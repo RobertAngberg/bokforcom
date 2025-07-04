@@ -59,7 +59,7 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
     const lönespec = lönespecResult.rows[0];
 
     // Kontrollera att lönespec inte redan är bokförd
-    if (lönespec.bokfört) {
+    if (lönespec.status === "Utbetald") {
       client.release();
       throw new Error("Lönespecifikation är redan bokförd");
     }
@@ -78,7 +78,9 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
 
     if (Math.abs(totalDebet - totalKredit) > 0.01) {
       client.release();
-      throw new Error(`Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`);
+      throw new Error(
+        `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`
+      );
     }
 
     // Skapa huvudtransaktion
@@ -112,8 +114,8 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
       const kontoResult = await client.query(kontoQuery, [post.konto]);
 
       if (kontoResult.rows.length === 0) {
-        console.warn(`⚠️ Konto ${post.konto} hittades inte i databasen`);
-        continue;
+        client.release();
+        throw new Error(`Konto ${post.konto} (${post.kontoNamn}) hittades inte i databasen`);
       }
 
       const kontoId = kontoResult.rows[0].id;
@@ -122,17 +124,13 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
       await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
     }
 
-    // Markera lönespecifikation som bokförd
+    // Markera lönespecifikation som utbetald
     const updateLönespecQuery = `
       UPDATE lönespecifikationer 
-      SET bokfört = true, bokfört_datum = $1, bokfört_transaktion_id = $2
-      WHERE id = $3
+      SET status = 'Utbetald', uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
     `;
-    await client.query(updateLönespecQuery, [
-      new Date(data.utbetalningsdatum),
-      transaktionId,
-      data.lönespecId,
-    ]);
+    await client.query(updateLönespecQuery, [data.lönespecId]);
 
     client.release();
 
