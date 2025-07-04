@@ -1,0 +1,14 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/CVS": true,
+    ".vscode": true,
+    "tsconfig.json": true,
+    "globals.css": true
+  },
+  "hide-files.files": [".vscode", "tsconfig.json", "globals.css"]
+}
