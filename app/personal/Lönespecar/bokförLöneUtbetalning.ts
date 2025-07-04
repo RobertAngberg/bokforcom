@@ -344,12 +344,17 @@ function genereraBokföringsPoster(
   }
 
   // 7. Nettolön till utbetalning (1930)
-  if (nettolön > 0) {
+  // Beräkna nettolön som balansering för att säkerställa att bokföringen stämmer
+  const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
+  const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
+  const beräknadNettolön = totalDebet - totalKredit;
+  
+  if (beräknadNettolön > 0) {
     poster.push({
       konto: "1930",
       kontoNamn: "Företagskonto/Bank",
       debet: 0,
-      kredit: nettolön,
+      kredit: beräknadNettolön,
       beskrivning: `Nettolön utbetalning ${anställdNamn}`,
     });
   }
