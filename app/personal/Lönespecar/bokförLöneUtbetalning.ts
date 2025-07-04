@@ -73,8 +73,8 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
     );
 
     // Validera att bokföringen balanserar
-    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + Number(post.debet), 0);
-    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + Number(post.kredit), 0);
+    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + post.debet, 0);
+    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + post.kredit, 0);
 
     if (Math.abs(totalDebet - totalKredit) > 0.01) {
       client.release();
@@ -205,7 +205,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7210",
       kontoNamn: "Löner till tjänstemän",
-      debet: Number(kontantlön),
+      debet: kontantlön,
       kredit: 0,
       beskrivning: `Kontantlön ${anställdNamn}`,
     });
@@ -233,7 +233,7 @@ function genereraBokföringsPoster(
       poster.push({
         konto: kontoMapping.konto,
         kontoNamn: kontoMapping.kontoNamn,
-        debet: Number(belopp),
+        debet: belopp,
         kredit: 0,
         beskrivning: `${rad.label} ${anställdNamn}`,
       });
@@ -268,7 +268,7 @@ function genereraBokföringsPoster(
         konto: kontoMapping.konto,
         kontoNamn: kontoMapping.kontoNamn,
         debet: 0,
-        kredit: Number(belopp),
+        kredit: belopp,
         beskrivning: `${rad.label} avdrag ${anställdNamn}`,
       });
     }
@@ -280,21 +280,21 @@ function genereraBokföringsPoster(
       konto: "7399",
       kontoNamn: "Motkonto skattepliktiga förmåner",
       debet: 0,
-      kredit: Number(skattepliktiga),
+      kredit: skattepliktiga,
       beskrivning: `Motkonto förmåner ${anställdNamn}`,
     });
   }
 
   // 4. Sociala avgifter
-  const socialaAvgifter7510 = Math.round(Number(kontantlön) * 0.3142);
-  const socialaAvgifter7512 = Math.round(Number(förmåner7512) * 0.3142);
-  const socialaAvgifter7515 = Math.round(Number(förmåner7515) * 0.3142);
+  const socialaAvgifter7510 = Math.round(kontantlön * 0.3142);
+  const socialaAvgifter7512 = Math.round(förmåner7512 * 0.3142);
+  const socialaAvgifter7515 = Math.round(förmåner7515 * 0.3142);
 
   if (socialaAvgifter7510 > 0) {
     poster.push({
       konto: "7510",
       kontoNamn: "Lagstadgade sociala avgifter",
-      debet: Number(socialaAvgifter7510),
+      debet: socialaAvgifter7510,
       kredit: 0,
       beskrivning: `Sociala avgifter kontantlön ${anställdNamn}`,
     });
@@ -304,7 +304,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7512",
       kontoNamn: "Lagstadgade sociala avgifter förmåner",
-      debet: Number(socialaAvgifter7512),
+      debet: socialaAvgifter7512,
       kredit: 0,
       beskrivning: `Sociala avgifter förmåner ${anställdNamn}`,
     });
@@ -314,7 +314,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7515",
       kontoNamn: "Sociala avgifter på skattepliktiga kostnadsersättningar",
-      debet: Number(socialaAvgifter7515),
+      debet: socialaAvgifter7515,
       kredit: 0,
       beskrivning: `Sociala avgifter ersättningar ${anställdNamn}`,
     });
@@ -327,7 +327,7 @@ function genereraBokföringsPoster(
       konto: "2731",
       kontoNamn: "Skuld för sociala avgifter",
       debet: 0,
-      kredit: Number(totalaSocialaAvgifter),
+      kredit: totalaSocialaAvgifter,
       beskrivning: `Skuld sociala avgifter ${anställdNamn}`,
     });
   }
@@ -338,7 +338,7 @@ function genereraBokföringsPoster(
       konto: "2710",
       kontoNamn: "Preliminär A-skatt",
       debet: 0,
-      kredit: Number(skatt),
+      kredit: skatt,
       beskrivning: `Preliminär skatt ${anställdNamn}`,
     });
   }
@@ -349,7 +349,7 @@ function genereraBokföringsPoster(
       konto: "1930",
       kontoNamn: "Företagskonto/Bank",
       debet: 0,
-      kredit: Number(nettolön),
+      kredit: nettolön,
       beskrivning: `Nettolön utbetalning ${anställdNamn}`,
     });
   }
