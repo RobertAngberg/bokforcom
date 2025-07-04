@@ -55,6 +55,11 @@ const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> 
   uppehalleUtrikes: { konto: "7323", kontoNamn: "Skattefria traktamenten, utlandet" },
   annanKompensation: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
   privatBil: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
+
+  // Företagsbilsförmåner (lägg till igen om de finns i definition)
+  foretagsbilExtra: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
+  foretagsbilBensinDiesel: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
+  foretagsbilEl: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
 };
 
 // Validering för att säkerställa konsistens mellan definitions och mappningar
@@ -208,7 +213,7 @@ export default function BokförLöner({
       poster.push({
         konto,
         kontoNamn,
-        debet: Math.round(belopp * 100) / 100,
+        debet: Number(Math.round(belopp * 100) / 100),
         kredit: 0,
       });
     });
@@ -230,7 +235,7 @@ export default function BokförLöner({
       poster.push({
         konto: "7210",
         kontoNamn: "Löner till tjänstemän",
-        debet: Math.round(totalKontantlön * 100) / 100,
+        debet: Number(Math.round(totalKontantlön * 100) / 100),
         kredit: 0,
       });
     }
@@ -241,7 +246,7 @@ export default function BokförLöner({
         konto: "7399",
         kontoNamn: "Motkonto skattepliktiga förmåner",
         debet: 0,
-        kredit: Math.round(reraFörmåner * 100) / 100,
+        kredit: Number(Math.round(reraFörmåner * 100) / 100),
       });
     }
 
@@ -256,7 +261,7 @@ export default function BokförLöner({
       poster.push({
         konto: "7510",
         kontoNamn: "Lagstadgade sociala avgifter",
-        debet: socialaAvgifterKontant,
+        debet: Number(socialaAvgifterKontant),
         kredit: 0,
       });
     }
@@ -295,7 +300,7 @@ export default function BokförLöner({
       poster.push({
         konto: "7512",
         kontoNamn: "Sociala avgifter för förmånsvärden",
-        debet: socialaAvgifterFörmåner7512,
+        debet: Number(socialaAvgifterFörmåner7512),
         kredit: 0,
       });
     }
@@ -306,7 +311,7 @@ export default function BokförLöner({
       poster.push({
         konto: "7515",
         kontoNamn: "Sociala avgifter på skattepliktiga kostnadsersättningar",
-        debet: socialaAvgifterFörmåner7515,
+        debet: Number(socialaAvgifterFörmåner7515),
         kredit: 0,
       });
     }
@@ -319,7 +324,7 @@ export default function BokförLöner({
         konto: "2710",
         kontoNamn: "Personalskatt",
         debet: 0,
-        kredit: Math.round(totalSkatt * 100) / 100,
+        kredit: Number(Math.round(totalSkatt * 100) / 100),
       });
     }
 
@@ -334,7 +339,7 @@ export default function BokförLöner({
         konto: "2731",
         kontoNamn: "Avräkning lagstadgade sociala avgifter",
         debet: 0,
-        kredit: Math.round(totalAllaSocialaAvgifter * 100) / 100,
+        kredit: Number(Math.round(totalAllaSocialaAvgifter * 100) / 100),
       });
     }
 
@@ -344,7 +349,7 @@ export default function BokförLöner({
         konto: "1930",
         kontoNamn: "Företagskonto / affärskonto",
         debet: 0,
-        kredit: Math.round(totalNettolön * 100) / 100,
+        kredit: Number(Math.round(totalNettolön * 100) / 100),
       });
     }
 
