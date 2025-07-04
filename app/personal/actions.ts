@@ -815,9 +815,22 @@ export async function skapaNyLönespec(data: {
       userId,
     ]);
 
+    const nyLönespec = insertResult.rows[0];
+
+    // 🏖️ AUTOMATISK SEMESTERINTJÄNING
+    const semesterResult = await läggTillAutomatiskSemester(
+      data.anställd_id,
+      nyLönespec.id,
+      data.månad,
+      data.år
+    );
+
     client.release();
 
-    return insertResult.rows[0];
+    return {
+      ...nyLönespec,
+      semesterInfo: semesterResult,
+    };
   } catch (error) {
     console.error("❌ skapaNyLönespec error:", error);
     throw new Error("Kunde inte skapa lönespecifikation");
@@ -1082,6 +1095,94 @@ export async function beräknaSemesterpenning(
   } catch (error) {
     console.error("❌ beräknaSemesterpenning error:", error);
     return 0;
+  }
+}
+
+/**
+ * Beräknar och lägger till automatisk semesterintjäning vid lönespec
+ */
+export async function läggTillAutomatiskSemester(
+  anställdId: number,
+  lönespecId: number,
+  månad: number,
+  år: number
+): Promise<{ success: boolean; dagar?: number; message?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  const userId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+
+    // Hämta senaste semesterpost för att se när vi senast lade till semester
+    const senasteSemesterQuery = `
+      SELECT datum, typ FROM semester 
+      WHERE anställd_id = $1 AND typ = 'Intjänat'
+      ORDER BY datum DESC
+      LIMIT 1
+    `;
+    const senasteSemesterResult = await client.query(senasteSemesterQuery, [anställdId]);
+
+    // Beräkna hur många månader som gått sedan senaste intjäning
+    let månaderAttLägga = 1; // Default: denna månad
+    
+    if (senasteSemesterResult.rows.length > 0) {
+      const senasteDatum = new Date(senasteSemesterResult.rows[0].datum);
+      const dennaMånad = new Date(år, månad - 1, 1);
+      
+      // Beräkna månader mellan senaste intjäning och nu
+      const månaderSkillnad = (dennaMånad.getFullYear() - senasteDatum.getFullYear()) * 12 + 
+                              (dennaMånad.getMonth() - senasteDatum.getMonth());
+      
+      månaderAttLägga = Math.max(0, månaderSkillnad);
+    }
+
+    // Om det inte finns några månader att lägga till, hoppa över
+    if (månaderAttLägga === 0) {
+      client.release();
+      return { success: true, dagar: 0, message: "Ingen semester att lägga till" };
+    }
+
+    // Beräkna semesterdagar (25 dagar/år = 2.08 dagar/månad)
+    const semesterDagar = Math.round((25 / 12) * månaderAttLägga * 100) / 100; // Avrunda till 2 decimaler
+
+    // Lägg till semesterpost
+    const insertSemesterQuery = `
+      INSERT INTO semester (
+        anställd_id, datum, typ, antal, beskrivning, 
+        lönespecifikation_id, bokfört, skapad_av
+      ) VALUES ($1, $2, 'Intjänat', $3, $4, $5, true, $6)
+      RETURNING id
+    `;
+
+    const beskrivning = `Automatisk semesterintjäning (${månaderAttLägga} mån: ${semesterDagar} dagar)`;
+    const datum = `${år}-${månad.toString().padStart(2, '0')}-01`;
+
+    await client.query(insertSemesterQuery, [
+      anställdId,
+      datum,
+      semesterDagar,
+      beskrivning,
+      lönespecId,
+      userId,
+    ]);
+
+    client.release();
+
+    return {
+      success: true,
+      dagar: semesterDagar,
+      message: `Lade till ${semesterDagar} semesterdagar`,
+    };
+  } catch (error) {
+    console.error("❌ läggTillAutomatiskSemester error:", error);
+    return {
+      success: false,
+      message: "Kunde inte lägga till semester",
+    };
   }
 }
 

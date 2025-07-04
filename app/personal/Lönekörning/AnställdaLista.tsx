@@ -103,6 +103,15 @@ export default function AnställdaLista({
         ...prev,
         [anställd.id]: nyLönespec,
       }));
+
+      // 🏖️ Visa semesterinformation om det lades till
+      if (nyLönespec.semesterInfo?.success && nyLönespec.semesterInfo?.dagar > 0) {
+        alert(
+          `✅ Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`
+        );
+      } else {
+        alert("✅ Lönespec skapad!");
+      }
     } catch (error) {
       console.error("Fel vid skapande av lönespec:", error);
       alert("❌ Kunde inte skapa lönespec");
