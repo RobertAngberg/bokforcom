@@ -8,7 +8,7 @@ import Anställda from "./Anställda/Anställda";
 import Personalinformation from "./Anställda/NyAnställd/Personalinformation";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lönespecar from "./Lönespecar/Lönespecar";
-import Semester from "./Semester/Semester";
+import ModernSemester from "./Semester/ModernSemester";
 import Lönekörning from "./Lönekörning/Lönekörning";
 import BokförLönTest from "./Lönespecar/BokförLönTest";
 
@@ -70,7 +70,7 @@ export default function PersonalPage() {
               <Lönespecar anställd={valdAnställd} />
             </AnimeradFlik>
             <AnimeradFlik title="Semester" icon="🏖️">
-              <Semester anställd={valdAnställd} />
+              <ModernSemester anställd={valdAnställd} userId={valdAnställd.user_id} />
             </AnimeradFlik>
           </>
         )}

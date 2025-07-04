@@ -18,7 +18,7 @@ import {
   beräknaSemesterpenning,
   SemesterSummary,
   SemesterRecord,
-} from "./semesterDatabase";
+} from "../actions";
 
 interface ModernSemesterProps {
   anställd: {
@@ -37,6 +37,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const [summary, setSummary] = useState<SemesterSummary | null>(null);
   const [historik, setHistorik] = useState<SemesterRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"översikt" | "uttag" | "historik">("översikt");
+  const [beräknadPenning, setBeräknadPenning] = useState<number>(0);
 
   const [semesteruttag, setSemesteruttag] = useState({
     startDatum: "",
@@ -76,15 +77,20 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
 
     setLoading(true);
     try {
-      const result = await registreraSemesteruttag(
-        anställd.id,
-        semesteruttag.startDatum,
-        semesteruttag.slutDatum || semesteruttag.startDatum,
-        parseFloat(semesteruttag.antal),
-        semesteruttag.beskrivning || `Semesteruttag ${anställd.förnamn} ${anställd.efternamn}`,
-        null, // lönespecifikation_id
-        userId
-      );
+      const uttag = {
+        anställd_id: anställd.id,
+        datum: new Date().toISOString().split("T")[0],
+        typ: "Betalda" as const,
+        antal: parseFloat(semesteruttag.antal),
+        från_datum: semesteruttag.startDatum,
+        till_datum: semesteruttag.slutDatum || semesteruttag.startDatum,
+        beskrivning:
+          semesteruttag.beskrivning || `Semesteruttag ${anställd.förnamn} ${anställd.efternamn}`,
+        lönespecifikation_id: undefined,
+        bokfört: false,
+      };
+
+      const result = await registreraSemesteruttag(anställd.id, uttag);
 
       if (result.success) {
         alert(`✅ ${result.message}`);
@@ -104,10 +110,16 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     }
   };
 
-  // Beräkna penning för uttag
-  const beräknadPenning = semesteruttag.antal
-    ? beräknaSemesterpenning(anställd.kompensation, parseFloat(semesteruttag.antal))
-    : null;
+  // Beräkna penning för uttag när antal ändras
+  useEffect(() => {
+    if (semesteruttag.antal) {
+      beräknaSemesterpenning(anställd.id, parseFloat(semesteruttag.antal))
+        .then(setBeräknadPenning)
+        .catch(() => setBeräknadPenning(0));
+    } else {
+      setBeräknadPenning(0);
+    }
+  }, [semesteruttag.antal, anställd.id]);
 
   // Kolumndefinitioner för historik
   const kolumner: ColumnDefinition<any>[] = [
@@ -266,27 +278,15 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
           </div>
 
           {/* Beräkningar */}
-          {beräknadPenning && (
+          {beräknadPenning > 0 && (
             <div className="bg-slate-700 p-4 rounded mb-4">
               <h4 className="font-semibold text-white mb-2">Beräknad semesterpenning</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <div className="text-sm text-slate-300">Semesterlön (0,43%)</div>
-                  <div className="font-bold text-white">
-                    {beräknadPenning.semesterlön.toLocaleString("sv-SE")} kr
-                  </div>
+              <div className="text-center">
+                <div className="text-sm text-slate-300">
+                  Totalt belopp (inkl. semesterersättning)
                 </div>
-                <div>
-                  <div className="text-sm text-slate-300">Semesterersättning (12%)</div>
-                  <div className="font-bold text-white">
-                    {beräknadPenning.semesterersättning.toLocaleString("sv-SE")} kr
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-slate-300">Totalt belopp</div>
-                  <div className="font-bold text-green-400">
-                    {beräknadPenning.totalt.toLocaleString("sv-SE")} kr
-                  </div>
+                <div className="font-bold text-green-400 text-xl">
+                  {beräknadPenning.toLocaleString("sv-SE")} kr
                 </div>
               </div>
             </div>
