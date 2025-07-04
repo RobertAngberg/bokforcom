@@ -49,7 +49,6 @@ const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> 
   obetaldFranvaro: { konto: "7210", kontoNamn: "Löner till tjänstemän" },
 
   // Företagsbilsförmåner (skattepliktiga)
-  foretagsbil: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
   foretagsbilExtra: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
 
   // Skattefria ersättningar

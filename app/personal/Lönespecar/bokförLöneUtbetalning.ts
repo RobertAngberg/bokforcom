@@ -73,12 +73,12 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
     );
 
     // Validera att bokföringen balanserar
-    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + post.debet, 0);
-    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + post.kredit, 0);
+    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + Number(post.debet), 0);
+    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + Number(post.kredit), 0);
 
     if (Math.abs(totalDebet - totalKredit) > 0.01) {
       client.release();
-      throw new Error(`Bokföringen balanserar inte! Debet: ${totalDebet}, Kredit: ${totalKredit}`);
+      throw new Error(`Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`);
     }
 
     // Skapa huvudtransaktion
@@ -166,10 +166,10 @@ function genereraBokföringsPoster(
   const poster: BokföringsPost[] = [];
 
   // Extrahera värden från beräknadeVärden eller lönespec
-  const kontantlön = beräknadeVärden.kontantlön || lönespec.grundlön;
-  const skatt = beräknadeVärden.skatt || lönespec.skatt;
-  const nettolön = beräknadeVärden.nettolön || lönespec.nettolön;
-  const socialaAvgifter = beräknadeVärden.socialaAvgifter || lönespec.sociala_avgifter;
+  const kontantlön = Number(beräknadeVärden.kontantlön || lönespec.grundlön);
+  const skatt = Number(beräknadeVärden.skatt || lönespec.skatt);
+  const nettolön = Number(beräknadeVärden.nettolön || lönespec.nettolön);
+  const socialaAvgifter = Number(beräknadeVärden.socialaAvgifter || lönespec.sociala_avgifter);
 
   // Mapping från extrarad-typ till bokföringskonto (samma som BokförLöner.tsx)
   const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> = {
@@ -207,7 +207,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7210",
       kontoNamn: "Löner till tjänstemän",
-      debet: kontantlön,
+      debet: Number(kontantlön),
       kredit: 0,
       beskrivning: `Kontantlön ${anställdNamn}`,
     });
@@ -228,14 +228,14 @@ function genereraBokföringsPoster(
       return;
     }
 
-    const belopp = Math.abs(rad.summa);
+    const belopp = Math.abs(Number(rad.summa));
 
-    if (rad.summa > 0) {
+    if (Number(rad.summa) > 0) {
       // Positiv extrarad
       poster.push({
         konto: kontoMapping.konto,
         kontoNamn: kontoMapping.kontoNamn,
-        debet: belopp,
+        debet: Number(belopp),
         kredit: 0,
         beskrivning: `${rad.label} ${anställdNamn}`,
       });
@@ -270,7 +270,7 @@ function genereraBokföringsPoster(
         konto: kontoMapping.konto,
         kontoNamn: kontoMapping.kontoNamn,
         debet: 0,
-        kredit: belopp,
+        kredit: Number(belopp),
         beskrivning: `${rad.label} avdrag ${anställdNamn}`,
       });
     }
@@ -282,21 +282,21 @@ function genereraBokföringsPoster(
       konto: "7399",
       kontoNamn: "Motkonto skattepliktiga förmåner",
       debet: 0,
-      kredit: skattepliktiga,
+      kredit: Number(skattepliktiga),
       beskrivning: `Motkonto förmåner ${anställdNamn}`,
     });
   }
 
   // 4. Sociala avgifter
-  const socialaAvgifter7510 = Math.round(kontantlön * 0.3142);
-  const socialaAvgifter7512 = Math.round(förmåner7512 * 0.3142);
-  const socialaAvgifter7515 = Math.round(förmåner7515 * 0.3142);
+  const socialaAvgifter7510 = Math.round(Number(kontantlön) * 0.3142);
+  const socialaAvgifter7512 = Math.round(Number(förmåner7512) * 0.3142);
+  const socialaAvgifter7515 = Math.round(Number(förmåner7515) * 0.3142);
 
   if (socialaAvgifter7510 > 0) {
     poster.push({
       konto: "7510",
       kontoNamn: "Lagstadgade sociala avgifter",
-      debet: socialaAvgifter7510,
+      debet: Number(socialaAvgifter7510),
       kredit: 0,
       beskrivning: `Sociala avgifter kontantlön ${anställdNamn}`,
     });
@@ -306,7 +306,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7512",
       kontoNamn: "Lagstadgade sociala avgifter förmåner",
-      debet: socialaAvgifter7512,
+      debet: Number(socialaAvgifter7512),
       kredit: 0,
       beskrivning: `Sociala avgifter förmåner ${anställdNamn}`,
     });
@@ -316,7 +316,7 @@ function genereraBokföringsPoster(
     poster.push({
       konto: "7515",
       kontoNamn: "Sociala avgifter på skattepliktiga kostnadsersättningar",
-      debet: socialaAvgifter7515,
+      debet: Number(socialaAvgifter7515),
       kredit: 0,
       beskrivning: `Sociala avgifter ersättningar ${anställdNamn}`,
     });
@@ -329,7 +329,7 @@ function genereraBokföringsPoster(
       konto: "2731",
       kontoNamn: "Skuld för sociala avgifter",
       debet: 0,
-      kredit: totalaSocialaAvgifter,
+      kredit: Number(totalaSocialaAvgifter),
       beskrivning: `Skuld sociala avgifter ${anställdNamn}`,
     });
   }
@@ -340,7 +340,7 @@ function genereraBokföringsPoster(
       konto: "2710",
       kontoNamn: "Preliminär A-skatt",
       debet: 0,
-      kredit: skatt,
+      kredit: Number(skatt),
       beskrivning: `Preliminär skatt ${anställdNamn}`,
     });
   }
@@ -351,7 +351,7 @@ function genereraBokföringsPoster(
       konto: "1930",
       kontoNamn: "Företagskonto/Bank",
       debet: 0,
-      kredit: nettolön,
+      kredit: Number(nettolön),
       beskrivning: `Nettolön utbetalning ${anställdNamn}`,
     });
   }
