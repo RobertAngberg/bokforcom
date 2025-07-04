@@ -48,9 +48,6 @@ const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> 
   // Avdrag (obetald frånvaro dras av från lönen)
   obetaldFranvaro: { konto: "7210", kontoNamn: "Löner till tjänstemän" },
 
-  // Företagsbilsförmåner (skattepliktiga)
-  foretagsbilExtra: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
-
   // Skattefria ersättningar
   resersattning: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
   logi: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
@@ -58,8 +55,6 @@ const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> 
   uppehalleUtrikes: { konto: "7323", kontoNamn: "Skattefria traktamenten, utlandet" },
   annanKompensation: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
   privatBil: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
-  foretagsbilBensinDiesel: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
-  foretagsbilEl: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
 };
 
 // Validering för att säkerställa konsistens mellan definitions och mappningar
@@ -357,8 +352,8 @@ export default function BokförLöner({
   };
 
   const poster = analyseraBokföringsposter();
-  const totalDebet = poster.reduce((sum, p) => sum + p.debet, 0);
-  const totalKredit = poster.reduce((sum, p) => sum + p.kredit, 0);
+  const totalDebet = poster.reduce((sum, p) => sum + Number(p.debet), 0);
+  const totalKredit = poster.reduce((sum, p) => sum + Number(p.kredit), 0);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
