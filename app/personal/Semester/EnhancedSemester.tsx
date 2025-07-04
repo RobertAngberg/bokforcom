@@ -9,11 +9,11 @@ import { useState, useEffect } from "react";
 import TextFält from "../../_components/TextFält";
 import InfoTooltip from "../../_components/InfoTooltip";
 import Knapp from "../../_components/Knapp";
-import { 
-  beräknaIntjänadeSemesterdagar, 
-  beräknaSemesterpenning, 
+import {
+  beräknaIntjänadeSemesterdagar,
+  beräknaSemesterpenning,
   valideraSemesteruttag,
-  SemesterIntjäning 
+  SemesterIntjäning,
 } from "./semesterBeräkningar";
 import { bokförSemesteruttag } from "./semesterBokföring";
 
@@ -41,7 +41,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
     dagar: "",
     startDatum: "",
     slutDatum: "",
-    kommentar: ""
+    kommentar: "",
   });
   const [bokföringsPoster, setBokföringsPoster] = useState<any[]>([]);
   const [showBokföring, setShowBokföring] = useState(false);
@@ -60,7 +60,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
   const beräknaSemesterpenningFörUttag = () => {
     const dagar = parseFloat(semesteruttag.dagar) || 0;
     if (dagar <= 0) return null;
-    
+
     return beräknaSemesterpenning(anställd.kompensation, dagar, true);
   };
 
@@ -87,22 +87,22 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
         kontoNamn: "Löner till tjänstemän",
         debet: penning.totaltBelopp,
         kredit: 0,
-        beskrivning: `Semesteruttag ${anställd.förnamn} ${anställd.efternamn}`
+        beskrivning: `Semesteruttag ${anställd.förnamn} ${anställd.efternamn}`,
       },
       {
         konto: "2920",
         kontoNamn: "Semesterskuld",
         debet: 0,
         kredit: penning.totaltBelopp,
-        beskrivning: `Minskning semesterskuld ${anställd.förnamn} ${anställd.efternamn}`
-      }
+        beskrivning: `Minskning semesterskuld ${anställd.förnamn} ${anställd.efternamn}`,
+      },
     ];
   };
 
   // Hantera bokföring
   const handleBokför = async () => {
     setLoading(true);
-    
+
     try {
       const result = await bokförSemesteruttag({
         anställdId: anställd.id,
@@ -111,7 +111,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
         datum: semesteruttag.startDatum,
         dagar: parseFloat(semesteruttag.dagar),
         månadslön: anställd.kompensation,
-        kommentar: semesteruttag.kommentar
+        kommentar: semesteruttag.kommentar,
       });
 
       if (result.success) {
@@ -121,7 +121,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
           dagar: "",
           startDatum: "",
           slutDatum: "",
-          kommentar: ""
+          kommentar: "",
         });
         setShowBokföring(false);
       }
@@ -143,7 +143,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
         <h3 className="text-xl font-semibold text-white mb-4">
           Semesteröversikt - {anställd.förnamn} {anställd.efternamn}
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-700 p-4 rounded">
             <div className="text-sm text-slate-300">Kvarvarande dagar</div>
@@ -159,7 +159,9 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
           </div>
           <div className="bg-slate-700 p-4 rounded">
             <div className="text-sm text-slate-300">Månadslön</div>
-            <div className="text-2xl font-bold text-white">{anställd.kompensation.toLocaleString("sv-SE")} kr</div>
+            <div className="text-2xl font-bold text-white">
+              {anställd.kompensation.toLocaleString("sv-SE")} kr
+            </div>
           </div>
         </div>
       </div>
@@ -167,15 +169,15 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
       {/* Semesterintjäning */}
       <div className="bg-slate-800 p-6 rounded-lg">
         <h3 className="text-xl font-semibold text-white mb-4">Semesterintjäning</h3>
-        
+
         {intjäning.map((period, index) => (
           <div key={index} className="bg-slate-700 p-4 rounded mb-2">
             <div className="flex justify-between items-center">
               <div>
                 <div className="font-medium text-white">Intjänandeår: {period.intjänandeår}</div>
                 <div className="text-sm text-slate-300">
-                  Intjänade dagar: {period.intjänadeDagar.toFixed(2)} | 
-                  Intjänad ersättning: {period.intjänadPengaTillägg.toFixed(2)} kr
+                  Intjänade dagar: {period.intjänadeDagar.toFixed(2)} | Intjänad ersättning:{" "}
+                  {period.intjänadPengaTillägg.toFixed(2)} kr
                 </div>
               </div>
               <div className="text-right">
@@ -190,37 +192,37 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
       {/* Semesteruttag */}
       <div className="bg-slate-800 p-6 rounded-lg">
         <h3 className="text-xl font-semibold text-white mb-4">Registrera semesteruttag</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <TextFält
             label="Antal dagar"
             name="dagar"
             type="number"
             value={semesteruttag.dagar}
-            onChange={(e) => setSemesteruttag(prev => ({ ...prev, dagar: e.target.value }))}
+            onChange={(e) => setSemesteruttag((prev) => ({ ...prev, dagar: e.target.value }))}
           />
-          
+
           <TextFält
             label="Startdatum"
             name="startDatum"
             type="date"
             value={semesteruttag.startDatum}
-            onChange={(e) => setSemesteruttag(prev => ({ ...prev, startDatum: e.target.value }))}
+            onChange={(e) => setSemesteruttag((prev) => ({ ...prev, startDatum: e.target.value }))}
           />
-          
+
           <TextFält
             label="Slutdatum"
             name="slutDatum"
             type="date"
             value={semesteruttag.slutDatum}
-            onChange={(e) => setSemesteruttag(prev => ({ ...prev, slutDatum: e.target.value }))}
+            onChange={(e) => setSemesteruttag((prev) => ({ ...prev, slutDatum: e.target.value }))}
           />
-          
+
           <TextFält
             label="Kommentar"
             name="kommentar"
             value={semesteruttag.kommentar}
-            onChange={(e) => setSemesteruttag(prev => ({ ...prev, kommentar: e.target.value }))}
+            onChange={(e) => setSemesteruttag((prev) => ({ ...prev, kommentar: e.target.value }))}
           />
         </div>
 
@@ -231,15 +233,21 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <div className="text-sm text-slate-300">Semesterlön</div>
-                <div className="font-bold text-white">{semesterpenning.semesterlön.toLocaleString("sv-SE")} kr</div>
+                <div className="font-bold text-white">
+                  {semesterpenning.semesterlön.toLocaleString("sv-SE")} kr
+                </div>
               </div>
               <div>
                 <div className="text-sm text-slate-300">Semesterersättning (12%)</div>
-                <div className="font-bold text-white">{semesterpenning.semesterersättning.toLocaleString("sv-SE")} kr</div>
+                <div className="font-bold text-white">
+                  {semesterpenning.semesterersättning.toLocaleString("sv-SE")} kr
+                </div>
               </div>
               <div>
                 <div className="text-sm text-slate-300">Totalt belopp</div>
-                <div className="font-bold text-green-400">{semesterpenning.totaltBelopp.toLocaleString("sv-SE")} kr</div>
+                <div className="font-bold text-green-400">
+                  {semesterpenning.totaltBelopp.toLocaleString("sv-SE")} kr
+                </div>
               </div>
             </div>
           </div>
@@ -247,9 +255,11 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
 
         {/* Validering */}
         {semesteruttag.dagar && (
-          <div className={`p-4 rounded mb-4 ${validering.godkänt ? 'bg-green-900' : 'bg-red-900'}`}>
-            <div className={`font-medium ${validering.godkänt ? 'text-green-300' : 'text-red-300'}`}>
-              {validering.godkänt ? '✅' : '❌'} {validering.meddelande}
+          <div className={`p-4 rounded mb-4 ${validering.godkänt ? "bg-green-900" : "bg-red-900"}`}>
+            <div
+              className={`font-medium ${validering.godkänt ? "text-green-300" : "text-red-300"}`}
+            >
+              {validering.godkänt ? "✅" : "❌"} {validering.meddelande}
             </div>
             {validering.förskottsDagar > 0 && (
               <div className="text-yellow-300 text-sm mt-1">
@@ -269,7 +279,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
             }}
             disabled={!validering.godkänt || !semesteruttag.dagar}
           />
-          
+
           {showBokföring && (
             <Knapp
               text="Bokför semesteruttag"
@@ -284,7 +294,7 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
       {showBokföring && bokföringsPoster.length > 0 && (
         <div className="bg-slate-800 p-6 rounded-lg">
           <h3 className="text-xl font-semibold text-white mb-4">Bokföringsposter</h3>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-white">
               <thead>
@@ -298,12 +308,14 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
               <tbody>
                 {bokföringsPoster.map((post, index) => (
                   <tr key={index} className="border-b border-slate-700">
-                    <td className="p-2">{post.konto} - {post.kontoNamn}</td>
-                    <td className="text-right p-2">
-                      {post.debet > 0 ? `${post.debet.toLocaleString("sv-SE")} kr` : '–'}
+                    <td className="p-2">
+                      {post.konto} - {post.kontoNamn}
                     </td>
                     <td className="text-right p-2">
-                      {post.kredit > 0 ? `${post.kredit.toLocaleString("sv-SE")} kr` : '–'}
+                      {post.debet > 0 ? `${post.debet.toLocaleString("sv-SE")} kr` : "–"}
+                    </td>
+                    <td className="text-right p-2">
+                      {post.kredit > 0 ? `${post.kredit.toLocaleString("sv-SE")} kr` : "–"}
                     </td>
                     <td className="p-2">{post.beskrivning}</td>
                   </tr>
@@ -311,13 +323,15 @@ export default function EnhancedSemester({ anställd }: EnhancedSemesterProps) {
               </tbody>
             </table>
           </div>
-          
+
           <div className="mt-4 p-4 bg-slate-700 rounded">
             <div className="flex justify-between">
               <span className="font-medium text-white">Balansering:</span>
               <span className="text-green-400">
-                Debet: {bokföringsPoster.reduce((sum, p) => sum + p.debet, 0).toLocaleString("sv-SE")} kr = 
-                Kredit: {bokföringsPoster.reduce((sum, p) => sum + p.kredit, 0).toLocaleString("sv-SE")} kr
+                Debet:{" "}
+                {bokföringsPoster.reduce((sum, p) => sum + p.debet, 0).toLocaleString("sv-SE")} kr =
+                Kredit:{" "}
+                {bokföringsPoster.reduce((sum, p) => sum + p.kredit, 0).toLocaleString("sv-SE")} kr
               </span>
             </div>
           </div>
