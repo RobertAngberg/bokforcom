@@ -336,7 +336,7 @@ function genereraBokföringsPoster(
   if (skatt > 0) {
     poster.push({
       konto: "2710",
-      kontoNamn: "Preliminär A-skatt",
+      kontoNamn: "Personalskatt",
       debet: 0,
       kredit: skatt,
       beskrivning: `Preliminär skatt ${anställdNamn}`,
@@ -348,7 +348,7 @@ function genereraBokföringsPoster(
   const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
   const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
   const beräknadNettolön = totalDebet - totalKredit;
-  
+
   if (beräknadNettolön > 0) {
     poster.push({
       konto: "1930",
