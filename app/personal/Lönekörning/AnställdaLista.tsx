@@ -106,9 +106,7 @@ export default function AnställdaLista({
 
       // 🏖️ Visa semesterinformation om det lades till
       if (nyLönespec.semesterInfo?.success && nyLönespec.semesterInfo?.dagar > 0) {
-        alert(
-          `✅ Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`
-        );
+        alert(`✅ Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`);
       } else {
         alert("✅ Lönespec skapad!");
       }

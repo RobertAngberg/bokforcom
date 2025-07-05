@@ -96,8 +96,6 @@ export default function LönespecCard({
         getLönespecStatusBadge={(status: string) => <StatusBadge status={status} type="lönespec" />}
       />
 
-      <Knapp text="📋 Bokföringsposter" onClick={() => setVisaBokföringsposter(true)} />
-
       <Lönekomponenter
         grundlön={grundlön}
         övertid={övertid}
@@ -122,23 +120,25 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
-      <div className="flex gap-2 mt-4 justify-center">
-        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => onFörhandsgranskning(lönespec.id)} />
-        <MailaLönespec
-          lönespec={lönespec}
-          anställd={anställd}
-          företagsprofil={företagsprofil}
-          extrarader={lönespec.extrarader || []}
-          beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
-        />
-        {onTaBortLönespec && (
+      {/* Knapp-rad */}
+      <div className="mt-6 flex flex-wrap gap-3 justify-between items-center">
+        <div className="flex gap-3">
           <Knapp
-            text="🗑️ Ta bort lönespec"
-            loading={taBortLoading}
-            loadingText="⏳ Tar bort..."
-            onClick={onTaBortLönespec}
+            text="👁️ Förhandsgranska / PDF"
+            onClick={() => onFörhandsgranskning(lönespec.id)}
           />
-        )}
+          <MailaLönespec
+            lönespec={lönespec}
+            anställd={anställd}
+            företagsprofil={företagsprofil}
+            extrarader={extrarader || []}
+            beräknadeVärden={beräknadeVärden}
+          />
+          <Knapp text="📋 Bokföringsposter" onClick={() => setVisaBokföringsposter(true)} />
+        </div>
+        <div>
+          <Knapp text="🗑️ Ta bort lönespec" onClick={onTaBortLönespec} loading={taBortLoading} />
+        </div>
       </div>
 
       <BokförLöner
@@ -149,7 +149,6 @@ export default function LönespecCard({
         isOpen={visaBokföringsposter}
         onClose={() => setVisaBokföringsposter(false)}
         onBokfört={() => {
-          // Stäng modalen och visa bekräftelse
           setVisaBokföringsposter(false);
           console.log("✅ Lönespecifikation bokförd!");
         }}

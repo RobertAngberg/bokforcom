@@ -39,33 +39,33 @@ export default function Lönespecar({
       return;
     }
 
-    const loadData = async () => {
-      if (!anställd?.id) return;
-
-      try {
-        setLoading(true);
-        const [lönespecarData, utläggData] = await Promise.all([
-          hämtaLönespecifikationer(anställd.id),
-          hämtaUtlägg(anställd.id),
-        ]);
-
-        setLönespecar(lönespecarData);
-        setUtlägg(utläggData);
-
-        const session = await fetch("/api/session").then((r) => r.json());
-        if (session?.user?.id) {
-          const företagsprofilData = await hämtaFöretagsprofil(session.user.id);
-          setFöretagsprofil(företagsprofilData);
-        }
-      } catch (error) {
-        console.error("Fel vid laddning av data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, [anställd?.id, specificLönespec]);
+
+  const loadData = async () => {
+    if (!anställd?.id) return;
+
+    try {
+      setLoading(true);
+      const [lönespecarData, utläggData] = await Promise.all([
+        hämtaLönespecifikationer(anställd.id),
+        hämtaUtlägg(anställd.id),
+      ]);
+
+      setLönespecar(lönespecarData);
+      setUtlägg(utläggData);
+
+      const session = await fetch("/api/session").then((r) => r.json());
+      if (session?.user?.id) {
+        const företagsprofilData = await hämtaFöretagsprofil(session.user.id);
+        setFöretagsprofil(företagsprofilData);
+      }
+    } catch (error) {
+      console.error("Fel vid laddning av data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBeräkningarUppdaterade = useCallback((lönespecId: string, beräkningar: any) => {
     setBeräknadeVärden((prev: any) => ({
@@ -107,6 +107,8 @@ export default function Lönespecar({
         taBortLoading={taBortLoading}
         extrarader={extrarader}
         setExtrarader={setExtrarader}
+        onLönespecUppdaterad={loadData}
+        företagsprofil={företagsprofil}
       />
 
       {visaFörhandsgranskning && (

@@ -828,12 +828,16 @@ export async function skapaNyLönespec(data: {
     client.release();
 
     return {
-      ...nyLönespec,
+      success: true,
+      lönespec: nyLönespec,
       semesterInfo: semesterResult,
     };
   } catch (error) {
     console.error("❌ skapaNyLönespec error:", error);
-    throw new Error("Kunde inte skapa lönespecifikation");
+    return {
+      success: false,
+      error: "Kunde inte skapa lönespecifikation",
+    };
   }
 }
 
@@ -1117,6 +1121,18 @@ export async function läggTillAutomatiskSemester(
   try {
     const client = await pool.connect();
 
+    // Hämta anställningsdatum
+    const anställdQuery = `SELECT startdatum FROM anställda WHERE id = $1`;
+    const anställdResult = await client.query(anställdQuery, [anställdId]);
+
+    if (anställdResult.rows.length === 0) {
+      client.release();
+      return { success: false, message: "Anställd hittades inte" };
+    }
+
+    const startdatum = anställdResult.rows[0].startdatum;
+    console.log("🔍 Startdatum:", startdatum);
+
     // Hämta senaste semesterpost för att se när vi senast lade till semester
     const senasteSemesterQuery = `
       SELECT datum, typ FROM semester 
@@ -1125,20 +1141,45 @@ export async function läggTillAutomatiskSemester(
       LIMIT 1
     `;
     const senasteSemesterResult = await client.query(senasteSemesterQuery, [anställdId]);
+    console.log("🔍 Senaste semester:", senasteSemesterResult.rows);
 
     // Beräkna hur många månader som gått sedan senaste intjäning
     let månaderAttLägga = 1; // Default: denna månad
-    
+
     if (senasteSemesterResult.rows.length > 0) {
       const senasteDatum = new Date(senasteSemesterResult.rows[0].datum);
       const dennaMånad = new Date(år, månad - 1, 1);
-      
+      console.log("🔍 Senaste datum:", senasteDatum, "Denna månad:", dennaMånad);
+
       // Beräkna månader mellan senaste intjäning och nu
-      const månaderSkillnad = (dennaMånad.getFullYear() - senasteDatum.getFullYear()) * 12 + 
-                              (dennaMånad.getMonth() - senasteDatum.getMonth());
-      
+      const månaderSkillnad =
+        (dennaMånad.getFullYear() - senasteDatum.getFullYear()) * 12 +
+        (dennaMånad.getMonth() - senasteDatum.getMonth());
+
       månaderAttLägga = Math.max(0, månaderSkillnad);
+      console.log("🔍 Månader skillnad:", månaderSkillnad, "Månader att lägga:", månaderAttLägga);
+    } else if (startdatum) {
+      // Om detta är första semesterintjäningen, beräkna från anställningsdatum
+      const anställningsDatum = new Date(startdatum);
+      const dennaMånad = new Date(år, månad - 1, 1);
+      console.log("🔍 Anställningsdatum:", anställningsDatum, "Denna månad:", dennaMånad);
+
+      // Beräkna månader sedan anställning (inklusive anställningsmånaden)
+      const månaderSedanAnställning =
+        (dennaMånad.getFullYear() - anställningsDatum.getFullYear()) * 12 +
+        (dennaMånad.getMonth() - anställningsDatum.getMonth()) +
+        1;
+
+      månaderAttLägga = Math.max(1, månaderSedanAnställning);
+      console.log(
+        "🔍 Månader sedan anställning:",
+        månaderSedanAnställning,
+        "Månader att lägga:",
+        månaderAttLägga
+      );
     }
+
+    console.log("🔍 Final månader att lägga:", månaderAttLägga);
 
     // Om det inte finns några månader att lägga till, hoppa över
     if (månaderAttLägga === 0) {
@@ -1158,8 +1199,11 @@ export async function läggTillAutomatiskSemester(
       RETURNING id
     `;
 
-    const beskrivning = `Automatisk semesterintjäning (${månaderAttLägga} mån: ${semesterDagar} dagar)`;
-    const datum = `${år}-${månad.toString().padStart(2, '0')}-01`;
+    const beskrivning =
+      senasteSemesterResult.rows.length === 0
+        ? `Semesterintjäning sedan anställning (${månaderAttLägga} mån: ${semesterDagar} dagar)`
+        : `Automatisk semesterintjäning (${månaderAttLägga} mån: ${semesterDagar} dagar)`;
+    const datum = `${år}-${månad.toString().padStart(2, "0")}-01`;
 
     await client.query(insertSemesterQuery, [
       anställdId,

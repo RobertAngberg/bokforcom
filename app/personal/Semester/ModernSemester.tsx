@@ -137,7 +137,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     id: post.id,
     datum: new Date(post.datum).toLocaleDateString("sv-SE"),
     typ: post.typ,
-    antal: post.antal.toFixed(2),
+    antal: Number(post.antal || 0).toFixed(2),
     från_datum: post.från_datum ? new Date(post.från_datum).toLocaleDateString("sv-SE") : "-",
     till_datum: post.till_datum ? new Date(post.till_datum).toLocaleDateString("sv-SE") : "-",
     beskrivning: post.beskrivning || "-",

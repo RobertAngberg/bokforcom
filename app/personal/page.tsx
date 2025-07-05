@@ -70,7 +70,13 @@ export default function PersonalPage() {
               <Lönespecar anställd={valdAnställd} />
             </AnimeradFlik>
             <AnimeradFlik title="Semester" icon="🏖️">
-              <ModernSemester anställd={valdAnställd} userId={valdAnställd.user_id} />
+              <ModernSemester
+                anställd={{
+                  ...valdAnställd,
+                  anställningsdatum: valdAnställd.startdatum,
+                }}
+                userId={valdAnställd.user_id}
+              />
             </AnimeradFlik>
           </>
         )}
