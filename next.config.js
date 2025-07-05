@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    reactStrictMode: false,
+    experimental: {
+        reactCompiler: false,
+    },
+
     async headers() {
         return [
             {
@@ -20,15 +25,6 @@ const nextConfig = {
 
     images: {
         domains: ["lh3.googleusercontent.com"],
-    },
-
-    webpack(config) {
-        config.module.rules.push({
-            test: /pdf\.worker\.min\.js$/,
-            type: "asset/resource",
-        });
-
-        return config;
     },
 };
 

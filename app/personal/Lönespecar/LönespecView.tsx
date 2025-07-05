@@ -7,37 +7,30 @@ import Utlägg from "./Utlägg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import MailaLönespec from "./MailaLönespec";
-import BokförLöner from "./BokförLöner";
 
 interface LönespecCardProps {
   lönespec: any;
   anställd: any;
   utlägg: any[];
-  onFörhandsgranskning: (id: string) => void;
   onBeräkningarUppdaterade: (lönespecId: string, beräkningar: any) => void;
   beräknadeVärden: any;
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
-  företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLönespec
-  extrarader?: any[]; // Lägg till denna om du vill skicka extrarader till MailaLönespec
+  extrarader?: any[];
 }
 
 export default function LönespecCard({
   lönespec,
   anställd,
   utlägg,
-  onFörhandsgranskning,
   onBeräkningarUppdaterade,
   beräknadeVärden,
   ingenAnimering,
   onTaBortLönespec,
   taBortLoading,
-  företagsprofil,
   extrarader = [],
 }: LönespecCardProps) {
-  const [visaBokföringsposter, setVisaBokföringsposter] = useState(false);
   const [aktuellExtraradData, setAktuellExtraradData] = useState<any[]>([]);
   //#endregion
 
@@ -120,39 +113,10 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
-      {/* Knapp-rad */}
-      <div className="mt-6 flex flex-wrap gap-3 justify-between items-center">
-        <div className="flex gap-3">
-          <Knapp
-            text="👁️ Förhandsgranska / PDF"
-            onClick={() => onFörhandsgranskning(lönespec.id)}
-          />
-          <MailaLönespec
-            lönespec={lönespec}
-            anställd={anställd}
-            företagsprofil={företagsprofil}
-            extrarader={extrarader || []}
-            beräknadeVärden={beräknadeVärden}
-          />
-          <Knapp text="📋 Bokföringsposter" onClick={() => setVisaBokföringsposter(true)} />
-        </div>
-        <div>
-          <Knapp text="🗑️ Ta bort lönespec" onClick={onTaBortLönespec} loading={taBortLoading} />
-        </div>
+      {/* Endast Ta bort-knapp */}
+      <div className="mt-6 flex justify-end">
+        <Knapp text="🗑️ Ta bort lönespec" onClick={onTaBortLönespec} loading={taBortLoading} />
       </div>
-
-      <BokförLöner
-        lönespec={lönespec}
-        extrarader={aktuellExtraradData}
-        beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
-        anställdNamn={`${anställd.förnamn} ${anställd.efternamn}`}
-        isOpen={visaBokföringsposter}
-        onClose={() => setVisaBokföringsposter(false)}
-        onBokfört={() => {
-          setVisaBokföringsposter(false);
-          console.log("✅ Lönespecifikation bokförd!");
-        }}
-      />
     </div>
   );
 

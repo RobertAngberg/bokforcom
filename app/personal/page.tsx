@@ -45,7 +45,6 @@ export default function PersonalPage() {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-white mb-8">Personal</h1>
-
         <AnimeradFlik title="Anställda" icon="👥" forcedOpen={true}>
           <Anställda
             onAnställdVald={handleAnställdVald}
@@ -57,7 +56,6 @@ export default function PersonalPage() {
         <AnimeradFlik title="Lönekörning" icon="💰" forcedOpen={false}>
           <Lönekörning />
         </AnimeradFlik>
-
         {valdAnställd && !visaAnställdFormulär && (
           <>
             <AnimeradFlik title="Personalinformation" icon="📋">
