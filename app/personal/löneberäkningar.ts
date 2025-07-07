@@ -631,3 +631,115 @@ export function beräknaSemesterIntjäningMellanDatum(
   const månadslönIntjäning = beräknaSemesterIntjäningPerMånad(tjänstegrad);
   return Math.max(0, månaderSkillnad * månadslönIntjäning);
 }
+
+/**
+ * Beräknar real-time semesterintjäning för nuvarande månad
+ * Används för att visa aktuellt saldo utan att spara i databas
+ */
+export function beräknaAktuelMånadsIntjäning(tjänstegrad: number = 100): number {
+  const idag = new Date();
+
+  // Dagar sedan månadsbörjan (1 juli = 0 dagar, 7 juli = 6 dagar)
+  const dagarIMånaden = idag.getDate() - 1;
+
+  // Intjäning per dag baserat på 25 dagar per år
+  const intjäningPerDag = (BOKIO_KONSTANTER.SEMESTERDAGAR_PER_ÅR / 365) * (tjänstegrad / 100);
+
+  // Total intjäning för dagarna i denna månad
+  const månadensIntjäning = dagarIMånaden * intjäningPerDag;
+
+  return Math.round(månadensIntjäning * 100) / 100; // Avrunda till 2 decimaler
+}
+
+/**
+ * Beräknar totalt semestersaldo med real-time för nuvarande månad
+ * Kombinerar sparad data från databas med aktuell månads intjäning
+ */
+export function beräknaTotaltSemesterSaldo(
+  sparadData: {
+    intjänat: number;
+    betalda: number;
+    sparade: number;
+    obetald: number;
+    förskott: number;
+    ersättning: number;
+    kvarvarande: number;
+    tillgängligt: number;
+  },
+  tjänstegrad: number = 100
+) {
+  // Lägg till aktuell månads intjäning till sparad intjäning
+  const aktuelMånadsIntjäning = beräknaAktuelMånadsIntjäning(tjänstegrad);
+  const totaltIntjänat = sparadData.intjänat + aktuelMånadsIntjäning;
+
+  // Debug: Visa vad som kommer från databasen
+  console.log("🔍 Semester debug - sparadData:", {
+    intjänat: sparadData.intjänat,
+    betalda: sparadData.betalda,
+    sparade: sparadData.sparade,
+    obetald: sparadData.obetald,
+    förskott: sparadData.förskott,
+    ersättning: sparadData.ersättning,
+  });
+
+  // Sparade dagar ska visas under Betalda, inte som separat kategori
+  const totaltBetalda = sparadData.betalda + sparadData.sparade;
+
+  console.log("🔍 Semester debug - beräkning:", {
+    "sparadData.betalda": sparadData.betalda,
+    "sparadData.sparade": sparadData.sparade,
+    "totaltBetalda (betalda + sparade)": totaltBetalda,
+    aktuelMånadsIntjäning: aktuelMånadsIntjäning,
+    totaltIntjänat: totaltIntjänat,
+  });
+
+  // Beräkna om kvarvarande och tillgängligt med uppdaterad logik
+  const kvarvarande = totaltIntjänat - totaltBetalda;
+  const tillgängligt = kvarvarande; // Ingen separat sparade längre
+
+  return {
+    intjänat: totaltIntjänat,
+    betalda: totaltBetalda, // Inkluderar nu sparade dagar
+    sparade: 0, // Visas inte längre som separat kategori
+    obetald: sparadData.obetald,
+    förskott: sparadData.förskott,
+    ersättning: sparadData.ersättning,
+    kvarvarande,
+    tillgängligt,
+    aktuelMånadsIntjäning, // Extra info för debugging
+  };
+}
+
+/**
+ * Beräknar total semesterintjäning från anställningsdatum till idag
+ * Används för att visa verklig intjäning baserat på arbetsdagar
+ */
+export function beräknaTotalIntjäningSedanAnställning(
+  anställningsdatum: string,
+  tjänstegrad: number = 100
+): number {
+  const anställd = new Date(anställningsdatum);
+  const idag = new Date();
+
+  // Beräkna antal dagar sedan anställning
+  const millisekunderPerDag = 24 * 60 * 60 * 1000;
+  const dagarSedanAnställning = Math.floor(
+    (idag.getTime() - anställd.getTime()) / millisekunderPerDag
+  );
+
+  // Intjäning per dag baserat på 25 dagar per år och tjänstegrad
+  const intjäningPerDag = (BOKIO_KONSTANTER.SEMESTERDAGAR_PER_ÅR / 365) * (tjänstegrad / 100);
+
+  // Total intjäning
+  const totalIntjäning = dagarSedanAnställning * intjäningPerDag;
+
+  console.log("📅 Semester från anställning:", {
+    anställningsdatum,
+    dagarSedanAnställning,
+    tjänstegrad: `${tjänstegrad}%`,
+    intjäningPerDag: intjäningPerDag.toFixed(4),
+    totalIntjäning: totalIntjäning.toFixed(2),
+  });
+
+  return Math.round(totalIntjäning * 100) / 100; // Avrunda till 2 decimaler
+}

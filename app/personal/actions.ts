@@ -4,12 +4,6 @@
 import { Pool } from "pg";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import {
-  ärSemesterExtrarad,
-  extraheraAntalSemesterdagar,
-  beräknaSemesterIntjäningPerMånad,
-  beräknaSemesterpenning,
-} from "./löneberäkningar";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -55,7 +49,13 @@ export async function hämtaAllaAnställda() {
     const client = await pool.connect();
 
     const query = `
-      SELECT * FROM anställda 
+      SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
+             clearingnummer, bankkonto, adress, postnummer, ort, 
+             startdatum, slutdatum, anställningstyp, löneperiod, 
+             ersättningPer, kompensation, arbetsvecka, arbetsbelastning, 
+             deltidProcent, tjänsteställeAdress, tjänsteställeOrt, 
+             skattetabell, skattekolumn, växaStöd, user_id, skapad, uppdaterad
+      FROM anställda 
       WHERE user_id = $1 
       ORDER BY skapad DESC
     `;
@@ -82,7 +82,13 @@ export async function hämtaAnställd(anställdId: number) {
     const client = await pool.connect();
 
     const query = `
-      SELECT * FROM anställda 
+      SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
+             clearingnummer, bankkonto, adress, postnummer, ort, 
+             startdatum, slutdatum, anställningstyp, löneperiod, 
+             ersättningPer, kompensation, arbetsvecka, arbetsbelastning, 
+             deltidProcent, tjänsteställeAdress, tjänsteställeOrt, 
+             skattetabell, skattekolumn, växaStöd, user_id, skapad, uppdaterad
+      FROM anställda 
       WHERE id = $1 AND user_id = $2
     `;
 
@@ -215,6 +221,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
         userId,
       ];
 
+      console.log("➕ Skapar ny anställd");
       const result = await client.query(insertQuery, values);
 
       const nyAnställdId = result.rows[0].id;
@@ -254,6 +261,7 @@ export async function taBortAnställd(anställdId: number) {
     `;
 
     const result = await client.query(query, [anställdId, userId]);
+    console.log("✅ Anställd borttagen:", result.rowCount);
 
     client.release();
     revalidatePath("/personal");
@@ -369,6 +377,7 @@ export async function hämtaSemesterTransaktioner(
     query += ` ORDER BY s.datum DESC, s.skapad DESC`;
 
     const result = await client.query(query, queryParams);
+    console.log("✅ Hittade", result.rows.length, "semestertransaktioner");
 
     client.release();
     return result.rows;
@@ -622,6 +631,7 @@ export async function hämtaLönespecifikationer(anställdId: number) {
 
     client.release();
 
+    console.log("🎯 FÄRDIGA LÖNESPECAR MED EXTRARADER:", lönespecarMedExtrarader);
     return lönespecarMedExtrarader;
   } catch (error) {
     console.error("❌ hämtaLönespecifikationer error:", error);
@@ -674,8 +684,6 @@ export async function sparaExtrarad(data: any) {
     throw new Error("Ingen inloggad användare");
   }
 
-  const userId = parseInt(session.user.id, 10);
-
   try {
     const client = await pool.connect();
 
@@ -696,44 +704,11 @@ export async function sparaExtrarad(data: any) {
     ];
 
     const result = await client.query(insertQuery, values);
-    const nyExtrarad = result.rows[0];
 
     client.release();
     revalidatePath("/personal");
 
-    // 🏖️ AUTOMATISK SEMESTERHANTERING
-    if (ärSemesterExtrarad(data.typ, data.kolumn1)) {
-      const antalDagar = extraheraAntalSemesterdagar(data.kolumn2, data.kolumn3);
-
-      if (antalDagar > 0) {
-        // Hämta lönespec för att få anställd_id och datum
-        const client2 = await pool.connect();
-        try {
-          const lönespecQuery = `
-            SELECT anställd_id, period_start FROM lönespecifikationer 
-            WHERE id = $1
-          `;
-          const lönespecResult = await client2.query(lönespecQuery, [data.lönespecifikation_id]);
-
-          if (lönespecResult.rows.length > 0) {
-            const { anställd_id, period_start } = lönespecResult.rows[0];
-
-            await skapaAutomatiskSemesterpost(
-              data.lönespecifikation_id,
-              anställd_id,
-              antalDagar,
-              period_start,
-              nyExtrarad.id,
-              userId
-            );
-          }
-        } finally {
-          client2.release();
-        }
-      }
-    }
-
-    return { success: true, data: nyExtrarad };
+    return { success: true, data: result.rows[0] };
   } catch (error) {
     console.error("❌ sparaExtrarad error:", error);
     return {
@@ -778,9 +753,6 @@ export async function taBortExtrarad(extraradId: number) {
 
     // ✅ LÄGG TILL DENNA RAD FÖR ATT UPPDATERA BOKFÖRINGEN!
     revalidatePath("/personal");
-
-    // Kontrollera och ta bort automatisk semesterpost om den finns
-    await taBortAutomatiskSemesterpost(extraradId);
 
     return { success: true };
   } catch (error) {
@@ -855,29 +827,12 @@ export async function skapaNyLönespec(data: {
       userId,
     ]);
 
-    const nyLönespec = insertResult.rows[0];
-
-    // 🏖️ AUTOMATISK SEMESTERINTJÄNING
-    const semesterResult = await läggTillAutomatiskSemester(
-      data.anställd_id,
-      nyLönespec.id,
-      data.månad,
-      data.år
-    );
-
     client.release();
 
-    return {
-      success: true,
-      lönespec: nyLönespec,
-      semesterInfo: semesterResult,
-    };
+    return insertResult.rows[0];
   } catch (error) {
     console.error("❌ skapaNyLönespec error:", error);
-    return {
-      success: false,
-      error: "Kunde inte skapa lönespecifikation",
-    };
+    throw new Error("Kunde inte skapa lönespecifikation");
   }
 }
 
@@ -905,13 +860,6 @@ export async function taBortLönespec(lönespecId: number) {
       throw new Error("Lönespec inte hittad");
     }
 
-    // 🏖️ TA BORT ALLA KOPPLADE SEMESTERPOSTER FÖRST
-    const deleteSemesterQuery = `
-      DELETE FROM semester 
-      WHERE lönespecifikation_id = $1
-    `;
-    await client.query(deleteSemesterQuery, [lönespecId]);
-
     const deleteQuery = `
       DELETE FROM lönespecifikationer 
       WHERE id = $1
@@ -929,174 +877,79 @@ export async function taBortLönespec(lönespecId: number) {
   }
 }
 
-// #region Semesterhantering
-
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: number;
-}
-
-export interface SemesterSummary {
-  intjänat: number;
-  betalda: number;
-  sparade: number;
-  förskott: number; // Behålls för bakåtkompatibilitet, men visas som "skuld"
-  kvarvarande: number;
-  tillgängligt: number;
-  obetald: number;
-  ersättning: number; // I SEK
-}
-
 /**
- * Hämtar semestersammanställning för en anställd
+ * Hämtar semester sammanställning med realtidsberäkning
+ * Kombinerar sparade data från databas med realtidsintjäning
  */
-export async function hämtaSemesterSammanställning(anställdId: number): Promise<SemesterSummary> {
+export async function hämtaSemesterSammanställningRealTime(anställdId: number) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
   }
 
-  const userId = parseInt(session.user.id, 10);
-
   try {
-    const client = await pool.connect();
+    // Importera här för att undvika cirkulära dependencies
+    const { hämtaSemesterSammanställning } = await import("./Semester/semesterDatabase");
 
-    const result = await client.query(
-      `
-      SELECT 
-        typ,
-        SUM(antal) as total_antal
-      FROM semester 
-      WHERE anställd_id = $1
-      GROUP BY typ
-    `,
-      [anställdId]
-    );
+    // Hämta semesterdata från databas
+    const semesterData = await hämtaSemesterSammanställning(anställdId);
 
-    client.release();
-
-    // Bygg sammanställning
-    const summary: SemesterSummary = {
-      intjänat: 0,
-      betalda: 0,
-      sparade: 0,
-      förskott: 0,
-      kvarvarande: 0,
-      tillgängligt: 0,
-      obetald: 0,
-      ersättning: 0,
-    };
-
-    result.rows.forEach((row) => {
-      const antal = parseFloat(row.total_antal) || 0;
-      switch (row.typ) {
-        case "Intjänat":
-          summary.intjänat = antal;
-          break;
-        case "Betalda":
-          summary.betalda = antal;
-          break;
-        case "Sparade":
-          summary.sparade = antal;
-          break;
-        case "Förskott":
-        case "Skuld":
-          summary.förskott = antal;
-          break;
-        case "Obetald":
-          summary.obetald = antal;
-          break;
-        case "Ersättning":
-          summary.ersättning = antal;
-          break;
-          break;
-      }
-    });
-
-    // Beräkna kvarvarande och tillgängligt
-    summary.kvarvarande = summary.intjänat - summary.betalda;
-    summary.tillgängligt = summary.kvarvarande - summary.förskott;
-
-    return summary;
+    return semesterData;
   } catch (error) {
-    console.error("❌ hämtaSemesterSammanställning error:", error);
+    console.error("❌ hämtaSemesterSammanställningRealTime error:", error);
     throw error;
   }
 }
 
 /**
- * Registrerar semesteruttag
+ * Registrerar semesteruttag via action
  */
-export async function registreraSemesteruttag(
+export async function registreraSemesteruttagAction(
   anställdId: number,
-  uttag: Omit<SemesterRecord, "id" | "skapad_av">
-): Promise<{ success: boolean; message: string }> {
+  uttag: {
+    dagar: number;
+    från_datum: string;
+    till_datum: string;
+    beskrivning?: string;
+  }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  try {
+    // Importera här för att undvika cirkulära dependencies
+    const { registreraSemesteruttag } = await import("./Semester/semesterDatabase");
+
+    const result = await registreraSemesteruttag(
+      anställdId,
+      uttag.från_datum,
+      uttag.till_datum,
+      uttag.dagar,
+      uttag.beskrivning || "",
+      null, // lönespecId
+      parseInt(session.user.id, 10)
+    );
+
+    revalidatePath("/personal");
+    return result;
+  } catch (error) {
+    console.error("❌ registreraSemesteruttagAction error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Hämtar semesterhistorik via action
+ */
+export async function hämtaSemesterHistorikAction(anställdId: number) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
   }
 
   const userId = parseInt(session.user.id, 10);
-
-  try {
-    const client = await pool.connect();
-
-    const insertQuery = `
-      INSERT INTO semester (
-        anställd_id, datum, typ, antal, från_datum, till_datum, 
-        beskrivning, lönespecifikation_id, bokfört, skapad_av
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING id
-    `;
-
-    const values = [
-      anställdId,
-      uttag.datum,
-      uttag.typ,
-      uttag.antal,
-      uttag.från_datum,
-      uttag.till_datum,
-      uttag.beskrivning,
-      uttag.lönespecifikation_id,
-      uttag.bokfört,
-      userId,
-    ];
-
-    const result = await client.query(insertQuery, values);
-    client.release();
-
-    revalidatePath("/personal");
-
-    return {
-      success: true,
-      message: "Semesteruttag registrerat!",
-    };
-  } catch (error) {
-    console.error("❌ registreraSemesteruttag error:", error);
-    return {
-      success: false,
-      message: "Kunde inte registrera semesteruttag",
-    };
-  }
-}
-
-/**
- * Hämtar semesterhistorik för en anställd
- */
-export async function hämtaSemesterHistorik(anställdId: number): Promise<SemesterRecord[]> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
 
   try {
     const client = await pool.connect();
@@ -1104,8 +957,8 @@ export async function hämtaSemesterHistorik(anställdId: number): Promise<Semes
     const result = await client.query(
       `
       SELECT * FROM semester 
-      WHERE anställd_id = $1
-      ORDER BY datum DESC
+      WHERE anställd_id = $1 
+      ORDER BY datum DESC, skapad DESC
     `,
       [anställdId]
     );
@@ -1113,322 +966,7 @@ export async function hämtaSemesterHistorik(anställdId: number): Promise<Semes
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaSemesterHistorik error:", error);
-    return [];
-  }
-}
-
-/**
- * Beräknar semesterpenning baserat på lön - använder senaste lönespec
- */
-export async function beräknaSemesterpenningFörAnställd(
-  anställdId: number,
-  semesterdagar: number
-): Promise<number> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  try {
-    const client = await pool.connect();
-
-    // Hämta senaste lönespec för att få aktuell lön
-    const result = await client.query(
-      `
-      SELECT bruttolön FROM lönespecifikationer 
-      WHERE anställd_id = $1
-      ORDER BY datum DESC
-      LIMIT 1
-    `,
-      [anställdId]
-    );
-
-    client.release();
-
-    if (result.rows.length === 0) {
-      return 0;
-    }
-
-    const månadslön = parseFloat(result.rows[0].bruttolön) || 0;
-
-    // Använd standardfunktionen för beräkning
-    return beräknaSemesterpenning(månadslön, semesterdagar);
-  } catch (error) {
-    console.error("❌ beräknaSemesterpenningFörAnställd error:", error);
-    return 0;
-  }
-}
-
-/**
- * Beräknar och lägger till automatisk semesterintjäning vid lönespec
- */
-export async function läggTillAutomatiskSemester(
-  anställdId: number,
-  lönespecId: number,
-  månad: number,
-  år: number
-): Promise<{ success: boolean; dagar?: number; message?: string }> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
-
-  try {
-    const client = await pool.connect();
-
-    // Hämta anställningsdatum
-    const anställdQuery = `SELECT startdatum FROM anställda WHERE id = $1`;
-    const anställdResult = await client.query(anställdQuery, [anställdId]);
-
-    if (anställdResult.rows.length === 0) {
-      client.release();
-      return { success: false, message: "Anställd hittades inte" };
-    }
-
-    const startdatum = anställdResult.rows[0].startdatum;
-
-    // Hämta senaste semesterpost för att se när vi senast lade till semester
-    const senasteSemesterQuery = `
-      SELECT datum, typ FROM semester 
-      WHERE anställd_id = $1 AND typ = 'Intjänat'
-      ORDER BY datum DESC
-      LIMIT 1
-    `;
-    const senasteSemesterResult = await client.query(senasteSemesterQuery, [anställdId]);
-
-    // Beräkna hur många månader som gått sedan senaste intjäning
-    let månaderAttLägga = 1; // Default: denna månad
-
-    if (senasteSemesterResult.rows.length > 0) {
-      const senasteDatum = new Date(senasteSemesterResult.rows[0].datum);
-      const dennaMånad = new Date(år, månad - 1, 1);
-
-      // Beräkna månader mellan senaste intjäning och nu
-      const månaderSkillnad =
-        (dennaMånad.getFullYear() - senasteDatum.getFullYear()) * 12 +
-        (dennaMånad.getMonth() - senasteDatum.getMonth());
-
-      månaderAttLägga = Math.max(0, månaderSkillnad);
-    } else if (startdatum) {
-      // Om detta är första semesterintjäningen, beräkna från anställningsdatum
-      const anställningsDatum = new Date(startdatum);
-      const dennaMånad = new Date(år, månad - 1, 1);
-
-      // Beräkna månader sedan anställning (inklusive anställningsmånaden)
-      const månaderSedanAnställning =
-        (dennaMånad.getFullYear() - anställningsDatum.getFullYear()) * 12 +
-        (dennaMånad.getMonth() - anställningsDatum.getMonth()) +
-        1;
-
-      månaderAttLägga = Math.max(1, månaderSedanAnställning);
-    }
-
-    // Om det inte finns några månader att lägga till, hoppa över
-    if (månaderAttLägga === 0) {
-      client.release();
-      return { success: true, dagar: 0, message: "Ingen semester att lägga till" };
-    }
-
-    // Beräkna semesterdagar med standardfunktion
-    const semesterDagar =
-      Math.round(beräknaSemesterIntjäningPerMånad() * månaderAttLägga * 100) / 100;
-
-    // Lägg till semesterpost
-    const insertSemesterQuery = `
-      INSERT INTO semester (
-        anställd_id, datum, typ, antal, beskrivning, 
-        lönespecifikation_id, bokfört, skapad_av
-      ) VALUES ($1, $2, 'Intjänat', $3, $4, $5, true, $6)
-      RETURNING id
-    `;
-
-    const beskrivning =
-      senasteSemesterResult.rows.length === 0
-        ? `Semesterintjäning sedan anställning (${månaderAttLägga} mån: ${semesterDagar} dagar)`
-        : `Automatisk semesterintjäning (${månaderAttLägga} mån: ${semesterDagar} dagar)`;
-    const datum = `${år}-${månad.toString().padStart(2, "0")}-01`;
-
-    await client.query(insertSemesterQuery, [
-      anställdId,
-      datum,
-      semesterDagar,
-      beskrivning,
-      lönespecId,
-      userId,
-    ]);
-
-    client.release();
-
-    return {
-      success: true,
-      dagar: semesterDagar,
-      message: `Lade till ${semesterDagar} semesterdagar`,
-    };
-  } catch (error) {
-    console.error("❌ läggTillAutomatiskSemester error:", error);
-    return {
-      success: false,
-      message: "Kunde inte lägga till semester",
-    };
-  }
-}
-
-// #endregion
-
-/**
- * Säkerställer att semester-tabellen har extrarad_id kolumn
- * OBS: Denna funktion ska INTE köras automatiskt - använd som manuell migration
- */
-export async function säkerställSemesterTabellStruktur(): Promise<void> {
-  try {
-    const client = await pool.connect();
-
-    // Kolla om extrarad_id kolumnen finns
-    const checkColumnQuery = `
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'semester' AND column_name = 'extrarad_id'
-    `;
-
-    const result = await client.query(checkColumnQuery);
-
-    // Om kolumnen inte finns, lägg till den
-    if (result.rows.length === 0) {
-      const addColumnQuery = `
-        ALTER TABLE semester 
-        ADD COLUMN extrarad_id INTEGER REFERENCES lönespec_extrarader(id) ON DELETE CASCADE
-      `;
-
-      await client.query(addColumnQuery);
-      console.log("✅ Semester-tabell uppdaterad med extrarad_id kolumn");
-    } else {
-      console.log("✅ Semester-tabell har redan extrarad_id kolumn");
-    }
-
-    client.release();
-  } catch (error) {
-    console.error("❌ Fel vid säkerställning av semester-tabell struktur:", error);
+    console.error("❌ hämtaSemesterHistorikAction error:", error);
     throw error;
-  }
-}
-
-// MIGRATION BORTTAGEN - kör ej automatiskt vid import!
-// Använd istället: await säkerställSemesterTabellStruktur() manuellt om behövs
-
-/**
- * Skapar automatisk semesterpost när semesterextrarad läggs till
- */
-async function skapaAutomatiskSemesterpost(
-  lönespecId: number,
-  anställdId: number,
-  antalDagar: number,
-  datum: string,
-  extraradId: number,
-  userId: number
-): Promise<void> {
-  if (antalDagar <= 0) return;
-
-  const client = await pool.connect();
-
-  try {
-    const insertQuery = `
-      INSERT INTO semester (
-        anställd_id, datum, typ, antal, beskrivning, 
-        lönespecifikation_id, extrarad_id, bokfört, skapad_av
-      ) VALUES ($1, $2, 'Betalda', $3, $4, $5, $6, true, $7)
-      RETURNING id
-    `;
-
-    const beskrivning = `Automatiskt uttag via lönespec (${antalDagar} dagar)`;
-
-    await client.query(insertQuery, [
-      anställdId,
-      datum,
-      antalDagar,
-      beskrivning,
-      lönespecId,
-      extraradId,
-      userId,
-    ]);
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Tar bort automatisk semesterpost när extrarad tas bort
- */
-async function taBortAutomatiskSemesterpost(extraradId: number): Promise<void> {
-  const client = await pool.connect();
-
-  try {
-    const deleteQuery = `
-      DELETE FROM semester 
-      WHERE extrarad_id = $1 AND typ = 'Betalda'
-    `;
-
-    await client.query(deleteQuery, [extraradId]);
-  } finally {
-    client.release();
-  }
-}
-
-// #endregion
-
-/**
- * Gör manuell justering av semestertyp
- */
-export async function justeraSemesterManuellt(
-  anställdId: number,
-  typ: "Intjänat" | "Betalda" | "Sparade" | "Skuld" | "Obetald" | "Ersättning",
-  antalDagar: number,
-  beskrivning?: string
-): Promise<{ success: boolean; message: string }> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
-
-  try {
-    const client = await pool.connect();
-
-    const insertQuery = `
-      INSERT INTO semester (
-        anställd_id, datum, typ, antal, beskrivning, 
-        bokfört, skapad_av
-      ) VALUES ($1, $2, $3, $4, $5, true, $6)
-      RETURNING id
-    `;
-
-    const datum = new Date().toISOString().split("T")[0];
-    const defaultBeskrivning = `Manuell justering: ${typ.toLowerCase()} ${antalDagar > 0 ? "+" : ""}${antalDagar} dagar`;
-
-    await client.query(insertQuery, [
-      anställdId,
-      datum,
-      typ,
-      antalDagar,
-      beskrivning || defaultBeskrivning,
-      userId,
-    ]);
-
-    client.release();
-    revalidatePath("/personal");
-
-    return {
-      success: true,
-      message: `✅ Justerade ${typ.toLowerCase()}: ${antalDagar > 0 ? "+" : ""}${antalDagar} dagar`,
-    };
-  } catch (error) {
-    console.error("❌ justeraSemesterManuellt error:", error);
-    return {
-      success: false,
-      message: "❌ Kunde inte spara justeringen",
-    };
   }
 }
