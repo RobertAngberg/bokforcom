@@ -295,8 +295,8 @@ export function getFieldsForRow(
       });
     }
 
-    // BELOPPSFÄLT: Endast för manuella poster
-    if (config.fält.beräknaTotalsummaAutomatiskt) {
+    // BELOPPSFÄLT: Endast för manuella poster (när beräknaTotalsummaAutomatiskt är false)
+    if (!config.fält.beräknaTotalsummaAutomatiskt) {
       fields.push({
         label: "å SEK",
         name: "kolumn3",

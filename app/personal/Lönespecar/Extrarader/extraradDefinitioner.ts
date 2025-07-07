@@ -312,6 +312,21 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
   // Skatt och sociala avgifter beräknas på bruttolönen inklusive semestertillägg.
   // Ingen hårdkodning – det styrs helt av flaggan i konfigurationen.
 
+  betaldSemester: {
+    label: "Betald semester",
+    enhet: "dagar",
+    skattepliktig: true,
+    läggTillIBruttolön: true,
+    beräknaVärde: (grundlön) => grundlön * 0.0043, // 0,43% per dag enligt semesterlagen
+    beräknaTotalt: (grundlön, antal) => grundlön * 0.0043 * antal,
+    fält: {
+      antalLabel: "Antal dagar",
+      antalPlaceholder: "Ange antal semesterdagar",
+      step: "0.5",
+      beräknaTotalsummaAutomatiskt: true,
+    },
+  },
+
   semestertillagg: {
     label: "Semestertillägg",
     enhet: "dagar",

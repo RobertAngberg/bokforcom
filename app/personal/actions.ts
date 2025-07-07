@@ -4,6 +4,12 @@
 import { Pool } from "pg";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import {
+  ärSemesterExtrarad,
+  extraheraAntalSemesterdagar,
+  beräknaSemesterIntjäningPerMånad,
+  beräknaSemesterpenning,
+} from "./löneberäkningar";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -668,6 +674,8 @@ export async function sparaExtrarad(data: any) {
     throw new Error("Ingen inloggad användare");
   }
 
+  const userId = parseInt(session.user.id, 10);
+
   try {
     const client = await pool.connect();
 
@@ -688,11 +696,44 @@ export async function sparaExtrarad(data: any) {
     ];
 
     const result = await client.query(insertQuery, values);
+    const nyExtrarad = result.rows[0];
 
     client.release();
     revalidatePath("/personal");
 
-    return { success: true, data: result.rows[0] };
+    // 🏖️ AUTOMATISK SEMESTERHANTERING
+    if (ärSemesterExtrarad(data.typ, data.kolumn1)) {
+      const antalDagar = extraheraAntalSemesterdagar(data.kolumn2, data.kolumn3);
+
+      if (antalDagar > 0) {
+        // Hämta lönespec för att få anställd_id och datum
+        const client2 = await pool.connect();
+        try {
+          const lönespecQuery = `
+            SELECT anställd_id, period_start FROM lönespecifikationer 
+            WHERE id = $1
+          `;
+          const lönespecResult = await client2.query(lönespecQuery, [data.lönespecifikation_id]);
+
+          if (lönespecResult.rows.length > 0) {
+            const { anställd_id, period_start } = lönespecResult.rows[0];
+
+            await skapaAutomatiskSemesterpost(
+              data.lönespecifikation_id,
+              anställd_id,
+              antalDagar,
+              period_start,
+              nyExtrarad.id,
+              userId
+            );
+          }
+        } finally {
+          client2.release();
+        }
+      }
+    }
+
+    return { success: true, data: nyExtrarad };
   } catch (error) {
     console.error("❌ sparaExtrarad error:", error);
     return {
@@ -737,6 +778,9 @@ export async function taBortExtrarad(extraradId: number) {
 
     // ✅ LÄGG TILL DENNA RAD FÖR ATT UPPDATERA BOKFÖRINGEN!
     revalidatePath("/personal");
+
+    // Kontrollera och ta bort automatisk semesterpost om den finns
+    await taBortAutomatiskSemesterpost(extraradId);
 
     return { success: true };
   } catch (error) {
@@ -861,6 +905,13 @@ export async function taBortLönespec(lönespecId: number) {
       throw new Error("Lönespec inte hittad");
     }
 
+    // 🏖️ TA BORT ALLA KOPPLADE SEMESTERPOSTER FÖRST
+    const deleteSemesterQuery = `
+      DELETE FROM semester 
+      WHERE lönespecifikation_id = $1
+    `;
+    await client.query(deleteSemesterQuery, [lönespecId]);
+
     const deleteQuery = `
       DELETE FROM lönespecifikationer 
       WHERE id = $1
@@ -898,9 +949,11 @@ export interface SemesterSummary {
   intjänat: number;
   betalda: number;
   sparade: number;
-  förskott: number;
+  förskott: number; // Behålls för bakåtkompatibilitet, men visas som "skuld"
   kvarvarande: number;
   tillgängligt: number;
+  obetald: number;
+  ersättning: number; // I SEK
 }
 
 /**
@@ -939,6 +992,8 @@ export async function hämtaSemesterSammanställning(anställdId: number): Promi
       förskott: 0,
       kvarvarande: 0,
       tillgängligt: 0,
+      obetald: 0,
+      ersättning: 0,
     };
 
     result.rows.forEach((row) => {
@@ -954,7 +1009,15 @@ export async function hämtaSemesterSammanställning(anställdId: number): Promi
           summary.sparade = antal;
           break;
         case "Förskott":
+        case "Skuld":
           summary.förskott = antal;
+          break;
+        case "Obetald":
+          summary.obetald = antal;
+          break;
+        case "Ersättning":
+          summary.ersättning = antal;
+          break;
           break;
       }
     });
@@ -1056,9 +1119,9 @@ export async function hämtaSemesterHistorik(anställdId: number): Promise<Semes
 }
 
 /**
- * Beräknar semesterpenning baserat på lön
+ * Beräknar semesterpenning baserat på lön - använder senaste lönespec
  */
-export async function beräknaSemesterpenning(
+export async function beräknaSemesterpenningFörAnställd(
   anställdId: number,
   semesterdagar: number
 ): Promise<number> {
@@ -1088,12 +1151,11 @@ export async function beräknaSemesterpenning(
     }
 
     const månadslön = parseFloat(result.rows[0].bruttolön) || 0;
-    const dagslön = månadslön / 21.75; // Genomsnittligt antal arbetsdagar per månad
-    const semesterersättning = dagslön * semesterdagar * 1.12; // 12% semesterersättning
 
-    return Math.round(semesterersättning);
+    // Använd standardfunktionen för beräkning
+    return beräknaSemesterpenning(månadslön, semesterdagar);
   } catch (error) {
-    console.error("❌ beräknaSemesterpenning error:", error);
+    console.error("❌ beräknaSemesterpenningFörAnställd error:", error);
     return 0;
   }
 }
@@ -1170,8 +1232,9 @@ export async function läggTillAutomatiskSemester(
       return { success: true, dagar: 0, message: "Ingen semester att lägga till" };
     }
 
-    // Beräkna semesterdagar (25 dagar/år = 2.08 dagar/månad)
-    const semesterDagar = Math.round((25 / 12) * månaderAttLägga * 100) / 100; // Avrunda till 2 decimaler
+    // Beräkna semesterdagar med standardfunktion
+    const semesterDagar =
+      Math.round(beräknaSemesterIntjäningPerMånad() * månaderAttLägga * 100) / 100;
 
     // Lägg till semesterpost
     const insertSemesterQuery = `
@@ -1214,3 +1277,158 @@ export async function läggTillAutomatiskSemester(
 }
 
 // #endregion
+
+/**
+ * Säkerställer att semester-tabellen har extrarad_id kolumn
+ * OBS: Denna funktion ska INTE köras automatiskt - använd som manuell migration
+ */
+export async function säkerställSemesterTabellStruktur(): Promise<void> {
+  try {
+    const client = await pool.connect();
+
+    // Kolla om extrarad_id kolumnen finns
+    const checkColumnQuery = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'semester' AND column_name = 'extrarad_id'
+    `;
+
+    const result = await client.query(checkColumnQuery);
+
+    // Om kolumnen inte finns, lägg till den
+    if (result.rows.length === 0) {
+      const addColumnQuery = `
+        ALTER TABLE semester 
+        ADD COLUMN extrarad_id INTEGER REFERENCES lönespec_extrarader(id) ON DELETE CASCADE
+      `;
+
+      await client.query(addColumnQuery);
+      console.log("✅ Semester-tabell uppdaterad med extrarad_id kolumn");
+    } else {
+      console.log("✅ Semester-tabell har redan extrarad_id kolumn");
+    }
+
+    client.release();
+  } catch (error) {
+    console.error("❌ Fel vid säkerställning av semester-tabell struktur:", error);
+    throw error;
+  }
+}
+
+// MIGRATION BORTTAGEN - kör ej automatiskt vid import!
+// Använd istället: await säkerställSemesterTabellStruktur() manuellt om behövs
+
+/**
+ * Skapar automatisk semesterpost när semesterextrarad läggs till
+ */
+async function skapaAutomatiskSemesterpost(
+  lönespecId: number,
+  anställdId: number,
+  antalDagar: number,
+  datum: string,
+  extraradId: number,
+  userId: number
+): Promise<void> {
+  if (antalDagar <= 0) return;
+
+  const client = await pool.connect();
+
+  try {
+    const insertQuery = `
+      INSERT INTO semester (
+        anställd_id, datum, typ, antal, beskrivning, 
+        lönespecifikation_id, extrarad_id, bokfört, skapad_av
+      ) VALUES ($1, $2, 'Betalda', $3, $4, $5, $6, true, $7)
+      RETURNING id
+    `;
+
+    const beskrivning = `Automatiskt uttag via lönespec (${antalDagar} dagar)`;
+
+    await client.query(insertQuery, [
+      anställdId,
+      datum,
+      antalDagar,
+      beskrivning,
+      lönespecId,
+      extraradId,
+      userId,
+    ]);
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Tar bort automatisk semesterpost när extrarad tas bort
+ */
+async function taBortAutomatiskSemesterpost(extraradId: number): Promise<void> {
+  const client = await pool.connect();
+
+  try {
+    const deleteQuery = `
+      DELETE FROM semester 
+      WHERE extrarad_id = $1 AND typ = 'Betalda'
+    `;
+
+    await client.query(deleteQuery, [extraradId]);
+  } finally {
+    client.release();
+  }
+}
+
+// #endregion
+
+/**
+ * Gör manuell justering av semestertyp
+ */
+export async function justeraSemesterManuellt(
+  anställdId: number,
+  typ: "Intjänat" | "Betalda" | "Sparade" | "Skuld" | "Obetald" | "Ersättning",
+  antalDagar: number,
+  beskrivning?: string
+): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  const userId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+
+    const insertQuery = `
+      INSERT INTO semester (
+        anställd_id, datum, typ, antal, beskrivning, 
+        bokfört, skapad_av
+      ) VALUES ($1, $2, $3, $4, $5, true, $6)
+      RETURNING id
+    `;
+
+    const datum = new Date().toISOString().split("T")[0];
+    const defaultBeskrivning = `Manuell justering: ${typ.toLowerCase()} ${antalDagar > 0 ? "+" : ""}${antalDagar} dagar`;
+
+    await client.query(insertQuery, [
+      anställdId,
+      datum,
+      typ,
+      antalDagar,
+      beskrivning || defaultBeskrivning,
+      userId,
+    ]);
+
+    client.release();
+    revalidatePath("/personal");
+
+    return {
+      success: true,
+      message: `✅ Justerade ${typ.toLowerCase()}: ${antalDagar > 0 ? "+" : ""}${antalDagar} dagar`,
+    };
+  } catch (error) {
+    console.error("❌ justeraSemesterManuellt error:", error);
+    return {
+      success: false,
+      message: "❌ Kunde inte spara justeringen",
+    };
+  }
+}

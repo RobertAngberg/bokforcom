@@ -15,7 +15,8 @@ import {
   hämtaSemesterSammanställning,
   registreraSemesteruttag,
   hämtaSemesterHistorik,
-  beräknaSemesterpenning,
+  beräknaSemesterpenningFörAnställd,
+  justeraSemesterManuellt,
   SemesterSummary,
   SemesterRecord,
 } from "../actions";
@@ -38,6 +39,8 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const [historik, setHistorik] = useState<SemesterRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"översikt" | "uttag" | "historik">("översikt");
   const [beräknadPenning, setBeräknadPenning] = useState<number>(0);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
 
   const [semesteruttag, setSemesteruttag] = useState({
     startDatum: "",
@@ -50,6 +53,19 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   useEffect(() => {
     hämtaData();
   }, [anställd.id]);
+
+  // Hantera ESC-tangent för att avbryta redigering
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && editingField) {
+        setEditingField(null);
+        setEditValue("");
+      }
+    };
+
+    document.addEventListener("keydown", handleEscKey);
+    return () => document.removeEventListener("keydown", handleEscKey);
+  }, [editingField]);
 
   const hämtaData = async () => {
     setLoading(true);
@@ -93,14 +109,44 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
       const result = await registreraSemesteruttag(anställd.id, uttag);
 
       if (result.success) {
-        alert(`✅ ${result.message}`);
+        // Visa framgångsmeddelande utan alert - mer subtilt
+        console.log(`✅ ${result.message}`);
         setSemesteruttag({
           startDatum: "",
           slutDatum: "",
           antal: "",
           beskrivning: "",
         });
-        await hämtaData(); // Uppdatera data
+
+        // Uppdatera lokalt istället för att hämta all data igen
+        if (summary) {
+          setSummary((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  betalda: prev.betalda + parseFloat(semesteruttag.antal),
+                }
+              : null
+          );
+        }
+
+        // Lägg till i historik lokalt
+        const nyttUttag: SemesterRecord = {
+          id: Date.now(), // Temporärt ID
+          anställd_id: anställd.id,
+          datum: new Date().toISOString().split("T")[0],
+          typ: "Betalda",
+          antal: parseFloat(semesteruttag.antal),
+          från_datum: semesteruttag.startDatum,
+          till_datum: semesteruttag.slutDatum || semesteruttag.startDatum,
+          beskrivning:
+            semesteruttag.beskrivning || `Semesteruttag ${anställd.förnamn} ${anställd.efternamn}`,
+          lönespecifikation_id: undefined,
+          bokfört: false,
+          skapad_av: userId,
+        };
+
+        setHistorik((prev) => [nyttUttag, ...prev]);
       }
     } catch (error) {
       console.error("Fel vid registrering av semesteruttag:", error);
@@ -113,13 +159,96 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   // Beräkna penning för uttag när antal ändras
   useEffect(() => {
     if (semesteruttag.antal) {
-      beräknaSemesterpenning(anställd.id, parseFloat(semesteruttag.antal))
+      beräknaSemesterpenningFörAnställd(anställd.id, parseFloat(semesteruttag.antal))
         .then(setBeräknadPenning)
         .catch(() => setBeräknadPenning(0));
     } else {
       setBeräknadPenning(0);
     }
   }, [semesteruttag.antal, anställd.id]);
+
+  // Hantera manuell redigering av semesterbox
+  const handleEditField = (fieldName: string, currentValue: number) => {
+    setEditingField(fieldName);
+    setEditValue(currentValue.toString());
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingField || !editValue || !summary) return;
+
+    const newValue = parseFloat(editValue);
+    if (isNaN(newValue)) {
+      alert("Ogiltigt nummer");
+      return;
+    }
+
+    const currentValue = summary[editingField as keyof SemesterSummary] as number;
+    const difference = newValue - currentValue;
+
+    if (difference === 0) {
+      setEditingField(null);
+      setEditValue("");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Mappa fältnamn till semestertyper
+      const typeMapping: Record<
+        string,
+        "Intjänat" | "Betalda" | "Sparade" | "Skuld" | "Obetald" | "Ersättning"
+      > = {
+        intjänat: "Intjänat",
+        betalda: "Betalda",
+        sparade: "Sparade",
+        skuld: "Skuld",
+        obetald: "Obetald",
+        ersättning: "Ersättning",
+      };
+
+      const semesterTyp = typeMapping[editingField];
+      if (!semesterTyp) {
+        throw new Error("Okänd semestertyp");
+      }
+
+      const result = await justeraSemesterManuellt(
+        anställd.id,
+        semesterTyp,
+        difference,
+        `Manuell redigering: ändrade från ${currentValue} till ${newValue}`
+      );
+
+      if (result.success) {
+        // Uppdatera lokalt istället för att hämta all data igen
+        setSummary((prev) =>
+          prev
+            ? {
+                ...prev,
+                [editingField]: newValue,
+              }
+            : null
+        );
+
+        // Visa framgångsmeddelande utan alert
+        console.log(`✅ ${result.message}`);
+      } else {
+        alert(result.message);
+      }
+
+      setEditingField(null);
+      setEditValue("");
+    } catch (error) {
+      console.error("Fel vid sparande:", error);
+      alert("❌ Kunde inte spara ändringen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
 
   // Kolumndefinitioner för historik
   const kolumner: ColumnDefinition<any>[] = [
@@ -172,45 +301,345 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
       {/* Översikt */}
       {activeTab === "översikt" && summary && (
         <div className="bg-slate-800 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-white mb-4">
-            Semesteröversikt - {anställd.förnamn} {anställd.efternamn}
+          <h3 className="text-xl font-semibold text-white mb-2">
+            Semestersaldo - {anställd.förnamn} {anställd.efternamn}
           </h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="bg-green-900 p-4 rounded">
-              <div className="text-sm text-green-300">Intjänat totalt</div>
-              <div className="text-2xl font-bold text-white">{summary.intjänat.toFixed(1)}</div>
-              <div className="text-xs text-green-400">dagar</div>
+          <p className="text-blue-300 mb-6">
+            💡 <strong>Klicka på boxarna</strong> för att manuellt justera värden
+          </p>
+
+          <div className="grid grid-cols-6 gap-4">
+            {/* Betalda dagar (tidigare "Uttagna") */}
+            <div
+              className="bg-red-900 p-4 rounded cursor-pointer hover:bg-red-800 transition-colors"
+              onClick={() => handleEditField("betalda", summary.betalda)}
+            >
+              <div className="text-sm text-red-300">Betalda</div>
+              {editingField === "betalda" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-red-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{summary.betalda.toFixed(1)}</div>
+                  <div className="text-xs text-red-400">dagar</div>
+                </>
+              )}
             </div>
 
-            <div className="bg-blue-900 p-4 rounded">
-              <div className="text-sm text-blue-300">Kvarvarande</div>
-              <div className="text-2xl font-bold text-white">{summary.kvarvarande.toFixed(1)}</div>
-              <div className="text-xs text-blue-400">dagar</div>
-            </div>
-
-            <div className="bg-purple-900 p-4 rounded">
+            {/* Sparade */}
+            <div
+              className="bg-purple-900 p-4 rounded cursor-pointer hover:bg-purple-800 transition-colors"
+              onClick={() => handleEditField("sparade", summary.sparade)}
+            >
               <div className="text-sm text-purple-300">Sparade</div>
-              <div className="text-2xl font-bold text-white">{summary.sparade.toFixed(1)}</div>
-              <div className="text-xs text-purple-400">dagar</div>
+              {editingField === "sparade" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-purple-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{summary.sparade.toFixed(1)}</div>
+                  <div className="text-xs text-purple-400">dagar</div>
+                </>
+              )}
             </div>
 
-            <div className="bg-yellow-900 p-4 rounded">
-              <div className="text-sm text-yellow-300">Förskott</div>
-              <div className="text-2xl font-bold text-white">{summary.förskott.toFixed(1)}</div>
-              <div className="text-xs text-yellow-400">dagar</div>
+            {/* Skuld (tidigare "Förskott") */}
+            <div
+              className="bg-yellow-900 p-4 rounded cursor-pointer hover:bg-yellow-800 transition-colors"
+              onClick={() => handleEditField("skuld", summary.förskott)}
+            >
+              <div className="text-sm text-yellow-300">Skuld</div>
+              {editingField === "skuld" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-yellow-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{summary.förskott.toFixed(1)}</div>
+                  <div className="text-xs text-yellow-400">dagar</div>
+                </>
+              )}
             </div>
 
-            <div className="bg-red-900 p-4 rounded">
-              <div className="text-sm text-red-300">Uttagna</div>
-              <div className="text-2xl font-bold text-white">{summary.betalda.toFixed(1)}</div>
-              <div className="text-xs text-red-400">dagar</div>
+            {/* Obetald */}
+            <div
+              className="bg-orange-900 p-4 rounded cursor-pointer hover:bg-orange-800 transition-colors"
+              onClick={() => handleEditField("obetald", summary.obetald)}
+            >
+              <div className="text-sm text-orange-300">Obetalda</div>
+              {editingField === "obetald" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-orange-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{summary.obetald.toFixed(1)}</div>
+                  <div className="text-xs text-orange-400">dagar</div>
+                </>
+              )}
             </div>
 
-            <div className="bg-emerald-900 p-4 rounded">
-              <div className="text-sm text-emerald-300">Tillgängligt</div>
-              <div className="text-2xl font-bold text-white">{summary.tillgängligt.toFixed(1)}</div>
-              <div className="text-xs text-emerald-400">dagar</div>
+            {/* Ersättning */}
+            <div
+              className="bg-emerald-900 p-4 rounded cursor-pointer hover:bg-emerald-800 transition-colors"
+              onClick={() => handleEditField("ersättning", summary.ersättning)}
+            >
+              <div className="text-sm text-emerald-300">Kompdagar</div>
+              {editingField === "ersättning" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-emerald-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">
+                    {Math.round(summary.ersättning).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-emerald-400">kr</div>
+                </>
+              )}
+            </div>
+
+            {/* Intjänade (flyttad sist) */}
+            <div
+              className="bg-green-900 p-4 rounded cursor-pointer hover:bg-green-800 transition-colors"
+              onClick={() => handleEditField("intjänat", summary.intjänat)}
+            >
+              <div className="text-sm text-green-300">Intjänade</div>
+              {editingField === "intjänat" ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-16 px-1 py-0.5 text-sm bg-green-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus
+                  />
+                  <div className="flex space-x-2">
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                      className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEdit();
+                      }}
+                      className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
+                    >
+                      ✕
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{summary.intjänat.toFixed(1)}</div>
+                  <div className="text-xs text-green-400">dagar</div>
+                </>
+              )}
             </div>
           </div>
 

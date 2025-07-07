@@ -1,4 +1,5 @@
 export const staticRows = [
+  { id: "betaldSemester", label: "Betald semester" },
   { id: "foretagsbilExtra", label: "Företagsbil" },
   { id: "foraldraledighet", label: "Föräldraledighet" },
   // { id: "jamkning", label: "Jämkning" },

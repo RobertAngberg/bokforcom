@@ -21,6 +21,7 @@ export default function ExtraraderGrid({
   onRemoveRow,
 }: Props) {
   const filtreradeStaticRows = filtreraRader(staticRows, sökterm);
+
   const mittenRows = filtreradeStaticRows.slice(0, Math.ceil(filtreradeStaticRows.length / 2));
   const hogerRows = filtreradeStaticRows.slice(Math.ceil(filtreradeStaticRows.length / 2));
 
@@ -174,7 +175,6 @@ export default function ExtraraderGrid({
           ))}
         </div>
       </div>
-
       {sökterm &&
         filtreradeStaticRows.length === 0 &&
         Object.values(dropdownRader).every((arr) => arr.length === 0) && (

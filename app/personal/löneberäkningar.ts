@@ -67,6 +67,9 @@ export const BOKIO_KONSTANTER = {
   VECKOR_PER_ÅR: 52,
   MÅNADER_PER_ÅR: 12,
   STANDARD_ARBETSTIMMAR_PER_VECKA: 40,
+  // Semesterkonstanter
+  SEMESTERDAGAR_PER_ÅR: 25,
+  ARBETSDAGAR_PER_MÅNAD: 21.75, // Genomsnitt
 } as const;
 
 /**
@@ -531,8 +534,100 @@ export function beräknaSkattTabell34(bruttolön: number): number {
 }
 
 // =====================================================================================
-// 📤 EXPORT SAMMANFATTNING
+// 🏖️ SEMESTERBERÄKNINGAR
 // =====================================================================================
-// Huvudfunktioner för actions.ts: beräknaKompletLön(), konverteraLön()
-// Huvudfunktioner för komponenter: beräknaLönekomponenter(), beräknaKomplett()
-// Huvudfunktioner för bokföring: beräknaKompletLön() med
+
+/**
+ * Beräknar automatisk semesterintjäning per månad
+ * Bokio: 25 dagar per år = 2,083 dagar per månad
+ */
+export function beräknaSemesterIntjäningPerMånad(tjänstegrad: number = 100): number {
+  const dagarPerMånad = BOKIO_KONSTANTER.SEMESTERDAGAR_PER_ÅR / BOKIO_KONSTANTER.MÅNADER_PER_ÅR;
+  return Math.round(dagarPerMånad * (tjänstegrad / 100) * 100) / 100; // Avrunda till 2 decimaler
+}
+
+/**
+ * Beräknar semesterpenning baserat på månadslön och antal dagar
+ * Inkluderar både semesterlön och semesterersättning (12%)
+ */
+export function beräknaSemesterpenning(månadslön: number, semesterdagar: number): number {
+  const dagslön = månadslön / BOKIO_KONSTANTER.ARBETSDAGAR_PER_MÅNAD;
+  const semesterersättning = dagslön * semesterdagar * BOKIO_KONSTANTER.SEMESTERERSÄTTNING_PROCENT;
+  return Math.round(semesterersättning);
+}
+
+/**
+ * Beräknar total semesterlön (grundlön + tillägg)
+ */
+export function beräknaTotalSemesterlön(
+  månadslön: number,
+  semesterdagar: number
+): {
+  semesterlön: number;
+  semesterersättning: number;
+  totalt: number;
+} {
+  const semesterlön = beräknaSemesterLön(månadslön, semesterdagar);
+  const semesterersättning = beräknaSemesterersättning(semesterlön);
+
+  return {
+    semesterlön,
+    semesterersättning,
+    totalt: semesterlön + semesterersättning,
+  };
+}
+
+/**
+ * Semestertyper som ska kopplas automatiskt till semestersystemet
+ */
+export const SEMESTER_EXTRARAD_TYPER = [
+  "semestertillägg",
+  "semesterlön",
+  "betald semester",
+  "betaldSemester", // Från extraradDefinitioner
+  "semester",
+  "semesterersättning",
+] as const;
+
+/**
+ * Identifierar om en extrarad är semesterrelaterad
+ */
+export function ärSemesterExtrarad(typ: string, kolumn1: string): boolean {
+  const typLower = (typ || "").toLowerCase();
+  const kolumn1Lower = (kolumn1 || "").toLowerCase();
+
+  return SEMESTER_EXTRARAD_TYPER.some(
+    (semesterTyp) => typLower.includes(semesterTyp) || kolumn1Lower.includes(semesterTyp)
+  );
+}
+
+/**
+ * Extraherar antal semesterdagar från extrarad
+ */
+export function extraheraAntalSemesterdagar(kolumn2: string, kolumn3: string): number {
+  // Försök först kolumn2 (antal)
+  const antal = parseFloat(kolumn2 || "0");
+  if (antal > 0) return antal;
+
+  // Om kolumn2 är tom, försök hitta dagar i kolumn3 (belopp)
+  const match = (kolumn3 || "").match(/(\d+(?:\.\d+)?)\s*dag/i);
+  if (match) return parseFloat(match[1]);
+
+  return 0;
+}
+
+/**
+ * Beräknar semesterintjäning mellan två datum
+ */
+export function beräknaSemesterIntjäningMellanDatum(
+  startDatum: Date,
+  slutDatum: Date,
+  tjänstegrad: number = 100
+): number {
+  const månaderSkillnad =
+    (slutDatum.getFullYear() - startDatum.getFullYear()) * 12 +
+    (slutDatum.getMonth() - startDatum.getMonth());
+
+  const månadslönIntjäning = beräknaSemesterIntjäningPerMånad(tjänstegrad);
+  return Math.max(0, månaderSkillnad * månadslönIntjäning);
+}
