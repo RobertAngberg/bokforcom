@@ -76,10 +76,11 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
   // KR-enheter utan belopp-fält (flyttat hit)
   if (config?.enhet === "kr" && !config.fält.beräknaTotalsummaAutomatiskt) {
     const summa = parseFloat(modalFields.kolumn2) || 0;
+    if (config.negativtBelopp) {
+      return (-Math.abs(summa)).toString();
+    }
     return summa.toString();
   }
-
-  // ...existing code...
 
   // Om raden har beräknaTotalsummaAutomatiskt : true, spara totalsumman i kolumn3
   if (config?.fält.beräknaTotalsummaAutomatiskt) {
@@ -100,7 +101,6 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
 
   const resultat = antal * belopp;
   return resultat.toString();
-  // ...existing code...
 }
 
 /**
@@ -265,6 +265,114 @@ export function getFieldsForRow(
   const config = RAD_KONFIGURATIONER[rowId];
 
   if (config) {
+    // Specialfall: Obetald frånvaro – visa ENDAST summa och kommentar
+    if (rowId === "obetaldFranvaro") {
+      return [
+        {
+          label: config.fält.antalLabel, // "Summa"
+          name: "kolumn2",
+          type: "number",
+          value: modalFields.kolumn2,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          required: true,
+          step: config.fält.step || "0.01",
+          placeholder: config.fält.antalPlaceholder,
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text" as const,
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          placeholder: "Valfri kommentar",
+        },
+      ];
+    }
+
+    // Specialfall: Övertid – visa ENDAST summa och kommentar
+    if (rowId === "overtid") {
+      return [
+        {
+          label: config.fält.antalLabel, // "Summa"
+          name: "kolumn2",
+          type: "number",
+          value: modalFields.kolumn2,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          required: true,
+          step: config.fält.step || "0.01",
+          placeholder: config.fält.antalPlaceholder,
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text" as const,
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          placeholder: "Valfri kommentar",
+        },
+      ];
+    }
+
+    // Specialfall: OB-tillägg – visa ENDAST summa och kommentar
+    if (rowId === "obTillagg") {
+      return [
+        {
+          label: config.fält.antalLabel, // "Summa"
+          name: "kolumn2",
+          type: "number",
+          value: modalFields.kolumn2,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          required: true,
+          step: config.fält.step || "0.01",
+          placeholder: config.fält.antalPlaceholder,
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text" as const,
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          placeholder: "Valfri kommentar",
+        },
+      ];
+    }
+
+    // Specialfall: Risktillägg – visa ENDAST summa och kommentar
+    if (rowId === "risktillagg") {
+      return [
+        {
+          label: config.fält.antalLabel, // "Summa"
+          name: "kolumn2",
+          type: "number",
+          value: modalFields.kolumn2,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          required: true,
+          step: config.fält.step || "0.01",
+          placeholder: config.fält.antalPlaceholder,
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text" as const,
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          placeholder: "Valfri kommentar",
+        },
+      ];
+    }
+
     const fields: any[] = [
       // FÖRSTA FÄLTET: Antal/Modell/Summa (beroende på extraradtyp)
       {
