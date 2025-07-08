@@ -17,6 +17,7 @@ interface LönespecListProps {
   extrarader: any[];
   setExtrarader: React.Dispatch<React.SetStateAction<any[]>>;
   onLönespecUppdaterad?: () => void; // Nytt callback för att uppdatera listan
+  visaExtraRader?: boolean; // NY PROP
 }
 
 export default function LönespecList({
@@ -30,6 +31,8 @@ export default function LönespecList({
   taBortLoading,
   onLönespecUppdaterad,
   extrarader,
+  setExtrarader,
+  visaExtraRader = false, // default false
 }: LönespecListProps) {
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
 
@@ -80,6 +83,7 @@ export default function LönespecList({
             onTaBortLönespec={() => handleTaBortLönespec(lönespec.id)}
             taBortLoading={taBortLaddning[lönespec.id] || false}
             extrarader={extrarader}
+            visaExtraRader={visaExtraRader} // Skicka vidare
           />
         ))
       )}

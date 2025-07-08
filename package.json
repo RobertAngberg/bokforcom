@@ -14,6 +14,7 @@
     "@neondatabase/serverless": "^1.0.0",
     "@vercel/blob": "^1.1.1",
     "auth": "^1.2.3",
+    "canvas": "^3.1.2",
     "chart.js": "^4.4.1",
     "dotenv": "^16.4.5",
     "html2canvas": "^1.4.1",

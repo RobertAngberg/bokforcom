@@ -16,6 +16,7 @@ type LönekomponenterProps = {
   skatt?: number;
   onBeräkningarUppdaterade?: (lönespecId: string, beräkningar: any) => void;
   onExtraradUppdaterade?: (lönespecId: string, extrarader: any[]) => void;
+  visaExtraRader?: boolean; // NY PROP
 };
 
 export default function Lönekomponenter({
@@ -24,6 +25,7 @@ export default function Lönekomponenter({
   övertid,
   onBeräkningarUppdaterade,
   onExtraradUppdaterade,
+  visaExtraRader = false,
 }: LönekomponenterProps) {
   //#endregion
 
@@ -110,11 +112,13 @@ export default function Lönekomponenter({
         onTaBortExtrarad={handleTaBortExtrarad}
       />
 
-      <ExtraRader
-        lönespecId={lönespec?.id}
-        grundlön={beräknadeVärden.grundlön}
-        onNyRad={handleNyRad}
-      />
+      {visaExtraRader && (
+        <ExtraRader
+          lönespecId={lönespec?.id}
+          grundlön={beräknadeVärden.grundlön}
+          onNyRad={handleNyRad}
+        />
+      )}
     </div>
   );
 }

@@ -83,11 +83,18 @@ export default function Historik({ initialData }: Props) {
     {
       key: "belopp",
       label: "Belopp",
-      render: (val: number) =>
-        val.toLocaleString("sv-SE", {
+      render: (_: number, item: HistoryItem) => {
+        // Summera debet från detailsMap om finns, annars visa originalvärde
+        const details = detailsMap[item.transaktions_id];
+        let debetSum = item.belopp;
+        if (details && details.length > 0) {
+          debetSum = details.reduce((sum, d) => sum + (d.debet || 0), 0);
+        }
+        return debetSum.toLocaleString("sv-SE", {
           style: "currency",
           currency: "SEK",
-        }),
+        });
+      },
     },
     { key: "kommentar", label: "Kommentar", hiddenOnMobile: true },
   ];

@@ -7,6 +7,8 @@ import Utlägg from "./Utlägg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
+import MailaLönespec from "./MailaLönespec";
+import Förhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
 
 interface LönespecCardProps {
   lönespec: any;
@@ -18,6 +20,7 @@ interface LönespecCardProps {
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
   extrarader?: any[];
+  visaExtraRader?: boolean; // NY PROP
 }
 
 export default function LönespecCard({
@@ -30,8 +33,10 @@ export default function LönespecCard({
   onTaBortLönespec,
   taBortLoading,
   extrarader = [],
+  visaExtraRader = false,
 }: LönespecCardProps) {
   const [aktuellExtraradData, setAktuellExtraradData] = useState<any[]>([]);
+  const [visaFörhandsgranskning, setVisaFörhandsgranskning] = useState(false);
   //#endregion
 
   //#region Helper Functions
@@ -95,6 +100,7 @@ export default function LönespecCard({
         lönespec={lönespec}
         onBeräkningarUppdaterade={onBeräkningarUppdaterade}
         onExtraradUppdaterade={(lönespecId, extrarader) => setAktuellExtraradData(extrarader)}
+        visaExtraRader={visaExtraRader} // Skicka vidare
       />
 
       <Utlägg
@@ -113,10 +119,34 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
+      {/* FÖRHANDSGRANSKA, MAILA & TA BORT på samma rad */}
+      {/* Knappar borttagna enligt önskemål */}
+
       {/* Endast Ta bort-knapp */}
-      <div className="mt-6 flex justify-end">
+      {/* <div className="mt-6 flex justify-end">
         <Knapp text="🗑️ Ta bort lönespec" onClick={onTaBortLönespec} loading={taBortLoading} />
-      </div>
+      </div> */}
+      {visaFörhandsgranskning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-2xl text-gray-400 hover:text-black"
+              onClick={() => setVisaFörhandsgranskning(false)}
+              aria-label="Stäng"
+            >
+              ×
+            </button>
+            <Förhandsgranskning
+              lönespec={lönespec}
+              anställd={anställd}
+              företagsprofil={{}} // TODO: hämta företagsprofil korrekt
+              extrarader={extrarader}
+              beräknadeVärden={beräknadeVärden[lönespec.id]}
+              onStäng={() => setVisaFörhandsgranskning(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 

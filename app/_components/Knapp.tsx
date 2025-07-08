@@ -14,7 +14,8 @@ export default function Knapp({
   disabled = false,
   loading = false,
   loadingText,
-}: KnappProps) {
+  className = "",
+}: KnappProps & { className?: string }) {
   const isDisabled = disabled || loading;
   const displayText = loading ? loadingText || "⏳ Laddar..." : text;
 
@@ -23,9 +24,7 @@ export default function Knapp({
       type={type}
       onClick={onClick}
       disabled={isDisabled}
-      className={`h-10 px-4 rounded transition text-white ${
-        isDisabled ? "bg-cyan-700/40 cursor-not-allowed" : "bg-cyan-700 hover:bg-cyan-800"
-      }`}
+      className={`bg-cyan-700 hover:bg-cyan-800 text-white px-4 py-2 rounded font-medium transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       {displayText}
     </button>

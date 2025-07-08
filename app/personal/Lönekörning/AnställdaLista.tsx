@@ -191,12 +191,13 @@ export default function AnställdaLista({
                       ingenAnimering={true}
                       onTaBortLönespec={() => handleTaBortLönespec(anställd)}
                       taBortLoading={taBort[anställd.id]}
+                      visaExtraRader={true} // Visa extrarader i lönekörning
                     />
                   ) : (
                     <div className="space-y-4">
                       <div className="flex justify-end">
                         <Knapp
-                          text="➕ Skapa ny lönespec"
+                          text="✚ Skapa ny lönespec"
                           loading={sparar[anställd.id]}
                           loadingText="⏳ Skapar..."
                           onClick={() => handleSkapaNyLönespec(anställd)}

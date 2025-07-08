@@ -974,3 +974,54 @@ export async function sparaSemesterFaltManuellt(
 ) {
   await uppdateraSemesterFalt(anstalldId, fält, nyttVärde);
 }
+
+export async function bokforSemesterTransaktion({
+  rows,
+  kommentar,
+  anstalldId,
+  anstalldNamn,
+  userId,
+}: {
+  rows: { konto: string; namn: string; debet: number; kredit: number }[];
+  kommentar?: string;
+  anstalldId: number;
+  anstalldNamn: string;
+  userId?: number;
+}) {
+  const session = await auth();
+  const realUserId = userId || (session?.user?.id ? parseInt(session.user.id, 10) : null);
+  if (!realUserId) throw new Error("Ingen inloggad användare");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const transResult = await client.query(
+      `INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId")
+       VALUES (NOW(), $1, $2, $3, $4) RETURNING id`,
+      [
+        `Semesteravstämning ${anstalldNamn}`,
+        rows.reduce((sum, r) => sum + (r.debet || r.kredit || 0), 0),
+        kommentar || null,
+        realUserId,
+      ]
+    );
+    const transId = transResult.rows[0].id;
+    for (const row of rows) {
+      const kontoRes = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        row.konto,
+      ]);
+      if (!kontoRes.rows.length) throw new Error(`Konto ${row.konto} saknas i kontoplanen`);
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [transId, kontoRes.rows[0].id, row.debet, row.kredit]
+      );
+    }
+    await client.query("COMMIT");
+    client.release();
+    return { success: true, transaktionsId: transId };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    client.release();
+    throw error;
+  }
+}

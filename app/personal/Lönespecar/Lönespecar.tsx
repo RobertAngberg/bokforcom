@@ -19,7 +19,8 @@ export default function Lönespecar({
   ingenAnimering,
   onTaBortLönespec,
   taBortLoading,
-}: LönespecProps) {
+  visaExtraRader = false, // NY PROP, default false
+}: LönespecProps & { visaExtraRader?: boolean }) {
   const [lönespecar, setLönespecar] = useState<any[]>([]);
   const [utlägg, setUtlägg] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +85,7 @@ export default function Lönespecar({
         extrarader={extrarader}
         setExtrarader={setExtrarader}
         onLönespecUppdaterad={loadData}
+        visaExtraRader={visaExtraRader} // Skicka vidare
       />
     </>
   );

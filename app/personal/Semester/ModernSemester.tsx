@@ -10,7 +10,12 @@ import InfoTooltip from "../../_components/InfoTooltip";
 import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
 import { ColumnDefinition } from "../../_components/TabellRad";
-import { hämtaSemesterSammanställningRealTime, sparaSemesterFaltManuellt } from "../actions";
+import {
+  hämtaSemesterSammanställningRealTime,
+  sparaSemesterFaltManuellt,
+  bokforSemesterTransaktion,
+} from "../actions";
+import BokforModal from "./BokforModal";
 
 // Ersätt import av SemesterSummary med lokal typ:
 type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
@@ -43,6 +48,8 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const [editingField, setEditingField] = useState<SemesterBoxField | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [bokforModalOpen, setBokforModalOpen] = useState(false);
+  const [bokforRows, setBokforRows] = useState<any[]>([]);
 
   // Hämta data vid laddning
   useEffect(() => {
@@ -116,6 +123,93 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const handleCancelEdit = () => {
     setEditingField(null);
     setEditValue("");
+  };
+
+  // Funktion för att räkna ut och visa bokföringsrader enligt Bokio
+  const handleOpenBokforModal = () => {
+    let rows;
+    if (summary.komp_dagar > 0) {
+      // Bokför komp_dagar som kronor
+      const kompBelopp = summary.komp_dagar;
+      const socialaAvgifter = kompBelopp * 0.314;
+      rows = [
+        {
+          konto: "2920",
+          namn: "Upplupna semesterlöner",
+          debet: 0,
+          kredit: kompBelopp,
+        },
+        {
+          konto: "2940",
+          namn: "Upplupna lagstadgade sociala och andra avgifter",
+          debet: 0,
+          kredit: socialaAvgifter,
+        },
+        {
+          konto: "7290",
+          namn: "Förändring av semesterlöneskuld",
+          debet: kompBelopp,
+          kredit: 0,
+        },
+        {
+          konto: "7519",
+          namn: "Sociala avgifter för semester- och löneskulder",
+          debet: socialaAvgifter,
+          kredit: 0,
+        },
+      ];
+    } else {
+      // Standard: betalda + sparade dagar
+      const dagar = summary.betalda_dagar + summary.sparade_dagar;
+      const dagslön = anställd.kompensation / 21;
+      const semesterlönPerDag = dagslön * 1.0545;
+      const semesterlön = dagar * semesterlönPerDag;
+      const socialaAvgifter = semesterlön * 0.314;
+      rows = [
+        {
+          konto: "2920",
+          namn: "Upplupna semesterlöner",
+          debet: 0,
+          kredit: semesterlön,
+        },
+        {
+          konto: "2940",
+          namn: "Upplupna lagstadgade sociala och andra avgifter",
+          debet: 0,
+          kredit: socialaAvgifter,
+        },
+        {
+          konto: "7290",
+          namn: "Förändring av semesterlöneskuld",
+          debet: semesterlön,
+          kredit: 0,
+        },
+        {
+          konto: "7519",
+          namn: "Sociala avgifter för semester- och löneskulder",
+          debet: socialaAvgifter,
+          kredit: 0,
+        },
+      ];
+    }
+    setBokforRows(rows);
+    setBokforModalOpen(true);
+  };
+
+  const handleConfirmBokfor = async (kommentar: string) => {
+    try {
+      await bokforSemesterTransaktion({
+        rows: bokforRows,
+        kommentar,
+        anstalldId: anställd.id,
+        anstalldNamn: `${anställd.förnamn} ${anställd.efternamn}`,
+        userId,
+      });
+      setBokforModalOpen(false);
+      alert("Bokföring sparad!");
+    } catch (error) {
+      alert("Fel vid bokföring: " + (error instanceof Error ? error.message : error));
+    }
   };
 
   if (loading) {
@@ -313,7 +407,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
             onClick={() => handleEditField("komp_dagar", summary.komp_dagar)}
           >
             <div className="absolute top-2 right-2 z-10">
-              <InfoTooltip text="Kompensationsdagar används oftast vid provisionsarbete eller timanställning" />
+              <InfoTooltip text="Kompensation i kronor för outnyttjad semester/tid" />
             </div>
             <div className="text-sm text-emerald-300">Komp</div>
             {editingField === "komp_dagar" ? (
@@ -359,8 +453,8 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold text-white">{summary.komp_dagar.toFixed(1)}</div>
-                <div className="text-xs text-emerald-400">dagar</div>
+                <div className="text-2xl font-bold text-white">{summary.komp_dagar.toFixed(2)}</div>
+                <div className="text-xs text-emerald-400">kr</div>
               </>
             )}
           </div>
@@ -383,6 +477,15 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
             </p>
           </div>
         </div>
+        <div className="mt-6 flex justify-end">
+          <Knapp text="Bokför transaktioner" onClick={handleOpenBokforModal} />
+        </div>
+        <BokforModal
+          open={bokforModalOpen}
+          onClose={() => setBokforModalOpen(false)}
+          rows={bokforRows}
+          onConfirm={handleConfirmBokfor}
+        />
       </div>
     </div>
   );
