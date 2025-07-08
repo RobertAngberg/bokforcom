@@ -1,21 +1,10 @@
 // Semester types separated from database implementation to avoid client-side PostgreSQL imports
 
 export interface SemesterSummary {
-  intjänat: number;
-  betalda: number;
-  sparade: number;
-  obetald: number;
-  förskott: number;
-  ersättning: number;
-  kvarvarande: number;
-  tillgängligt: number;
-  // Nya kolumndata
   betalda_dagar: number;
   sparade_dagar: number;
   skuld: number;
-  obetalda_dagar: number;
   komp_dagar: number;
-  intjänade_dagar: number;
 }
 
 export interface SemesterRecord {

@@ -4,6 +4,7 @@
 import { Pool } from "pg";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { uppdateraSemesterFalt } from "./Semester/semesterDatabase";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -52,9 +53,9 @@ export async function hämtaAllaAnställda() {
       SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
              clearingnummer, bankkonto, adress, postnummer, ort, 
              startdatum, slutdatum, anställningstyp, löneperiod, 
-             ersättningPer, kompensation, arbetsvecka, arbetsbelastning, 
-             deltidProcent, tjänsteställeAdress, tjänsteställeOrt, 
-             skattetabell, skattekolumn, växaStöd, user_id, skapad, uppdaterad
+             ersättning_per, kompensation, arbetsvecka_timmar, arbetsbelastning, 
+             deltid_procent, tjänsteställe_adress, tjänsteställe_ort, 
+             skattetabell, skattekolumn, växa_stöd, user_id, skapad, uppdaterad
       FROM anställda 
       WHERE user_id = $1 
       ORDER BY skapad DESC
@@ -85,9 +86,9 @@ export async function hämtaAnställd(anställdId: number) {
       SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
              clearingnummer, bankkonto, adress, postnummer, ort, 
              startdatum, slutdatum, anställningstyp, löneperiod, 
-             ersättningPer, kompensation, arbetsvecka, arbetsbelastning, 
-             deltidProcent, tjänsteställeAdress, tjänsteställeOrt, 
-             skattetabell, skattekolumn, växaStöd, user_id, skapad, uppdaterad
+             ersättning_per, kompensation, arbetsvecka_timmar, arbetsbelastning, 
+             deltid_procent, tjänsteställe_adress, tjänsteställe_ort, 
+             skattetabell, skattekolumn, växa_stöd, user_id, skapad, uppdaterad
       FROM anställda 
       WHERE id = $1 AND user_id = $2
     `;
@@ -886,15 +887,10 @@ export async function hämtaSemesterSammanställningRealTime(anställdId: number
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
   }
-
   try {
-    // Importera här för att undvika cirkulära dependencies
     const { hämtaSemesterSammanställning } = await import("./Semester/semesterDatabase");
-
-    // Hämta semesterdata från databas
-    const semesterData = await hämtaSemesterSammanställning(anställdId);
-
-    return semesterData;
+    const summary = await hämtaSemesterSammanställning(anställdId);
+    return summary;
   } catch (error) {
     console.error("❌ hämtaSemesterSammanställningRealTime error:", error);
     throw error;
@@ -969,4 +965,12 @@ export async function hämtaSemesterHistorikAction(anställdId: number) {
     console.error("❌ hämtaSemesterHistorikAction error:", error);
     throw error;
   }
+}
+
+export async function sparaSemesterFaltManuellt(
+  anstalldId: number,
+  fält: "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar",
+  nyttVärde: number
+) {
+  await uppdateraSemesterFalt(anstalldId, fält, nyttVärde);
 }

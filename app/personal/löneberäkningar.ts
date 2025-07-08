@@ -583,7 +583,7 @@ export function beräknaTotalSemesterlön(
 export const SEMESTER_EXTRARAD_TYPER = [
   "semestertillägg",
   "semesterlön",
-  "betald semester",
+  " ter",
   "betaldSemester", // Från extraradDefinitioner
   "semester",
   "semesterersättning",
@@ -711,35 +711,30 @@ export function beräknaTotaltSemesterSaldo(
 }
 
 /**
- * Beräknar total semesterintjäning från anställningsdatum till idag
- * Används för att visa verklig intjäning baserat på arbetsdagar
+ * Beräknar total semesterintjäning sedan anställningsdatum
+ * Använder formeln: (dagar sedan anställning / 365) * 25 * tjänstegrad
  */
-export function beräknaTotalIntjäningSedanAnställning(
-  anställningsdatum: string,
-  tjänstegrad: number = 100
-): number {
-  const anställd = new Date(anställningsdatum);
+export function beräknaTotalIntjäningSedanAnställning(anställd: any): number {
   const idag = new Date();
+  const anställningsdatum = new Date(anställd.startdatum);
 
-  // Beräkna antal dagar sedan anställning
-  const millisekunderPerDag = 24 * 60 * 60 * 1000;
+  // Beräkna dagar sedan anställning
   const dagarSedanAnställning = Math.floor(
-    (idag.getTime() - anställd.getTime()) / millisekunderPerDag
+    (idag.getTime() - anställningsdatum.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  // Intjäning per dag baserat på 25 dagar per år och tjänstegrad
-  const intjäningPerDag = (BOKIO_KONSTANTER.SEMESTERDAGAR_PER_ÅR / 365) * (tjänstegrad / 100);
+  // Beräkna intjänade dagar: (dagar / 365) * 25 semesterdagar per år
+  const tjänstegrad = (anställd.deltid_procent || 100) / 100;
+  const intjänadeDagar = (dagarSedanAnställning / 365) * 25 * tjänstegrad;
 
-  // Total intjäning
-  const totalIntjäning = dagarSedanAnställning * intjäningPerDag;
-
-  console.log("📅 Semester från anställning:", {
-    anställningsdatum,
-    dagarSedanAnställning,
-    tjänstegrad: `${tjänstegrad}%`,
-    intjäningPerDag: intjäningPerDag.toFixed(4),
-    totalIntjäning: totalIntjäning.toFixed(2),
-  });
-
-  return Math.round(totalIntjäning * 100) / 100; // Avrunda till 2 decimaler
+  return Math.max(0, parseFloat(intjänadeDagar.toFixed(2)));
 }
+
+/**
+ * Beräknar aktuell månads semesterintjäning
+ * Använder formeln: (25 dagar / 12 månader) * tjänstegrad
+ */
+// export function beräknaAktuelMånadsIntjäning(tjänstegrad: number = 100): number {
+//  const månatligIntjäning = (25 / 12) * (tjänstegrad / 100);
+//  return parseFloat(månatligIntjäning.toFixed(2));
+// }
