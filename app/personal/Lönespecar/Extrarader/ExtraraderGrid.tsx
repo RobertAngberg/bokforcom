@@ -1,5 +1,4 @@
-import Rad from "./Rad";
-import DropdownRad from "./DropdownRad";
+import ExtraradRadOchDropdown from "./ExtraradRadOchDropdown";
 import { staticRows, dropdownRaderData } from "./extraraderData";
 import { filtreraRader } from "./extraraderUtils";
 
@@ -32,126 +31,97 @@ export default function ExtraraderGrid({
     bilersattning: filtreraRader(dropdownRaderData.bilersattning, sökterm),
   };
 
+  function DropdownSection({
+    label,
+    open,
+    toggleDropdown,
+    rows,
+    state,
+    toggleCheckbox,
+    onRemoveRow,
+  }: {
+    label: string;
+    open: boolean;
+    toggleDropdown: () => void;
+    rows: { id: string; label: string }[];
+    state: Record<string, boolean>;
+    toggleCheckbox: (id: string, label: string) => void;
+    onRemoveRow?: (id: string) => void;
+  }) {
+    return (
+      <>
+        <ExtraradRadOchDropdown
+          label={label}
+          isDropdown
+          open={open}
+          onToggleDropdown={toggleDropdown}
+          toggle={() => {}}
+        />
+        {open && (
+          <div className="ml-6 space-y-1">
+            {rows
+              .sort((a, b) => a.label.localeCompare(b.label, "sv"))
+              .map((item) => (
+                <ExtraradRadOchDropdown
+                  key={item.id}
+                  id={item.id}
+                  label={item.label}
+                  checked={state[item.id]}
+                  toggle={() => toggleCheckbox(item.id, item.label)}
+                  onRemove={onRemoveRow ? () => onRemoveRow(item.id) : undefined}
+                />
+              ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Första kolumnen: dropdown-sektioner */}
         <div className="space-y-1">
-          {(!sökterm || dropdownRader.sjukfranvaro.length > 0) && (
-            <>
-              <DropdownRad
-                label="Sjukfrånvaro"
-                open={open.sjukfranvaro}
-                toggle={() => toggleDropdown("sjukfranvaro")}
+          {[
+            {
+              key: "sjukfranvaro",
+              label: "Sjukfrånvaro",
+              rows: dropdownRader.sjukfranvaro,
+            },
+            {
+              key: "skattadeFormaner",
+              label: "Skattade förmåner",
+              rows: dropdownRader.skattadeFormaner,
+            },
+            {
+              key: "skattefrittTraktamente",
+              label: "Skattefritt traktamente",
+              rows: dropdownRader.skattefrittTraktamente,
+            },
+            {
+              key: "bilersattning",
+              label: "Bilersättning",
+              rows: dropdownRader.bilersattning,
+            },
+          ].map(({ key, label, rows }) =>
+            !sökterm || rows.length > 0 ? (
+              <DropdownSection
+                key={key}
+                label={label}
+                open={open[key]}
+                toggleDropdown={() => toggleDropdown(key)}
+                rows={rows}
+                state={state}
+                toggleCheckbox={toggleCheckbox}
+                onRemoveRow={onRemoveRow}
               />
-              {open.sjukfranvaro && (
-                <div className="ml-6 space-y-1">
-                  {dropdownRader.sjukfranvaro
-                    .sort((a: { label: string }, b: { label: string }) =>
-                      a.label.localeCompare(b.label, "sv")
-                    )
-                    .map((item: { id: string; label: string }) => (
-                      <Rad
-                        key={item.id}
-                        id={item.id}
-                        label={item.label}
-                        checked={state[item.id]}
-                        toggle={() => toggleCheckbox(item.id, item.label)}
-                        onRemove={onRemoveRow ? () => onRemoveRow(item.id) : undefined}
-                      />
-                    ))}
-                </div>
-              )}
-            </>
-          )}
-
-          {(!sökterm || dropdownRader.skattadeFormaner.length > 0) && (
-            <>
-              <DropdownRad
-                label="Skattade förmåner"
-                open={open.skattadeFormaner}
-                toggle={() => toggleDropdown("skattadeFormaner")}
-              />
-              {open.skattadeFormaner && (
-                <div className="ml-6 space-y-1">
-                  {dropdownRader.skattadeFormaner
-                    .sort((a: { label: string }, b: { label: string }) =>
-                      a.label.localeCompare(b.label, "sv")
-                    )
-                    .map((item: { id: string; label: string }) => (
-                      <Rad
-                        key={item.id}
-                        id={item.id}
-                        label={item.label}
-                        checked={state[item.id]}
-                        toggle={() => toggleCheckbox(item.id, item.label)}
-                        onRemove={onRemoveRow ? () => onRemoveRow(item.id) : undefined}
-                      />
-                    ))}
-                </div>
-              )}
-            </>
-          )}
-
-          {(!sökterm || dropdownRader.skattefrittTraktamente.length > 0) && (
-            <>
-              <DropdownRad
-                label="Skattefritt traktamente"
-                open={open.skattefrittTraktamente}
-                toggle={() => toggleDropdown("skattefrittTraktamente")}
-              />
-              {open.skattefrittTraktamente && (
-                <div className="ml-6 space-y-1">
-                  {dropdownRader.skattefrittTraktamente
-                    .sort((a: { label: string }, b: { label: string }) =>
-                      a.label.localeCompare(b.label, "sv")
-                    )
-                    .map((item: { id: string; label: string }) => (
-                      <Rad
-                        key={item.id}
-                        id={item.id}
-                        label={item.label}
-                        checked={state[item.id]}
-                        toggle={() => toggleCheckbox(item.id, item.label)}
-                        onRemove={onRemoveRow ? () => onRemoveRow(item.id) : undefined}
-                      />
-                    ))}
-                </div>
-              )}
-            </>
-          )}
-
-          {(!sökterm || dropdownRader.bilersattning.length > 0) && (
-            <>
-              <DropdownRad
-                label="Bilersättning"
-                open={open.bilersattning}
-                toggle={() => toggleDropdown("bilersattning")}
-              />
-              {open.bilersattning && (
-                <div className="ml-6 space-y-1">
-                  {dropdownRader.bilersattning
-                    .sort((a: { label: string }, b: { label: string }) =>
-                      a.label.localeCompare(b.label, "sv")
-                    )
-                    .map((item: { id: string; label: string }) => (
-                      <Rad
-                        key={item.id}
-                        id={item.id}
-                        label={item.label}
-                        checked={state[item.id]}
-                        toggle={() => toggleCheckbox(item.id, item.label)}
-                        onRemove={onRemoveRow ? () => onRemoveRow(item.id) : undefined}
-                      />
-                    ))}
-                </div>
-              )}
-            </>
+            ) : null
           )}
         </div>
-
+        {/* Andra kolumnen: mittenRows */}
         <div className="space-y-1">
           {mittenRows.map((item: { id: string; label: string }) => (
-            <Rad
+            <ExtraradRadOchDropdown
               key={item.id}
               id={item.id}
               label={item.label}
@@ -161,10 +131,10 @@ export default function ExtraraderGrid({
             />
           ))}
         </div>
-
+        {/* Tredje kolumnen: hogerRows */}
         <div className="space-y-1">
           {hogerRows.map((item: { id: string; label: string }) => (
-            <Rad
+            <ExtraradRadOchDropdown
               key={item.id}
               id={item.id}
               label={item.label}

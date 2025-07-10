@@ -1,12 +1,14 @@
 import Knapp from "../../_components/Knapp";
 
+export type Anställd = {
+  id: number;
+  namn: string;
+  epost: string;
+  roll?: string;
+};
+
 type AnställdaRadProps = {
-  anställd: {
-    id: number;
-    namn: string;
-    epost: string;
-    roll?: string;
-  };
+  anställd: Anställd;
   onRedigera?: (id: number) => void;
   onTaBort?: (id: number) => void;
   loading?: boolean;

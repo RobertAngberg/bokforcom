@@ -5,13 +5,13 @@ import ExtraraderModal from "./ExtraraderModal";
 import ExtraraderSökning from "./ExtraraderSökning";
 import ExtraraderGrid from "./ExtraraderGrid";
 import { sparaExtrarad } from "../../actions";
-import { useExtraraderState } from "./useExtraraderState";
 import {
   beräknaSumma,
   formatKolumn2Värde,
   initializeModalFields,
   getFieldsForRow,
 } from "./extraraderUtils";
+import { useState } from "react";
 
 export default function ExtraRader({
   lönespecId,
@@ -22,20 +22,22 @@ export default function ExtraRader({
   onNyRad: () => void;
   grundlön?: number;
 }) {
-  const {
-    state,
-    setState,
-    open,
-    setOpen,
-    modalOpen,
-    setModalOpen,
-    modalRow,
-    setModalRow,
-    modalFields,
-    setModalFields,
-    sökterm,
-    setSökterm,
-  } = useExtraraderState();
+  const [state, setState] = useState<Record<string, boolean>>({});
+  const [open, setOpen] = useState<Record<string, boolean>>({
+    sjukfranvaro: false,
+    skattadeFormaner: false,
+    skattefrittTraktamente: false,
+    bilersattning: false,
+  });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalRow, setModalRow] = useState<{ id: string; label: string } | null>(null);
+  const [modalFields, setModalFields] = useState({
+    kolumn2: "",
+    kolumn3: "",
+    kolumn4: "",
+    enhet: "",
+  });
+  const [sökterm, setSökterm] = useState("");
 
   const toggleDropdown = (key: string) => {
     setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -53,26 +55,18 @@ export default function ExtraRader({
   };
 
   const handleRemoveRow = async (id: string) => {
-    alert("handleRemoveRow anropad för: " + id); // ← BRUTAL MEN TYDLIG
-
-    // ✅ HITTA EXTRARAD-ID från databasen baserat på lönespec + kolumn1
+    // Ta bort från UI och databas
     try {
-      // Först - ta bort från UI
       setState((prev) => ({ ...prev, [id]: false }));
-
-      // Sen - ta bort från databas genom att spara med 0 belopp
       await sparaExtrarad({
         lönespecifikation_id: lönespecId,
-        kolumn1: id, // eller vad som matchar kolumn1
+        kolumn1: id,
         kolumn2: "0",
         kolumn3: "0",
         kolumn4: "",
       });
-
       onNyRad();
     } catch (error) {
-      console.error("❌ Fel vid borttagning av extrarad:", error);
-      // Återställ UI om det blev fel
       setState((prev) => ({ ...prev, [id]: true }));
     }
   };
@@ -80,7 +74,6 @@ export default function ExtraRader({
   return (
     <AnimeradFlik title="Extra rader" icon="➕">
       <ExtraraderSökning sökterm={sökterm} setSökterm={setSökterm} />
-
       <ExtraraderGrid
         sökterm={sökterm}
         state={state}
@@ -89,7 +82,6 @@ export default function ExtraRader({
         toggleCheckbox={toggleCheckbox}
         onRemoveRow={handleRemoveRow}
       />
-
       <ExtraraderModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -98,10 +90,8 @@ export default function ExtraRader({
         onSubmit={async (e) => {
           e.preventDefault();
           if (!lönespecId) return;
-
           const kolumn3Value = beräknaSumma(modalRow?.id || "", modalFields, grundlön);
           const kolumn2Value = formatKolumn2Värde(modalRow?.id || "", modalFields);
-
           const dataToSave = {
             lönespecifikation_id: lönespecId,
             typ: modalRow?.id,
@@ -110,13 +100,9 @@ export default function ExtraRader({
             kolumn3: kolumn3Value,
             kolumn4: modalFields.kolumn4,
           };
-
-          console.log("SPARAR EXTRARAD:", dataToSave);
-
-          console.log("modalRow vid sparande:", modalRow);
-
           await sparaExtrarad(dataToSave);
           setModalOpen(false);
+          setState((prev) => ({ ...prev, [modalRow?.id || ""]: true }));
           onNyRad();
         }}
       />

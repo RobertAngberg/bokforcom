@@ -1,3 +1,8 @@
+// Denna fil definierar vilka extrarader som visas i extrarad-menyn för lönespecar.
+// staticRows är fasta extrarader som alltid visas.
+// dropdownRaderData innehåller grupperade extrarader för olika dropdown-menyer (t.ex. förmåner, traktamente, bilersättning).
+// Varje rad har ett id (som matchar extraradDefinitioner) och en label som visas i UI:t.
+
 export const staticRows = [
   { id: "betaldSemester", label: "Betald semester" },
   { id: "foretagsbilExtra", label: "Företagsbil" },

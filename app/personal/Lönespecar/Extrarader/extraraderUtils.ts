@@ -2,12 +2,6 @@
 // beräknaTotalsummaAutomatiskt: false = användaren matar in totalsumman direkt
 
 /**
- * EXTRARADER UTILITIES
- *
- * Detta är hjälpfunktioner för att hantera extrarader i lönesystemet.
- * Extrarader kan vara allt från avdrag (vård av sjukt barn, föräldraledighet)
- * till förmåner (försäkring, företagsbil, parkering) och tillägg (övertid, OB).
- *
  * Systemet fungerar genom att:
  * 1. Läsa konfiguration från extraradDefinitioner.ts
  * 2. Skapa dynamiska formulär baserat på konfigurationen

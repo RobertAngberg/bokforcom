@@ -95,11 +95,11 @@ export default function Lönekörning() {
             extrarader={extrarader}
             beräknadeVärden={{}}
           />
-          <BankgiroExport
+          {/* <BankgiroExport
             anställda={anställda}
             utbetalningsdatum={utbetalningsdatum}
             lönespecar={lönespecar}
-          />
+          /> */}
           <BokförKnappOchModal
             anställda={anställda}
             utbetalningsdatum={utbetalningsdatum}

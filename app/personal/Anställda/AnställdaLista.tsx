@@ -1,17 +1,17 @@
-import AnställdaRad from "./AnställdaRad";
-
-type Anställd = {
+export type Anställd = {
   id: number;
   namn: string;
   epost: string;
   roll?: string;
 };
 
+import AnställdaRad from "./AnställdaRad";
+
 type AnställdaListaProps = {
   anställda: Anställd[];
   onRedigera?: (id: number) => void;
   onTaBort?: (id: number) => void;
-  loadingAnställdId?: number | null; // Lägg till denna prop
+  loadingAnställdId?: number | null;
 };
 
 export default function AnställdaLista({

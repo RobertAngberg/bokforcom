@@ -201,6 +201,26 @@ export function beräknaBilersättning(bilTyp: BilTyp, kilometer: number): numbe
 }
 
 /**
+ * Beräknar semesterpenning för ett uttag
+ */
+export function beräknaSemesterpenning(
+  månadslön: number,
+  dagar: number
+): {
+  semesterlön: number;
+  semesterersättning: number;
+  totalt: number;
+} {
+  const semesterlön = månadslön * 0.0043 * dagar;
+  const semesterersättning = semesterlön * 0.12;
+  return {
+    semesterlön,
+    semesterersättning,
+    totalt: semesterlön + semesterersättning,
+  };
+}
+
+/**
  * Alias-funktioner för bakåtkompatibilitet
  */
 export function beräknaObetaldDag(månadslön: number): number {
@@ -544,16 +564,6 @@ export function beräknaSkattTabell34(bruttolön: number): number {
 export function beräknaSemesterIntjäningPerMånad(tjänstegrad: number = 100): number {
   const dagarPerMånad = BOKIO_KONSTANTER.SEMESTERDAGAR_PER_ÅR / BOKIO_KONSTANTER.MÅNADER_PER_ÅR;
   return Math.round(dagarPerMånad * (tjänstegrad / 100) * 100) / 100; // Avrunda till 2 decimaler
-}
-
-/**
- * Beräknar semesterpenning baserat på månadslön och antal dagar
- * Inkluderar både semesterlön och semesterersättning (12%)
- */
-export function beräknaSemesterpenning(månadslön: number, semesterdagar: number): number {
-  const dagslön = månadslön / BOKIO_KONSTANTER.ARBETSDAGAR_PER_MÅNAD;
-  const semesterersättning = dagslön * semesterdagar * BOKIO_KONSTANTER.SEMESTERERSÄTTNING_PROCENT;
-  return Math.round(semesterersättning);
 }
 
 /**

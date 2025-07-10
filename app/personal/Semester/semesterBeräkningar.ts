@@ -4,6 +4,7 @@
  */
 
 import { BOKIO_KONSTANTER } from "../löneberäkningar";
+import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "../löneberäkningar";
 
 export interface SemesterIntjäning {
   intjänandeår: string; // "2024-2025"
@@ -166,4 +167,9 @@ export function valideraSemesteruttag(
     meddelande: `Otillräckligt med semesterdagar. Begärt: ${begärdaDagar}, Tillgängligt: ${totaltTillgängligt}`,
     förskottsDagar: 0,
   };
+}
+
+// Enkel util för att beräkna intjänade dagar per månad utifrån tjänstegrad
+export function beräknaIntjänadeDagar(tjänstegrad: number = 100): number {
+  return (25 / 12) * (tjänstegrad / 100);
 }

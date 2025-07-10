@@ -11,7 +11,7 @@ import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import {
-  hämtaSemesterSammanställningRealTime,
+  hämtaSemesterSammanställning,
   sparaSemesterFaltManuellt,
   bokforSemesterTransaktion,
 } from "../actions";
@@ -71,7 +71,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const hämtaData = async () => {
     setLoading(true);
     try {
-      const summaryData = await hämtaSemesterSammanställningRealTime(anställd.id);
+      const summaryData = await hämtaSemesterSammanställning(anställd.id);
       setSummary({
         betalda_dagar: summaryData.betalda_dagar ?? 0,
         sparade_dagar: summaryData.sparade_dagar ?? 0,
