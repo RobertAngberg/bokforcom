@@ -367,6 +367,43 @@ export function getFieldsForRow(
       ];
     }
 
+    // Specialfall: Företagsbil – visa bilmodell, summa och kommentar
+    if (rowId === "foretagsbilExtra") {
+      return [
+        {
+          label: "Bilmodell",
+          name: "kolumn1", // Använd kolumn1 för bilmodell
+          type: "text",
+          value: modalFields.kolumn1,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn1: e.target.value })),
+          required: true,
+          placeholder: "T.ex. Volvo V70, BMW 320i",
+        },
+        {
+          label: "Summa",
+          name: "kolumn2",
+          type: "number",
+          value: modalFields.kolumn2,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          required: true,
+          step: "0.01",
+          placeholder: "Ange summa",
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text" as const,
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          placeholder: "Valfri kommentar",
+        },
+      ];
+    }
+
     const fields: any[] = [
       // FÖRSTA FÄLTET: Antal/Modell/Summa (beroende på extraradtyp)
       {

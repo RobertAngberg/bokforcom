@@ -1,5 +1,5 @@
-import { RAD_KONFIGURATIONER } from "./Lönespecar/Extrarader/extraradDefinitioner";
-import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
+import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
+import { SKATTETABELL_34_1_2025 } from "../skattetabell34";
 
 // Om semestertillägg – kortfattat:
 

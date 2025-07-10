@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { hämtaExtrarader, taBortExtrarad } from "../../actions";
 import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LöneTabell";
-import { beräknaLönekomponenter } from "../../löneberäkningar";
+import { beräknaLönekomponenter } from "../löneberäkningar";
 
 type LönekomponenterProps = {
   lönespec: any;

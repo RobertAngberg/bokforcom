@@ -1,7 +1,7 @@
 // beräknaTotalsummaAutomatiskt: true = antal × belopp per enhet (räkna ut totalsumman automatiskt)
 // beräknaTotalsummaAutomatiskt: false = användaren matar in totalsumman direkt
 
-import { beräknaKarensavdrag, beräknaDaglön, beräknaObetaldDag } from "../../löneberäkningar";
+import { beräknaKarensavdrag, beräknaDaglön, beräknaObetaldDag } from "../löneberäkningar";
 
 export interface RadKonfiguration {
   label: string;
@@ -100,10 +100,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -113,10 +112,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1", // (valfritt, men tydligare)
-      beloppPlaceholder: "à SEK", // Lägg till denna rad
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false, // Sätt till false!
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -126,10 +124,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1", // (valfritt, men tydligare)
-      beloppPlaceholder: "à SEK", // Lägg till denna rad
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false, // Sätt till false!
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -139,10 +136,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1", // (valfritt, men tydligare)
-      beloppPlaceholder: "à SEK", // Lägg till denna rad
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false, // Sätt till false!
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -208,10 +204,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: false,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -221,10 +216,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: false,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -234,10 +228,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: false,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -247,10 +240,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: false,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -260,10 +252,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: false,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -343,10 +334,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     läggTillIBruttolön: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false, // Visa alltid belopp manuellt
+      beräknaTotalsummaAutomatiskt: true,
       enhetDropdown: ["Timme", "Dag", "St"],
     },
   },
@@ -356,12 +346,13 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
+    beräknaVärde: () => 1,
+    beräknaTotalt: (grundlön, antal) => antal * 1,
     fält: {
       antalLabel: "Summa",
-      antalPlaceholder: "0",
+      antalPlaceholder: "Ange summa i kronor",
       step: "0.01",
       beräknaTotalsummaAutomatiskt: false,
-      skipKommentar: false,
     },
   },
 
@@ -372,10 +363,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     läggTillIBruttolön: true,
     fält: {
       antalLabel: "Summa",
-      antalPlaceholder: "0",
+      antalPlaceholder: "Ange summa i kronor",
       step: "0.01",
       beräknaTotalsummaAutomatiskt: false,
-      skipKommentar: false,
     },
   },
 
@@ -384,25 +374,27 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
+    beräknaVärde: () => 1,
+    beräknaTotalt: (grundlön, antal) => antal * 1,
     fält: {
       antalLabel: "Summa",
-      antalPlaceholder: "0",
+      antalPlaceholder: "Ange summa i kronor",
       step: "0.01",
       beräknaTotalsummaAutomatiskt: false,
-      skipKommentar: false,
     },
   },
 
   obetaldFranvaro: {
     label: "Obetald frånvaro",
     enhet: "kr",
-    negativtBelopp: true, // Detta gör att summan dras minus
+    beräknaVärde: () => 1,
+    beräknaTotalt: (grundlön, antal) => antal * 1,
+    negativtBelopp: true,
     fält: {
       antalLabel: "Summa",
-      antalPlaceholder: "0",
+      antalPlaceholder: "Ange summa i kronor",
       step: "0.01",
       beräknaTotalsummaAutomatiskt: false,
-      skipKommentar: false,
     },
   },
 
@@ -411,11 +403,11 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "st",
     skattepliktig: true,
     fält: {
-      antalLabel: "",
-      antalPlaceholder: "",
-      beloppPlaceholder: "à SEK",
+      antalLabel: "Antal",
+      antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "Belopp",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 
@@ -425,29 +417,13 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     läggTillINettolön: true,
     fält: {
       antalLabel: "Antal",
-      antalPlaceholder: "1",
-      beloppPlaceholder: "à SEK",
+      antalPlaceholder: "Ange antal",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
+      beloppPlaceholder: "Belopp (använd - för avdrag)",
       enhetDropdown: ["Timme", "Dag", "St"],
     },
   },
-
-  // Betald semester tas bort ur extraradlistan
-  // betaldSemester: {
-  //   label: "Betald semester",
-  //   enhet: "dagar",
-  //   skattepliktig: true,
-  //   läggTillIBruttolön: true,
-  //   beräknaVärde: (grundlön) => grundlön * 0.0043, // 0,43% per dag enligt semesterlagen
-  //   beräknaTotalt: (grundlön, antal) => grundlön * 0.0043 * antal,
-  //   fält: {
-  //     antalLabel: "Antal dagar",
-  //     antalPlaceholder: "Ange antal semesterdagar",
-  //     step: "0.5",
-  //     beräknaTotalsummaAutomatiskt: true,
-  //   },
-  // },
 };
 
 export type RadKonfigurationType = RadKonfiguration;

@@ -4,7 +4,6 @@
 import { Pool } from "pg";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { beräknaIntjänadeDagar } from "./Semester/semesterBeräkningar";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -50,13 +49,7 @@ export async function hämtaAllaAnställda() {
     const client = await pool.connect();
 
     const query = `
-      SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
-             clearingnummer, bankkonto, adress, postnummer, ort, 
-             startdatum, slutdatum, anställningstyp, löneperiod, 
-             ersättning_per, kompensation, arbetsvecka_timmar, arbetsbelastning, 
-             deltid_procent, tjänsteställe_adress, tjänsteställe_ort, 
-             skattetabell, skattekolumn, växa_stöd, user_id, skapad, uppdaterad
-      FROM anställda 
+      SELECT * FROM anställda 
       WHERE user_id = $1 
       ORDER BY skapad DESC
     `;
@@ -83,13 +76,7 @@ export async function hämtaAnställd(anställdId: number) {
     const client = await pool.connect();
 
     const query = `
-      SELECT id, förnamn, efternamn, personnummer, jobbtitel, mail, 
-             clearingnummer, bankkonto, adress, postnummer, ort, 
-             startdatum, slutdatum, anställningstyp, löneperiod, 
-             ersättning_per, kompensation, arbetsvecka_timmar, arbetsbelastning, 
-             deltid_procent, tjänsteställe_adress, tjänsteställe_ort, 
-             skattetabell, skattekolumn, växa_stöd, user_id, skapad, uppdaterad
-      FROM anställda 
+      SELECT * FROM anställda 
       WHERE id = $1 AND user_id = $2
     `;
 
@@ -878,252 +865,15 @@ export async function taBortLönespec(lönespecId: number) {
   }
 }
 
-// ======= SEMESTER =======
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: number;
+// --- Stubbar för ModernSemester.tsx ---
+export async function hämtaSemesterSammanställning() {
+  throw new Error("hämtaSemesterSammanställning är inte implementerad.");
 }
 
-export interface SemesterSummary {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
+export async function sparaSemesterFaltManuellt() {
+  throw new Error("sparaSemesterFaltManuellt är inte implementerad.");
 }
 
-export async function hämtaSemesterSammanställning(anställdId: number): Promise<SemesterSummary> {
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      `
-      SELECT 
-        betalda_dagar, 
-        sparade_dagar, 
-        skuld, 
-        komp_dagar
-      FROM semester
-      WHERE anställd_id = $1
-      ORDER BY datum DESC, id DESC
-      LIMIT 1
-      `,
-      [anställdId]
-    );
-    const row = result.rows[0] || {};
-    return {
-      betalda_dagar: parseFloat(row.betalda_dagar) || 0,
-      sparade_dagar: parseFloat(row.sparade_dagar) || 0,
-      skuld: parseFloat(row.skuld) || 0,
-      komp_dagar: parseFloat(row.komp_dagar) || 0,
-    };
-  } finally {
-    client.release();
-  }
-}
-
-export async function registreraSemesterintjäning(
-  anställdId: number,
-  månad: string, // "2025-07"
-  månadslön: number,
-  tjänstegrad: number = 100,
-  skapadAv: number
-): Promise<void> {
-  const client = await pool.connect();
-  try {
-    const intjänadeDagar = beräknaIntjänadeDagar(tjänstegrad);
-    const existing = await client.query(
-      `
-      SELECT id FROM semester 
-      WHERE anställd_id = $1 AND typ = 'Intjänat' 
-      AND datum::text LIKE $2
-    `,
-      [anställdId, `${månad}%`]
-    );
-    if (existing.rows.length === 0) {
-      await client.query(
-        `
-        INSERT INTO semester (
-          anställd_id, datum, typ, antal, beskrivning, bokfört, skapad_av
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `,
-        [
-          anställdId,
-          `${månad}-01`,
-          "Intjänat",
-          intjänadeDagar,
-          `Semesterintjäning ${månad} (${tjänstegrad}%)`,
-          false,
-          skapadAv,
-        ]
-      );
-    }
-  } finally {
-    client.release();
-  }
-}
-
-export async function registreraSemesteruttag(
-  anställdId: number,
-  startDatum: string,
-  slutDatum: string,
-  antal: number,
-  beskrivning: string,
-  lönespecId: number | null,
-  skapadAv: number
-): Promise<{ success: boolean; message: string; id?: number }> {
-  const client = await pool.connect();
-  try {
-    // TODO: Anpassa logik till nya fält (betalda_dagar, sparade_dagar, skuld, komp_dagar)
-    return { success: true, message: "Uttag registrerat (logik ej implementerad)", id: undefined };
-  } finally {
-    client.release();
-  }
-}
-
-export async function hämtaSemesterHistorik(anställdId: number): Promise<SemesterRecord[]> {
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      `
-      SELECT 
-        s.*,
-        u.name as skapad_av_namn,
-        l.månad, l.år
-      FROM semester s
-      LEFT JOIN users u ON s.skapad_av = u.id
-      LEFT JOIN lönespecifikationer l ON s.lönespecifikation_id = l.id
-      WHERE s.anställd_id = $1
-      ORDER BY s.datum DESC, s.id DESC
-    `,
-      [anställdId]
-    );
-    return result.rows;
-  } finally {
-    client.release();
-  }
-}
-
-export async function markeraSomBokförd(semesterId: number): Promise<void> {
-  const client = await pool.connect();
-  try {
-    await client.query(
-      `
-      UPDATE semester 
-      SET bokfört = true, uppdaterad = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `,
-      [semesterId]
-    );
-  } finally {
-    client.release();
-  }
-}
-
-export async function uppdateraSemesterFalt(
-  anstalldId: number,
-  fält: "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar",
-  nyttVärde: number
-): Promise<void> {
-  const client = await pool.connect();
-  try {
-    let kolumn = "";
-    switch (fält) {
-      case "betalda_dagar":
-        kolumn = "betalda_dagar";
-        break;
-      case "sparade_dagar":
-        kolumn = "sparade_dagar";
-        break;
-      case "skuld":
-        kolumn = "skuld";
-        break;
-      case "komp_dagar":
-        kolumn = "komp_dagar";
-        break;
-      default:
-        throw new Error("Otillåtet fält");
-    }
-    await client.query(`UPDATE semester SET ${kolumn} = $2 WHERE anställd_id = $1`, [
-      anstalldId,
-      nyttVärde,
-    ]);
-  } finally {
-    client.release();
-  }
-}
-
-export async function sparaSemesterFaltManuellt(
-  anställdId: number,
-  fieldName: string,
-  newValue: number
-): Promise<void> {
-  const client = await pool.connect();
-  try {
-    // This is a simplified implementation - in a real app you'd want more validation
-    await client.query(`UPDATE semester SET ${fieldName} = $1 WHERE anställd_id = $2`, [
-      newValue,
-      anställdId,
-    ]);
-  } finally {
-    client.release();
-  }
-}
-
-export async function bokforSemesterTransaktion({
-  rows,
-  kommentar,
-  anstalldId,
-  anstalldNamn,
-  userId,
-}: {
-  rows: { konto: string; namn: string; debet: number; kredit: number }[];
-  kommentar?: string;
-  anstalldId: number;
-  anstalldNamn: string;
-  userId?: number;
-}) {
-  const session = await auth();
-  const realUserId = userId || (session?.user?.id ? parseInt(session.user.id, 10) : null);
-  if (!realUserId) throw new Error("Ingen inloggad användare");
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const transResult = await client.query(
-      `INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId")
-       VALUES (NOW(), $1, $2, $3, $4) RETURNING id`,
-      [
-        `Semesteravstämning ${anstalldNamn}`,
-        rows.reduce((sum, r) => sum + (r.debet || r.kredit || 0), 0),
-        kommentar || null,
-        realUserId,
-      ]
-    );
-    const transId = transResult.rows[0].id;
-    for (const row of rows) {
-      const kontoRes = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        row.konto,
-      ]);
-      if (!kontoRes.rows.length) throw new Error(`Konto ${row.konto} saknas i kontoplanen`);
-      await client.query(
-        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-         VALUES ($1, $2, $3, $4)`,
-        [transId, kontoRes.rows[0].id, row.debet, row.kredit]
-      );
-    }
-    await client.query("COMMIT");
-    client.release();
-    return { success: true, transaktionsId: transId };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    client.release();
-    throw error;
-  }
+export async function bokforSemesterTransaktion() {
+  throw new Error("bokforSemesterTransaktion är inte implementerad.");
 }

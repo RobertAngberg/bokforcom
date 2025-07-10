@@ -1,5 +1,4 @@
 //#region Huvud
-import { useState } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
 import Lönekomponenter from "./Lönekomponenter/Lönekomponenter";
@@ -8,35 +7,34 @@ import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
 import MailaLönespec from "./MailaLönespec";
-import Förhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
 
 interface LönespecCardProps {
   lönespec: any;
   anställd: any;
   utlägg: any[];
+  onFörhandsgranskning: (id: string) => void;
   onBeräkningarUppdaterade: (lönespecId: string, beräkningar: any) => void;
   beräknadeVärden: any;
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
-  extrarader?: any[];
-  visaExtraRader?: boolean; // NY PROP
+  företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLönespec
+  extrarader?: any[]; // Lägg till denna om du vill skicka extrarader till MailaLönespec
 }
 
 export default function LönespecCard({
   lönespec,
   anställd,
   utlägg,
+  onFörhandsgranskning,
   onBeräkningarUppdaterade,
   beräknadeVärden,
   ingenAnimering,
   onTaBortLönespec,
   taBortLoading,
+  företagsprofil,
   extrarader = [],
-  visaExtraRader = false,
 }: LönespecCardProps) {
-  const [aktuellExtraradData, setAktuellExtraradData] = useState<any[]>([]);
-  const [visaFörhandsgranskning, setVisaFörhandsgranskning] = useState(false);
   //#endregion
 
   //#region Helper Functions
@@ -99,8 +97,6 @@ export default function LönespecCard({
         övertid={övertid}
         lönespec={lönespec}
         onBeräkningarUppdaterade={onBeräkningarUppdaterade}
-        onExtraradUppdaterade={(lönespecId, extrarader) => setAktuellExtraradData(extrarader)}
-        visaExtraRader={visaExtraRader} // Skicka vidare
       />
 
       <Utlägg
@@ -119,34 +115,24 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
-      {/* FÖRHANDSGRANSKA, MAILA & TA BORT på samma rad */}
-      {/* Knappar borttagna enligt önskemål */}
-
-      {/* Endast Ta bort-knapp */}
-      {/* <div className="mt-6 flex justify-end">
-        <Knapp text="🗑️ Ta bort lönespec" onClick={onTaBortLönespec} loading={taBortLoading} />
-      </div> */}
-      {visaFörhandsgranskning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto p-6 relative">
-            <button
-              className="absolute top-2 right-2 text-2xl text-gray-400 hover:text-black"
-              onClick={() => setVisaFörhandsgranskning(false)}
-              aria-label="Stäng"
-            >
-              ×
-            </button>
-            <Förhandsgranskning
-              lönespec={lönespec}
-              anställd={anställd}
-              företagsprofil={{}} // TODO: hämta företagsprofil korrekt
-              extrarader={extrarader}
-              beräknadeVärden={beräknadeVärden[lönespec.id]}
-              onStäng={() => setVisaFörhandsgranskning(false)}
-            />
-          </div>
-        </div>
-      )}
+      <div className="flex gap-2 mt-4 justify-center">
+        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => onFörhandsgranskning(lönespec.id)} />
+        <MailaLönespec
+          lönespec={lönespec}
+          anställd={anställd}
+          företagsprofil={företagsprofil}
+          extrarader={lönespec.extrarader || []}
+          beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+        />
+        {onTaBortLönespec && (
+          <Knapp
+            text="🗑️ Ta bort lönespec"
+            loading={taBortLoading}
+            loadingText="⏳ Tar bort..."
+            onClick={onTaBortLönespec}
+          />
+        )}
+      </div>
     </div>
   );
 
