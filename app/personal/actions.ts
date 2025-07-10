@@ -295,13 +295,7 @@ export async function hämtaFöretagsprofil(userId: string): Promise<any | null>
   }
 }
 
-export async function hämtaSemesterTransaktioner(
-  anställdId: number,
-  startDatum?: string,
-  slutDatum?: string,
-  typ?: string,
-  bokfört?: boolean
-) {
+export async function hämtaSemesterTransaktioner(anställdId: number) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
@@ -324,49 +318,12 @@ export async function hämtaSemesterTransaktioner(
       return [];
     }
 
-    let query = `
-      SELECT 
-        s.*,
-        l.månad as lönespec_månad,
-        l.år as lönespec_år
-      FROM semester s
-      LEFT JOIN lönespecifikationer l ON s.lönespecifikation_id = l.id
-      WHERE s.anställd_id = $1
+    const query = `
+      SELECT betalda_dagar, sparade_dagar, skuld, komp_dagar
+      FROM semester
+      WHERE anställd_id = $1
     `;
-
-    const queryParams: any[] = [anställdId];
-    let paramIndex = 2;
-
-    // Lägg till filter
-    if (startDatum) {
-      query += ` AND s.datum >= $${paramIndex}`;
-      queryParams.push(startDatum);
-      paramIndex++;
-    }
-
-    if (slutDatum) {
-      query += ` AND s.datum <= $${paramIndex}`;
-      queryParams.push(slutDatum);
-      paramIndex++;
-    }
-
-    if (typ && typ !== "Alla") {
-      query += ` AND s.typ = $${paramIndex}`;
-      queryParams.push(typ);
-      paramIndex++;
-    }
-
-    if (bokfört !== undefined) {
-      query += ` AND s.bokfört = $${paramIndex}`;
-      queryParams.push(bokfört);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY s.datum DESC, s.skapad DESC`;
-
-    const result = await client.query(query, queryParams);
-    console.log("✅ Hittade", result.rows.length, "semestertransaktioner");
-
+    const result = await client.query(query, [anställdId]);
     client.release();
     return result.rows;
   } catch (error) {
@@ -377,14 +334,8 @@ export async function hämtaSemesterTransaktioner(
 
 export async function sparaSemesterTransaktion(data: {
   anställdId: number;
-  datum: string;
-  typ: string;
-  antal: number;
-  frånDatum?: string;
-  tillDatum?: string;
-  beskrivning?: string;
-  lönespecifikationId?: number;
-  bokfört?: boolean;
+  nyttVärde: number;
+  kolumn: "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
 }) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -395,51 +346,57 @@ export async function sparaSemesterTransaktion(data: {
 
   try {
     const client = await pool.connect();
-
-    // Kontrollera att anställd tillhör användaren
-    const checkQuery = `
-      SELECT id FROM anställda 
-      WHERE id = $1 AND user_id = $2
+    // UPDATE
+    const updateQuery = `
+      UPDATE semester
+      SET ${data.kolumn} = $1, uppdaterad = NOW()
+      WHERE anställd_id = $2
+      RETURNING id
     `;
-    const checkResult = await client.query(checkQuery, [data.anställdId, userId]);
-
-    if (checkResult.rows.length === 0) {
-      client.release();
-      return { success: false, error: "Anställd inte hittad" };
+    const updateResult = await client.query(updateQuery, [data.nyttVärde, data.anställdId]);
+    let id = updateResult.rows[0]?.id;
+    if (!id) {
+      // INSERT
+      let betalda_dagar = 0,
+        sparade_dagar = 0,
+        skuld = 0,
+        komp_dagar = 0;
+      switch (data.kolumn) {
+        case "betalda_dagar":
+          betalda_dagar = data.nyttVärde;
+          break;
+        case "sparade_dagar":
+          sparade_dagar = data.nyttVärde;
+          break;
+        case "skuld":
+          skuld = data.nyttVärde;
+          break;
+        case "komp_dagar":
+          komp_dagar = data.nyttVärde;
+          break;
+      }
+      const insertQuery = `
+        INSERT INTO semester (
+          anställd_id, betalda_dagar, sparade_dagar, skuld, komp_dagar
+        ) VALUES (
+          $1, $2, $3, $4, $5
+        ) RETURNING id
+      `;
+      const insertResult = await client.query(insertQuery, [
+        data.anställdId,
+        betalda_dagar,
+        sparade_dagar,
+        skuld,
+        komp_dagar,
+      ]);
+      id = insertResult.rows[0]?.id;
     }
-
-    const insertQuery = `
-      INSERT INTO semester (
-        anställd_id, datum, typ, antal, från_datum, till_datum, 
-        beskrivning, lönespecifikation_id, bokfört, skapad_av
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-      ) RETURNING id
-    `;
-
-    const values = [
-      data.anställdId,
-      data.datum,
-      data.typ,
-      data.antal,
-      data.frånDatum || null,
-      data.tillDatum || null,
-      data.beskrivning || null,
-      data.lönespecifikationId || null,
-      data.bokfört || false,
-      userId,
-    ];
-
-    const result = await client.query(insertQuery, values);
-    const nyTransaktionId = result.rows[0].id;
-
     client.release();
     revalidatePath("/personal");
-
     return {
       success: true,
-      id: nyTransaktionId,
-      message: "Semestertransaktion sparad!",
+      id,
+      message: "Semesterfält uppdaterat!",
     };
   } catch (error) {
     console.error("❌ sparaSemesterTransaktion error:", error);
@@ -865,15 +822,62 @@ export async function taBortLönespec(lönespecId: number) {
   }
 }
 
-// --- Stubbar för ModernSemester.tsx ---
-export async function hämtaSemesterSammanställning() {
-  throw new Error("hämtaSemesterSammanställning är inte implementerad.");
-}
+export async function bokförSemester({
+  userId,
+  rader,
+  kommentar,
+  datum,
+}: {
+  userId: number;
+  rader: { kontobeskrivning: string; belopp: number }[];
+  kommentar?: string;
+  datum?: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Ingen inloggad användare");
+  const realUserId = userId || parseInt(session.user.id, 10);
 
-export async function sparaSemesterFaltManuellt() {
-  throw new Error("sparaSemesterFaltManuellt är inte implementerad.");
-}
+  try {
+    const client = await pool.connect();
+    const transaktionsdatum = datum || new Date().toISOString();
 
-export async function bokforSemesterTransaktion() {
-  throw new Error("bokforSemesterTransaktion är inte implementerad.");
+    // Skapa huvudtransaktion
+    const huvudBeskrivning = "Semestertransaktion";
+    const insertTransaktion = await client.query(
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+      [transaktionsdatum, huvudBeskrivning, kommentar || null, realUserId]
+    );
+    const transaktionsId = insertTransaktion.rows[0].id;
+
+    // Lägg till varje rad i transaktionsposter
+    for (const rad of rader) {
+      // Extrahera kontonummer ur kontobeskrivning (t.ex. "2920 Upplupna semesterlöner")
+      const kontoMatch = rad.kontobeskrivning.match(/^(\d+)/);
+      const kontonummer = kontoMatch ? kontoMatch[1] : null;
+      if (!kontonummer)
+        throw new Error(`Kunde inte extrahera kontonummer ur beskrivning: ${rad.kontobeskrivning}`);
+      // Slå upp id i konton-tabellen
+      const kontoRes = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        kontonummer,
+      ]);
+      if (kontoRes.rows.length === 0)
+        throw new Error(`Kontonummer ${kontonummer} finns ej i konton-tabellen!`);
+      const konto_id = kontoRes.rows[0].id;
+      const debet = rad.belopp > 0 ? rad.belopp : 0;
+      const kredit = rad.belopp < 0 ? -rad.belopp : 0;
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [transaktionsId, konto_id, debet, kredit]
+      );
+    }
+
+    client.release();
+    revalidatePath("/personal");
+    return { success: true, message: "Bokföringsrader sparade!" };
+  } catch (error) {
+    console.error("❌ bokförSemester error:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
+  }
 }

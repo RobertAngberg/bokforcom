@@ -26,10 +26,12 @@ import {
 
 type Props = {
   fakturor: any[];
+  kunder: any[];
+  artiklar: any[];
 };
 //#endregion
 
-export default function Fakturor({ fakturor: initialFakturor }: Props) {
+export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }: Props) {
   //#region Context och state
   const { formData, setFormData, setKundStatus } = useFakturaContext();
   const { data: session } = useSession();

@@ -103,6 +103,7 @@ export default function Lönekomponenter({
   //#endregion
 
   return (
+    // för att lägga till i commit git....
     <div className="bg-slate-700 p-4 rounded-lg">
       <h3 className="text-lg font-semibold text-white mb-4">Lönekomponenter</h3>
 

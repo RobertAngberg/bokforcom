@@ -12,7 +12,7 @@ interface LönespecCardProps {
   lönespec: any;
   anställd: any;
   utlägg: any[];
-  onFörhandsgranskning: (id: string) => void;
+  onFörhandsgranskning?: (id: string) => void; // Nu valfri
   onBeräkningarUppdaterade: (lönespecId: string, beräkningar: any) => void;
   beräknadeVärden: any;
   ingenAnimering?: boolean;
@@ -20,6 +20,7 @@ interface LönespecCardProps {
   taBortLoading?: boolean;
   företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLönespec
   extrarader?: any[]; // Lägg till denna om du vill skicka extrarader till MailaLönespec
+  visaExtraRader?: boolean; // NY PROP
 }
 
 export default function LönespecCard({
@@ -34,6 +35,7 @@ export default function LönespecCard({
   taBortLoading,
   företagsprofil,
   extrarader = [],
+  visaExtraRader = false,
 }: LönespecCardProps) {
   //#endregion
 
@@ -97,6 +99,7 @@ export default function LönespecCard({
         övertid={övertid}
         lönespec={lönespec}
         onBeräkningarUppdaterade={onBeräkningarUppdaterade}
+        visaExtraRader={true}
       />
 
       <Utlägg
@@ -116,7 +119,10 @@ export default function LönespecCard({
       />
 
       <div className="flex gap-2 mt-4 justify-center">
-        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => onFörhandsgranskning(lönespec.id)} />
+        <Knapp
+          text="👁️ Förhandsgranska / PDF"
+          onClick={() => onFörhandsgranskning?.(lönespec.id)}
+        />
         <MailaLönespec
           lönespec={lönespec}
           anställd={anställd}

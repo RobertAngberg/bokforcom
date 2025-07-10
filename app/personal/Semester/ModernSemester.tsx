@@ -11,9 +11,9 @@ import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import {
-  hämtaSemesterSammanställning,
-  sparaSemesterFaltManuellt,
-  bokforSemesterTransaktion,
+  hämtaSemesterTransaktioner,
+  sparaSemesterTransaktion,
+  uppdateraSemesterdata,
 } from "../actions";
 import BokforModal from "./BokforModal";
 
@@ -71,13 +71,19 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const hämtaData = async () => {
     setLoading(true);
     try {
-      const summaryData = await hämtaSemesterSammanställning(anställd.id);
-      setSummary({
-        betalda_dagar: summaryData.betalda_dagar ?? 0,
-        sparade_dagar: summaryData.sparade_dagar ?? 0,
-        skuld: summaryData.skuld ?? 0,
-        komp_dagar: summaryData.komp_dagar ?? 0,
-      });
+      const transaktioner = await hämtaSemesterTransaktioner(anställd.id);
+      // Summera kolumner direkt
+      let betalda_dagar = 0,
+        sparade_dagar = 0,
+        skuld = 0,
+        komp_dagar = 0;
+      for (const t of transaktioner) {
+        betalda_dagar += Number(t.betalda_dagar) || 0;
+        sparade_dagar += Number(t.sparade_dagar) || 0;
+        skuld += Number(t.skuld) || 0;
+        komp_dagar += Number(t.komp_dagar) || 0;
+      }
+      setSummary({ betalda_dagar, sparade_dagar, skuld, komp_dagar });
     } catch (error) {
       console.error("Fel vid hämtning av semesterdata:", error);
       alert("❌ Kunde inte hämta semesterdata");
@@ -101,17 +107,17 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     }
     setLoading(true);
     try {
-      await sparaSemesterFaltManuellt(anställd.id, editingField as any, newValue);
-      setSummary((prev: any) =>
-        prev
-          ? {
-              ...prev,
-              [editingField]: newValue,
-            }
-          : null
-      );
+      // Skicka kolumnnamn och nytt värde direkt
+      if (newValue !== summary[editingField]) {
+        await sparaSemesterTransaktion({
+          anställdId: anställd.id,
+          kolumn: editingField, // "betalda_dagar", "sparade_dagar", "skuld", "komp_dagar"
+          nyttVärde: newValue,
+        });
+      }
       setEditingField(null);
       setEditValue("");
+      await hämtaData(); // Hämta om data från servern
     } catch (error) {
       console.error("Fel vid sparande:", error);
       alert("❌ Kunde inte spara ändringen");
@@ -197,18 +203,32 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   };
 
   const handleConfirmBokfor = async (kommentar: string) => {
+    setLoading(true);
     try {
-      await bokforSemesterTransaktion({
-        rows: bokforRows,
-        kommentar,
-        anstalldId: anställd.id,
-        anstalldNamn: `${anställd.förnamn} ${anställd.efternamn}`,
+      // Mappa om bokforRows till rätt format för bokförSemester
+      const rader = bokforRows.map((row) => ({
+        kontobeskrivning: `${row.konto} ${row.namn}`,
+        belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
+      }));
+      const res = await (
+        await import("../actions")
+      ).bokförSemester({
         userId,
+        rader,
+        kommentar,
+        datum: new Date().toISOString(),
       });
       setBokforModalOpen(false);
-      alert("Bokföring sparad!");
+      if (res?.success) {
+        alert("Bokföring sparad!");
+        await hämtaData();
+      } else {
+        alert("Fel vid bokföring: " + (res?.error || "Okänt fel"));
+      }
     } catch (error) {
       alert("Fel vid bokföring: " + (error instanceof Error ? error.message : error));
+    } finally {
+      setLoading(false);
     }
   };
 
