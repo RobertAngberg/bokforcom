@@ -7,6 +7,8 @@ import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
 import MailaLönespec from "./MailaLönespec";
+import { useState } from "react";
+import Förhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
 
 interface LönespecCardProps {
   lönespec: any;
@@ -85,6 +87,8 @@ export default function LönespecCard({
   //#endregion
 
   //#region Render Content
+  const [visaFörhandsgranskning, setVisaFörhandsgranskning] = useState(false);
+
   const innehåll = (
     <div className="space-y-6">
       <ToppInfo
@@ -119,10 +123,7 @@ export default function LönespecCard({
       />
 
       <div className="flex gap-2 mt-4 justify-center">
-        <Knapp
-          text="👁️ Förhandsgranska / PDF"
-          onClick={() => onFörhandsgranskning?.(lönespec.id)}
-        />
+        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaFörhandsgranskning(true)} />
         <MailaLönespec
           lönespec={lönespec}
           anställd={anställd}
@@ -139,6 +140,27 @@ export default function LönespecCard({
           />
         )}
       </div>
+      {visaFörhandsgranskning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
+              onClick={() => setVisaFörhandsgranskning(false)}
+              aria-label="Stäng"
+            >
+              ×
+            </button>
+            <Förhandsgranskning
+              lönespec={lönespec}
+              anställd={anställd}
+              företagsprofil={företagsprofil}
+              extrarader={lönespec.extrarader || []}
+              beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+              onStäng={() => setVisaFörhandsgranskning(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 
