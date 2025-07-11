@@ -8,8 +8,9 @@ import Anställda from "./Anstallda/Anstallda";
 import Personalinformation from "./Anstallda/NyAnställd/Personalinformation";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
-import ModernSemester from "./Semester/ModernSemester";
+import ModernSemester from "./Semester/Semester";
 import Lonekorning from "./Lonekorning/Lonekorning";
+import Semester from "./Semester/Semester";
 
 export default function PersonalPage() {
   // #endregion
@@ -52,7 +53,7 @@ export default function PersonalPage() {
             onAvbryt={handleAvbrytFormulär}
           />
         </AnimeradFlik>
-        <AnimeradFlik title="Lönekorning" icon="💰" forcedOpen={false}>
+        <AnimeradFlik title="Lönekörning" icon="💰" forcedOpen={false}>
           <Lonekorning />
         </AnimeradFlik>
         {valdAnställd && !visaAnställdFormulär && (
@@ -67,7 +68,7 @@ export default function PersonalPage() {
               <Lonespecar anställd={valdAnställd} />
             </AnimeradFlik>
             <AnimeradFlik title="Semester" icon="🏖️">
-              <ModernSemester
+              <Semester
                 anställd={{
                   ...valdAnställd,
                   anställningsdatum: valdAnställd.startdatum,

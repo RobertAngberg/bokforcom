@@ -354,9 +354,10 @@ export async function sparaSemesterTransaktion(data: {
       RETURNING id
     `;
     const updateResult = await client.query(updateQuery, [data.nyttVärde, data.anställdId]);
+    console.log("sparaSemesterTransaktion: updateResult", updateResult.rows);
     let id = updateResult.rows[0]?.id;
     if (!id) {
-      // INSERT
+      // Ingen rad uppdaterad, skapa en ny rad med rätt värde
       let betalda_dagar = 0,
         sparade_dagar = 0,
         skuld = 0,
@@ -390,6 +391,7 @@ export async function sparaSemesterTransaktion(data: {
         komp_dagar,
       ]);
       id = insertResult.rows[0]?.id;
+      console.log("sparaSemesterTransaktion: insertResult", insertResult.rows);
     }
     client.release();
     revalidatePath("/personal");

@@ -210,6 +210,27 @@ export default function AnställdaLista({
                         ingenAnimering={true}
                         visaExtraRader={true}
                       />
+                      <div className="flex gap-2 mt-2 justify-between items-center">
+                        <Knapp
+                          text="👁️ Förhandsgranska/PDF"
+                          onClick={() => {
+                            setFörhandsgranskaId(anställd.id);
+                            setFörhandsgranskaData({
+                              lönespec: getLönespec(anställd.id),
+                              anställd,
+                              företagsprofil: {},
+                              extrarader: [],
+                              beräknadeVärden: {},
+                            });
+                          }}
+                        />
+                        <div className="flex-1" />
+                        <Knapp
+                          text="🗑️ Ta bort lönespec"
+                          loading={taBort[anställd.id]}
+                          onClick={() => handleTaBortLönespec(anställd)}
+                        />
+                      </div>
                     </>
                   ) : (
                     <div className="space-y-4">
