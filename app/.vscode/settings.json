@@ -9,7 +9,14 @@
     ".vscode": true,
     "tsconfig.tsbuildinfo": true,
     "tsconfig.json": true,
-    ".env.local": true
+    ".env.local": true,
+    "globals.css": true
   },
-  "hide-files.files": [".vscode", "tsconfig.tsbuildinfo", "tsconfig.json", ".env.local"]
+  "hide-files.files": [
+    ".vscode",
+    "tsconfig.tsbuildinfo",
+    "tsconfig.json",
+    ".env.local",
+    "globals.css"
+  ]
 }

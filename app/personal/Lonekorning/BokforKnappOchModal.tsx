@@ -109,6 +109,22 @@ export default function BokförKnappOchModal({
     }
   };
 
+  // Logga summering och bokföringsrader för felsökning
+  if (bokföringsData) {
+    console.log("BOKFÖRINGS-SUMMERING:", bokföringsData.summering);
+    if (bokföringsData.summering?.rader) {
+      bokföringsData.summering.rader.forEach((rad: any) => {
+        console.log("Rad:", rad);
+      });
+    }
+    console.log("Total debet:", bokföringsData.summering?.totalDebet);
+    console.log("Total kredit:", bokföringsData.summering?.totalKredit);
+    console.log("Balanserar:", bokföringsData.summering?.balanserar);
+    if (bokföringsData.fel && bokföringsData.fel.length > 0) {
+      console.log("Fel:", bokföringsData.fel);
+    }
+  }
+
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

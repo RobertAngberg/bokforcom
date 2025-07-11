@@ -1,7 +1,12 @@
 "use client";
-import Anställda from "./Anställda";
+import Anställda from "./Anstallda";
 import MainLayout from "../../_components/MainLayout";
 import { useState } from "react";
+import AnimeradFlik from "../../_components/AnimeradFlik";
+import Personalinformation from "./NyAnställd/Personalinformation";
+import Kontrakt from "../Kontrakt/Kontrakt";
+import Lonespecar from "../Lonespecar/Lonespecar";
+import Semester from "../Semester/Semester";
 
 export default function AnställdaPage() {
   const [valdAnställd, setValdAnställd] = useState<any>(null);
@@ -16,6 +21,22 @@ export default function AnställdaPage() {
         visaFormulär={visaAnställdFormulär}
         onAvbryt={() => setVisaAnställdFormulär(false)}
       />
+      {valdAnställd && (
+        <div className="mt-8">
+          <AnimeradFlik title="Personalinformation" icon="📋" forcedOpen={true}>
+            <Personalinformation anställd={valdAnställd} />
+          </AnimeradFlik>
+          <AnimeradFlik title="Kontrakt" icon="📄">
+            <Kontrakt anställd={valdAnställd} />
+          </AnimeradFlik>
+          <AnimeradFlik title="Lönespecar" icon="💰">
+            <Lonespecar anställd={valdAnställd} />
+          </AnimeradFlik>
+          <AnimeradFlik title="Semester" icon="🏖️">
+            <Semester anställd={valdAnställd} userId={valdAnställd?.id || 0} />
+          </AnimeradFlik>
+        </div>
+      )}
     </MainLayout>
   );
 }

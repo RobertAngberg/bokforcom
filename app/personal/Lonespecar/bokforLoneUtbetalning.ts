@@ -359,6 +359,17 @@ function genereraBokföringsPoster(
     });
   }
 
+  // Logga ut poster och summeringar för felsökning
+  console.log("Bokföringsposter för", anställdNamn, poster);
+  console.log(
+    "Debet:",
+    poster.reduce((sum, p) => sum + p.debet, 0)
+  );
+  console.log(
+    "Kredit:",
+    poster.reduce((sum, p) => sum + p.kredit, 0)
+  );
+
   return poster;
 }
 

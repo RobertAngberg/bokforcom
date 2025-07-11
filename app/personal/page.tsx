@@ -11,6 +11,7 @@ import Lonespecar from "./Lonespecar/Lonespecar";
 import ModernSemester from "./Semester/Semester";
 import Lonekorning from "./Lonekorning/Lonekorning";
 import Semester from "./Semester/Semester";
+import Aaapage from "./aaapage";
 
 export default function PersonalPage() {
   // #endregion
@@ -43,9 +44,11 @@ export default function PersonalPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white mb-8">Personal</h1>
-        <AnimeradFlik title="Anställda" icon="👥" forcedOpen={true}>
+      <div className="">
+        <h1 className="text-3xl text-white mb-8 text-center">Personalaaa</h1>
+
+        <Aaapage />
+        {/* <AnimeradFlik title="Anställda" icon="👥" forcedOpen={true}>
           <Anställda
             onAnställdVald={handleAnställdVald}
             onLäggTillAnställd={handleLäggTillAnställd}
@@ -77,7 +80,7 @@ export default function PersonalPage() {
               />
             </AnimeradFlik>
           </>
-        )}
+        )} */}
       </div>
     </MainLayout>
   );
