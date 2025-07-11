@@ -3,12 +3,12 @@
 
 import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import BakåtPil from "../../_components/BakåtPil";
+import Forhandsgranskning from "../Förhandsgranskning";
 
 interface Props {
   mode: "steg2" | "steg3";
