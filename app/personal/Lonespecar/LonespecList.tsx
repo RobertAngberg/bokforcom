@@ -59,7 +59,7 @@ export default function LonespecList({
           Inga lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
           <br />
           <span className="text-sm text-gray-500">
-            Skapa lönespecar under "Lonekorning" när det är dags för utbetalning.
+            Skapa lönespecar under "Lönekorning" när det är dags för utbetalning.
           </span>
         </div>
       ) : (

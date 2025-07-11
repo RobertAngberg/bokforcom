@@ -6,9 +6,6 @@ import Knapp from "../../_components/Knapp";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import { skapaNyLönespec, taBortLönespec, hämtaLönespecifikationer } from "../actions";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
-import BankgiroExport from "./BankgiroExport";
-import BokforLoner from "../Lonespecar/BokforLoner";
-import LoneKnappar, { LöneBatchKnappar } from "./LoneKnappar";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
 
@@ -16,10 +13,12 @@ export default function AnställdaLista({
   anställda,
   loading,
   utbetalningsdatum,
+  onLonespecarChange,
 }: {
   anställda: any[];
   loading: boolean;
   utbetalningsdatum: Date | null;
+  onLonespecarChange?: (specar: Record<string, any>) => void;
 }) {
   const { setLonespecar } = useLonespecContext();
   const [sparar, setSparar] = useState<Record<string, boolean>>({});
@@ -68,8 +67,8 @@ export default function AnställdaLista({
         }
 
         setBefintligaLönespecar(befintliga);
-        // Sätt i context
         setLonespecar(Object.values(befintliga));
+        onLonespecarChange?.(befintliga);
       } catch (error) {
         console.error("❌ Fel vid laddning av lönespecar:", error);
       } finally {
@@ -78,7 +77,7 @@ export default function AnställdaLista({
     };
 
     laddaBefintligaLönespecar();
-  }, [anställda, utbetalningsdatum, getLöneperiod, setLonespecar]);
+  }, [anställda, utbetalningsdatum, getLöneperiod, setLonespecar, onLonespecarChange]);
 
   const handleSkapaNyLönespec = async (anställd: any) => {
     if (!utbetalningsdatum) return;
@@ -187,142 +186,76 @@ export default function AnställdaLista({
           Lönekörning {utbetalningsdatum?.toLocaleDateString("sv-SE")} ({anställda.length}{" "}
           anställda)
         </h5>
-        {/* Knappar för export och bokföring */}
-        <div className="flex gap-2">
-          <BankgiroExport
-            anställda={anställda}
-            utbetalningsdatum={utbetalningsdatum}
-            lönespecar={{ ...befintligaLönespecar, ...nyaLönespecar }}
-          />
-          <BokforLoner
-            lönespec={Object.values({ ...befintligaLönespecar, ...nyaLönespecar })}
-            extrarader={[]}
-            beräknadeVärden={{}}
-            anställdNamn={"Alla"}
-            isOpen={false}
-            onClose={() => {}}
-          />
-        </div>
+        {/* Batch action buttons removed from header area to avoid duplication */}
       </div>
-
       {loading || laddaLönespecar ? (
         <div className="text-gray-300 text-center py-4">Laddar anställda och lönespecar...</div>
       ) : anställda.length === 0 ? (
         <div className="text-gray-300 text-center py-4">Inga anställda hittades</div>
       ) : (
-        <>
-          <div className="space-y-4">
-            {anställda.map((anställd) => (
-              <div key={anställd.id} className="space-y-2">
-                <AnimeradFlik
-                  title={`${anställd.förnamn} ${anställd.efternamn}`}
-                  icon="👤"
-                  visaSummaDirekt={`${parseFloat(anställd.kompensation || 0).toLocaleString("sv-SE")} kr`}
-                >
-                  <div className="space-y-4">
-                    {harLönespec(anställd.id) ? (
-                      <>
-                        <Lonespecar
-                          anställd={anställd}
-                          specificLönespec={getLönespec(anställd.id)}
-                          ingenAnimering={true}
-                          visaExtraRader={true}
+        <div className="space-y-4">
+          {anställda.map((anställd) => (
+            <div key={anställd.id} className="space-y-2">
+              <AnimeradFlik
+                title={`${anställd.förnamn} ${anställd.efternamn}`}
+                icon="👤"
+                visaSummaDirekt={`${parseFloat(anställd.kompensation || 0).toLocaleString("sv-SE")} kr`}
+              >
+                <div className="space-y-4">
+                  {harLönespec(anställd.id) ? (
+                    <>
+                      <Lonespecar
+                        anställd={anställd}
+                        specificLönespec={getLönespec(anställd.id)}
+                        ingenAnimering={true}
+                        visaExtraRader={true}
+                      />
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-end">
+                        <Knapp
+                          text="✚ Skapa ny lönespec"
+                          loading={sparar[anställd.id]}
+                          loadingText="⏳ Skapar..."
+                          onClick={() => handleSkapaNyLönespec(anställd)}
                         />
-                        <LoneKnappar
-                          lönespec={getLönespec(anställd.id)}
-                          anställd={anställd}
-                          företagsprofil={{}}
-                          extrarader={[]}
-                          beräknadeVärden={{}}
-                          onForhandsgranskning={() => {
-                            setFörhandsgranskaId(getLönespec(anställd.id)?.id);
-                            setFörhandsgranskaData({
-                              lönespec: getLönespec(anställd.id),
-                              anställd,
-                              företagsprofil: {},
-                              extrarader: [],
-                              beräknadeVärden: {},
-                            });
-                          }}
-                          onTaBortLönespec={() => handleTaBortLönespec(anställd)}
-                          taBortLoading={taBort[anställd.id]}
-                        />
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex justify-end">
-                          <Knapp
-                            text="✚ Skapa ny lönespec"
-                            loading={sparar[anställd.id]}
-                            loadingText="⏳ Skapar..."
-                            onClick={() => handleSkapaNyLönespec(anställd)}
-                          />
-                        </div>
-                        <div className="text-gray-400 text-center py-4">
-                          Ingen lönespec för{" "}
-                          {löneperiod ? `${löneperiod.månad}/${löneperiod.år}` : ""}
-                        </div>
                       </div>
-                    )}
-                  </div>
-                </AnimeradFlik>
-              </div>
-            ))}
-          </div>
-          {/* Förhandsgranskning-modal */}
-          {förhandsgranskaId && förhandsgranskaData && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
-                <button
-                  className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-                  onClick={() => setFörhandsgranskaId(null)}
-                  aria-label="Stäng"
-                >
-                  ×
-                </button>
-                <Forhandsgranskning
-                  lönespec={förhandsgranskaData.lönespec}
-                  anställd={förhandsgranskaData.anställd}
-                  företagsprofil={förhandsgranskaData.företagsprofil}
-                  extrarader={förhandsgranskaData.extrarader}
-                  beräknadeVärden={förhandsgranskaData.beräknadeVärden}
-                  onStäng={() => setFörhandsgranskaId(null)}
-                />
-              </div>
+                      <div className="text-gray-400 text-center py-4">
+                        Ingen lönespec för{" "}
+                        {löneperiod ? `${löneperiod.månad}/${löneperiod.år}` : ""}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AnimeradFlik>
             </div>
-          )}
-          {/* Batch-knappar under listan */}
-          <LöneBatchKnappar
-            lönespecar={Object.values({ ...befintligaLönespecar, ...nyaLönespecar })}
-            anställda={anställda}
-            företagsprofil={{}}
-            extrarader={[]}
-            beräknadeVärden={{}}
-            onMaila={() => setBatchMailModalOpen(true)}
-            onBankgiroClick={() => setBankgiroModalOpen(true)}
-            onBokförClick={() => {}}
-          />
-          {/* Batch mail modal */}
-          {batchMailModalOpen && (
-            <MailaLonespec
-              batch={batchLönespecList}
-              batchMode={true}
-              open={true}
-              onClose={() => setBatchMailModalOpen(false)}
-            />
-          )}
-          {/* Bankgiro modal */}
-          {bankgiroModalOpen && (
-            <BankgiroExport
-              anställda={anställda}
-              utbetalningsdatum={utbetalningsdatum}
-              lönespecar={{ ...befintligaLönespecar, ...nyaLönespecar }}
-              open={true}
-              onClose={() => setBankgiroModalOpen(false)}
-            />
-          )}
-        </>
+          ))}
+        </div>
       )}
+      {/* Förhandsgranskning-modal */}
+      {förhandsgranskaId && förhandsgranskaData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
+              onClick={() => setFörhandsgranskaId(null)}
+              aria-label="Stäng"
+            >
+              ×
+            </button>
+            <Forhandsgranskning
+              lönespec={förhandsgranskaData.lönespec}
+              anställd={förhandsgranskaData.anställd}
+              företagsprofil={förhandsgranskaData.företagsprofil}
+              extrarader={förhandsgranskaData.extrarader}
+              beräknadeVärden={förhandsgranskaData.beräknadeVärden}
+              onStäng={() => setFörhandsgranskaId(null)}
+            />
+          </div>
+        </div>
+      )}
+      {/* Batch-knappar under listan borttagna! */}
     </>
   );
 }

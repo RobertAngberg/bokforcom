@@ -95,7 +95,7 @@ export default function LönespecCard({
         grundlön={grundlön}
         övertid={övertid}
         lönespec={lönespec}
-        visaExtraRader={true}
+        visaExtraRader={visaExtraRader}
       />
 
       <Utlogg

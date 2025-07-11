@@ -10,7 +10,6 @@ import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import ModernSemester from "./Semester/ModernSemester";
 import Lonekorning from "./Lonekorning/Lonekorning";
-import BokförLönTest from "./Lonespecar/BokförLönTest";
 
 export default function PersonalPage() {
   // #endregion
@@ -53,7 +52,7 @@ export default function PersonalPage() {
             onAvbryt={handleAvbrytFormulär}
           />
         </AnimeradFlik>
-        <AnimeradFlik title="Lonekorning" icon="💰" forcedOpen={false}>
+        <AnimeradFlik title="Lönekorning" icon="💰" forcedOpen={false}>
           <Lonekorning />
         </AnimeradFlik>
         {valdAnställd && !visaAnställdFormulär && (
@@ -64,7 +63,7 @@ export default function PersonalPage() {
             <AnimeradFlik title="Kontrakt" icon="📄">
               <Kontrakt anställd={valdAnställd} onRedigera={handleRedigeraAnställd} />
             </AnimeradFlik>
-            <AnimeradFlik title="Lonespecar" icon="💰">
+            <AnimeradFlik title="Lönespecar" icon="💰">
               <Lonespecar anställd={valdAnställd} />
             </AnimeradFlik>
             <AnimeradFlik title="Semester" icon="🏖️">
