@@ -1,7 +1,7 @@
 // beräknaTotalsummaAutomatiskt: true = antal × belopp per enhet (räkna ut totalsumman automatiskt)
 // beräknaTotalsummaAutomatiskt: false = användaren matar in totalsumman direkt
 
-import { beräknaKarensavdrag, beräknaDaglön, beräknaObetaldDag } from "../löneberäkningar";
+import { beräknaKarensavdrag, beräknaDaglön, beräknaObetaldDag } from "../loneberokningar";
 
 export interface RadKonfiguration {
   label: string;

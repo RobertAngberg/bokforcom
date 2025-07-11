@@ -21,11 +21,11 @@ export default function BokförKnappOchModal({
   const [loading, setLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
   // ✅ STATE FÖR FÄRSKA LÖNESPECAR MED EXTRARADER
-  const [färskaLönespecar, setFärskaLönespecar] = useState<Record<string, any>>({});
+  const [färskaLonespecar, setFärskaLonespecar] = useState<Record<string, any>>({});
 
   // Beräkna bokföringsdata FRÅN FÄRSKA LÖNESPECAR
   const bokföringsData = useMemo(() => {
-    const dataAttAnvända = Object.keys(färskaLönespecar).length > 0 ? färskaLönespecar : lönespecar;
+    const dataAttAnvända = Object.keys(färskaLonespecar).length > 0 ? färskaLonespecar : lönespecar;
 
     if (Object.keys(dataAttAnvända).length === 0) return null;
 
@@ -43,20 +43,20 @@ export default function BokförKnappOchModal({
       return null;
     }
     // Lägg till efter rad 42:
-    console.log("🔍 BOKFÖR MODAL - färskaLönespecar:", färskaLönespecar);
+    console.log("🔍 BOKFÖR MODAL - färskaLonespecar:", färskaLonespecar);
     console.log("🔍 BOKFÖR MODAL - lönespecar:", lönespecar);
     console.log(
       "🔍 BOKFÖR MODAL - dataAttAnvända:",
-      Object.keys(färskaLönespecar).length > 0 ? färskaLönespecar : lönespecar
+      Object.keys(färskaLonespecar).length > 0 ? färskaLonespecar : lönespecar
     );
-  }, [färskaLönespecar, lönespecar, anställda]);
+  }, [färskaLonespecar, lönespecar, anställda]);
 
   // ✅ HÄMTA FÄRSK DATA NÄR MODALEN ÖPPNAS
   const hanteraBokför = async () => {
     setLoading(true);
 
     try {
-      const uppdateradeLönespecar: Record<string, any> = {};
+      const uppdateradeLonespecar: Record<string, any> = {};
 
       // Hämta färska extrarader för varje lönespec
       for (const anställdId of Object.keys(lönespecar)) {
@@ -66,21 +66,21 @@ export default function BokförKnappOchModal({
           try {
             const extrarader = await hämtaExtrarader(lönespec.id);
 
-            uppdateradeLönespecar[anställdId] = {
+            uppdateradeLonespecar[anställdId] = {
               ...lönespec,
               extrarader: extrarader,
             };
           } catch (error) {
             console.error(`❌ Fel vid hämtning av extrarader för lönespec ${lönespec.id}:`, error);
             // Fallback till ursprunglig data
-            uppdateradeLönespecar[anställdId] = lönespec;
+            uppdateradeLonespecar[anställdId] = lönespec;
           }
         } else {
-          uppdateradeLönespecar[anställdId] = lönespec;
+          uppdateradeLonespecar[anställdId] = lönespec;
         }
       }
 
-      setFärskaLönespecar(uppdateradeLönespecar);
+      setFärskaLonespecar(uppdateradeLonespecar);
 
       setVisaModal(true);
     } catch (error) {
@@ -104,7 +104,7 @@ export default function BokförKnappOchModal({
       alert("✅ Bokföring genomförd!");
       setVisaModal(false);
       // ✅ RENSA FÄRSKA DATA EFTER BOKFÖRING
-      setFärskaLönespecar({});
+      setFärskaLonespecar({});
     } catch (error) {
       console.error("Fel vid bokföring:", error);
       alert("❌ Fel vid bokföring!");
@@ -116,7 +116,7 @@ export default function BokförKnappOchModal({
   // ✅ RENSA FÄRSKA DATA NÄR MODAL STÄNGS
   const stängModal = () => {
     setVisaModal(false);
-    setFärskaLönespecar({});
+    setFärskaLonespecar({});
   };
 
   return (

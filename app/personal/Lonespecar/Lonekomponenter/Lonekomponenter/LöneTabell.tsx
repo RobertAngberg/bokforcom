@@ -1,5 +1,5 @@
 import LöneRadItem from "./LöneRadItem";
-import { RAD_KONFIGURATIONER } from "../Extrarader/extraradDefinitioner";
+import { RAD_KONFIGURATIONER } from "../../Extrarader/extraradDefinitioner";
 
 interface LöneTabellProps {
   beräknadeVärden: {

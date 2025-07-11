@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
-import { bokförLöneUtbetalning } from "./bokförLöneUtbetalning";
+import { bokforLoneUtbetalning } from "./bokforLoneUtbetalning";
 
 interface BokföringsPost {
   konto: string;
@@ -11,7 +11,7 @@ interface BokföringsPost {
   kredit: number;
 }
 
-interface BokförLönerProps {
+interface BokforLonerProps {
   lönespec: any;
   extrarader: any[];
   beräknadeVärden: any;
@@ -87,19 +87,19 @@ const validateExtraradMapping = () => {
   // Logga varningar i development mode
   if (process.env.NODE_ENV === "development") {
     if (saknarBokföring.length > 0) {
-      console.warn("🚨 BokförLöner: Saknar bokföringskonton för extraradtyper:", saknarBokföring);
+      console.warn("🚨 BokforLoner: Saknar bokföringskonton för extraradtyper:", saknarBokföring);
       console.warn("Lägg till dem i EXTRARAD_TILL_KONTO mappningen");
     }
 
     if (onödigaMappningar.length > 0) {
       console.warn(
-        "⚠️ BokförLöner: Onödiga bokföringsmappningar (typ finns ej i definitionen):",
+        "⚠️ BokforLoner: Onödiga bokföringsmappningar (typ finns ej i definitionen):",
         onödigaMappningar
       );
     }
 
     if (saknarBokföring.length === 0 && onödigaMappningar.length === 0) {
-      console.log("✅ BokförLöner: Alla extraradmappningar är konsistenta");
+      console.log("✅ BokforLoner: Alla extraradmappningar är konsistenta");
     }
   }
 
@@ -110,7 +110,7 @@ const validateExtraradMapping = () => {
   };
 };
 
-export default function BokförLöner({
+export default function BokforLoner({
   lönespec,
   extrarader,
   beräknadeVärden,
@@ -118,7 +118,7 @@ export default function BokförLöner({
   isOpen,
   onClose,
   onBokfört,
-}: BokförLönerProps) {
+}: BokforLonerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [utbetalningsdatum, setUtbetalningsdatum] = useState(
@@ -141,7 +141,7 @@ export default function BokförLöner({
     setError(null);
 
     try {
-      const result = await bokförLöneUtbetalning({
+      const result = await bokforLoneUtbetalning({
         lönespecId: lönespec.id,
         extrarader,
         beräknadeVärden,

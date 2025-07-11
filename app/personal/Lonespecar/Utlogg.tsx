@@ -1,19 +1,19 @@
 //#region Huvud
-interface UtläggProps {
-  lönespecUtlägg: any[];
+interface UtloggProps {
+  lönespecUtlogg: any[];
   getStatusBadge: (status: string) => React.ReactElement;
 }
 
-export default function Utlägg({ lönespecUtlägg, getStatusBadge }: UtläggProps) {
+export default function Utlogg({ lönespecUtlogg, getStatusBadge }: UtloggProps) {
   //#endregion
 
-  if (lönespecUtlägg.length === 0) return null;
+  if (lönespecUtlogg.length === 0) return null;
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
-      <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">Utlägg</h4>
+      <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">Utlogg</h4>
       <div className="space-y-3">
-        {lönespecUtlägg.map((utläggItem) => (
+        {lönespecUtlogg.map((utläggItem) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">
             <div className="flex justify-between items-start mb-2">
               <div>

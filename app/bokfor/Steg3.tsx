@@ -40,7 +40,7 @@ interface Step3Props {
   valtFörval?: Förval | null;
   setCurrentStep?: (step: number) => void;
   extrafält?: Record<string, ExtrafältRad>;
-  isUtlägg?: boolean; // ← LÄGG TILL
+  isUtlogg?: boolean; // ← LÄGG TILL
   valdaAnställda?: number[]; // ← LÄGG TILL
 }
 // #endregion
@@ -55,7 +55,7 @@ export default function Steg3({
   valtFörval = null,
   setCurrentStep,
   extrafält = {},
-  isUtlägg = false, // ← LÄGG TILL
+  isUtlogg = false, // ← LÄGG TILL
   valdaAnställda = [], // ← LÄGG TILL
 }: Step3Props) {
   // #region Moms- och beloppsberäkning
@@ -78,7 +78,7 @@ export default function Steg3({
     formData.set("belopp", belopp.toString());
     formData.set("moms", moms.toString());
     formData.set("beloppUtanMoms", beloppUtanMoms.toString());
-    formData.set("isUtlägg", isUtlägg ? "true" : "false");
+    formData.set("isUtlogg", isUtlogg ? "true" : "false");
     formData.set("valdaAnställda", JSON.stringify(valdaAnställda));
     const result = await saveTransaction(formData);
     if (result.success) setCurrentStep(4);
@@ -104,7 +104,7 @@ export default function Steg3({
               beloppAttVisa = moms;
             } else if (kontoNr === "1930") {
               // Om det är utlägg, visa 2890 istället för 1930
-              if (isUtlägg && valdaAnställda.length > 0) {
+              if (isUtlogg && valdaAnställda.length > 0) {
                 namn = `2890 Övriga kortfristiga skulder`;
               }
               beloppAttVisa = belopp;

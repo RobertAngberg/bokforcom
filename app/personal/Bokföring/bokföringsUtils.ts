@@ -55,7 +55,7 @@ export function exporteraTillSIE(summering: BokföringsSummering, datum: Date): 
   sie += `#KONTO 7510 "Lagstadgade sociala avgifter"\n\n`;
 
   // Verifikat
-  sie += `#VER "LÖN" "1" ${datumStr} "Lönekörning ${datum.toLocaleDateString("sv-SE")}"\n`;
+  sie += `#VER "LÖN" "1" ${datumStr} "Lonekorning ${datum.toLocaleDateString("sv-SE")}"\n`;
   sie += `{\n`;
 
   summering.rader.forEach((rad) => {

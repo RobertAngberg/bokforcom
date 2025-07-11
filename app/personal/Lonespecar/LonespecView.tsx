@@ -1,27 +1,23 @@
 //#region Huvud
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
-import Lönekomponenter from "./Lönekomponenter/Lönekomponenter";
-import Utlägg from "./Utlägg";
+import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lönekomponenter";
+import Utlogg from "./Utlogg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import MailaLönespec from "./MailaLönespec";
 import { useState } from "react";
-import Förhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
+import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import { useLonespecContext } from "./LonespecContext";
 
 interface LönespecCardProps {
   lönespec: any;
   anställd: any;
   utlägg: any[];
-  onFörhandsgranskning?: (id: string) => void; // Nu valfri
-  onBeräkningarUppdaterade: (lönespecId: string, beräkningar: any) => void;
-  beräknadeVärden: any;
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
-  företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLönespec
-  extrarader?: any[]; // Lägg till denna om du vill skicka extrarader till MailaLönespec
+  företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLonespec
   visaExtraRader?: boolean; // NY PROP
 }
 
@@ -29,16 +25,13 @@ export default function LönespecCard({
   lönespec,
   anställd,
   utlägg,
-  onFörhandsgranskning,
-  onBeräkningarUppdaterade,
-  beräknadeVärden,
   ingenAnimering,
   onTaBortLönespec,
   taBortLoading,
   företagsprofil,
-  extrarader = [],
   visaExtraRader = false,
 }: LönespecCardProps) {
+  const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
   //#endregion
 
   //#region Helper Functions
@@ -81,13 +74,13 @@ export default function LönespecCard({
   const visaSocialaAvgifter = aktuellBeräkning?.socialaAvgifter ?? socialaAvgifter;
   const visaLönekostnad = aktuellBeräkning?.lönekostnad ?? bruttolön + socialaAvgifter;
 
-  const lönespecUtlägg = utlägg.filter(
+  const lönespecUtlogg = utlägg.filter(
     (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
   );
   //#endregion
 
   //#region Render Content
-  const [visaFörhandsgranskning, setVisaFörhandsgranskning] = useState(false);
+  const [visaForhandsgranskning, setVisaForhandsgranskning] = useState(false);
 
   const innehåll = (
     <div className="space-y-6">
@@ -98,16 +91,15 @@ export default function LönespecCard({
         getLönespecStatusBadge={(status: string) => <StatusBadge status={status} type="lönespec" />}
       />
 
-      <Lönekomponenter
+      <Lonekomponenter
         grundlön={grundlön}
         övertid={övertid}
         lönespec={lönespec}
-        onBeräkningarUppdaterade={onBeräkningarUppdaterade}
         visaExtraRader={true}
       />
 
-      <Utlägg
-        lönespecUtlägg={lönespecUtlägg}
+      <Utlogg
+        lönespecUtlogg={lönespecUtlogg}
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
       />
 
@@ -122,41 +114,23 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
-      <div className="flex gap-2 mt-4 justify-center">
-        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaFörhandsgranskning(true)} />
-        <MailaLönespec
-          lönespec={lönespec}
-          anställd={anställd}
-          företagsprofil={företagsprofil}
-          extrarader={lönespec.extrarader || []}
-          beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
-        />
-        {onTaBortLönespec && (
-          <Knapp
-            text="🗑️ Ta bort lönespec"
-            loading={taBortLoading}
-            loadingText="⏳ Tar bort..."
-            onClick={onTaBortLönespec}
-          />
-        )}
-      </div>
-      {visaFörhandsgranskning && (
+      {visaForhandsgranskning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
             <button
               className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-              onClick={() => setVisaFörhandsgranskning(false)}
+              onClick={() => setVisaForhandsgranskning(false)}
               aria-label="Stäng"
             >
               ×
             </button>
-            <Förhandsgranskning
+            <Forhandsgranskning
               lönespec={lönespec}
               anställd={anställd}
               företagsprofil={företagsprofil}
-              extrarader={lönespec.extrarader || []}
+              extrarader={extrarader[lönespec.id] || []}
               beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
-              onStäng={() => setVisaFörhandsgranskning(false)}
+              onStäng={() => setVisaForhandsgranskning(false)}
             />
           </div>
         </div>

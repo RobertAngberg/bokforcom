@@ -66,8 +66,8 @@ export default function VisaAllt() {
             📄 {tabell.namn} <span className="text-white">▼</span>
           </summary>
           <div className="p-4 bg-slate-800 space-y-4 overflow-auto">
-            {/* Förhandsgranskning */}
-            <div className="text-sm text-cyan-300 pt-2">Förhandsgranskning (max 100 rader):</div>
+            {/* Forhandsgranskning */}
+            <div className="text-sm text-cyan-300 pt-2">Forhandsgranskning (max 100 rader):</div>
             <table className="text-sm w-full table-auto border-collapse">
               <thead>
                 <tr className="bg-slate-700 text-xs">

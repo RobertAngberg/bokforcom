@@ -4,7 +4,7 @@
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { useState } from "react";

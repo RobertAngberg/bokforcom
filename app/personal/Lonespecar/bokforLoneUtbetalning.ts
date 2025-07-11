@@ -29,9 +29,9 @@ interface BokförLöneUtbetalningData {
 
 /**
  * Bokför en löneutbetalning genom att skapa en transaktion med tillhörande transaktionsposter
- * Använder samma logik som BokförLöner.tsx men sparar i databasen
+ * Använder samma logik som BokforLoner.tsx men sparar i databasen
  */
-export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData) {
+export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
@@ -64,7 +64,7 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
       throw new Error("Lönespecifikation är redan bokförd");
     }
 
-    // Generera bokföringsposter (samma logik som BokförLöner.tsx)
+    // Generera bokföringsposter (samma logik som BokforLoner.tsx)
     const bokföringsPoster = genereraBokföringsPoster(
       lönespec,
       data.extrarader,
@@ -147,13 +147,13 @@ export async function bokförLöneUtbetalning(data: BokförLöneUtbetalningData)
       bokföringsPoster,
     };
   } catch (error) {
-    console.error("❌ bokförLöneUtbetalning error:", error);
+    console.error("❌ bokforLoneUtbetalning error:", error);
     throw error;
   }
 }
 
 /**
- * Genererar bokföringsposter enligt samma logik som BokförLöner.tsx
+ * Genererar bokföringsposter enligt samma logik som BokforLoner.tsx
  */
 function genereraBokföringsPoster(
   lönespec: any,
@@ -169,7 +169,7 @@ function genereraBokföringsPoster(
   const nettolön = Number(beräknadeVärden.nettolön || lönespec.nettolön);
   const socialaAvgifter = Number(beräknadeVärden.socialaAvgifter || lönespec.sociala_avgifter);
 
-  // Mapping från extrarad-typ till bokföringskonto (samma som BokförLöner.tsx)
+  // Mapping från extrarad-typ till bokföringskonto (samma som BokforLoner.tsx)
   const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> = {
     // Skattepliktiga förmåner
     boende: { konto: "7381", kontoNamn: "Kostnader för fri bostad" },

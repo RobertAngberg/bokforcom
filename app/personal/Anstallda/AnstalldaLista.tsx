@@ -5,7 +5,7 @@ export type Anställd = {
   roll?: string;
 };
 
-import AnställdaRad from "./AnställdaRad";
+import AnställdaRad from "./AnstalldaRad";
 
 type AnställdaListaProps = {
   anställda: Anställd[];

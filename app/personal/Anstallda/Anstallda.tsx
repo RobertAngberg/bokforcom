@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import NyAnställd from "./NyAnställd/NyAnställd";
-import AnställdaLista from "./AnställdaLista";
+import AnställdaLista from "./AnstalldaLista";
 import { hämtaAllaAnställda, hämtaAnställd, taBortAnställd } from "../actions";
 //#endregion
 
@@ -18,7 +18,7 @@ interface AnställdaProps {
 }
 //#endregion
 
-export default function Anställda({
+export default function Anstallda({
   onAnställdVald,
   onLäggTillAnställd,
   visaFormulär,

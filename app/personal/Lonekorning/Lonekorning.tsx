@@ -3,21 +3,21 @@
 
 import { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../actions";
-import Lönedatum from "./Lönedatum";
-import AnställdaLista from "./AnställdaLista";
+import Lonedatum from "./Lonedatum";
+import AnstolldaLista from "./AnstolldaLista";
 import BankgiroExport from "./BankgiroExport";
-import BokförKnappOchModal from "./BokförKnappOchModal";
+import BokforKnappOchModal from "./BokforKnappOchModal";
 //#endregion
 
 //#region Component
-export default function Lönekörning() {
+export default function Lonekorning() {
   //#endregion
 
   //#region State
   const [anställda, setAnställda] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(null);
-  const [lönespecar, setLönespecar] = useState<Record<string, any>>({});
+  const [lönespecar, setLonespecar] = useState<Record<string, any>>({});
   //#endregion
 
   //#region Effects
@@ -47,17 +47,16 @@ export default function Lönekörning() {
   //#region Render
   return (
     <div className="space-y-6">
-      <Lönedatum
+      <Lonedatum
         utbetalningsdatum={utbetalningsdatum}
         setUtbetalningsdatum={setUtbetalningsdatum}
       />
 
       {utbetalningsdatum && (
-        <AnställdaLista
+        <AnstolldaLista
           anställda={anställda}
           loading={loading}
           utbetalningsdatum={utbetalningsdatum}
-          onLönespecarChange={setLönespecar}
         />
       )}
 
@@ -69,7 +68,7 @@ export default function Lönekörning() {
             utbetalningsdatum={utbetalningsdatum}
             lönespecar={lönespecar}
           />
-          <BokförKnappOchModal
+          <BokforKnappOchModal
             anställda={anställda}
             utbetalningsdatum={utbetalningsdatum}
             lönespecar={lönespecar}

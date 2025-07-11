@@ -4,6 +4,7 @@ import Navbar from "./Navbar";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import React from "react";
+import { LönespecProvider } from "./personal/Lonespecar/LonespecContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,8 +18,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="sv">
       <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>
         <SessionProvider>
-          <Navbar />
-          {children}
+          <LönespecProvider>
+            <Navbar />
+            {children}
+          </LönespecProvider>
         </SessionProvider>
       </body>
     </html>

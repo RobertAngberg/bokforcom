@@ -3,8 +3,8 @@
  * Baserat på svenska semesterlagen och Bokios logik
  */
 
-import { BOKIO_KONSTANTER } from "../Lönespecar/löneberäkningar";
-import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "../Lönespecar/löneberäkningar";
+import { BOKIO_KONSTANTER } from "../Lonespecar/loneberokningar";
+import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "../Lonespecar/loneberokningar";
 
 export interface SemesterIntjäning {
   intjänandeår: string; // "2024-2025"

@@ -25,7 +25,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
               src={URL.createObjectURL(fil)}
-              alt="Förhandsgranskning"
+              alt="Forhandsgranskning"
               width={800}
               height={600}
               className="object-contain max-w-full rounded"

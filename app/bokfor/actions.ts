@@ -296,7 +296,7 @@ export async function saveTransaction(formData: FormData) {
   const beloppUtanMoms = Number(formData.get("beloppUtanMoms")?.toString() || 0);
   const belopp = Number(formData.get("belopp")?.toString() || 0);
 
-  const isUtlägg = formData.get("isUtlägg") === "true";
+  const isUtlogg = formData.get("isUtlogg") === "true";
   const valdaAnställda = JSON.parse(formData.get("valdaAnställda")?.toString() || "[]");
 
   const extrafält = JSON.parse(formData.get("extrafält")?.toString() || "{}") as Record<
@@ -309,7 +309,7 @@ export async function saveTransaction(formData: FormData) {
     belopp,
     moms,
     beloppUtanMoms,
-    isUtlägg,
+    isUtlogg,
     valdaAnställda,
   });
   //#endregion
@@ -369,7 +369,7 @@ export async function saveTransaction(formData: FormData) {
     //#endregion
 
     //#region SaveUtlagg
-    if (isUtlägg && valdaAnställda.length > 0) {
+    if (isUtlogg && valdaAnställda.length > 0) {
       for (const anställdId of valdaAnställda) {
         await client.query(
           `INSERT INTO utlägg 
@@ -378,7 +378,7 @@ export async function saveTransaction(formData: FormData) {
           [
             belopp,
             new Date(transaktionsdatum),
-            valtFörval.namn || "Utlägg",
+            valtFörval.namn || "Utlogg",
             anställdId,
             userId,
             filename,
@@ -388,7 +388,7 @@ export async function saveTransaction(formData: FormData) {
           ]
         );
       }
-      console.log(`✅ Utlägg sparat för ${valdaAnställda.length} anställd(a)`);
+      console.log(`✅ Utlogg sparat för ${valdaAnställda.length} anställd(a)`);
     }
     //#endregion
 
@@ -434,14 +434,14 @@ export async function saveTransaction(formData: FormData) {
     }
     //#endregion
 
-    //#region ProcessForvalPosts --- 1930 → 2890 for Utlägg
+    //#region ProcessForvalPosts --- 1930 → 2890 for Utlogg
     if (!valtFörval.specialtyp) {
       for (const k of valtFörval.konton) {
         let nr = k.kontonummer?.toString().trim();
         if (!nr) continue;
 
         // Byt 1930 → 2890 för utlägg
-        if (nr === "1930" && isUtlägg && valdaAnställda.length > 0) {
+        if (nr === "1930" && isUtlogg && valdaAnställda.length > 0) {
           nr = "2890";
           console.log("🔄 Ändrade 1930 → 2890 för utlägg");
         }

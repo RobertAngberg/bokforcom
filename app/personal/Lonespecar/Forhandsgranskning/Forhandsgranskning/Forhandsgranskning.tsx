@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { hämtaFöretagsprofil } from "../../actions";
-import Huvudinfo from "../Förhandsgranskning/Huvudinfo";
-import Lönetabell from "../Förhandsgranskning/Lönetabell";
-import Sammanfattning from "../Förhandsgranskning/Sammanfattning";
-import SemesterInfo from "../Förhandsgranskning/SemesterInfo";
-import SkatteInfo from "../Förhandsgranskning/SkatteInfo";
-import Årssammanställning from "../Förhandsgranskning/Årssammanställning";
-import ArbetstidInfo from "../Förhandsgranskning/ArbetstidInfo";
-import Fotinfo from "../Förhandsgranskning/Fotinfo";
+import { hämtaFöretagsprofil } from "../../../actions";
+import Huvudinfo from "./Huvudinfo";
+import Lonetabell from "./Lonetabell";
+import Sammanfattning from "./Sammanfattning";
+import SemesterInfo from "./SemesterInfo";
+import SkatteInfo from "./SkatteInfo";
+import Arssammanstollning from "./Arssammanstollning";
+import ArbetstidInfo from "./ArbetstidInfo";
+import Fotinfo from "./Fotinfo";
 
-interface FörhandsgranskningProps {
+interface ForhandsgranskningProps {
   lönespec: any;
   anställd: any;
   företagsprofil: any;
@@ -20,14 +20,14 @@ interface FörhandsgranskningProps {
   onStäng: () => void;
 }
 
-export default function Förhandsgranskning({
+export default function Forhandsgranskning({
   lönespec,
   anställd,
   företagsprofil,
   extrarader,
   beräknadeVärden = {},
   onStäng,
-}: FörhandsgranskningProps) {
+}: ForhandsgranskningProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [företag, setFöretag] = useState<any>(företagsprofil);
 
@@ -156,7 +156,7 @@ export default function Förhandsgranskning({
             periodStart={periodStart}
             periodSlut={periodSlut}
           />
-          <Lönetabell
+          <Lonetabell
             lönespec={lönespec}
             bruttolön={bruttolön}
             extraraderMapped={extraraderMapped}
@@ -182,7 +182,7 @@ export default function Förhandsgranskning({
               <SkatteInfo anställd={anställd} />
             </div>
           </div>
-          <Årssammanställning
+          <Arssammanstollning
             bruttolön={bruttolön}
             skatt={skatt}
             formatNoDecimals={formatNoDecimals}

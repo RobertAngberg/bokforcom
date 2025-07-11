@@ -1,39 +1,31 @@
 "use client";
 
 //#region Huvud
-import LönespecCard from "./LönespecView";
+import LönespecCard from "./LonespecView";
 import { taBortLönespec } from "../actions";
 import { useState } from "react";
+import { useLonespecContext } from "./LonespecContext";
 
-interface LönespecListProps {
-  lönespecar: any[];
+interface LonespecListProps {
   anställd: any;
   utlägg: any[];
-  onBeräkningarUppdaterade: (lönespecId: string, beräkningar: any) => void;
-  beräknadeVärden: any;
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
-  extrarader: any[];
-  setExtrarader: React.Dispatch<React.SetStateAction<any[]>>;
-  onLönespecUppdaterad?: () => void; // Nytt callback för att uppdatera listan
-  visaExtraRader?: boolean; // NY PROP
+  onLönespecUppdaterad?: () => void;
+  visaExtraRader?: boolean;
 }
 
-export default function LönespecList({
-  lönespecar,
+export default function LonespecList({
   anställd,
   utlägg,
-  onBeräkningarUppdaterade,
-  beräknadeVärden,
   ingenAnimering,
   onTaBortLönespec,
   taBortLoading,
   onLönespecUppdaterad,
-  extrarader,
-  setExtrarader,
-  visaExtraRader = false, // default false
-}: LönespecListProps) {
+  visaExtraRader = false,
+}: LonespecListProps) {
+  const { lönespecar } = useLonespecContext();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
 
   const handleTaBortLönespec = async (lönespecId: string) => {
@@ -67,7 +59,7 @@ export default function LönespecList({
           Inga lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
           <br />
           <span className="text-sm text-gray-500">
-            Skapa lönespecar under "Lönekörning" när det är dags för utbetalning.
+            Skapa lönespecar under "Lonekorning" när det är dags för utbetalning.
           </span>
         </div>
       ) : (
@@ -77,13 +69,10 @@ export default function LönespecList({
             lönespec={lönespec}
             anställd={anställd}
             utlägg={utlägg}
-            onBeräkningarUppdaterade={onBeräkningarUppdaterade}
-            beräknadeVärden={beräknadeVärden}
             ingenAnimering={ingenAnimering}
             onTaBortLönespec={() => handleTaBortLönespec(lönespec.id)}
             taBortLoading={taBortLaddning[lönespec.id] || false}
-            extrarader={extrarader}
-            visaExtraRader={visaExtraRader} // Skicka vidare
+            visaExtraRader={visaExtraRader}
           />
         ))
       )}

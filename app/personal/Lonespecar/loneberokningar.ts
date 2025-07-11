@@ -245,7 +245,7 @@ export function beräknaVårdavdrag(månadslön: number): number {
 
 /**
  * Klassificerar extrarader enligt konfigurationens flaggor.
- * Summerar till rätt kategori för löneberäkningarna.
+ * Summerar till rätt kategori för loneberokningarna.
  */
 export function klassificeraExtrarader(extrarader: any[]) {
   let bruttolönTillägg = 0;
@@ -464,7 +464,7 @@ export function beräknaKomplett(
  * Huvudfunktion för lönekomponenter (från huvudberäkningar.ts)
  * För bakåtkompatibilitet med befintliga komponenter
  */
-export function beräknaLönekomponenter(
+export function beräknaLonekomponenter(
   grundlön: number,
   övertid: number,
   lönespec: any,

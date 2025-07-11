@@ -4,13 +4,13 @@
 import { useState } from "react";
 import MainLayout from "../_components/MainLayout";
 import AnimeradFlik from "../_components/AnimeradFlik";
-import Anställda from "./Anställda/Anställda";
-import Personalinformation from "./Anställda/NyAnställd/Personalinformation";
+import Anställda from "./Anstallda/Anstallda";
+import Personalinformation from "./Anstallda/NyAnställd/Personalinformation";
 import Kontrakt from "./Kontrakt/Kontrakt";
-import Lönespecar from "./Lönespecar/Lönespecar";
+import Lonespecar from "./Lonespecar/Lonespecar";
 import ModernSemester from "./Semester/ModernSemester";
-import Lönekörning from "./Lönekörning/Lönekörning";
-import BokförLönTest from "./Lönespecar/BokförLönTest";
+import Lonekorning from "./Lonekorning/Lonekorning";
+import BokförLönTest from "./Lonespecar/BokförLönTest";
 
 export default function PersonalPage() {
   // #endregion
@@ -53,8 +53,8 @@ export default function PersonalPage() {
             onAvbryt={handleAvbrytFormulär}
           />
         </AnimeradFlik>
-        <AnimeradFlik title="Lönekörning" icon="💰" forcedOpen={false}>
-          <Lönekörning />
+        <AnimeradFlik title="Lonekorning" icon="💰" forcedOpen={false}>
+          <Lonekorning />
         </AnimeradFlik>
         {valdAnställd && !visaAnställdFormulär && (
           <>
@@ -64,8 +64,8 @@ export default function PersonalPage() {
             <AnimeradFlik title="Kontrakt" icon="📄">
               <Kontrakt anställd={valdAnställd} onRedigera={handleRedigeraAnställd} />
             </AnimeradFlik>
-            <AnimeradFlik title="Lönespecar" icon="💰">
-              <Lönespecar anställd={valdAnställd} />
+            <AnimeradFlik title="Lonespecar" icon="💰">
+              <Lonespecar anställd={valdAnställd} />
             </AnimeradFlik>
             <AnimeradFlik title="Semester" icon="🏖️">
               <ModernSemester

@@ -7,12 +7,16 @@ interface BankgiroExportProps {
   anställda: any[];
   utbetalningsdatum: Date | null;
   lönespecar: Record<string, any>;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 export default function BankgiroExport({
   anställda,
   utbetalningsdatum,
   lönespecar,
+  open,
+  onClose,
 }: BankgiroExportProps) {
   const [visaModal, setVisaModal] = useState(false);
   const [kundnummer, setKundnummer] = useState("123456");
@@ -70,6 +74,9 @@ export default function BankgiroExport({
     setVisaModal(false);
   };
 
+  // Modal state: styrs av prop om satt, annars lokalt
+  const showModal = open !== undefined ? open : visaModal;
+
   if (anställdaMedLönespec.length === 0) {
     return null; // Ingen knapp om inga lönespecar
   }
@@ -78,7 +85,7 @@ export default function BankgiroExport({
     <>
       <Knapp text="💳 Hämta Bankgirofil" onClick={() => setVisaModal(true)} />
 
-      {visaModal && (
+      {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
             {/* Header */}
@@ -180,7 +187,13 @@ export default function BankgiroExport({
 
               {/* Knappar */}
               <div className="flex gap-3 justify-end">
-                <Knapp text="Avbryt" onClick={() => setVisaModal(false)} />
+                <Knapp
+                  text="Avbryt"
+                  onClick={() => {
+                    setVisaModal(false);
+                    onClose?.();
+                  }}
+                />
                 <Knapp text="💾 Skapa fil" onClick={genereraBankgirofil} />
               </div>
             </div>

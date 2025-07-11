@@ -8,7 +8,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "./KundUppgifter";
 import ProdukterTjanster from "./ProdukterTjänster/ProdukterTjänster";
-import Förhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
+import Forhandsgranskning from ../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import SparadeFakturor from "./SparadeFakturor";
 import AnimeradFlik from "../_components/AnimeradFlik";
 import Knapp from "../_components/Knapp";
@@ -119,7 +119,7 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
       </MainLayout>
 
       <div id="print-area" className="hidden print:block">
-        <Förhandsgranskning />
+        <Forhandsgranskning />
       </div>
 
       {showPreview && (
@@ -130,7 +130,7 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
             </div>
             <div className="p-6 flex justify-center">
               <div className="w-[210mm] h-[297mm] bg-white shadow border rounded">
-                <Förhandsgranskning />
+                <Forhandsgranskning />
               </div>
             </div>
           </div>

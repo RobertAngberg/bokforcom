@@ -8,7 +8,7 @@ export default function Sammanfattning({ anställda }: SammanfattningProps) {
   const totalBrutto = anställda.reduce((sum, a) => sum + parseFloat(a.kompensation || 0), 0);
   const totalLönekostnad = totalBrutto * 1.3142; // Approximation med sociala avgifter
 
-  const handleKörLönekörning = () => {
+  const handleKörLonekorning = () => {
     // Här kan du lägga till logik för att köra lönekörning
   };
 
@@ -40,7 +40,7 @@ export default function Sammanfattning({ anställda }: SammanfattningProps) {
       {/* Kör lönekörning knapp */}
       <div className="flex justify-center">
         <button
-          onClick={handleKörLönekörning}
+          onClick={handleKörLonekorning}
           className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium"
         >
           🚀 Kör lönekörning
