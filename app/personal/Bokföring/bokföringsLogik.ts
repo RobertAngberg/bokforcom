@@ -5,6 +5,8 @@ import {
   beräknaSocialaAvgifter,
 } from "../Lonespecar/loneberokningar";
 
+// commit.....
+
 export interface BokföringsRad {
   konto: string;
   kontoNamn: string;
