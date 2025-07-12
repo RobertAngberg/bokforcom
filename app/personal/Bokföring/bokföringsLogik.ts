@@ -34,6 +34,9 @@ export function genereraBokföringsrader(
     const anställd = anställdMap.get(parseInt(anställdId));
     const anställdNamn = anställd ? `${anställd.förnamn} ${anställd.efternamn}` : "Okänd";
 
+    // Hämta procentsats för sociala avgifter
+    const socialaAvgifterSats = Number(lönespec.socialaAvgifterSats || 0.3142);
+
     // Klassificera extrarader
     const klassificering = klassificeraExtrarader(lönespec.extrarader || []);
     const grundlön = Number(lönespec.beräknadeVärden?.grundlön || lönespec.grundlön || 0);
@@ -42,20 +45,30 @@ export function genereraBokföringsrader(
       klassificering.bruttolönTillägg -
       (klassificering.nettolönejustering < 0 ? Math.abs(klassificering.nettolönejustering) : 0);
 
-    // Skatt enligt Bokio (skattetabell 34, kolumn 1)
-    const skatt = beräknaSkattTabell34(bruttolön);
-    // Sociala avgifter enligt Bokio
-    const socialaAvgifterSats = Number(lönespec.socialaAvgifterSats || 0.3142);
-    const socialaAvgifter = beräknaSocialaAvgifter(bruttolön, socialaAvgifterSats);
+    // --- Bokio-style: Beräkna bruttolön efter avdrag (t.ex. föräldraledighet) ---
+    let antalForaldraledighet = 0;
+    const foraldraledighetRad = (lönespec.extrarader || []).find(
+      (rad: any) => rad.typ === "foraldraledighet"
+    );
+    if (foraldraledighetRad) {
+      antalForaldraledighet = Number(foraldraledighetRad.kolumn2) || 1;
+    }
+    const daglon = grundlön * 0.046;
+    const totalAvdrag = daglon * antalForaldraledighet;
+    const bruttolönKorr = grundlön - totalAvdrag;
+
+    // Skatt och sociala avgifter på korrigerad bruttolön
+    const skatt = beräknaSkattTabell34(bruttolönKorr);
+    const socialaAvgifter = beräknaSocialaAvgifter(bruttolönKorr, socialaAvgifterSats);
 
     // Bokföringsrader
-    if (bruttolön > 0) {
+    if (bruttolönKorr > 0) {
       bokföringsrader.push({
         konto: KONTO_MAPPNINGAR.grundlön.debet!,
         kontoNamn: KONTO_MAPPNINGAR.grundlön.namn,
-        debet: bruttolön,
+        debet: Math.round(bruttolönKorr * 100) / 100,
         kredit: 0,
-        beskrivning: `Bruttolön inkl tillägg/avdrag - ${anställdNamn}`,
+        beskrivning: `Bruttolön inkl avdrag - ${anställdNamn}`,
         anställdNamn,
       });
     }
@@ -64,7 +77,7 @@ export function genereraBokföringsrader(
         {
           konto: KONTO_MAPPNINGAR.socialaAvgifter.debet!,
           kontoNamn: KONTO_MAPPNINGAR.socialaAvgifter.namn,
-          debet: socialaAvgifter,
+          debet: Math.round(socialaAvgifter * 100) / 100,
           kredit: 0,
           beskrivning: `Sociala avgifter - ${anställdNamn}`,
           anställdNamn,
@@ -73,7 +86,7 @@ export function genereraBokföringsrader(
           konto: KONTO_MAPPNINGAR.socialaAvgifter.kredit!,
           kontoNamn: "Avräkning lagstadgade sociala avgifter",
           debet: 0,
-          kredit: socialaAvgifter,
+          kredit: Math.round(socialaAvgifter * 100) / 100,
           beskrivning: `Avräkning sociala avgifter - ${anställdNamn}`,
           anställdNamn,
         }
@@ -84,22 +97,68 @@ export function genereraBokföringsrader(
         konto: KONTO_MAPPNINGAR.preliminärSkatt.kredit!,
         kontoNamn: KONTO_MAPPNINGAR.preliminärSkatt.namn,
         debet: 0,
-        kredit: skatt,
+        kredit: Math.round(skatt * 100) / 100,
         beskrivning: `Preliminär skatt - ${anställdNamn}`,
         anställdNamn,
       });
     }
     // Nettolön = bruttolön - skatt
-    const nettolön = bruttolön - skatt;
+    const nettolön = bruttolönKorr - skatt;
     if (nettolön > 0) {
       bokföringsrader.push({
         konto: KONTO_MAPPNINGAR.nettolön.kredit!,
         kontoNamn: KONTO_MAPPNINGAR.nettolön.namn,
         debet: 0,
-        kredit: nettolön,
+        kredit: Math.round(nettolön * 100) / 100,
         beskrivning: `Nettolön utbetalning - ${anställdNamn}`,
         anställdNamn,
       });
+    }
+    // --- Bokio-style: Bokför semesterlöneskuld och sociala avgifter för semester vid föräldraledighet ---
+    let semesterlon = 0;
+    if (antalForaldraledighet > 0) {
+      semesterlon = Math.round(daglon * antalForaldraledighet * 0.12 * 100) / 100;
+    }
+    const socialaSemesterAvgifter = Math.round(semesterlon * socialaAvgifterSats * 100) / 100;
+    if (semesterlon > 0) {
+      bokföringsrader.push(
+        {
+          konto: "7290",
+          kontoNamn: "Förändring av semesterlöneskuld",
+          debet: semesterlon,
+          kredit: 0,
+          beskrivning: `Semesterlöneskuld (föräldraledighet) - ${anställdNamn}`,
+          anställdNamn,
+        },
+        {
+          konto: "2920",
+          kontoNamn: "Upplupna semesterlöner",
+          debet: 0,
+          kredit: semesterlon,
+          beskrivning: `Upplupen semesterlön (föräldraledighet) - ${anställdNamn}`,
+          anställdNamn,
+        }
+      );
+    }
+    if (socialaSemesterAvgifter > 0) {
+      bokföringsrader.push(
+        {
+          konto: "7519",
+          kontoNamn: "Arbetsgivaravgifter för semester- och löneskulder",
+          debet: socialaSemesterAvgifter,
+          kredit: 0,
+          beskrivning: `Sociala avgifter semester (föräldraledighet) - ${anställdNamn}`,
+          anställdNamn,
+        },
+        {
+          konto: "2940",
+          kontoNamn: "Upplupna lagstadgade sociala och andra avgifter",
+          debet: 0,
+          kredit: socialaSemesterAvgifter,
+          beskrivning: `Upplupna sociala avgifter semester (föräldraledighet) - ${anställdNamn}`,
+          anställdNamn,
+        }
+      );
     }
   });
 
