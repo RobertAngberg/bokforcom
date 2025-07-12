@@ -131,15 +131,14 @@ export function genereraBokföringsrader(
     }
     // --- Bokio-style: Bokför semesterlöneskuld och sociala avgifter för semester ---
     // Bokio: semesterlöneskuld = daglön * antal arbetsdagar per månad * 0.12
-    const arbetsdagarPerMånad = 21.75; // Bokios standard
-    const semesterlonRounded = Math.round(daglon * arbetsdagarPerMånad * 0.12 * 100) / 100;
-    const socialaSemesterAvgifterRounded =
-      Math.round(semesterlonRounded * socialaAvgifterSats * 100) / 100;
+    // Bokio-formel: semesterlöneskuld = månadslön * 0.1068
+    const semesterloneskuld = Math.round(grundlön * 0.1068 * 100) / 100;
+    const socialaSemesterAvgifter = Math.round(semesterloneskuld * socialaAvgifterSats * 100) / 100;
     bokföringsrader.push(
       {
         konto: "7290",
         kontoNamn: "Förändring av semesterlöneskuld",
-        debet: semesterlonRounded,
+        debet: semesterloneskuld,
         kredit: 0,
         beskrivning: `Förändring av semesterlöneskuld - ${anställdNamn}`,
         anställdNamn,
@@ -148,14 +147,14 @@ export function genereraBokföringsrader(
         konto: "2920",
         kontoNamn: "Upplupna semesterlöner",
         debet: 0,
-        kredit: semesterlonRounded,
+        kredit: semesterloneskuld,
         beskrivning: `Upplupna semesterlöner - ${anställdNamn}`,
         anställdNamn,
       },
       {
         konto: "7519",
         kontoNamn: "Sociala avgifter för semester- och löneskulder",
-        debet: socialaSemesterAvgifterRounded,
+        debet: socialaSemesterAvgifter,
         kredit: 0,
         beskrivning: `Sociala avgifter för semesterlöneskuld - ${anställdNamn}`,
         anställdNamn,
@@ -164,7 +163,7 @@ export function genereraBokföringsrader(
         konto: "2940",
         kontoNamn: "Upplupna lagstadgade sociala och andra avgifter",
         debet: 0,
-        kredit: socialaSemesterAvgifterRounded,
+        kredit: socialaSemesterAvgifter,
         beskrivning: `Upplupna lagstadgade sociala avgifter för semester - ${anställdNamn}`,
         anställdNamn,
       }
