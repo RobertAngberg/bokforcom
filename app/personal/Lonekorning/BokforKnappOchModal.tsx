@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import { genereraBokföringsrader } from "../Bokföring/bokföringsLogik";
 import { valideraBokföring, formateraBeloppKronor } from "../Bokföring/bokföringsUtils";
@@ -22,6 +22,9 @@ export default function BokförKnappOchModal({
   const [bokförLoading, setBokförLoading] = useState(false);
   // ✅ STATE FÖR FÄRSKA LÖNESPECAR MED EXTRARADER
   const [färskaLonespecar, setFärskaLonespecar] = useState<Record<string, any>>({});
+
+  // Lägg till en loading-state för färsk data
+  const [freshLoading, setFreshLoading] = useState(false);
 
   // Beräkna bokföringsdata FRÅN FÄRSKA LÖNESPECAR
   const bokföringsData = useMemo(() => {
@@ -89,6 +92,29 @@ export default function BokförKnappOchModal({
     }
   };
 
+  // Hämta färsk data varje gång modalen öppnas
+  useEffect(() => {
+    // Anta att modalen är öppen om anställda och lönespecar finns
+    if (anställda.length > 0 && Object.keys(lönespecar).length > 0) {
+      setFreshLoading(true);
+      // Hämta extrarader för varje lönespec och uppdatera state
+      const fetchFreshLonespecar = async () => {
+        const updated: Record<string, any> = {};
+        for (const [id, spec] of Object.entries(lönespecar)) {
+          try {
+            const extrarader = await hämtaExtrarader(spec.id);
+            updated[id] = { ...spec, extrarader };
+          } catch (err) {
+            updated[id] = { ...spec, extrarader: spec.extrarader || [] };
+          }
+        }
+        setFärskaLonespecar(updated);
+        setFreshLoading(false);
+      };
+      fetchFreshLonespecar();
+    }
+  }, [anställda, lönespecar]);
+
   const hanteraBokförExekvering = async () => {
     if (!bokföringsData?.kanBokföra) return;
 
@@ -109,6 +135,15 @@ export default function BokförKnappOchModal({
     }
   };
 
+  // Visa loading tills färsk data är hämtad
+  if (freshLoading) {
+    return <div className="p-8 text-center text-white">Hämtar färsk löneinformation...</div>;
+  }
+
+  // Logga aktuell data innan summering
+  console.log("BOKFÖR MODAL - anställda:", anställda);
+  console.log("BOKFÖR MODAL - lönespecar:", lönespecar);
+  console.log("BOKFÖR MODAL - färskaLonespecar:", färskaLonespecar);
   // Logga summering och bokföringsrader för felsökning
   if (bokföringsData) {
     console.log("BOKFÖRINGS-SUMMERING:", bokföringsData.summering);
@@ -124,6 +159,12 @@ export default function BokförKnappOchModal({
       console.log("Fel:", bokföringsData.fel);
     }
   }
+
+  // Logga lönespecar och bruttolön innan summering
+  Object.values(lönespecar).forEach((spec: any) => {
+    console.log("LÖNESPEC:", spec);
+    console.log("Bruttolön:", spec.bruttolön);
+  });
 
   return (
     <>
