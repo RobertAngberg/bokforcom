@@ -3,6 +3,7 @@ import {
   klassificeraExtrarader,
   beräknaSkattTabell34,
   beräknaSocialaAvgifter,
+  beräknaDaglön,
 } from "../Lonespecar/loneberokningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 
@@ -66,7 +67,7 @@ export function genereraBokföringsrader(
       }
     });
     // Bruttolön = månadslön + tillägg - avdrag (VAB/föräldraledighet)
-    const daglon = grundlön * 0.046;
+    const daglon = beräknaDaglön(grundlön);
     const totalAvdrag = daglon * (antalForaldraledighet + antalVab);
     const bruttolönKorr = grundlön + tillaggBruttolon - totalAvdrag;
 

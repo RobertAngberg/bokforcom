@@ -144,7 +144,7 @@ const SKATTEPLIKTIGA_POSTER = [
  * Bokio: 1 dag = 4,6% av månadslön
  */
 export function beräknaDaglön(månadslön: number): number {
-  return månadslön * BOKIO_KONSTANTER.DAGLÖN_PROCENT;
+  return månadslön / 21.75;
 }
 
 /**
