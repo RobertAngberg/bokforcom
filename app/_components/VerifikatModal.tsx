@@ -72,7 +72,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                     <tbody>
                       {details.map((row, index) => (
                         <tr
-                          key={row.transaktionspost_id}
+                          key={row.transaktionspost_id || index}
                           className={`border-t border-slate-700 ${index % 2 === 0 ? "bg-slate-900" : "bg-slate-800"}`}
                         >
                           <td className="p-4 text-white">
@@ -80,7 +80,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                             <div className="text-slate-400 text-sm">{row.beskrivning}</div>
                           </td>
                           <td className="text-right p-4 text-white">
-                            {row.debet !== 0 ? (
+                            {row.debet !== undefined ? (
                               <span className="text-white">
                                 {row.debet.toLocaleString("sv-SE", {
                                   style: "currency",
@@ -92,7 +92,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                             )}
                           </td>
                           <td className="text-right p-4 text-white">
-                            {row.kredit !== 0 ? (
+                            {row.kredit !== undefined ? (
                               <span className="text-white">
                                 {row.kredit.toLocaleString("sv-SE", {
                                   style: "currency",
