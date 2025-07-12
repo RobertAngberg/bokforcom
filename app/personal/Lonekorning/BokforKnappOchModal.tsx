@@ -140,32 +140,6 @@ export default function BokförKnappOchModal({
     return <div className="p-8 text-center text-white">Hämtar färsk löneinformation...</div>;
   }
 
-  // Logga aktuell data innan summering
-  console.log("BOKFÖR MODAL - anställda:", anställda);
-  console.log("BOKFÖR MODAL - lönespecar:", lönespecar);
-  console.log("BOKFÖR MODAL - färskaLonespecar:", färskaLonespecar);
-  // Logga summering och bokföringsrader för felsökning
-  if (bokföringsData) {
-    console.log("BOKFÖRINGS-SUMMERING:", bokföringsData.summering);
-    if (bokföringsData.summering?.rader) {
-      bokföringsData.summering.rader.forEach((rad: any) => {
-        console.log("Rad:", rad);
-      });
-    }
-    console.log("Total debet:", bokföringsData.summering?.totalDebet);
-    console.log("Total kredit:", bokföringsData.summering?.totalKredit);
-    console.log("Balanserar:", bokföringsData.summering?.balanserar);
-    if (bokföringsData.fel && bokföringsData.fel.length > 0) {
-      console.log("Fel:", bokföringsData.fel);
-    }
-  }
-
-  // Logga lönespecar och bruttolön innan summering
-  Object.values(lönespecar).forEach((spec: any) => {
-    console.log("LÖNESPEC:", spec);
-    console.log("Bruttolön:", spec.bruttolön);
-  });
-
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

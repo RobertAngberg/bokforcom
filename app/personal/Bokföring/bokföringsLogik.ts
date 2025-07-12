@@ -1,4 +1,9 @@
 import { KONTO_MAPPNINGAR, hittaBokföringsregel, type BokföringsRegel } from "./bokföringsRegler";
+import {
+  klassificeraExtrarader,
+  beräknaSkattTabell34,
+  beräknaSocialaAvgifter,
+} from "../Lonespecar/loneberokningar";
 
 export interface BokföringsRad {
   konto: string;
@@ -27,62 +32,31 @@ export function genereraBokföringsrader(
     const anställd = anställdMap.get(parseInt(anställdId));
     const anställdNamn = anställd ? `${anställd.förnamn} ${anställd.efternamn}` : "Okänd";
 
-    // BERÄKNA VERKLIG BRUTTOLÖN
-    let grundlön = Number(
-      lönespec.beräknadeVärden?.bruttolön || lönespec.bruttolön || lönespec.grundlön || 0
-    );
-    let avdragSumma = 0;
+    // Klassificera extrarader
+    const klassificering = klassificeraExtrarader(lönespec.extrarader || []);
+    const grundlön = Number(lönespec.beräknadeVärden?.grundlön || lönespec.grundlön || 0);
+    const bruttolön =
+      grundlön +
+      klassificering.bruttolönTillägg -
+      (klassificering.nettolönejustering < 0 ? Math.abs(klassificering.nettolönejustering) : 0);
 
-    // RÄKNA AVDRAG FÖRST
-    lönespec.extrarader?.forEach((rad: any) => {
-      const belopp = Number(rad.kolumn3 || rad.belopp || 0);
-      if (belopp < 0) {
-        avdragSumma += Math.abs(belopp);
-      }
-    });
+    // Skatt enligt Bokio (skattetabell 34, kolumn 1)
+    const skatt = beräknaSkattTabell34(bruttolön);
+    // Sociala avgifter enligt Bokio
+    const socialaAvgifterSats = Number(lönespec.socialaAvgifterSats || 0.3142);
+    const socialaAvgifter = beräknaSocialaAvgifter(bruttolön, socialaAvgifterSats);
 
-    // JUSTERA GRUNDLÖN MED AVDRAG
-    const verkligBruttolön = grundlön - avdragSumma;
-
-    // GRUNDLÖN (justerad)
-    if (verkligBruttolön > 0) {
+    // Bokföringsrader
+    if (bruttolön > 0) {
       bokföringsrader.push({
         konto: KONTO_MAPPNINGAR.grundlön.debet!,
         kontoNamn: KONTO_MAPPNINGAR.grundlön.namn,
-        debet: verkligBruttolön,
+        debet: bruttolön,
         kredit: 0,
-        beskrivning: `Grundlön - ${anställdNamn}`,
+        beskrivning: `Bruttolön inkl tillägg/avdrag - ${anställdNamn}`,
         anställdNamn,
       });
     }
-
-    // EXTRARADER (bara tillägg och avdrag separat)
-    lönespec.extrarader?.forEach((rad: any) => {
-      const belopp = Number(rad.kolumn3 || rad.belopp || 0);
-      const beskrivning = rad.kolumn1 || "Extrarad";
-      if (belopp === 0) return;
-
-      if (belopp > 0) {
-        let regel = KONTO_MAPPNINGAR.grundlön;
-        const desc = beskrivning.toLowerCase();
-        if (desc.includes("övertid")) regel = KONTO_MAPPNINGAR.övertid;
-        else if (desc.includes("bil")) regel = KONTO_MAPPNINGAR.bilförmån;
-        else if (desc.includes("förmån")) regel = KONTO_MAPPNINGAR.annanForman;
-
-        bokföringsrader.push({
-          konto: regel.debet!,
-          kontoNamn: regel.namn,
-          debet: belopp,
-          kredit: 0,
-          beskrivning: `${beskrivning} - ${anställdNamn}`,
-          anställdNamn,
-        });
-      }
-      // AVDRAG HANTERAS GENOM REDUCERAD GRUNDLÖN, INGEN SEPARAT RAD
-    });
-
-    // SOCIALA AVGIFTER (på verklig bruttolön)
-    const socialaAvgifter = Math.round(verkligBruttolön * 0.3142);
     if (socialaAvgifter > 0) {
       bokföringsrader.push(
         {
@@ -103,9 +77,6 @@ export function genereraBokföringsrader(
         }
       );
     }
-
-    // SKATT (på verklig bruttolön)
-    const skatt = Math.round(verkligBruttolön * 0.25);
     if (skatt > 0) {
       bokföringsrader.push({
         konto: KONTO_MAPPNINGAR.preliminärSkatt.kredit!,
@@ -116,9 +87,8 @@ export function genereraBokföringsrader(
         anställdNamn,
       });
     }
-
-    // NETTOLÖN (bruttolön - skatt)
-    const nettolön = verkligBruttolön - skatt;
+    // Nettolön = bruttolön - skatt
+    const nettolön = bruttolön - skatt;
     if (nettolön > 0) {
       bokföringsrader.push({
         konto: KONTO_MAPPNINGAR.nettolön.kredit!,
