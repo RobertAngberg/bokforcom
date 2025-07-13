@@ -52,19 +52,11 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
 
   // Automatiska beräkningar (karensavdrag, daglön-baserade avdrag, etc.)
   if (config?.beräknaTotalt && grundlön) {
-    console.log("🔄 AUTOMATISK BERÄKNING");
-    const antal = parseFloat(modalFields.kolumn2) || 0;
-
-    if (!isNaN(antal)) {
-      let summa = config.beräknaTotalt(grundlön, antal);
-
-      // Hantera negativa belopp (avdrag)
-      if (config.negativtBelopp) {
-        summa = -Math.abs(summa);
-      }
-
-      return summa.toFixed(2);
+    let summa = config.beräknaTotalt(grundlön, modalFields);
+    if (config.negativtBelopp) {
+      summa = -Math.abs(summa);
     }
+    return summa.toFixed(2);
   }
 
   // KR-enheter utan belopp-fält (flyttat hit)
@@ -259,31 +251,45 @@ export function getFieldsForRow(
   const config = RAD_KONFIGURATIONER[rowId];
 
   if (config) {
-    // Specialfall: Obetald frånvaro – visa ENDAST summa och kommentar
+    // Specialfall: Obetald frånvaro – visa Antal, Enhet (dropdown), och Kommentar
     if (rowId === "obetaldFranvaro") {
-      return [
+      const fields = [
         {
-          label: config.fält.antalLabel, // "Summa"
+          label: config.fält.antalLabel, // "Antal"
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
           onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
             setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
           required: true,
-          step: config.fält.step || "0.01",
+          step: config.fält.step || "1",
           placeholder: config.fält.antalPlaceholder,
         },
-        {
-          label: "Kommentar",
-          name: "kolumn4",
-          type: "text" as const,
-          value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
-          required: false,
-          placeholder: "Valfri kommentar",
-        },
       ];
+      if (config.fält.enhetDropdown) {
+        fields.push({
+          label: "Enhet",
+          name: "enhet",
+          type: "select",
+          value: modalFields.enhet || config.fält.enhetDropdown[0],
+          onChange: (e: any) => setModalFields((f: any) => ({ ...f, enhet: e.target.value })),
+          required: true,
+          options: config.fält.enhetDropdown as string[],
+          placeholder: "Välj enhet",
+        } as any);
+      }
+      fields.push({
+        label: "Kommentar",
+        name: "kolumn4",
+        type: "text",
+        value: modalFields.kolumn4,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+        required: false,
+        step: "1",
+        placeholder: "Valfri kommentar",
+      });
+      return fields;
     }
 
     // Specialfall: Övertid – visa ENDAST summa och kommentar

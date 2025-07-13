@@ -7,6 +7,7 @@ import Lonetabell from "./Lonetabell";
 import Sammanfattning from "./Sammanfattning";
 import SemesterInfo from "./SemesterInfo";
 import SkatteInfo from "./SkatteInfo";
+import { beräknaSumma } from "../../Extrarader/extraraderUtils";
 import Arssammanstollning from "./Arssammanstollning";
 import ArbetstidInfo from "./ArbetstidInfo";
 import Fotinfo from "./Fotinfo";
@@ -36,14 +37,98 @@ export default function Forhandsgranskning({
     Number(num).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   // Mappa extrarader till rätt format
-  const extraraderMapped = (extrarader ?? []).map((rad: any) => ({
-    benämning: rad.benämning ?? rad.kolumn1 ?? "",
-    antal: rad.antal ?? rad.kolumn2 ?? "",
-    kostnad: parseFloat(
+
+  const extraraderMapped = (extrarader ?? []).map((rad: any) => {
+    const benämning = rad.benämning ?? rad.kolumn1 ?? "";
+    const antal = rad.antal ?? rad.kolumn2 ?? "";
+    let kostnad = parseFloat(
       (rad.kostnad ?? rad.belopp ?? rad.kolumn3 ?? "0").toString().replace(",", ".")
-    ),
-    summa: parseFloat((rad.summa ?? rad.belopp ?? rad.kolumn3 ?? "0").toString().replace(",", ".")),
-  }));
+    );
+    let summa = parseFloat(
+      (rad.summa ?? rad.belopp ?? rad.kolumn3 ?? "0").toString().replace(",", ".")
+    );
+    // Om kostnad eller summa är 0, beräkna automatiskt med modalFields
+    if (!kostnad || kostnad === 0) {
+      kostnad = parseFloat(
+        beräknaSumma(
+          rad.typ,
+          { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+          beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+        )
+      );
+    }
+    if (!summa || summa === 0) {
+      summa = parseFloat(
+        beräknaSumma(
+          rad.typ,
+          { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+          beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+        )
+      );
+    }
+    // Specialfall: Företagsbil (man anger bara summa)
+    if (rad.typ === "foretagsbilExtra") {
+      if (!kostnad || kostnad === 0) {
+        kostnad = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { kolumn3: rad.kolumn3 ?? rad.belopp ?? "0" },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+      if (!summa || summa === 0) {
+        summa = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { kolumn3: rad.kolumn3 ?? rad.belopp ?? "0" },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+    } else if (rad.typ === "vab") {
+      // Specialfall: VAB (antal dagar krävs)
+      if (!kostnad || kostnad === 0) {
+        kostnad = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { kolumn2: rad.antal ?? rad.kolumn2 },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+      if (!summa || summa === 0) {
+        summa = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { kolumn2: rad.antal ?? rad.kolumn2 },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+    } else {
+      // Default: skicka in både antal och belopp
+      if (!kostnad || kostnad === 0) {
+        kostnad = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+      if (!summa || summa === 0) {
+        summa = parseFloat(
+          beräknaSumma(
+            rad.typ,
+            { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+          )
+        );
+      }
+    }
+    return { benämning, antal, kostnad, summa };
+  });
 
   // Använd beräknade värden om de finns, annars fall back till lönespec
   const bruttolön = beräknadeVärden.bruttolön ?? parseFloat(lönespec?.bruttolön || 0);

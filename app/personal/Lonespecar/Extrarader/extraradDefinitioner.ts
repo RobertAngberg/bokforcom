@@ -1,13 +1,18 @@
 // beräknaTotalsummaAutomatiskt: true = antal × belopp per enhet (räkna ut totalsumman automatiskt)
 // beräknaTotalsummaAutomatiskt: false = användaren matar in totalsumman direkt
 
-import { beräknaKarensavdrag, beräknaDaglön, beräknaObetaldDag } from "../loneberokningar";
+import {
+  beräknaKarensavdrag,
+  beräknaDaglön,
+  beräknaObetaldDag,
+  beräknaTimlön,
+} from "../loneberokningar";
 
 export interface RadKonfiguration {
   label: string;
   enhet: string;
-  beräknaVärde?: (grundlön: number) => number;
-  beräknaTotalt?: (grundlön: number, antal: number) => number;
+  beräknaVärde?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
+  beräknaTotalt?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
   negativtBelopp?: boolean;
   skattepliktig?: boolean;
   läggTillINettolön?: boolean;
@@ -101,8 +106,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -113,8 +119,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -125,8 +132,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -137,8 +145,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -205,8 +214,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -217,8 +227,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -229,8 +240,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -241,8 +253,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -253,8 +266,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 
@@ -346,8 +360,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: () => 1,
-    beräknaTotalt: (grundlön, antal) => antal * 1,
+    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
+    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",
@@ -374,8 +388,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: () => 1,
-    beräknaTotalt: (grundlön, antal) => antal * 1,
+    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
+    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",
@@ -386,15 +400,29 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
 
   obetaldFranvaro: {
     label: "Obetald frånvaro",
-    enhet: "kr",
-    beräknaVärde: () => 1,
-    beräknaTotalt: (grundlön, antal) => antal * 1,
+    enhet: "dag",
+    beräknaVärde: (grundlön, modalFields, arbetstimmarPerVecka = 40) => {
+      const enhet = modalFields?.enhet || "Dag";
+      if (enhet === "Timme") {
+        return -beräknaTimlön(grundlön, arbetstimmarPerVecka);
+      }
+      return -beräknaDaglön(grundlön);
+    },
+    beräknaTotalt: (grundlön, modalFields, arbetstimmarPerVecka = 40) => {
+      const antal = parseFloat(modalFields?.kolumn2) || 0;
+      const enhet = modalFields?.enhet || "Dag";
+      if (enhet === "Timme") {
+        return -beräknaTimlön(grundlön, arbetstimmarPerVecka) * antal;
+      }
+      return -beräknaDaglön(grundlön) * antal;
+    },
     negativtBelopp: true,
     fält: {
-      antalLabel: "Summa",
-      antalPlaceholder: "Ange summa i kronor",
-      step: "0.01",
+      antalLabel: "Antal",
+      antalPlaceholder: "Ange antal",
+      step: "1",
       beräknaTotalsummaAutomatiskt: false,
+      enhetDropdown: ["Dag", "Timme"],
     },
   },
 
@@ -418,9 +446,9 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     fält: {
       antalLabel: "Antal",
       antalPlaceholder: "Ange antal",
+      beloppPlaceholder: "à SEK",
       step: "1",
-      beräknaTotalsummaAutomatiskt: true,
-      beloppPlaceholder: "Belopp (använd - för avdrag)",
+      beräknaTotalsummaAutomatiskt: false,
       enhetDropdown: ["Timme", "Dag", "St"],
     },
   },

@@ -86,6 +86,23 @@ export function genereraBokföringsrader(
         anställdNamn,
       });
     }
+
+    // --- GENERERA ALLA EXTRARADER SOM EGNA BOKFÖRINGSRADER ---
+    (lönespec.extrarader || []).forEach((rad: any) => {
+      const konfig = rad.typ && RAD_KONFIGURATIONER[rad.typ];
+      if (!konfig || !konfig.konto) return;
+      // Beloppet kan ligga i kolumn3, eller vara uträknat
+      const belopp = Number(rad.kolumn3 || rad.belopp || 0);
+      if (belopp === 0) return;
+      bokföringsrader.push({
+        konto: konfig.konto,
+        kontoNamn: konfig.kontoNamn || konfig.namn || rad.namn || rad.typ,
+        debet: konfig.typ === "debet" ? belopp : 0,
+        kredit: konfig.typ === "kredit" ? belopp : 0,
+        beskrivning: `${konfig.beskrivning ? konfig.beskrivning + " - " : ""}${anställdNamn} (extrarad: ${rad.typ}, belopp: ${belopp} kr, konto: ${konfig.konto})`,
+        anställdNamn,
+      });
+    });
     if (socialaAvgifter > 0) {
       const socialaAvgifterRounded = Math.round(socialaAvgifter * 100) / 100;
       bokföringsrader.push(
@@ -170,12 +187,11 @@ export function genereraBokföringsrader(
     );
   });
 
-  const summeradeRader = summeraBokföringsrader(bokföringsrader);
-  const totalDebet = summeradeRader.reduce((sum, rad) => sum + Number(rad.debet || 0), 0);
-  const totalKredit = summeradeRader.reduce((sum, rad) => sum + Number(rad.kredit || 0), 0);
+  const totalDebet = bokföringsrader.reduce((sum, rad) => sum + Number(rad.debet || 0), 0);
+  const totalKredit = bokföringsrader.reduce((sum, rad) => sum + Number(rad.kredit || 0), 0);
 
   return {
-    rader: summeradeRader,
+    rader: bokföringsrader,
     totalDebet: Math.round(totalDebet * 100) / 100,
     totalKredit: Math.round(totalKredit * 100) / 100,
     balanserar: Math.abs(totalDebet - totalKredit) < 0.01,
