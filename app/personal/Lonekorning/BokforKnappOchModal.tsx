@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
-import { genereraBokföringsrader } from "../Bokföring/bokföringsLogik";
-import { valideraBokföring, formateraBeloppKronor } from "../Bokföring/bokföringsUtils";
+import { genereraBokföringsrader } from "../Bokföring/bokforingsLogik";
+import { valideraBokföring, formateraBeloppKronor } from "../Bokföring/bokforingsUtils";
 import { hämtaExtrarader } from "../actions";
 
 interface BokförProps {

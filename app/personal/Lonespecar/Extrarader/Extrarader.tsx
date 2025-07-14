@@ -90,8 +90,16 @@ export default function ExtraRader({
         onSubmit={async (e) => {
           e.preventDefault();
           if (!lönespecId) return;
-          const kolumn3Value = beräknaSumma(modalRow?.id || "", modalFields, grundlön);
-          const kolumn2Value = formatKolumn2Värde(modalRow?.id || "", modalFields);
+          // Spara alltid bara siffran i kolumn2, ingen enhet
+          let kolumn2Value = modalFields.kolumn2;
+          if (typeof kolumn2Value === "string") {
+            // Extrahera första numeriska värdet ur strängen
+            const match = kolumn2Value.match(/\d+(\.\d+)?/);
+            kolumn2Value = match ? match[0] : "";
+          }
+          // Specialfall: obetalda dagar, reducerade dagar, vab, föräldraledighet – spara inputvärdet från beloppsfältet
+          // Alltid beräkna totalsumman automatiskt för kolumn3Value
+          let kolumn3Value = beräknaSumma(modalRow?.id || "", modalFields, grundlön);
           const dataToSave = {
             lönespecifikation_id: lönespecId,
             typ: modalRow?.id,

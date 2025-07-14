@@ -79,7 +79,9 @@ export default function ExtraraderModal({
                       id={field.name}
                       name={field.name}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
                       required={field.required}
                       placeholder={field.placeholder}
                       step={field.step}

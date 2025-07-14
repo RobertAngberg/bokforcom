@@ -1,3 +1,5 @@
+import { RAD_KONFIGURATIONER, RadKonfiguration } from "../../Extrarader/extraradDefinitioner";
+
 interface LöneRadItemProps {
   benämning: string;
   belopp: number;
@@ -17,6 +19,15 @@ export default function LöneRadItem({
   const isExtrarad = typ === "extrarad";
   const isVarav = typ === "varav";
 
+  // Visa minus framför beloppet om extrarad och negativt belopp, men bara om beloppet är positivt
+  let showMinus = false;
+  if (isExtrarad && benämning) {
+    const radConfig = Object.values(RAD_KONFIGURATIONER).find(
+      (c): c is RadKonfiguration => (c as RadKonfiguration).label === benämning
+    );
+    showMinus = (radConfig as RadKonfiguration)?.negativtBelopp === true && belopp > 0;
+  }
+
   return (
     <tr
       className={`border-b border-slate-600/70 ${isExtrarad ? "hover:bg-slate-600 cursor-pointer group relative" : ""}`}
@@ -29,7 +40,8 @@ export default function LöneRadItem({
       <td
         className={`text-right ${textColor} font-medium py-2 relative ${isVarav ? "text-gray-300" : ""}`}
       >
-        {belopp.toLocaleString("sv-SE", {
+        <span className="font-mono text-white">{showMinus ? "-" : ""}</span>
+        {Math.abs(belopp).toLocaleString("sv-SE", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}{" "}

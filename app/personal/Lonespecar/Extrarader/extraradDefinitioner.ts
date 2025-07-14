@@ -81,7 +81,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
       antalLabel: "Antal dagar",
       antalPlaceholder: "Ange antal dagar",
       step: "1",
-      beräknaTotalsummaAutomatiskt: false,
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 

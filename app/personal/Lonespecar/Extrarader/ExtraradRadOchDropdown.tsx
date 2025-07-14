@@ -1,4 +1,5 @@
 import React from "react";
+import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 
 interface ExtraradRadOchDropdownProps {
   label: string;
@@ -10,7 +11,6 @@ interface ExtraradRadOchDropdownProps {
   onToggleDropdown?: () => void;
   id?: string;
 }
-
 export default function ExtraradRadOchDropdown({
   label,
   checked,
@@ -19,7 +19,10 @@ export default function ExtraradRadOchDropdown({
   isDropdown = false,
   open = false,
   onToggleDropdown,
+  id,
 }: ExtraradRadOchDropdownProps) {
+  // Visa minustecken om negativtBelopp är true för denna rad
+  const showMinus = checked && id && RAD_KONFIGURATIONER[id]?.negativtBelopp;
   return (
     <div
       className="group flex items-center justify-between px-2 py-1 hover:bg-slate-700 rounded min-h-10 text-sm cursor-pointer"

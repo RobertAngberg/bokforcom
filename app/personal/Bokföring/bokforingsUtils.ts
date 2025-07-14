@@ -1,4 +1,4 @@
-import { type BokföringsRad, type BokföringsSummering } from "./bokföringsLogik";
+import { type BokföringsRad, type BokföringsSummering } from "./bokforingsLogik";
 
 // FORMATERA BELOPP
 export function formateraBeloppKronor(belopp: number): string {

@@ -1,7 +1,7 @@
 //#region Huvud
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
-import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lönekomponenter";
+import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lonekomponenter";
 import Utlogg from "./Utlogg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";

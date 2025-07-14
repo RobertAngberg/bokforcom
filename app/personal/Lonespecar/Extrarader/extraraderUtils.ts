@@ -52,16 +52,41 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
 
   // Automatiska beräkningar (karensavdrag, daglön-baserade avdrag, etc.)
   if (config?.beräknaTotalt && grundlön) {
-    let summa = config.beräknaTotalt(grundlön, modalFields);
-    if (config.negativtBelopp) {
-      summa = -Math.abs(summa);
+    if (config.fält.beräknaTotalsummaAutomatiskt === false) {
+      // Om enheten är "kr" (summa direkt), skicka modalFields, annars skicka antal
+      let summa;
+      if (config.enhet === "kr") {
+        summa = config.beräknaTotalt(grundlön, modalFields);
+      } else {
+        const antal = parseFloat(modalFields.kolumn2) || 0;
+        summa = config.beräknaTotalt(grundlön, antal);
+      }
+      if (isNaN(summa)) summa = 0;
+      if (config.negativtBelopp) {
+        summa = -Math.abs(summa);
+      }
+      return summa.toFixed(2);
+    } else {
+      let antal = 1;
+      if (
+        modalFields &&
+        (typeof modalFields.kolumn2 === "string" || typeof modalFields.kolumn2 === "number")
+      ) {
+        antal = parseFloat(modalFields.kolumn2) || 1;
+      }
+      let summa = config.beräknaTotalt(grundlön, antal);
+      if (isNaN(summa)) summa = 0;
+      if (config.negativtBelopp) {
+        summa = -Math.abs(summa);
+      }
+      return summa.toFixed(2);
     }
-    return summa.toFixed(2);
   }
 
   // KR-enheter utan belopp-fält (flyttat hit)
   if (config?.enhet === "kr" && !config.fält.beräknaTotalsummaAutomatiskt) {
-    const summa = parseFloat(modalFields.kolumn2) || 0;
+    const summa = parseFloat(modalFields.kolumn2);
+    if (isNaN(summa)) return "0";
     if (config.negativtBelopp) {
       return (-Math.abs(summa)).toString();
     }
@@ -72,8 +97,9 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
   if (config?.fält.beräknaTotalsummaAutomatiskt) {
     const antal = parseFloat(modalFields.kolumn2);
     const beloppPerEnhet = parseFloat(modalFields.kolumn3) || 0;
-    if (isNaN(antal)) return "0";
+    if (isNaN(antal) || isNaN(beloppPerEnhet)) return "0";
     const totalsumma = antal * beloppPerEnhet;
+    if (isNaN(totalsumma)) return "0";
     return totalsumma.toFixed(2);
   }
 
@@ -81,11 +107,12 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
   const antal = parseFloat(modalFields.kolumn2);
   const belopp = parseFloat(modalFields.kolumn3) || 0;
 
-  if (isNaN(antal)) {
-    return belopp.toString();
+  if (isNaN(antal) || isNaN(belopp)) {
+    return "0";
   }
 
   const resultat = antal * belopp;
+  if (isNaN(resultat)) return "0";
   return resultat.toString();
 }
 
@@ -442,17 +469,40 @@ export function getFieldsForRow(
 
     // BELOPPSFÄLT: Endast för manuella poster (när beräknaTotalsummaAutomatiskt är false)
     if (!config.fält.beräknaTotalsummaAutomatiskt) {
+      let beloppOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+        setModalFields((f: any) => ({ ...f, kolumn3: e.target.value }));
+
+      // Specialfall: obetalda dagar, reducerade dagar, vab, föräldraledighet – uppdatera belopp automatiskt vid ändring av antal
+      if (["obetaldaDagar", "reduceradeDagar", "vab", "foraldraledighet"].includes(rowId)) {
+        // Hämta belopp per dag från konfigurationen
+        let beloppPerDag = 0;
+        if (config?.beräknaVärde && grundlön) {
+          beloppPerDag = config.beräknaVärde(grundlön);
+        } else {
+          beloppPerDag = parseFloat(modalFields.kolumn3) || 0;
+        }
+        // Ta hänsyn till negativtBelopp
+        if (config?.negativtBelopp) {
+          beloppPerDag = -Math.abs(beloppPerDag);
+        }
+        beloppOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+          const nyttAntal = parseFloat(e.target.value) || 0;
+          const multiplikation = nyttAntal * beloppPerDag;
+          setModalFields((f: any) => ({
+            ...f,
+            kolumn2: e.target.value,
+            kolumn3: multiplikation.toFixed(2),
+          }));
+        };
+      }
       fields.push({
         label: "å SEK",
         name: "kolumn3",
         type: "number" as const,
         value: modalFields.kolumn3,
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-          setModalFields((f: any) => ({ ...f, kolumn3: e.target.value })),
+        onChange: beloppOnChange,
         step: "0.01", // Tillåt ören
         required: true,
-        // min: rowId === "nettolönejustering" ? undefined : "0", // ← TILLÅT NEGATIVA FÖR NETTOLÖNEJUSTERING
-        // Använd custom placeholder eller fallback till generisk
         placeholder: config.fält.beloppPlaceholder || "Belopp per " + config.enhet,
       });
     }
