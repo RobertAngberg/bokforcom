@@ -25,7 +25,7 @@ export default function LöneRadItem({
     const radConfig = Object.values(RAD_KONFIGURATIONER).find(
       (c): c is RadKonfiguration => (c as RadKonfiguration).label === benämning
     );
-    showMinus = (radConfig as RadKonfiguration)?.negativtBelopp === true && belopp > 0;
+    showMinus = (radConfig as RadKonfiguration)?.negativtBelopp === true;
   }
 
   return (

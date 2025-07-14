@@ -97,12 +97,18 @@ export default function ExtraRader({
             const match = kolumn2Value.match(/\d+(\.\d+)?/);
             kolumn2Value = match ? match[0] : "";
           }
-          // Specialfall: obetalda dagar, reducerade dagar, vab, föräldraledighet – spara inputvärdet från beloppsfältet
+          // Validera typ mot RAD_KONFIGURATIONER
+          const radKonfigKeys = Object.keys(require("./extraradDefinitioner").RAD_KONFIGURATIONER);
+          let typValue = modalRow?.id ?? "";
+          if (!radKonfigKeys.includes(typValue)) {
+            console.warn("⚠️ Felaktig typ vid sparande av extrarad:", typValue);
+            typValue = "";
+          }
           // Alltid beräkna totalsumman automatiskt för kolumn3Value
-          let kolumn3Value = beräknaSumma(modalRow?.id || "", modalFields, grundlön);
+          let kolumn3Value = beräknaSumma(typValue, modalFields, grundlön);
           const dataToSave = {
             lönespecifikation_id: lönespecId,
-            typ: modalRow?.id,
+            typ: typValue,
             kolumn1: modalRow?.label ?? "",
             kolumn2: kolumn2Value,
             kolumn3: kolumn3Value,
@@ -110,7 +116,7 @@ export default function ExtraRader({
           };
           await sparaExtrarad(dataToSave);
           setModalOpen(false);
-          setState((prev) => ({ ...prev, [modalRow?.id || ""]: true }));
+          setState((prev) => ({ ...prev, [typValue]: true }));
           onNyRad();
         }}
       />

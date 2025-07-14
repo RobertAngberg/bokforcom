@@ -53,9 +53,11 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
   // Automatiska beräkningar (karensavdrag, daglön-baserade avdrag, etc.)
   if (config?.beräknaTotalt && grundlön) {
     if (config.fält.beräknaTotalsummaAutomatiskt === false) {
-      // Om enheten är "kr" (summa direkt), skicka modalFields, annars skicka antal
+      // För obetaldFranvaro och liknande, skicka alltid hela modalFields
       let summa;
-      if (config.enhet === "kr") {
+      if (rowId === "obetaldFranvaro") {
+        summa = config.beräknaTotalt(grundlön, modalFields);
+      } else if (config.enhet === "kr") {
         summa = config.beräknaTotalt(grundlön, modalFields);
       } else {
         const antal = parseFloat(modalFields.kolumn2) || 0;
@@ -400,19 +402,9 @@ export function getFieldsForRow(
       ];
     }
 
-    // Specialfall: Företagsbil – visa bilmodell, summa och kommentar
+    // Specialfall: Företagsbil – visa ENDAST summa och kommentar
     if (rowId === "foretagsbilExtra") {
       return [
-        {
-          label: "Bilmodell",
-          name: "kolumn1", // Använd kolumn1 för bilmodell
-          type: "text",
-          value: modalFields.kolumn1,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn1: e.target.value })),
-          required: true,
-          placeholder: "T.ex. Volvo V70, BMW 320i",
-        },
         {
           label: "Summa",
           name: "kolumn2",

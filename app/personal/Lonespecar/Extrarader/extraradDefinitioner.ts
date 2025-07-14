@@ -428,14 +428,13 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
 
   foretagsbilExtra: {
     label: "Företagsbil",
-    enhet: "st",
+    enhet: "kr",
     skattepliktig: true,
     fält: {
-      antalLabel: "Antal",
-      antalPlaceholder: "Ange antal",
-      beloppPlaceholder: "Belopp",
-      step: "1",
-      beräknaTotalsummaAutomatiskt: true,
+      antalLabel: "Summa",
+      antalPlaceholder: "Ange summa",
+      step: "0.01",
+      beräknaTotalsummaAutomatiskt: false,
     },
   },
 

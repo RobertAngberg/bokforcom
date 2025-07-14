@@ -9,7 +9,14 @@ interface LöneTabellProps {
     bruttolön: number;
     skatt: number;
     nettolön: number;
+    dagavdrag?: {
+      föräldraledighet?: number;
+      vårdAvSjuktBarn?: number;
+      sjukfrånvaro?: number;
+      totalt?: number;
+    };
   };
+  grundlön: number;
   extrarader: any[];
   onTaBortExtrarad: (id: number) => void;
 }
@@ -18,6 +25,7 @@ export default function LöneTabell({
   beräknadeVärden,
   extrarader,
   onTaBortExtrarad,
+  grundlön,
 }: LöneTabellProps) {
   return (
     <table className="w-full">
@@ -43,17 +51,46 @@ export default function LöneTabell({
 
         {/* EXTRARADER */}
         {extrarader.map((rad, i) => {
-          // Använd beräknaSumma för att få korrekt belopp (inkl. multiplikation och minus)
-          const modalFields = {
-            kolumn1: rad.kolumn1,
-            kolumn2: rad.kolumn2,
-            kolumn3: rad.kolumn3,
-            kolumn4: rad.kolumn4,
-          };
-          const grundlön = beräknadeVärden?.bruttolön || 0;
-          let belopp = parseFloat(beräknaSumma(rad.typ, modalFields, grundlön));
-          // Skicka alltid positivt belopp till LöneRadItem, minus visas via showMinus
-          belopp = Math.abs(belopp);
+          // Debug-logg för felsökning
+          // Sätt enhet till 'Dag' om den saknas
+          const enhetValue = rad.enhet || rad.modalFields?.enhet || "Dag";
+          if (typeof window !== "undefined") {
+            console.log("LoneTabell extrarad:", {
+              typ: rad.typ,
+              kolumn1: rad.kolumn1,
+              kolumn2: rad.kolumn2,
+              kolumn3: rad.kolumn3,
+              enhet: enhetValue,
+            });
+          }
+          let belopp;
+          const config = RAD_KONFIGURATIONER[rad.typ];
+          // Visa exakt det avdrag som används i totalen för Föräldraledighet och Vård av sjukt barn
+          if (
+            rad.kolumn1?.toLowerCase().includes("föräldraledighet") &&
+            beräknadeVärden.dagavdrag?.föräldraledighet !== undefined
+          ) {
+            belopp = -Math.abs(Math.round(beräknadeVärden.dagavdrag.föräldraledighet * 100) / 100);
+          } else if (
+            rad.kolumn1?.toLowerCase().includes("vård av sjukt barn") &&
+            beräknadeVärden.dagavdrag?.vårdAvSjuktBarn !== undefined
+          ) {
+            belopp = -Math.abs(Math.round(beräknadeVärden.dagavdrag.vårdAvSjuktBarn * 100) / 100);
+          } else {
+            const modalFields = {
+              kolumn1: rad.kolumn1,
+              kolumn2: rad.kolumn2,
+              kolumn3: rad.kolumn3,
+              kolumn4: rad.kolumn4,
+              enhet: enhetValue,
+            };
+            const summa = parseFloat(beräknaSumma(rad.typ, modalFields, grundlön));
+            if (config?.negativtBelopp) {
+              belopp = -Math.abs(summa);
+            } else {
+              belopp = Math.abs(summa);
+            }
+          }
 
           return (
             <LöneRadItem
