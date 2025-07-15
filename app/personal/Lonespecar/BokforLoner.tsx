@@ -279,27 +279,14 @@ export default function BokforLoner({
       if (radKonfig?.skattepliktig && belopp > 0) {
         const kontoNummer = konto;
         if (kontoNummer >= "7381" && kontoNummer <= "7389") {
-          // Vissa förmåner använder 7512, andra 7515
-          if (kontoNummer === "7381") {
-            // Boende - använder troligtvis 7515
-            förmånerFör7515 += belopp;
-          } else {
-            förmånerFör7512 += belopp;
-          }
+          // Alla förmåner 7381-7389 bokförs på 7515 enligt Bokio
+          förmånerFör7515 += belopp;
         }
       }
     });
 
     // 7512: Sociala avgifter för specifika förmånsvärden
-    if (förmånerFör7512 > 0) {
-      const socialaAvgifterFörmåner7512 = Math.round(förmånerFör7512 * 0.3142 * 100) / 100;
-      poster.push({
-        konto: "7512",
-        kontoNamn: "Sociala avgifter för förmånsvärden",
-        debet: Number(socialaAvgifterFörmåner7512),
-        kredit: 0,
-      });
-    }
+    // 7512 borttagen enligt Bokio-modell
 
     // 7515: Sociala avgifter på skattepliktiga kostnadsersättningar
     if (förmånerFör7515 > 0) {
