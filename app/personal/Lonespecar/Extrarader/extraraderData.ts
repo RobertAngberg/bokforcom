@@ -8,7 +8,7 @@ export const staticRows = [
   { id: "foretagsbilExtra", label: "Företagsbil" },
   { id: "foraldraledighet", label: "Föräldraledighet" },
   // { id: "jamkning", label: "Jämkning" },
-  { id: "nettolönejustering", label: "Justering, nettolön" },
+  // { id: "nettolönejustering", label: "Justering, nettolön" },
   { id: "obetaldFranvaro", label: "Obetald frånvaro" },
   { id: "obTillagg", label: "OB-tillägg" },
   { id: "overtid", label: "Övertid" },

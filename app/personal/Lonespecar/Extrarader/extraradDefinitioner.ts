@@ -438,19 +438,19 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     },
   },
 
-  nettolönejustering: {
-    label: "Nettolönejustering",
-    enhet: "variabel",
-    läggTillINettolön: true,
-    fält: {
-      antalLabel: "Antal",
-      antalPlaceholder: "Ange antal",
-      beloppPlaceholder: "à SEK",
-      step: "1",
-      beräknaTotalsummaAutomatiskt: false,
-      enhetDropdown: ["Timme", "Dag", "St"],
-    },
-  },
+  // nettolönejustering: {
+  //   label: "Nettolönejustering",
+  //   enhet: "variabel",
+  //   läggTillINettolön: true,
+  //   fält: {
+  //     antalLabel: "Antal",
+  //     antalPlaceholder: "Ange antal",
+  //     beloppPlaceholder: "à SEK",
+  //     step: "1",
+  //     beräknaTotalsummaAutomatiskt: false,
+  //     enhetDropdown: ["Timme", "Dag", "St"],
+  //   },
+  // },
 };
 
 export type RadKonfigurationType = RadKonfiguration;

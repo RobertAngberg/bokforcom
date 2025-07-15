@@ -276,7 +276,7 @@ export function klassificeraExtrarader(extrarader: any[]) {
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
-    nettolönejustering,
+    // nettolönejustering,
   };
 }
 
@@ -418,7 +418,7 @@ export function beräknaKomplett(
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
-    nettolönejustering,
+    // nettolönejustering,
   } = klassificeraExtrarader(extrarader);
 
   // I Bokio ingår skattepliktiga förmåner direkt i bruttolönen
@@ -436,7 +436,8 @@ export function beräknaKomplett(
   // Nettolön beräknas på kontantlön (grundlön + tillägg - avdrag), inte på förmåner
   const kontantlön =
     kontrakt.månadslön + övertidsersättning + övrigaTillägg + bruttolönTillägg - totalDagavdrag;
-  const nettolön = kontantlön - skatt + skattefriaErsättningar + nettolönejustering;
+  const nettolön = kontantlön - skatt + skattefriaErsättningar;
+  //  + nettolönejustering;
 
   const socialaAvgifter = beräknaSocialaAvgifter(skattunderlag, kontrakt.socialaAvgifterSats);
   const lönekostnad = bruttolön + socialaAvgifter; // Skattepliktiga förmåner redan inkluderade i bruttolön

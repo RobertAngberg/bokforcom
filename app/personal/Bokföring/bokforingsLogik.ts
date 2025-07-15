@@ -40,10 +40,8 @@ export function genereraBokföringsrader(
     // Klassificera extrarader
     const klassificering = klassificeraExtrarader(lönespec.extrarader || []);
     const grundlön = Number(lönespec.beräknadeVärden?.grundlön || lönespec.grundlön || 0);
-    const bruttolön =
-      grundlön +
-      klassificering.bruttolönTillägg -
-      (klassificering.nettolönejustering < 0 ? Math.abs(klassificering.nettolönejustering) : 0);
+    const bruttolön = grundlön + klassificering.bruttolönTillägg;
+    // (klassificering.nettolönejustering < 0 ? Math.abs(klassificering.nettolönejustering) : 0);
 
     // --- Bokio-style: Beräkna bruttolön efter avdrag (VAB och föräldraledighet) ---
     let antalForaldraledighet = 0;
