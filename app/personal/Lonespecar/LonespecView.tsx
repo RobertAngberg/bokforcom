@@ -10,7 +10,7 @@ import { useState } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import { useLonespecContext } from "./LonespecContext";
 
-interface LönespecCardProps {
+interface LönespecViewProps {
   lönespec: any;
   anställd: any;
   utlägg: any[];
@@ -21,7 +21,7 @@ interface LönespecCardProps {
   visaExtraRader?: boolean; // NY PROP
 }
 
-export default function LönespecCard({
+export default function LönespecView({
   lönespec,
   anställd,
   utlägg,
@@ -30,7 +30,7 @@ export default function LönespecCard({
   taBortLoading,
   företagsprofil,
   visaExtraRader = false,
-}: LönespecCardProps) {
+}: LönespecViewProps) {
   const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
   //#endregion
 
@@ -114,6 +114,19 @@ export default function LönespecCard({
         lönekostnad={visaLönekostnad}
       />
 
+      <div className="flex gap-3 mt-4 justify-between items-center">
+        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaForhandsgranskning(true)} />
+        {onTaBortLönespec && (
+          <div className="flex-1 flex justify-end">
+            <Knapp
+              text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort"}
+              onClick={onTaBortLönespec}
+              disabled={taBortLoading}
+            />
+          </div>
+        )}
+      </div>
+
       {visaForhandsgranskning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
@@ -144,11 +157,12 @@ export default function LönespecCard({
   }
 
   // Annars visa med AnimeradFlik som vanligt
+  const namn = anställd ? `${anställd.förnamn || ""} ${anställd.efternamn || ""}`.trim() : "Okänd";
   return (
     <AnimeradFlik
       key={lönespec.id}
-      title={`Lönespec ${månadsNamn}`}
-      icon="📅"
+      title={namn}
+      icon=""
       visaSummaDirekt={`Netto: ${visaNettolön.toLocaleString("sv-SE")} kr`}
     >
       {innehåll}

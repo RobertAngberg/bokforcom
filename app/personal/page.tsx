@@ -45,7 +45,7 @@ export default function PersonalPage() {
   return (
     <MainLayout>
       <div className="">
-        <h1 className="text-3xl text-white mb-8 text-center">Personalaaa</h1>
+        <h1 className="text-3xl text-white mb-8 text-center">Personal</h1>
 
         <Aaapage />
         {/* <AnimeradFlik title="Anställda" icon="👥" forcedOpen={true}>

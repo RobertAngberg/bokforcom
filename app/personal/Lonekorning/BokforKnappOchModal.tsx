@@ -8,7 +8,7 @@ import { hämtaExtrarader } from "../actions";
 
 interface BokförProps {
   anställda: any[];
-  utbetalningsdatum: Date;
+  utbetalningsdatum?: Date | null;
   lönespecar: Record<string, any>;
 }
 
@@ -147,7 +147,8 @@ export default function BokförKnappOchModal({
           {/* HEADER */}
           <div className="flex justify-between items-center p-6 border-b border-gray-700">
             <h3 className="text-xl font-semibold text-white">
-              📊 Bokföring - {utbetalningsdatum.toLocaleDateString("sv-SE")}
+              📊 Bokföring
+              {utbetalningsdatum ? ` - ${utbetalningsdatum.toLocaleDateString("sv-SE")}` : ""}
             </h3>
             <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">
               ✕

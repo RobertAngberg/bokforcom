@@ -1,5 +1,54 @@
-//#region
 "use server";
+
+export async function hämtaAllaLönespecarFörUser() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+  const userId = parseInt(session.user.id, 10);
+  try {
+    const client = await pool.connect();
+    const query = `
+      SELECT l.*
+      FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE a.user_id = $1
+      ORDER BY l.utbetalningsdatum DESC, l.skapad DESC
+    `;
+    const result = await client.query(query, [userId]);
+    client.release();
+    return result.rows;
+  } catch (error) {
+    console.error("❌ hämtaAllaLönespecarFörUser error:", error);
+    return [];
+  }
+}
+
+export async function hämtaUtbetalningsdatumLista() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+  const userId = parseInt(session.user.id, 10);
+  try {
+    const client = await pool.connect();
+    const query = `
+      SELECT DISTINCT l.utbetalningsdatum
+      FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE a.user_id = $1
+      ORDER BY l.utbetalningsdatum DESC
+    `;
+    const result = await client.query(query, [userId]);
+    client.release();
+    // Returnera som array av datumsträngar
+    return result.rows.map((row) => row.utbetalningsdatum);
+  } catch (error) {
+    console.error("❌ hämtaUtbetalningsdatumLista error:", error);
+    return [];
+  }
+}
+//#region
 
 import { Pool } from "pg";
 import { auth } from "@/auth";

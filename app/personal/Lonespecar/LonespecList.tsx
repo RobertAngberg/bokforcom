@@ -1,7 +1,7 @@
 "use client";
 
 //#region Huvud
-import LönespecCard from "./LonespecView";
+import LönespecView from "./LonespecView";
 import { taBortLönespec } from "../actions";
 import { useState } from "react";
 import { useLonespecContext } from "./LonespecContext";
@@ -64,7 +64,7 @@ export default function LonespecList({
         </div>
       ) : (
         lönespecar.map((lönespec) => (
-          <LönespecCard
+          <LönespecView
             key={lönespec.id}
             lönespec={lönespec}
             anställd={anställd}

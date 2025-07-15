@@ -121,10 +121,7 @@ export default function BokforLoner({
 }: BokforLonerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [utbetalningsdatum, setUtbetalningsdatum] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [kommentar, setKommentar] = useState("");
+  // ...existing code...
 
   // Validera mappningen vid första rendering (endast i development)
   if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -147,8 +144,7 @@ export default function BokforLoner({
         beräknadeVärden,
         anställdNamn,
         period: `${lönespec.månad}/${lönespec.år}`,
-        utbetalningsdatum,
-        kommentar: kommentar || undefined,
+        // Bokföringsinställningar borttagna
       });
 
       alert(`✅ ${result.message}`);
@@ -383,6 +379,8 @@ export default function BokforLoner({
           </div>
         </div>
 
+        {/* Bokföringsinställningar borttagen */}
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-white">
             <thead>
@@ -433,37 +431,7 @@ export default function BokforLoner({
           </table>
         </div>
 
-        {/* Bokföringsinställningar */}
-        <div className="bg-slate-700 p-4 rounded-lg mt-4">
-          <h3 className="text-md font-semibold text-slate-300 mb-4">Bokföringsinställningar</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Utbetalningsdatum
-              </label>
-              <input
-                type="date"
-                value={utbetalningsdatum}
-                onChange={(e) => setUtbetalningsdatum(e.target.value)}
-                className="w-full p-2 bg-slate-600 text-white rounded border border-slate-500 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Kommentar (valfritt)
-              </label>
-              <input
-                type="text"
-                value={kommentar}
-                onChange={(e) => setKommentar(e.target.value)}
-                placeholder={`Löneutbetalning ${anställdNamn}`}
-                className="w-full p-2 bg-slate-600 text-white rounded border border-slate-500 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Bokföringsinställningar borttagna, tom div borttagen */}
 
         {/* Felmeddelande */}
         {error && (
