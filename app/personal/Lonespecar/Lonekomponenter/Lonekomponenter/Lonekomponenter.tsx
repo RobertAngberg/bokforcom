@@ -55,6 +55,7 @@ export default function Lonekomponenter({
       <LöneTabell
         beräknadeVärden={beräknadeVärden}
         extrarader={extrarader[lönespec.id] || []}
+        grundlön={grundlön}
         onTaBortExtrarad={async (extraradId) => {
           await taBortExtrarad(extraradId);
           hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));

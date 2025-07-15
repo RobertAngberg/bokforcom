@@ -16,7 +16,7 @@ interface LöneTabellProps {
       totalt?: number;
     };
   };
-  grundlön: number;
+  grundlön: number | undefined;
   extrarader: any[];
   onTaBortExtrarad: (id: number) => void;
 }

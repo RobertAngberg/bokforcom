@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Personalinformation from "./Personalinformation";
 import Kompensation from "./Kompensation";
-import Tjänsteställe from "./Tjänsteställe";
+import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../_components/Knapp";
 import { sparaAnställd } from "../../actions";

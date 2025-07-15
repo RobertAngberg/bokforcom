@@ -4,14 +4,14 @@
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import { sparaAnställd } from "../actions";
-import Anställningstyp from "./Anställningstyp";
+import Anställningstyp from "./Anstallningstyp";
 import KontraktPeriod from "./KontraktPeriod";
-import Lön from "./Lön";
+import Lön from "./Lon";
 import Arbetsbelastning from "./Arbetsbelastning";
 import Skatt from "./Skatt";
 import Jobbtitel from "./Jobbtitel";
 import Semester from "./Semester";
-import Tjänsteställe from "./Tjänsteställe";
+import Tjänsteställe from "./Tjanstestalle";
 
 interface KontraktProps {
   anställd?: any;

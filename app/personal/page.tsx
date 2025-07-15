@@ -5,7 +5,7 @@ import { useState } from "react";
 import MainLayout from "../_components/MainLayout";
 import AnimeradFlik from "../_components/AnimeradFlik";
 import Anställda from "./Anstallda/Anstallda";
-import Personalinformation from "./Anstallda/NyAnställd/Personalinformation";
+import Personalinformation from "./Anstallda/NyAnstalld/Personalinformation";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import ModernSemester from "./Semester/Semester";

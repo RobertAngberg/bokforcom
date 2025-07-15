@@ -3,7 +3,7 @@ import Anställda from "./Anstallda";
 import MainLayout from "../../_components/MainLayout";
 import { useState } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import Personalinformation from "./NyAnställd/Personalinformation";
+import Personalinformation from "./NyAnstalld/Personalinformation";
 import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Semester from "../Semester/Semester";

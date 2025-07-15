@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../actions";
 import Lonedatum from "./Lonedatum";
-import AnstolldaLista from "./AnstolldaLista";
+import AnstolldaLista from "./AnstalldaLista";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
