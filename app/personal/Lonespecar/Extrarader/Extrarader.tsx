@@ -2,7 +2,7 @@
 
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import ExtraraderModal from "./ExtraraderModal";
-import ExtraraderSökning from "./ExtraraderSökning";
+import ExtraraderSökning from "./ExtraraderSokning";
 import ExtraraderGrid from "./ExtraraderGrid";
 import { sparaExtrarad } from "../../actions";
 import {
