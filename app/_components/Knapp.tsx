@@ -1,6 +1,6 @@
 type KnappProps = {
   text: string;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
   loading?: boolean;

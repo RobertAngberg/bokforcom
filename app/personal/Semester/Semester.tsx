@@ -1,8 +1,3 @@
-/**
- * Modern semesterkomponent som använder befintlig semester-tabell
- * Fullt integrerad med din databasstruktur
- */
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,8 +12,8 @@ import {
 } from "../actions";
 import BokforModal from "./BokforModal";
 
-// Ersätt import av SemesterSummary med lokal typ:
 type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
+
 type SemesterBoxSummary = {
   betalda_dagar: number;
   sparade_dagar: number;
@@ -47,6 +42,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   });
   const [editingField, setEditingField] = useState<SemesterBoxField | null>(null);
   const [editValue, setEditValue] = useState<string>("");
+  // Remove originalSummary, not needed
   const [loading, setLoading] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [bokforRows, setBokforRows] = useState<any[]>([]);
@@ -276,24 +272,22 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                   autoFocus
                 />
                 <div className="flex space-x-2">
-                  <span
+                  <Knapp
+                    text="💾 Spara"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleSaveEdit();
                     }}
-                    className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
-                  >
-                    ✓
-                  </span>
-                  <span
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
+                  <Knapp
+                    text="❌ Avbryt"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleCancelEdit();
                     }}
-                    className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
-                  >
-                    ✕
-                  </span>
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
                 </div>
               </div>
             ) : (
@@ -335,24 +329,22 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                   autoFocus
                 />
                 <div className="flex space-x-2">
-                  <span
+                  <Knapp
+                    text="💾 Spara"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleSaveEdit();
                     }}
-                    className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
-                  >
-                    ✓
-                  </span>
-                  <span
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
+                  <Knapp
+                    text="❌ Avbryt"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleCancelEdit();
                     }}
-                    className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
-                  >
-                    ✕
-                  </span>
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
                 </div>
               </div>
             ) : (
@@ -394,24 +386,22 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                   autoFocus
                 />
                 <div className="flex space-x-2">
-                  <span
+                  <Knapp
+                    text="💾 Spara"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleSaveEdit();
                     }}
-                    className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
-                  >
-                    ✓
-                  </span>
-                  <span
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
+                  <Knapp
+                    text="❌ Avbryt"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleCancelEdit();
                     }}
-                    className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
-                  >
-                    ✕
-                  </span>
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
                 </div>
               </div>
             ) : (
@@ -451,24 +441,22 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                   autoFocus
                 />
                 <div className="flex space-x-2">
-                  <span
+                  <Knapp
+                    text="💾 Spara"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleSaveEdit();
                     }}
-                    className="text-green-400 text-3xl hover:text-green-300 cursor-pointer select-none"
-                  >
-                    ✓
-                  </span>
-                  <span
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
+                  <Knapp
+                    text="❌ Avbryt"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e?.stopPropagation();
                       handleCancelEdit();
                     }}
-                    className="text-red-400 text-3xl hover:text-red-300 cursor-pointer select-none"
-                  >
-                    ✕
-                  </span>
+                    className="text-sm px-2 py-0.5 min-w-0"
+                  />
                 </div>
               </div>
             ) : (
