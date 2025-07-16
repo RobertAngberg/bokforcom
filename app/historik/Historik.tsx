@@ -152,20 +152,16 @@ export default function Historik({ initialData }: Props) {
                             {detail.kontonummer} – {detail.beskrivning}
                           </td>
                           <td className="py-2 pr-4 text-right">
-                            {detail.debet !== 0
-                              ? detail.debet.toLocaleString("sv-SE", {
-                                  style: "currency",
-                                  currency: "SEK",
-                                })
-                              : "–"}
+                            {detail.debet.toLocaleString("sv-SE", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }) + " kr"}
                           </td>
                           <td className="py-2 pr-6 text-right">
-                            {detail.kredit !== 0
-                              ? detail.kredit.toLocaleString("sv-SE", {
-                                  style: "currency",
-                                  currency: "SEK",
-                                })
-                              : "–"}
+                            {detail.kredit.toLocaleString("sv-SE", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }) + " kr"}
                           </td>
                         </tr>
                       ))}

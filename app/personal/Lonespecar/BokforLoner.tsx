@@ -406,10 +406,10 @@ export default function BokforLoner({
                     <td className="p-2 font-mono">{post.konto}</td>
                     <td className="p-2">{post.kontoNamn}</td>
                     <td className="p-2 text-right">
-                      {post.debet > 0 ? `${post.debet.toLocaleString("sv-SE")} kr` : ""}
+                      {`${post.debet.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr`}
                     </td>
                     <td className="p-2 text-right">
-                      {post.kredit > 0 ? `${post.kredit.toLocaleString("sv-SE")} kr` : ""}
+                      {`${post.kredit.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr`}
                     </td>
                   </tr>
                 ))}
