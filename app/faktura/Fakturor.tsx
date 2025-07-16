@@ -32,8 +32,80 @@ type Props = {
 //#endregion
 
 export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }: Props) {
+  // State för att styra flikarnas synlighet
+  const [showAllFlikar, setShowAllFlikar] = useState(false);
   //#region Context och state
   const { formData, setFormData, setKundStatus } = useFakturaContext();
+  // Funktion för att hantera när en faktura väljs
+  const hanteraValdFaktura = async (fakturaId: number) => {
+    const data = await hämtaFakturaMedRader(fakturaId);
+    if (!data || !data.faktura) {
+      alert("❌ Kunde inte hämta faktura");
+      return;
+    }
+    const { faktura, artiklar, rotRut } = data;
+    setFormData((prev) => ({
+      ...prev,
+      id: faktura.id,
+      fakturanummer: faktura.fakturanummer ?? "",
+      fakturadatum: faktura.fakturadatum?.toISOString
+        ? faktura.fakturadatum.toISOString().slice(0, 10)
+        : (faktura.fakturadatum ?? ""),
+      forfallodatum: faktura.forfallodatum?.toISOString
+        ? faktura.forfallodatum.toISOString().slice(0, 10)
+        : (faktura.forfallodatum ?? ""),
+      betalningsmetod: faktura.betalningsmetod ?? "",
+      betalningsvillkor: faktura.betalningsvillkor ?? "",
+      drojsmalsranta: faktura.drojsmalsranta ?? "",
+      kundId: faktura.kundId?.toString() ?? "",
+      nummer: faktura.nummer ?? "",
+      kundmomsnummer: faktura.kundmomsnummer ?? "",
+      kundnamn: faktura.kundnamn ?? "",
+      kundnummer: faktura.kundnummer ?? "",
+      kundorganisationsnummer: faktura.kundorganisationsnummer ?? "",
+      kundadress: faktura.kundadress ?? "",
+      kundpostnummer: faktura.kundpostnummer ?? "",
+      kundstad: faktura.kundstad ?? "",
+      kundemail: faktura.kundemail ?? "",
+      företagsnamn: faktura.företagsnamn ?? "",
+      epost: faktura.epost ?? "",
+      adress: faktura.adress ?? "",
+      postnummer: faktura.postnummer ?? "",
+      stad: faktura.stad ?? "",
+      organisationsnummer: faktura.organisationsnummer ?? "",
+      momsregistreringsnummer: faktura.momsregistreringsnummer ?? "",
+      telefonnummer: faktura.telefonnummer ?? "",
+      bankinfo: faktura.bankinfo ?? "",
+      webbplats: faktura.webbplats ?? "",
+      logo: faktura.logo ?? "",
+      logoWidth: faktura.logo_width ?? 200,
+      artiklar: artiklar.map((rad: any) => ({
+        beskrivning: rad.beskrivning,
+        antal: Number(rad.antal),
+        prisPerEnhet: Number(rad.pris_per_enhet ?? rad.prisPerEnhet),
+        moms: Number(rad.moms),
+        valuta: rad.valuta ?? "SEK",
+        typ: rad.typ === "tjänst" ? "tjänst" : "vara",
+        rotRutTyp: rad.rot_rut_typ ?? rad.rotRutTyp,
+        rotRutKategori: rad.rot_rut_kategori ?? rad.rotRutKategori,
+        avdragProcent: rad.avdrag_procent ?? rad.avdragProcent,
+        arbetskostnadExMoms: rad.arbetskostnad_ex_moms ?? rad.arbetskostnadExMoms,
+      })),
+      // ROT/RUT-fält från rot_rut-tabellen
+      rotRutAktiverat: !!rotRut.typ,
+      rotRutTyp: rotRut.typ ?? "",
+      rotRutKategori: rotRut.rot_rut_kategori ?? "",
+      avdragProcent: rotRut.avdrag_procent ?? "",
+      arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms ?? "",
+      avdragBelopp: rotRut.avdrag_belopp ?? "",
+      personnummer: rotRut.personnummer ?? "",
+      fastighetsbeteckning: rotRut.fastighetsbeteckning ?? "",
+      rotBoendeTyp: rotRut.rot_boende_typ ?? "",
+      brfOrganisationsnummer: rotRut.brf_organisationsnummer ?? "",
+      brfLagenhetsnummer: rotRut.brf_lagenhetsnummer ?? "",
+    }));
+    setShowAllFlikar(true);
+  };
   const { data: session } = useSession();
   const [showPreview, setShowPreview] = useState(false);
   const [fakturor, setFakturor] = useState(initialFakturor);
@@ -109,38 +181,54 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
       <MainLayout>
         <h1 className="text-3xl text-center mb-8">Fakturor</h1>
 
-        <AnimeradFlik title="Sparade fakturor" icon="📂">
-          <SparadeFakturor
-            // onSelectInvoice={hanteraValdFaktura}
-            fakturor={fakturor}
-            activeInvoiceId={currentInvoiceId}
-          />
-        </AnimeradFlik>
+        {!showAllFlikar && (
+          <AnimeradFlik title="Sparade fakturor" icon="📂" forcedOpen>
+            <SparadeFakturor
+              fakturor={fakturor}
+              activeInvoiceId={currentInvoiceId}
+              onSelectInvoice={hanteraValdFaktura}
+            />
+          </AnimeradFlik>
+        )}
 
-        <AnimeradFlik title="Avsändare" icon="🧑‍💻">
-          <Avsandare />
-        </AnimeradFlik>
+        {!showAllFlikar && (
+          <div className="flex justify-center my-8">
+            <Knapp
+              text="📝 Ny faktura"
+              onClick={() => {
+                /* Töm formuläret om du vill börja på ny faktura */
+                setShowAllFlikar(true);
+              }}
+            />
+          </div>
+        )}
 
-        <AnimeradFlik title="Kunduppgifter" icon="🧑‍💼">
-          <KundUppgifter />
-        </AnimeradFlik>
+        {showAllFlikar && (
+          <>
+            <AnimeradFlik title="Avsändare" icon="🧑‍💻">
+              <Avsandare />
+            </AnimeradFlik>
 
-        <AnimeradFlik title="Produkter & Tjänster" icon="📦">
-          <ProdukterTjanster />
-        </AnimeradFlik>
+            <AnimeradFlik title="Kunduppgifter" icon="🧑‍💼">
+              <KundUppgifter />
+            </AnimeradFlik>
 
-        <AnimeradFlik title="Betalning" icon="💰">
-          <Betalning />
-        </AnimeradFlik>
+            <AnimeradFlik title="Produkter & Tjänster" icon="📦">
+              <ProdukterTjanster />
+            </AnimeradFlik>
 
-        <AnimeradFlik title="Alternativ" icon="⚙️">
-          <Alternativ
-            // onSave={hanteraSpara}
-            onReload={() => window.location.reload()}
-            // onPrint={() => window.print()}
-            onPreview={() => setShowPreview(true)}
-          />
-        </AnimeradFlik>
+            <AnimeradFlik title="Betalning" icon="💰">
+              <Betalning />
+            </AnimeradFlik>
+
+            <AnimeradFlik title="Alternativ" icon="⚙️">
+              <Alternativ
+                onReload={() => window.location.reload()}
+                onPreview={() => setShowPreview(true)}
+              />
+            </AnimeradFlik>
+          </>
+        )}
       </MainLayout>
 
       <div id="print-area" className="hidden print:block">

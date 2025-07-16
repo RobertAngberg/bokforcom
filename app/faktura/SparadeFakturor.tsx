@@ -8,24 +8,38 @@ import { useFakturaContext } from "./FakturaProvider";
 interface Props {
   fakturor: any[];
   activeInvoiceId?: number;
+  onSelectInvoice?: (id: number) => void | Promise<void>;
 }
 //#endregion
 
-export default function SparadeFakturor({ fakturor, activeInvoiceId }: Props) {
+export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInvoice }: Props) {
   const { setFormData, setKundStatus } = useFakturaContext();
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<number | null>(null);
 
+  // Om onSelectInvoice finns, använd den istället för att ladda data själv
   const handleSelectInvoice = async (id: number) => {
-    setLoadingInvoiceId(id);
+    if (typeof onSelectInvoice === "function") {
+      setLoadingInvoiceId(id);
+      try {
+        await onSelectInvoice(id);
+        setKundStatus("loaded");
+      } catch (error) {
+        alert("❌ Fel vid laddning av faktura");
+        console.error(error);
+      } finally {
+        setLoadingInvoiceId(null);
+      }
+      return;
+    }
+    // ...befintlig kod för att ladda faktura om ingen prop skickas...
     try {
+      setLoadingInvoiceId(id);
       const data = await hämtaFakturaMedRader(id);
       if (!data || !data.faktura) {
         alert("❌ Kunde inte hämta faktura");
         return;
       }
-
       const { faktura, artiklar, rotRut } = data;
-
       setFormData((prev) => ({
         ...prev,
         id: faktura.id,
@@ -86,7 +100,6 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId }: Props) {
         brfOrganisationsnummer: rotRut.brf_organisationsnummer ?? "",
         brfLagenhetsnummer: rotRut.brf_lagenhetsnummer ?? "",
       }));
-
       setKundStatus("loaded");
     } catch (error) {
       alert("❌ Fel vid laddning av faktura");
