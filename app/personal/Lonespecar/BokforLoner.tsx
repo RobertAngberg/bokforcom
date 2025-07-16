@@ -9,6 +9,7 @@ interface BokföringsPost {
   kontoNamn: string;
   debet: number;
   kredit: number;
+  beskrivning: string;
 }
 
 interface BokforLonerProps {
@@ -133,8 +134,11 @@ export default function BokforLoner({
     setError(null);
 
     try {
+      // Skicka hela arrayen med bokföringsposter till backend
+      const poster = analyseraBokföringsposter();
       const result = await bokforLoneUtbetalning({
         lönespecId: lönespec.id,
+        bokföringsPoster: poster,
         extrarader,
         beräknadeVärden,
         anställdNamn,
@@ -206,6 +210,7 @@ export default function BokforLoner({
         kontoNamn,
         debet: Number(Math.round(belopp * 100) / 100),
         kredit: 0,
+        beskrivning: kontoNamn,
       });
     });
 
@@ -228,6 +233,7 @@ export default function BokforLoner({
         kontoNamn: "Löner till tjänstemän",
         debet: Number(Math.round(totalKontantlön * 100) / 100),
         kredit: 0,
+        beskrivning: "Kontantlön",
       });
     }
 
@@ -238,6 +244,7 @@ export default function BokforLoner({
         kontoNamn: "Motkonto skattepliktiga förmåner",
         debet: 0,
         kredit: Number(Math.round(reraFörmåner * 100) / 100),
+        beskrivning: "Motkonto förmåner",
       });
     }
 
@@ -254,6 +261,7 @@ export default function BokforLoner({
         kontoNamn: "Lagstadgade sociala avgifter",
         debet: Number(socialaAvgifterKontant),
         kredit: 0,
+        beskrivning: "Sociala avgifter kontantlön",
       });
     }
 
@@ -291,6 +299,7 @@ export default function BokforLoner({
         kontoNamn: "Sociala avgifter på skattepliktiga kostnadsersättningar",
         debet: Number(socialaAvgifterFörmåner7515),
         kredit: 0,
+        beskrivning: "Sociala avgifter förmåner",
       });
     }
 
@@ -303,6 +312,7 @@ export default function BokforLoner({
         kontoNamn: "Personalskatt",
         debet: 0,
         kredit: Number(Math.round(totalSkatt * 100) / 100),
+        beskrivning: "Personalskatt",
       });
     }
 
@@ -318,6 +328,7 @@ export default function BokforLoner({
         kontoNamn: "Avräkning lagstadgade sociala avgifter",
         debet: 0,
         kredit: Number(Math.round(totalAllaSocialaAvgifter * 100) / 100),
+        beskrivning: "Skuld sociala avgifter",
       });
     }
 
@@ -328,6 +339,7 @@ export default function BokforLoner({
         kontoNamn: "Företagskonto / affärskonto",
         debet: 0,
         kredit: Number(Math.round(totalNettolön * 100) / 100),
+        beskrivning: "Nettolön utbetalning",
       });
     }
 

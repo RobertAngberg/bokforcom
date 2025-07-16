@@ -25,6 +25,7 @@ interface BokförLöneUtbetalningData {
   period: string;
   utbetalningsdatum: string;
   kommentar?: string;
+  bokföringsPoster?: BokföringsPost[];
 }
 
 /**
@@ -64,13 +65,31 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
       throw new Error("Lönespecifikation är redan bokförd");
     }
 
-    // Generera bokföringsposter (samma logik som BokforLoner.tsx)
-    const bokföringsPoster = genereraBokföringsPoster(
-      lönespec,
-      data.extrarader,
-      data.beräknadeVärden,
-      data.anställdNamn
-    );
+    // Sätt alltid status till 'Skapad' innan bokföring
+    const updateLönespecQueryReset = `
+      UPDATE lönespecifikationer 
+      SET status = 'Skapad', uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await client.query(updateLönespecQueryReset, [data.lönespecId]);
+
+    // Använd bokföringsPoster direkt om den finns, annars generera som tidigare
+    const bokföringsPoster = data.bokföringsPoster && Array.isArray(data.bokföringsPoster)
+      ? data.bokföringsPoster
+      : genereraBokföringsPoster(
+          lönespec,
+          data.extrarader,
+          data.beräknadeVärden,
+          data.anställdNamn
+        );
+
+    // LOGGA: Visa alla bokföringsposter innan de sparas
+    console.log("[bokforLoneUtbetalning] bokföringsPoster:", bokföringsPoster);
+    bokföringsPoster.forEach((post, i) => {
+      if (isNaN(post.debet) || isNaN(post.kredit)) {
+        console.warn(`[bokforLoneUtbetalning] NaN-belopp på rad ${i}:`, post);
+      }
+    });
 
     // Validera att bokföringen balanserar
     const totalDebet = bokföringsPoster.reduce((sum, post) => sum + post.debet, 0);
@@ -109,18 +128,22 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
     `;
 
     for (const post of bokföringsPoster) {
+      post.debet = Number(post.debet) || 0;
+      post.kredit = Number(post.kredit) || 0;
+      if (post.debet === 0 && post.kredit === 0) {
+        console.log("Skippar post med 0 debet och 0 kredit:", post);
+        continue;
+      }
       // Hämta konto-ID från kontonummer
       const kontoQuery = `SELECT id FROM konton WHERE kontonummer = $1`;
       const kontoResult = await client.query(kontoQuery, [post.konto]);
-
       if (kontoResult.rows.length === 0) {
         client.release();
         throw new Error(`Konto ${post.konto} (${post.kontoNamn}) hittades inte i databasen`);
       }
-
       const kontoId = kontoResult.rows[0].id;
-
-      // Skapa transaktionspost
+      // LOGGA: Visa varje post som sparas
+      console.log("[bokforLoneUtbetalning] Sparar post:", post);
       await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
     }
 
