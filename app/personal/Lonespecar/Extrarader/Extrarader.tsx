@@ -104,8 +104,12 @@ export default function ExtraRader({
             console.warn("⚠️ Felaktig typ vid sparande av extrarad:", typValue);
             typValue = "";
           }
-          // Alltid beräkna totalsumman automatiskt för kolumn3Value
-          let kolumn3Value = beräknaSumma(typValue, modalFields, grundlön);
+          // Sätt alltid enhet till 'Timme' för obetald frånvaro
+          let modalFieldsToSave = { ...modalFields };
+          if (typValue === "obetaldFranvaro") {
+            modalFieldsToSave.enhet = "Timme";
+          }
+          let kolumn3Value = beräknaSumma(typValue, modalFieldsToSave, grundlön);
           const dataToSave = {
             lönespecifikation_id: lönespecId,
             typ: typValue,

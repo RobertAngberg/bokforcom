@@ -280,45 +280,32 @@ export function getFieldsForRow(
   const config = RAD_KONFIGURATIONER[rowId];
 
   if (config) {
-    // Specialfall: Obetald frånvaro – visa Antal, Enhet (dropdown), och Kommentar
+    // Specialfall: Obetald frånvaro – visa Antal, enhet "Timme" (ej dropdown), och Kommentar
     if (rowId === "obetaldFranvaro") {
-      const fields = [
+      return [
         {
-          label: config.fält.antalLabel, // "Antal"
+          label: "Summa",
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
           onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
             setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
           required: true,
-          step: config.fält.step || "1",
-          placeholder: config.fält.antalPlaceholder,
+          step: "0.01",
+          placeholder: "Ange belopp (kr)",
+        },
+        {
+          label: "Kommentar",
+          name: "kolumn4",
+          type: "text",
+          value: modalFields.kolumn4,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          required: false,
+          step: "1",
+          placeholder: "Valfri kommentar",
         },
       ];
-      if (config.fält.enhetDropdown) {
-        fields.push({
-          label: "Enhet",
-          name: "enhet",
-          type: "select",
-          value: modalFields.enhet || config.fält.enhetDropdown[0],
-          onChange: (e: any) => setModalFields((f: any) => ({ ...f, enhet: e.target.value })),
-          required: true,
-          options: config.fält.enhetDropdown as string[],
-          placeholder: "Välj enhet",
-        } as any);
-      }
-      fields.push({
-        label: "Kommentar",
-        name: "kolumn4",
-        type: "text",
-        value: modalFields.kolumn4,
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-          setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
-        required: false,
-        step: "1",
-        placeholder: "Valfri kommentar",
-      });
-      return fields;
     }
 
     // Specialfall: Övertid – visa ENDAST summa och kommentar

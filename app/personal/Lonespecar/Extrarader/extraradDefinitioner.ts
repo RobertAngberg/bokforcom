@@ -400,21 +400,15 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
 
   obetaldFranvaro: {
     label: "Obetald frånvaro",
-    enhet: "dag",
+    enhet: "timme",
     beräknaVärde: (grundlön, modalFields, arbetstimmarPerVecka = 40) => {
-      const enhet = modalFields?.enhet || "Dag";
-      if (enhet === "Timme") {
-        return -beräknaTimlön(grundlön, arbetstimmarPerVecka);
-      }
-      return -beräknaDaglön(grundlön);
+      // Alltid timlön för obetald frånvaro
+      return -beräknaTimlön(grundlön, arbetstimmarPerVecka);
     },
     beräknaTotalt: (grundlön, modalFields, arbetstimmarPerVecka = 40) => {
       const antal = parseFloat(modalFields?.kolumn2) || 0;
-      const enhet = modalFields?.enhet || "Dag";
-      if (enhet === "Timme") {
-        return -beräknaTimlön(grundlön, arbetstimmarPerVecka) * antal;
-      }
-      return -beräknaDaglön(grundlön) * antal;
+      // Alltid timlön för obetald frånvaro
+      return -beräknaTimlön(grundlön, arbetstimmarPerVecka) * antal;
     },
     negativtBelopp: true,
     fält: {
