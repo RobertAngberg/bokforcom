@@ -8,7 +8,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "./KundUppgifter";
 import ProdukterTjanster from "./ProdukterTjänster/ProdukterTjänster";
-import Forhandsgranskning from "../personal/Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import Forhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
 import SparadeFakturor from "./SparadeFakturor";
 import AnimeradFlik from "../_components/AnimeradFlik";
 import Knapp from "../_components/Knapp";
@@ -144,13 +144,7 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
       </MainLayout>
 
       <div id="print-area" className="hidden print:block">
-        <Forhandsgranskning
-          lönespec={lönespec}
-          anställd={anställd}
-          företagsprofil={företagsprofil}
-          extrarader={extrarader}
-          onStäng={() => {}}
-        />
+        <Forhandsgranskning />
       </div>
 
       {showPreview && (
@@ -161,13 +155,7 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
             </div>
             <div className="p-6 flex justify-center">
               <div className="w-[210mm] h-[297mm] bg-white shadow border rounded">
-                <Forhandsgranskning
-                  lönespec={lönespec}
-                  anställd={anställd}
-                  företagsprofil={företagsprofil}
-                  extrarader={extrarader}
-                  onStäng={handleStäng}
-                />
+                <Forhandsgranskning />
               </div>
             </div>
           </div>
