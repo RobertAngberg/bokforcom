@@ -97,10 +97,6 @@ const validateExtraradMapping = () => {
         onödigaMappningar
       );
     }
-
-    if (saknarBokföring.length === 0 && onödigaMappningar.length === 0) {
-      console.log("✅ BokforLoner: Alla extraradmappningar är konsistenta");
-    }
   }
 
   return {
@@ -121,7 +117,6 @@ export default function BokforLoner({
 }: BokforLonerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // ...existing code...
 
   // Validera mappningen vid första rendering (endast i development)
   if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -144,7 +139,7 @@ export default function BokforLoner({
         beräknadeVärden,
         anställdNamn,
         period: `${lönespec.månad}/${lönespec.år}`,
-        // Bokföringsinställningar borttagna
+        utbetalningsdatum: new Date().toISOString().split("T")[0],
       });
 
       alert(`✅ ${result.message}`);
@@ -335,6 +330,19 @@ export default function BokforLoner({
         kredit: Number(Math.round(totalNettolön * 100) / 100),
       });
     }
+
+    // LOGGA: Visa extrarader och deras typ/belopp
+    console.log("[BokforLoner] extrarader:", extrarader);
+
+    // LOGGA: Visa beräknade värden
+    console.log("[BokforLoner] beräknadeVärden:", beräknadeVärden);
+
+    // LOGGA: Visa summering av förmåner för 7512 och 7515
+    console.log("[BokforLoner] förmånerFör7512:", förmånerFör7512);
+    console.log("[BokforLoner] förmånerFör7515:", förmånerFör7515);
+
+    // LOGGA: Visa alla bokföringsposter innan return
+    console.log("[BokforLoner] poster:", poster);
 
     return poster.filter((p) => p.debet > 0 || p.kredit > 0);
   };

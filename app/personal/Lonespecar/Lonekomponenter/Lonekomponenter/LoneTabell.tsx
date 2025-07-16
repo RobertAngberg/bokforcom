@@ -51,18 +51,8 @@ export default function LöneTabell({
 
         {/* EXTRARADER */}
         {extrarader.map((rad, i) => {
-          // Debug-logg för felsökning
           // Sätt enhet till 'Dag' om den saknas
           const enhetValue = rad.enhet || rad.modalFields?.enhet || "Dag";
-          if (typeof window !== "undefined") {
-            console.log("LoneTabell extrarad:", {
-              typ: rad.typ,
-              kolumn1: rad.kolumn1,
-              kolumn2: rad.kolumn2,
-              kolumn3: rad.kolumn3,
-              enhet: enhetValue,
-            });
-          }
           let belopp;
           const config = RAD_KONFIGURATIONER[rad.typ];
           // Visa exakt det avdrag som används i totalen för Föräldraledighet och Vård av sjukt barn
