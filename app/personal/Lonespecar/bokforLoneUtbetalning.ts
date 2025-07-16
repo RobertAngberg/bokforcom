@@ -74,14 +74,15 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
     await client.query(updateLönespecQueryReset, [data.lönespecId]);
 
     // Använd bokföringsPoster direkt om den finns, annars generera som tidigare
-    const bokföringsPoster = data.bokföringsPoster && Array.isArray(data.bokföringsPoster)
-      ? data.bokföringsPoster
-      : genereraBokföringsPoster(
-          lönespec,
-          data.extrarader,
-          data.beräknadeVärden,
-          data.anställdNamn
-        );
+    const bokföringsPoster =
+      data.bokföringsPoster && Array.isArray(data.bokföringsPoster)
+        ? data.bokföringsPoster
+        : genereraBokföringsPoster(
+            lönespec,
+            data.extrarader,
+            data.beräknadeVärden,
+            data.anställdNamn
+          );
 
     // LOGGA: Visa alla bokföringsposter innan de sparas
     console.log("[bokforLoneUtbetalning] bokföringsPoster:", bokföringsPoster);
