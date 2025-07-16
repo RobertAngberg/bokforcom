@@ -11,6 +11,7 @@ import ProdukterTjanster from "./ProdukterTjänster/ProdukterTjänster";
 import Forhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
 import SparadeFakturor from "./SparadeFakturor";
 import AnimeradFlik from "../_components/AnimeradFlik";
+import BakåtPil from "../_components/BakåtPil";
 import Knapp from "../_components/Knapp";
 import MainLayout from "../_components/MainLayout";
 import Alternativ from "./Alternativ/Alternativ";
@@ -179,7 +180,16 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
   return (
     <>
       <MainLayout>
-        <h1 className="text-3xl text-center mb-8">Fakturor</h1>
+        <div className="relative mb-8 flex items-center justify-center">
+          {showAllFlikar && (
+            <div className="absolute left-0 top-1">
+              <BakåtPil onClick={() => setShowAllFlikar(false)} className="">
+                Tillbaka
+              </BakåtPil>
+            </div>
+          )}
+          <h1 className="text-3xl text-center w-full">Fakturor</h1>
+        </div>
 
         {!showAllFlikar && (
           <AnimeradFlik title="Sparade fakturor" icon="📂" forcedOpen>

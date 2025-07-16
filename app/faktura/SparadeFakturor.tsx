@@ -123,9 +123,7 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-      <div>
-        <h3 className="text-xl font-semibold mb-2">🧾 Fakturor</h3>
-
+      <div className="max-w-[260px]">
         {fakturor.length === 0 ? (
           <p className="text-gray-400 italic">Inga fakturor hittades.</p>
         ) : (
@@ -145,42 +143,41 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
               return (
                 <li
                   key={faktura.id}
-                  className={`bg-slate-900 border rounded px-4 py-2 hover:bg-slate-800 ${
+                  className={`bg-slate-900 border rounded px-2 py-1 hover:bg-slate-800 text-sm flex items-center gap-0 ${
                     isActive ? "border-green-500" : "border-slate-700"
                   } ${isLoading ? "opacity-75" : ""}`}
                 >
-                  <div className="flex justify-between">
-                    <div
-                      className={`cursor-pointer ${isLoading ? "pointer-events-none" : ""}`}
-                      onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
-                    >
-                      <div>
-                        #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}
-                      </div>
-                      <div className="text-gray-400 text-sm">{datum}</div>
-
-                      {isLoading && (
-                        <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
-                          <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
-                          Laddar...
-                        </div>
-                      )}
-
-                      {isActive && !isLoading && (
-                        <div className="text-green-400 text-xs mt-1 flex items-center gap-1">
-                          ✅ Inladdad
-                        </div>
-                      )}
+                  <div
+                    className={`cursor-pointer flex-1 ${isLoading ? "pointer-events-none" : ""}`}
+                    onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
+                  >
+                    <div>
+                      <span className="mr-1">🧾</span>#{faktura.fakturanummer} –{" "}
+                      {faktura.kundnamn ?? "Okänd kund"}
                     </div>
-                    <button
-                      onClick={() => hanteraRaderaFaktura(faktura.id)}
-                      className="hover:text-red-500 text-lg ml-4"
-                      title="Ta bort faktura"
-                      disabled={isLoading}
-                    >
-                      🗑️
-                    </button>
+                    <div className="text-gray-400 text-sm">{datum}</div>
+
+                    {isLoading && (
+                      <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
+                        <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
+                        Laddar...
+                      </div>
+                    )}
+
+                    {isActive && !isLoading && (
+                      <div className="text-green-400 text-xs mt-1 flex items-center gap-1">
+                        ✅ Inladdad
+                      </div>
+                    )}
                   </div>
+                  <button
+                    onClick={() => hanteraRaderaFaktura(faktura.id)}
+                    className="hover:text-red-500 text-lg"
+                    title="Ta bort faktura"
+                    disabled={isLoading}
+                  >
+                    🗑️
+                  </button>
                 </li>
               );
             })}
