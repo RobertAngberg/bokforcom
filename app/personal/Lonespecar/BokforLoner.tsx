@@ -142,7 +142,7 @@ export default function BokforLoner({
         extrarader,
         beräknadeVärden,
         anställdNamn,
-        period: `${lönespec.månad}/${lönespec.år}`,
+        period: lönespec.månad && lönespec.år ? `${lönespec.månad}/${lönespec.år}` : "",
         utbetalningsdatum: new Date().toISOString().split("T")[0],
       });
 
