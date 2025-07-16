@@ -103,24 +103,25 @@ export default function Historik({ initialData }: Props) {
     <MainLayout>
       <div className="text-center mb-8 space-y-4">
         <h1 className="text-3xl">Historik</h1>
-
-        <Dropdown
-          value={year}
-          onChange={setYear}
-          placeholder="Välj år"
-          options={[
-            { label: "2025", value: "2025" },
-            { label: "2024", value: "2024" },
-            { label: "2023", value: "2023" },
-            { label: "2022", value: "2022" },
-            { label: "2021", value: "2021" },
-            { label: "2020", value: "2020" },
-          ]}
-        />
-
-        <div className="pt-2">
-          <Knapp onClick={handleExport} text="Exportera JSON" />
+        <div className="flex justify-center">
+          <div className="max-w-[8rem] w-full">
+            <Dropdown
+              value={year}
+              onChange={setYear}
+              placeholder="Välj år"
+              options={[
+                { label: "2025", value: "2025" },
+                { label: "2024", value: "2024" },
+                { label: "2023", value: "2023" },
+                { label: "2022", value: "2022" },
+                { label: "2021", value: "2021" },
+                { label: "2020", value: "2020" },
+              ]}
+            />
+          </div>
         </div>
+
+        <div className="pt-2"></div>
       </div>
 
       <Tabell
