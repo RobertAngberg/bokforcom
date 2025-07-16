@@ -8,7 +8,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "./KundUppgifter";
 import ProdukterTjanster from "./ProdukterTjänster/ProdukterTjänster";
-import Forhandsgranskning from ../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import Forhandsgranskning from "../personal/Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import SparadeFakturor from "./SparadeFakturor";
 import AnimeradFlik from "../_components/AnimeradFlik";
 import Knapp from "../_components/Knapp";
@@ -79,6 +79,31 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
   }, []);
   //#endregion
 
+  // Props till Forhandsgranskning
+  const lönespec = formData;
+  const anställd = {
+    förnamn: formData.kundnamn,
+    efternamn: "",
+    user_id: formData.kundId,
+    ...formData,
+  };
+  const företagsprofil = {
+    företagsnamn: formData.företagsnamn,
+    adress: formData.adress,
+    postnummer: formData.postnummer,
+    stad: formData.stad,
+    organisationsnummer: formData.organisationsnummer,
+    momsregistreringsnummer: formData.momsregistreringsnummer,
+    telefonnummer: formData.telefonnummer,
+    epost: formData.epost,
+    bankinfo: formData.bankinfo,
+    webbplats: formData.webbplats,
+    logo: formData.logo,
+    logoWidth: formData.logoWidth,
+  };
+  const extrarader = formData.artiklar || [];
+  const handleStäng = () => setShowPreview(false);
+
   return (
     <>
       <MainLayout>
@@ -119,7 +144,13 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
       </MainLayout>
 
       <div id="print-area" className="hidden print:block">
-        <Forhandsgranskning />
+        <Forhandsgranskning
+          lönespec={lönespec}
+          anställd={anställd}
+          företagsprofil={företagsprofil}
+          extrarader={extrarader}
+          onStäng={() => {}}
+        />
       </div>
 
       {showPreview && (
@@ -130,7 +161,13 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
             </div>
             <div className="p-6 flex justify-center">
               <div className="w-[210mm] h-[297mm] bg-white shadow border rounded">
-                <Forhandsgranskning />
+                <Forhandsgranskning
+                  lönespec={lönespec}
+                  anställd={anställd}
+                  företagsprofil={företagsprofil}
+                  extrarader={extrarader}
+                  onStäng={handleStäng}
+                />
               </div>
             </div>
           </div>
