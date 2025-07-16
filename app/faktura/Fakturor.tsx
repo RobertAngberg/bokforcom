@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { useFakturaContext } from "./FakturaProvider";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "./KundUppgifter";
-import ProdukterTjanster from "./ProdukterTjänster/ProdukterTjänster";
-import Forhandsgranskning from "./Förhandsgranskning/Förhandsgranskning";
+import ProdukterTjanster from "./ProdukterTjanster/ProdukterTjanster";
+import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import SparadeFakturor from "./SparadeFakturor";
 import AnimeradFlik from "../_components/AnimeradFlik";
 import BakåtPil from "../_components/BakåtPil";
@@ -188,29 +188,47 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
               </BakåtPil>
             </div>
           )}
-          <h1 className="text-3xl text-center w-full">Fakturor</h1>
+          {!showAllFlikar ? (
+            <h1 className="text-3xl text-center w-full">Fakturor</h1>
+          ) : (
+            <h1 className="text-2xl text-center w-full">
+              {formData.fakturanummer && formData.kundnamn
+                ? `🧾 Faktura #${formData.fakturanummer} - ${formData.kundnamn}`
+                : "Faktura"}
+            </h1>
+          )}
         </div>
 
         {!showAllFlikar && (
-          <AnimeradFlik title="Sparade fakturor" icon="📂" forcedOpen>
+          <>
+            <div className="mb-4 flex justify-end">
+              <Knapp
+                text="📝 Ny faktura"
+                onClick={() => {
+                  // Nollställ kunduppgifter och artiklar
+                  setFormData((prev) => ({
+                    ...prev,
+                    kundnamn: "",
+                    kundId: "",
+                    kundnummer: "",
+                    kundorganisationsnummer: "",
+                    kundadress: "",
+                    kundpostnummer: "",
+                    kundstad: "",
+                    kundemail: "",
+                    artiklar: [],
+                  }));
+                  setShowAllFlikar(true);
+                }}
+                className="mr-2"
+              />
+            </div>
             <SparadeFakturor
               fakturor={fakturor}
               activeInvoiceId={currentInvoiceId}
               onSelectInvoice={hanteraValdFaktura}
             />
-          </AnimeradFlik>
-        )}
-
-        {!showAllFlikar && (
-          <div className="flex justify-center my-8">
-            <Knapp
-              text="📝 Ny faktura"
-              onClick={() => {
-                /* Töm formuläret om du vill börja på ny faktura */
-                setShowAllFlikar(true);
-              }}
-            />
-          </div>
+          </>
         )}
 
         {showAllFlikar && (

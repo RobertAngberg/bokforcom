@@ -44,8 +44,8 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Knapp onClick={hanteraSpara} text="💾 Spara faktura" />
         <Knapp onClick={onPreview} text="👁️ Förhandsgranska" />
-        <Knapp onClick={onReload} text="🔄 Återställ" />
         <ExporteraPDFKnapp />
+        <Knapp onClick={onReload} text="🔄 Återställ" />
       </div>
 
       <SkickaEpost

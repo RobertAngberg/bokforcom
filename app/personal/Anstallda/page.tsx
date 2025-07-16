@@ -23,7 +23,7 @@ export default function AnställdaPage() {
       />
       {valdAnställd && (
         <div className="mt-8">
-          <AnimeradFlik title="Personalinformation" icon="📋" forcedOpen={true}>
+          <AnimeradFlik title="Personalinformation" icon="📋">
             <Personalinformation anställd={valdAnställd} />
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">

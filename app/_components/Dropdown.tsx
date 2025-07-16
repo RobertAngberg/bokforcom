@@ -12,7 +12,7 @@ type DropdownProps = {
 
 export default function Dropdown({ label, value, options, onChange, placeholder }: DropdownProps) {
   return (
-    <div className="max-w-xs w-full">
+    <div className="max-w-[220px] w-full">
       {label && <label className="block text-sm font-medium text-white mb-2">{label}</label>}
       <select
         value={value}

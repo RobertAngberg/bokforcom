@@ -143,7 +143,7 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
               return (
                 <li
                   key={faktura.id}
-                  className={`bg-slate-900 border rounded px-2 py-1 hover:bg-slate-800 text-sm flex items-center gap-0 ${
+                  className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm flex items-center gap-0 ${
                     isActive ? "border-green-500" : "border-slate-700"
                   } ${isLoading ? "opacity-75" : ""}`}
                 >

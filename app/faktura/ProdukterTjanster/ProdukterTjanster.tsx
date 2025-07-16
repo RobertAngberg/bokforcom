@@ -15,7 +15,7 @@ import FavoritArtiklarList from "./FavoritArtiklarList";
 import ArtiklarList from "./ArtiklarList";
 import ArtikelForm from "./ArtikelForm";
 import RotRutCheckbox from "./RotRutCheckbox";
-import LäggTillFavoritartikel from "./LäggTillFavoritartikel";
+import LäggTillFavoritartikel from "./LaggTillFavoritartikel";
 
 type Artikel = {
   beskrivning: string;

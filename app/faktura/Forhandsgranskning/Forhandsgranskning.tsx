@@ -10,7 +10,7 @@ import RotRutInfo from "./RotRutInfo";
 import ArtiklarLista from "./ArtiklarLista";
 import Logotyp from "./Logotyp";
 import Fot from "./Fot";
-import AvsändMottag from "./AvsändMottag";
+import AvsändMottag from "./AvsandMottag";
 import TotalerInfo from "./TotalerInfo";
 //#endregion
 
