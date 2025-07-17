@@ -268,7 +268,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                       handleCancelEdit();
                     }
                   }}
-                  className="w-16 px-1 py-0.5 text-sm bg-red-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-center text-2xl font-bold text-white bg-red-700 rounded px-2 py-2 mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   autoFocus
                 />
                 <div className="flex space-x-2">
@@ -325,7 +325,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                       handleCancelEdit();
                     }
                   }}
-                  className="w-16 px-1 py-0.5 text-sm bg-purple-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-center text-2xl font-bold text-white bg-purple-700 rounded px-2 py-2 mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   autoFocus
                 />
                 <div className="flex space-x-2">
@@ -382,7 +382,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                       handleCancelEdit();
                     }
                   }}
-                  className="w-16 px-1 py-0.5 text-sm bg-yellow-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-center text-2xl font-bold text-white bg-yellow-700 rounded px-2 py-2 mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   autoFocus
                 />
                 <div className="flex space-x-2">
@@ -437,7 +437,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
                       handleCancelEdit();
                     }
                   }}
-                  className="w-16 px-1 py-0.5 text-sm bg-emerald-700 text-white rounded mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-center text-2xl font-bold text-white bg-emerald-700 rounded px-2 py-2 mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   autoFocus
                 />
                 <div className="flex space-x-2">
