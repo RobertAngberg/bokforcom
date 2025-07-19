@@ -34,6 +34,8 @@ interface ModernSemesterProps {
 }
 
 export default function ModernSemester({ anställd, userId }: ModernSemesterProps) {
+  // State för att styra om knappen ska visas
+  const [showBokforKnapp, setShowBokforKnapp] = useState(false);
   const [summary, setSummary] = useState<SemesterBoxSummary>({
     betalda_dagar: 0,
     sparade_dagar: 0,
@@ -69,17 +71,15 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     try {
       const transaktioner = await hämtaSemesterTransaktioner(anställd.id);
       // Summera kolumner direkt
-      let betalda_dagar = 0,
-        sparade_dagar = 0,
-        skuld = 0,
-        komp_dagar = 0;
-      for (const t of transaktioner) {
-        betalda_dagar += Number(t.betalda_dagar) || 0;
-        sparade_dagar += Number(t.sparade_dagar) || 0;
-        skuld += Number(t.skuld) || 0;
-        komp_dagar += Number(t.komp_dagar) || 0;
-      }
-      setSummary({ betalda_dagar, sparade_dagar, skuld, komp_dagar });
+      // Förväntar oss EN rad per anställd
+      const t = transaktioner[0] || {};
+      setSummary({
+        betalda_dagar: Number(t.betalda_dagar) || 0,
+        sparade_dagar: Number(t.sparade_dagar) || 0,
+        skuld: Number(t.skuld) || 0,
+        komp_dagar: Number(t.komp_dagar) || 0,
+      });
+      setShowBokforKnapp(t.bokförd === false);
     } catch (error) {
       console.error("Fel vid hämtning av semesterdata:", error);
       alert("❌ Kunde inte hämta semesterdata");
@@ -485,9 +485,11 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
             </p>
           </div>
         </div>
-        <div className="mt-6 flex justify-end">
-          <Knapp text="Bokför transaktioner" onClick={handleOpenBokforModal} />
-        </div>
+        {showBokforKnapp && (
+          <div className="mt-6 flex justify-end">
+            <Knapp text="Bokför transaktioner" onClick={handleOpenBokforModal} />
+          </div>
+        )}
         <BokforModal
           open={bokforModalOpen}
           onClose={() => setBokforModalOpen(false)}

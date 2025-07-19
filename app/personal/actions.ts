@@ -364,7 +364,7 @@ export async function hämtaSemesterTransaktioner(anställdId: number) {
     }
 
     const query = `
-      SELECT betalda_dagar, sparade_dagar, skuld, komp_dagar
+      SELECT betalda_dagar, sparade_dagar, skuld, komp_dagar, bokförd
       FROM semester
       WHERE anställd_id = $1
     `;
@@ -394,7 +394,7 @@ export async function sparaSemesterTransaktion(data: {
     // UPDATE
     const updateQuery = `
       UPDATE semester
-      SET ${data.kolumn} = $1, uppdaterad = NOW()
+      SET ${data.kolumn} = $1, bokförd = FALSE, uppdaterad = NOW()
       WHERE anställd_id = $2
       RETURNING id
     `;
@@ -423,9 +423,9 @@ export async function sparaSemesterTransaktion(data: {
       }
       const insertQuery = `
         INSERT INTO semester (
-          anställd_id, betalda_dagar, sparade_dagar, skuld, komp_dagar
+          anställd_id, betalda_dagar, sparade_dagar, skuld, komp_dagar, bokförd
         ) VALUES (
-          $1, $2, $3, $4, $5
+          $1, $2, $3, $4, $5, FALSE
         ) RETURNING id
       `;
       const insertResult = await client.query(insertQuery, [
