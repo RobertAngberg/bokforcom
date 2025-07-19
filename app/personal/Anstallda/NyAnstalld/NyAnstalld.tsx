@@ -136,8 +136,6 @@ export default function NyAnställd({
         setSkattetabell={setSkattetabell}
         skattekolumn={skattekolumn}
         setSkattekolumn={setSkattekolumn}
-        växaStöd={växaStöd}
-        setVäxaStöd={setVäxaStöd}
       />
 
       <div className="flex gap-4 pt-4">

@@ -7,8 +7,6 @@ interface SkattProps {
   setSkattetabell: (value: string) => void;
   skattekolumn: string;
   setSkattekolumn: (value: string) => void;
-  växaStöd: boolean;
-  setVäxaStöd: (value: boolean) => void;
 }
 
 export default function Skatt({
@@ -16,8 +14,6 @@ export default function Skatt({
   setSkattetabell,
   skattekolumn,
   setSkattekolumn,
-  växaStöd,
-  setVäxaStöd,
 }: SkattProps) {
   return (
     <div className="bg-slate-800 p-6 rounded-lg">
@@ -48,18 +44,6 @@ export default function Skatt({
             }),
           ]}
         />
-
-        <div className="col-span-1">
-          <label className="flex items-center text-white">
-            <input
-              type="checkbox"
-              checked={växaStöd}
-              onChange={(e) => setVäxaStöd(e.target.checked)}
-              className="mr-2 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
-            />
-            VÄXA-stöd
-          </label>
-        </div>
       </div>
     </div>
   );

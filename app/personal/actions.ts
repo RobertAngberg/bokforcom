@@ -82,7 +82,6 @@ type AnställdData = {
   tjänsteställeOrt: string;
   skattetabell: string;
   skattekolumn: string;
-  växaStöd: boolean;
 };
 //#endregion
 
@@ -163,7 +162,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
           startdatum = $11, slutdatum = $12, anställningstyp = $13, löneperiod = $14, ersättning_per = $15,
           kompensation = $16, arbetsvecka_timmar = $17, arbetsbelastning = $18, deltid_procent = $19,
           tjänsteställe_adress = $20, tjänsteställe_ort = $21,
-          skattetabell = $22, skattekolumn = $23, växa_stöd = $24,
+          skattetabell = $22, skattekolumn = $23,
           uppdaterad = NOW()
         WHERE id = $25 AND user_id = $26
         RETURNING id
@@ -193,7 +192,6 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
         data.tjänsteställeOrt || null,
         data.skattetabell ? parseInt(data.skattetabell, 10) : null,
         data.skattekolumn ? parseInt(data.skattekolumn, 10) : null,
-        data.växaStöd,
         anställdId,
         userId,
       ];
@@ -217,7 +215,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
           startdatum, slutdatum, anställningstyp, löneperiod, ersättning_per,
           kompensation, arbetsvecka_timmar, arbetsbelastning, deltid_procent,
           tjänsteställe_adress, tjänsteställe_ort,
-          skattetabell, skattekolumn, växa_stöd,
+          skattetabell, skattekolumn,
           user_id
         ) VALUES (
           $1, $2, $3, $4, $5,
@@ -254,7 +252,6 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
         data.tjänsteställeOrt || null,
         data.skattetabell ? parseInt(data.skattetabell, 10) : null,
         data.skattekolumn ? parseInt(data.skattekolumn, 10) : null,
-        data.växaStöd,
         userId,
       ];
 

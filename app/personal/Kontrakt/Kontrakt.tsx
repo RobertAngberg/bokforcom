@@ -33,7 +33,6 @@ interface EditData {
   skattekolumn: string;
   jobbtitel: string;
   semesterdagarPerÅr: string;
-  växaStöd: boolean;
   tjänsteställeAdress: string;
   tjänsteställeOrt: string;
 }
@@ -57,7 +56,6 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     skattekolumn: "",
     jobbtitel: "",
     semesterdagarPerÅr: "",
-    växaStöd: false,
     tjänsteställeAdress: "",
     tjänsteställeOrt: "",
   });
@@ -77,7 +75,6 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     skattekolumn: "",
     jobbtitel: "",
     semesterdagarPerÅr: "",
-    växaStöd: false,
     tjänsteställeAdress: "",
     tjänsteställeOrt: "",
   });
@@ -101,7 +98,6 @@ export default function Kontrakt({ anställd }: KontraktProps) {
         skattekolumn: anställd.skattekolumn?.toString() || "",
         jobbtitel: anställd.jobbtitel || "",
         semesterdagarPerÅr: anställd.semesterdagar_per_år?.toString() || "",
-        växaStöd: anställd.växa_stöd || false,
         tjänsteställeAdress: anställd.tjänsteställe_adress || "",
         tjänsteställeOrt: anställd.tjänsteställe_ort || "",
       };
@@ -141,7 +137,6 @@ export default function Kontrakt({ anställd }: KontraktProps) {
           skattekolumn: editData.skattekolumn,
           jobbtitel: editData.jobbtitel,
           semesterdagarPerÅr: editData.semesterdagarPerÅr,
-          växaStöd: editData.växaStöd,
           tjänsteställeAdress: editData.tjänsteställeAdress,
           tjänsteställeOrt: editData.tjänsteställeOrt,
         },
@@ -168,7 +163,6 @@ export default function Kontrakt({ anställd }: KontraktProps) {
           skattekolumn: parseFloat(editData.skattekolumn) || 0,
           jobbtitel: editData.jobbtitel,
           semesterdagar_per_år: parseFloat(editData.semesterdagarPerÅr) || 0,
-          växa_stöd: editData.växaStöd,
           tjänsteställe_adress: editData.tjänsteställeAdress,
           tjänsteställe_ort: editData.tjänsteställeOrt,
         });

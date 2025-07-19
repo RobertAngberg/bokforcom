@@ -45,17 +45,6 @@ export default function Semester({ editData, handleChange, anställd, viewMode }
           value={editData.semesterdagarPerÅr || ""}
           onChange={(e) => handleChange?.("semesterdagarPerÅr", e.target.value)}
         />
-        <div className="flex items-center">
-          <label className="flex items-center text-white">
-            <input
-              type="checkbox"
-              checked={editData.växaStöd || false}
-              onChange={(e) => handleChange?.("växaStöd", e.target.checked)}
-              className="mr-2 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
-            />
-            VÄXA-stöd
-          </label>
-        </div>
       </div>
     </div>
   );

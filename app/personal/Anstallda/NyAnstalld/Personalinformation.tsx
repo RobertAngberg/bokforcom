@@ -125,7 +125,6 @@ export default function Personalinformation({
           tjänsteställeOrt: anställd.tjänsteställe_ort || "",
           skattetabell: anställd.skattetabell?.toString() || "",
           skattekolumn: anställd.skattekolumn?.toString() || "",
-          växaStöd: anställd.växa_stöd || false,
         },
         anställd.id
       );
