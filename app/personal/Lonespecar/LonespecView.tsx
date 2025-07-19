@@ -62,7 +62,10 @@ export default function LönespecView({
   const socialaAvgifter = parseFloat(lönespec.sociala_avgifter || 0);
   const skatt = parseFloat(lönespec.skatt || 0);
   const nettolön = parseFloat(lönespec.nettolön || 0);
-  const utbetalningsDatum = new Date(lönespec.år, (lönespec.månad || 1) - 1, 25);
+  // Fix: Use lönespec.utbetalningsdatum if available, otherwise fallback to old logic
+  const utbetalningsDatum = lönespec.utbetalningsdatum
+    ? new Date(lönespec.utbetalningsdatum)
+    : new Date(lönespec.år, (lönespec.månad || 1) - 1, 25);
 
   // Hämta beräknade värden för denna lönespec
   const aktuellBeräkning = beräknadeVärden[lönespec.id];

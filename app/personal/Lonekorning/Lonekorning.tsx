@@ -53,7 +53,7 @@ export default function Lonekorning() {
         utlaggMap[a.id] = utlaggResults[idx];
       });
       setUlaggMap(utlaggMap);
-      // Gruppera per utbetalningsdatum
+      // Gruppera per utbetalningsdatum och ta bort tomma datum
       const grupperat: Record<string, any[]> = {};
       specar.forEach((spec) => {
         if (spec.utbetalningsdatum) {
@@ -61,16 +61,22 @@ export default function Lonekorning() {
           grupperat[spec.utbetalningsdatum].push(spec);
         }
       });
-      // Sortera datumen fallande
-      const datumSort = Object.keys(grupperat).sort(
+      // Ta bort datum med 0 lönespecar
+      const grupperatUtanTomma = Object.fromEntries(
+        Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+      );
+      const datumSort = Object.keys(grupperatUtanTomma).sort(
         (a, b) => new Date(b).getTime() - new Date(a).getTime()
       );
       setDatumLista(datumSort);
-      setSpecarPerDatum(grupperat);
+      setSpecarPerDatum(grupperatUtanTomma);
       // Förvalt: visa lönespecar för senaste datum
       if (datumSort.length > 0) {
         setUtbetalningsdatum(datumSort[0]);
-        setValdaSpecar(grupperat[datumSort[0]]);
+        setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+      } else {
+        setUtbetalningsdatum(null);
+        setValdaSpecar([]);
       }
     };
     fetchData();
@@ -146,6 +152,42 @@ export default function Lonekorning() {
                   } else {
                     alert("Ny lönespecifikation skapad!");
                     setNySpecModalOpen(false);
+                    // Refresh lönespecar
+                    const [specar, anstallda] = await Promise.all([
+                      hämtaAllaLönespecarFörUser(),
+                      hämtaAllaAnställda(),
+                    ]);
+                    setAnstallda(anstallda);
+                    const utlaggPromises = anstallda.map((a) => hämtaUtlogg(a.id));
+                    const utlaggResults = await Promise.all(utlaggPromises);
+                    const utlaggMap: Record<number, any[]> = {};
+                    anstallda.forEach((a, idx) => {
+                      utlaggMap[a.id] = utlaggResults[idx];
+                    });
+                    setUlaggMap(utlaggMap);
+                    const grupperat: Record<string, any[]> = {};
+                    specar.forEach((spec) => {
+                      if (spec.utbetalningsdatum) {
+                        if (!grupperat[spec.utbetalningsdatum])
+                          grupperat[spec.utbetalningsdatum] = [];
+                        grupperat[spec.utbetalningsdatum].push(spec);
+                      }
+                    });
+                    const grupperatUtanTomma = Object.fromEntries(
+                      Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+                    );
+                    const datumSort = Object.keys(grupperatUtanTomma).sort(
+                      (a, b) => new Date(b).getTime() - new Date(a).getTime()
+                    );
+                    setDatumLista(datumSort);
+                    setSpecarPerDatum(grupperatUtanTomma);
+                    if (datumSort.length > 0) {
+                      setUtbetalningsdatum(datumSort[0]);
+                      setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+                    } else {
+                      setUtbetalningsdatum(null);
+                      setValdaSpecar([]);
+                    }
                   }
                 }}
               >
@@ -155,85 +197,101 @@ export default function Lonekorning() {
           </div>
         </div>
       )}
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-white mb-2">Välj utbetalningsdatum:</h2>
-        <div className="flex flex-col gap-2">
-          {datumLista.map((datum) => (
-            <a
-              key={datum}
-              href="#"
-              className={`px-3 py-1 rounded bg-slate-700 text-white hover:bg-cyan-600 w-fit ${datum === utbetalningsdatum ? "ring-2 ring-cyan-400" : ""}`}
-              onClick={(e) => {
-                e.preventDefault();
-                setUtbetalningsdatum(datum);
-              }}
-            >
-              {new Date(datum).toLocaleDateString("sv-SE")} ({specarPerDatum[datum]?.length ?? 0}{" "}
-              lönespecar)
-            </a>
-          ))}
+      {datumLista.length > 0 && (
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-white mb-2">Välj utbetalningsdatum:</h2>
+          <div className="flex flex-col gap-2">
+            {datumLista.map((datum) => (
+              <a
+                key={datum}
+                href="#"
+                className={`px-3 py-1 rounded bg-slate-700 text-white hover:bg-cyan-600 w-fit ${datum === utbetalningsdatum ? "ring-2 ring-cyan-400" : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setUtbetalningsdatum(datum);
+                }}
+              >
+                {new Date(datum).toLocaleDateString("sv-SE")} ({specarPerDatum[datum]?.length ?? 0}{" "}
+                lönespecar)
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
-      {utbetalningsdatum && (
+      )}
+      {utbetalningsdatum && valdaSpecar.length > 0 && (
         <div className="space-y-2">
-          {valdaSpecar.length === 0 ? (
-            <div className="text-gray-400">Inga lönespecar för detta datum.</div>
-          ) : (
-            <>
-              {valdaSpecar.map((spec) => {
-                const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-                const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
-                const handleTaBortLönespec = async () => {
-                  if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?"))
-                    return;
-                  setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
-                  try {
-                    // Importera taBortLönespec från actions om det behövs
-                    const { taBortLönespec } = await import("../actions");
-                    const resultat = await taBortLönespec(spec.id);
-                    if (resultat.success) {
-                      alert("✅ Lönespecifikation borttagen!");
-                      // Ta bort från state
-                      setValdaSpecar((prev) => prev.filter((s) => s.id !== spec.id));
-                      setSpecarPerDatum((prev) => {
-                        const updated = { ...prev };
-                        if (utbetalningsdatum && updated[utbetalningsdatum]) {
-                          updated[utbetalningsdatum] = updated[utbetalningsdatum].filter(
-                            (s) => s.id !== spec.id
-                          );
+          {/* ...lönespecar... */}
+          <>
+            {valdaSpecar.map((spec) => {
+              const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+              const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
+              const handleTaBortLönespec = async () => {
+                if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
+                setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
+                try {
+                  // Importera taBortLönespec från actions om det behövs
+                  const { taBortLönespec } = await import("../actions");
+                  const resultat = await taBortLönespec(spec.id);
+                  if (resultat.success) {
+                    alert("✅ Lönespecifikation borttagen!");
+                    // Ta bort från state
+                    setValdaSpecar((prev) => prev.filter((s) => s.id !== spec.id));
+                    setSpecarPerDatum((prev) => {
+                      const updated = { ...prev };
+                      if (utbetalningsdatum && updated[utbetalningsdatum]) {
+                        updated[utbetalningsdatum] = updated[utbetalningsdatum].filter(
+                          (s) => s.id !== spec.id
+                        );
+                        // If no lönespecar left for this date, remove the date
+                        if (updated[utbetalningsdatum].length === 0) {
+                          delete updated[utbetalningsdatum];
                         }
-                        return updated;
+                      }
+                      return updated;
+                    });
+                    setDatumLista((prev) => {
+                      const filtered = prev.filter((d) => {
+                        // Only keep dates that still have lönespecar
+                        return (
+                          specarPerDatum[d] &&
+                          specarPerDatum[d].filter((s) => s.id !== spec.id).length > 0
+                        );
                       });
-                    } else {
-                      alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
-                    }
-                  } catch (error) {
-                    console.error("❌ Fel vid borttagning av lönespec:", error);
-                    alert("❌ Kunde inte ta bort lönespec");
-                  } finally {
-                    setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
+                      // If current utbetalningsdatum is now empty, clear selection
+                      if (filtered.indexOf(utbetalningsdatum) === -1) {
+                        setUtbetalningsdatum(filtered[0] || null);
+                      }
+                      return filtered;
+                    });
+                  } else {
+                    alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
                   }
-                };
-                return (
-                  <LönespecView
-                    key={spec.id}
-                    lönespec={spec}
-                    anställd={anstalld}
-                    utlägg={utlagg}
-                    ingenAnimering={false}
-                    taBortLoading={taBortLaddning[spec.id] || false}
-                    visaExtraRader={true}
-                    onTaBortLönespec={handleTaBortLönespec}
-                  />
-                );
-              })}
-              <div className="flex gap-4 mt-8">
-                <Knapp text="🏦 Hämta bankgirofil" onClick={() => setBankgiroModalOpen(true)} />
-                <Knapp text="✉️ Maila lönespecar" onClick={() => setBatchMailModalOpen(true)} />
-                <Knapp text="📖 Bokför" onClick={() => setBokforModalOpen(true)} />
-              </div>
-            </>
-          )}
+                } catch (error) {
+                  console.error("❌ Fel vid borttagning av lönespec:", error);
+                  alert("❌ Kunde inte ta bort lönespec");
+                } finally {
+                  setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
+                }
+              };
+              return (
+                <LönespecView
+                  key={spec.id}
+                  lönespec={spec}
+                  anställd={anstalld}
+                  utlägg={utlagg}
+                  ingenAnimering={false}
+                  taBortLoading={taBortLaddning[spec.id] || false}
+                  visaExtraRader={true}
+                  onTaBortLönespec={handleTaBortLönespec}
+                />
+              );
+            })}
+            <div className="flex gap-4 mt-8">
+              <Knapp text="🏦 Hämta bankgirofil" onClick={() => setBankgiroModalOpen(true)} />
+              <Knapp text="✉️ Maila lönespecar" onClick={() => setBatchMailModalOpen(true)} />
+              <Knapp text="📖 Bokför" onClick={() => setBokforModalOpen(true)} />
+            </div>
+          </>
         </div>
       )}
       {/* EXPORT & BOKFÖRING - LÄNGST NER */}

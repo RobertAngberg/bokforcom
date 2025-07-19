@@ -15,7 +15,6 @@ export default function ToppInfo({
     <div className="bg-slate-700 p-4 rounded-lg">
       <div className="flex justify-between items-start mb-4">
         <h4 className="text-lg font-bold text-white">Lönespecifikation {månadsNamn}</h4>
-        <div className="flex gap-2 items-center">{getLönespecStatusBadge(lönespec.status)}</div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-base">
         <div>
