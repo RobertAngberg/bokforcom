@@ -759,10 +759,7 @@ export async function taBortExtrarad(extraradId: number) {
 
 export async function skapaNyLönespec(data: {
   anställd_id: number;
-  månad: number;
-  år: number;
-  period_start: string;
-  period_slut: string;
+  utbetalningsdatum: string; // YYYY-MM-DD
 }) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -786,14 +783,17 @@ export async function skapaNyLönespec(data: {
     const anställd = anställdResult.rows[0];
 
     // Kontrollera duplicat
-    const existsQuery = `SELECT id FROM lönespecifikationer WHERE anställd_id = $1 AND månad = $2 AND år = $3`;
-    const existsResult = await client.query(existsQuery, [data.anställd_id, data.månad, data.år]);
+    const existsQuery = `SELECT id FROM lönespecifikationer WHERE anställd_id = $1 AND utbetalningsdatum = $2`;
+    const existsResult = await client.query(existsQuery, [
+      data.anställd_id,
+      data.utbetalningsdatum,
+    ]);
 
     if (existsResult.rows.length > 0) {
       client.release();
       return {
         success: false,
-        error: `Lönespecifikation för ${data.månad}/${data.år} finns redan`,
+        error: `Lönespecifikation för ${data.utbetalningsdatum} finns redan`,
       };
     }
 
@@ -802,24 +802,21 @@ export async function skapaNyLönespec(data: {
 
     const insertQuery = `
       INSERT INTO lönespecifikationer (
-        anställd_id, period_start, period_slut, månad, år,
+        anställd_id, utbetalningsdatum,
         grundlön, bruttolön, skatt, sociala_avgifter, nettolön,
-        status, skapad_av
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Utkast', $11)
+        skapad_av
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
     const insertResult = await client.query(insertQuery, [
       data.anställd_id,
-      data.period_start,
-      data.period_slut,
-      data.månad,
-      data.år,
-      grundlön, // ✅ 35000 direkt från anställd.kompensation
-      grundlön, // ✅ Bruttolön = grundlön initialt
-      0, // Skatt beräknas senare
-      0, // Sociala avgifter beräknas senare
-      grundlön, // ✅ Nettolön = grundlön initialt (innan skatt)
+      data.utbetalningsdatum,
+      grundlön,
+      grundlön,
+      0,
+      0,
+      grundlön,
       userId,
     ]);
 
