@@ -42,6 +42,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     skuld: 0,
     komp_dagar: 0,
   });
+  const [prevSummary, setPrevSummary] = useState<SemesterBoxSummary | null>(null);
   const [editingField, setEditingField] = useState<SemesterBoxField | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   // Remove originalSummary, not needed
@@ -70,15 +71,16 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     setLoading(true);
     try {
       const transaktioner = await hämtaSemesterTransaktioner(anställd.id);
-      // Summera kolumner direkt
       // Förväntar oss EN rad per anställd
       const t = transaktioner[0] || {};
-      setSummary({
+      const newSummary = {
         betalda_dagar: Number(t.betalda_dagar) || 0,
         sparade_dagar: Number(t.sparade_dagar) || 0,
         skuld: Number(t.skuld) || 0,
         komp_dagar: Number(t.komp_dagar) || 0,
-      });
+      };
+      setPrevSummary(summary); // Spara tidigare värde
+      setSummary(newSummary);
       setShowBokforKnapp(t.bokförd === false);
     } catch (error) {
       console.error("Fel vid hämtning av semesterdata:", error);
@@ -129,71 +131,63 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
 
   // Funktion för att räkna ut och visa bokföringsrader enligt Bokio
   const handleOpenBokforModal = () => {
-    let rows;
-    if (summary.komp_dagar > 0) {
-      // Bokför komp_dagar som kronor
-      const kompBelopp = summary.komp_dagar;
-      const socialaAvgifter = kompBelopp * 0.314;
-      rows = [
-        {
-          konto: "2920",
-          namn: "Upplupna semesterlöner",
-          debet: Math.round(kompBelopp),
-          kredit: 0,
-        },
+    // Räkna ut delta (förändring) i dagar
+    const prevDagar = prevSummary ? prevSummary.betalda_dagar + prevSummary.sparade_dagar : 0;
+    const currDagar = summary.betalda_dagar + summary.sparade_dagar;
+    const deltaDagar = currDagar - prevDagar;
+    // Om ingen förändring, visa tomt
+    if (deltaDagar === 0) {
+      setBokforRows([
+        { konto: "2920", namn: "Upplupna semesterlöner", debet: 0, kredit: 0 },
         {
           konto: "2940",
           namn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: Math.round(socialaAvgifter),
+          debet: 0,
           kredit: 0,
         },
-        {
-          konto: "7290",
-          namn: "Förändring av semesterlöneskuld",
-          debet: 0,
-          kredit: Math.round(kompBelopp),
-        },
+        { konto: "7290", namn: "Förändring av semesterlöneskuld", debet: 0, kredit: 0 },
         {
           konto: "7519",
           namn: "Sociala avgifter för semester- och löneskulder",
           debet: 0,
-          kredit: Math.round(socialaAvgifter),
-        },
-      ];
-    } else {
-      // Standard: betalda + sparade dagar
-      const dagar = summary.betalda_dagar + summary.sparade_dagar;
-      const dagslön = anställd.kompensation / 21;
-      const semesterlönPerDag = dagslön * 1.0545;
-      const semesterlön = dagar * semesterlönPerDag;
-      const socialaAvgifter = semesterlön * 0.314;
-      rows = [
-        {
-          konto: "2920",
-          namn: "Upplupna semesterlöner",
-          debet: Math.round(semesterlön),
           kredit: 0,
         },
-        {
-          konto: "2940",
-          namn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: Math.round(socialaAvgifter),
-          kredit: 0,
-        },
-        {
-          konto: "7290",
-          namn: "Förändring av semesterlöneskuld",
-          debet: 0,
-          kredit: Math.round(semesterlön),
-        },
-        {
-          konto: "7519",
-          namn: "Sociala avgifter för semester- och löneskulder",
-          debet: 0,
-          kredit: Math.round(socialaAvgifter),
-        },
-      ];
+      ]);
+      setBokforModalOpen(true);
+      return;
     }
+    // Beräkna belopp baserat på delta
+    const dagslön = anställd.kompensation / 21;
+    const semesterlönPerDag = dagslön * 1.0545;
+    const semesterlön = deltaDagar * semesterlönPerDag;
+    const socialaAvgifter = semesterlön * 0.314;
+    // Om delta är negativt, vänd tecken på debet/kredit
+    const rows = [
+      {
+        konto: "2920",
+        namn: "Upplupna semesterlöner",
+        debet: semesterlön > 0 ? Math.round(semesterlön) : 0,
+        kredit: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
+      },
+      {
+        konto: "2940",
+        namn: "Upplupna lagstadgade sociala och andra avgifter",
+        debet: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
+        kredit: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
+      },
+      {
+        konto: "7290",
+        namn: "Förändring av semesterlöneskuld",
+        debet: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
+        kredit: semesterlön > 0 ? Math.round(semesterlön) : 0,
+      },
+      {
+        konto: "7519",
+        namn: "Sociala avgifter för semester- och löneskulder",
+        debet: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
+        kredit: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
+      },
+    ];
     setBokforRows(rows);
     setBokforModalOpen(true);
   };
