@@ -138,26 +138,26 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
         {
           konto: "2920",
           namn: "Upplupna semesterlöner",
-          debet: 0,
-          kredit: kompBelopp,
+          debet: Math.round(kompBelopp),
+          kredit: 0,
         },
         {
           konto: "2940",
           namn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: 0,
-          kredit: socialaAvgifter,
+          debet: Math.round(socialaAvgifter),
+          kredit: 0,
         },
         {
           konto: "7290",
           namn: "Förändring av semesterlöneskuld",
-          debet: kompBelopp,
-          kredit: 0,
+          debet: 0,
+          kredit: Math.round(kompBelopp),
         },
         {
           konto: "7519",
           namn: "Sociala avgifter för semester- och löneskulder",
-          debet: socialaAvgifter,
-          kredit: 0,
+          debet: 0,
+          kredit: Math.round(socialaAvgifter),
         },
       ];
     } else {
@@ -171,26 +171,26 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
         {
           konto: "2920",
           namn: "Upplupna semesterlöner",
-          debet: 0,
-          kredit: semesterlön,
+          debet: Math.round(semesterlön),
+          kredit: 0,
         },
         {
           konto: "2940",
           namn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: 0,
-          kredit: socialaAvgifter,
+          debet: Math.round(socialaAvgifter),
+          kredit: 0,
         },
         {
           konto: "7290",
           namn: "Förändring av semesterlöneskuld",
-          debet: semesterlön,
-          kredit: 0,
+          debet: 0,
+          kredit: Math.round(semesterlön),
         },
         {
           konto: "7519",
           namn: "Sociala avgifter för semester- och löneskulder",
-          debet: socialaAvgifter,
-          kredit: 0,
+          debet: 0,
+          kredit: Math.round(socialaAvgifter),
         },
       ];
     }
