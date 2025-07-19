@@ -164,7 +164,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
           tjänsteställe_adress = $20, tjänsteställe_ort = $21,
           skattetabell = $22, skattekolumn = $23,
           uppdaterad = NOW()
-        WHERE id = $25 AND user_id = $26
+        WHERE id = $24 AND user_id = $25
         RETURNING id
       `;
 
@@ -223,8 +223,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
           $11, $12, $13, $14, $15,
           $16, $17, $18, $19,
           $20, $21,
-          $22, $23, $24,
-          $25
+          $22, $23, $24
         ) RETURNING id
       `;
 
