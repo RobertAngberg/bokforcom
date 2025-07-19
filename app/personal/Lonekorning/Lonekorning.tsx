@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { hämtaAllaLönespecarFörUser, hämtaAllaAnställda, hämtaUtlogg } from "../actions";
 // import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LönespecView from "../Lonespecar/LonespecView";
@@ -16,6 +18,8 @@ import { useLonespecContext } from "../Lonespecar/LonespecContext";
 
 //#region Component
 export default function Lonekorning() {
+  const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
+  const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
   const { extrarader, beräknadeVärden } = useLonespecContext();
   //#endregion
 
@@ -85,6 +89,72 @@ export default function Lonekorning() {
   // ...existing code...
   return (
     <div className="space-y-6">
+      <div className="flex justify-end mb-4">
+        <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
+      </div>
+      {nySpecModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-2xl p-8 shadow-2xl min-w-[340px] border border-cyan-800">
+            <h2 className="text-xl font-bold text-cyan-300 mb-6 tracking-wide">
+              Välj utbetalningsdatum
+            </h2>
+            <div className="mb-6">
+              <DatePicker
+                selected={nySpecDatum}
+                onChange={(date) => setNySpecDatum(date)}
+                dateFormat="yyyy-MM-dd"
+                className="border border-cyan-400 bg-slate-800 text-white px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                placeholderText="Välj datum"
+                calendarClassName="bg-slate-900 text-white border-cyan-400"
+                dayClassName={(date) => "text-cyan-400"}
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-5 py-2 bg-slate-700 text-gray-200 rounded-lg hover:bg-slate-600 transition font-semibold"
+                onClick={() => setNySpecModalOpen(false)}
+              >
+                Avbryt
+              </button>
+              <button
+                className="px-5 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-semibold shadow"
+                onClick={async () => {
+                  if (!nySpecDatum) {
+                    alert("Välj ett datum först!");
+                    return;
+                  }
+                  if (anstallda.length === 0) {
+                    alert("Ingen anställd hittades.");
+                    return;
+                  }
+                  let utbetalningsdatum = null;
+                  if (nySpecDatum instanceof Date && !isNaN(nySpecDatum.getTime())) {
+                    utbetalningsdatum = nySpecDatum.toISOString().slice(0, 10);
+                  }
+                  if (!utbetalningsdatum) {
+                    alert("Fel: utbetalningsdatum saknas eller är ogiltigt!");
+                    return;
+                  }
+                  const res = await import("../actions").then((mod) =>
+                    mod.skapaNyLönespec({
+                      anställd_id: anstallda[0].id,
+                      utbetalningsdatum,
+                    })
+                  );
+                  if (res?.success === false) {
+                    alert("Fel: " + (res.error || "Misslyckades att skapa lönespecifikation."));
+                  } else {
+                    alert("Ny lönespecifikation skapad!");
+                    setNySpecModalOpen(false);
+                  }
+                }}
+              >
+                Skapa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-white mb-2">Välj utbetalningsdatum:</h2>
         <div className="flex flex-col gap-2">

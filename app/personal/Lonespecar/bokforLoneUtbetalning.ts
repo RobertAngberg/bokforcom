@@ -273,12 +273,21 @@ function genereraBokföringsPoster(
           "forsakring",
           "parkering",
           "annanForman",
+          "foretagsbilExtra",
         ].includes(rad.typ)
       ) {
         skattepliktiga += belopp;
 
         // Specifika förmåner för 7512
-        if (["boende", "gratisFrukost", "gratisLunchMiddag", "gratisMat"].includes(rad.typ)) {
+        if (
+          [
+            "boende",
+            "gratisFrukost",
+            "gratisLunchMiddag",
+            "gratisMat",
+            "foretagsbilExtra",
+          ].includes(rad.typ)
+        ) {
           förmåner7512 += belopp;
         } else {
           förmåner7515 += belopp;
