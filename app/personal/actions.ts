@@ -879,7 +879,7 @@ export async function bokförSemester({
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Ingen inloggad användare");
-  const realUserId = userId || parseInt(session.user.id, 10);
+  const realUserId = parseInt(session.user.id, 10); // Alltid inloggad användare
 
   try {
     const client = await pool.connect();
