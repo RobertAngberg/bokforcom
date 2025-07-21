@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { hämtaAllaLönespecarFörUser, hämtaAllaAnställda, hämtaUtlogg } from "../actions";
+import { hämtaAllaLönespecarFörUser, hämtaAllaAnställda, hämtaUtlägg } from "../actions";
 // import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LönespecView from "../Lonespecar/LonespecView";
 import AnstolldaLista from "./AnstalldaLista";
@@ -46,7 +46,7 @@ export default function Lonekorning() {
       ]);
       setAnstallda(anstallda);
       // Hämta utlägg för varje anställd parallellt
-      const utlaggPromises = anstallda.map((a) => hämtaUtlogg(a.id));
+      const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
       const utlaggResults = await Promise.all(utlaggPromises);
       const utlaggMap: Record<number, any[]> = {};
       anstallda.forEach((a, idx) => {
@@ -158,7 +158,7 @@ export default function Lonekorning() {
                       hämtaAllaAnställda(),
                     ]);
                     setAnstallda(anstallda);
-                    const utlaggPromises = anstallda.map((a) => hämtaUtlogg(a.id));
+                    const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
                     const utlaggResults = await Promise.all(utlaggPromises);
                     const utlaggMap: Record<number, any[]> = {};
                     anstallda.forEach((a, idx) => {

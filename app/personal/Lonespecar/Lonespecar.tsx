@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { hämtaLönespecifikationer, hämtaUtlogg } from "../actions";
+import { hämtaLönespecifikationer, hämtaUtlägg } from "../actions";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useLonespecContext } from "./LonespecContext";
@@ -29,7 +29,7 @@ export default function Lonespecar({
     beräknadeVärden,
     setBeräknadeVärden,
   } = useLonespecContext();
-  const [utlägg, setUtlogg] = useState<any[]>([]);
+  const [utlägg, setUtlägg] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,10 +47,10 @@ export default function Lonespecar({
       setLoading(true);
       const [lönespecarData, utläggData] = await Promise.all([
         hämtaLönespecifikationer(anställd.id),
-        hämtaUtlogg(anställd.id),
+        hämtaUtlägg(anställd.id),
       ]);
       setLonespecar(lönespecarData);
-      setUtlogg(utläggData);
+      setUtlägg(utläggData);
     } catch (error) {
       console.error("Fel vid laddning av data:", error);
     } finally {

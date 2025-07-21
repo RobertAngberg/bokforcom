@@ -10,23 +10,23 @@ interface Anställd {
   efternamn: string;
 }
 
-interface UtloggProps {
-  onUtloggChange?: (isUtlogg: boolean, valdaAnställda?: number[]) => void;
+interface UtläggProps {
+  onUtläggChange?: (isUtlägg: boolean, valdaAnställda?: number[]) => void;
   initialValue?: boolean;
 }
 //#endregion
 
-export default function Utlogg({ onUtloggChange, initialValue = false }: UtloggProps) {
+export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
   //#region State
-  const [isUtlogg, setIsUtlogg] = useState(initialValue);
+  const [isUtlägg, setIsUtlägg] = useState(initialValue);
   const [anställda, setAnställda] = useState<Anställd[]>([]);
   const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   //#endregion
 
   //#region Handlers
-  const handleUtloggChange = async (checked: boolean) => {
-    setIsUtlogg(checked);
+  const handleUtläggChange = async (checked: boolean) => {
+    setIsUtlägg(checked);
 
     if (checked) {
       setLoading(true);
@@ -43,7 +43,7 @@ export default function Utlogg({ onUtloggChange, initialValue = false }: UtloggP
       setValdaAnställda([]);
     }
 
-    onUtloggChange?.(checked, checked ? valdaAnställda : []);
+    onUtläggChange?.(checked, checked ? valdaAnställda : []);
   };
 
   const handleAnställdChange = (anställdId: number, checked: boolean) => {
@@ -52,7 +52,7 @@ export default function Utlogg({ onUtloggChange, initialValue = false }: UtloggP
       : valdaAnställda.filter((id) => id !== anställdId);
 
     setValdaAnställda(nyaValda);
-    onUtloggChange?.(isUtlogg, nyaValda);
+    onUtläggChange?.(isUtlägg, nyaValda);
   };
   //#endregion
 
@@ -63,8 +63,8 @@ export default function Utlogg({ onUtloggChange, initialValue = false }: UtloggP
         <input
           type="checkbox"
           id="utlägg-checkbox"
-          checked={isUtlogg}
-          onChange={(e) => handleUtloggChange(e.target.checked)}
+          checked={isUtlägg}
+          onChange={(e) => handleUtläggChange(e.target.checked)}
           className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
         />
         <label
@@ -76,7 +76,7 @@ export default function Utlogg({ onUtloggChange, initialValue = false }: UtloggP
       </div>
 
       {/* Anställda lista */}
-      {isUtlogg && (
+      {isUtlägg && (
         <div>
           <h4 className="text-gray-400 font-semibold mb-3">Välj anställd:</h4>
 

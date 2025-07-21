@@ -2,7 +2,7 @@
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
 import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lonekomponenter";
-import Utlogg from "./Utlogg";
+import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
@@ -77,7 +77,7 @@ export default function LönespecView({
   const visaSocialaAvgifter = aktuellBeräkning?.socialaAvgifter ?? socialaAvgifter;
   const visaLönekostnad = aktuellBeräkning?.lönekostnad ?? bruttolön + socialaAvgifter;
 
-  const lönespecUtlogg = utlägg.filter(
+  const lönespecUtlägg = utlägg.filter(
     (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
   );
   //#endregion
@@ -101,8 +101,8 @@ export default function LönespecView({
         visaExtraRader={visaExtraRader}
       />
 
-      <Utlogg
-        lönespecUtlogg={lönespecUtlogg}
+      <Utlagg
+        lönespecUtlägg={lönespecUtlägg}
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
       />
 

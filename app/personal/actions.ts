@@ -631,7 +631,7 @@ export async function hämtaLönespecifikationer(anställdId: number) {
   }
 }
 
-export async function hämtaUtlogg(anställdId: number) {
+export async function hämtaUtlägg(anställdId: number) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");
@@ -665,7 +665,7 @@ export async function hämtaUtlogg(anställdId: number) {
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaUtlogg error:", error);
+    console.error("❌ hämtaUtlägg error:", error);
     return [];
   }
 }
