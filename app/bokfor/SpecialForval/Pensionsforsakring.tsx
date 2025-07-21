@@ -1,9 +1,8 @@
-// #region Huvud
+// #region
 "use client";
 
-import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
@@ -13,54 +12,63 @@ import BakåtPil from "../../_components/BakåtPil";
 interface Props {
   mode: "steg2" | "steg3";
   belopp?: number | null;
-  setBelopp: (val: number | null) => void;
+  setBelopp: (v: number | null) => void;
   transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
+  setTransaktionsdatum: (v: string) => void;
   kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
+  setKommentar?: (v: string | null) => void;
+  setCurrentStep?: (v: number) => void;
   fil: File | null;
-  setFil: (val: File | null) => void;
+  setFil: (f: File | null) => void;
   pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
+  setPdfUrl: (u: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (val: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
 }
 // #endregion
 
-export default function Rantekostnader({
+export default function Pensionsforsakring({
   mode,
   belopp,
   setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
   setCurrentStep,
   fil,
   setFil,
   pdfUrl,
   setPdfUrl,
+  transaktionsdatum,
+  setTransaktionsdatum,
+  kommentar,
+  setKommentar,
   extrafält,
   setExtrafält,
 }: Props) {
-  const [amortering, setAmortering] = useState(0);
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
-    const total = belopp ?? 0;
+    const val = belopp ?? 0;
+    const loneskatt = val * 0.2425;
 
-    const extrafaltObj = {
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
-      "2310": { label: "Obligations- och förlagslån", debet: amortering, kredit: 0 },
-      "8410": {
-        label: "Räntekostnader för långfristiga skulder",
-        debet: total - amortering,
+    const extrafältObj = {
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: val },
+      "2514": {
+        label: "Beräknad särskild löneskatt på pensionskostnader",
+        debet: 0,
+        kredit: loneskatt,
+      },
+      "7412": {
+        label: "Premier för individuella pensionsförsäkringar",
+        debet: val,
+        kredit: 0,
+      },
+      "7533": {
+        label: "Särskild löneskatt för pensionskostnader",
+        debet: loneskatt,
         kredit: 0,
       },
     };
 
-    setExtrafält?.(extrafaltObj);
+    setExtrafält?.(extrafältObj);
     setCurrentStep?.(3);
   }
 
@@ -70,7 +78,7 @@ export default function Rantekostnader({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Räntekostnader</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Pensionsförsäkring</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -82,17 +90,11 @@ export default function Rantekostnader({
               />
 
               <TextFält
-                label="Totalt belopp (ränta + amortering)"
-                name="total"
-                value={belopp ?? 0}
+                label="Totalt belopp"
+                name="belopp"
+                type="number"
+                value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
-              />
-
-              <TextFält
-                label="Varav amortering"
-                name="amortering"
-                value={amortering}
-                onChange={(e) => setAmortering(Number(e.target.value))}
               />
 
               <label className="block text-sm font-medium text-white mb-2">
@@ -122,6 +124,7 @@ export default function Rantekostnader({
                 disabled={!giltigt}
               />
             </div>
+
             <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
           </div>
         </div>
@@ -135,20 +138,20 @@ export default function Rantekostnader({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="8410"
-            kontobeskrivning="Räntekostnader"
+            kontonummer="7412"
+            kontobeskrivning="Pensionsförsäkring"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Räntekostnader",
+              namn: "Pensionsförsäkring",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0,
-              specialtyp: "rantekostnader",
+              specialtyp: "pensionsforsakring",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

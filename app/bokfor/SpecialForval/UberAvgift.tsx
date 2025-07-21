@@ -1,8 +1,9 @@
 // #region Huvud
 "use client";
 
+import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
@@ -12,54 +13,62 @@ import BakåtPil from "../../_components/BakåtPil";
 interface Props {
   mode: "steg2" | "steg3";
   belopp?: number | null;
-  setBelopp: (v: number | null) => void;
+  setBelopp: (val: number | null) => void;
   transaktionsdatum?: string | null;
-  setTransaktionsdatum: (v: string) => void;
+  setTransaktionsdatum: (val: string) => void;
   kommentar?: string | null;
-  setKommentar?: (v: string | null) => void;
-  setCurrentStep?: (v: number) => void;
+  setKommentar?: (val: string | null) => void;
+  setCurrentStep?: (val: number) => void;
   fil: File | null;
-  setFil: (f: File | null) => void;
+  setFil: (val: File | null) => void;
   pdfUrl: string | null;
-  setPdfUrl: (u: string) => void;
+  setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  formRef?: React.RefObject<HTMLFormElement>;
-  handleSubmit?: (fd: FormData) => void;
 }
 // #endregion
 
-export default function Banklan({
+export default function UberAvgift({
   mode,
-  belopp = null,
+  belopp,
   setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
   setCurrentStep,
   fil,
   setFil,
   pdfUrl,
   setPdfUrl,
+  transaktionsdatum,
+  setTransaktionsdatum,
+  kommentar,
+  setKommentar,
   extrafält,
   setExtrafält,
 }: Props) {
+  const [moms, setMoms] = useState(0);
+
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
+    const moms = Number((total * 0.25).toFixed(2));
+    setMoms(moms);
 
     const extrafältObj = {
-      "1930": {
-        label: "Företagskonto / affärskonto",
-        debet: total,
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "2614": {
+        label: "Utgående moms omvänd skattskyldighet, 25 %",
+        debet: 0,
+        kredit: moms,
+      },
+      "2645": {
+        label: "Beräknad ingående moms på förvärv från utlandet",
+        debet: moms,
         kredit: 0,
       },
-      "2350": {
-        label: "Lån från kreditinstitut",
-        debet: 0,
-        kredit: total,
+      "4535": {
+        label: "Inköp av tjänster från annat EU-land, 25 %",
+        debet: total,
+        kredit: 0,
       },
     };
 
@@ -73,34 +82,31 @@ export default function Banklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Banklån</h1>
-          <div className="flex flex-col-reverse justify-between md:flex-row">
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Uberavgift</h1>
+          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
                 setPdfUrl={setPdfUrl}
-                setBelopp={setBelopp}
                 setTransaktionsdatum={setTransaktionsdatum}
+                setBelopp={setBelopp}
               />
 
               <TextFält
-                label="Totalt lånebelopp"
-                name="total"
+                label="Summa Uber-avgift exkl moms"
+                name="belopp"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
-                required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
-                Utbetalningsdatum (ÅÅÅÅ‑MM‑DD)
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={transaktionsdatum ? new Date(transaktionsdatum) : null}
-                onChange={(date) =>
-                  setTransaktionsdatum(date ? date.toISOString().split("T")[0] : "")
-                }
+                onChange={(d) => setTransaktionsdatum(d ? d.toISOString().split("T")[0] : "")}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -122,7 +128,7 @@ export default function Banklan({
               />
             </div>
 
-            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
           </div>
         </div>
       </>
@@ -135,20 +141,20 @@ export default function Banklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="2350"
-            kontobeskrivning="Banklån"
+            kontonummer="4535"
+            kontobeskrivning="Uberavgift"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Banklån",
+              namn: "Uberavgift",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0,
-              specialtyp: "banklan",
+              momssats: 0.25,
+              specialtyp: "uberavgift",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

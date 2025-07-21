@@ -2,7 +2,7 @@
 "use client";
 
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
@@ -13,24 +13,22 @@ import BakåtPil from "../../_components/BakåtPil";
 interface Props {
   mode: "steg2" | "steg3";
   belopp?: number | null;
-  setBelopp: (val: number | null) => void;
+  setBelopp: (amount: number | null) => void;
   transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
+  setTransaktionsdatum: (date: string) => void;
   kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
+  setKommentar?: (comment: string | null) => void;
+  setCurrentStep?: (step: number) => void;
   fil: File | null;
-  setFil: (val: File | null) => void;
+  setFil: (file: File | null) => void;
   pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
+  setPdfUrl: (url: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  formRef?: React.RefObject<HTMLFormElement>;
-  handleSubmit?: (formData: FormData) => void;
 }
 // #endregion
 
-export default function InkopVarorEU25({
+export default function InkopTjanstUtanfEU({
   mode,
   belopp = null,
   setBelopp,
@@ -53,19 +51,21 @@ export default function InkopVarorEU25({
 
     const extrafältObj = {
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-      "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
+      "2614": {
+        label: "Utgående moms omvänd skattskyldighet, 25 %",
+        debet: 0,
+        kredit: moms,
+      },
       "2645": {
         label: "Beräknad ingående moms på förvärv från utlandet",
         debet: moms,
         kredit: 0,
       },
-      "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-      "4515": {
-        label: "Inköp av varor från annat EU-land, 25 %",
+      "4531": {
+        label: "Import tjänster land utanför EU, 25% moms",
         debet: belopp ?? 0,
         kredit: 0,
       },
-      "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
     };
 
     setExtrafält?.(extrafältObj);
@@ -78,7 +78,7 @@ export default function InkopVarorEU25({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Inköp varor inom EU 25%</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Inköp tjänster utanför EU</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
             <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -99,7 +99,7 @@ export default function InkopVarorEU25({
 
               <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
-                className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={ÅÅÅÅMMDDTillDate(transaktionsdatum ?? "")}
                 onChange={(date) => setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
                 dateFormat="yyyy-MM-dd"
@@ -115,7 +115,12 @@ export default function InkopVarorEU25({
                 required={false}
               />
 
-              <KnappFullWidth text="Bokför" onClick={gåTillSteg3} disabled={!giltigt} />
+              <KnappFullWidth
+                text="Bokför"
+                type="button"
+                onClick={gåTillSteg3}
+                disabled={!giltigt}
+              />
             </div>
 
             <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
@@ -131,20 +136,20 @@ export default function InkopVarorEU25({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="4515"
-            kontobeskrivning="Inköp varor inom EU 25%"
+            kontonummer="4531"
+            kontobeskrivning="Inköp tjänster utanför EU"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Inköp varor inom EU 25%",
+              namn: "Inköp tjänster utanför EU",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0.25,
-              specialtyp: "inkopvaroreu25",
+              specialtyp: "InkopTjanstUtanfEU",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

@@ -1,4 +1,4 @@
-import Bokför from "./Bokför";
+import Bokför from "./Bokfor";
 import { fetchFavoritforval } from "./actions";
 
 export default async function Page() {

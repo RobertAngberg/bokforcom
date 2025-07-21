@@ -2,7 +2,7 @@
 "use client";
 
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
@@ -27,7 +27,7 @@ interface Props {
 }
 // #endregion
 
-export default function EgetUttag({
+export default function AvrakningsnotaUtanMoms({
   mode,
   belopp = null,
   setBelopp,
@@ -47,10 +47,12 @@ export default function EgetUttag({
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
+
     const extrafältObj = {
-      "2013": { label: "Övriga egna uttag", debet: total, kredit: 0 },
+      "6570": { label: "Bankkostnader", debet: total, kredit: 0 },
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
     };
+
     setExtrafält?.(extrafältObj);
     setCurrentStep?.(3);
   }
@@ -61,15 +63,15 @@ export default function EgetUttag({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Eget uttag</h1>
-          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Avräkningsnota utan moms</h1>
+          <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
                 setPdfUrl={setPdfUrl}
-                setTransaktionsdatum={setTransaktionsdatum}
                 setBelopp={setBelopp}
+                setTransaktionsdatum={setTransaktionsdatum}
               />
 
               <TextFält
@@ -81,7 +83,7 @@ export default function EgetUttag({
               />
 
               <label className="block text-sm font-medium text-white mb-2">
-                Uttagsdatum (ÅÅÅÅ‑MM‑DD)
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
@@ -121,20 +123,20 @@ export default function EgetUttag({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="2013"
-            kontobeskrivning="Eget uttag"
+            kontonummer="6064"
+            kontobeskrivning="Avräkningsnota utan moms"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Eget uttag",
+              namn: "Avräkningsnota utan moms",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0,
-              specialtyp: "egetuttag",
+              specialtyp: "avrakningsnotautanmoms",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

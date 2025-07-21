@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import { formatSEK, parseNumber } from "../../_utils/format";

@@ -2,11 +2,11 @@
 "use client";
 
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
-import DatePicker from "react-datepicker";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import BakåtPil from "../../_components/BakåtPil";
 
@@ -25,10 +25,12 @@ interface Props {
   setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  formRef?: React.RefObject<HTMLFormElement>;
+  handleSubmit?: (formData: FormData) => void;
 }
 // #endregion
 
-export default function ITtjansterEU({
+export default function InkopVarorEU25({
   mode,
   belopp = null,
   setBelopp,
@@ -57,21 +59,13 @@ export default function ITtjansterEU({
         debet: moms,
         kredit: 0,
       },
-      "4535": {
-        label: "Inköp av tjänster från annat EU-land, 25 %",
+      "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
+      "4515": {
+        label: "Inköp av varor från annat EU-land, 25 %",
         debet: belopp ?? 0,
         kredit: 0,
       },
-      "4598": {
-        label: "Justering, omvänd moms",
-        debet: 0,
-        kredit: belopp ?? 0,
-      },
-      "6540": {
-        label: "IT-tjänster",
-        debet: belopp ?? 0,
-        kredit: 0,
-      },
+      "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
     };
 
     setExtrafält?.(extrafältObj);
@@ -84,7 +78,7 @@ export default function ITtjansterEU({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: IT-tjänster inom EU</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Inköp varor inom EU 25%</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
             <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -106,11 +100,10 @@ export default function ITtjansterEU({
               <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={transaktionsdatum ? ÅÅÅÅMMDDTillDate(transaktionsdatum) : null} // ✅ FIXA: Hantera null
+                selected={ÅÅÅÅMMDDTillDate(transaktionsdatum ?? "")}
                 onChange={(date) => setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
-                placeholderText=""
                 required
               />
 
@@ -138,20 +131,20 @@ export default function ITtjansterEU({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="6540"
-            kontobeskrivning="IT-tjänster inom EU"
+            kontonummer="4515"
+            kontobeskrivning="Inköp varor inom EU 25%"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "IT-tjänster inom EU",
+              namn: "Inköp varor inom EU 25%",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0.25,
-              specialtyp: "ittjanstereu",
+              specialtyp: "inkopvaroreu25",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

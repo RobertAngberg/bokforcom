@@ -2,7 +2,7 @@
 "use client";
 
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
@@ -24,10 +24,12 @@ interface Props {
   setPdfUrl: (u: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  formRef?: React.RefObject<HTMLFormElement>;
+  handleSubmit?: (fd: FormData) => void;
 }
 // #endregion
 
-export default function AvrakningsnotaUtanMoms({
+export default function Banklan({
   mode,
   belopp = null,
   setBelopp,
@@ -49,8 +51,16 @@ export default function AvrakningsnotaUtanMoms({
     const total = belopp ?? 0;
 
     const extrafältObj = {
-      "6570": { label: "Bankkostnader", debet: total, kredit: 0 },
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "1930": {
+        label: "Företagskonto / affärskonto",
+        debet: total,
+        kredit: 0,
+      },
+      "2350": {
+        label: "Lån från kreditinstitut",
+        debet: 0,
+        kredit: total,
+      },
     };
 
     setExtrafält?.(extrafältObj);
@@ -63,7 +73,7 @@ export default function AvrakningsnotaUtanMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Avräkningsnota utan moms</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Banklån</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -75,20 +85,22 @@ export default function AvrakningsnotaUtanMoms({
               />
 
               <TextFält
-                label="Belopp"
-                name="belopp"
+                label="Totalt lånebelopp"
+                name="total"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
                 required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
-                Betaldatum (ÅÅÅÅ‑MM‑DD)
+                Utbetalningsdatum (ÅÅÅÅ‑MM‑DD)
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={transaktionsdatum ? new Date(transaktionsdatum) : null}
-                onChange={(d) => setTransaktionsdatum(d ? d.toISOString().split("T")[0] : "")}
+                onChange={(date) =>
+                  setTransaktionsdatum(date ? date.toISOString().split("T")[0] : "")
+                }
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -110,7 +122,7 @@ export default function AvrakningsnotaUtanMoms({
               />
             </div>
 
-            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
+            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
           </div>
         </div>
       </>
@@ -123,20 +135,20 @@ export default function AvrakningsnotaUtanMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="6064"
-            kontobeskrivning="Avräkningsnota utan moms"
+            kontonummer="2350"
+            kontobeskrivning="Banklån"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Avräkningsnota utan moms",
+              namn: "Banklån",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0,
-              specialtyp: "avrakningsnotautanmoms",
+              specialtyp: "banklan",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

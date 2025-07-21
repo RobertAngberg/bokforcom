@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { fetchAllaForval, loggaFavoritförval } from "./actions";
-import FörvalKort from "./FörvalKort";
+import FörvalKort from "./ForvalKort";
 
 type KontoRad = {
   beskrivning: string;

@@ -1,14 +1,13 @@
 // #region Huvud
 "use client";
 
+import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import { formatSEK } from "../../_utils/format";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import BakåtPil from "../../_components/BakåtPil";
 
 interface Props {
@@ -26,12 +25,10 @@ interface Props {
   setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (val: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  formRef?: React.RefObject<HTMLFormElement>;
-  handleSubmit?: (formData: FormData) => void;
 }
 // #endregion
 
-export default function Hyrbil({
+export default function Rantekostnader({
   mode,
   belopp,
   setBelopp,
@@ -47,17 +44,23 @@ export default function Hyrbil({
   extrafält,
   setExtrafält,
 }: Props) {
-  const moms = +(Number(belopp ?? 0) * 0.25 * 0.5).toFixed(2);
-  const netto = +(Number(belopp ?? 0) - moms).toFixed(2);
+  const [amortering, setAmortering] = useState(0);
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
-    setExtrafält?.({
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-      "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
-      "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
-    });
+    const total = belopp ?? 0;
 
+    const extrafaltObj = {
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "2310": { label: "Obligations- och förlagslån", debet: amortering, kredit: 0 },
+      "8410": {
+        label: "Räntekostnader för långfristiga skulder",
+        debet: total - amortering,
+        kredit: 0,
+      },
+    };
+
+    setExtrafält?.(extrafaltObj);
     setCurrentStep?.(3);
   }
 
@@ -67,9 +70,9 @@ export default function Hyrbil({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Hyrbil</h1>
-          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
-            <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Räntekostnader</h1>
+          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
+            <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
@@ -79,24 +82,29 @@ export default function Hyrbil({
               />
 
               <TextFält
-                label="Total kostnad inkl. moms"
-                name="kostnad"
-                value={belopp ?? ""}
+                label="Totalt belopp (ränta + amortering)"
+                name="total"
+                value={belopp ?? 0}
                 onChange={(e) => setBelopp(Number(e.target.value))}
-                required
               />
 
-              <p className="text-sm text-gray-400 mb-4">
-                Avdragbar moms (25% × 50%): {formatSEK(moms)} kr
-              </p>
+              <TextFält
+                label="Varav amortering"
+                name="amortering"
+                value={amortering}
+                onChange={(e) => setAmortering(Number(e.target.value))}
+              />
 
-              <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
+              <label className="block text-sm font-medium text-white mb-2">
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
+              </label>
               <DatePicker
-                className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={transaktionsdatum ? ÅÅÅÅMMDDTillDate(transaktionsdatum) : null}
-                onChange={(d) => setTransaktionsdatum(d ? dateTillÅÅÅÅMMDD(d) : "")}
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+                selected={transaktionsdatum ? new Date(transaktionsdatum) : null}
+                onChange={(d) => setTransaktionsdatum(d ? d.toISOString().split("T")[0] : "")}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
+                required
               />
 
               <TextFält
@@ -107,10 +115,14 @@ export default function Hyrbil({
                 required={false}
               />
 
-              <KnappFullWidth text="Gå vidare" onClick={gåTillSteg3} disabled={!giltigt} />
+              <KnappFullWidth
+                text="Bokför"
+                type="button"
+                onClick={gåTillSteg3}
+                disabled={!giltigt}
+              />
             </div>
-
-            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
           </div>
         </div>
       </>
@@ -123,20 +135,20 @@ export default function Hyrbil({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="5820"
-            kontobeskrivning="Hyrbil"
+            kontonummer="8410"
+            kontobeskrivning="Räntekostnader"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Hyrbil",
+              namn: "Räntekostnader",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0.25,
-              specialtyp: "hyrbil",
+              momssats: 0,
+              specialtyp: "rantekostnader",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

@@ -96,15 +96,16 @@ export default function Steg3({
         }))
       : valtFörval
         ? valtFörval.konton.map((rad, i) => {
-            const kontoNr = rad.kontonummer?.toString().trim();
+            let kontoNr = rad.kontonummer?.toString().trim();
             let namn = `${kontoNr} ${rad.beskrivning ?? ""}`;
             let beloppAttVisa = 0;
 
             if (kontoNr?.startsWith("26")) {
               beloppAttVisa = moms;
             } else if (kontoNr === "1930") {
-              // Om det är utlägg, visa 2890 istället för 1930
+              // Om det är utlägg, byt både kontonummer och namn till 2890
               if (isUtlägg && valdaAnställda.length > 0) {
+                kontoNr = "2890";
                 namn = `2890 Övriga kortfristiga skulder`;
               }
               beloppAttVisa = belopp;

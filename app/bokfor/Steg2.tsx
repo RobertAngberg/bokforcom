@@ -4,9 +4,9 @@
 import LaddaUppFil from "./LaddaUppFil";
 import Information from "./Information";
 import Kommentar from "./Kommentar";
-import Forhandsgranskning from "./Förhandsgranskning";
+import Forhandsgranskning from "./Forhandsgranskning";
 import BakåtPil from "../_components/BakåtPil";
-import Utlägg from "./Utlägg";
+import Utlägg from "./Utlagg";
 import KnappFullWidth from "../_components/KnappFullWidth";
 
 type KontoRad = {
@@ -68,7 +68,7 @@ export default function Steg2({
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
-      const SpecialComponent = require(`./SpecialFörval/${valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`./SpecialForval/${valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
           mode="steg2"

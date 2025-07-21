@@ -2,7 +2,7 @@
 "use client";
 
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
@@ -28,7 +28,7 @@ interface Props {
 }
 // #endregion
 
-export default function InkopTjansterSverigeOmvand({
+export default function InkopTjanstEU({
   mode,
   belopp = null,
   setBelopp,
@@ -51,28 +51,18 @@ export default function InkopTjansterSverigeOmvand({
 
     const extrafältObj = {
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-      "2617": {
-        label: "Utgående moms omvänd skattskyldighet varor och tjänster i Sverige, 25 %",
+      "2614": {
+        label: "Utgående moms omvänd skattskyldighet tjänster från annat EU-land, 25 %",
         debet: 0,
         kredit: moms,
       },
-      "2647": {
-        label: "Ingående moms omvänd skattskyldighet varor och tjänster i Sverige",
+      "2645": {
+        label: "Beräknad ingående moms på förvärv från utlandet",
         debet: moms,
         kredit: 0,
       },
-      "4400": {
-        label: "Inköpta tjänster i Sverige, omvänd skattskyldighet",
-        debet: 0,
-        kredit: belopp ?? 0,
-      },
-      "4425": {
-        label: "Inköpta tjänster i Sverige, omvänd skattskyldighet, 25 %",
-        debet: belopp ?? 0,
-        kredit: 0,
-      },
-      "4600": {
-        label: "Legoarbeten och underentreprenader (gruppkonto)",
+      "4535": {
+        label: "Inköp av tjänster från annat EU-land",
         debet: belopp ?? 0,
         kredit: 0,
       },
@@ -88,9 +78,7 @@ export default function InkopTjansterSverigeOmvand({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">
-            Steg 2: Inköp tjänster Sverige (omvänd moms)
-          </h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Inköp tjänster EU</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
             <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -112,7 +100,7 @@ export default function InkopTjansterSverigeOmvand({
               <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={transaktionsdatum ? ÅÅÅÅMMDDTillDate(transaktionsdatum) : null}
+                selected={ÅÅÅÅMMDDTillDate(transaktionsdatum ?? "")}
                 onChange={(date) => setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -143,20 +131,20 @@ export default function InkopTjansterSverigeOmvand({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="4400"
-            kontobeskrivning="Inköp tjänster Sverige (omvänd moms)"
+            kontonummer="4535"
+            kontobeskrivning="Inköp tjänster EU"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Inköp tjänster Sverige (omvänd moms)",
+              namn: "Inköp tjänster EU",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0.25,
-              specialtyp: "inkoptjanstersverigeomvand",
+              specialtyp: "inkoptjansteu",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

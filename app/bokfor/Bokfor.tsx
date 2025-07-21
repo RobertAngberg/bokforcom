@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import SökFörval from "./SökFörval";
+import SökFörval from "./SokForval";
 import Steg2 from "./Steg2";
 import Steg3 from "./Steg3";
 import Steg4 from "./Steg4";

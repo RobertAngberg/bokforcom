@@ -1,9 +1,8 @@
 // #region Huvud
 "use client";
 
-import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Förhandsgranskning";
+import Forhandsgranskning from "../Forhandsgranskning";
 import TextFält from "../../_components/TextFält";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
@@ -13,65 +12,45 @@ import BakåtPil from "../../_components/BakåtPil";
 interface Props {
   mode: "steg2" | "steg3";
   belopp?: number | null;
-  setBelopp: (val: number | null) => void;
+  setBelopp: (v: number | null) => void;
   transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
+  setTransaktionsdatum: (v: string) => void;
   kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
+  setKommentar?: (v: string | null) => void;
+  setCurrentStep?: (v: number) => void;
   fil: File | null;
-  setFil: (val: File | null) => void;
+  setFil: (f: File | null) => void;
   pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
+  setPdfUrl: (u: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
 }
 // #endregion
 
-export default function UberAvgift({
+export default function EgetUttag({
   mode,
-  belopp,
+  belopp = null,
   setBelopp,
+  transaktionsdatum = "",
+  setTransaktionsdatum,
+  kommentar = "",
+  setKommentar,
   setCurrentStep,
   fil,
   setFil,
   pdfUrl,
   setPdfUrl,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
   extrafält,
   setExtrafält,
 }: Props) {
-  const [moms, setMoms] = useState(0);
-
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
-    const moms = Number((total * 0.25).toFixed(2));
-    setMoms(moms);
-
     const extrafältObj = {
+      "2013": { label: "Övriga egna uttag", debet: total, kredit: 0 },
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
-      "2614": {
-        label: "Utgående moms omvänd skattskyldighet, 25 %",
-        debet: 0,
-        kredit: moms,
-      },
-      "2645": {
-        label: "Beräknad ingående moms på förvärv från utlandet",
-        debet: moms,
-        kredit: 0,
-      },
-      "4535": {
-        label: "Inköp av tjänster från annat EU-land, 25 %",
-        debet: total,
-        kredit: 0,
-      },
     };
-
     setExtrafält?.(extrafältObj);
     setCurrentStep?.(3);
   }
@@ -82,7 +61,7 @@ export default function UberAvgift({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Uberavgift</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Eget uttag</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -94,14 +73,15 @@ export default function UberAvgift({
               />
 
               <TextFält
-                label="Summa Uber-avgift exkl moms"
+                label="Belopp"
                 name="belopp"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
+                required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
-                Betaldatum (ÅÅÅÅ‑MM‑DD)
+                Uttagsdatum (ÅÅÅÅ‑MM‑DD)
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
@@ -141,20 +121,20 @@ export default function UberAvgift({
         <div className="max-w-5xl mx-auto px-4 relative">
           <BakåtPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="4535"
-            kontobeskrivning="Uberavgift"
+            kontonummer="2013"
+            kontobeskrivning="Eget uttag"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Uberavgift",
+              namn: "Eget uttag",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0.25,
-              specialtyp: "uberavgift",
+              momssats: 0,
+              specialtyp: "egetuttag",
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}
