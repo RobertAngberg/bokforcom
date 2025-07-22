@@ -3,6 +3,7 @@ import Anställda from "./Anstallda";
 import MainLayout from "../../_components/MainLayout";
 import { useState } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
+import UtlaggFlik from "./UtlaggFlik";
 import Personalinformation from "./NyAnstalld/Personalinformation";
 import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
@@ -28,6 +29,9 @@ export default function AnställdaPage() {
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">
             <Kontrakt anställd={valdAnställd} />
+          </AnimeradFlik>
+          <AnimeradFlik title="Utlägg" icon="💳">
+            <UtlaggFlik anställd={valdAnställd} />
           </AnimeradFlik>
           <AnimeradFlik title="Lönespecar" icon="💰">
             <Lonespecar anställd={valdAnställd} />
