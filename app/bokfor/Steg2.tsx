@@ -6,7 +6,6 @@ import Information from "./Information";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
 import BakåtPil from "../_components/BakåtPil";
-import Utlägg from "./Utlagg";
 import KnappFullWidth from "../_components/KnappFullWidth";
 
 type KontoRad = {
@@ -42,8 +41,7 @@ type Step2Props = {
   valtFörval: Förval | null;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  setIsUtlägg: (value: boolean) => void;
-  setValdaAnställda: (value: number[]) => void;
+  // ...utlägg props borttagna
 };
 // #endregion
 
@@ -62,8 +60,7 @@ export default function Steg2({
   valtFörval,
   extrafält,
   setExtrafält,
-  setIsUtlägg,
-  setValdaAnställda,
+  // ...utlägg props borttagna
 }: Step2Props) {
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
@@ -120,12 +117,6 @@ export default function Steg2({
               setTransaktionsdatum={setTransaktionsdatum}
             />
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <Utlägg
-              onUtläggChange={(utlägg, anställda) => {
-                setIsUtlägg(utlägg);
-                setValdaAnställda(anställda || []);
-              }}
-            />
             <KnappFullWidth text="Bokför" onClick={() => setCurrentStep(3)} />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

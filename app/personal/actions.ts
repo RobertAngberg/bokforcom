@@ -945,3 +945,54 @@ export async function hämtaUtbetalningsdatumLista() {
     return [];
   }
 }
+
+export async function sparaUtlägg({
+  belopp,
+  datum,
+  beskrivning,
+  kategori,
+  anställd_id,
+  kvitto_fil,
+  kvitto_filtyp,
+}: {
+  belopp: number;
+  datum: string;
+  beskrivning: string;
+  kategori?: string;
+  anställd_id: number;
+  kvitto_fil?: string;
+  kvitto_filtyp?: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+  const userId = parseInt(session.user.id, 10);
+  try {
+    const client = await pool.connect();
+    const query = `
+      INSERT INTO utlägg (
+        belopp, datum, beskrivning, kategori, anställd_id, user_id, kvitto_fil, kvitto_filtyp, skapad, uppdaterad
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()
+      ) RETURNING id
+    `;
+    const values = [
+      belopp,
+      datum,
+      beskrivning,
+      kategori || null,
+      anställd_id,
+      userId,
+      kvitto_fil || null,
+      kvitto_filtyp || null,
+    ];
+    const result = await client.query(query, values);
+    client.release();
+    revalidatePath("/personal/utlagg");
+    return { success: true, id: result.rows[0].id };
+  } catch (error) {
+    console.error("❌ sparaUtlägg error:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
+  }
+}

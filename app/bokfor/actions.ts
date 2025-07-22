@@ -278,13 +278,10 @@ export async function hämtaAnställda() {
 }
 
 export async function saveTransaction(formData: FormData) {
-  //#region AuthValidation
   const session = await auth();
   if (!session?.user?.id) throw new Error("Ingen användare inloggad");
   const userId = Number(session.user.id);
-  //#endregion
 
-  //#region ParseFormData
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
@@ -296,9 +293,6 @@ export async function saveTransaction(formData: FormData) {
   const beloppUtanMoms = Number(formData.get("beloppUtanMoms")?.toString() || 0);
   const belopp = Number(formData.get("belopp")?.toString() || 0);
 
-  const isUtlägg = formData.get("isUtlägg") === "true";
-  const valdaAnställda = JSON.parse(formData.get("valdaAnställda")?.toString() || "[]");
-
   const extrafält = JSON.parse(formData.get("extrafält")?.toString() || "{}") as Record<
     string,
     { label?: string; debet: number; kredit: number }
@@ -309,12 +303,8 @@ export async function saveTransaction(formData: FormData) {
     belopp,
     moms,
     beloppUtanMoms,
-    isUtlägg,
-    valdaAnställda,
   });
-  //#endregion
 
-  //#region FileUpload
   let blobUrl = null;
   let filename = "";
 
@@ -341,12 +331,9 @@ export async function saveTransaction(formData: FormData) {
       filename = fil.name;
     }
   }
-  //#endregion
 
-  //#region DatabaseTransaction
   const client = await pool.connect();
   try {
-    //#region CreateMainTransaction
     const { rows } = await client.query(
       `
       INSERT INTO transaktioner (
@@ -366,34 +353,7 @@ export async function saveTransaction(formData: FormData) {
     );
     const transaktionsId = rows[0].id;
     console.log("🆔  Skapad transaktion:", transaktionsId);
-    //#endregion
 
-    //#region SaveUtlagg
-    if (isUtlägg && valdaAnställda.length > 0) {
-      for (const anställdId of valdaAnställda) {
-        await client.query(
-          `INSERT INTO utlägg 
-           (belopp, datum, beskrivning, anställd_id, user_id, kvitto_fil, kvitto_filtyp, status, kommentar, transaktion_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-          [
-            belopp,
-            new Date(transaktionsdatum),
-            valtFörval.namn || "Utlägg",
-            anställdId,
-            userId,
-            filename,
-            fil?.type || null,
-            "Väntande",
-            kommentar,
-            transaktionsId,
-          ]
-        );
-      }
-      console.log(`✅ Utlägg sparat för ${valdaAnställda.length} anställd(a) med transaktion_id`);
-    }
-    //#endregion
-
-    //#region HelperFunctions
     const insertPost = `
       INSERT INTO transaktionsposter
         (transaktions_id, konto_id, debet, kredit)
@@ -413,9 +373,7 @@ export async function saveTransaction(formData: FormData) {
       if (klass === "3") return beloppUtanMoms;
       return 0;
     };
-    //#endregion
 
-    //#region ProcessExtraFields
     if (Object.keys(extrafält).length) {
       for (const [nr, data] of Object.entries(extrafält)) {
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
@@ -433,19 +391,11 @@ export async function saveTransaction(formData: FormData) {
         await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);
       }
     }
-    //#endregion
 
-    //#region ProcessForvalPosts --- 1930 → 2890 for Utlägg
     if (!valtFörval.specialtyp) {
       for (const k of valtFörval.konton) {
         let nr = k.kontonummer?.toString().trim();
         if (!nr) continue;
-
-        // Byt 1930 → 2890 för utlägg
-        if (nr === "1930" && isUtlägg && valdaAnställda.length > 0) {
-          nr = "2890";
-          console.log("🔄 Ändrade 1930 → 2890 för utlägg");
-        }
 
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
           nr,
@@ -465,9 +415,7 @@ export async function saveTransaction(formData: FormData) {
     } else {
       console.log("⏭️  Förvalskonton hoppas över – specialtyp:", valtFörval.specialtyp);
     }
-    //#endregion
 
-    //#region Finalize
     client.release();
     await invalidateBokförCache();
 
@@ -477,7 +425,6 @@ export async function saveTransaction(formData: FormData) {
     console.error("❌ saveTransaction error:", err);
     return { success: false, error: (err as Error).message };
   }
-  // #endregion
 }
 
 // Bokför ett utlägg och koppla till transaktion

@@ -58,8 +58,6 @@ export default function Bokför({ favoritFörvalen }: Props) {
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});
-  const [isUtlägg, setIsUtlägg] = useState<boolean>(false);
-  const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
 
   return (
     <MainLayout>
@@ -89,8 +87,6 @@ export default function Bokför({ favoritFörvalen }: Props) {
           valtFörval={valtFörval}
           extrafält={extrafält}
           setExtrafält={setExtrafält}
-          setIsUtlägg={setIsUtlägg}
-          setValdaAnställda={setValdaAnställda}
         />
       )}
 
@@ -105,8 +101,6 @@ export default function Bokför({ favoritFörvalen }: Props) {
           valtFörval={valtFörval}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}
-          isUtlägg={isUtlägg}
-          valdaAnställda={valdaAnställda}
         />
       )}
 
