@@ -63,25 +63,17 @@ export default function ExtraraderModal({
   useEffect(() => {
     if (startDate && endDate && title === "Betald semester") {
       const dagar = beräknaArbetsdagar(startDate, endDate);
-      console.log("🗓️ Datum ändrat:", {
-        startDate: startDate.toDateString(),
-        endDate: endDate.toDateString(),
-        beräknadeDagar: dagar,
-      });
       setSemesterDagar(dagar);
 
       // Uppdatera det motsvarande fältet automatiskt
       const antalField = fields.find((field) => field.name === "kolumn2");
       if (antalField) {
-        console.log("🔄 Uppdaterar kolumn2 fält med:", dagar);
         antalField.onChange({
           target: { value: dagar.toString() },
         } as React.ChangeEvent<HTMLInputElement>);
-      } else {
-        console.log("❌ Hittade inte kolumn2 fält");
       }
     }
-  }, [startDate, endDate, title]); // Ta bort 'fields' från dependencies
+  }, [startDate, endDate, title]);
 
   useEffect(() => {
     if (open && title === "Betald semester" && anstalldId) {

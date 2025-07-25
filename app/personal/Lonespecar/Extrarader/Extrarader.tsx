@@ -46,14 +46,10 @@ export default function ExtraRader({
   };
 
   const toggleCheckbox = (id: string, label: string) => {
-    const newCheckedState = !state[id];
-    setState((prev) => ({ ...prev, [id]: newCheckedState }));
-
-    if (newCheckedState) {
-      setModalRow({ id, label });
-      setModalFields(initializeModalFields(id, grundlön));
-      setModalOpen(true);
-    }
+    // Öppna modalen direkt, oavsett state
+    setModalRow({ id, label });
+    setModalFields(initializeModalFields(id, grundlön));
+    setModalOpen(true);
   };
 
   const handleRemoveRow = async (id: string) => {
