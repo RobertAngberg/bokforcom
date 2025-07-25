@@ -6,6 +6,9 @@ import {
   beräknaDaglön,
   beräknaObetaldDag,
   beräknaTimlön,
+  beräknaSemesterLön,
+  beräknaSemesterersättning,
+  beräknaSemesterlönPerDag,
 } from "../loneberokningar";
 
 export interface RadKonfiguration {
@@ -426,7 +429,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     },
   },
 
-  foretagsbilExtra: {
+  foretagsbil: {
     label: "Företagsbil",
     enhet: "kr",
     skattepliktig: true,
@@ -435,6 +438,20 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
       antalPlaceholder: "Ange summa",
       step: "0.01",
       beräknaTotalsummaAutomatiskt: false,
+    },
+  },
+
+  betaldSemester: {
+    label: "Betald semester",
+    enhet: "dagar",
+    beräknaVärde: (grundlön) => beräknaSemesterLön(grundlön, 1),
+    beräknaTotalt: (grundlön, antal) => beräknaSemesterLön(grundlön, antal),
+    negativtBelopp: false,
+    fält: {
+      antalLabel: "Antal dagar",
+      antalPlaceholder: "Antal semesterdagar",
+      step: "1",
+      beräknaTotalsummaAutomatiskt: true,
     },
   },
 

@@ -13,6 +13,7 @@ type LonekomponenterProps = {
   grundlön?: number;
   övertid?: number;
   visaExtraRader?: boolean; // NY PROP
+  anstalldId?: number;
 };
 
 export default function Lonekomponenter({
@@ -20,6 +21,7 @@ export default function Lonekomponenter({
   grundlön,
   övertid,
   visaExtraRader = false,
+  anstalldId,
 }: LonekomponenterProps) {
   const { extrarader, setExtrarader, setBeräknadeVärden } = useLonespecContext();
 
@@ -69,6 +71,7 @@ export default function Lonekomponenter({
             hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));
           }}
           grundlön={grundlön}
+          anstalldId={anstalldId}
         />
       )}
     </div>

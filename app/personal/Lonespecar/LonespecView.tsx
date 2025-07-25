@@ -99,6 +99,7 @@ export default function LönespecView({
         övertid={övertid}
         lönespec={lönespec}
         visaExtraRader={visaExtraRader}
+        anstalldId={anställd?.id}
       />
 
       <Utlagg

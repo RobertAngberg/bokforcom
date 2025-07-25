@@ -17,10 +17,12 @@ export default function ExtraRader({
   lönespecId,
   onNyRad,
   grundlön,
+  anstalldId,
 }: {
   lönespecId: number;
   onNyRad: () => void;
   grundlön?: number;
+  anstalldId?: number;
 }) {
   const [state, setState] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState<Record<string, boolean>>({
@@ -123,6 +125,7 @@ export default function ExtraRader({
           setState((prev) => ({ ...prev, [typValue]: true }));
           onNyRad();
         }}
+        anstalldId={anstalldId}
       />
     </AnimeradFlik>
   );

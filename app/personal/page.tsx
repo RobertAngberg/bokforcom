@@ -60,7 +60,7 @@ export default function PersonalPage() {
               Utlägg
             </h2>
             <p className="text-sm italic text-gray-400 mt-1">
-              Hantera och bokför utlägg för anställda.
+              Hantera och bokför utlägg för anställda. Du väljer anställd i steg 3.
             </p>
           </button>
         </div>

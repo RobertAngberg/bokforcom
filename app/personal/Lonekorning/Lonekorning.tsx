@@ -99,8 +99,8 @@ export default function Lonekorning() {
         <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
       </div>
       {nySpecModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-slate-900 rounded-2xl p-8 shadow-2xl min-w-[340px] border border-cyan-800">
+        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50">
+          <div className="bg-cyan-950 rounded-2xl p-8 shadow-lg min-w-[340px] border border-cyan-800 text-slate-100">
             <h2 className="text-xl font-bold text-cyan-300 mb-6 tracking-wide">
               Välj utbetalningsdatum
             </h2>
@@ -109,9 +109,9 @@ export default function Lonekorning() {
                 selected={nySpecDatum}
                 onChange={(date) => setNySpecDatum(date)}
                 dateFormat="yyyy-MM-dd"
-                className="border border-cyan-400 bg-slate-800 text-white px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-cyan-700"
                 placeholderText="Välj datum"
-                calendarClassName="bg-slate-900 text-white border-cyan-400"
+                calendarClassName="bg-slate-900 text-white"
                 dayClassName={(date) => "text-cyan-400"}
               />
             </div>

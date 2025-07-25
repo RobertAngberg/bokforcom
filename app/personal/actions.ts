@@ -607,7 +607,7 @@ export async function hämtaUtlägg(anställdId: number) {
     const query = `
       SELECT * FROM utlägg 
       WHERE anställd_id = $1 
-      ORDER BY datum DESC, skapad DESC
+      ORDER BY skapad DESC
     `;
 
     const result = await client.query(query, [anställdId]);
@@ -994,5 +994,50 @@ export async function sparaUtlägg({
   } catch (error) {
     console.error("❌ sparaUtlägg error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
+  }
+}
+
+export async function hämtaBetaldaSemesterdagar(anställdId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  const userId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+
+    // Kontrollera att anställd tillhör användaren
+    const checkQuery = `
+      SELECT id FROM anställda 
+      WHERE id = $1 AND user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [anställdId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      return 0;
+    }
+
+    // Hämta betalda semesterdagar från semester-tabellen
+    const query = `
+      SELECT betalda_dagar FROM semester 
+      WHERE anställd_id = $1 
+      ORDER BY skapad DESC 
+      LIMIT 1
+    `;
+
+    const result = await client.query(query, [anställdId]);
+    client.release();
+
+    if (result.rows.length > 0) {
+      return parseInt(result.rows[0].betalda_dagar) || 0;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error("❌ hämtaBetaldaSemesterdagar error:", error);
+    return 0;
   }
 }

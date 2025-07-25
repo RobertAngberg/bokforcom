@@ -193,6 +193,16 @@ export function beräknaSemesterersättning(semesterlön: number): number {
 }
 
 /**
+ * Beräknar semesterlön per dag enligt procentregeln (Verksamt)
+ * 12% av årslön för 25 dagar = 0,48% av årslön per dag
+ * För månadslön: årslön = månadslön × 12
+ */
+export function beräknaSemesterlönPerDag(månadslön: number): number {
+  const årslön = månadslön * 12;
+  return årslön * 0.0048; // 0,48% av årslönen per semesterdag
+}
+
+/**
  * Beräknar bilersättning enligt Bokios formel
  * Bokio: Olika satser för olika biltyper
  */
