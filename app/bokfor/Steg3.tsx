@@ -1,6 +1,9 @@
 // #region Imports och types
 "use client";
 
+import React, { useState, useEffect } from "react";
+import { hämtaAllaAnställda } from "../personal/actions";
+import AnstalldDropdown, { Anstalld } from "./AnstalldDropdown";
 import { saveTransaction } from "./actions";
 import KnappFullWidth from "../_components/KnappFullWidth";
 import BakåtPil from "../_components/BakåtPil";
@@ -40,7 +43,7 @@ interface Step3Props {
   valtFörval?: Förval | null;
   setCurrentStep?: (step: number) => void;
   extrafält?: Record<string, ExtrafältRad>;
-  // ...utlägg props borttagna
+  utlaggMode?: boolean;
 }
 // #endregion
 
@@ -54,18 +57,49 @@ export default function Steg3({
   valtFörval = null,
   setCurrentStep,
   extrafält = {},
-  // ...utlägg props borttagna
+  utlaggMode = false,
 }: Step3Props) {
+  // State för anställda och vald anställd
+  const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
+  const [anstalldId, setAnstalldId] = useState<string>("");
+
+  useEffect(() => {
+    if (utlaggMode) {
+      hämtaAllaAnställda().then((res) => {
+        setAnstallda(res);
+        if (res.length === 1) setAnstalldId(res[0].id.toString());
+      });
+    }
+  }, [utlaggMode]);
   // #region Moms- och beloppsberäkning
   const momsSats = valtFörval?.momssats ?? 0;
   const moms = +(belopp * (momsSats / (1 + momsSats))).toFixed(2);
   const beloppUtanMoms = +(belopp - moms).toFixed(2);
   // #endregion
 
+  // #region Hämta beskrivning för konto 2890 från DB
+  const [konto2890Beskrivning, setKonto2890Beskrivning] = React.useState<string>("");
+  React.useEffect(() => {
+    async function fetchKonto2890() {
+      try {
+        const res = await fetch("/api/konto-beskrivning?kontonummer=2890");
+        if (res.ok) {
+          const data = await res.json();
+          setKonto2890Beskrivning(data.beskrivning || "Övriga kortfristiga skulder");
+        } else {
+          setKonto2890Beskrivning("Övriga kortfristiga skulder");
+        }
+      } catch {
+        setKonto2890Beskrivning("Övriga kortfristiga skulder");
+      }
+    }
+    if (utlaggMode) fetchKonto2890();
+  }, [utlaggMode]);
+  // #endregion
+
   // #region Submitta form
   const handleSubmit = async (formData: FormData) => {
     if (!valtFörval || !setCurrentStep) return;
-
     if (fil) formData.set("fil", fil);
     formData.set("valtFörval", JSON.stringify(valtFörval));
     formData.set("extrafält", JSON.stringify(extrafält));
@@ -76,7 +110,8 @@ export default function Steg3({
     formData.set("belopp", belopp.toString());
     formData.set("moms", moms.toString());
     formData.set("beloppUtanMoms", beloppUtanMoms.toString());
-    // ...utläggformdata borttagen
+    formData.set("utlaggMode", utlaggMode ? "true" : "false");
+    if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
     const result = await saveTransaction(formData);
     if (result.success) setCurrentStep(4);
   };
@@ -97,11 +132,13 @@ export default function Steg3({
             let namn = `${kontoNr} ${rad.beskrivning ?? ""}`;
             let beloppAttVisa = 0;
 
-            if (kontoNr?.startsWith("26")) {
-              beloppAttVisa = moms;
-            } else if (kontoNr === "1930") {
-              // Om det är utlägg, byt både kontonummer och namn till 2890
+            // Om utläggs-mode, byt ut 1930 mot 2890
+            if (utlaggMode && kontoNr === "1930") {
+              kontoNr = "2890";
+              namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
               beloppAttVisa = belopp;
+            } else if (kontoNr?.startsWith("26")) {
+              beloppAttVisa = moms;
             } else {
               beloppAttVisa = beloppUtanMoms;
             }
@@ -128,6 +165,28 @@ export default function Steg3({
       <p className="text-center text-gray-300 mb-8">
         {transaktionsdatum ? new Date(transaktionsdatum).toLocaleDateString("sv-SE") : ""}
       </p>
+      {utlaggMode && (
+        <>
+          <div className="mb-6 flex items-center px-4 py-3 bg-blue-900 text-blue-100 rounded-lg text-base">
+            <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-blue-700 text-white text-lg font-bold">
+              i
+            </span>
+            <div className="flex-1 text-center">
+              <strong>Utlägg bokförs här på 2890.</strong>
+              <br />
+              När du sedan betalar ut lönen kommer detta att kvittas mot ditt företagskonto.
+            </div>
+          </div>
+          <div className="mb-6 flex flex-col items-center">
+            <div className="w-full max-w-md mx-auto flex flex-col items-center">
+              <span className="block text-base font-medium text-white mb-2 text-center">
+                Välj anställd att knyta till utlägget:
+              </span>
+              <AnstalldDropdown anstallda={anstallda} value={anstalldId} onChange={setAnstalldId} />
+            </div>
+          </div>
+        </>
+      )}
       {kommentar && <p className="text-center text-gray-400 mb-4 italic">{kommentar}</p>}
 
       <form action={handleSubmit}>
@@ -161,8 +220,13 @@ export default function Steg3({
           </tfoot>
         </table>
 
-        <div className="mt-8">
-          <KnappFullWidth text="Bokför" />
+        <div className="mt-8 flex justify-center">
+          <button
+            type="submit"
+            className="w-full max-w-lg px-8 py-6 bg-cyan-700 hover:bg-cyan-800 text-white rounded font-bold text-lg shadow"
+          >
+            Bokför
+          </button>
         </div>
       </form>
     </div>

@@ -42,10 +42,11 @@ type Forval = {
 
 type Props = {
   favoritFörvalen: Forval[];
+  utlaggMode?: boolean;
 };
 //#endregion
 
-export default function Bokför({ favoritFörvalen }: Props) {
+export default function Bokför({ favoritFörvalen, utlaggMode = false }: Props) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [kontonummer, setKontonummer] = useState<string>("");
   const [kontobeskrivning, setKontobeskrivning] = useState<string>();
@@ -87,6 +88,7 @@ export default function Bokför({ favoritFörvalen }: Props) {
           valtFörval={valtFörval}
           extrafält={extrafält}
           setExtrafält={setExtrafält}
+          utlaggMode={utlaggMode}
         />
       )}
 
@@ -101,6 +103,7 @@ export default function Bokför({ favoritFörvalen }: Props) {
           valtFörval={valtFörval}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}
+          utlaggMode={utlaggMode}
         />
       )}
 

@@ -41,7 +41,7 @@ type Step2Props = {
   valtFörval: Förval | null;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  // ...utlägg props borttagna
+  utlaggMode?: boolean;
 };
 // #endregion
 

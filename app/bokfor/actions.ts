@@ -278,6 +278,7 @@ export async function hämtaAnställda() {
 }
 
 export async function saveTransaction(formData: FormData) {
+  const anstalldId = formData.get("anstalldId")?.toString();
   const session = await auth();
   if (!session?.user?.id) throw new Error("Ingen användare inloggad");
   const userId = Number(session.user.id);
@@ -298,11 +299,15 @@ export async function saveTransaction(formData: FormData) {
     { label?: string; debet: number; kredit: number }
   >;
 
+  // NYTT: Kolla om vi är i utläggs-mode
+  const utlaggMode = formData.get("utlaggMode") === "true";
+
   console.log("📥 formData:", {
     transaktionsdatum,
     belopp,
     moms,
     beloppUtanMoms,
+    utlaggMode,
   });
 
   let blobUrl = null;
@@ -397,6 +402,9 @@ export async function saveTransaction(formData: FormData) {
         let nr = k.kontonummer?.toString().trim();
         if (!nr) continue;
 
+        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode
+        if (utlaggMode && nr === "1930") nr = "2890";
+
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
           nr,
         ]);
@@ -416,9 +424,24 @@ export async function saveTransaction(formData: FormData) {
       console.log("⏭️  Förvalskonton hoppas över – specialtyp:", valtFörval.specialtyp);
     }
 
+    // Skapa utlägg-rad om utläggs-mode och anstalldId finns
+    if (utlaggMode && anstalldId) {
+      console.log("🔍 Utlägg formData:", {
+        userId,
+        transaktionsId,
+        anstalldId,
+        belopp,
+        transaktionsdatum,
+        kommentar,
+      });
+      const res = await client.query(
+        `INSERT INTO utlägg (user_id, transaktion_id, anställd_id) VALUES ($1, $2, $3) RETURNING *`,
+        [userId, transaktionsId, anstalldId]
+      );
+      console.log("📝 Utlägg SQL-result:", res.rows);
+    }
     client.release();
     await invalidateBokförCache();
-
     return { success: true, id: transaktionsId, blobUrl };
   } catch (err) {
     client.release();
