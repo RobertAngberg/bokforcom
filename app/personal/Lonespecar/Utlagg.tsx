@@ -11,7 +11,25 @@ export default function Utlägg({ lönespecUtlägg, getStatusBadge }: UtläggPro
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
-      <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">Utlägg</h4>
+      <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        Utlägg asdf 🎯 VI ÄR HÄR 🎯
+      </h4>
+
+      {/* Lägg till utlägg knapp i mitten */}
+      <div className="flex justify-center mb-4">
+        <button
+          className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+          onClick={() => {
+            console.log("🎯 LÄGG TILL UTLÄGG KLICKAD!");
+            console.log("📋 Befintliga utlägg:", lönespecUtlägg);
+            console.log("🔢 Antal utlägg:", lönespecUtlägg.length);
+            alert("🎯 Lägg till utlägg - funktion kommer snart!");
+          }}
+        >
+          💰 Lägg till utlägg
+        </button>
+      </div>
+
       <div className="space-y-3">
         {lönespecUtlägg.map((utläggItem) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">

@@ -14,6 +14,7 @@ import MailaLonespec from "../Lonespecar/MailaLonespec";
 import BokforKnappOchModal from "./BokforKnappOchModal";
 import Knapp from "../../_components/Knapp";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
+import LoadingSpinner from "../../_components/LoadingSpinner";
 //#endregion
 
 //#region Component
@@ -24,6 +25,7 @@ export default function Lonekorning() {
   //#endregion
 
   //#region State
+  const [loading, setLoading] = useState(true);
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<string | null>(null);
   const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
@@ -40,43 +42,50 @@ export default function Lonekorning() {
   useEffect(() => {
     // Hämta och gruppera alla lönespecar per utbetalningsdatum
     const fetchData = async () => {
-      const [specar, anstallda] = await Promise.all([
-        hämtaAllaLönespecarFörUser(),
-        hämtaAllaAnställda(),
-      ]);
-      setAnstallda(anstallda);
-      // Hämta utlägg för varje anställd parallellt
-      const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
-      const utlaggResults = await Promise.all(utlaggPromises);
-      const utlaggMap: Record<number, any[]> = {};
-      anstallda.forEach((a, idx) => {
-        utlaggMap[a.id] = utlaggResults[idx];
-      });
-      setUlaggMap(utlaggMap);
-      // Gruppera per utbetalningsdatum och ta bort tomma datum
-      const grupperat: Record<string, any[]> = {};
-      specar.forEach((spec) => {
-        if (spec.utbetalningsdatum) {
-          if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-          grupperat[spec.utbetalningsdatum].push(spec);
+      setLoading(true);
+      try {
+        const [specar, anstallda] = await Promise.all([
+          hämtaAllaLönespecarFörUser(),
+          hämtaAllaAnställda(),
+        ]);
+        setAnstallda(anstallda);
+        // Hämta utlägg för varje anställd parallellt
+        const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+        const utlaggResults = await Promise.all(utlaggPromises);
+        const utlaggMap: Record<number, any[]> = {};
+        anstallda.forEach((a, idx) => {
+          utlaggMap[a.id] = utlaggResults[idx];
+        });
+        setUlaggMap(utlaggMap);
+        // Gruppera per utbetalningsdatum och ta bort tomma datum
+        const grupperat: Record<string, any[]> = {};
+        specar.forEach((spec) => {
+          if (spec.utbetalningsdatum) {
+            if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+            grupperat[spec.utbetalningsdatum].push(spec);
+          }
+        });
+        // Ta bort datum med 0 lönespecar
+        const grupperatUtanTomma = Object.fromEntries(
+          Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+        );
+        const datumSort = Object.keys(grupperatUtanTomma).sort(
+          (a, b) => new Date(b).getTime() - new Date(a).getTime()
+        );
+        setDatumLista(datumSort);
+        setSpecarPerDatum(grupperatUtanTomma);
+        // Förvalt: visa lönespecar för senaste datum
+        if (datumSort.length > 0) {
+          setUtbetalningsdatum(datumSort[0]);
+          setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+        } else {
+          setUtbetalningsdatum(null);
+          setValdaSpecar([]);
         }
-      });
-      // Ta bort datum med 0 lönespecar
-      const grupperatUtanTomma = Object.fromEntries(
-        Object.entries(grupperat).filter(([_, list]) => list.length > 0)
-      );
-      const datumSort = Object.keys(grupperatUtanTomma).sort(
-        (a, b) => new Date(b).getTime() - new Date(a).getTime()
-      );
-      setDatumLista(datumSort);
-      setSpecarPerDatum(grupperatUtanTomma);
-      // Förvalt: visa lönespecar för senaste datum
-      if (datumSort.length > 0) {
-        setUtbetalningsdatum(datumSort[0]);
-        setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-      } else {
-        setUtbetalningsdatum(null);
-        setValdaSpecar([]);
+      } catch (error) {
+        console.error("❌ Fel vid laddning av lönekörning:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -93,6 +102,11 @@ export default function Lonekorning() {
   //#region Render
   // Helper to build batch data for modal
   // ...existing code...
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">

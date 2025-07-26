@@ -92,17 +92,6 @@ export default function ExtraRader({
     <AnimeradFlik title="Extra rader" icon="➕">
       <ExtraraderSökning sökterm={sökterm} setSökterm={setSökterm} />
 
-      {/* Knapp för att lägga till utlägg */}
-      <div className="mb-4">
-        <button
-          onClick={läggTillUtlägg}
-          disabled={läggerTillUtlägg}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {läggerTillUtlägg ? "Lägger till utlägg..." : "Lägg till väntande utlägg"}
-        </button>
-      </div>
-
       <ExtraraderGrid
         sökterm={sökterm}
         state={state}
