@@ -4,7 +4,7 @@ import AnimeradFlik from "../../../_components/AnimeradFlik";
 import ExtraraderModal from "./ExtraraderModal";
 import ExtraraderSökning from "./ExtraraderSokning";
 import ExtraraderGrid from "./ExtraraderGrid";
-import { sparaExtrarad } from "../../actions";
+import { sparaExtrarad, läggTillUtläggILönespec } from "../../actions";
 import {
   beräknaSumma,
   formatKolumn2Värde,
@@ -40,6 +40,25 @@ export default function ExtraRader({
     enhet: "",
   });
   const [sökterm, setSökterm] = useState("");
+  const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
+
+  const läggTillUtlägg = async () => {
+    if (!lönespecId) return;
+    setLäggerTillUtlägg(true);
+    try {
+      const result = await läggTillUtläggILönespec(lönespecId);
+      if (result.success) {
+        console.log(`✅ Lade till ${result.count} utlägg`);
+        onNyRad(); // Uppdatera vyn
+      } else {
+        console.error("❌ Kunde inte lägga till utlägg:", result.error);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid tillägg av utlägg:", error);
+    } finally {
+      setLäggerTillUtlägg(false);
+    }
+  };
 
   const toggleDropdown = (key: string) => {
     setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -72,6 +91,18 @@ export default function ExtraRader({
   return (
     <AnimeradFlik title="Extra rader" icon="➕">
       <ExtraraderSökning sökterm={sökterm} setSökterm={setSökterm} />
+
+      {/* Knapp för att lägga till utlägg */}
+      <div className="mb-4">
+        <button
+          onClick={läggTillUtlägg}
+          disabled={läggerTillUtlägg}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {läggerTillUtlägg ? "Lägger till utlägg..." : "Lägg till väntande utlägg"}
+        </button>
+      </div>
+
       <ExtraraderGrid
         sökterm={sökterm}
         state={state}

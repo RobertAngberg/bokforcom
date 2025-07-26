@@ -605,9 +605,15 @@ export async function hämtaUtlägg(anställdId: number) {
     }
 
     const query = `
-      SELECT * FROM utlägg 
-      WHERE anställd_id = $1 
-      ORDER BY skapad DESC
+      SELECT 
+        u.*, 
+        t.belopp,
+        t.kontobeskrivning as beskrivning,
+        t.transaktionsdatum as datum
+      FROM utlägg u 
+      LEFT JOIN transaktioner t ON u.transaktion_id = t.id
+      WHERE u.anställd_id = $1 
+      ORDER BY u.skapad DESC
     `;
 
     const result = await client.query(query, [anställdId]);
@@ -672,6 +678,83 @@ export async function hämtaExtrarader(lönespecifikation_id: number) {
   } catch (error) {
     console.error("❌ hämtaExtrarader error:", error);
     return [];
+  }
+}
+
+export async function läggTillUtläggILönespec(lönespecId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  try {
+    const client = await pool.connect();
+
+    // Hämta lönespec och anställd info
+    const lönespecQuery = `
+      SELECT l.*, a.id as anställd_id 
+      FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const lönespecResult = await client.query(lönespecQuery, [
+      lönespecId,
+      parseInt(session.user.id, 10),
+    ]);
+
+    if (lönespecResult.rows.length === 0) {
+      client.release();
+      return { success: false, error: "Lönespec not found" };
+    }
+
+    const anställdId = lönespecResult.rows[0].anställd_id;
+
+    // Hämta väntande utlägg för anställd
+    const utläggQuery = `
+      SELECT 
+        u.id,
+        u.transaktion_id,
+        t.belopp,
+        t.kontobeskrivning as beskrivning
+      FROM utlägg u 
+      LEFT JOIN transaktioner t ON u.transaktion_id = t.id
+      WHERE u.anställd_id = $1 AND u.status = 'Väntande'
+    `;
+
+    const utläggResult = await client.query(utläggQuery, [anställdId]);
+
+    // Lägg till varje utlägg som extrarad
+    for (const utlägg of utläggResult.rows) {
+      const insertQuery = `
+        INSERT INTO lönespec_extrarader (
+          lönespecifikation_id, typ, kolumn1, kolumn2, kolumn3, kolumn4
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+
+      const values = [
+        lönespecId,
+        "utlägg",
+        utlägg.beskrivning || "Utlägg",
+        utlägg.belopp || 0,
+        "",
+        `Utlägg ID: ${utlägg.id}`,
+      ];
+
+      await client.query(insertQuery, values);
+
+      // Uppdatera utlägg status
+      const updateUtläggQuery = `
+        UPDATE utlägg SET status = 'Inkluderat i lönespec' WHERE id = $1
+      `;
+      await client.query(updateUtläggQuery, [utlägg.id]);
+    }
+
+    client.release();
+
+    return { success: true, count: utläggResult.rows.length };
+  } catch (error) {
+    console.error("❌ läggTillUtläggILönespec error:", error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
