@@ -8,6 +8,47 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Types
+interface ExtraradData {
+  lönespecifikation_id: number;
+  typ: string;
+  kolumn1?: string | null;
+  kolumn2?: string | null;
+  kolumn3?: string | null;
+  kolumn4?: string | null;
+}
+
+interface ExtraradResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+interface UtläggData {
+  id: number;
+  beskrivning: string;
+  belopp: number;
+  kommentar?: string;
+  datum: string;
+}
+
+// Dedicated funktion för att lägga till utlägg som extrarad
+export async function läggTillUtläggSomExtrarad(
+  lönespecId: number,
+  utlägg: UtläggData
+): Promise<ExtraradResult> {
+  const extraradData: ExtraradData = {
+    lönespecifikation_id: lönespecId,
+    typ: "manuellPost", // Behåller samma typ som fungerar
+    kolumn1: utlägg.beskrivning || `Utlägg - ${utlägg.datum}`,
+    kolumn2: "1", // Antal = 1
+    kolumn3: utlägg.belopp.toString(), // Belopp per enhet
+    kolumn4: utlägg.kommentar || "",
+  };
+
+  return sparaExtrarad(extraradData);
+}
+
 type AnställdData = {
   förnamn: string;
   efternamn: string;
@@ -626,7 +667,7 @@ export async function hämtaUtlägg(anställdId: number) {
   }
 }
 
-export async function sparaExtrarad(data: any) {
+export async function sparaExtrarad(data: ExtraradData): Promise<ExtraradResult> {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Ingen inloggad användare");

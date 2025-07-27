@@ -6,7 +6,7 @@ import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import { useLonespecContext } from "./LonespecContext";
 
@@ -32,6 +32,10 @@ export default function LönespecView({
   visaExtraRader = false,
 }: LönespecViewProps) {
   const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
+
+  // Lokal state för utlägg så vi kan uppdatera UI direkt
+  const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);
+
   //#endregion
 
   //#region Helper Functions
@@ -77,9 +81,47 @@ export default function LönespecView({
   const visaSocialaAvgifter = aktuellBeräkning?.socialaAvgifter ?? socialaAvgifter;
   const visaLönekostnad = aktuellBeräkning?.lönekostnad ?? bruttolön + socialaAvgifter;
 
-  const lönespecUtlägg = utlägg.filter(
-    (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
-  );
+  // Använd useMemo för att säkerställa att lönespecUtlägg uppdateras när lokalUtlägg ändras
+  const lönespecUtlägg = useMemo(() => {
+    const filtrerade = lokalUtlägg.filter(
+      (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
+    );
+    console.log("🔍 lönespecUtlägg uppdaterat:", filtrerade);
+    return filtrerade;
+  }, [lokalUtlägg, lönespec.id]);
+
+  // Callback för att uppdatera utlägg status i lokal state
+  const handleUtläggAdded = (tillagdaUtlägg: any[]) => {
+    console.log("🔍 handleUtläggAdded anropad med:", tillagdaUtlägg);
+    console.log("🔍 Nuvarande lokalUtlägg:", lokalUtlägg);
+    
+    // Uppdatera utlägg status
+    setLokalUtlägg((prevUtlägg) => {
+      const uppdateradeUtlägg = prevUtlägg.map((utlägg) => {
+        const skaSättas = tillagdaUtlägg.some((t) => t.id === utlägg.id);
+        console.log(`🔍 Utlägg ${utlägg.id}: ska uppdateras=${skaSättas}`);
+        return skaSättas
+          ? { ...utlägg, status: "Inkluderat i lönespec" }
+          : utlägg;
+      });
+      console.log("🔍 Nya utlägg state:", uppdateradeUtlägg);
+      return uppdateradeUtlägg;
+    });
+
+    // Lägg till nya extrarader för dessa utlägg
+    const nyaExtrarader = tillagdaUtlägg.map((utlägg) => ({
+      id: `temp-${Date.now()}-${utlägg.id}`, // Temp ID
+      lönespecifikation_id: lönespec.id,
+      typ: "manuellPost",
+      kolumn1: utlägg.beskrivning || `Utlägg - ${utlägg.datum}`,
+      kolumn2: "1",
+      kolumn3: utlägg.belopp.toString(),
+      kolumn4: utlägg.kommentar || "",
+    }));
+
+    // Uppdatera extrarader state
+    setExtrarader(lönespec.id.toString(), [...(extrarader[lönespec.id] || []), ...nyaExtrarader]);
+  };
   //#endregion
 
   //#region Render Content
@@ -106,6 +148,7 @@ export default function LönespecView({
         lönespecUtlägg={lönespecUtlägg}
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
         lönespecId={lönespec?.id}
+        onUtläggAdded={handleUtläggAdded}
       />
 
       <Sammanfattning
