@@ -29,7 +29,7 @@ export default function StatusBadge({ status, type }: StatusBadgeProps) {
 
   function getStatusBadge(status: string) {
     const statusMap: { [key: string]: { label: string; className: string } } = {
-      "Väntande": {
+      Väntande: {
         label: "Väntande",
         className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
       },
@@ -38,7 +38,7 @@ export default function StatusBadge({ status, type }: StatusBadgeProps) {
         className: "bg-green-500/20 text-green-400 border-green-500/30",
       },
       väntande: {
-        label: "Väntande", 
+        label: "Väntande",
         className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
       },
       godkänd: {

@@ -343,19 +343,6 @@ export default function BokforLoner({
       });
     }
 
-    // LOGGA: Visa extrarader och deras typ/belopp
-    console.log("[BokforLoner] extrarader:", extrarader);
-
-    // LOGGA: Visa beräknade värden
-    console.log("[BokforLoner] beräknadeVärden:", beräknadeVärden);
-
-    // LOGGA: Visa summering av förmåner för 7512 och 7515
-    console.log("[BokforLoner] förmånerFör7512:", förmånerFör7512);
-    console.log("[BokforLoner] förmånerFör7515:", förmånerFör7515);
-
-    // LOGGA: Visa alla bokföringsposter innan return
-    console.log("[BokforLoner] poster:", poster);
-
     return poster.filter((p) => p.debet > 0 || p.kredit > 0);
   };
 

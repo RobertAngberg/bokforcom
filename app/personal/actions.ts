@@ -614,7 +614,6 @@ export async function hämtaLönespecifikationer(anställdId: number) {
 
     client.release();
 
-    console.log("🎯 FÄRDIGA LÖNESPECAR MED EXTRARADER:", lönespecarMedExtrarader);
     return lönespecarMedExtrarader;
   } catch (error) {
     console.error("❌ hämtaLönespecifikationer error:", error);
@@ -793,8 +792,6 @@ export async function läggTillUtläggILönespec(lönespecId: number) {
     const utläggResult = await client.query(utläggQuery, [anställdId]);
 
     // DEBUG: Logga vad vi får från databasen
-    console.log("🔍 DEBUG utläggResult.rows:", JSON.stringify(utläggResult.rows, null, 2));
-
     // Lägg till varje utlägg som extrarad
     for (const utlägg of utläggResult.rows) {
       const insertQuery = `

@@ -45,13 +45,6 @@ export default function BokförKnappOchModal({
       console.error("Fel vid beräkning av bokföring:", error);
       return null;
     }
-    // Lägg till efter rad 42:
-    console.log("🔍 BOKFÖR MODAL - färskaLonespecar:", färskaLonespecar);
-    console.log("🔍 BOKFÖR MODAL - lönespecar:", lönespecar);
-    console.log(
-      "🔍 BOKFÖR MODAL - dataAttAnvända:",
-      Object.keys(färskaLonespecar).length > 0 ? färskaLonespecar : lönespecar
-    );
   }, [färskaLonespecar, lönespecar, anställda]);
 
   // ✅ HÄMTA FÄRSK DATA NÄR MODALEN ÖPPNAS

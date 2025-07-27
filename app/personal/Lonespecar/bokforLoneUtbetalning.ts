@@ -84,8 +84,7 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
             data.anställdNamn
           );
 
-    // LOGGA: Visa alla bokföringsposter innan de sparas
-    console.log("[bokforLoneUtbetalning] bokföringsPoster:", bokföringsPoster);
+    // Validera att bokföringen balanserar
     bokföringsPoster.forEach((post, i) => {
       if (isNaN(post.debet) || isNaN(post.kredit)) {
         console.warn(`[bokforLoneUtbetalning] NaN-belopp på rad ${i}:`, post);
@@ -132,8 +131,7 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
       post.debet = Number(post.debet) || 0;
       post.kredit = Number(post.kredit) || 0;
       if (post.debet === 0 && post.kredit === 0) {
-        console.log("Skippar post med 0 debet och 0 kredit:", post);
-        continue;
+        continue; // Skippa poster med 0-belopp
       }
       // Hämta konto-ID från kontonummer
       const kontoQuery = `SELECT id FROM konton WHERE kontonummer = $1`;
@@ -143,8 +141,7 @@ export async function bokforLoneUtbetalning(data: BokförLöneUtbetalningData) {
         throw new Error(`Konto ${post.konto} (${post.kontoNamn}) hittades inte i databasen`);
       }
       const kontoId = kontoResult.rows[0].id;
-      // LOGGA: Visa varje post som sparas
-      console.log("[bokforLoneUtbetalning] Sparar post:", post);
+
       await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
     }
 

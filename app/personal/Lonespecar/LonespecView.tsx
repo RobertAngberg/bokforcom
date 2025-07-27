@@ -83,30 +83,21 @@ export default function LönespecView({
 
   // Använd useMemo för att säkerställa att lönespecUtlägg uppdateras när lokalUtlägg ändras
   const lönespecUtlägg = useMemo(() => {
-    const filtrerade = lokalUtlägg.filter(
+    return lokalUtlägg.filter(
       (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
     );
-    console.log("🔍 lönespecUtlägg uppdaterat:", filtrerade);
-    return filtrerade;
   }, [lokalUtlägg, lönespec.id]);
 
   // Callback för att uppdatera utlägg status i lokal state
   const handleUtläggAdded = (tillagdaUtlägg: any[]) => {
-    console.log("🔍 handleUtläggAdded anropad med:", tillagdaUtlägg);
-    console.log("🔍 Nuvarande lokalUtlägg:", lokalUtlägg);
-    
     // Uppdatera utlägg status
-    setLokalUtlägg((prevUtlägg) => {
-      const uppdateradeUtlägg = prevUtlägg.map((utlägg) => {
-        const skaSättas = tillagdaUtlägg.some((t) => t.id === utlägg.id);
-        console.log(`🔍 Utlägg ${utlägg.id}: ska uppdateras=${skaSättas}`);
-        return skaSättas
+    setLokalUtlägg((prevUtlägg) =>
+      prevUtlägg.map((utlägg) =>
+        tillagdaUtlägg.some((t) => t.id === utlägg.id)
           ? { ...utlägg, status: "Inkluderat i lönespec" }
-          : utlägg;
-      });
-      console.log("🔍 Nya utlägg state:", uppdateradeUtlägg);
-      return uppdateradeUtlägg;
-    });
+          : utlägg
+      )
+    );
 
     // Lägg till nya extrarader för dessa utlägg
     const nyaExtrarader = tillagdaUtlägg.map((utlägg) => ({

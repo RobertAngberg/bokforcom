@@ -693,26 +693,8 @@ export function beräknaTotaltSemesterSaldo(
   const aktuelMånadsIntjäning = beräknaAktuelMånadsIntjäning(tjänstegrad);
   const totaltIntjänat = sparadData.intjänat + aktuelMånadsIntjäning;
 
-  // Debug: Visa vad som kommer från databasen
-  console.log("🔍 Semester debug - sparadData:", {
-    intjänat: sparadData.intjänat,
-    betalda: sparadData.betalda,
-    sparade: sparadData.sparade,
-    obetald: sparadData.obetald,
-    förskott: sparadData.förskott,
-    ersättning: sparadData.ersättning,
-  });
-
   // Sparade dagar ska visas under Betalda, inte som separat kategori
   const totaltBetalda = sparadData.betalda + sparadData.sparade;
-
-  console.log("🔍 Semester debug - beräkning:", {
-    "sparadData.betalda": sparadData.betalda,
-    "sparadData.sparade": sparadData.sparade,
-    "totaltBetalda (betalda + sparade)": totaltBetalda,
-    aktuelMånadsIntjäning: aktuelMånadsIntjäning,
-    totaltIntjänat: totaltIntjänat,
-  });
 
   // Beräkna om kvarvarande och tillgängligt med uppdaterad logik
   const kvarvarande = totaltIntjänat - totaltBetalda;
