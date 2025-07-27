@@ -5,7 +5,7 @@ interface UtläggProps {
   lönespecUtlägg: any[];
   getStatusBadge: (status: string) => React.ReactElement;
   lönespecId?: number;
-  onUtläggAdded?: (tillagdaUtlägg: any[]) => void; // Skicka vilka utlägg som lades till
+  onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>; // Uppdaterad callback
 }
 
 export default function Utlägg({
@@ -30,16 +30,18 @@ export default function Utlägg({
     }
 
     try {
+      const extraradResults = [];
       for (const utlägg of väntandeUtlägg) {
-        // Enkel, tydlig funktion
-        await läggTillUtläggSomExtrarad(lönespecId, utlägg);
+        // Enkel, tydlig funktion - spara resultatet
+        const result = await läggTillUtläggSomExtrarad(lönespecId, utlägg);
+        extraradResults.push(result);
         await uppdateraUtläggStatus(utlägg.id, "Inkluderat i lönespec");
       }
       alert(`${väntandeUtlägg.length} utlägg tillagda!`);
 
-      // Uppdatera UI genom callback - riktig React-stil!
+      // Uppdatera UI genom callback - skicka både utlägg och resultat
       if (onUtläggAdded) {
-        onUtläggAdded(väntandeUtlägg); // Skicka de utlägg som lades till
+        await onUtläggAdded(väntandeUtlägg, extraradResults);
       }
     } catch (error) {
       console.error("Fel:", error);
@@ -49,10 +51,14 @@ export default function Utlägg({
 
   if (lönespecUtlägg.length === 0) return null;
 
+  // Visa bara komponenten om det finns väntande utlägg
+  const väntandeUtlägg = lönespecUtlägg.filter((u) => u.status === "Väntande");
+  if (väntandeUtlägg.length === 0) return null;
+
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
       <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-        Utlägg asdf 🎯 VI ÄR HÄR 🎯
+        💰 Väntande utlägg
       </h4>
       {/* Lägg till utlägg knapp i mitten */}
       <div className="flex justify-center mb-4">

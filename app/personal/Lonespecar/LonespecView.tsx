@@ -89,7 +89,7 @@ export default function LönespecView({
   }, [lokalUtlägg, lönespec.id]);
 
   // Callback för att uppdatera utlägg status i lokal state
-  const handleUtläggAdded = (tillagdaUtlägg: any[]) => {
+  const handleUtläggAdded = async (tillagdaUtlägg: any[], extraradResults: any[]) => {
     // Uppdatera utlägg status
     setLokalUtlägg((prevUtlägg) =>
       prevUtlägg.map((utlägg) =>
@@ -99,19 +99,14 @@ export default function LönespecView({
       )
     );
 
-    // Lägg till nya extrarader för dessa utlägg
-    const nyaExtrarader = tillagdaUtlägg.map((utlägg) => ({
-      id: `temp-${Date.now()}-${utlägg.id}`, // Temp ID
-      lönespecifikation_id: lönespec.id,
-      typ: "manuellPost",
-      kolumn1: utlägg.beskrivning || `Utlägg - ${utlägg.datum}`,
-      kolumn2: "1",
-      kolumn3: utlägg.belopp.toString(),
-      kolumn4: utlägg.kommentar || "",
-    }));
-
-    // Uppdatera extrarader state
-    setExtrarader(lönespec.id.toString(), [...(extrarader[lönespec.id] || []), ...nyaExtrarader]);
+    // Använd riktiga extrarader från databasen istället för temp-ID:n
+    if (extraradResults && extraradResults.length > 0) {
+      const nyaExtrarader = extraradResults.filter((result) => result.success && result.data);
+      setExtrarader(lönespec.id.toString(), [
+        ...(extrarader[lönespec.id] || []),
+        ...nyaExtrarader.map((result) => result.data),
+      ]);
+    }
   };
   //#endregion
 
