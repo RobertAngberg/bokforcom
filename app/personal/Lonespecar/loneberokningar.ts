@@ -3,7 +3,13 @@ import { SKATTETABELL_34_1_2025 } from "../skattetabell34";
 
 // Om semestertillägg – kortfattat:
 
-// Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut när anställda tar semester.
+// Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut nexport function klassificeraExtrarader(extrarader: any[]) {
+let bruttolönTillägg = 0;
+let skattepliktigaFörmåner = 0;
+let skattefriaErsättningar = 0;
+let övrigaTillägg = 0;
+let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
+// let nettolönejustering = 0;tällda tar semester.
 // Skatt: Semestertillägg är skattepliktigt och ska beskattas som vanlig lön.
 // Syfte: Ger extra pengar under semestern utöver ordinarie lön.
 
@@ -268,6 +274,22 @@ export function klassificeraExtrarader(extrarader: any[]) {
     const konfig = RAD_KONFIGURATIONER[rad.typ];
     const belopp = parseFloat(rad.kolumn3) || 0;
 
+    // DEBUG: Logga klassificering
+    console.log(`📝 Klassificerar ${rad.typ}: ${belopp} kr`, {
+      konfig,
+      läggTillINettolön: konfig?.läggTillINettolön,
+      läggTillIBruttolön: konfig?.läggTillIBruttolön,
+      skattepliktig: konfig?.skattepliktig,
+      negativtBelopp: konfig?.negativtBelopp,
+    });
+
+    // Hantera avdrag som ska dras från kontantlön
+    if (konfig?.negativtBelopp || belopp < 0) {
+      console.log(`📉 Avdrag från kontantlön ${rad.typ}: ${belopp} kr`);
+      kontantlönAvdrag += Math.abs(belopp); // Lägg till som positivt tal för avdrag
+      return;
+    }
+
     if (konfig?.läggTillINettolön) {
       nettolönejustering += belopp;
     } else if (konfig?.läggTillIBruttolön) {
@@ -286,6 +308,7 @@ export function klassificeraExtrarader(extrarader: any[]) {
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
+    kontantlönAvdrag, // Nytt: returnera avdrag
     // nettolönejustering,
   };
 }
@@ -428,24 +451,36 @@ export function beräknaKomplett(
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
+    kontantlönAvdrag,
     // nettolönejustering,
   } = klassificeraExtrarader(extrarader);
 
-  // I Bokio ingår skattepliktiga förmåner direkt i bruttolönen
-  const bruttolön =
+  // Beräkna kontantlön först (som ska på 7210) - UTAN förmåner men MED extrarad-avdrag
+  const kontantlön =
     kontrakt.månadslön +
     övertidsersättning +
     övrigaTillägg +
-    bruttolönTillägg +
-    skattepliktigaFörmåner -
-    totalDagavdrag;
+    bruttolönTillägg -
+    totalDagavdrag -
+    kontantlönAvdrag;
+
+  // DEBUG: Logga beräkningsdetaljer
+  console.log("🔍 KONTANTLÖN DEBUG:", {
+    månadslön: kontrakt.månadslön,
+    övertidsersättning,
+    övrigaTillägg,
+    bruttolönTillägg,
+    totalDagavdrag,
+    kontantlönAvdrag,
+    skattepliktigaFörmåner,
+    beräknadKontantlön: kontantlön,
+  });
+
+  // Bruttolön för skattunderlag = kontantlön + förmåner (Bokios modell)
+  const bruttolön = kontantlön + skattepliktigaFörmåner;
 
   const skattunderlag = bruttolön; // Skattepliktiga förmåner redan inkluderade i bruttolön
   const skatt = beräknaSkattTabell34(skattunderlag);
-
-  // Nettolön beräknas på kontantlön (grundlön + tillägg - avdrag), inte på förmåner
-  const kontantlön =
-    kontrakt.månadslön + övertidsersättning + övrigaTillägg + bruttolönTillägg - totalDagavdrag;
   const nettolön = kontantlön - skatt + skattefriaErsättningar;
   //  + nettolönejustering;
 
@@ -455,6 +490,7 @@ export function beräknaKomplett(
   return {
     timlön: Math.round(timlön * 100) / 100,
     daglön: Math.round(daglön),
+    kontantlön, // Ny: kontantlön för bokföring på 7210
     bruttolön,
     socialaAvgifter,
     lönekostnad,
@@ -543,6 +579,7 @@ export function beräknaLonekomponenter(
     grundlön: originalGrundlön,
     övertid: originalÖvertid,
     extraradsSumma: övrigaExtrarader.reduce((sum, rad) => sum + (parseFloat(rad.kolumn3) || 0), 0),
+    kontantlön: beräkningar.kontantlön, // Ny: kontantlön för bokföring
     bruttolön: beräkningar.bruttolön,
     socialaAvgifter: beräkningar.socialaAvgifter,
     skatt: beräkningar.skatt,

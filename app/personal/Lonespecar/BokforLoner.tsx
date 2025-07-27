@@ -57,10 +57,13 @@ const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> 
   annanKompensation: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
   privatBil: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
 
-  // Företagsbilsförmåner (lägg till igen om de finns i definition)
-  foretagsbilExtra: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
+  // Företagsbilsförmåner
+  foretagsbil: { konto: "7385", kontoNamn: "Kostnader för fri bil" },
   foretagsbilBensinDiesel: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
   foretagsbilEl: { konto: "7331", kontoNamn: "Skattefria bilersättningar" },
+
+  // Manuella poster
+  manuellPost: { konto: "7321", kontoNamn: "Skattefria traktamenten, Sverige" },
 };
 
 // Validering för att säkerställa konsistens mellan definitions och mappningar
@@ -216,12 +219,36 @@ export default function BokforLoner({
 
     // HUVUDPOSTER
 
-    // Beräkna kontantlön först (används i flera ställen)
-    // Kontantlön = bruttolön MINUS alla förmåner
-    const totalKontantlön = bruttolön - reraFörmåner;
+    // Beräkna semestertillägg separat (ska på 7285, inte 7210)
+    let semestertillägBelopp = 0;
+    extrarader.forEach((rad) => {
+      const typ = rad.typ;
+      const belopp = parseFloat(rad.kolumn3) || 0;
+      if (typ === "semestertillagg" && belopp > 0) {
+        semestertillägBelopp += belopp;
+      }
+    });
 
-    // 1. Löner till tjänstemän (7210) - ENDAST kontantlön (ej förmåner)
-    if (totalKontantlön > 0) {
+    // Bokio-quirk: Beräkna sjuk-justering tidigt för kontantlön-beräkning
+    const harSjukavdrag = extrarader.some(
+      (rad) =>
+        rad.typ &&
+        (rad.typ.includes("sjuk") ||
+          rad.typ.includes("karens") ||
+          rad.typ.includes("reducerade") ||
+          rad.typ.includes("vård"))
+    );
+    const sjukJustering = harSjukavdrag ? 0.01 : 0;
+
+    // Använd kontantlön direkt från beräknadeVärden (redan korrigerad för avdrag)
+    // Men dra av semestertillägg som ska på separat konto och sjuk-justering
+    const kontantlön =
+      (beräknadeVärden.kontantlön || bruttolön - reraFörmåner) -
+      semestertillägBelopp -
+      sjukJustering;
+
+    // 1. Löner till tjänstemän (7210) - kontantlön MINUS semestertillägg
+    if (kontantlön > 0) {
       // Ta bort eventuell tidigare 7210-post från extrarader för att undvika dubletter
       const befintlig7210Index = poster.findIndex((p) => p.konto === "7210");
       if (befintlig7210Index !== -1) {
@@ -231,9 +258,19 @@ export default function BokforLoner({
       poster.push({
         konto: "7210",
         kontoNamn: "Löner till tjänstemän",
-        debet: Number(Math.round(totalKontantlön * 100) / 100),
+        debet: Number(Math.round(kontantlön * 100) / 100),
         kredit: 0,
         beskrivning: "Kontantlön",
+      });
+    }
+
+    if (harSjukavdrag) {
+      poster.push({
+        konto: "7281",
+        kontoNamn: "Sjuklöner till tjänstemän",
+        debet: 0,
+        kredit: 0.01,
+        beskrivning: "Sjuklön justering",
       });
     }
 
@@ -250,11 +287,12 @@ export default function BokforLoner({
 
     // 3. SOCIALA AVGIFTER - Dela upp enligt Bokios modell
 
-    // Kontantlön = samma som 7210 (grundlön + lönetillägg - avdrag, exklusive förmåner)
-    const kontantlön = totalKontantlön;
+    // Beräkna total kontantlön för sociala avgifter (7210 + 7285)
+    const totalKontantlönFörSocialaAvgifter = kontantlön + semestertillägBelopp;
 
-    // 7510: Lagstadgade sociala avgifter på kontantlön
-    const socialaAvgifterKontant = Math.round(kontantlön * 0.3142 * 100) / 100;
+    // 7510: Lagstadgade sociala avgifter på kontantlön (inklusive semestertillägg)
+    const socialaAvgifterKontant =
+      Math.round(totalKontantlönFörSocialaAvgifter * 0.3142 * 100) / 100;
     if (socialaAvgifterKontant > 0) {
       poster.push({
         konto: "7510",
@@ -316,11 +354,15 @@ export default function BokforLoner({
       });
     }
 
-    // 6. Avräkning lagstadgade sociala avgifter (2731) - summa av alla sociala avgifter
-    const totalAllaSocialaAvgifter =
-      socialaAvgifterKontant +
-      (förmånerFör7512 > 0 ? Math.round(förmånerFör7512 * 0.3142 * 100) / 100 : 0) +
-      (förmånerFör7515 > 0 ? Math.round(förmånerFör7515 * 0.3142 * 100) / 100 : 0);
+    // 6. Avräkning lagstadgade sociala avgifter (2731) - summa av faktiska debetposter
+    let totalAllaSocialaAvgifter = 0;
+
+    // Hitta alla sociala avgifter-poster som redan lagts till
+    poster.forEach((post) => {
+      if (post.konto === "7510" || post.konto === "7515") {
+        totalAllaSocialaAvgifter += post.debet;
+      }
+    });
 
     if (totalAllaSocialaAvgifter > 0) {
       poster.push({
