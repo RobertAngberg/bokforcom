@@ -1,5 +1,5 @@
 //#region Huvud
-import { läggTillUtläggILönespec } from "../actions";
+import { sparaExtrarad, uppdateraUtläggStatus } from "../actions";
 
 interface UtläggProps {
   lönespecUtlägg: any[];
@@ -17,10 +17,9 @@ export default function Utlägg({ lönespecUtlägg, getStatusBadge, lönespecId 
       <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
         Utlägg asdf 🎯 VI ÄR HÄR 🎯
       </h4>
-
       {/* Lägg till utlägg knapp i mitten */}
       <div className="flex justify-center mb-4">
-        <button 
+        <button
           className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
           onClick={async () => {
             if (!lönespecId) {
@@ -28,26 +27,47 @@ export default function Utlägg({ lönespecUtlägg, getStatusBadge, lönespecId 
               alert("❌ Fel: Ingen lönespec ID hittades");
               return;
             }
-            
+
             console.log("🎯 LÄGG TILL UTLÄGG KLICKAD!");
             console.log("📋 LönespecId:", lönespecId);
             console.log("📋 Befintliga utlägg:", lönespecUtlägg);
-            
+
+            // Hitta väntande utlägg i UI-datan
+            const väntandeUtlägg = lönespecUtlägg.filter((u) => u.status === "Väntande");
+            console.log("📋 Väntande utlägg:", väntandeUtlägg);
+
+            if (väntandeUtlägg.length === 0) {
+              alert("✅ 0 utlägg tillagda i lönespecen!");
+              return;
+            }
+
             try {
-              const result = await läggTillUtläggILönespec(lönespecId);
-              if (result.success) {
-                console.log("✅ Utlägg tillagda:", result.count);
-                if (result.count === 0) {
-                  alert("ℹ️ Inga väntande utlägg hittades för denna anställd. Alla utlägg är redan inkluderade eller bokförda.");
-                } else {
-                  alert(`✅ ${result.count} utlägg tillagda i lönespecen!`);
-                  // Ladda om sidan för att visa uppdateringen
-                  window.location.reload();
-                }
-              } else {
-                console.error("❌ Fel:", result.error);
-                alert(`❌ Fel: ${result.error}`);
+              // Lägg till varje väntande utlägg som extrarad direkt
+              for (const utlägg of väntandeUtlägg) {
+                console.log("🔍 RAW UTLÄGG OBJECT:", utlägg);
+                console.log("🔍 utlägg.belopp:", utlägg.belopp, "typeof:", typeof utlägg.belopp);
+                console.log("🔍 utlägg.beskrivning:", utlägg.beskrivning);
+
+                const extraradData = {
+                  lönespecifikation_id: lönespecId, // Rätt kolumnnamn!
+                  kolumn1: utlägg.beskrivning || `Utlägg - ${utlägg.datum}`,
+                  kolumn2: "1", // Antal = 1
+                  kolumn3: utlägg.belopp.toString(), // Belopp per enhet
+                  kolumn4: utlägg.kommentar || "",
+                  typ: "manuellPost",
+                };
+
+                console.log("📋 EXTRARAD DATA INNAN SPARANDE:", extraradData);
+                const result = await sparaExtrarad(extraradData);
+                console.log("📋 RESULTAT FRÅN SPARANDE:", result);
+
+                // Uppdatera utlägg status
+                await uppdateraUtläggStatus(utlägg.id, "Inkluderat i lönespec");
+                console.log("📋 STATUS UPPDATERAD för utlägg", utlägg.id);
               }
+
+              alert(`✅ ${väntandeUtlägg.length} utlägg tillagda i lönespecen!`);
+              window.location.reload();
             } catch (error) {
               console.error("❌ Fel vid tillägg:", error);
               alert("❌ Något gick fel!");
@@ -56,7 +76,8 @@ export default function Utlägg({ lönespecUtlägg, getStatusBadge, lönespecId 
         >
           💰 Lägg till väntande utlägg
         </button>
-      </div>      <div className="space-y-3">
+      </div>{" "}
+      <div className="space-y-3">
         {lönespecUtlägg.map((utläggItem) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">
             <div className="flex justify-between items-start mb-2">

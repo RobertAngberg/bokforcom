@@ -105,6 +105,7 @@ export default function LönespecView({
       <Utlagg
         lönespecUtlägg={lönespecUtlägg}
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
+        lönespecId={lönespec?.id}
       />
 
       <Sammanfattning

@@ -455,6 +455,19 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     },
   },
 
+  manuellPost: {
+    label: "Manuell post",
+    enhet: "st",
+    skattepliktig: false,
+    fält: {
+      antalLabel: "Antal",
+      antalPlaceholder: "1",
+      beloppPlaceholder: "à SEK",
+      step: "1",
+      beräknaTotalsummaAutomatiskt: true,
+    },
+  },
+
   // nettolönejustering: {
   //   label: "Nettolönejustering",
   //   enhet: "variabel",

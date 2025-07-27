@@ -666,6 +666,33 @@ export async function sparaExtrarad(data: any) {
   }
 }
 
+export async function uppdateraUtläggStatus(utläggId: number, status: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  try {
+    const client = await pool.connect();
+
+    const updateQuery = `
+      UPDATE utlägg SET status = $1, uppdaterad = NOW() 
+      WHERE id = $2
+    `;
+
+    await client.query(updateQuery, [status, utläggId]);
+    client.release();
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ uppdateraUtläggStatus error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Ett fel uppstod",
+    };
+  }
+}
+
 export async function hämtaExtrarader(lönespecifikation_id: number) {
   try {
     const client = await pool.connect();
@@ -712,16 +739,20 @@ export async function läggTillUtläggILönespec(lönespecId: number) {
     // Hämta väntande utlägg för anställd
     const utläggQuery = `
       SELECT 
-        u.id,
-        u.transaktion_id,
+        u.*, 
         t.belopp,
-        t.kontobeskrivning as beskrivning
+        t.kontobeskrivning as beskrivning,
+        t.transaktionsdatum as datum
       FROM utlägg u 
       LEFT JOIN transaktioner t ON u.transaktion_id = t.id
       WHERE u.anställd_id = $1 AND u.status = 'Väntande'
+      ORDER BY u.skapad DESC
     `;
 
     const utläggResult = await client.query(utläggQuery, [anställdId]);
+
+    // DEBUG: Logga vad vi får från databasen
+    console.log("🔍 DEBUG utläggResult.rows:", JSON.stringify(utläggResult.rows, null, 2));
 
     // Lägg till varje utlägg som extrarad
     for (const utlägg of utläggResult.rows) {
