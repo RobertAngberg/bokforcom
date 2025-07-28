@@ -21,6 +21,8 @@ import BokforKnappOchModal from "./BokforKnappOchModal";
 import Knapp from "../../_components/Knapp";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LoadingSpinner from "../../_components/LoadingSpinner";
+import { klassificeraExtrarader } from "../Lonespecar/loneberokningar";
+import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 //#endregion
 
 //#region Component
@@ -203,7 +205,44 @@ export default function Lonekorning() {
         const skatt = beräkningar?.skatt || spec.skatt || 0;
         const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
 
-        // Spara lönespec-data för debug
+        // 🆕 KORREKT AGI-MAPPNING: Analysera extrarader enligt Skatteverkets koder
+        const extrarader = spec.extrarader || [];
+        const { skattepliktigaFörmåner, skattefriaErsättningar } =
+          klassificeraExtrarader(extrarader);
+
+        // Analysera specifika AGI-komponenter från extrarader
+        let harTraktamente = false;
+        let harBilersättning = false;
+        let bilförmånVärde = 0;
+        let övrigaFörmånerVärde = 0;
+        
+        extrarader.forEach((rad: any) => {
+          const konfig = RAD_KONFIGURATIONER[rad.typ];
+          const belopp = parseFloat(rad.kolumn3) || 0;
+          
+          if (belopp === 0) return; // Skippa tomma rader
+          
+          // Traktamente (051) - skattefria traktamenten
+          if (['uppehalleInrikes', 'uppehalleUtrikes', 'logi', 'resersattning', 'annanKompensation'].includes(rad.typ)) {
+            if (belopp > 0) harTraktamente = true;
+          }
+          
+          // Bilersättning (050) - skattefria bilersättningar  
+          else if (['privatBil', 'foretagsbilBensinDiesel', 'foretagsbilEl'].includes(rad.typ)) {
+            if (belopp > 0) harBilersättning = true;
+          }
+          
+          // Bilförmån (013) - skattepliktig bilförmån (specifikt företagsbil som förmån)
+          else if (['foretagsbilExtra', 'foretagsbil'].includes(rad.typ) && konfig?.skattepliktig) {
+            bilförmånVärde += belopp;
+          }
+          
+          // Övriga skattepliktiga förmåner (012) - alla andra skattepliktiga förmåner
+          else if (konfig?.skattepliktig && belopp > 0) {
+            // Alla skattepliktiga förmåner som inte är bilförmån
+            övrigaFörmånerVärde += belopp;
+          }
+        });        // Spara lönespec-data för debug
         debugInfo.lönespecData.push({
           id: spec.id,
           grundlön: spec.grundlön,
@@ -213,6 +252,12 @@ export default function Lonekorning() {
           kontantlön,
           beräknadSkatt: skatt,
           socialaAvgifter,
+          // Ny debug-info för AGI
+          harTraktamente,
+          harBilersättning,
+          skattepliktigaFörmåner,
+          bilförmånVärde,
+          extraraderAntal: extrarader.length,
         });
 
         // Lägg till individuppgift med all tillgänglig data
@@ -237,15 +282,17 @@ export default function Lonekorning() {
 
           // Lönedata från lönespec
           kontantErsattningUlagAG: kontantlön,
+          skatteplOvrigaFormanerUlagAG: Math.round(skattepliktigaFörmåner - bilförmånVärde), // 012: Övriga förmåner (exkl. bil)
+          skatteplBilformanUlagAG: Math.round(bilförmånVärde), // 013: Bilförmån
           avdrPrelSkatt: skatt,
 
           // Utökad lönedata om tillgänglig
           bruttoLon: beräkningar?.bruttolön || spec.bruttolön,
           nettoLon: beräkningar?.nettolön || spec.nettolön,
 
-          // Extra tillägg/avdrag från lönespec
-          traktamente: spec.traktamente || 0,
-          bilersattning: spec.bilersättning || 0,
+          // Korrekt AGI-mappning från extrarader
+          traktamente: harTraktamente, // 051: boolean för traktamente
+          bilersattning: harBilersättning, // 050: boolean för bilersättning
 
           // Metadata
           utbetalningsdatum: spec.utbetalningsdatum,
@@ -365,9 +412,11 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
         <agd:RedovisningsPeriod faltkod="006">${data.redovisningsperiod}</agd:RedovisningsPeriod>
         <agd:Specifikationsnummer faltkod="570">${iu.specifikationsnummer}</agd:Specifikationsnummer>
         <agd:KontantErsattningUlagAG faltkod="011">${Math.round(iu.kontantErsattningUlagAG)}</agd:KontantErsattningUlagAG>
+        ${iu.skatteplOvrigaFormanerUlagAG && iu.skatteplOvrigaFormanerUlagAG > 0 ? `<agd:SkatteplOvrigaFormanerUlagAG faltkod="012">${Math.round(iu.skatteplOvrigaFormanerUlagAG)}</agd:SkatteplOvrigaFormanerUlagAG>` : ""}
+        ${iu.skatteplBilformanUlagAG && iu.skatteplBilformanUlagAG > 0 ? `<agd:SkatteplBilformanUlagAG faltkod="013">${Math.round(iu.skatteplBilformanUlagAG)}</agd:SkatteplBilformanUlagAG>` : ""}
         <agd:AvdrPrelSkatt faltkod="001">${Math.round(iu.avdrPrelSkatt)}</agd:AvdrPrelSkatt>
-        ${iu.traktamente && iu.traktamente > 0 ? `<agd:Traktamente faltkod="071">${Math.round(iu.traktamente)}</agd:Traktamente>` : ""}
-        ${iu.bilersattning && iu.bilersattning > 0 ? `<agd:Bilersattning faltkod="072">${Math.round(iu.bilersattning)}</agd:Bilersattning>` : ""}
+        ${iu.bilersattning ? `<agd:Bilersattning faltkod="050">true</agd:Bilersattning>` : ""}
+        ${iu.traktamente ? `<agd:Traktamente faltkod="051">true</agd:Traktamente>` : ""}
       </agd:IU>
     </agd:Blankettinnehall>
   </agd:Blankett>`

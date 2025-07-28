@@ -249,7 +249,7 @@ export default function AGI_XMLGenerator() {
         ${iu.skatteplBilformanUlagAG ? `<agd:SkatteplBilformanUlagAG faltkod="013">${iu.skatteplBilformanUlagAG}</agd:SkatteplBilformanUlagAG>` : ""}
         ${iu.drivmVidBilformanUlagAG ? `<agd:DrivmVidBilformanUlagAG faltkod="018">${iu.drivmVidBilformanUlagAG}</agd:DrivmVidBilformanUlagAG>` : ""}
         ${iu.betForDrivmVidBilformanUlagAG ? `<agd:BetForDrivmVidBilformanUlagAG faltkod="098">${iu.betForDrivmVidBilformanUlagAG}</agd:BetForDrivmVidBilformanUlagAG>` : ""}
-        ${iu.skatteplOvrigaFormanerUlagAG ? `<agd:SkatteplOvrigaFormanerUlagAG faltkod="014">${iu.skatteplOvrigaFormanerUlagAG}</agd:SkatteplOvrigaFormanerUlagAG>` : ""}
+        ${iu.skatteplOvrigaFormanerUlagAG ? `<agd:SkatteplOvrigaFormanerUlagAG faltkod="012">${iu.skatteplOvrigaFormanerUlagAG}</agd:SkatteplOvrigaFormanerUlagAG>` : ""}
         ${iu.avrakningAvgiftsfriErs ? `<agd:AvrakningAvgiftsfriErs faltkod="010">${iu.avrakningAvgiftsfriErs}</agd:AvrakningAvgiftsfriErs>` : ""}
         
         <!-- Ersättningskoder -->
