@@ -132,6 +132,16 @@ interface AGIFormData {
 }
 
 export default function AGI_XMLGenerator() {
+  // Hjälpfunktion för att formatera redovisningsperiod till XML-format (ta bort bindestreck)
+  const formatRedovisningsperiodForXML = (period: string): string => {
+    return period.replace("-", "");
+  };
+
+  // Hjälpfunktion för att formatera organisationsnummer till XML-format (ta bort bindestreck)
+  const formatOrganisationsnummerForXML = (orgnr: string): string => {
+    return orgnr.replace("-", "");
+  };
+
   const [formData, setFormData] = useState<AGIFormData>({
     programnamn: "BokförCom AGI Generator v1.0",
     organisationsnummer: "",
@@ -152,24 +162,70 @@ export default function AGI_XMLGenerator() {
   const validateForm = (): string[] => {
     const errors: string[] = [];
 
+    // Organisationsnummer format validation (Skatteverkets IDENTITET pattern)
     if (!formData.organisationsnummer) {
       errors.push("Organisationsnummer är obligatoriskt");
+    } else if (
+      !/^\d{6}-\d{4}$/.test(formData.organisationsnummer) &&
+      !/^\d{12}$/.test(formData.organisationsnummer.replace("-", ""))
+    ) {
+      errors.push(
+        "Organisationsnummer måste ha format XXXXXX-XXXX eller 12 siffror (t.ex. 556123-4567 eller 165560269986)"
+      );
     }
+
+    // AG-registrerat ID (12 siffror)
     if (!formData.agRegistreradId) {
       errors.push("AG-registrerat ID är obligatoriskt");
+    } else if (!/^\d{12}$/.test(formData.agRegistreradId)) {
+      errors.push("AG-registrerat ID måste ha 12 siffror (t.ex. 165560269986)");
     }
+
+    // Redovisningsperiod format validation (Skatteverkets REDOVISNINGSPERIOD pattern)
     if (!formData.redovisningsperiod) {
       errors.push("Redovisningsperiod är obligatorisk");
+    } else if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(formData.redovisningsperiod)) {
+      errors.push(
+        `Redovisningsperiod "${formData.redovisningsperiod}" är ogiltig. Format YYYY-MM (t.ex. 2025-06)`
+      );
+    } else {
+      // Additional check for minimum date (2018-07)
+      const [year, month] = formData.redovisningsperiod.split("-").map(Number);
+      if (year < 2018 || (year === 2018 && month < 7)) {
+        errors.push(
+          `Redovisningsperiod "${formData.redovisningsperiod}" är för tidig. Måste vara från 2018-07 och framåt`
+        );
+      }
     }
+
+    // Kontaktperson validation
     if (!formData.tekniskKontakt.namn) {
       errors.push("Teknisk kontaktperson namn är obligatoriskt");
     }
     if (!formData.tekniskKontakt.telefon) {
       errors.push("Teknisk kontaktperson telefon är obligatoriskt");
     }
+
+    // E-post format validation
     if (!formData.tekniskKontakt.epost) {
       errors.push("Teknisk kontaktperson e-post är obligatorisk");
+    } else if (
+      !/^[a-zA-Z0-9_]+([-+.'][a-zA-Z0-9_]+)*@[a-zA-Z0-9_]+([-.][a-zA-Z0-9_]+)*\.[a-zA-Z0-9_]+([-.][a-zA-Z0-9_]+)*$/.test(
+        formData.tekniskKontakt.epost
+      )
+    ) {
+      errors.push("Teknisk kontaktperson e-post måste ha giltigt format (t.ex. namn@exempel.se)");
     }
+
+    // Individuppgifter validation
+    formData.individuppgifter.forEach((iu, index) => {
+      const hasAnyId = iu.betalningsmottagareId || iu.fodelsetid || iu.annatId;
+      if (!hasAnyId) {
+        errors.push(
+          `Individuppgift ${index + 1}: Minst ett ID-fält måste vara ifyllt (Betalningsmottagare ID, Födelsetid eller Annat ID)`
+        );
+      }
+    });
 
     return errors;
   };
@@ -190,7 +246,7 @@ export default function AGI_XMLGenerator() {
         (fu) => `
   <agd:Franvarouppgift>
     <agd:AgRegistreradId faltkod="201">${formData.agRegistreradId}</agd:AgRegistreradId>
-    <agd:RedovisningsPeriod faltkod="006">${formData.redovisningsperiod}</agd:RedovisningsPeriod>
+    <agd:RedovisningsPeriod faltkod="006">${formatRedovisningsperiodForXML(formData.redovisningsperiod)}</agd:RedovisningsPeriod>
     <agd:FranvaroDatum faltkod="821">${fu.franvaroDatum}</agd:FranvaroDatum>
     <agd:BetalningsmottagarId faltkod="215">${fu.betalningsmottagareId}</agd:BetalningsmottagarId>
     <agd:FranvaroSpecifikationsnummer faltkod="822">${fu.specifikationsnummer}</agd:FranvaroSpecifikationsnummer>
@@ -211,7 +267,7 @@ export default function AGI_XMLGenerator() {
   <agd:Blankett>
     <agd:Arendeinformation>
       <agd:Arendeagare>${formData.agRegistreradId}</agd:Arendeagare>
-      <agd:Period>${formData.redovisningsperiod}</agd:Period>
+      <agd:Period>${formatRedovisningsperiodForXML(formData.redovisningsperiod)}</agd:Period>
     </agd:Arendeinformation>
     
     <agd:Blankettinnehall>
@@ -221,11 +277,16 @@ export default function AGI_XMLGenerator() {
         </agd:ArbetsgivareIUGROUP>
         
         <agd:BetalningsmottagareIUGROUP>
+          ${
+            iu.betalningsmottagareId || iu.fodelsetid || iu.annatId
+              ? `
           <agd:BetalningsmottagareIDChoice>
             ${iu.betalningsmottagareId ? `<agd:BetalningsmottagarId faltkod="215">${iu.betalningsmottagareId}</agd:BetalningsmottagarId>` : ""}
             ${iu.fodelsetid ? `<agd:Fodelsetid faltkod="222">${iu.fodelsetid}</agd:Fodelsetid>` : ""}
             ${iu.annatId ? `<agd:AnnatId faltkod="224">${iu.annatId}</agd:AnnatId>` : ""}
-          </agd:BetalningsmottagareIDChoice>
+          </agd:BetalningsmottagareIDChoice>`
+              : ""
+          }
           
           ${iu.fornamn ? `<agd:Fornamn faltkod="216">${iu.fornamn}</agd:Fornamn>` : ""}
           ${iu.efternamn ? `<agd:Efternamn faltkod="217">${iu.efternamn}</agd:Efternamn>` : ""}
@@ -240,7 +301,7 @@ export default function AGI_XMLGenerator() {
           ${iu.landskodTIN ? `<agd:LandskodTIN faltkod="076">${iu.landskodTIN}</agd:LandskodTIN>` : ""}
         </agd:BetalningsmottagareIUGROUP>
         
-        <agd:RedovisningsPeriod faltkod="006">${formData.redovisningsperiod}</agd:RedovisningsPeriod>
+        <agd:RedovisningsPeriod faltkod="006">${formatRedovisningsperiodForXML(formData.redovisningsperiod)}</agd:RedovisningsPeriod>
         <agd:Specifikationsnummer faltkod="570">${iu.specifikationsnummer}</agd:Specifikationsnummer>
         
         <!-- Ersättningar -->
@@ -307,7 +368,7 @@ xsi:schemaLocation="http://xmls.skatteverket.se/se/skatteverket/da/instans/schem
 http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgivardeklaration_1.1.xsd">
   <agd:Avsandare>
     <agd:Programnamn>${formData.programnamn}</agd:Programnamn>
-    <agd:Organisationsnummer>${formData.organisationsnummer}</agd:Organisationsnummer>
+    <agd:Organisationsnummer>${formatOrganisationsnummerForXML(formData.organisationsnummer)}</agd:Organisationsnummer>
     <agd:TekniskKontaktperson>
       <agd:Namn>${formData.tekniskKontakt.namn}</agd:Namn>
       <agd:Telefon>${formData.tekniskKontakt.telefon}</agd:Telefon>
@@ -319,6 +380,11 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
   <agd:Blankettgemensamt>
     <agd:Arbetsgivare>
       <agd:AgRegistreradId>${formData.agRegistreradId}</agd:AgRegistreradId>
+      <agd:Kontaktperson>
+        <agd:Namn>${formData.tekniskKontakt.namn}</agd:Namn>
+        <agd:Telefon>${formData.tekniskKontakt.telefon}</agd:Telefon>
+        <agd:Epostadress>${formData.tekniskKontakt.epost}</agd:Epostadress>
+      </agd:Kontaktperson>
     </agd:Arbetsgivare>
   </agd:Blankettgemensamt>
   
@@ -326,7 +392,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
   <agd:Blankett>
     <agd:Arendeinformation>
       <agd:Arendeagare>${formData.agRegistreradId}</agd:Arendeagare>
-      <agd:Period>${formData.redovisningsperiod}</agd:Period>
+      <agd:Period>${formatRedovisningsperiodForXML(formData.redovisningsperiod)}</agd:Period>
     </agd:Arendeinformation>
     
     <agd:Blankettinnehall>
@@ -336,11 +402,11 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
           ${formData.ejFastDriftställe ? '<agd:EjFastDriftstalleISv faltkod="115">1</agd:EjFastDriftstalleISv>' : ""}
         </agd:ArbetsgivareHUGROUP>
         
-        <agd:RedovisningsPeriod faltkod="006">${formData.redovisningsperiod}</agd:RedovisningsPeriod>
+        <agd:RedovisningsPeriod faltkod="006">${formatRedovisningsperiodForXML(formData.redovisningsperiod)}</agd:RedovisningsPeriod>
         
         ${formData.summaArbAvgSlf ? `<agd:SummaArbAvgSlf faltkod="487">${formData.summaArbAvgSlf}</agd:SummaArbAvgSlf>` : ""}
         ${formData.summaSkatteavdr ? `<agd:SummaSkatteavdr faltkod="497">${formData.summaSkatteavdr}</agd:SummaSkatteavdr>` : ""}
-        ${formData.totalSjuklonekostnad ? `<agd:TotalSjuklonekostnad faltkod="232">${formData.totalSjuklonekostnad}</agd:TotalSjuklonekostnad>` : ""}
+        ${formData.totalSjuklonekostnad ? `<agd:TotalSjuklonekostnad faltkod="499">${formData.totalSjuklonekostnad}</agd:TotalSjuklonekostnad>` : ""}
       </agd:HU>
     </agd:Blankettinnehall>
   </agd:Blankett>
@@ -384,6 +450,53 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
     }));
   };
 
+  const loadTestData = () => {
+    setFormData({
+      programnamn: "BokförCom AGI Generator v1.0",
+      organisationsnummer: "165560269986",
+      tekniskKontakt: {
+        namn: "Anna Andersson",
+        telefon: "08-123456",
+        epost: "anna.andersson@example.se",
+      },
+      agRegistreradId: "165560269986",
+      redovisningsperiod: "2025-06",
+      ejFastDriftställe: false,
+      summaArbAvgSlf: 10997,
+      summaSkatteavdr: 7000,
+      // totalSjuklonekostnad: 2000, // Inte giltigt för 2025
+      individuppgifter: [
+        {
+          specifikationsnummer: 1,
+          betalningsmottagareId: "198202252386",
+          fornamn: "Erik",
+          efternamn: "Eriksson",
+          kontantErsattningUlagAG: 35000,
+          avdrPrelSkatt: 7000,
+        },
+      ],
+      franvarouppgifter: [],
+    });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      programnamn: "BokförCom AGI Generator v1.0",
+      organisationsnummer: "",
+      tekniskKontakt: {
+        namn: "",
+        telefon: "",
+        epost: "",
+      },
+      agRegistreradId: "",
+      redovisningsperiod: "",
+      individuppgifter: [],
+      franvarouppgifter: [],
+    });
+    setGeneratedXML("");
+    setValidationErrors([]);
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-6">
       <div className="mb-8 text-center">
@@ -423,7 +536,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
               </label>
               <input
                 type="text"
-                placeholder="XXXXXXXX-XXXX"
+                placeholder="556123-4567"
                 value={formData.organisationsnummer}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, organisationsnummer: e.target.value }))
@@ -487,7 +600,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
               </label>
               <input
                 type="text"
-                placeholder="XXXXXXXX-XXXX"
+                placeholder="165560269986"
                 value={formData.agRegistreradId}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, agRegistreradId: e.target.value }))
@@ -501,7 +614,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
               </label>
               <input
                 type="text"
-                placeholder="YYYY-MM"
+                placeholder="2025-06"
                 value={formData.redovisningsperiod}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, redovisningsperiod: e.target.value }))
@@ -720,6 +833,18 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
 
         {/* Generera XML */}
         <div className="flex gap-4">
+          <button
+            onClick={resetForm}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md font-medium"
+          >
+            🗑️ Rensa
+          </button>
+          <button
+            onClick={loadTestData}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium"
+          >
+            📝 Ladda testdata
+          </button>
           <button
             onClick={generateXML}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium"
