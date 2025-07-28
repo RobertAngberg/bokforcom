@@ -2,9 +2,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { hämtaAllaLönespecarFörUser, hämtaAllaAnställda, hämtaUtlägg } from "../actions";
+import {
+  hämtaAllaLönespecarFörUser,
+  hämtaAllaAnställda,
+  hämtaUtlägg,
+  hämtaFöretagsprofil,
+} from "../actions";
 // import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LönespecView from "../Lonespecar/LonespecView";
 import AnstolldaLista from "./AnstalldaLista";
@@ -36,6 +42,8 @@ export default function Lonekorning() {
   const [utlaggMap, setUlaggMap] = useState<Record<number, any[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
+  const [agiDebugData, setAgiDebugData] = useState<any>(null);
+  const [visaDebug, setVisaDebug] = useState(false);
   //#endregion
 
   //#region Effects
@@ -100,31 +108,114 @@ export default function Lonekorning() {
   //#endregion
 
   //#region AGI Generation
+  const { data: session } = useSession();
+
+  // Funktion för att formatera organisationsnummer/personnummer för enskild firma
+  const formateraOrganisationsnummer = (orgnr: string): string => {
+    if (!orgnr) return "";
+    // Ta bort alla bindestreck först
+    const endast_siffror = orgnr.replace(/-/g, "");
+
+    if (endast_siffror.length === 10) {
+      // Kontrollera om det är ett personnummer genom att titta på månad (position 2-3)
+      const månad = parseInt(endast_siffror.slice(2, 4));
+
+      if (månad >= 1 && månad <= 12) {
+        // Detta verkar vara ett personnummer (YYMMDD-XXXX) - konvertera till 12-siffrigt
+        const år = endast_siffror.slice(0, 2);
+        const fullYear = parseInt(år) <= 99 ? "19" + år : "20" + år;
+        const restAvNummer = endast_siffror.slice(2);
+        return fullYear + restAvNummer.slice(0, 4) + "-" + restAvNummer.slice(4);
+      } else {
+        // Detta är ett organisationsnummer - formatera som XXXXXX-XXXX
+        return endast_siffror.slice(0, 6) + "-" + endast_siffror.slice(6);
+      }
+    }
+
+    if (endast_siffror.length === 12) {
+      // Redan 12 siffror (YYYYMMDD-XXXX)
+      return endast_siffror.slice(0, 8) + "-" + endast_siffror.slice(8);
+    }
+
+    return orgnr; // Returnera som det är om det inte matchar
+  };
   const hanteraAGI = async () => {
     try {
+      // Hämta företagsdata först
+      let företagsdata = null;
+      if (session?.user?.id) {
+        företagsdata = await hämtaFöretagsprofil(session.user.id);
+      }
+
+      const debugInfo = {
+        anställdaData: [] as any[],
+        lönespecData: [] as any[],
+        finalAgiData: null as any,
+        företagsdata: företagsdata, // Lägg till för debug
+      };
+
       // Samla data från alla lönespecar för den valda perioden
+      // IDENTITET-typ kräver 12 siffror utan bindestreck enligt Skatteverkets schema
+      const originalOrgnr = företagsdata?.organisationsnummer || "556026-9986";
+      const formateratOrgnr = originalOrgnr.replace(/-/g, ""); // Ta bort bindestreck
+
+      // Om det är 10 siffror, lägg till "19" framför för att göra det 12 siffror
+      const slutgiltigtOrgnr =
+        formateratOrgnr.length === 10 ? "19" + formateratOrgnr : formateratOrgnr;
+
       const agiData = {
-        organisationsnummer: "165560269986", // TODO: Hämta från företagsprofil
-        agRegistreradId: "165560269986", // TODO: Hämta från företagsprofil
+        organisationsnummer: slutgiltigtOrgnr,
+        agRegistreradId: slutgiltigtOrgnr, // Samma som organisationsnummer
         redovisningsperiod: utbetalningsdatum
           ? new Date(utbetalningsdatum).toISOString().slice(0, 7).replace("-", "")
           : new Date().toISOString().slice(0, 7).replace("-", ""),
         individuppgifter: [] as any[],
         summaArbAvgSlf: 0,
         summaSkatteavdr: 0,
+        // Lägg till företagsdata för XML-generering
+        företagsnamn: företagsdata?.företagsnamn || "Auto Generated",
+        kontaktperson: {
+          namn: företagsdata?.företagsnamn || "Auto Generated",
+          telefon: företagsdata?.telefonnummer || "08-123456",
+          epost: företagsdata?.epost || "info@example.se",
+        },
       };
 
-      // Beräkna totaler från lönespecarna
+      // AGI-generering från valda lönespecar
       valdaSpecar.forEach((spec) => {
         const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
         if (!anstalld) return;
+
+        // Spara anställd-data för debug
+        debugInfo.anställdaData.push({
+          id: anstalld.id,
+          namn: `${anstalld.förnamn} ${anstalld.efternamn}`,
+          personnummer: anstalld.personnummer,
+          adress: anstalld.adress,
+          postnummer: anstalld.postnummer,
+          ort: anstalld.ort,
+          tjänsteställe_adress: anstalld.tjänsteställe_adress,
+          tjänsteställe_ort: anstalld.tjänsteställe_ort,
+        });
 
         const beräkningar = beräknadeVärden[spec.id];
         const kontantlön = beräkningar?.kontantlön || spec.grundlön || 0;
         const skatt = beräkningar?.skatt || spec.skatt || 0;
         const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
 
-        // Lägg till individuppgift
+        // Spara lönespec-data för debug
+        debugInfo.lönespecData.push({
+          id: spec.id,
+          grundlön: spec.grundlön,
+          bruttolön: spec.bruttolön,
+          specSkatt: spec.skatt,
+          beräkningar: beräkningar,
+          kontantlön,
+          beräknadSkatt: skatt,
+          socialaAvgifter,
+        });
+
+        // Lägg till individuppgift med all tillgänglig data
         agiData.individuppgifter.push({
           specifikationsnummer: agiData.individuppgifter.length + 1,
           betalningsmottagareId: anstalld.personnummer
@@ -134,14 +225,42 @@ export default function Lonekorning() {
             : "198202252386", // Fallback
           fornamn: anstalld.förnamn,
           efternamn: anstalld.efternamn,
+
+          // Adressuppgifter från anställd-tabellen
+          gatuadress: anstalld.adress,
+          postnummer: anstalld.postnummer,
+          postort: anstalld.ort,
+
+          // Arbetsplatsuppgifter
+          arbetsplatsensGatuadress: anstalld.tjänsteställe_adress,
+          arbetsplatsensOrt: anstalld.tjänsteställe_ort,
+
+          // Lönedata från lönespec
           kontantErsattningUlagAG: kontantlön,
           avdrPrelSkatt: skatt,
+
+          // Utökad lönedata om tillgänglig
+          bruttoLon: beräkningar?.bruttolön || spec.bruttolön,
+          nettoLon: beräkningar?.nettolön || spec.nettolön,
+
+          // Extra tillägg/avdrag från lönespec
+          traktamente: spec.traktamente || 0,
+          bilersattning: spec.bilersättning || 0,
+
+          // Metadata
+          utbetalningsdatum: spec.utbetalningsdatum,
+          lonePeriod: `${spec.månad}-${spec.år}`,
         });
 
         // Summera totaler
         agiData.summaArbAvgSlf += socialaAvgifter;
         agiData.summaSkatteavdr += skatt;
       });
+
+      // Spara final AGI-data för debug
+      debugInfo.finalAgiData = agiData;
+      setAgiDebugData(debugInfo);
+      setVisaDebug(true);
 
       // Generera XML
       const xml = genereraAGIXML(agiData);
@@ -175,9 +294,9 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
     <agd:Programnamn>BokförCom AGI Generator v1.0</agd:Programnamn>
     <agd:Organisationsnummer>${data.organisationsnummer}</agd:Organisationsnummer>
     <agd:TekniskKontaktperson>
-      <agd:Namn>Auto Generated</agd:Namn>
-      <agd:Telefon>08-123456</agd:Telefon>
-      <agd:Epostadress>info@example.se</agd:Epostadress>
+      <agd:Namn>${data.kontaktperson.namn}</agd:Namn>
+      <agd:Telefon>${data.kontaktperson.telefon}</agd:Telefon>
+      <agd:Epostadress>${data.kontaktperson.epost}</agd:Epostadress>
     </agd:TekniskKontaktperson>
     <agd:Skapad>${timestamp}</agd:Skapad>
   </agd:Avsandare>
@@ -186,9 +305,9 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
     <agd:Arbetsgivare>
       <agd:AgRegistreradId>${data.agRegistreradId}</agd:AgRegistreradId>
       <agd:Kontaktperson>
-        <agd:Namn>Auto Generated</agd:Namn>
-        <agd:Telefon>08-123456</agd:Telefon>
-        <agd:Epostadress>info@example.se</agd:Epostadress>
+        <agd:Namn>${data.kontaktperson.namn}</agd:Namn>
+        <agd:Telefon>${data.kontaktperson.telefon}</agd:Telefon>
+        <agd:Epostadress>${data.kontaktperson.epost}</agd:Epostadress>
       </agd:Kontaktperson>
     </agd:Arbetsgivare>
   </agd:Blankettgemensamt>
@@ -235,12 +354,20 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
           </agd:BetalningsmottagareIDChoice>
           <agd:Fornamn faltkod="216">${iu.fornamn}</agd:Fornamn>
           <agd:Efternamn faltkod="217">${iu.efternamn}</agd:Efternamn>
+          ${iu.gatuadress ? `<agd:Gatuadress faltkod="218">${iu.gatuadress}</agd:Gatuadress>` : ""}
+          ${iu.postnummer ? `<agd:Postnummer faltkod="219">${iu.postnummer}</agd:Postnummer>` : ""}
+          ${iu.postort ? `<agd:Postort faltkod="220">${iu.postort}</agd:Postort>` : ""}
         </agd:BetalningsmottagareIUGROUP>
+        
+        ${iu.arbetsplatsensGatuadress ? `<agd:ArbetsplatsensGatuadress faltkod="245">${iu.arbetsplatsensGatuadress}</agd:ArbetsplatsensGatuadress>` : ""}
+        ${iu.arbetsplatsensOrt ? `<agd:ArbetsplatsensOrt faltkod="246">${iu.arbetsplatsensOrt}</agd:ArbetsplatsensOrt>` : ""}
         
         <agd:RedovisningsPeriod faltkod="006">${data.redovisningsperiod}</agd:RedovisningsPeriod>
         <agd:Specifikationsnummer faltkod="570">${iu.specifikationsnummer}</agd:Specifikationsnummer>
         <agd:KontantErsattningUlagAG faltkod="011">${Math.round(iu.kontantErsattningUlagAG)}</agd:KontantErsattningUlagAG>
         <agd:AvdrPrelSkatt faltkod="001">${Math.round(iu.avdrPrelSkatt)}</agd:AvdrPrelSkatt>
+        ${iu.traktamente && iu.traktamente > 0 ? `<agd:Traktamente faltkod="071">${Math.round(iu.traktamente)}</agd:Traktamente>` : ""}
+        ${iu.bilersattning && iu.bilersattning > 0 ? `<agd:Bilersattning faltkod="072">${Math.round(iu.bilersattning)}</agd:Bilersattning>` : ""}
       </agd:IU>
     </agd:Blankettinnehall>
   </agd:Blankett>`
@@ -504,6 +631,205 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
           isOpen={true}
           onClose={() => setBokforModalOpen(false)}
         />
+      )}
+
+      {/* AGI Debug Modal */}
+      {visaDebug && agiDebugData && (
+        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl text-white font-bold">🔍 AGI Debug Information</h2>
+              <button
+                onClick={() => setVisaDebug(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Företagsdata */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-3">🏢 Företagsdata</h3>
+                <div className="bg-slate-600 rounded p-3">
+                  <div className="text-white text-sm space-y-1">
+                    <div>
+                      <strong>Företagsnamn:</strong>{" "}
+                      {agiDebugData.företagsdata?.företagsnamn || "❌ SAKNAS"}
+                    </div>
+                    <div>
+                      <strong>Organisationsnummer:</strong>{" "}
+                      {agiDebugData.företagsdata?.organisationsnummer || "❌ SAKNAS"}
+                    </div>
+                    <div>
+                      <strong>Telefon:</strong>{" "}
+                      {agiDebugData.företagsdata?.telefonnummer || "❌ SAKNAS"}
+                    </div>
+                    <div>
+                      <strong>E-post:</strong> {agiDebugData.företagsdata?.epost || "❌ SAKNAS"}
+                    </div>
+                    <div>
+                      <strong>Adress:</strong> {agiDebugData.företagsdata?.adress || "❌ SAKNAS"}
+                    </div>
+                    <div className="mt-2 text-yellow-300">
+                      {!agiDebugData.företagsdata
+                        ? "⚠️ Ingen företagsprofil hittades - använder fallback-värden"
+                        : "✅ Företagsprofil hämtad från databas"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Anställd Data */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-3">👤 Anställd Data</h3>
+                {agiDebugData.anställdaData.map((anst: any, idx: number) => (
+                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
+                    <div className="text-white text-sm space-y-1">
+                      <div>
+                        <strong>Namn:</strong> {anst.namn}
+                      </div>
+                      <div>
+                        <strong>Personnummer:</strong> {anst.personnummer || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Adress:</strong> {anst.adress || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Postnummer:</strong> {anst.postnummer || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Ort:</strong> {anst.ort || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Tjänsteställe adress:</strong>{" "}
+                        {anst.tjänsteställe_adress || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Tjänsteställe ort:</strong> {anst.tjänsteställe_ort || "❌ SAKNAS"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Lönespec Data */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-3">💰 Lönespec Data</h3>
+                {agiDebugData.lönespecData.map((spec: any, idx: number) => (
+                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
+                    <div className="text-white text-sm space-y-1">
+                      <div>
+                        <strong>ID:</strong> {spec.id}
+                      </div>
+                      <div>
+                        <strong>Grundlön:</strong> {spec.grundlön || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Bruttolön:</strong> {spec.bruttolön || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Spec Skatt:</strong> {spec.specSkatt || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Beräknad Skatt:</strong> {spec.beräknadSkatt}
+                      </div>
+                      <div>
+                        <strong>Sociala Avgifter:</strong> {spec.socialaAvgifter}
+                      </div>
+                      <div>
+                        <strong>Kontantlön (används i AGI):</strong> {spec.kontantlön}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Final AGI Data */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-3">📊 Final AGI Data</h3>
+                <div className="bg-slate-600 rounded p-3">
+                  <div className="text-white text-sm space-y-1">
+                    <div>
+                      <strong>Organisationsnummer:</strong>{" "}
+                      {agiDebugData.finalAgiData.organisationsnummer}
+                    </div>
+                    <div>
+                      <strong>Redovisningsperiod:</strong>{" "}
+                      {agiDebugData.finalAgiData.redovisningsperiod}
+                    </div>
+                    <div>
+                      <strong>Antal individuppgifter:</strong>{" "}
+                      {agiDebugData.finalAgiData.individuppgifter.length}
+                    </div>
+                    <div>
+                      <strong>Summa Arbetsgivaravgifter:</strong>{" "}
+                      {agiDebugData.finalAgiData.summaArbAvgSlf}
+                    </div>
+                    <div>
+                      <strong>Summa Skatteavdrag:</strong>{" "}
+                      {agiDebugData.finalAgiData.summaSkatteavdr}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Individuppgifter Details */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-3">
+                  👥 Individuppgifter (som skickas till XML)
+                </h3>
+                {agiDebugData.finalAgiData.individuppgifter.map((iu: any, idx: number) => (
+                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
+                    <div className="text-white text-sm space-y-1">
+                      <div>
+                        <strong>Spec Nr:</strong> {iu.specifikationsnummer}
+                      </div>
+                      <div>
+                        <strong>Betalningsmottagare ID:</strong> {iu.betalningsmottagareId}
+                      </div>
+                      <div>
+                        <strong>Namn:</strong> {iu.fornamn} {iu.efternamn}
+                      </div>
+                      <div>
+                        <strong>Adress:</strong> {iu.gatuadress || "❌ SAKNAS"}
+                      </div>
+                      <div>
+                        <strong>Postnummer/Ort:</strong> {iu.postnummer || "❌"}{" "}
+                        {iu.postort || "❌"}
+                      </div>
+                      <div>
+                        <strong>Arbetsplats:</strong> {iu.arbetsplatsensGatuadress || "❌"},{" "}
+                        {iu.arbetsplatsensOrt || "❌"}
+                      </div>
+                      <div>
+                        <strong>Kontantlön:</strong> {iu.kontantErsattningUlagAG}
+                      </div>
+                      <div>
+                        <strong>Skatteavdrag:</strong> {iu.avdrPrelSkatt}
+                      </div>
+                      <div>
+                        <strong>Traktamente:</strong> {iu.traktamente || 0}
+                      </div>
+                      <div>
+                        <strong>Bilersättning:</strong> {iu.bilersattning || 0}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setVisaDebug(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Stäng Debug
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
