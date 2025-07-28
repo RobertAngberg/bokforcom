@@ -25,7 +25,7 @@ export default function PersonalPage() {
     <MainLayout>
       <div className="">
         <h1 className="text-3xl text-white mb-8 text-center">Personal</h1>
-        <div className="grid gap-6 grid-cols-3 w-full mx-auto mt-12">
+        <div className="grid gap-6 grid-cols-2 lg:grid-cols-4 w-full mx-auto mt-12">
           <a
             href="/personal/Anstallda"
             className="block p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition w-full"
@@ -48,6 +48,18 @@ export default function PersonalPage() {
             </h2>
             <p className="text-sm italic text-gray-400 mt-1">
               Hantera utbetalning och bokföring av löner.
+            </p>
+          </a>
+          <a
+            href="/personal/agi"
+            className="block p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition w-full"
+          >
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <span>📋</span>
+              AGI
+            </h2>
+            <p className="text-sm italic text-gray-400 mt-1">
+              Arbetsgivardeklaration till Skatteverket.
             </p>
           </a>
           <button

@@ -9,6 +9,7 @@ import StatusBadge from "./StatusBadge";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import { useLonespecContext } from "./LonespecContext";
+import FormelVisning from "./FormelVisning";
 
 interface LönespecViewProps {
   lönespec: any;
@@ -146,6 +147,12 @@ export default function LönespecView({
         skatt={visaSkatt}
         socialaAvgifter={visaSocialaAvgifter}
         lönekostnad={visaLönekostnad}
+      />
+
+      <FormelVisning
+        beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+        extrarader={extrarader[lönespec.id] || []}
+        lönespec={lönespec}
       />
 
       <div className="flex gap-3 mt-4 justify-between items-center">
