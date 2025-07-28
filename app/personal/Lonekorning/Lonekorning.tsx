@@ -99,6 +99,158 @@ export default function Lonekorning() {
   }, [utbetalningsdatum, specarPerDatum]);
   //#endregion
 
+  //#region AGI Generation
+  const hanteraAGI = async () => {
+    try {
+      // Samla data från alla lönespecar för den valda perioden
+      const agiData = {
+        organisationsnummer: "165560269986", // TODO: Hämta från företagsprofil
+        agRegistreradId: "165560269986", // TODO: Hämta från företagsprofil
+        redovisningsperiod: utbetalningsdatum
+          ? new Date(utbetalningsdatum).toISOString().slice(0, 7).replace("-", "")
+          : new Date().toISOString().slice(0, 7).replace("-", ""),
+        individuppgifter: [] as any[],
+        summaArbAvgSlf: 0,
+        summaSkatteavdr: 0,
+      };
+
+      // Beräkna totaler från lönespecarna
+      valdaSpecar.forEach((spec) => {
+        const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+        if (!anstalld) return;
+
+        const beräkningar = beräknadeVärden[spec.id];
+        const kontantlön = beräkningar?.kontantlön || spec.grundlön || 0;
+        const skatt = beräkningar?.skatt || spec.skatt || 0;
+        const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
+
+        // Lägg till individuppgift
+        agiData.individuppgifter.push({
+          specifikationsnummer: agiData.individuppgifter.length + 1,
+          betalningsmottagareId: anstalld.personnummer
+            ? anstalld.personnummer.length === 10
+              ? "19" + anstalld.personnummer
+              : anstalld.personnummer
+            : "198202252386", // Fallback
+          fornamn: anstalld.förnamn,
+          efternamn: anstalld.efternamn,
+          kontantErsattningUlagAG: kontantlön,
+          avdrPrelSkatt: skatt,
+        });
+
+        // Summera totaler
+        agiData.summaArbAvgSlf += socialaAvgifter;
+        agiData.summaSkatteavdr += skatt;
+      });
+
+      // Generera XML
+      const xml = genereraAGIXML(agiData);
+
+      // Ladda ner filen
+      const blob = new Blob([xml], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `arbetsgivardeklaration_${agiData.redovisningsperiod}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Fel vid AGI-generering:", error);
+      alert("❌ Fel vid AGI-generering: " + (error?.message || error));
+    }
+  };
+
+  // Hjälpfunktion för XML-generering
+  const genereraAGIXML = (data: any) => {
+    const timestamp = new Date().toISOString();
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Skatteverket omrade="Arbetsgivardeklaration" xmlns="http://xmls.skatteverket.se/se/skatteverket/da/instans/schema/1.1"
+xmlns:agd="http://xmls.skatteverket.se/se/skatteverket/da/komponent/schema/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://xmls.skatteverket.se/se/skatteverket/da/instans/schema/1.1
+http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgivardeklaration_1.1.xsd">
+  <agd:Avsandare>
+    <agd:Programnamn>BokförCom AGI Generator v1.0</agd:Programnamn>
+    <agd:Organisationsnummer>${data.organisationsnummer}</agd:Organisationsnummer>
+    <agd:TekniskKontaktperson>
+      <agd:Namn>Auto Generated</agd:Namn>
+      <agd:Telefon>08-123456</agd:Telefon>
+      <agd:Epostadress>info@example.se</agd:Epostadress>
+    </agd:TekniskKontaktperson>
+    <agd:Skapad>${timestamp}</agd:Skapad>
+  </agd:Avsandare>
+  
+  <agd:Blankettgemensamt>
+    <agd:Arbetsgivare>
+      <agd:AgRegistreradId>${data.agRegistreradId}</agd:AgRegistreradId>
+      <agd:Kontaktperson>
+        <agd:Namn>Auto Generated</agd:Namn>
+        <agd:Telefon>08-123456</agd:Telefon>
+        <agd:Epostadress>info@example.se</agd:Epostadress>
+      </agd:Kontaktperson>
+    </agd:Arbetsgivare>
+  </agd:Blankettgemensamt>
+  
+  <!-- Huvuduppgift -->
+  <agd:Blankett>
+    <agd:Arendeinformation>
+      <agd:Arendeagare>${data.agRegistreradId}</agd:Arendeagare>
+      <agd:Period>${data.redovisningsperiod}</agd:Period>
+    </agd:Arendeinformation>
+    
+    <agd:Blankettinnehall>
+      <agd:HU>
+        <agd:ArbetsgivareHUGROUP>
+          <agd:AgRegistreradId faltkod="201">${data.agRegistreradId}</agd:AgRegistreradId>
+        </agd:ArbetsgivareHUGROUP>
+        
+        <agd:RedovisningsPeriod faltkod="006">${data.redovisningsperiod}</agd:RedovisningsPeriod>
+        <agd:SummaArbAvgSlf faltkod="487">${Math.round(data.summaArbAvgSlf)}</agd:SummaArbAvgSlf>
+        <agd:SummaSkatteavdr faltkod="497">${Math.round(data.summaSkatteavdr)}</agd:SummaSkatteavdr>
+      </agd:HU>
+    </agd:Blankettinnehall>
+  </agd:Blankett>
+      
+  ${data.individuppgifter
+    .map(
+      (iu: any) => `
+  <!-- Individuppgift -->
+  <agd:Blankett>
+    <agd:Arendeinformation>
+      <agd:Arendeagare>${data.agRegistreradId}</agd:Arendeagare>
+      <agd:Period>${data.redovisningsperiod}</agd:Period>
+    </agd:Arendeinformation>
+    
+    <agd:Blankettinnehall>
+      <agd:IU>
+        <agd:ArbetsgivareIUGROUP>
+          <agd:AgRegistreradId faltkod="201">${data.agRegistreradId}</agd:AgRegistreradId>
+        </agd:ArbetsgivareIUGROUP>
+        
+        <agd:BetalningsmottagareIUGROUP>
+          <agd:BetalningsmottagareIDChoice>
+            <agd:BetalningsmottagarId faltkod="215">${iu.betalningsmottagareId}</agd:BetalningsmottagarId>
+          </agd:BetalningsmottagareIDChoice>
+          <agd:Fornamn faltkod="216">${iu.fornamn}</agd:Fornamn>
+          <agd:Efternamn faltkod="217">${iu.efternamn}</agd:Efternamn>
+        </agd:BetalningsmottagareIUGROUP>
+        
+        <agd:RedovisningsPeriod faltkod="006">${data.redovisningsperiod}</agd:RedovisningsPeriod>
+        <agd:Specifikationsnummer faltkod="570">${iu.specifikationsnummer}</agd:Specifikationsnummer>
+        <agd:KontantErsattningUlagAG faltkod="011">${Math.round(iu.kontantErsattningUlagAG)}</agd:KontantErsattningUlagAG>
+        <agd:AvdrPrelSkatt faltkod="001">${Math.round(iu.avdrPrelSkatt)}</agd:AvdrPrelSkatt>
+      </agd:IU>
+    </agd:Blankettinnehall>
+  </agd:Blankett>`
+    )
+    .join("")}
+  
+</Skatteverket>`;
+  };
+  //#endregion
+
   //#region Render
   // Helper to build batch data for modal
   // ...existing code...
@@ -304,6 +456,7 @@ export default function Lonekorning() {
               <Knapp text="🏦 Hämta bankgirofil" onClick={() => setBankgiroModalOpen(true)} />
               <Knapp text="✉️ Maila lönespecar" onClick={() => setBatchMailModalOpen(true)} />
               <Knapp text="📖 Bokför" onClick={() => setBokforModalOpen(true)} />
+              <Knapp text="📊 Generera AGI" onClick={hanteraAGI} />
             </div>
           </>
         </div>
