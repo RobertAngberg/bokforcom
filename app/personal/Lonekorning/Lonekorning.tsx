@@ -10,6 +10,7 @@ import {
   hämtaAllaAnställda,
   hämtaUtlägg,
   hämtaFöretagsprofil,
+  bokförLöneskatter,
 } from "../actions";
 // import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LönespecView from "../Lonespecar/LonespecView";
@@ -45,6 +46,8 @@ export default function Lonekorning() {
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
+  const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
+  const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
   const [agiDebugData, setAgiDebugData] = useState<any>(null);
   const [visaDebug, setVisaDebug] = useState(false);
   //#endregion
@@ -80,6 +83,39 @@ export default function Lonekorning() {
   };
 
   const skatteData = beräknaSkatteData();
+  //#endregion
+
+  //#region Skatte bokföring
+  const hanteraBokförSkatter = async () => {
+    if (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0) {
+      alert("Inga skatter att bokföra!");
+      return;
+    }
+
+    setSkatteBokförPågår(true);
+    try {
+      const datum = skatteDatum?.toISOString() || new Date().toISOString();
+      const result = await bokförLöneskatter({
+        socialaAvgifter: skatteData.socialaAvgifter,
+        personalskatt: skatteData.personalskatt,
+        datum,
+        kommentar: `Löneskatter för ${valdaSpecar.length} lönespec${valdaSpecar.length !== 1 ? "ar" : ""}`,
+      });
+
+      if (result.success) {
+        alert("✅ Löneskatter bokförda!");
+        setSkatteModalOpen(false);
+        setSkatteDatum(null);
+      } else {
+        alert(`❌ Fel vid bokföring: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Bokföring misslyckades:", error);
+      alert("❌ Något gick fel vid bokföringen");
+    } finally {
+      setSkatteBokförPågår(false);
+    }
+  };
   //#endregion
 
   //#region Effects
@@ -1079,18 +1115,13 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                           2731 Avräkning lagstadgade sociala avgifter
                         </td>
                         <td className="p-2 text-right text-gray-200">
-                          {(skatteData.socialaAvgifter + 0.22).toLocaleString("sv-SE", {
+                          {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}{" "}
                           kr
                         </td>
                         <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 text-gray-200">3740 Öres- och kronutjämning</td>
-                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                        <td className="p-2 text-right text-gray-200">0,22 kr</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1146,14 +1177,17 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   <label className="block text-sm text-gray-300 font-medium mb-2">
                     Datum skatterna drogs från Skattekontot
                   </label>
-                  <input
-                    type="date"
-                    defaultValue={
-                      utbetalningsdatum
-                        ? new Date(utbetalningsdatum).toISOString().slice(0, 10)
-                        : "2025-08-19"
+                  <DatePicker
+                    selected={
+                      skatteDatum ||
+                      (utbetalningsdatum ? new Date(utbetalningsdatum) : new Date("2025-08-19"))
                     }
-                    className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-700"
+                    onChange={(date) => setSkatteDatum(date)}
+                    dateFormat="yyyy-MM-dd"
+                    className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-700 w-full"
+                    calendarClassName="bg-slate-900 text-white"
+                    dayClassName={(date) => "text-cyan-400"}
+                    placeholderText="Välj datum"
                   />
                 </div>
               </div>
@@ -1167,13 +1201,21 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   Stäng
                 </button>
                 <button
-                  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
-                  onClick={() => {
-                    alert("Bokföring av skatter skulle genomföras här!");
-                    setSkatteModalOpen(false);
-                  }}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  onClick={hanteraBokförSkatter}
+                  disabled={
+                    skatteBokförPågår ||
+                    (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0)
+                  }
                 >
-                  Bokför transaktioner
+                  {skatteBokförPågår ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Bokför...
+                    </>
+                  ) : (
+                    "Bokför transaktioner"
+                  )}
                 </button>
               </div>
             </div>

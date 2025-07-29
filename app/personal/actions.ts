@@ -1193,3 +1193,114 @@ export async function hämtaBetaldaSemesterdagar(anställdId: number) {
     return 0;
   }
 }
+
+export async function bokförLöneskatter({
+  socialaAvgifter,
+  personalskatt,
+  datum,
+  kommentar,
+}: {
+  socialaAvgifter: number;
+  personalskatt: number;
+  datum?: string;
+  kommentar?: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Ingen inloggad användare");
+  const realUserId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+    const transaktionsdatum = datum || new Date().toISOString();
+
+    // Skapa huvudtransaktion för sociala avgifter
+    const socialTransaktion = await client.query(
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+      [
+        transaktionsdatum,
+        "Bokföring av sociala avgifter",
+        kommentar || "Automatisk bokföring från lönekörning",
+        realUserId,
+      ]
+    );
+    const socialTransaktionsId = socialTransaktion.rows[0].id;
+
+    // Sociala avgifter - transaktionsposter
+    if (socialaAvgifter > 0) {
+      // Hämta konto-id för 2012 och 2731
+      const konto2012 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "2012",
+      ]);
+      const konto2731 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "2731",
+      ]);
+
+      if (konto2012.rows.length === 0) throw new Error("Konto 2012 finns inte");
+      if (konto2731.rows.length === 0) throw new Error("Konto 2731 finns inte");
+
+      // 2012 Avräkning för skatter och avgifter (kredit)
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [socialTransaktionsId, konto2012.rows[0].id, 0, socialaAvgifter]
+      );
+
+      // 2731 Avräkning lagstadgade sociala avgifter (debet)
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [socialTransaktionsId, konto2731.rows[0].id, socialaAvgifter, 0]
+      );
+    }
+
+    // Skapa huvudtransaktion för personalskatt
+    const skattTransaktion = await client.query(
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+      [
+        transaktionsdatum,
+        "Bokföring av personalskatt",
+        kommentar || "Automatisk bokföring från lönekörning",
+        realUserId,
+      ]
+    );
+    const skattTransaktionsId = skattTransaktion.rows[0].id;
+
+    // Personalskatt - transaktionsposter
+    if (personalskatt > 0) {
+      // Hämta konto-id för 2012 och 2710
+      const konto2012 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "2012",
+      ]);
+      const konto2710 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "2710",
+      ]);
+
+      if (konto2012.rows.length === 0) throw new Error("Konto 2012 finns inte");
+      if (konto2710.rows.length === 0) throw new Error("Konto 2710 finns inte");
+
+      // 2012 Avräkning för skatter och avgifter (kredit)
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [skattTransaktionsId, konto2012.rows[0].id, 0, personalskatt]
+      );
+
+      // 2710 Personalskatt (debet)
+      await client.query(
+        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+         VALUES ($1, $2, $3, $4)`,
+        [skattTransaktionsId, konto2710.rows[0].id, personalskatt, 0]
+      );
+    }
+
+    client.release();
+    revalidatePath("/personal");
+    revalidatePath("/historik");
+    return { success: true, message: "Löneskatter bokförda!" };
+  } catch (error) {
+    console.error("❌ bokförLöneskatter error:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
+  }
+}
