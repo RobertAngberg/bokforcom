@@ -201,55 +201,75 @@ export default function Lonekorning() {
         });
 
         const beräkningar = beräknadeVärden[spec.id];
-        const kontantlön = beräkningar?.kontantlön || spec.grundlön || 0;
+        const bruttolön = beräkningar?.bruttolön || spec.bruttolön || spec.grundlön || 0;
         const skatt = beräkningar?.skatt || spec.skatt || 0;
         const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
 
         // 🆕 KORREKT AGI-MAPPNING: Analysera extrarader enligt Skatteverkets koder
-        const extrarader = spec.extrarader || [];
+        const specExtrarader = extrarader[spec.id] || []; // Hämta från context istället för spec
         const { skattepliktigaFörmåner, skattefriaErsättningar } =
-          klassificeraExtrarader(extrarader);
+          klassificeraExtrarader(specExtrarader);
+
+        // 🔍 DEBUG: Logga extrarader för att se vad som händer
+        console.log(`🔍 AGI Debug för lönespec ${spec.id}:`, {
+          extraradAntal: specExtrarader.length,
+          extrarader: specExtrarader.map((rad: any) => ({
+            typ: rad.typ,
+            kolumn1: rad.kolumn1,
+            kolumn3: rad.kolumn3,
+            belopp: parseFloat(rad.kolumn3) || 0,
+          })),
+          skattepliktigaFörmåner,
+          skattefriaErsättningar,
+        });
 
         // Analysera specifika AGI-komponenter från extrarader
         let harTraktamente = false;
         let harBilersättning = false;
         let bilförmånVärde = 0;
         let övrigaFörmånerVärde = 0;
-        
-        extrarader.forEach((rad: any) => {
+
+        specExtrarader.forEach((rad: any) => {
           const konfig = RAD_KONFIGURATIONER[rad.typ];
           const belopp = parseFloat(rad.kolumn3) || 0;
-          
+
           if (belopp === 0) return; // Skippa tomma rader
-          
+
           // Traktamente (051) - skattefria traktamenten
-          if (['uppehalleInrikes', 'uppehalleUtrikes', 'logi', 'resersattning', 'annanKompensation'].includes(rad.typ)) {
+          if (
+            [
+              "uppehalleInrikes",
+              "uppehalleUtrikes",
+              "logi",
+              "resersattning",
+              "annanKompensation",
+            ].includes(rad.typ)
+          ) {
             if (belopp > 0) harTraktamente = true;
           }
-          
-          // Bilersättning (050) - skattefria bilersättningar  
-          else if (['privatBil', 'foretagsbilBensinDiesel', 'foretagsbilEl'].includes(rad.typ)) {
+
+          // Bilersättning (050) - skattefria bilersättningar
+          else if (["privatBil", "foretagsbilBensinDiesel", "foretagsbilEl"].includes(rad.typ)) {
             if (belopp > 0) harBilersättning = true;
           }
-          
+
           // Bilförmån (013) - skattepliktig bilförmån (specifikt företagsbil som förmån)
-          else if (['foretagsbilExtra', 'foretagsbil'].includes(rad.typ) && konfig?.skattepliktig) {
+          else if (["foretagsbilExtra", "foretagsbil"].includes(rad.typ) && konfig?.skattepliktig) {
             bilförmånVärde += belopp;
           }
-          
+
           // Övriga skattepliktiga förmåner (012) - alla andra skattepliktiga förmåner
           else if (konfig?.skattepliktig && belopp > 0) {
             // Alla skattepliktiga förmåner som inte är bilförmån
             övrigaFörmånerVärde += belopp;
           }
-        });        // Spara lönespec-data för debug
+        }); // Spara lönespec-data för debug
         debugInfo.lönespecData.push({
           id: spec.id,
           grundlön: spec.grundlön,
-          bruttolön: spec.bruttolön,
           specSkatt: spec.skatt,
           beräkningar: beräkningar,
-          kontantlön,
+          beräknadBruttolön: bruttolön,
           beräknadSkatt: skatt,
           socialaAvgifter,
           // Ny debug-info för AGI
@@ -257,7 +277,7 @@ export default function Lonekorning() {
           harBilersättning,
           skattepliktigaFörmåner,
           bilförmånVärde,
-          extraraderAntal: extrarader.length,
+          extraraderAntal: specExtrarader.length,
         });
 
         // Lägg till individuppgift med all tillgänglig data
@@ -281,7 +301,7 @@ export default function Lonekorning() {
           arbetsplatsensOrt: anstalld.tjänsteställe_ort,
 
           // Lönedata från lönespec
-          kontantErsattningUlagAG: kontantlön,
+          kontantErsattningUlagAG: Math.round(bruttolön - skattepliktigaFörmåner), // 011: Kontant ersättning (bruttolön minus förmåner)
           skatteplOvrigaFormanerUlagAG: Math.round(skattepliktigaFörmåner - bilförmånVärde), // 012: Övriga förmåner (exkl. bil)
           skatteplBilformanUlagAG: Math.round(bilförmånVärde), // 013: Bilförmån
           avdrPrelSkatt: skatt,
@@ -296,7 +316,9 @@ export default function Lonekorning() {
 
           // Metadata
           utbetalningsdatum: spec.utbetalningsdatum,
-          lonePeriod: `${spec.månad}-${spec.år}`,
+          lonePeriod: spec.utbetalningsdatum
+            ? new Date(spec.utbetalningsdatum).toISOString().slice(0, 7)
+            : `${spec.månad || "unknown"}-${spec.år || "unknown"}`,
         });
 
         // Summera totaler
@@ -306,11 +328,15 @@ export default function Lonekorning() {
 
       // Spara final AGI-data för debug
       debugInfo.finalAgiData = agiData;
-      setAgiDebugData(debugInfo);
-      setVisaDebug(true);
 
       // Generera XML
       const xml = genereraAGIXML(agiData);
+
+      // Spara XML för debug
+      (debugInfo as any).generatedXML = xml;
+
+      setAgiDebugData(debugInfo);
+      setVisaDebug(true);
 
       // Ladda ner filen
       const blob = new Blob([xml], { type: "application/xml" });
@@ -787,7 +813,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                         <strong>Sociala Avgifter:</strong> {spec.socialaAvgifter}
                       </div>
                       <div>
-                        <strong>Kontantlön (används i AGI):</strong> {spec.kontantlön}
+                        <strong>Beräknad Bruttolön:</strong> {spec.beräknadBruttolön}
                       </div>
                     </div>
                   </div>
@@ -852,7 +878,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                         {iu.arbetsplatsensOrt || "❌"}
                       </div>
                       <div>
-                        <strong>Kontantlön:</strong> {iu.kontantErsattningUlagAG}
+                        <strong>Kontant ersättning (011):</strong> {iu.kontantErsattningUlagAG}
                       </div>
                       <div>
                         <strong>Skatteavdrag:</strong> {iu.avdrPrelSkatt}
@@ -866,6 +892,47 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* XML Sektion */}
+            <div className="mt-8 border-t border-slate-600 pt-6">
+              <h3 className="text-lg text-white font-semibold mb-4">📋 Genererad AGI XML</h3>
+              <div className="bg-slate-900 p-4 rounded border border-slate-600 max-h-64 overflow-y-auto">
+                <pre className="text-xs font-mono whitespace-pre-wrap text-green-400">
+                  {(agiDebugData as any)?.generatedXML || "XML inte tillgänglig"}
+                </pre>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText((agiDebugData as any)?.generatedXML || "");
+                    alert("XML kopierad!");
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                >
+                  📋 Kopiera XML
+                </button>
+                <button
+                  onClick={() => {
+                    const debugData = JSON.stringify(
+                      {
+                        företagsdata: agiDebugData.företagsdata,
+                        anställdaData: agiDebugData.anställdaData,
+                        lönespecData: agiDebugData.lönespecData,
+                        finalAgiData: agiDebugData.finalAgiData,
+                        generatedXML: (agiDebugData as any)?.generatedXML,
+                      },
+                      null,
+                      2
+                    );
+                    navigator.clipboard.writeText(debugData);
+                    alert("Debug-data kopierad!");
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
+                >
+                  📋 Kopiera Debug-data
+                </button>
               </div>
             </div>
 
