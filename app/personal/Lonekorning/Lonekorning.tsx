@@ -44,8 +44,42 @@ export default function Lonekorning() {
   const [utlaggMap, setUlaggMap] = useState<Record<number, any[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
+  const [skatteModalOpen, setSkatteModalOpen] = useState(false);
   const [agiDebugData, setAgiDebugData] = useState<any>(null);
   const [visaDebug, setVisaDebug] = useState(false);
+  //#endregion
+
+  //#region Skatte beräkningar
+  const beräknaSkatteData = () => {
+    if (!valdaSpecar || valdaSpecar.length === 0) {
+      return {
+        socialaAvgifter: 0,
+        personalskatt: 0,
+        totaltSkatter: 0,
+      };
+    }
+
+    // Summera alla sociala avgifter och skatter från valda lönespecar
+    let totalSocialaAvgifter = 0;
+    let totalPersonalskatt = 0;
+
+    valdaSpecar.forEach((spec) => {
+      const beräkningar = beräknadeVärden[spec.id];
+      const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
+      const skatt = beräkningar?.skatt || spec.skatt || 0;
+
+      totalSocialaAvgifter += socialaAvgifter;
+      totalPersonalskatt += skatt;
+    });
+
+    return {
+      socialaAvgifter: Math.round(totalSocialaAvgifter * 100) / 100,
+      personalskatt: Math.round(totalPersonalskatt * 100) / 100,
+      totaltSkatter: Math.round((totalSocialaAvgifter + totalPersonalskatt) * 100) / 100,
+    };
+  };
+
+  const skatteData = beräknaSkatteData();
   //#endregion
 
   //#region Effects
@@ -659,6 +693,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
               <Knapp text="✉️ Maila lönespecar" onClick={() => setBatchMailModalOpen(true)} />
               <Knapp text="📖 Bokför" onClick={() => setBokforModalOpen(true)} />
               <Knapp text="📊 Generera AGI" onClick={hanteraAGI} />
+              <Knapp text="💰 Bokför skatter" onClick={() => setSkatteModalOpen(true)} />
             </div>
           </>
         </div>
@@ -937,6 +972,209 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skatte modal */}
+      {skatteModalOpen && (
+        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl text-white font-bold">💰 Bokför skatter</h2>
+              <button
+                onClick={() => setSkatteModalOpen(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Info text */}
+              <div className="bg-slate-700 p-4 rounded-lg">
+                <p className="text-sm text-gray-300">
+                  När dragningen/återbäringen av skatter syns på ditt skattekonto kan du bokföra
+                  dessa här. Du kan inte bokföra det tidigare för du kan inte bokföra i framtiden.
+                </p>
+              </div>
+
+              {/* Sammanfattning */}
+              {valdaSpecar && valdaSpecar.length > 0 && (
+                <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
+                  <h3 className="text-lg text-white font-semibold mb-3">
+                    📊 Sammanfattning för {valdaSpecar.length} lönespec
+                    {valdaSpecar.length !== 1 ? "ar" : ""}
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-cyan-400">
+                        {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        kr
+                      </div>
+                      <div className="text-sm text-gray-300">Sociala avgifter</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-400">
+                        {skatteData.personalskatt.toLocaleString("sv-SE", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        kr
+                      </div>
+                      <div className="text-sm text-gray-300">Personalskatt</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-yellow-400">
+                        {skatteData.totaltSkatter.toLocaleString("sv-SE", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        kr
+                      </div>
+                      <div className="text-sm text-gray-300">Totalt skatter</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sociala avgifter sektion */}
+              <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-4">
+                  {utbetalningsdatum
+                    ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
+                    : "2025-08-19"}{" "}
+                  - Sociala avgifter
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-600">
+                        <th className="text-left p-2 text-gray-300">Konto</th>
+                        <th className="text-right p-2 text-gray-300">Debet</th>
+                        <th className="text-right p-2 text-gray-300">Kredit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-slate-600">
+                        <td className="p-2 text-gray-200">
+                          2012 Avräkning för skatter och avgifter (skattekonto)
+                        </td>
+                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
+                        <td className="p-2 text-right text-gray-200">
+                          {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          kr
+                        </td>
+                      </tr>
+                      <tr className="border-b border-slate-600">
+                        <td className="p-2 text-gray-200">
+                          2731 Avräkning lagstadgade sociala avgifter
+                        </td>
+                        <td className="p-2 text-right text-gray-200">
+                          {(skatteData.socialaAvgifter + 0.22).toLocaleString("sv-SE", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          kr
+                        </td>
+                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 text-gray-200">3740 Öres- och kronutjämning</td>
+                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
+                        <td className="p-2 text-right text-gray-200">0,22 kr</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Inkomstskatter sektion */}
+              <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-4">
+                  {utbetalningsdatum
+                    ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
+                    : "2025-08-19"}{" "}
+                  - Inkomstskatter
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-600">
+                        <th className="text-left p-2 text-gray-300">Konto</th>
+                        <th className="text-right p-2 text-gray-300">Debet</th>
+                        <th className="text-right p-2 text-gray-300">Kredit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-slate-600">
+                        <td className="p-2 text-gray-200">
+                          2012 Avräkning för skatter och avgifter (skattekonto)
+                        </td>
+                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
+                        <td className="p-2 text-right text-gray-200">
+                          {skatteData.personalskatt.toLocaleString("sv-SE", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          kr
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 text-gray-200">2710 Personalskatt</td>
+                        <td className="p-2 text-right text-gray-200">
+                          {skatteData.personalskatt.toLocaleString("sv-SE", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          kr
+                        </td>
+                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm text-gray-300 font-medium mb-2">
+                    Datum skatterna drogs från Skattekontot
+                  </label>
+                  <input
+                    type="date"
+                    defaultValue={
+                      utbetalningsdatum
+                        ? new Date(utbetalningsdatum).toISOString().slice(0, 10)
+                        : "2025-08-19"
+                    }
+                    className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-700"
+                  />
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex justify-end gap-4 pt-4 border-t border-slate-600">
+                <button
+                  onClick={() => setSkatteModalOpen(false)}
+                  className="px-4 py-2 bg-slate-700 text-white border border-slate-600 rounded hover:bg-slate-600"
+                >
+                  Stäng
+                </button>
+                <button
+                  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
+                  onClick={() => {
+                    alert("Bokföring av skatter skulle genomföras här!");
+                    setSkatteModalOpen(false);
+                  }}
+                >
+                  Bokför transaktioner
+                </button>
               </div>
             </div>
           </div>
