@@ -24,6 +24,11 @@ import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { klassificeraExtrarader } from "../Lonespecar/loneberokningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
+import SkatteBokforingModal from "./SkatteBokforingModal";
+import AGIDebugModal from "./AGIDebugModal";
+import NySpecModal from "./NySpecModal";
+import UtbetalningsdatumValjare from "./UtbetalningsdatumValjare";
+import LonespecLista from "./LonespecLista";
 //#endregion
 
 //#region Component
@@ -85,6 +90,43 @@ export default function Lonekorning() {
   const skatteData = beräknaSkatteData();
   //#endregion
 
+  //#region Lönespec hantering
+  const hanteraTaBortSpec = async (specId: number) => {
+    // Importera taBortLönespec från actions om det behövs
+    const { taBortLönespec } = await import("../actions");
+    const resultat = await taBortLönespec(specId);
+    if (resultat.success) {
+      alert("✅ Lönespecifikation borttagen!");
+      // Ta bort från state
+      setValdaSpecar((prev) => prev.filter((s) => s.id !== specId));
+      setSpecarPerDatum((prev) => {
+        const updated = { ...prev };
+        if (utbetalningsdatum && updated[utbetalningsdatum]) {
+          updated[utbetalningsdatum] = updated[utbetalningsdatum].filter((s) => s.id !== specId);
+          // If no lönespecar left for this date, remove the date
+          if (updated[utbetalningsdatum].length === 0) {
+            delete updated[utbetalningsdatum];
+          }
+        }
+        return updated;
+      });
+      setDatumLista((prev) => {
+        const filtered = prev.filter((d) => {
+          // Only keep dates that still have lönespecar
+          return specarPerDatum[d] && specarPerDatum[d].filter((s) => s.id !== specId).length > 0;
+        });
+        // If current utbetalningsdatum is now empty, clear selection
+        if (utbetalningsdatum && filtered.indexOf(utbetalningsdatum) === -1) {
+          setUtbetalningsdatum(filtered[0] || null);
+        }
+        return filtered;
+      });
+    } else {
+      alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
+    }
+  };
+  //#endregion
+
   //#region Skatte bokföring
   const hanteraBokförSkatter = async () => {
     if (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0) {
@@ -99,7 +141,7 @@ export default function Lonekorning() {
         socialaAvgifter: skatteData.socialaAvgifter,
         personalskatt: skatteData.personalskatt,
         datum,
-        kommentar: `Löneskatter för ${valdaSpecar.length} lönespec${valdaSpecar.length !== 1 ? "ar" : ""}`,
+        kommentar: "Löneskatter från lönekörning",
       });
 
       if (result.success) {
@@ -536,204 +578,74 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
       <div className="flex justify-end mb-4">
         <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
       </div>
-      {nySpecModalOpen && (
-        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50">
-          <div className="bg-cyan-950 rounded-2xl p-8 shadow-lg min-w-[340px] border border-cyan-800 text-slate-100">
-            <h2 className="text-xl font-bold text-cyan-300 mb-6 tracking-wide">
-              Välj utbetalningsdatum
-            </h2>
-            <div className="mb-6">
-              <DatePicker
-                selected={nySpecDatum}
-                onChange={(date) => setNySpecDatum(date)}
-                dateFormat="yyyy-MM-dd"
-                className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-cyan-700"
-                placeholderText="Välj datum"
-                calendarClassName="bg-slate-900 text-white"
-                dayClassName={(date) => "text-cyan-400"}
-              />
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button
-                className="px-5 py-2 bg-slate-700 text-gray-200 rounded-lg hover:bg-slate-600 transition font-semibold"
-                onClick={() => setNySpecModalOpen(false)}
-              >
-                Avbryt
-              </button>
-              <button
-                className="px-5 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-semibold shadow"
-                onClick={async () => {
-                  if (!nySpecDatum) {
-                    alert("Välj ett datum först!");
-                    return;
-                  }
-                  if (anstallda.length === 0) {
-                    alert("Ingen anställd hittades.");
-                    return;
-                  }
-                  let utbetalningsdatum = null;
-                  if (nySpecDatum instanceof Date && !isNaN(nySpecDatum.getTime())) {
-                    utbetalningsdatum = nySpecDatum.toISOString().slice(0, 10);
-                  }
-                  if (!utbetalningsdatum) {
-                    alert("Fel: utbetalningsdatum saknas eller är ogiltigt!");
-                    return;
-                  }
-                  const res = await import("../actions").then((mod) =>
-                    mod.skapaNyLönespec({
-                      anställd_id: anstallda[0].id,
-                      utbetalningsdatum,
-                    })
-                  );
-                  if (res?.success === false) {
-                    alert("Fel: " + (res.error || "Misslyckades att skapa lönespecifikation."));
-                  } else {
-                    alert("Ny lönespecifikation skapad!");
-                    setNySpecModalOpen(false);
-                    // Refresh lönespecar
-                    const [specar, anstallda] = await Promise.all([
-                      hämtaAllaLönespecarFörUser(),
-                      hämtaAllaAnställda(),
-                    ]);
-                    setAnstallda(anstallda);
-                    const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
-                    const utlaggResults = await Promise.all(utlaggPromises);
-                    const utlaggMap: Record<number, any[]> = {};
-                    anstallda.forEach((a, idx) => {
-                      utlaggMap[a.id] = utlaggResults[idx];
-                    });
-                    setUlaggMap(utlaggMap);
-                    const grupperat: Record<string, any[]> = {};
-                    specar.forEach((spec) => {
-                      if (spec.utbetalningsdatum) {
-                        if (!grupperat[spec.utbetalningsdatum])
-                          grupperat[spec.utbetalningsdatum] = [];
-                        grupperat[spec.utbetalningsdatum].push(spec);
-                      }
-                    });
-                    const grupperatUtanTomma = Object.fromEntries(
-                      Object.entries(grupperat).filter(([_, list]) => list.length > 0)
-                    );
-                    const datumSort = Object.keys(grupperatUtanTomma).sort(
-                      (a, b) => new Date(b).getTime() - new Date(a).getTime()
-                    );
-                    setDatumLista(datumSort);
-                    setSpecarPerDatum(grupperatUtanTomma);
-                    if (datumSort.length > 0) {
-                      setUtbetalningsdatum(datumSort[0]);
-                      setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-                    } else {
-                      setUtbetalningsdatum(null);
-                      setValdaSpecar([]);
-                    }
-                  }
-                }}
-              >
-                Skapa
-              </button>
-            </div>
-          </div>
-        </div>
+
+      <NySpecModal
+        isOpen={nySpecModalOpen}
+        onClose={() => setNySpecModalOpen(false)}
+        nySpecDatum={nySpecDatum}
+        setNySpecDatum={setNySpecDatum}
+        anstallda={anstallda}
+        onSpecCreated={async () => {
+          // Refresh lönespecar
+          const [specar, anstallda] = await Promise.all([
+            hämtaAllaLönespecarFörUser(),
+            hämtaAllaAnställda(),
+          ]);
+          setAnstallda(anstallda);
+          const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+          const utlaggResults = await Promise.all(utlaggPromises);
+          const utlaggMap: Record<number, any[]> = {};
+          anstallda.forEach((a, idx) => {
+            utlaggMap[a.id] = utlaggResults[idx];
+          });
+          setUlaggMap(utlaggMap);
+          const grupperat: Record<string, any[]> = {};
+          specar.forEach((spec) => {
+            if (spec.utbetalningsdatum) {
+              if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+              grupperat[spec.utbetalningsdatum].push(spec);
+            }
+          });
+          const grupperatUtanTomma = Object.fromEntries(
+            Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+          );
+          const datumSort = Object.keys(grupperatUtanTomma).sort(
+            (a, b) => new Date(b).getTime() - new Date(a).getTime()
+          );
+          setDatumLista(datumSort);
+          setSpecarPerDatum(grupperatUtanTomma);
+          if (datumSort.length > 0) {
+            setUtbetalningsdatum(datumSort[0]);
+            setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+          } else {
+            setUtbetalningsdatum(null);
+            setValdaSpecar([]);
+          }
+        }}
+      />
+
+      <UtbetalningsdatumValjare
+        datumLista={datumLista}
+        utbetalningsdatum={utbetalningsdatum}
+        setUtbetalningsdatum={setUtbetalningsdatum}
+        specarPerDatum={specarPerDatum}
+      />
+
+      {utbetalningsdatum && (
+        <LonespecLista
+          valdaSpecar={valdaSpecar}
+          anstallda={anstallda}
+          utlaggMap={utlaggMap}
+          onTaBortSpec={hanteraTaBortSpec}
+          onHämtaBankgiro={() => setBankgiroModalOpen(true)}
+          onMailaSpecar={() => setBatchMailModalOpen(true)}
+          onBokför={() => setBokforModalOpen(true)}
+          onGenereraAGI={hanteraAGI}
+          onBokförSkatter={() => setSkatteModalOpen(true)}
+        />
       )}
-      {datumLista.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-white mb-2">Välj utbetalningsdatum:</h2>
-          <div className="flex flex-col gap-2">
-            {datumLista.map((datum) => (
-              <a
-                key={datum}
-                href="#"
-                className={`px-3 py-1 rounded bg-slate-700 text-white hover:bg-cyan-600 w-fit ${datum === utbetalningsdatum ? "ring-2 ring-cyan-400" : ""}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setUtbetalningsdatum(datum);
-                }}
-              >
-                {new Date(datum).toLocaleDateString("sv-SE")} ({specarPerDatum[datum]?.length ?? 0}{" "}
-                lönespecar)
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-      {utbetalningsdatum && valdaSpecar.length > 0 && (
-        <div className="space-y-2">
-          {/* ...lönespecar... */}
-          <>
-            {valdaSpecar.map((spec) => {
-              const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-              const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
-              const handleTaBortLönespec = async () => {
-                if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
-                setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
-                try {
-                  // Importera taBortLönespec från actions om det behövs
-                  const { taBortLönespec } = await import("../actions");
-                  const resultat = await taBortLönespec(spec.id);
-                  if (resultat.success) {
-                    alert("✅ Lönespecifikation borttagen!");
-                    // Ta bort från state
-                    setValdaSpecar((prev) => prev.filter((s) => s.id !== spec.id));
-                    setSpecarPerDatum((prev) => {
-                      const updated = { ...prev };
-                      if (utbetalningsdatum && updated[utbetalningsdatum]) {
-                        updated[utbetalningsdatum] = updated[utbetalningsdatum].filter(
-                          (s) => s.id !== spec.id
-                        );
-                        // If no lönespecar left for this date, remove the date
-                        if (updated[utbetalningsdatum].length === 0) {
-                          delete updated[utbetalningsdatum];
-                        }
-                      }
-                      return updated;
-                    });
-                    setDatumLista((prev) => {
-                      const filtered = prev.filter((d) => {
-                        // Only keep dates that still have lönespecar
-                        return (
-                          specarPerDatum[d] &&
-                          specarPerDatum[d].filter((s) => s.id !== spec.id).length > 0
-                        );
-                      });
-                      // If current utbetalningsdatum is now empty, clear selection
-                      if (filtered.indexOf(utbetalningsdatum) === -1) {
-                        setUtbetalningsdatum(filtered[0] || null);
-                      }
-                      return filtered;
-                    });
-                  } else {
-                    alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
-                  }
-                } catch (error) {
-                  console.error("❌ Fel vid borttagning av lönespec:", error);
-                  alert("❌ Kunde inte ta bort lönespec");
-                } finally {
-                  setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
-                }
-              };
-              return (
-                <LönespecView
-                  key={spec.id}
-                  lönespec={spec}
-                  anställd={anstalld}
-                  utlägg={utlagg}
-                  ingenAnimering={false}
-                  taBortLoading={taBortLaddning[spec.id] || false}
-                  visaExtraRader={true}
-                  onTaBortLönespec={handleTaBortLönespec}
-                />
-              );
-            })}
-            <div className="flex gap-4 mt-8">
-              <Knapp text="🏦 Hämta bankgirofil" onClick={() => setBankgiroModalOpen(true)} />
-              <Knapp text="✉️ Maila lönespecar" onClick={() => setBatchMailModalOpen(true)} />
-              <Knapp text="📖 Bokför" onClick={() => setBokforModalOpen(true)} />
-              <Knapp text="📊 Generera AGI" onClick={hanteraAGI} />
-              <Knapp text="💰 Bokför skatter" onClick={() => setSkatteModalOpen(true)} />
-            </div>
-          </>
-        </div>
-      )}
+
+      {/* EXPORT & BOKFÖRING - LÄNGST NER */}
       {/* EXPORT & BOKFÖRING - LÄNGST NER */}
       {/* Batch mail och bokföring kan implementeras här om du vill, men nu är all gammal state och props borttagen. */}
       {/* Bankgiro modal */}
@@ -780,448 +692,24 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
       )}
 
       {/* AGI Debug Modal */}
-      {visaDebug && agiDebugData && (
-        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl text-white font-bold">🔍 AGI Debug Information</h2>
-              <button
-                onClick={() => setVisaDebug(false)}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* XML Sektion - ÖVERST för snabb åtkomst */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-4">📋 Genererad AGI XML</h3>
-                <div className="bg-slate-900 p-4 rounded border border-slate-600 max-h-64 overflow-y-auto">
-                  <pre className="text-xs font-mono whitespace-pre-wrap text-green-400">
-                    {(agiDebugData as any)?.generatedXML || "XML inte tillgänglig"}
-                  </pre>
-                </div>
-                <div className="mt-4 flex gap-3">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText((agiDebugData as any)?.generatedXML || "");
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-semibold"
-                  >
-                    📋 Kopiera XML
-                  </button>
-                  <button
-                    onClick={() => {
-                      const debugData = JSON.stringify(
-                        {
-                          företagsdata: agiDebugData.företagsdata,
-                          anställdaData: agiDebugData.anställdaData,
-                          lönespecData: agiDebugData.lönespecData,
-                          finalAgiData: agiDebugData.finalAgiData,
-                          generatedXML: (agiDebugData as any)?.generatedXML,
-                        },
-                        null,
-                        2
-                      );
-                      navigator.clipboard.writeText(debugData);
-                    }}
-                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold"
-                  >
-                    📋 Kopiera Debug-data
-                  </button>
-                  <button
-                    onClick={() => setVisaDebug(false)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold"
-                  >
-                    Stäng Debug
-                  </button>
-                </div>
-              </div>
-
-              {/* Företagsdata */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-3">🏢 Företagsdata</h3>
-                <div className="bg-slate-600 rounded p-3">
-                  <div className="text-white text-sm space-y-1">
-                    <div>
-                      <strong>Företagsnamn:</strong>{" "}
-                      {agiDebugData.företagsdata?.företagsnamn || "❌ SAKNAS"}
-                    </div>
-                    <div>
-                      <strong>Organisationsnummer:</strong>{" "}
-                      {agiDebugData.företagsdata?.organisationsnummer || "❌ SAKNAS"}
-                    </div>
-                    <div>
-                      <strong>Telefon:</strong>{" "}
-                      {agiDebugData.företagsdata?.telefonnummer || "❌ SAKNAS"}
-                    </div>
-                    <div>
-                      <strong>E-post:</strong> {agiDebugData.företagsdata?.epost || "❌ SAKNAS"}
-                    </div>
-                    <div>
-                      <strong>Adress:</strong> {agiDebugData.företagsdata?.adress || "❌ SAKNAS"}
-                    </div>
-                    <div className="mt-2 text-yellow-300">
-                      {!agiDebugData.företagsdata
-                        ? "⚠️ Ingen företagsprofil hittades - använder fallback-värden"
-                        : "✅ Företagsprofil hämtad från databas"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Anställd Data */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-3">👤 Anställd Data</h3>
-                {agiDebugData.anställdaData.map((anst: any, idx: number) => (
-                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
-                    <div className="text-white text-sm space-y-1">
-                      <div>
-                        <strong>Namn:</strong> {anst.namn}
-                      </div>
-                      <div>
-                        <strong>Personnummer:</strong> {anst.personnummer || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Adress:</strong> {anst.adress || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Postnummer:</strong> {anst.postnummer || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Ort:</strong> {anst.ort || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Tjänsteställe adress:</strong>{" "}
-                        {anst.tjänsteställe_adress || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Tjänsteställe ort:</strong> {anst.tjänsteställe_ort || "❌ SAKNAS"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Lönespec Data */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-3">💰 Lönespec Data</h3>
-                {agiDebugData.lönespecData.map((spec: any, idx: number) => (
-                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
-                    <div className="text-white text-sm space-y-1">
-                      <div>
-                        <strong>ID:</strong> {spec.id}
-                      </div>
-                      <div>
-                        <strong>Grundlön:</strong> {spec.grundlön || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Bruttolön:</strong> {spec.bruttolön || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Spec Skatt:</strong> {spec.specSkatt || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Beräknad Skatt:</strong> {spec.beräknadSkatt}
-                      </div>
-                      <div>
-                        <strong>Sociala Avgifter:</strong> {spec.socialaAvgifter}
-                      </div>
-                      <div>
-                        <strong>Beräknad Bruttolön:</strong> {spec.beräknadBruttolön}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Final AGI Data */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-3">📊 Final AGI Data</h3>
-                <div className="bg-slate-600 rounded p-3">
-                  <div className="text-white text-sm space-y-1">
-                    <div>
-                      <strong>Organisationsnummer:</strong>{" "}
-                      {agiDebugData.finalAgiData.organisationsnummer}
-                    </div>
-                    <div>
-                      <strong>Redovisningsperiod:</strong>{" "}
-                      {agiDebugData.finalAgiData.redovisningsperiod}
-                    </div>
-                    <div>
-                      <strong>Antal individuppgifter:</strong>{" "}
-                      {agiDebugData.finalAgiData.individuppgifter.length}
-                    </div>
-                    <div>
-                      <strong>Summa Arbetsgivaravgifter:</strong>{" "}
-                      {agiDebugData.finalAgiData.summaArbAvgSlf}
-                    </div>
-                    <div>
-                      <strong>Summa Skatteavdrag:</strong>{" "}
-                      {agiDebugData.finalAgiData.summaSkatteavdr}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Individuppgifter Details */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-3">
-                  👥 Individuppgifter (som skickas till XML)
-                </h3>
-                {agiDebugData.finalAgiData.individuppgifter.map((iu: any, idx: number) => (
-                  <div key={idx} className="bg-slate-600 rounded p-3 mb-3">
-                    <div className="text-white text-sm space-y-1">
-                      <div>
-                        <strong>Spec Nr:</strong> {iu.specifikationsnummer}
-                      </div>
-                      <div>
-                        <strong>Betalningsmottagare ID:</strong> {iu.betalningsmottagareId}
-                      </div>
-                      <div>
-                        <strong>Namn:</strong> {iu.fornamn} {iu.efternamn}
-                      </div>
-                      <div>
-                        <strong>Adress:</strong> {iu.gatuadress || "❌ SAKNAS"}
-                      </div>
-                      <div>
-                        <strong>Postnummer/Ort:</strong> {iu.postnummer || "❌"}{" "}
-                        {iu.postort || "❌"}
-                      </div>
-                      <div>
-                        <strong>Arbetsplats:</strong> {iu.arbetsplatsensGatuadress || "❌"},{" "}
-                        {iu.arbetsplatsensOrt || "❌"}
-                      </div>
-                      <div>
-                        <strong>Kontant ersättning (011):</strong> {iu.kontantErsattningUlagAG}
-                      </div>
-                      <div>
-                        <strong>Skatteavdrag:</strong> {iu.avdrPrelSkatt}
-                      </div>
-                      <div>
-                        <strong>Traktamente:</strong> {iu.traktamente || 0}
-                      </div>
-                      <div>
-                        <strong>Bilersättning:</strong> {iu.bilersattning || 0}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AGIDebugModal
+        visaDebug={visaDebug}
+        setVisaDebug={setVisaDebug}
+        agiDebugData={agiDebugData}
+      />
 
       {/* Skatte modal */}
-      {skatteModalOpen && (
-        <div className="fixed inset-0 bg-slate-950 bg-opacity-95 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl text-white font-bold">💰 Bokför skatter</h2>
-              <button
-                onClick={() => setSkatteModalOpen(false)}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Info text */}
-              <div className="bg-slate-700 p-4 rounded-lg">
-                <p className="text-sm text-gray-300">
-                  När dragningen/återbäringen av skatter syns på ditt skattekonto kan du bokföra
-                  dessa här. Du kan inte bokföra det tidigare för du kan inte bokföra i framtiden.
-                </p>
-              </div>
-
-              {/* Sammanfattning */}
-              {valdaSpecar && valdaSpecar.length > 0 && (
-                <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
-                  <h3 className="text-lg text-white font-semibold mb-3">
-                    📊 Sammanfattning för {valdaSpecar.length} lönespec
-                    {valdaSpecar.length !== 1 ? "ar" : ""}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-cyan-400">
-                        {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        kr
-                      </div>
-                      <div className="text-sm text-gray-300">Sociala avgifter</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-400">
-                        {skatteData.personalskatt.toLocaleString("sv-SE", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        kr
-                      </div>
-                      <div className="text-sm text-gray-300">Personalskatt</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-yellow-400">
-                        {skatteData.totaltSkatter.toLocaleString("sv-SE", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        kr
-                      </div>
-                      <div className="text-sm text-gray-300">Totalt skatter</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sociala avgifter sektion */}
-              <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-4">
-                  {utbetalningsdatum
-                    ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
-                    : "2025-08-19"}{" "}
-                  - Sociala avgifter
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-600">
-                        <th className="text-left p-2 text-gray-300">Konto</th>
-                        <th className="text-right p-2 text-gray-300">Debet</th>
-                        <th className="text-right p-2 text-gray-300">Kredit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-slate-600">
-                        <td className="p-2 text-gray-200">
-                          2012 Avräkning för skatter och avgifter (skattekonto)
-                        </td>
-                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                        <td className="p-2 text-right text-gray-200">
-                          {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          kr
-                        </td>
-                      </tr>
-                      <tr className="border-b border-slate-600">
-                        <td className="p-2 text-gray-200">
-                          2731 Avräkning lagstadgade sociala avgifter
-                        </td>
-                        <td className="p-2 text-right text-gray-200">
-                          {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          kr
-                        </td>
-                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Inkomstskatter sektion */}
-              <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
-                <h3 className="text-lg text-white font-semibold mb-4">
-                  {utbetalningsdatum
-                    ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
-                    : "2025-08-19"}{" "}
-                  - Inkomstskatter
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-600">
-                        <th className="text-left p-2 text-gray-300">Konto</th>
-                        <th className="text-right p-2 text-gray-300">Debet</th>
-                        <th className="text-right p-2 text-gray-300">Kredit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-slate-600">
-                        <td className="p-2 text-gray-200">
-                          2012 Avräkning för skatter och avgifter (skattekonto)
-                        </td>
-                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                        <td className="p-2 text-right text-gray-200">
-                          {skatteData.personalskatt.toLocaleString("sv-SE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          kr
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 text-gray-200">2710 Personalskatt</td>
-                        <td className="p-2 text-right text-gray-200">
-                          {skatteData.personalskatt.toLocaleString("sv-SE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          kr
-                        </td>
-                        <td className="p-2 text-right text-gray-200">0,00 kr</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div className="mt-4">
-                  <label className="block text-sm text-gray-300 font-medium mb-2">
-                    Datum skatterna drogs från Skattekontot
-                  </label>
-                  <DatePicker
-                    selected={
-                      skatteDatum ||
-                      (utbetalningsdatum ? new Date(utbetalningsdatum) : new Date("2025-08-19"))
-                    }
-                    onChange={(date) => setSkatteDatum(date)}
-                    dateFormat="yyyy-MM-dd"
-                    className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-700 w-full"
-                    calendarClassName="bg-slate-900 text-white"
-                    dayClassName={(date) => "text-cyan-400"}
-                    placeholderText="Välj datum"
-                  />
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex justify-end gap-4 pt-4 border-t border-slate-600">
-                <button
-                  onClick={() => setSkatteModalOpen(false)}
-                  className="px-4 py-2 bg-slate-700 text-white border border-slate-600 rounded hover:bg-slate-600"
-                >
-                  Stäng
-                </button>
-                <button
-                  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  onClick={hanteraBokförSkatter}
-                  disabled={
-                    skatteBokförPågår ||
-                    (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0)
-                  }
-                >
-                  {skatteBokförPågår ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Bokför...
-                    </>
-                  ) : (
-                    "Bokför transaktioner"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <SkatteBokforingModal
+        skatteModalOpen={skatteModalOpen}
+        setSkatteModalOpen={setSkatteModalOpen}
+        valdaSpecar={valdaSpecar}
+        skatteData={skatteData}
+        utbetalningsdatum={utbetalningsdatum}
+        skatteDatum={skatteDatum}
+        setSkatteDatum={setSkatteDatum}
+        hanteraBokförSkatter={hanteraBokförSkatter}
+        skatteBokförPågår={skatteBokförPågår}
+      />
     </div>
   );
   //#endregion
