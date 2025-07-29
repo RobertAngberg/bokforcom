@@ -723,6 +723,51 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
             </div>
 
             <div className="space-y-6">
+              {/* XML Sektion - ÖVERST för snabb åtkomst */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h3 className="text-lg text-white font-semibold mb-4">📋 Genererad AGI XML</h3>
+                <div className="bg-slate-900 p-4 rounded border border-slate-600 max-h-64 overflow-y-auto">
+                  <pre className="text-xs font-mono whitespace-pre-wrap text-green-400">
+                    {(agiDebugData as any)?.generatedXML || "XML inte tillgänglig"}
+                  </pre>
+                </div>
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText((agiDebugData as any)?.generatedXML || "");
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-semibold"
+                  >
+                    📋 Kopiera XML
+                  </button>
+                  <button
+                    onClick={() => {
+                      const debugData = JSON.stringify(
+                        {
+                          företagsdata: agiDebugData.företagsdata,
+                          anställdaData: agiDebugData.anställdaData,
+                          lönespecData: agiDebugData.lönespecData,
+                          finalAgiData: agiDebugData.finalAgiData,
+                          generatedXML: (agiDebugData as any)?.generatedXML,
+                        },
+                        null,
+                        2
+                      );
+                      navigator.clipboard.writeText(debugData);
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold"
+                  >
+                    📋 Kopiera Debug-data
+                  </button>
+                  <button
+                    onClick={() => setVisaDebug(false)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold"
+                  >
+                    Stäng Debug
+                  </button>
+                </div>
+              </div>
+
               {/* Företagsdata */}
               <div className="bg-slate-700 rounded-lg p-4">
                 <h3 className="text-lg text-white font-semibold mb-3">🏢 Företagsdata</h3>
@@ -893,56 +938,6 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* XML Sektion */}
-            <div className="mt-8 border-t border-slate-600 pt-6">
-              <h3 className="text-lg text-white font-semibold mb-4">📋 Genererad AGI XML</h3>
-              <div className="bg-slate-900 p-4 rounded border border-slate-600 max-h-64 overflow-y-auto">
-                <pre className="text-xs font-mono whitespace-pre-wrap text-green-400">
-                  {(agiDebugData as any)?.generatedXML || "XML inte tillgänglig"}
-                </pre>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText((agiDebugData as any)?.generatedXML || "");
-                    alert("XML kopierad!");
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                >
-                  📋 Kopiera XML
-                </button>
-                <button
-                  onClick={() => {
-                    const debugData = JSON.stringify(
-                      {
-                        företagsdata: agiDebugData.företagsdata,
-                        anställdaData: agiDebugData.anställdaData,
-                        lönespecData: agiDebugData.lönespecData,
-                        finalAgiData: agiDebugData.finalAgiData,
-                        generatedXML: (agiDebugData as any)?.generatedXML,
-                      },
-                      null,
-                      2
-                    );
-                    navigator.clipboard.writeText(debugData);
-                    alert("Debug-data kopierad!");
-                  }}
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
-                >
-                  📋 Kopiera Debug-data
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => setVisaDebug(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Stäng Debug
-              </button>
             </div>
           </div>
         </div>
