@@ -268,6 +268,7 @@ export function klassificeraExtrarader(extrarader: any[]) {
   let skattepliktigaFörmåner = 0;
   let skattefriaErsättningar = 0;
   let övrigaTillägg = 0;
+  let kontantlönAvdrag = 0; // Lägg till denna variabel
   let nettolönejustering = 0;
 
   extrarader.forEach((rad) => {
