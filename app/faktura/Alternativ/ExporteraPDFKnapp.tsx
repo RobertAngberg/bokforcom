@@ -13,5 +13,5 @@ export default function ExporteraPDFKnapp() {
     }
   };
 
-  return <Knapp onClick={handleExport} text="📤 Exportera PDF" />;
+  return <Knapp onClick={handleExport} text="📤 Spara PDF" />;
 }

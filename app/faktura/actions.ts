@@ -704,3 +704,103 @@ export async function hämtaSenasteBetalningsmetod(userId: string) {
     return { betalningsmetod: null, nummer: null };
   }
 }
+
+interface BokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
+interface BokförFakturaData {
+  fakturanummer: string;
+  kundnamn: string;
+  totaltBelopp: number;
+  poster: BokföringsPost[];
+  kommentar?: string;
+}
+
+export async function bokförFaktura(data: BokförFakturaData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Inte inloggad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Validera att bokföringen balanserar
+    const totalDebet = data.poster.reduce((sum, post) => sum + post.debet, 0);
+    const totalKredit = data.poster.reduce((sum, post) => sum + post.kredit, 0);
+
+    if (Math.abs(totalDebet - totalKredit) > 0.01) {
+      throw new Error(
+        `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`
+      );
+    }
+
+    // Skapa huvudtransaktion
+    const transaktionQuery = `
+      INSERT INTO transaktioner (
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `;
+
+    const transaktionResult = await client.query(transaktionQuery, [
+      new Date(), // Dagens datum
+      `Faktura ${data.fakturanummer} - ${data.kundnamn}`,
+      data.totaltBelopp,
+      data.kommentar || `Bokföring av faktura ${data.fakturanummer} för ${data.kundnamn}`,
+      userId,
+    ]);
+
+    const transaktionsId = transaktionResult.rows[0].id;
+    console.log("🆔 Skapad fakturatransaktion:", transaktionsId);
+
+    // Skapa bokföringsposter
+    const insertPostQuery = `
+      INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+      VALUES ($1, $2, $3, $4)
+    `;
+
+    for (const post of data.poster) {
+      // Hämta konto_id från konton-tabellen
+      const kontoResult = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        post.konto,
+      ]);
+
+      if (kontoResult.rows.length === 0) {
+        throw new Error(`Konto ${post.konto} (${post.kontoNamn}) finns inte i databasen`);
+      }
+
+      const kontoId = kontoResult.rows[0].id;
+
+      await client.query(insertPostQuery, [transaktionsId, kontoId, post.debet, post.kredit]);
+
+      console.log(`📘 Bokförd post ${post.konto}: D ${post.debet}  K ${post.kredit}`);
+    }
+
+    await client.query("COMMIT");
+    console.log("✅ Faktura bokförd framgångsrikt!");
+
+    return {
+      success: true,
+      transaktionsId,
+      message: `Faktura ${data.fakturanummer} har bokförts framgångsrikt!`,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("❌ Fel vid bokföring av faktura:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Okänt fel vid bokföring",
+    };
+  } finally {
+    client.release();
+  }
+}
