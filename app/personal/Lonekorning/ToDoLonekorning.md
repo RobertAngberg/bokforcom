@@ -172,7 +172,20 @@ personal/Lonekorning/
 
 ```
 
-- ⏳ **2.2 ActionButtons.tsx** (20 rader) - Knappar för export och bokföring
+- ✅ **2.2 AGIGenerator.tsx** (320 rader) - AGI-generering och XML-skapande - KLART!
+
+```
+
+📁 Fil: personal/Lonekorning/AGIGenerator.tsx (320 rader)
+📝 Innehåll: Komplett AGI-generering med XML-export och debug-data
+🔗 Props: valdaSpecar, anstallda, beräknadeVärden, extrarader, session, callbacks
+💡 Inkluderar: Företagsdata-hämtning, lönespec-analys, XML-generering, filnedladdning
+💫 Resultat: Lonekorning.tsx reducerad från 716 → 413 rader (-303 rader!)
+🎯 Status: Massiv förbättring - största refaktorering hittills
+
+```
+
+### 🎯 Steg 3: Logik-komponenter (Prio 3 - Business logic separation)
 
 ```
 
