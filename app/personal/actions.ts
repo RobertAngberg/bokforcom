@@ -1304,3 +1304,232 @@ export async function bokförLöneskatter({
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }
+
+// Löneutbetalning bokföring
+interface BokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
+interface BokförLöneUtbetalningData {
+  lönespecId: number;
+  extrarader: any[];
+  beräknadeVärden: any;
+  anställdNamn: string;
+  period: string;
+  utbetalningsdatum: string;
+  kommentar?: string;
+  bokföringsPoster?: BokföringsPost[];
+}
+
+/**
+ * Bokför en löneutbetalning genom att skapa en transaktion med tillhörande transaktionsposter
+ */
+export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  const userId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+
+    // Hämta lönespecifikation för att säkerställa att den tillhör användaren
+    const lönespecQuery = `
+      SELECT l.*, a.förnamn, a.efternamn, a.kompensation
+      FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const lönespecResult = await client.query(lönespecQuery, [data.lönespecId, userId]);
+
+    if (lönespecResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespecifikation hittades inte");
+    }
+
+    const lönespec = lönespecResult.rows[0];
+
+    // Kontrollera att lönespec inte redan är bokförd
+    if (lönespec.status === "Utbetald") {
+      client.release();
+      throw new Error("Lönespecifikation är redan bokförd");
+    }
+
+    // Sätt alltid status till 'Skapad' innan bokföring
+    const updateLönespecQueryReset = `
+      UPDATE lönespecifikationer 
+      SET status = 'Skapad', uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await client.query(updateLönespecQueryReset, [data.lönespecId]);
+
+    // Använd bokföringsPoster direkt om den finns, annars generera som tidigare
+    const bokföringsPoster =
+      data.bokföringsPoster && Array.isArray(data.bokföringsPoster)
+        ? data.bokföringsPoster
+        : genereraBokföringsPoster(
+            lönespec,
+            data.extrarader,
+            data.beräknadeVärden,
+            data.anställdNamn
+          );
+
+    // Validera att bokföringen balanserar
+    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + post.debet, 0);
+    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + post.kredit, 0);
+
+    if (Math.abs(totalDebet - totalKredit) > 0.01) {
+      client.release();
+      throw new Error(
+        `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`
+      );
+    }
+
+    // Skapa huvudtransaktion
+    const transaktionQuery = `
+      INSERT INTO transaktioner (
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `;
+
+    const nettolön = data.beräknadeVärden.nettolön || lönespec.nettolön;
+    const transaktionResult = await client.query(transaktionQuery, [
+      new Date(data.utbetalningsdatum),
+      `Löneutbetalning ${data.anställdNamn} ${data.period}`,
+      nettolön,
+      data.kommentar || `Löneutbetalning för ${data.anställdNamn}, period ${data.period}`,
+      userId,
+    ]);
+
+    const transaktionId = transaktionResult.rows[0].id;
+
+    // Skapa transaktionsposter för varje bokföringspost
+    const transaktionspostQuery = `
+      INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
+      VALUES ($1, $2, $3, $4)
+    `;
+
+    for (const post of bokföringsPoster) {
+      post.debet = Number(post.debet) || 0;
+      post.kredit = Number(post.kredit) || 0;
+      if (post.debet === 0 && post.kredit === 0) {
+        continue;
+      }
+
+      const kontoQuery = `SELECT id FROM konton WHERE kontonummer = $1`;
+      const kontoResult = await client.query(kontoQuery, [post.konto]);
+      if (kontoResult.rows.length === 0) {
+        client.release();
+        throw new Error(`Konto ${post.konto} (${post.kontoNamn}) hittades inte i databasen`);
+      }
+      const kontoId = kontoResult.rows[0].id;
+
+      await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
+    }
+
+    // Markera lönespecifikation som utbetald
+    const updateLönespecQuery = `
+      UPDATE lönespecifikationer 
+      SET status = 'Utbetald', uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await client.query(updateLönespecQuery, [data.lönespecId]);
+
+    client.release();
+
+    revalidatePath("/personal");
+    revalidatePath("/historik");
+    revalidatePath("/rapporter");
+
+    return {
+      success: true,
+      transaktionId,
+      message: `Löneutbetalning bokförd för ${data.anställdNamn}`,
+      bokföringsPoster,
+    };
+  } catch (error) {
+    console.error("❌ bokförLöneutbetalning error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Genererar bokföringsposter enligt samma logik som BokforLoner.tsx
+ */
+function genereraBokföringsPoster(
+  lönespec: any,
+  extrarader: any[],
+  beräknadeVärden: any,
+  anställdNamn: string
+): BokföringsPost[] {
+  const poster: BokföringsPost[] = [];
+
+  const kontantlön = Number(beräknadeVärden.kontantlön || lönespec.grundlön);
+  const skatt = Number(beräknadeVärden.skatt || lönespec.skatt);
+
+  // 1. Kontantlön (7210)
+  if (kontantlön > 0) {
+    poster.push({
+      konto: "7210",
+      kontoNamn: "Löner till tjänstemän",
+      debet: kontantlön,
+      kredit: 0,
+      beskrivning: `Kontantlön ${anställdNamn}`,
+    });
+  }
+
+  // 2. Sociala avgifter (7510)
+  const socialaAvgifter = Math.round(kontantlön * 0.3142);
+  if (socialaAvgifter > 0) {
+    poster.push({
+      konto: "7510",
+      kontoNamn: "Lagstadgade sociala avgifter",
+      debet: socialaAvgifter,
+      kredit: 0,
+      beskrivning: `Sociala avgifter ${anställdNamn}`,
+    });
+  }
+
+  // 3. Skuld sociala avgifter (2731)
+  if (socialaAvgifter > 0) {
+    poster.push({
+      konto: "2731",
+      kontoNamn: "Skuld för sociala avgifter",
+      debet: 0,
+      kredit: socialaAvgifter,
+      beskrivning: `Skuld sociala avgifter ${anställdNamn}`,
+    });
+  }
+
+  // 4. Preliminär skatt (2710)
+  if (skatt > 0) {
+    poster.push({
+      konto: "2710",
+      kontoNamn: "Personalskatt",
+      debet: 0,
+      kredit: skatt,
+      beskrivning: `Preliminär skatt ${anställdNamn}`,
+    });
+  }
+
+  // 5. Nettolön till utbetalning (1930)
+  const nettolön = kontantlön - skatt;
+  if (nettolön > 0) {
+    poster.push({
+      konto: "1930",
+      kontoNamn: "Företagskonto/Bank",
+      debet: 0,
+      kredit: nettolön,
+      beskrivning: `Nettolön utbetalning ${anställdNamn}`,
+    });
+  }
+
+  return poster;
+}

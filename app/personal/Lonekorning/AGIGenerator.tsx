@@ -1,6 +1,6 @@
 "use client";
 
-import { klassificeraExtrarader } from "../Lonespecar/loneberokningar";
+import { klassificeraExtrarader } from "../Lonespecar/loneberakningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 
 interface AGIGeneratorProps {

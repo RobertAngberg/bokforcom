@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
-import { bokforLoneUtbetalning } from "./bokforLoneUtbetalning";
+import { bokförLöneutbetalning } from "../actions";
 
 interface BokföringsPost {
   konto: string;
@@ -139,7 +139,7 @@ export default function BokforLoner({
     try {
       // Skicka hela arrayen med bokföringsposter till backend
       const poster = analyseraBokföringsposter();
-      const result = await bokforLoneUtbetalning({
+      const result = await bokförLöneutbetalning({
         lönespecId: lönespec.id,
         bokföringsPoster: poster,
         extrarader,

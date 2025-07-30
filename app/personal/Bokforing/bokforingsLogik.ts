@@ -5,7 +5,7 @@ import {
   beräknaSkattTabell34,
   beräknaSocialaAvgifter,
   beräknaDaglön,
-} from "../Lonespecar/loneberokningar";
+} from "../Lonespecar/loneberakningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 
 export interface BokföringsRad {

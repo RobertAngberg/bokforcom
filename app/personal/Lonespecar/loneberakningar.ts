@@ -261,7 +261,7 @@ export function beräknaVårdavdrag(månadslön: number): number {
 
 /**
  * Klassificerar extrarader enligt konfigurationens flaggor.
- * Summerar till rätt kategori för loneberokningarna.
+ * Summerar till rätt kategori för löneberäkningarna.
  */
 export function klassificeraExtrarader(extrarader: any[]) {
   let bruttolönTillägg = 0;

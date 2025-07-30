@@ -9,7 +9,7 @@ import {
   beräknaSemesterLön,
   beräknaSemesterersättning,
   beräknaSemesterlönPerDag,
-} from "../loneberokningar";
+} from "../loneberakningar";
 
 export interface RadKonfiguration {
   label: string;
