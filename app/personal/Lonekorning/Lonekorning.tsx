@@ -12,18 +12,12 @@ import {
   hämtaFöretagsprofil,
   bokförLöneskatter,
 } from "../actions";
-// import { useLonespecContext } from "../Lonespecar/LonespecContext";
-import LönespecView from "../Lonespecar/LonespecView";
-import AnstolldaLista from "./AnstalldaLista";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
-import BokforKnappOchModal from "./BokforKnappOchModal";
 import Knapp from "../../_components/Knapp";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LoadingSpinner from "../../_components/LoadingSpinner";
-import { klassificeraExtrarader } from "../Lonespecar/loneberokningar";
-import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
 import AGIDebugModal from "./AGIDebugModal";
 import NySpecModal from "./NySpecModal";
@@ -60,7 +54,7 @@ export default function Lonekorning() {
   const [visaDebug, setVisaDebug] = useState(false);
   //#endregion
 
-  //#region Skatte beräkningar
+  //#region Skatteberäkningar
   const skatteManager = SkatteManager({
     valdaSpecar,
     beräknadeVärden,
@@ -145,7 +139,6 @@ export default function Lonekorning() {
   }, [utbetalningsdatum, specarPerDatum]);
   //#endregion
 
-  //#region AGI Generation
   const { data: session } = useSession();
 
   const agiGenerator = AGIGenerator({
@@ -236,10 +229,6 @@ export default function Lonekorning() {
         />
       )}
 
-      {/* EXPORT & BOKFÖRING - LÄNGST NER */}
-      {/* EXPORT & BOKFÖRING - LÄNGST NER */}
-      {/* Batch mail och bokföring kan implementeras här om du vill, men nu är all gammal state och props borttagen. */}
-      {/* Bankgiro modal */}
       {bankgiroModalOpen && (
         <BankgiroExport
           anställda={anstallda}
@@ -249,7 +238,7 @@ export default function Lonekorning() {
           onClose={() => setBankgiroModalOpen(false)}
         />
       )}
-      {/* Batch mail modal */}
+
       {batchMailModalOpen && (
         <MailaLonespec
           batch={valdaSpecar.map((spec) => ({
@@ -264,7 +253,7 @@ export default function Lonekorning() {
           onClose={() => setBatchMailModalOpen(false)}
         />
       )}
-      {/* Bokför modal */}
+
       {bokforModalOpen && (
         <BokforLoner
           lönespec={valdaSpecar[0]}
@@ -282,14 +271,12 @@ export default function Lonekorning() {
         />
       )}
 
-      {/* AGI Debug Modal */}
       <AGIDebugModal
         visaDebug={visaDebug}
         setVisaDebug={setVisaDebug}
         agiDebugData={agiDebugData}
       />
 
-      {/* Skatte modal */}
       <SkatteBokforingModal
         skatteModalOpen={skatteModalOpen}
         setSkatteModalOpen={setSkatteModalOpen}
@@ -303,5 +290,4 @@ export default function Lonekorning() {
       />
     </div>
   );
-  //#endregion
 }
