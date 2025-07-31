@@ -2,11 +2,10 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "@/auth";
+import { auth } from "../../auth";
 import OpenAI from "openai";
 import { invalidateBokförCache } from "../_utils/invalidateBokförCache";
 import { put } from "@vercel/blob";
-import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 
 const pool = new Pool({
@@ -206,29 +205,6 @@ export async function fetchTransactionWithBlob(transactionId: number) {
   }
 }
 
-export async function processImageOCR(imageBase64: string): Promise<string> {
-  console.log("🤖 Server OCR startar...");
-
-  try {
-    const buffer = Buffer.from(imageBase64, "base64");
-
-    // Tesseract vill ha Buffer direkt, inte Uint8Array
-    const result = await Tesseract.recognize(buffer, "swe+eng", {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          console.log(`🤖 Server OCR: ${(m.progress * 100).toFixed(1)}%`);
-        }
-      },
-    });
-
-    console.log("✅ Server OCR klar");
-    return result.data.text;
-  } catch (error) {
-    console.error("❌ Server OCR fel:", error);
-    return "";
-  }
-}
-
 export async function extractPDFText(pdfBase64: string): Promise<string> {
   console.log("📄 Server PDF-extraktion startar...");
 
@@ -301,6 +277,9 @@ export async function saveTransaction(formData: FormData) {
 
   // NYTT: Kolla om vi är i utläggs-mode
   const utlaggMode = formData.get("utlaggMode") === "true";
+  console.log(
+    `🔍 DEBUG: utlaggMode value from form = "${formData.get("utlaggMode")}", parsed utlaggMode = ${utlaggMode}`
+  );
 
   console.log("📥 formData:", {
     transaktionsdatum,
@@ -309,6 +288,10 @@ export async function saveTransaction(formData: FormData) {
     beloppUtanMoms,
     utlaggMode,
   });
+  console.log(
+    `🎯 Processing transaction: ${valtFörval.namn}, specialtyp: ${valtFörval.specialtyp}`
+  );
+  console.log(`📋 extrafält:`, extrafält);
 
   let blobUrl = null;
   let filename = "";
@@ -329,7 +312,7 @@ export async function saveTransaction(formData: FormData) {
         addRandomSuffix: false,
       });
 
-      blobUrl = blob.url;
+      // blobUrl = blob.url;
       console.log(`✅ Fil sparad till Blob Storage: ${blobUrl}`);
     } catch (blobError) {
       console.error("❌ Kunde inte spara fil till Blob Storage:", blobError);
@@ -365,20 +348,48 @@ export async function saveTransaction(formData: FormData) {
       VALUES ($1,$2,$3,$4)
     `;
 
-    const getBelopp = (nr: string, typ: "debet" | "kredit"): number => {
+    const getBelopp = (nr: string, typ: "debet" | "kredit") => {
       const klass = nr[0];
+      console.log(
+        `🔍 getBelopp called: nr=${nr}, typ=${typ}, klass=${klass}, belopp=${belopp}, beloppUtanMoms=${beloppUtanMoms}`
+      );
+
       if (typ === "debet") {
-        if (klass === "1") return belopp;
-        if (klass === "2") return moms;
-        return beloppUtanMoms;
+        // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
+        if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
+          console.log(`💰 Returning belopp ${belopp} for debet 1930 (försäljning)`);
+          return belopp;
+        }
+        // Alla andra klass 1-konton får beloppUtanMoms som tidigare
+        if (klass === "1") return beloppUtanMoms;
+        if (klass === "2") return moms; // FIXED: 2640 moms-konton som debet
+        if (klass === "3") return 0;
+        if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8")
+          return beloppUtanMoms; // FIXED: Kostnader
+        return 0;
       }
+      // typ === "kredit"
+      // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
+      if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
+        console.log(`💰 Returning 0 for kredit 1930 (försäljning) - should not be credit`);
+        return 0;
+      }
+      // UTLÄGG FIX: 2890 ska få hela beloppet som kredit (ersätter 1930)
+      if (nr === "2890") {
+        console.log(`💰 Returning belopp ${belopp} for kredit 2890 (utlägg)`);
+        return belopp;
+      }
+      // Alla andra klass 1-konton får belopp som tidigare
       if (klass === "1") return belopp;
-      if (nr.startsWith("20")) return belopp;
-      if (klass === "2") return moms;
+      if (klass === "2") {
+        console.log(`💰 Returning moms ${moms} for kredit klass 2 (konto ${nr})`);
+        return moms; // FIXED: 2610 utgående moms ska vara kredit vid försäljning
+      }
       if (klass === "3") return beloppUtanMoms;
+      if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8")
+        return 0; // Kostnader ska inte vara kredit
       return 0;
     };
-
     if (Object.keys(extrafält).length) {
       for (const [nr, data] of Object.entries(extrafält)) {
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
@@ -389,7 +400,19 @@ export async function saveTransaction(formData: FormData) {
           continue;
         }
 
-        const { debet = 0, kredit = 0 } = data;
+        // CHECKPOINT FIX 2025-07-31: Använd samma logik som getBelopp för 1930 vid försäljning
+        let { debet = 0, kredit = 0 } = data;
+
+        // Om detta är konto 1930 och det är försäljning, använd rätt belopp
+        if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
+          if (debet > 0) {
+            debet = belopp; // Hela beloppet som debet, inte beloppUtanMoms
+          }
+          if (kredit > 0) {
+            kredit = 0; // 1930 ska inte vara kredit vid försäljning
+          }
+        }
+
         if (debet === 0 && kredit === 0) continue;
 
         console.log(`➕ Extrafält  ${nr}: D ${debet}  K ${kredit}`);
@@ -404,6 +427,7 @@ export async function saveTransaction(formData: FormData) {
 
         // NYTT: Byt ut 1930 mot 2890 om utläggs-mode
         if (utlaggMode && nr === "1930") nr = "2890";
+        console.log(`🔍 Would change 1930 to 2890? utlaggMode=${utlaggMode}, nr=${nr}`);
 
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
           nr,
@@ -415,7 +439,14 @@ export async function saveTransaction(formData: FormData) {
 
         const debet = k.debet ? getBelopp(nr, "debet") : 0;
         const kredit = k.kredit ? getBelopp(nr, "kredit") : 0;
-        if (debet === 0 && kredit === 0) continue;
+        console.log(
+          `📘 Förvalskonto ${nr}: k.debet=${k.debet}, k.kredit=${k.kredit}, calculated D=${debet}, K=${kredit}`
+        );
+
+        if (debet === 0 && kredit === 0) {
+          console.log(`⚠️ Skipping konto ${nr} because both debet and kredit are 0`);
+          continue;
+        }
 
         console.log(`📘 Förvalskonto ${nr}: D ${debet}  K ${kredit}`);
         await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);

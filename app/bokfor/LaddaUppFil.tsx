@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR, processImageOCR } from "./actions";
+import { extractDataFromOCR } from "./actions";
 import Tesseract from "tesseract.js";
 
 interface FileUploadProps {
@@ -277,7 +277,7 @@ export default function LaddaUppFil({
 }
 
 async function förbättraOchLäsBild(file: File): Promise<string> {
-  console.log("🖼️ Förbereder bild för server OCR...");
+  console.log("🖼️ Förbereder bild för client-side OCR...");
 
   const img = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
@@ -285,7 +285,7 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
 
   if (!ctx) throw new Error("Kunde inte skapa canvas");
 
-  // Bildbearbetning (samma som förut)
+  // Bildbearbetning för bättre OCR-läsning
   const scaleFactor = img.width < 800 ? 2 : 1.5;
   canvas.width = img.width * scaleFactor;
   canvas.height = img.height * scaleFactor;
@@ -301,12 +301,28 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
   }
   ctx.putImageData(imageData, 0, 0);
 
-  // Konvertera till base64 och skicka till server
-  const dataUrl = canvas.toDataURL("image/png");
-  const base64Data = dataUrl.split(",")[1];
+  console.log("🔍 Startar Tesseract OCR...");
 
-  console.log("📤 Skickar till server OCR...");
-  const text = await processImageOCR(base64Data);
+  try {
+    // Använd Tesseract.js direkt på den förbättrade bilden
+    const {
+      data: { text },
+    } = await Tesseract.recognize(
+      canvas,
+      "swe+eng", // Svenska och engelska
+      {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            console.log(`📖 OCR progress: ${Math.round(m.progress * 100)}%`);
+          }
+        },
+      }
+    );
 
-  return text;
+    console.log("✅ OCR klar! Extraherad text:", text.substring(0, 100) + "...");
+    return text;
+  } catch (error) {
+    console.error("❌ Tesseract OCR fel:", error);
+    throw new Error("OCR misslyckades");
+  }
 }

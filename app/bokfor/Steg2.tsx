@@ -65,6 +65,7 @@ export default function Steg2({
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
+      console.log("🔍 Försöker ladda specialförval:", valtFörval.specialtyp);
       const SpecialComponent = require(`./SpecialForval/${valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
@@ -86,6 +87,7 @@ export default function Steg2({
         />
       );
     } catch (err) {
+      console.error("❌ Fel vid laddning av specialförval:", valtFörval.specialtyp, err);
       return (
         <div className="p-10 text-white bg-red-900 text-center">
           ⚠️ Kunde inte ladda specialförval: {valtFörval.specialtyp}

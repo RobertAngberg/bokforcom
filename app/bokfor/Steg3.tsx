@@ -139,6 +139,9 @@ export default function Steg3({
               beloppAttVisa = belopp;
             } else if (kontoNr?.startsWith("26")) {
               beloppAttVisa = moms;
+            } else if (kontoNr === "1930") {
+              // CHECKPOINT FIX 2025-07-31: 1930 ska visa hela beloppet, inte beloppUtanMoms
+              beloppAttVisa = belopp;
             } else {
               beloppAttVisa = beloppUtanMoms;
             }
