@@ -4,35 +4,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFakturaContext } from "./FakturaProvider";
+import { FakturaProvider } from "../FakturaProvider";
+import { useFakturaContext } from "../FakturaProvider";
 import { useSession } from "next-auth/react";
-import KundUppgifter from "./KundUppgifter";
-import ProdukterTjanster from "./ProdukterTjanster/ProdukterTjanster";
-import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
-import SparadeFakturor from "./SparadeFakturor";
-import AnimeradFlik from "../_components/AnimeradFlik";
-import BakåtPil from "../_components/BakåtPil";
-import Knapp from "../_components/Knapp";
-import MainLayout from "../_components/MainLayout";
-import Alternativ from "./Alternativ/Alternativ";
-import Betalning from "./Betalning";
-import Avsandare from "./Avsandare";
+import KundUppgifter from "../KundUppgifter";
+import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
+import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
+import SparadeFakturor from "../SparadeFakturor";
+import AnimeradFlik from "../../_components/AnimeradFlik";
+import BakåtPil from "../../_components/BakåtPil";
+import Knapp from "../../_components/Knapp";
+import MainLayout from "../../_components/MainLayout";
+import Alternativ from "../Alternativ/Alternativ";
+import Betalning from "../Betalning";
+import Avsandare from "../Avsandare";
+import Link from "next/link";
 import {
   saveInvoice,
   hämtaFakturaMedRader,
   deleteFaktura,
   hämtaSparadeFakturor,
   hämtaFöretagsprofil,
-} from "./actions";
+  hämtaSparadeKunder,
+  hämtaSparadeArtiklar,
+} from "../actions";
+//#endregion
 
-type Props = {
+function FakturorComponent({
+  fakturor: initialFakturor,
+  kunder,
+  artiklar,
+}: {
   fakturor: any[];
   kunder: any[];
   artiklar: any[];
-};
-//#endregion
-
-export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }: Props) {
+}) {
   // State för att styra flikarnas synlighet
   const [showAllFlikar, setShowAllFlikar] = useState(false);
   //#region Context och state
@@ -45,7 +51,7 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
       return;
     }
     const { faktura, artiklar, rotRut } = data;
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       id: faktura.id,
       fakturanummer: faktura.fakturanummer ?? "",
@@ -118,9 +124,9 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
   //#region Ladda företagsdata centralt när session är tillgänglig
   useEffect(() => {
     if (session?.user?.id && !formData.företagsnamn) {
-      hämtaFöretagsprofil(session.user.id).then((profil) => {
+      hämtaFöretagsprofil(session.user.id).then((profil: any) => {
         if (profil) {
-          setFormData((prev) => ({
+          setFormData((prev: any) => ({
             ...prev,
             företagsnamn: profil.företagsnamn ?? "",
             adress: profil.adress ?? "",
@@ -152,31 +158,6 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
   }, []);
   //#endregion
 
-  // Props till Forhandsgranskning
-  const lönespec = formData;
-  const anställd = {
-    förnamn: formData.kundnamn,
-    efternamn: "",
-    user_id: formData.kundId,
-    ...formData,
-  };
-  const företagsprofil = {
-    företagsnamn: formData.företagsnamn,
-    adress: formData.adress,
-    postnummer: formData.postnummer,
-    stad: formData.stad,
-    organisationsnummer: formData.organisationsnummer,
-    momsregistreringsnummer: formData.momsregistreringsnummer,
-    telefonnummer: formData.telefonnummer,
-    epost: formData.epost,
-    bankinfo: formData.bankinfo,
-    webbplats: formData.webbplats,
-    logo: formData.logo,
-    logoWidth: formData.logoWidth,
-  };
-  const extrarader = formData.artiklar || [];
-  const handleStäng = () => setShowPreview(false);
-
   return (
     <>
       <MainLayout>
@@ -188,8 +169,28 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
               </BakåtPil>
             </div>
           )}
+          {!showAllFlikar && (
+            <div className="absolute left-0 top-1">
+              <Link
+                href="/faktura"
+                className="flex items-center gap-2 text-white font-bold px-3 py-2 rounded hover:bg-gray-700 focus:outline-none"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Tillbaka
+              </Link>
+            </div>
+          )}
           {!showAllFlikar ? (
-            <h1 className="text-3xl text-center w-full">Fakturor</h1>
+            <h1 className="text-3xl text-center w-full">Sparade Fakturor</h1>
           ) : (
             <h1 className="text-2xl text-center w-full">
               {formData.fakturanummer && formData.kundnamn
@@ -201,28 +202,6 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
 
         {!showAllFlikar && (
           <>
-            <div className="mb-4 flex justify-end">
-              <Knapp
-                text="📝 Ny faktura"
-                onClick={() => {
-                  // Nollställ kunduppgifter och artiklar
-                  setFormData((prev) => ({
-                    ...prev,
-                    kundnamn: "",
-                    kundId: "",
-                    kundnummer: "",
-                    kundorganisationsnummer: "",
-                    kundadress: "",
-                    kundpostnummer: "",
-                    kundstad: "",
-                    kundemail: "",
-                    artiklar: [],
-                  }));
-                  setShowAllFlikar(true);
-                }}
-                className="mr-2"
-              />
-            </div>
             <SparadeFakturor
               fakturor={fakturor}
               activeInvoiceId={currentInvoiceId}
@@ -278,5 +257,50 @@ export default function Fakturor({ fakturor: initialFakturor, kunder, artiklar }
         </div>
       )}
     </>
+  );
+}
+
+// Data-loading wrapper för att hålla server-side funktionaliteten
+async function DataLoader() {
+  const [_, kunder, fakturor, artiklar] = await Promise.all([
+    new Promise((r) => setTimeout(r, 400)),
+    hämtaSparadeKunder(),
+    hämtaSparadeFakturor(),
+    hämtaSparadeArtiklar(),
+  ]);
+
+  return { kunder, fakturor, artiklar };
+}
+
+export default function SparadeFakturorPage() {
+  const [data, setData] = useState<{ kunder: any[]; fakturor: any[]; artiklar: any[] } | null>(
+    null
+  );
+
+  useEffect(() => {
+    DataLoader().then(setData);
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-slate-950 overflow-x-hidden px-4 py-10 text-slate-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="w-full p-8 bg-cyan-950 border border-cyan-800 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+                <p className="text-slate-100 text-lg">Laddar fakturor...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <FakturaProvider>
+      <FakturorComponent fakturor={data.fakturor} kunder={data.kunder} artiklar={data.artiklar} />
+    </FakturaProvider>
   );
 }
