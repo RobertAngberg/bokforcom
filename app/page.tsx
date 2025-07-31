@@ -1,13 +1,36 @@
+"use client";
+
+import { useState } from "react";
 import Startsida from "./start/Startsida";
 import { fetchDataFromYear } from "./start/actions";
+import Modal from "./_components/Modal";
 
-export default async function Page() {
-  // Starta ALLA asynkrona operationer samtidigt
-  const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
-  const dataPromise = fetchDataFromYear("2025");
+export default function Page() {
+  const [showModal, setShowModal] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
-  // Promise.all väntar på att alla blir klara (delay + data hämtas parallellt)
-  const [, initialData] = await Promise.all([delayPromise, dataPromise]);
+  // Ladda data när komponenten mountas
+  useState(() => {
+    const loadData = async () => {
+      const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
+      const dataPromise = fetchDataFromYear("2025");
+      const [, data] = await Promise.all([delayPromise, dataPromise]);
+      setInitialData(data);
+    };
+    loadData();
+  });
 
-  return <Startsida initialData={initialData} />;
+  return (
+    <>
+      {initialData && <Startsida initialData={initialData} />}
+
+      {/* Test knapp för Modal */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed bottom-4 right-4 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg shadow-lg transition-colors z-40"
+      >
+        Testa Modal
+      </button>
+    </>
+  );
 }
