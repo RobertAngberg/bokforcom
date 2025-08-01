@@ -1,7 +1,17 @@
 import Bokför from "./Bokfor";
 import { fetchFavoritforval } from "./actions";
 
-export default async function Page() {
+type PageProps = {
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default async function Page({ searchParams }: PageProps) {
+  // Await searchParams för NextJS kompatibilitet
+  const params = await searchParams;
+
+  // Kolla om vi är i leverantörsfaktura-mode
+  const isLevfaktMode = params.levfakt === "true";
+
   // Starta ALLA asynkrona operationer samtidigt
   const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
   const favoritFörvalenPromise = fetchFavoritforval();
@@ -9,5 +19,5 @@ export default async function Page() {
   // Promise.all väntar på att alla blir klara (delay + data hämtas parallellt)
   const [, favoritFörvalen] = await Promise.all([delayPromise, favoritFörvalenPromise]);
 
-  return <Bokför favoritFörvalen={favoritFörvalen} />;
+  return <Bokför favoritFörvalen={favoritFörvalen} levfaktMode={isLevfaktMode} />;
 }

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import SökFörval from "./SokForval";
 import Steg2 from "./Steg2";
+import Steg2Levfakt from "./steg2Levfakt";
 import Steg3 from "./Steg3";
 import Steg4 from "./Steg4";
 import MainLayout from "../_components/MainLayout";
@@ -43,10 +44,15 @@ type Forval = {
 type Props = {
   favoritFörvalen: Forval[];
   utlaggMode?: boolean;
+  levfaktMode?: boolean;
 };
 //#endregion
 
-export default function Bokför({ favoritFörvalen, utlaggMode = false }: Props) {
+export default function Bokför({
+  favoritFörvalen,
+  utlaggMode = false,
+  levfaktMode = false,
+}: Props) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [kontonummer, setKontonummer] = useState<string>("");
   const [kontobeskrivning, setKontobeskrivning] = useState<string>();
@@ -69,11 +75,32 @@ export default function Bokför({ favoritFörvalen, utlaggMode = false }: Props)
           setvaltFörval={setValtFörval}
           setKontonummer={setKontonummer}
           setKontobeskrivning={setKontobeskrivning}
+          levfaktMode={levfaktMode}
         />
       )}
 
-      {currentStep === 2 && (
+      {currentStep === 2 && !levfaktMode && (
         <Steg2
+          setCurrentStep={setCurrentStep}
+          fil={fil}
+          setFil={setFil}
+          pdfUrl={pdfUrl}
+          setPdfUrl={setPdfUrl}
+          belopp={belopp}
+          setBelopp={setBelopp}
+          transaktionsdatum={transaktionsdatum}
+          setTransaktionsdatum={setTransaktionsdatum}
+          kommentar={kommentar}
+          setKommentar={setKommentar}
+          valtFörval={valtFörval}
+          extrafält={extrafält}
+          setExtrafält={setExtrafält}
+          utlaggMode={utlaggMode}
+        />
+      )}
+
+      {currentStep === 2 && levfaktMode && (
+        <Steg2Levfakt
           setCurrentStep={setCurrentStep}
           fil={fil}
           setFil={setFil}
@@ -104,6 +131,7 @@ export default function Bokför({ favoritFörvalen, utlaggMode = false }: Props)
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}
           utlaggMode={utlaggMode}
+          levfaktMode={levfaktMode}
         />
       )}
 

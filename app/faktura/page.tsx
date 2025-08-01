@@ -12,7 +12,7 @@ const fakturaAlternativ = [
     emoji: "📋",
     title: "Leverantörsfakturor",
     description: "Hantera inkommande fakturor från leverantörer.",
-    href: "/faktura/Leverantorer",
+    href: "/bokfor?levfakt=true",
   },
   {
     emoji: "📝",

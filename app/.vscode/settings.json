@@ -18,5 +18,6 @@
     "tsconfig.json",
     ".env.local",
     "globals.css"
-  ]
+  ],
+  "copilot-chat.sendOnEnter": false
 }

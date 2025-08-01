@@ -36,6 +36,7 @@ type Props = {
   setvaltFörval: (val: Forval) => void;
   setKontonummer: (val: string) => void;
   setKontobeskrivning: (val: string) => void;
+  levfaktMode?: boolean;
 };
 
 export default function SokForval({
@@ -44,6 +45,7 @@ export default function SokForval({
   setvaltFörval,
   setKontonummer,
   setKontobeskrivning,
+  levfaktMode = false,
 }: Props) {
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<Forval[]>(favoritFörvalen ?? []);
@@ -151,7 +153,9 @@ export default function SokForval({
 
   return (
     <div className="w-full">
-      <h1 className="mb-8 text-3xl text-center text-white">Steg 1: Sök förval</h1>
+      <h1 className="mb-8 text-3xl text-center text-white">
+        {levfaktMode ? "Steg 1: Välj förval för leverantörsfaktura" : "Steg 1: Sök förval"}
+      </h1>
 
       <input
         ref={inputRef}

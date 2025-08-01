@@ -49,6 +49,75 @@ export async function extractDataFromOCR(text: string) {
   }
 }
 
+export async function extractDataFromOCRLevFakt(text: string) {
+  console.log("🧠 Extracting leverantörsfaktura data from OCR text:", text);
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || "",
+  });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4.1-nano",
+      messages: [
+        {
+          role: "system",
+          content: `Extract all relevant invoice data from OCR text. This is a supplier invoice (leverantörsfaktura). 
+          
+          Look for:
+          - Supplier/company name (leverantör)
+          - Invoice date (fakturadatum) 
+          - Due date (förfallodatum)
+          - Invoice number (fakturanummer)
+          - Total amount (belopp)
+          - Payment date if mentioned (betaldatum)
+          
+          Respond with *raw* JSON only (no markdown, no triple backticks). 
+          Format: {
+            "leverantör": "Company Name",
+            "fakturadatum": "YYYY-MM-DD",
+            "förfallodatum": "YYYY-MM-DD", 
+            "fakturanummer": "12345",
+            "belopp": 1234.56,
+            "betaldatum": "YYYY-MM-DD"
+          }
+          
+          If a field cannot be determined, use empty string "" for text fields, null for dates, or 0 for amount.`,
+        },
+        { role: "user", content: text },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+
+    if (content && content.startsWith("{")) {
+      const parsed = JSON.parse(content);
+      console.log("✅ Leverantörsfaktura OCR extracted:", parsed);
+      return parsed;
+    }
+
+    console.warn("⚠️ GPT unstructured content:", content);
+    return {
+      leverantör: "",
+      fakturadatum: null,
+      förfallodatum: null,
+      fakturanummer: "",
+      belopp: 0,
+      betaldatum: null,
+    };
+  } catch (error) {
+    console.error("❌ extractDataFromOCRLevFakt error:", error);
+    return {
+      leverantör: "",
+      fakturadatum: null,
+      förfallodatum: null,
+      fakturanummer: "",
+      belopp: 0,
+      betaldatum: null,
+    };
+  }
+}
+
 export async function getKontoklass(kontonummer: string) {
   try {
     const client = await pool.connect();
@@ -263,6 +332,28 @@ export async function saveTransaction(formData: FormData) {
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
 
+  // Konvertera transaktionsdatum till korrekt format för PostgreSQL
+  let formattedDate = "";
+  if (transaktionsdatum) {
+    try {
+      const date = new Date(transaktionsdatum);
+      if (!isNaN(date.getTime())) {
+        // Formatera som YYYY-MM-DD för PostgreSQL
+        formattedDate = date.toISOString().split("T")[0];
+      } else {
+        console.error("❌ Ogiltigt datum:", transaktionsdatum);
+        throw new Error("Ogiltigt transaktionsdatum");
+      }
+    } catch (error) {
+      console.error("❌ Fel vid datumkonvertering:", error, "Datum:", transaktionsdatum);
+      throw new Error("Kunde inte konvertera transaktionsdatum");
+    }
+  } else {
+    throw new Error("Transaktionsdatum saknas");
+  }
+
+  console.log("📅 Datum konverterat:", transaktionsdatum, "→", formattedDate);
+
   const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
   if (!valtFörval?.konton) throw new Error("⛔ Saknar valda förval");
 
@@ -275,18 +366,18 @@ export async function saveTransaction(formData: FormData) {
     { label?: string; debet: number; kredit: number }
   >;
 
-  // NYTT: Kolla om vi är i utläggs-mode
+  // NYTT: Kolla om vi är i utläggs-mode eller leverantörsfaktura-mode
   const utlaggMode = formData.get("utlaggMode") === "true";
-  console.log(
-    `🔍 DEBUG: utlaggMode value from form = "${formData.get("utlaggMode")}", parsed utlaggMode = ${utlaggMode}`
-  );
+  const levfaktMode = formData.get("levfaktMode") === "true";
+  console.log(`🔍 DEBUG: utlaggMode = ${utlaggMode}, levfaktMode = ${levfaktMode}`);
 
   console.log("📥 formData:", {
-    transaktionsdatum,
+    transaktionsdatum: formattedDate, // Använd formaterade datumet i debug
     belopp,
     moms,
     beloppUtanMoms,
     utlaggMode,
+    levfaktMode,
   });
   console.log(
     `🎯 Processing transaction: ${valtFörval.namn}, specialtyp: ${valtFörval.specialtyp}`
@@ -330,7 +421,7 @@ export async function saveTransaction(formData: FormData) {
       RETURNING id
       `,
       [
-        new Date(transaktionsdatum),
+        formattedDate, // Använd det formaterade datumet istället för new Date()
         valtFörval.namn ?? "",
         belopp,
         filename,
@@ -379,6 +470,11 @@ export async function saveTransaction(formData: FormData) {
         console.log(`💰 Returning belopp ${belopp} for kredit 2890 (utlägg)`);
         return belopp;
       }
+      // LEVERANTÖRSFAKTURA FIX: 2440 ska få hela beloppet som kredit (ersätter 1930)
+      if (nr === "2440") {
+        console.log(`💰 Returning belopp ${belopp} for kredit 2440 (leverantörsfaktura)`);
+        return belopp;
+      }
       // Alla andra klass 1-konton får belopp som tidigare
       if (klass === "1") return belopp;
       if (klass === "2") {
@@ -425,9 +521,15 @@ export async function saveTransaction(formData: FormData) {
         let nr = k.kontonummer?.toString().trim();
         if (!nr) continue;
 
-        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode
-        if (utlaggMode && nr === "1930") nr = "2890";
-        console.log(`🔍 Would change 1930 to 2890? utlaggMode=${utlaggMode}, nr=${nr}`);
+        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode, eller mot 2440 om leverantörsfaktura-mode
+        if (utlaggMode && nr === "1930") {
+          nr = "2890";
+        } else if (levfaktMode && nr === "1930") {
+          nr = "2440";
+        }
+        console.log(
+          `🔍 Kontokonvertering: utlaggMode=${utlaggMode}, levfaktMode=${levfaktMode}, nr=${nr}`
+        );
 
         const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
           nr,

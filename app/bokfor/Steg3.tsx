@@ -44,6 +44,7 @@ interface Step3Props {
   setCurrentStep?: (step: number) => void;
   extrafält?: Record<string, ExtrafältRad>;
   utlaggMode?: boolean;
+  levfaktMode?: boolean;
 }
 // #endregion
 
@@ -58,6 +59,7 @@ export default function Steg3({
   setCurrentStep,
   extrafält = {},
   utlaggMode = false,
+  levfaktMode = false,
 }: Step3Props) {
   // State för anställda och vald anställd
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
@@ -100,6 +102,7 @@ export default function Steg3({
   // #region Submitta form
   const handleSubmit = async (formData: FormData) => {
     if (!valtFörval || !setCurrentStep) return;
+
     if (fil) formData.set("fil", fil);
     formData.set("valtFörval", JSON.stringify(valtFörval));
     formData.set("extrafält", JSON.stringify(extrafält));
@@ -111,7 +114,9 @@ export default function Steg3({
     formData.set("moms", moms.toString());
     formData.set("beloppUtanMoms", beloppUtanMoms.toString());
     formData.set("utlaggMode", utlaggMode ? "true" : "false");
+    formData.set("levfaktMode", levfaktMode ? "true" : "false");
     if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
+
     const result = await saveTransaction(formData);
     if (result.success) setCurrentStep(4);
   };
@@ -136,6 +141,12 @@ export default function Steg3({
             if (utlaggMode && kontoNr === "1930") {
               kontoNr = "2890";
               namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
+              beloppAttVisa = belopp;
+            }
+            // Om leverantörsfaktura-mode, byt ut 1930 mot 2440
+            else if (levfaktMode && kontoNr === "1930") {
+              kontoNr = "2440";
+              namn = `2440 Leverantörsskulder`;
               beloppAttVisa = belopp;
             } else if (kontoNr?.startsWith("26")) {
               beloppAttVisa = moms;
@@ -163,11 +174,27 @@ export default function Steg3({
     <div className="relative">
       <BakåtPil onClick={() => setCurrentStep?.(2)} />
 
-      <h1 className="text-3xl mb-4 text-center">Steg 3: Kontrollera och slutför</h1>
+      <h1 className="text-3xl mb-4 text-center">
+        {levfaktMode
+          ? "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
+          : "Steg 3: Kontrollera och slutför"}
+      </h1>
       <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
       <p className="text-center text-gray-300 mb-8">
         {transaktionsdatum ? new Date(transaktionsdatum).toLocaleDateString("sv-SE") : ""}
       </p>
+      {levfaktMode && (
+        <div className="mb-6 flex items-center px-4 py-3 bg-purple-900 text-purple-100 rounded-lg text-base">
+          <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-purple-700 text-white text-lg font-bold">
+            📋
+          </span>
+          <div className="flex-1 text-center">
+            <strong>Leverantörsfaktura bokförs på skuldsidan (2440).</strong>
+            <br />
+            När du senare betalar fakturan kommer skulden att kvittas mot ditt företagskonto.
+          </div>
+        </div>
+      )}
       {utlaggMode && (
         <>
           <div className="mb-6 flex items-center px-4 py-3 bg-blue-900 text-blue-100 rounded-lg text-base">
