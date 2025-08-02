@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { formatSEK } from "../_utils/format";
 import { hamtaBokfordaFakturor, hamtaTransaktionsposter, registreraBetalning } from "./actions";
 import VerifikatModal from "./VerifikatModal";
+import BetalningsbekräftelseModal from "./BetalningsbekraftelseModal";
 
 type BokfordFaktura = {
   id: number; // leverantörsfaktura.id
@@ -31,6 +32,13 @@ export default function BokfordaFakturor() {
   }>({
     isOpen: false,
     transaktionId: 0,
+  });
+  const [betalningsModal, setBetalningsModal] = useState<{
+    isOpen: boolean;
+    faktura: BokfordFaktura | null;
+  }>({
+    isOpen: false,
+    faktura: null,
   });
 
   useEffect(() => {
@@ -67,30 +75,41 @@ export default function BokfordaFakturor() {
   };
 
   const handleRegistreraBetalning = async (faktura: BokfordFaktura) => {
-    const confirmed = confirm(
-      `Vill du registrera betalning för faktura från ${faktura.leverantör}?
-Belopp: ${formatSEK(faktura.belopp)}`
-    );
+    setBetalningsModal({
+      isOpen: true,
+      faktura: faktura,
+    });
+  };
 
-    if (confirmed) {
-      try {
-        const result = await registreraBetalning(faktura.id, faktura.belopp);
+  const bekräftaBetalning = async () => {
+    if (!betalningsModal.faktura) return;
 
-        if (result.success) {
-          alert("Betalning registrerad!");
-          // Ladda om data för att visa uppdaterad status
-          const updatedData = await hamtaBokfordaFakturor();
-          if (updatedData.success) {
-            setFakturor(updatedData.fakturor || []);
-          }
-        } else {
-          alert(`Fel vid registrering av betalning: ${result.error}`);
+    try {
+      const result = await registreraBetalning(
+        betalningsModal.faktura.id,
+        betalningsModal.faktura.belopp
+      );
+
+      if (result.success) {
+        alert("Betalning registrerad!");
+        // Stäng modalen
+        setBetalningsModal({ isOpen: false, faktura: null });
+        // Ladda om data för att visa uppdaterad status
+        const updatedData = await hamtaBokfordaFakturor();
+        if (updatedData.success) {
+          setFakturor(updatedData.fakturor || []);
         }
-      } catch (error) {
-        console.error("Fel vid betalning:", error);
-        alert("Ett fel uppstod vid registrering av betalning");
+      } else {
+        alert(`Fel vid registrering av betalning: ${result.error}`);
       }
+    } catch (error) {
+      console.error("Fel vid betalning:", error);
+      alert("Ett fel uppstod vid registrering av betalning");
     }
+  };
+
+  const stängBetalningsModal = () => {
+    setBetalningsModal({ isOpen: false, faktura: null });
   };
 
   if (loading) {
@@ -193,6 +212,16 @@ Belopp: ${formatSEK(faktura.belopp)}`
         transaktionId={verifikatModal.transaktionId}
         fakturanummer={verifikatModal.fakturanummer}
         leverantör={verifikatModal.leverantör}
+      />
+
+      {/* Betalningsbekräftelse Modal */}
+      <BetalningsbekräftelseModal
+        isOpen={betalningsModal.isOpen}
+        onClose={stängBetalningsModal}
+        onConfirm={bekräftaBetalning}
+        leverantör={betalningsModal.faktura?.leverantör || ""}
+        fakturanummer={betalningsModal.faktura?.fakturanummer || ""}
+        belopp={betalningsModal.faktura?.belopp || 0}
       />
     </div>
   );
