@@ -1035,9 +1035,6 @@ export type Leverantör = {
   ort?: string;
   telefon?: string;
   email?: string;
-  kontaktperson?: string;
-  hemsida?: string;
-  anteckningar?: string;
   skapad?: string;
   uppdaterad?: string;
 };
@@ -1056,33 +1053,18 @@ export async function saveLeverantör(formData: FormData) {
     const ort = formData.get("ort")?.toString();
     const telefon = formData.get("telefon")?.toString();
     const email = formData.get("email")?.toString();
-    const kontaktperson = formData.get("kontaktperson")?.toString();
-    const hemsida = formData.get("hemsida")?.toString();
-    const anteckningar = formData.get("anteckningar")?.toString();
 
     if (!namn) {
       return { success: false, error: "Namn är obligatoriskt" };
     }
 
     const result = await client.query(
-      `INSERT INTO leverantörer (
-        userId, namn, organisationsnummer, adress, postnummer, ort, 
-        telefon, email, kontaktperson, hemsida, anteckningar
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+      `INSERT INTO "leverantörer" (
+        "userId", "namn", "organisationsnummer", "adress", "postnummer", "ort", 
+        "telefon", "email"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *`,
-      [
-        userId,
-        namn,
-        organisationsnummer,
-        adress,
-        postnummer,
-        ort,
-        telefon,
-        email,
-        kontaktperson,
-        hemsida,
-        anteckningar,
-      ]
+      [userId, namn, organisationsnummer, adress, postnummer, ort, telefon, email]
     );
 
     return { success: true, leverantör: result.rows[0] };
@@ -1102,7 +1084,7 @@ export async function getLeverantörer() {
 
   try {
     const result = await client.query(
-      `SELECT * FROM leverantörer WHERE userId = $1 ORDER BY namn ASC`,
+      `SELECT * FROM "leverantörer" WHERE "userId" = $1 ORDER BY "namn" ASC`,
       [userId]
     );
 
@@ -1110,6 +1092,70 @@ export async function getLeverantörer() {
   } catch (error) {
     console.error("Fel vid hämtning av leverantörer:", error);
     return { success: false, error: "Kunde inte hämta leverantörer" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateLeverantör(
+  id: number,
+  data: {
+    namn: string;
+    organisationsnummer?: string;
+    adress?: string;
+    postnummer?: string;
+    ort?: string;
+    telefon?: string;
+    email?: string;
+  }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `UPDATE "leverantörer" 
+       SET "namn" = $1, "organisationsnummer" = $2, "adress" = $3, 
+           "postnummer" = $4, "ort" = $5, "telefon" = $6, "email" = $7, "uppdaterad" = NOW()
+       WHERE "id" = $8 AND "userId" = $9`,
+      [data.namn, data.organisationsnummer, data.adress, data.postnummer, data.ort, data.telefon, data.email, id, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, error: "Leverantör hittades inte" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Fel vid uppdatering av leverantör:", error);
+    return { success: false, error: "Kunde inte uppdatera leverantör" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteLeverantör(id: number) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `DELETE FROM "leverantörer" WHERE "id" = $1 AND "userId" = $2`,
+      [id, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, error: "Leverantör hittades inte" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Fel vid borttagning av leverantör:", error);
+    return { success: false, error: "Kunde inte ta bort leverantör" };
   } finally {
     client.release();
   }

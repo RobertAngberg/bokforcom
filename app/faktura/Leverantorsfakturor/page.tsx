@@ -1,13 +1,16 @@
 "use client";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MainLayout from "../../_components/MainLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
-import LeverantörFlik from "../Leverantorer/LeverantorFlik";
+import Knapp from "../../_components/Knapp";
+import LeverantorFlik from "../Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
+import VäljLeverantörModal from "./VäljLeverantörModal";
 
 export default function LeverantorsfakturorPage() {
   const router = useRouter();
+  const [showLeverantörModal, setShowLeverantörModal] = useState(false);
 
   return (
     <MainLayout>
@@ -18,24 +21,27 @@ export default function LeverantorsfakturorPage() {
 
       {/* Registrera ny leverantörsfaktura knapp */}
       <div className="mb-8 text-center">
-        <Link
-          href="/bokfor?levfakt=true"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition-colors"
-        >
-          <span>📋</span>
-          Registrera leverantörsfaktura
-        </Link>
+        <Knapp
+          text="📋 Registrera leverantörsfaktura"
+          onClick={() => setShowLeverantörModal(true)}
+          className="bg-cyan-600 hover:bg-cyan-700 px-6 py-3"
+        />
       </div>
 
       {/* Leverantörer flik */}
       <div className="mb-6">
-        <LeverantörFlik />
+        <LeverantorFlik />
       </div>
 
       {/* Bokförda leverantörsfakturor flik */}
       <div className="mb-8">
         <BokfordaFakturorFlik />
       </div>
+
+      <VäljLeverantörModal
+        isOpen={showLeverantörModal}
+        onClose={() => setShowLeverantörModal(false)}
+      />
     </MainLayout>
   );
 }

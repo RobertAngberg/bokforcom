@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import BokfordaFakturor from "../BokfordaFakturor";
+import LoadingSpinner from "../../_components/LoadingSpinner";
 import { hamtaBokfordaFakturor } from "../actions";
 
 export default function BokfordaFakturorFlik() {
@@ -33,7 +34,13 @@ export default function BokfordaFakturorFlik() {
       visaSummaDirekt={loading ? "..." : `${fakturorAntal} st`}
       forcedOpen={true}
     >
-      <BokfordaFakturor />
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <BokfordaFakturor />
+      )}
     </AnimeradFlik>
   );
 }

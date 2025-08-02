@@ -3,13 +3,17 @@
 import { useState, useEffect } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
-import NyLeverantörModal from "./NyLeverantorModal";
-import { getLeverantörer, type Leverantör } from "../actions";
+import NyLeverantorModal from "./NyLeverantorModal";
+import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
+import { getLeverantörer, deleteLeverantör, type Leverantör } from "../actions";
 
 export default function LeverantörFlik() {
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editLeverantör, setEditLeverantör] = useState<Leverantör | undefined>();
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; leverantör?: Leverantör }>({ show: false });
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadLeverantörer = async () => {
     setLoading(true);
@@ -26,6 +30,33 @@ export default function LeverantörFlik() {
 
   const handleLeverantörAdded = () => {
     loadLeverantörer();
+  };
+
+  const handleEditLeverantör = (leverantör: Leverantör) => {
+    setEditLeverantör(leverantör);
+    setShowModal(true);
+  };
+
+  const handleDeleteLeverantör = (leverantör: Leverantör) => {
+    setDeleteModal({ show: true, leverantör });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.leverantör) return;
+    
+    setDeleteLoading(true);
+    const result = await deleteLeverantör(deleteModal.leverantör.id!);
+    
+    if (result.success) {
+      setDeleteModal({ show: false });
+      loadLeverantörer();
+    }
+    setDeleteLoading(false);
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setEditLeverantör(undefined);
   };
 
   return (
@@ -84,12 +115,6 @@ export default function LeverantörFlik() {
                         )}
                       </div>
 
-                      {leverantör.kontaktperson && (
-                        <div className="mt-2 text-sm text-gray-300">
-                          <span className="text-gray-400">Kontakt:</span> {leverantör.kontaktperson}
-                        </div>
-                      )}
-
                       {leverantör.adress && (
                         <div className="mt-2 text-sm text-gray-300">
                           <span className="text-gray-400">Adress:</span> {leverantör.adress}
@@ -100,10 +125,16 @@ export default function LeverantörFlik() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 ml-4">
-                      <button className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 rounded">
+                      <button 
+                        onClick={() => handleEditLeverantör(leverantör)}
+                        className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 rounded"
+                      >
                         Redigera
                       </button>
-                      <button className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded">
+                      <button 
+                        onClick={() => handleDeleteLeverantör(leverantör)}
+                        className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded"
+                      >
                         Ta bort
                       </button>
                     </div>
@@ -115,10 +146,19 @@ export default function LeverantörFlik() {
         </div>
       </AnimeradFlik>
 
-      <NyLeverantörModal
+      <NyLeverantorModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={handleModalClose}
         onSaved={handleLeverantörAdded}
+        editLeverantör={editLeverantör}
+      />
+
+      <BekraftaBorttagnngModal
+        isOpen={deleteModal.show}
+        onClose={() => setDeleteModal({ show: false })}
+        onConfirm={confirmDelete}
+        leverantorNamn={deleteModal.leverantör?.namn || ""}
+        loading={deleteLoading}
       />
     </>
   );
