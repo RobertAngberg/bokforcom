@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode } from "react";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ModalProps {
   children: ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "full";
   showCloseButton?: boolean;
+  isLoading?: boolean;
 }
 
 export default function Modal({
@@ -18,6 +20,7 @@ export default function Modal({
   children,
   maxWidth = "4xl",
   showCloseButton = true,
+  isLoading = false,
 }: ModalProps) {
   // Hantera ESC-tangent
   useEffect(() => {
@@ -84,7 +87,7 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div>{children}</div>
+        <div>{isLoading ? <LoadingSpinner /> : children}</div>
       </div>
     </div>
   );

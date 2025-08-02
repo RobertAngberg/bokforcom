@@ -1,18 +1,15 @@
 // #region Huvud
 "use client";
 
-import LaddaUppFil from "../LaddaUppFil";
-import Forhandsgranskning from "../Forhandsgranskning";
-import TextFält from "../../_components/TextFält";
-import KnappFullWidth from "../../_components/KnappFullWidth";
-import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { formatSEK } from "../../_utils/format";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import StandardLayout from "./_layouts/StandardLayout";
+import LevfaktLayout from "./_layouts/LevfaktLayout";
 import BakåtPil from "../../_components/BakåtPil";
 
 interface Props {
   mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt"; // NY!
   belopp?: number | null;
   setBelopp: (val: number | null) => void;
   transaktionsdatum?: string | null;
@@ -26,13 +23,22 @@ interface Props {
   setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (val: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  formRef?: React.RefObject<HTMLFormElement>;
-  handleSubmit?: (formData: FormData) => void;
+
+  // Levfakt-specifika props (optional)
+  leverantör?: string;
+  setLeverantör?: (val: string) => void;
+  fakturanummer?: string;
+  setFakturanummer?: (val: string) => void;
+  fakturadatum?: string;
+  setFakturadatum?: (val: string) => void;
+  förfallodatum?: string;
+  setFörfallodatum?: (val: string) => void;
 }
 // #endregion
 
 export default function Hyrbil({
   mode,
+  renderMode = "standard",
   belopp,
   setBelopp,
   transaktionsdatum,
@@ -46,74 +52,82 @@ export default function Hyrbil({
   setPdfUrl,
   extrafält,
   setExtrafält,
+  leverantör,
+  setLeverantör,
+  fakturanummer,
+  setFakturanummer,
+  fakturadatum,
+  setFakturadatum,
+  förfallodatum,
+  setFörfallodatum,
 }: Props) {
+  // #region Beräkningar
   const moms = +(Number(belopp ?? 0) * 0.25 * 0.5).toFixed(2);
   const netto = +(Number(belopp ?? 0) - moms).toFixed(2);
-  const giltigt = !!belopp && !!transaktionsdatum;
 
-  function gåTillSteg3() {
-    setExtrafält?.({
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-      "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
-      "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
-    });
+  // Olika valideringslogik beroende på renderMode
+  const giltigt =
+    renderMode === "levfakt"
+      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
+      : !!belopp && !!transaktionsdatum;
 
+  const gåTillSteg3 = () => {
+    if (renderMode === "levfakt") {
+      // Leverantörsfaktura: Skuld mot leverantör
+      setExtrafält?.({
+        "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
+        "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
+        "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
+      });
+    } else {
+      // Standard: Direkt betalning från företagskonto
+      setExtrafält?.({
+        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
+        "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
+        "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
+      });
+    }
     setCurrentStep?.(3);
-  }
+  };
+
+  const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
+  // #endregion
 
   if (mode === "steg2") {
     return (
-      <>
-        <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
-
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Hyrbil</h1>
-          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
-            <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
-              <LaddaUppFil
-                fil={fil}
-                setFil={setFil}
-                setPdfUrl={setPdfUrl}
-                setTransaktionsdatum={setTransaktionsdatum}
-                setBelopp={setBelopp}
-              />
-
-              <TextFält
-                label="Total kostnad inkl. moms"
-                name="kostnad"
-                value={belopp ?? ""}
-                onChange={(e) => setBelopp(Number(e.target.value))}
-                required
-              />
-
-              <p className="text-sm text-gray-400 mb-4">
-                Avdragbar moms (25% × 50%): {formatSEK(moms)} kr
-              </p>
-
-              <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
-              <DatePicker
-                className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={transaktionsdatum ? ÅÅÅÅMMDDTillDate(transaktionsdatum) : null}
-                onChange={(d) => setTransaktionsdatum(d ? dateTillÅÅÅÅMMDD(d) : "")}
-                dateFormat="yyyy-MM-dd"
-                locale="sv"
-              />
-
-              <TextFält
-                label="Kommentar"
-                name="kommentar"
-                value={kommentar ?? ""}
-                onChange={(e) => setKommentar?.(e.target.value)}
-                required={false}
-              />
-
-              <KnappFullWidth text="Gå vidare" onClick={gåTillSteg3} disabled={!giltigt} />
-            </div>
-
-            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
-          </div>
+      <Layout
+        belopp={belopp}
+        setBelopp={setBelopp}
+        transaktionsdatum={transaktionsdatum}
+        setTransaktionsdatum={setTransaktionsdatum}
+        kommentar={kommentar}
+        setKommentar={setKommentar}
+        fil={fil}
+        setFil={setFil}
+        pdfUrl={pdfUrl}
+        setPdfUrl={setPdfUrl}
+        isValid={giltigt}
+        onSubmit={gåTillSteg3}
+        setCurrentStep={setCurrentStep}
+        leverantör={leverantör}
+        setLeverantör={setLeverantör}
+        fakturanummer={fakturanummer}
+        setFakturanummer={setFakturanummer}
+        fakturadatum={fakturadatum}
+        setFakturadatum={setFakturadatum}
+        förfallodatum={förfallodatum}
+        setFörfallodatum={setFörfallodatum}
+        title="Hyrbil"
+      >
+        {/* Hyrbil-specifikt innehåll */}
+        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-medium text-blue-900 mb-2">Hyrbil - Momsberäkning</h3>
+          <p className="text-sm text-blue-700 mb-2">
+            Avdragbar moms (25% × 50%): {formatSEK(moms)} kr
+          </p>
+          <p className="text-sm text-blue-700">Nettokostnad: {formatSEK(netto)} kr</p>
         </div>
-      </>
+      </Layout>
     );
   }
 

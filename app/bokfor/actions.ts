@@ -636,8 +636,8 @@ export async function saveTransaction(formData: FormData) {
       const res = await client.query(
         `INSERT INTO leverantörsfakturor (
           "userId", transaktions_id, leverantör_namn, fakturanummer, 
-          fakturadatum, förfallodatum, betaldatum, belopp
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+          fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
         [
           userId,
           transaktionsId,
@@ -647,6 +647,8 @@ export async function saveTransaction(formData: FormData) {
           formattedFörfallodatum,
           formattedBetaldatum,
           belopp,
+          formattedBetaldatum ? "Betald" : "Obetald", // status_betalning
+          "Bokförd", // status_bokförd
         ]
       );
       console.log("📝 Leverantörsfaktura SQL-result:", res.rows);

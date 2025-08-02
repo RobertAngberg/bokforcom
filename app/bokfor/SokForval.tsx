@@ -64,7 +64,38 @@ export default function SokForval({
       const input = searchText.trim();
 
       if (input.length < 2) {
-        setResults(favoritFörvalen);
+        let baseResults = favoritFörvalen;
+
+        // Filtrera bort försäljningsförval när vi är i leverantörsfaktura-mode
+        if (levfaktMode) {
+          baseResults = baseResults.filter((f) => {
+            // Kolla om förvalet har några inköpsrelaterade konton (4xxx, 5xxx, 6xxx)
+            const harInköpsKonton = f.konton.some((k: KontoRad) => {
+              const kontonummer = k.kontonummer || "";
+              return /^[456]/.test(kontonummer);
+            });
+
+            // Kolla om förvalet bara har icke-inköpsrelaterade konton
+            const harBaraIckeInköpsKonton =
+              f.konton.length > 0 &&
+              f.konton
+                .filter(
+                  (k: KontoRad) =>
+                    k.kontonummer && k.kontonummer !== "1930" && k.kontonummer !== "2440"
+                )
+                .every((k: KontoRad) => {
+                  const kontonummer = k.kontonummer || "";
+                  return !/^[456]/.test(kontonummer);
+                });
+
+            // Visa förvalet om det antingen:
+            // 1. Har inköpsrelaterade konton (5xxx, 6xxx), ELLER
+            // 2. Inte bara har icke-inköpsrelaterade konton (dvs har specialförval eller andra typer)
+            return harInköpsKonton || !harBaraIckeInköpsKonton;
+          });
+        }
+
+        setResults(baseResults);
         setHighlightedIndex(0);
         setLoading(false);
         return;
@@ -98,11 +129,35 @@ export default function SokForval({
         return poäng;
       }
 
-      const träffar = alla
+      let träffar = alla
         .map((f) => ({ förval: f, poäng: score(f) }))
         .filter((x) => x.poäng > 0)
         .sort((a, b) => b.poäng - a.poäng)
         .map((x) => x.förval);
+
+      // Filtrera även sökresultat för leverantörsfakturor
+      if (levfaktMode) {
+        träffar = träffar.filter((f) => {
+          const harInköpsKonton = f.konton.some((k: KontoRad) => {
+            const kontonummer = k.kontonummer || "";
+            return /^[456]/.test(kontonummer);
+          });
+
+          const harBaraIckeInköpsKonton =
+            f.konton.length > 0 &&
+            f.konton
+              .filter(
+                (k: KontoRad) =>
+                  k.kontonummer && k.kontonummer !== "1930" && k.kontonummer !== "2440"
+              )
+              .every((k: KontoRad) => {
+                const kontonummer = k.kontonummer || "";
+                return !/^[456]/.test(kontonummer);
+              });
+
+          return harInköpsKonton || !harBaraIckeInköpsKonton;
+        });
+      }
 
       setResults(träffar);
       setHighlightedIndex(0);
@@ -110,7 +165,7 @@ export default function SokForval({
     }, 300);
 
     return () => clearTimeout(delay);
-  }, [searchText, favoritFörvalen]);
+  }, [searchText, favoritFörvalen, levfaktMode]);
 
   const väljFörval = (f: Forval) => {
     loggaFavoritförval(f.id);

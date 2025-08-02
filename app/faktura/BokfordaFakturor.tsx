@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { formatSEK } from "../_utils/format";
-import { hamtaBokfordaFakturor } from "./actions";
+import { hamtaBokfordaFakturor, hamtaTransaktionsposter, registreraBetalning } from "./actions";
+import VerifikatModal from "./VerifikatModal";
 
 type BokfordFaktura = {
-  id: number;
+  id: number; // leverantörsfaktura.id
+  transaktionId?: number; // transaktion.id för verifikat
   datum: string;
   belopp: number;
   kommentar: string;
@@ -14,12 +16,22 @@ type BokfordFaktura = {
   fakturadatum?: string;
   förfallodatum?: string;
   betaldatum?: string;
-  typ: "leverantor" | "kund";
+  status_betalning?: string;
+  status_bokförd?: string;
 };
 
 export default function BokfordaFakturor() {
   const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verifikatModal, setVerifikatModal] = useState<{
+    isOpen: boolean;
+    transaktionId: number;
+    fakturanummer?: string;
+    leverantör?: string;
+  }>({
+    isOpen: false,
+    transaktionId: 0,
+  });
 
   useEffect(() => {
     async function hamtaFakturor() {
@@ -37,6 +49,49 @@ export default function BokfordaFakturor() {
 
     hamtaFakturor();
   }, []);
+
+  const öppnaVerifikat = (faktura: BokfordFaktura) => {
+    setVerifikatModal({
+      isOpen: true,
+      transaktionId: faktura.transaktionId || faktura.id,
+      fakturanummer: faktura.fakturanummer,
+      leverantör: faktura.leverantör,
+    });
+  };
+
+  const stängVerifikat = () => {
+    setVerifikatModal({
+      isOpen: false,
+      transaktionId: 0,
+    });
+  };
+
+  const handleRegistreraBetalning = async (faktura: BokfordFaktura) => {
+    const confirmed = confirm(
+      `Vill du registrera betalning för faktura från ${faktura.leverantör}?
+Belopp: ${formatSEK(faktura.belopp)}`
+    );
+
+    if (confirmed) {
+      try {
+        const result = await registreraBetalning(faktura.id, faktura.belopp);
+
+        if (result.success) {
+          alert("Betalning registrerad!");
+          // Ladda om data för att visa uppdaterad status
+          const updatedData = await hamtaBokfordaFakturor();
+          if (updatedData.success) {
+            setFakturor(updatedData.fakturor || []);
+          }
+        } else {
+          alert(`Fel vid registrering av betalning: ${result.error}`);
+        }
+      } catch (error) {
+        console.error("Fel vid betalning:", error);
+        alert("Ett fel uppstod vid registrering av betalning");
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -67,11 +122,14 @@ export default function BokfordaFakturor() {
           <thead>
             <tr className="border-b border-gray-700">
               <th className="text-left text-gray-300 pb-2">Datum</th>
-              <th className="text-left text-gray-300 pb-2">Typ</th>
               <th className="text-left text-gray-300 pb-2">Leverantör/Kund</th>
               <th className="text-left text-gray-300 pb-2">Fakturanr</th>
               <th className="text-left text-gray-300 pb-2">Belopp</th>
+              <th className="text-left text-gray-300 pb-2">Betalning</th>
+              <th className="text-left text-gray-300 pb-2">Bokförd</th>
               <th className="text-left text-gray-300 pb-2">Kommentar</th>
+              <th className="text-center text-gray-300 pb-2">Verifikat</th>
+              <th className="text-center text-gray-300 pb-2">Åtgärder</th>
             </tr>
           </thead>
           <tbody>
@@ -80,26 +138,62 @@ export default function BokfordaFakturor() {
                 <td className="py-2 text-white">
                   {new Date(faktura.datum).toLocaleDateString("sv-SE")}
                 </td>
-                <td className="py-2">
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      faktura.typ === "leverantor"
-                        ? "bg-red-900 text-red-200"
-                        : "bg-green-900 text-green-200"
-                    }`}
-                  >
-                    {faktura.typ === "leverantor" ? "Inköp" : "Försäljning"}
-                  </span>
-                </td>
                 <td className="py-2 text-gray-300">{faktura.leverantör || "-"}</td>
                 <td className="py-2 text-gray-300">{faktura.fakturanummer || "-"}</td>
                 <td className="py-2 text-white">{formatSEK(faktura.belopp)}</td>
+                <td className="py-2">
+                  <span
+                    className={`px-2 py-1 rounded text-xs ${
+                      faktura.status_betalning === "Betald"
+                        ? "bg-green-900 text-green-200"
+                        : "bg-red-900 text-red-200"
+                    }`}
+                  >
+                    {faktura.status_betalning || "Obetald"}
+                  </span>
+                </td>
+                <td className="py-2">
+                  <span className="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200">
+                    {faktura.status_bokförd || "Bokförd"}
+                  </span>
+                </td>
                 <td className="py-2 text-gray-300 max-w-xs truncate">{faktura.kommentar}</td>
+                <td className="py-2 text-center">
+                  <button
+                    onClick={() => öppnaVerifikat(faktura)}
+                    className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    title="Visa verifikat"
+                  >
+                    📄 Verifikat
+                  </button>
+                </td>
+                <td className="py-2 text-center">
+                  {faktura.status_betalning === "Obetald" ? (
+                    <button
+                      onClick={() => handleRegistreraBetalning(faktura)}
+                      className="px-3 py-1 text-xs bg-green-700 hover:bg-green-600 text-white rounded transition-colors"
+                      title="Registrera betalning"
+                    >
+                      💰 Betala
+                    </button>
+                  ) : (
+                    <span className="text-gray-500 text-xs">Betald</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Verifikat Modal */}
+      <VerifikatModal
+        isOpen={verifikatModal.isOpen}
+        onClose={stängVerifikat}
+        transaktionId={verifikatModal.transaktionId}
+        fakturanummer={verifikatModal.fakturanummer}
+        leverantör={verifikatModal.leverantör}
+      />
     </div>
   );
 }

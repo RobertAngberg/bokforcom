@@ -815,40 +815,25 @@ export async function hamtaBokfordaFakturor() {
   const client = await pool.connect();
 
   try {
-    // Hämta transaktioner som bokförts via levfakt-mode
-    // Vi hämtar bara transaktioner som antingen har leverantör-data eller är kundfakturor (1510)
+    // Hämta endast leverantörsfakturor från leverantörsfakturor tabellen
     const { rows } = await client.query(
       `
       SELECT DISTINCT
-        t.id,
+        t.id as transaktion_id,
+        lf.id,
         t.transaktionsdatum as datum,
         t.belopp,
         t.kommentar,
-        CASE 
-          WHEN lf.id IS NOT NULL THEN 'leverantor'
-          WHEN EXISTS (
-            SELECT 1 FROM transaktionsposter tp 
-            JOIN konton k ON tp.konto_id = k.id 
-            WHERE tp.transaktions_id = t.id AND k.kontonummer::text = '1510'
-          ) THEN 'kund'
-          ELSE 'okand'
-        END as typ,
         lf.leverantör_namn as leverantör,
         lf.fakturanummer,
         lf.fakturadatum,
         lf.förfallodatum,
-        lf.betaldatum
+        lf.betaldatum,
+        lf.status_betalning,
+        lf.status_bokförd
       FROM transaktioner t
-      LEFT JOIN leverantörsfakturor lf ON lf.transaktions_id = t.id
+      INNER JOIN leverantörsfakturor lf ON lf.transaktions_id = t.id
       WHERE t."userId" = $1
-        AND (
-          lf.id IS NOT NULL OR
-          EXISTS (
-            SELECT 1 FROM transaktionsposter tp 
-            JOIN konton k ON tp.konto_id = k.id 
-            WHERE tp.transaktions_id = t.id AND k.kontonummer::text = '1510'
-          )
-        )
       ORDER BY t.transaktionsdatum DESC, t.id DESC
       LIMIT 100
     `,
@@ -857,7 +842,8 @@ export async function hamtaBokfordaFakturor() {
 
     const fakturor = rows.map((row) => {
       return {
-        id: row.id,
+        id: row.id, // Nu leverantörsfaktura.id istället för transaktion.id
+        transaktionId: row.transaktion_id, // För verifikat-modal
         datum: row.datum,
         belopp: parseFloat(row.belopp),
         kommentar: row.kommentar || "",
@@ -866,7 +852,8 @@ export async function hamtaBokfordaFakturor() {
         fakturadatum: row.fakturadatum,
         förfallodatum: row.förfallodatum,
         betaldatum: row.betaldatum,
-        typ: row.typ,
+        status_betalning: row.status_betalning || (row.betaldatum ? "Betald" : "Obetald"),
+        status_bokförd: row.status_bokförd || "Bokförd",
       };
     });
 
@@ -876,6 +863,163 @@ export async function hamtaBokfordaFakturor() {
     return {
       success: false,
       error: "Kunde inte hämta bokförda fakturor",
+    };
+  } finally {
+    client.release();
+  }
+}
+
+export async function hamtaTransaktionsposter(transaktionId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Ej autentiserad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    console.log("🔍 Hämtar transaktionsposter för:", { transaktionId, userId });
+
+    // Först, kolla om transaktionen finns
+    const { rows: transCheck } = await client.query(
+      `SELECT id, "userId" FROM transaktioner WHERE id = $1`,
+      [transaktionId]
+    );
+    console.log("🔍 Transaktion existerar:", transCheck);
+
+    // Sedan, kolla transaktionsposter utan JOIN först
+    const { rows: posterSimple } = await client.query(
+      `SELECT * FROM transaktionsposter WHERE transaktions_id = $1`,
+      [transaktionId]
+    );
+    console.log("🔍 Transaktionsposter (simple):", posterSimple);
+
+    // Hämta transaktionsposter med kontoinformation
+    const { rows } = await client.query(
+      `
+      SELECT 
+        tp.id,
+        tp.debet,
+        tp.kredit,
+        k.kontonummer,
+        k.beskrivning as konto_beskrivning,
+        t.transaktionsdatum,
+        t.kommentar as transaktionskommentar,
+        t.id as transaktion_id
+      FROM transaktionsposter tp
+      JOIN konton k ON tp.konto_id = k.id
+      JOIN transaktioner t ON tp.transaktions_id = t.id
+      WHERE tp.transaktions_id = $1 AND t."userId" = $2
+      ORDER BY tp.id
+    `,
+      [transaktionId, userId]
+    );
+
+    console.log("📝 Hittade transaktionsposter:", rows.length);
+
+    // Om inga poster hittades, kolla vad som finns i transaktioner
+    if (rows.length === 0) {
+      const { rows: transaktionCheck } = await client.query(
+        `SELECT id, transaktionsdatum, kommentar, "userId" FROM transaktioner WHERE id = $1`,
+        [transaktionId]
+      );
+      console.log("🔍 Transaktion check:", transaktionCheck);
+
+      const { rows: posterCheck } = await client.query(
+        `SELECT COUNT(*) as antal FROM transaktionsposter WHERE transaktions_id = $1`,
+        [transaktionId]
+      );
+      console.log("🔍 Poster check:", posterCheck);
+    }
+
+    const poster = rows.map((row) => ({
+      id: row.id,
+      kontonummer: row.kontonummer,
+      kontobeskrivning: row.konto_beskrivning,
+      debet: parseFloat(row.debet) || 0,
+      kredit: parseFloat(row.kredit) || 0,
+      transaktionsdatum: row.transaktionsdatum,
+      transaktionskommentar: row.transaktionskommentar,
+    }));
+
+    return { success: true, poster };
+  } catch (error) {
+    console.error("Fel vid hämtning av transaktionsposter:", error);
+    return {
+      success: false,
+      error: "Kunde inte hämta transaktionsposter",
+    };
+  } finally {
+    client.release();
+  }
+}
+
+export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Ej autentiserad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    // Skapa ny transaktion för betalningen
+    const { rows: transRows } = await client.query(
+      `INSERT INTO transaktioner (
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id`,
+      [
+        new Date().toISOString().split("T")[0], // Dagens datum
+        "Betalning leverantörsfaktura",
+        belopp,
+        "Automatisk betalning av leverantörsfaktura",
+        userId,
+      ]
+    );
+    const transaktionsId = transRows[0].id;
+
+    // Hämta konto-id för 1930 (Företagskonto) och 2440 (Leverantörsskulder)
+    const kontoRes = await client.query(
+      `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
+    );
+    const kontoMap = Object.fromEntries(kontoRes.rows.map((r: any) => [r.kontonummer, r.id]));
+
+    if (!kontoMap["1930"] || !kontoMap["2440"]) {
+      throw new Error("Konto 1930 eller 2440 saknas");
+    }
+
+    // Skapa transaktionsposter för betalningen
+    // 1930 Företagskonto - Kredit (pengar ut)
+    await client.query(
+      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
+      [transaktionsId, kontoMap["1930"], 0, belopp]
+    );
+
+    // 2440 Leverantörsskulder - Debet (skuld minskar)
+    await client.query(
+      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
+      [transaktionsId, kontoMap["2440"], belopp, 0]
+    );
+
+    // Uppdatera leverantörsfaktura med betaldatum och status
+    console.log("📝 Uppdaterar leverantörsfaktura:", leverantörsfakturaId, "för userId:", userId);
+    const updateResult = await client.query(
+      `UPDATE leverantörsfakturor 
+       SET betaldatum = $1, status_betalning = 'Betald' 
+       WHERE id = $2 AND "userId" = $3`,
+      [new Date().toISOString().split("T")[0], leverantörsfakturaId, userId]
+    );
+    console.log("📝 Update result rowCount:", updateResult.rowCount);
+
+    return { success: true, transaktionsId };
+  } catch (error) {
+    console.error("Fel vid registrering av betalning:", error);
+    return {
+      success: false,
+      error: "Kunde inte registrera betalning",
     };
   } finally {
     client.release();

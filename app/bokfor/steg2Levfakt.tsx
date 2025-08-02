@@ -141,6 +141,7 @@ export default function Steg2Levfakt({
       return (
         <SpecialComponent
           mode="steg2"
+          renderMode="levfakt"
           setCurrentStep={setCurrentStep}
           fil={fil}
           setFil={setFil}
@@ -152,18 +153,16 @@ export default function Steg2Levfakt({
           setTransaktionsdatum={setTransaktionsdatum}
           kommentar={kommentar}
           setKommentar={setKommentar}
-          valtFörval={valtFörval}
           extrafält={extrafält}
           setExtrafält={setExtrafält}
-          // Leverantörsfaktura-specifika props
           leverantör={leverantör}
           setLeverantör={setLeverantör}
+          fakturanummer={fakturanummer}
+          setFakturanummer={setFakturanummer}
           fakturadatum={fakturadatum}
           setFakturadatum={setFakturadatum}
           förfallodatum={förfallodatum}
           setFörfallodatum={setFörfallodatum}
-          fakturanummer={fakturanummer}
-          setFakturanummer={setFakturanummer}
         />
       );
     } catch (err) {
