@@ -73,6 +73,10 @@ export default function Bokför({
   const [förfallodatum, setFörfallodatum] = useState<string | null>("");
   const [betaldatum, setBetaldatum] = useState<string | null>("");
 
+  // Kundfaktura-specifika states
+  const [bokförSomFaktura, setBokförSomFaktura] = useState<boolean>(false);
+  const [kundfakturadatum, setKundfakturadatum] = useState<string | null>(null);
+
   return (
     <MainLayout>
       {currentStep === 1 && (
@@ -103,6 +107,10 @@ export default function Bokför({
           extrafält={extrafält}
           setExtrafält={setExtrafält}
           utlaggMode={utlaggMode}
+          bokförSomFaktura={bokförSomFaktura}
+          setBokförSomFaktura={setBokförSomFaktura}
+          kundfakturadatum={kundfakturadatum}
+          setKundfakturadatum={setKundfakturadatum}
         />
       )}
 
@@ -160,6 +168,9 @@ export default function Bokför({
           fakturadatum={fakturadatum}
           förfallodatum={förfallodatum}
           betaldatum={betaldatum}
+          // Kundfaktura-specifika props
+          bokförSomFaktura={bokförSomFaktura}
+          kundfakturadatum={kundfakturadatum}
         />
       )}
 

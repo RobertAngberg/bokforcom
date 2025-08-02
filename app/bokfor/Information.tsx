@@ -13,6 +13,9 @@ interface InformationProps {
   setBelopp: (value: number) => void;
   transaktionsdatum: string | null;
   setTransaktionsdatum: (value: string) => void;
+  visaFakturadatum?: boolean;
+  fakturadatum?: string | null;
+  setFakturadatum?: (value: string) => void;
 }
 
 export default function Information({
@@ -20,6 +23,9 @@ export default function Information({
   setBelopp,
   transaktionsdatum,
   setTransaktionsdatum,
+  visaFakturadatum = false,
+  fakturadatum,
+  setFakturadatum,
 }: InformationProps) {
   // Datepicker
   useEffect(() => {
@@ -57,6 +63,28 @@ export default function Information({
         value={belopp}
         onChange={(e) => setBelopp(Number(e.target.value))}
       />
+
+      {/* Fakturadatum - visas endast om fakturametod är aktiverad */}
+      {visaFakturadatum && (
+        <>
+          <label htmlFor="fakturadatum" className="block mb-2 text-white">
+            Fakturadatum (ÅÅÅÅ-MM-DD):
+          </label>
+          <DatePicker
+            className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+            id="fakturadatum"
+            selected={fakturadatum ? new Date(fakturadatum) : new Date()}
+            onChange={(date) => {
+              if (setFakturadatum) {
+                setFakturadatum(date ? date.toISOString() : "");
+              }
+            }}
+            dateFormat="yyyy-MM-dd"
+            locale="sv"
+            required
+          />
+        </>
+      )}
 
       <label htmlFor="datum" className="block mb-2 text-white">
         Betaldatum (ÅÅÅÅ-MM-DD):

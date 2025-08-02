@@ -51,6 +51,9 @@ interface Step3Props {
   fakturadatum?: string | null;
   förfallodatum?: string | null;
   betaldatum?: string | null;
+  // Kundfaktura-specifika props
+  bokförSomFaktura?: boolean;
+  kundfakturadatum?: string | null;
 }
 // #endregion
 
@@ -72,6 +75,9 @@ export default function Steg3({
   fakturadatum = null,
   förfallodatum = null,
   betaldatum = null,
+  // Kundfaktura-specifika props
+  bokförSomFaktura = false,
+  kundfakturadatum = null,
 }: Step3Props) {
   // State för anställda och vald anställd
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
@@ -148,6 +154,12 @@ export default function Steg3({
         if (betaldatum) formData.set("betaldatum", betaldatum);
       }
 
+      // Kundfaktura-specifika fält
+      if (bokförSomFaktura) {
+        formData.set("bokförSomFaktura", "true");
+        if (kundfakturadatum) formData.set("kundfakturadatum", kundfakturadatum);
+      }
+
       const result = await saveTransaction(formData);
       if (result.success) setCurrentStep(4);
     } finally {
@@ -183,6 +195,12 @@ export default function Steg3({
             if (utlaggMode && kontoNr === "1930") {
               kontoNr = "2890";
               namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
+              beloppAttVisa = belopp;
+            }
+            // Om kundfaktura-mode (bokför som faktura), byt ut 1930 mot 1510
+            else if (bokförSomFaktura && kontoNr === "1930") {
+              kontoNr = "1510";
+              namn = `1510 Kundfordringar`;
               beloppAttVisa = belopp;
             }
             // Om leverantörsfaktura-mode (inköp), byt ut 1930 mot 2440

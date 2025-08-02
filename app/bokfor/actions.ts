@@ -139,6 +139,90 @@ export async function getKontoklass(kontonummer: string) {
   }
 }
 
+export async function extractDataFromOCRKundfaktura(text: string) {
+  console.log("🧠 Extracting kundfaktura data from OCR text:", text);
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || "",
+  });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4.1-nano",
+      messages: [
+        {
+          role: "system",
+          content: `Extract invoice data from OCR text. This is for creating a customer invoice (kundfaktura).
+          
+          IMPORTANT: Look specifically for:
+          - Invoice date (fakturadatum) - the date when the invoice was issued
+          - Due date (förfallodatum) - when payment is due 
+          - Amount (belopp) - total invoice amount
+          
+          Do NOT confuse invoice date with payment date or transaction date.
+          The invoice date is when the service/product was delivered or when the invoice was created.
+          
+          Respond with *raw* JSON only (no markdown, no triple backticks). 
+          Format: {
+            "fakturadatum": "YYYY-MM-DD",
+            "förfallodatum": "YYYY-MM-DD", 
+            "belopp": 1234.56
+          }
+          
+          If a field cannot be determined, use null for dates or 0 for amount.`,
+        },
+        { role: "user", content: text },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+
+    if (content && content.startsWith("{")) {
+      const parsed = JSON.parse(content);
+      console.log("✅ Kundfaktura OCR extracted:", parsed);
+      return parsed;
+    }
+
+    console.warn("⚠️ GPT unstructured content:", content);
+    return {
+      fakturadatum: null,
+      förfallodatum: null,
+      belopp: 0,
+    };
+  } catch (error) {
+    console.error("❌ extractDataFromOCRKundfaktura error:", error);
+    return {
+      fakturadatum: null,
+      förfallodatum: null,
+      belopp: 0,
+    };
+  }
+}
+
+export async function hämtaBokföringsmetod() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen användare inloggad");
+  }
+
+  try {
+    const client = await pool.connect();
+    const query = "SELECT bokföringsmetod FROM users WHERE id = $1";
+    const res = await client.query(query, [session.user.id]);
+    client.release();
+
+    if (res.rows.length === 0) {
+      console.warn("⛔ Användare inte funnen:", session.user.id);
+      return "Kontantmetoden"; // Default fallback
+    }
+
+    return res.rows[0].bokföringsmetod || "Kontantmetoden";
+  } catch (error) {
+    console.error("❌ hämtaBokföringsmetod error:", error);
+    return "Kontantmetoden"; // Default fallback
+  }
+}
+
 export async function taBortTransaktion(id: number) {
   const client = await pool.connect();
   try {

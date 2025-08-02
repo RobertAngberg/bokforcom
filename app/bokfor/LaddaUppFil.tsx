@@ -11,6 +11,9 @@ interface FileUploadProps {
   setTransaktionsdatum: (datum: string) => void;
   setBelopp: (belopp: number) => void;
   fil: File | null;
+  onOcrTextChange?: (text: string) => void;
+  skipBasicAI?: boolean;
+  onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
 }
 
 export default function LaddaUppFil({
@@ -19,10 +22,60 @@ export default function LaddaUppFil({
   setTransaktionsdatum,
   setBelopp,
   fil,
+  onOcrTextChange,
+  skipBasicAI = false,
+  onReprocessTrigger,
 }: FileUploadProps) {
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
+
+  // Funktion för att köra OCR igen på befintlig fil
+  const reprocessFile = async () => {
+    if (!fil) {
+      console.log("⚠️ Ingen fil att köra OCR på igen");
+      return;
+    }
+
+    console.log("🔄 Kör OCR igen på fil:", fil.name);
+    setIsLoading(true);
+    setTimeoutTriggered(false);
+
+    const timeout = setTimeout(() => {
+      console.log("⏰ Timeout efter 10 sekunder!");
+      setIsLoading(false);
+      setTimeoutTriggered(true);
+    }, 10000);
+
+    try {
+      let text = "";
+
+      if (fil.type === "application/pdf") {
+        console.log("🔍 Extraherar text från PDF igen...");
+        text = (await extractTextFromPDF(fil, "clean")) || "";
+      } else if (fil.type.startsWith("image/")) {
+        console.log("🔍 OCR på bild igen...");
+        text = await förbättraOchLäsBild(fil);
+      }
+
+      if (!text || text.trim().length === 0) {
+        console.log("⚠️ Ingen text extraherad från fil vid omprocessning");
+        setTimeoutTriggered(true);
+        setIsLoading(false);
+        clearTimeout(timeout);
+        return;
+      }
+
+      clearTimeout(timeout);
+      setRecognizedText(text);
+      onOcrTextChange?.(text);
+    } catch (error) {
+      console.error("❌ Fel vid omprocessning av fil:", error);
+      clearTimeout(timeout);
+      setTimeoutTriggered(true);
+      setIsLoading(false);
+    }
+  };
 
   // Mjukare bildkomprimering - mål 100-200KB (läsbar)
   async function komprimeraImage(file: File): Promise<File> {
@@ -192,6 +245,7 @@ export default function LaddaUppFil({
 
       clearTimeout(timeout);
       setRecognizedText(text);
+      onOcrTextChange?.(text);
     } catch (error) {
       console.error("❌ Fel vid textextraktion:", error);
       clearTimeout(timeout);
@@ -201,7 +255,7 @@ export default function LaddaUppFil({
   };
 
   useEffect(() => {
-    if (!recognizedText) return;
+    if (!recognizedText || skipBasicAI) return;
 
     (async () => {
       try {
@@ -221,7 +275,21 @@ export default function LaddaUppFil({
         setIsLoading(false);
       }
     })();
-  }, [recognizedText, setBelopp, setTransaktionsdatum]);
+  }, [recognizedText, setBelopp, setTransaktionsdatum, skipBasicAI]);
+
+  // Stäng av loading när OCR är klar men grundläggande AI hoppas över
+  useEffect(() => {
+    if (recognizedText && skipBasicAI) {
+      setIsLoading(false);
+    }
+  }, [recognizedText, skipBasicAI]);
+
+  // Skicka reprocess-funktionen till parent när fil ändras
+  useEffect(() => {
+    if (onReprocessTrigger && fil) {
+      onReprocessTrigger(reprocessFile);
+    }
+  }, [fil]); // Bara trigga när fil ändras
 
   return (
     <>
