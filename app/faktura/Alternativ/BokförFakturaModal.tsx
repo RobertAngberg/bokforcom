@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFakturaContext } from "../FakturaProvider";
 import { bokförFaktura } from "../actions";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+import Modal from "../../_components/Modal";
 
 interface BokförFakturaModalProps {
   isOpen: boolean;
@@ -198,90 +199,84 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-slate-800 p-6 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-cyan-400">
-            📊 Bokför faktura {formData.fakturanummer}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">
-            ×
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`📊 Bokför faktura ${formData.fakturanummer}`}
+      maxWidth="4xl"
+    >
+      {/* Varningar */}
+      {varningar.length > 0 && (
+        <div className="mb-6 p-4 bg-yellow-900/50 border border-yellow-600 rounded">
+          <h3 className="text-yellow-400 font-semibold mb-2">⚠️ Varningar:</h3>
+          <ul className="text-yellow-200 space-y-1">
+            {varningar.map((varning, index) => (
+              <li key={index}>• {varning}</li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {/* Varningar */}
-        {varningar.length > 0 && (
-          <div className="mb-6 p-4 bg-yellow-900/50 border border-yellow-600 rounded">
-            <h3 className="text-yellow-400 font-semibold mb-2">⚠️ Varningar:</h3>
-            <ul className="text-yellow-200 space-y-1">
-              {varningar.map((varning, index) => (
-                <li key={index}>• {varning}</li>
-              ))}
-            </ul>
+      {/* Faktura-info */}
+      <div className="mb-6 p-4 bg-slate-700 rounded">
+        <h3 className="text-white font-semibold mb-2">Fakturanuppgifter:</h3>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-gray-400">Kund:</span>
+            <span className="text-white ml-2">{formData.kundnamn}</span>
           </div>
-        )}
-
-        {/* Faktura-info */}
-        <div className="mb-6 p-4 bg-slate-700 rounded">
-          <h3 className="text-white font-semibold mb-2">Fakturanuppgifter:</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-400">Kund:</span>
-              <span className="text-white ml-2">{formData.kundnamn}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Fakturanummer:</span>
-              <span className="text-white ml-2">{formData.fakturanummer}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Antal artiklar:</span>
-              <span className="text-white ml-2">{formData.artiklar?.length || 0}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Totalt inkl. moms:</span>
-              <span className="text-white ml-2">
-                {formData.artiklar
-                  ?.reduce(
-                    (sum, artikel) =>
-                      sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
-                    0
-                  )
-                  .toFixed(2)}{" "}
-                kr
-              </span>
-            </div>
+          <div>
+            <span className="text-gray-400">Fakturanummer:</span>
+            <span className="text-white ml-2">{formData.fakturanummer}</span>
           </div>
-        </div>
-
-        {/* Bokföringsposter */}
-        {poster.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-white font-semibold mb-4">Föreslagna bokföringsposter:</h3>
-            <Tabell
-              data={posterMedSumma}
-              columns={columns}
-              getRowId={(item) => `${item.konto}-${item.beskrivning}`}
-            />
+          <div>
+            <span className="text-gray-400">Antal artiklar:</span>
+            <span className="text-white ml-2">{formData.artiklar?.length || 0}</span>
           </div>
-        )}
-
-        {/* Knappar */}
-        <div className="flex justify-end gap-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            Avbryt
-          </button>
-          <button
-            onClick={hanteraBokför}
-            disabled={loading || poster.length === 0 || varningar.length > 0}
-            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
-          >
-            {loading ? "Bokför..." : "📊 Bokför"}
-          </button>
+          <div>
+            <span className="text-gray-400">Totalt inkl. moms:</span>
+            <span className="text-white ml-2">
+              {formData.artiklar
+                ?.reduce(
+                  (sum, artikel) =>
+                    sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
+                  0
+                )
+                .toFixed(2)}{" "}
+              kr
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Bokföringsposter */}
+      {poster.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-white font-semibold mb-4">Föreslagna bokföringsposter:</h3>
+          <Tabell
+            data={posterMedSumma}
+            columns={columns}
+            getRowId={(item) => `${item.konto}-${item.beskrivning}`}
+          />
+        </div>
+      )}
+
+      {/* Knappar */}
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+          Avbryt
+        </button>
+        <button
+          onClick={hanteraBokför}
+          disabled={loading || poster.length === 0 || varningar.length > 0}
+          className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
+        >
+          {loading ? "Bokför..." : "📊 Bokför"}
+        </button>
+      </div>
+    </Modal>
   );
 }
