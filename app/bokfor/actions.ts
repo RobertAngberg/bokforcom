@@ -408,6 +408,7 @@ export async function hämtaAnställda() {
 
 export async function saveTransaction(formData: FormData) {
   const anstalldId = formData.get("anstalldId")?.toString();
+  const leverantorId = formData.get("leverantorId")?.toString();
   const session = await auth();
   if (!session?.user?.id) throw new Error("Ingen användare inloggad");
   const userId = Number(session.user.id);
@@ -415,6 +416,8 @@ export async function saveTransaction(formData: FormData) {
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
+
+  console.log("📋 Sparar transaktion med leverantorId:", leverantorId);
 
   // Konvertera transaktionsdatum till korrekt format för PostgreSQL
   let formattedDate = "";
@@ -684,8 +687,20 @@ export async function saveTransaction(formData: FormData) {
     }
 
     // Skapa leverantörsfaktura-rad om levfakt-mode
-    if (levfaktMode) {
-      const leverantör = formData.get("leverantör")?.toString() || null;
+    if (leverantorId) {
+      // Hämta leverantörsnamn från databasen
+      const leverantörResult = await client.query(
+        `SELECT "namn" FROM "leverantörer" WHERE "id" = $1 AND "userId" = $2`,
+        [parseInt(leverantorId), userId]
+      );
+
+      const leverantörNamn =
+        leverantörResult.rows.length > 0
+          ? leverantörResult.rows[0].namn
+          : (() => {
+              throw new Error(`Leverantör med ID ${leverantorId} hittades inte`);
+            })();
+
       const fakturanummer = formData.get("fakturanummer")?.toString() || null;
       const fakturadatum = formData.get("fakturadatum")?.toString() || null;
       const förfallodatum = formData.get("förfallodatum")?.toString() || null;
@@ -694,7 +709,8 @@ export async function saveTransaction(formData: FormData) {
       console.log("🔍 Leverantörsfaktura formData:", {
         userId,
         transaktionsId,
-        leverantör,
+        leverantorId,
+        leverantörNamn,
         fakturanummer,
         fakturadatum,
         förfallodatum,
@@ -719,13 +735,14 @@ export async function saveTransaction(formData: FormData) {
 
       const res = await client.query(
         `INSERT INTO leverantörsfakturor (
-          "userId", transaktions_id, leverantör_namn, fakturanummer, 
+          "userId", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
           fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [
           userId,
           transaktionsId,
-          leverantör,
+          leverantörNamn,
+          parseInt(leverantorId),
           fakturanummer,
           formattedFakturadatum,
           formattedFörfallodatum,

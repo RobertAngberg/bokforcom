@@ -14,8 +14,8 @@ import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
 import KnappFullWidth from "../_components/KnappFullWidth";
-import Dropdown from "../_components/Dropdown";
 import TextFalt from "../_components/TextFalt";
+import { type Leverantör } from "../faktura/actions";
 
 type KontoRad = {
   beskrivning: string;
@@ -59,8 +59,8 @@ interface Step2LevfaktProps {
   valtFörval?: Förval | null;
   extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
   // Leverantörsfaktura-specifika props
-  leverantör: string | null;
-  setLeverantör: (leverantör: string | null) => void;
+  leverantör: Leverantör | null;
+  setLeverantör: (leverantör: Leverantör | null) => void;
   fakturanummer: string | null;
   setFakturanummer: (nummer: string | null) => void;
   fakturadatum: string | null;
@@ -98,16 +98,6 @@ export default function Steg2Levfakt({
   betaldatum,
   setBetaldatum,
 }: Step2LevfaktProps) {
-  // Dummy leverantörer - här skulle du hämta från din databas
-  const leverantörOptions = [
-    { label: "Välj leverantör...", value: "" },
-    { label: "Telia", value: "telia" },
-    { label: "Ellevio", value: "ellevio" },
-    { label: "ICA", value: "ica" },
-    { label: "Staples", value: "staples" },
-    { label: "Office Depot", value: "office_depot" },
-  ];
-
   // Datepicker styling
   useEffect(() => {
     const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
@@ -196,15 +186,26 @@ export default function Steg2Levfakt({
               setFakturanummer={setFakturanummer}
             />
 
-            {/* Leverantör dropdown */}
+            {/* Vald leverantör - visas som fast information */}
             <div className="mb-4">
-              <Dropdown
-                label="Leverantör"
-                value={leverantör || ""}
-                options={leverantörOptions}
-                onChange={setLeverantör}
-                placeholder="Välj leverantör..."
-              />
+              <label className="block mb-2 text-white">Leverantör:</label>
+              {leverantör ? (
+                <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
+                  <div className="text-white font-medium text-lg">{leverantör.namn}</div>
+                  {leverantör.organisationsnummer && (
+                    <div className="text-sm text-gray-400 mt-1">
+                      Org-nr: {leverantör.organisationsnummer}
+                    </div>
+                  )}
+                  {leverantör.email && (
+                    <div className="text-sm text-gray-400">E-post: {leverantör.email}</div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 text-gray-400">
+                  Ingen leverantör vald
+                </div>
+              )}
             </div>
 
             {/* Fakturadatum */}

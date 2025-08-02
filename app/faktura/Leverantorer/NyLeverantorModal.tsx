@@ -42,7 +42,12 @@ const InputField = ({
   </div>
 );
 
-export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLeverantör }: NyLeverantorModalProps) {
+export default function NyLeverantorModal({
+  isOpen,
+  onClose,
+  onSaved,
+  editLeverantör,
+}: NyLeverantorModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,19 +66,19 @@ export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLevera
 
     try {
       const formData = new FormData(e.currentTarget);
-      
+
       if (isEditing && editLeverantör) {
         const data = {
           namn: formData.get("namn") as string,
-          organisationsnummer: formData.get("organisationsnummer") as string || undefined,
-          adress: formData.get("adress") as string || undefined,
-          postnummer: formData.get("postnummer") as string || undefined,
-          ort: formData.get("ort") as string || undefined,
-          telefon: formData.get("telefon") as string || undefined,
-          email: formData.get("email") as string || undefined,
+          organisationsnummer: (formData.get("organisationsnummer") as string) || undefined,
+          adress: (formData.get("adress") as string) || undefined,
+          postnummer: (formData.get("postnummer") as string) || undefined,
+          ort: (formData.get("ort") as string) || undefined,
+          telefon: (formData.get("telefon") as string) || undefined,
+          email: (formData.get("email") as string) || undefined,
         };
         const result = await updateLeverantör(editLeverantör.id!, data);
-        
+
         if (result.success) {
           onSaved();
           onClose();
@@ -100,10 +105,10 @@ export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLevera
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title={isEditing ? "Redigera leverantör" : "Lägg till ny leverantör"} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? "Redigera leverantör" : "Lägg till ny leverantör"}
       maxWidth="xl"
     >
       <div className="p-6">
@@ -114,10 +119,10 @@ export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLevera
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <InputField 
-            label="Företagsnamn" 
-            name="namn" 
-            required 
+          <InputField
+            label="Företagsnamn"
+            name="namn"
+            required
             placeholder="Ange företagsnamn"
             defaultValue={editLeverantör?.namn}
           />
@@ -132,39 +137,39 @@ export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLevera
             <div></div> {/* Tom div för att hålla grid layout */}
           </div>
 
-          <InputField 
-            label="Postadress" 
-            name="adress" 
+          <InputField
+            label="Postadress"
+            name="adress"
             placeholder="Gatuadress"
             defaultValue={editLeverantör?.adress}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField 
-              label="Postnummer" 
-              name="postnummer" 
+            <InputField
+              label="Postnummer"
+              name="postnummer"
               placeholder="123 45"
               defaultValue={editLeverantör?.postnummer}
             />
-            <InputField 
-              label="Stad" 
-              name="ort" 
+            <InputField
+              label="Stad"
+              name="ort"
               placeholder="Ort"
               defaultValue={editLeverantör?.ort}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField 
-              label="Telefon" 
-              name="telefon" 
+            <InputField
+              label="Telefon"
+              name="telefon"
               placeholder="070-123 45 67"
               defaultValue={editLeverantör?.telefon}
             />
-            <InputField 
-              label="E-post" 
-              name="email" 
-              type="email" 
+            <InputField
+              label="E-post"
+              name="email"
+              type="email"
               placeholder="info@företag.se"
               defaultValue={editLeverantör?.email}
             />
@@ -179,7 +184,7 @@ export default function NyLeverantorModal({ isOpen, onClose, onSaved, editLevera
               className="bg-gray-600 hover:bg-gray-700"
             />
             <Knapp
-              text={loading ? "Sparar..." : (isEditing ? "Uppdatera leverantör" : "Spara leverantör")}
+              text={loading ? "Sparar..." : isEditing ? "Uppdatera leverantör" : "Spara leverantör"}
               type="submit"
               disabled={loading}
             />

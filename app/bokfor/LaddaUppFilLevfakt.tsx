@@ -5,6 +5,8 @@ import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCRLevFakt } from "./actions";
 import Tesseract from "tesseract.js";
 
+import { type Leverantör } from "../faktura/actions";
+
 interface FileUploadLevfaktProps {
   setFil: (file: File | null) => void;
   setPdfUrl: (url: string) => void;
@@ -12,7 +14,7 @@ interface FileUploadLevfaktProps {
   setBelopp: (belopp: number) => void;
   fil: File | null;
   // Leverantörsfaktura-specifika setters
-  setLeverantör: (leverantör: string) => void;
+  setLeverantör: (leverantör: Leverantör | null) => void;
   setFakturadatum: (datum: string | null) => void;
   setFörfallodatum: (datum: string | null) => void;
   setFakturanummer: (nummer: string) => void;
@@ -219,9 +221,10 @@ export default function LaddaUppFilLevfakt({
         console.log("📄 Parsed leverantörsfaktura data:", parsed);
 
         // Fyll i alla fält automatiskt
-        if (parsed?.leverantör) {
-          setLeverantör(parsed.leverantör);
-        }
+        // TODO: Uppdatera när OCR returnerar Leverantör-objekt istället för string
+        // if (parsed?.leverantör) {
+        //   setLeverantör(parsed.leverantör);
+        // }
 
         if (parsed?.fakturadatum) {
           setFakturadatum(parsed.fakturadatum);

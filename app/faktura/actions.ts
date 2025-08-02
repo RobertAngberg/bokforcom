@@ -1120,7 +1120,17 @@ export async function updateLeverantör(
        SET "namn" = $1, "organisationsnummer" = $2, "adress" = $3, 
            "postnummer" = $4, "ort" = $5, "telefon" = $6, "email" = $7, "uppdaterad" = NOW()
        WHERE "id" = $8 AND "userId" = $9`,
-      [data.namn, data.organisationsnummer, data.adress, data.postnummer, data.ort, data.telefon, data.email, id, userId]
+      [
+        data.namn,
+        data.organisationsnummer,
+        data.adress,
+        data.postnummer,
+        data.ort,
+        data.telefon,
+        data.email,
+        id,
+        userId,
+      ]
     );
 
     if (result.rowCount === 0) {

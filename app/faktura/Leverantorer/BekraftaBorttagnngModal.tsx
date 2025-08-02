@@ -11,12 +11,12 @@ interface BekraftaBorttagnngModalProps {
   loading?: boolean;
 }
 
-export default function BekraftaBorttagnngModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+export default function BekraftaBorttagnngModal({
+  isOpen,
+  onClose,
+  onConfirm,
   leverantorNamn,
-  loading = false 
+  loading = false,
 }: BekraftaBorttagnngModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Bekräfta borttagning" maxWidth="md">
@@ -27,8 +27,8 @@ export default function BekraftaBorttagnngModal({
             Är du säker på att du vill ta bort leverantören?
           </h3>
           <p className="text-gray-300 mb-6">
-            <strong>{leverantorNamn}</strong> kommer att tas bort permanent. 
-            Denna åtgärd kan inte ångras.
+            <strong>{leverantorNamn}</strong> kommer att tas bort permanent. Denna åtgärd kan inte
+            ångras.
           </p>
         </div>
 

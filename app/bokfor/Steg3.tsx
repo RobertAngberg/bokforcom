@@ -8,6 +8,7 @@ import { saveTransaction } from "./actions";
 import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
 import { formatSEK, round } from "../_utils/format";
+import { type Leverantör } from "../faktura/actions";
 
 type KontoRad = {
   kontonummer?: string;
@@ -46,7 +47,7 @@ interface Step3Props {
   utlaggMode?: boolean;
   levfaktMode?: boolean;
   // Leverantörsfaktura-specifika props
-  leverantör?: string | null;
+  leverantör?: Leverantör | null;
   fakturanummer?: string | null;
   fakturadatum?: string | null;
   förfallodatum?: string | null;
@@ -147,7 +148,7 @@ export default function Steg3({
 
       // Leverantörsfaktura-specifika fält
       if (levfaktMode) {
-        if (leverantör) formData.set("leverantör", leverantör);
+        if (leverantör?.id) formData.set("leverantorId", leverantör.id.toString());
         if (fakturanummer) formData.set("fakturanummer", fakturanummer);
         if (fakturadatum) formData.set("fakturadatum", fakturadatum);
         if (förfallodatum) formData.set("förfallodatum", förfallodatum);
@@ -259,9 +260,20 @@ export default function Steg3({
           : "Steg 3: Kontrollera och slutför"}
       </h1>
       <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
-      <p className="text-center text-gray-300 mb-8">
+      <p className="text-center text-gray-300 mb-2">
         {transaktionsdatum ? new Date(transaktionsdatum).toLocaleDateString("sv-SE") : ""}
       </p>
+      {levfaktMode && leverantör && (
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center bg-slate-800 border border-slate-600 rounded-lg px-4 py-2">
+            <span className="text-gray-400 text-sm mr-2">Leverantör:</span>
+            <span className="text-white font-medium">{leverantör.namn}</span>
+            {leverantör.organisationsnummer && (
+              <span className="text-gray-400 text-sm ml-2">({leverantör.organisationsnummer})</span>
+            )}
+          </div>
+        </div>
+      )}
       {levfaktMode && ärFörsäljning && (
         <div className="mb-6 flex items-center px-4 py-3 bg-green-900 text-green-100 rounded-lg text-base">
           <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-green-700 text-white text-lg font-bold">

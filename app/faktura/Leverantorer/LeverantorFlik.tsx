@@ -12,7 +12,9 @@ export default function LeverantörFlik() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editLeverantör, setEditLeverantör] = useState<Leverantör | undefined>();
-  const [deleteModal, setDeleteModal] = useState<{ show: boolean; leverantör?: Leverantör }>({ show: false });
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; leverantör?: Leverantör }>({
+    show: false,
+  });
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadLeverantörer = async () => {
@@ -43,10 +45,10 @@ export default function LeverantörFlik() {
 
   const confirmDelete = async () => {
     if (!deleteModal.leverantör) return;
-    
+
     setDeleteLoading(true);
     const result = await deleteLeverantör(deleteModal.leverantör.id!);
-    
+
     if (result.success) {
       setDeleteModal({ show: false });
       loadLeverantörer();
@@ -125,13 +127,13 @@ export default function LeverantörFlik() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 ml-4">
-                      <button 
+                      <button
                         onClick={() => handleEditLeverantör(leverantör)}
                         className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 rounded"
                       >
                         Redigera
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteLeverantör(leverantör)}
                         className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded"
                       >

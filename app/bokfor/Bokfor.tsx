@@ -1,7 +1,7 @@
 //#region Huvud
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SökFörval from "./SokForval";
 import Steg2 from "./Steg2";
 import Steg2Levfakt from "./steg2Levfakt";
@@ -11,6 +11,7 @@ import MainLayout from "../_components/MainLayout";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
+import { getLeverantörer, type Leverantör } from "../faktura/actions";
 
 // För React DatePicker
 registerLocale("sv", sv);
@@ -45,6 +46,7 @@ type Props = {
   favoritFörvalen: Forval[];
   utlaggMode?: boolean;
   levfaktMode?: boolean;
+  leverantorId?: number | null;
 };
 //#endregion
 
@@ -52,6 +54,7 @@ export default function Bokför({
   favoritFörvalen,
   utlaggMode = false,
   levfaktMode = false,
+  leverantorId = null,
 }: Props) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [kontonummer, setKontonummer] = useState<string>("");
@@ -67,11 +70,27 @@ export default function Bokför({
   >({});
 
   // Leverantörsfaktura-specifika states
-  const [leverantör, setLeverantör] = useState<string | null>("");
+  const [leverantör, setLeverantör] = useState<Leverantör | null>(null);
   const [fakturanummer, setFakturanummer] = useState<string | null>("");
   const [fakturadatum, setFakturadatum] = useState<string | null>("");
   const [förfallodatum, setFörfallodatum] = useState<string | null>("");
   const [betaldatum, setBetaldatum] = useState<string | null>("");
+
+  // Hämta leverantörsdata om leverantorId finns
+  useEffect(() => {
+    if (leverantorId && levfaktMode) {
+      const fetchLeverantör = async () => {
+        const result = await getLeverantörer();
+        if (result.success) {
+          const foundLeverantör = result.leverantörer?.find((l) => l.id === leverantorId);
+          if (foundLeverantör) {
+            setLeverantör(foundLeverantör);
+          }
+        }
+      };
+      fetchLeverantör();
+    }
+  }, [leverantorId, levfaktMode]);
 
   // Kundfaktura-specifika states
   const [bokförSomFaktura, setBokförSomFaktura] = useState<boolean>(false);
