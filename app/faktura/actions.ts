@@ -804,3 +804,80 @@ export async function bokförFaktura(data: BokförFakturaData) {
     client.release();
   }
 }
+
+export async function hamtaBokfordaFakturor() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Ej autentiserad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    // Hämta transaktioner som bokförts via levfakt-mode
+    // Vi hämtar bara transaktioner som antingen har leverantör-data eller är kundfakturor (1510)
+    const { rows } = await client.query(
+      `
+      SELECT DISTINCT
+        t.id,
+        t.transaktionsdatum as datum,
+        t.belopp,
+        t.kommentar,
+        CASE 
+          WHEN lf.id IS NOT NULL THEN 'leverantor'
+          WHEN EXISTS (
+            SELECT 1 FROM transaktionsposter tp 
+            JOIN konton k ON tp.konto_id = k.id 
+            WHERE tp.transaktions_id = t.id AND k.kontonummer::text = '1510'
+          ) THEN 'kund'
+          ELSE 'okand'
+        END as typ,
+        lf.leverantör_namn as leverantör,
+        lf.fakturanummer,
+        lf.fakturadatum,
+        lf.förfallodatum,
+        lf.betaldatum
+      FROM transaktioner t
+      LEFT JOIN leverantörsfakturor lf ON lf.transaktions_id = t.id
+      WHERE t."userId" = $1
+        AND (
+          lf.id IS NOT NULL OR
+          EXISTS (
+            SELECT 1 FROM transaktionsposter tp 
+            JOIN konton k ON tp.konto_id = k.id 
+            WHERE tp.transaktions_id = t.id AND k.kontonummer::text = '1510'
+          )
+        )
+      ORDER BY t.transaktionsdatum DESC, t.id DESC
+      LIMIT 100
+    `,
+      [userId]
+    );
+
+    const fakturor = rows.map((row) => {
+      return {
+        id: row.id,
+        datum: row.datum,
+        belopp: parseFloat(row.belopp),
+        kommentar: row.kommentar || "",
+        leverantör: row.leverantör || "",
+        fakturanummer: row.fakturanummer || "",
+        fakturadatum: row.fakturadatum,
+        förfallodatum: row.förfallodatum,
+        betaldatum: row.betaldatum,
+        typ: row.typ,
+      };
+    });
+
+    return { success: true, fakturor };
+  } catch (error) {
+    console.error("Fel vid hämtning av bokförda fakturor:", error);
+    return {
+      success: false,
+      error: "Kunde inte hämta bokförda fakturor",
+    };
+  } finally {
+    client.release();
+  }
+}

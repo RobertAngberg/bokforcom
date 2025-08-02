@@ -66,6 +66,13 @@ export default function Bokför({
     Record<string, { label: string; debet: number; kredit: number }>
   >({});
 
+  // Leverantörsfaktura-specifika states
+  const [leverantör, setLeverantör] = useState<string | null>("");
+  const [fakturanummer, setFakturanummer] = useState<string | null>("");
+  const [fakturadatum, setFakturadatum] = useState<string | null>("");
+  const [förfallodatum, setFörfallodatum] = useState<string | null>("");
+  const [betaldatum, setBetaldatum] = useState<string | null>("");
+
   return (
     <MainLayout>
       {currentStep === 1 && (
@@ -101,7 +108,10 @@ export default function Bokför({
 
       {currentStep === 2 && levfaktMode && (
         <Steg2Levfakt
+          favoritFörvalen={favoritFörvalen}
           setCurrentStep={setCurrentStep}
+          setKontonummer={setKontonummer}
+          setKontobeskrivning={setKontobeskrivning}
           fil={fil}
           setFil={setFil}
           pdfUrl={pdfUrl}
@@ -113,9 +123,21 @@ export default function Bokför({
           kommentar={kommentar}
           setKommentar={setKommentar}
           valtFörval={valtFörval}
+          setValtFörval={setValtFörval}
           extrafält={extrafält}
           setExtrafält={setExtrafält}
           utlaggMode={utlaggMode}
+          // Leverantörsfaktura-specifika props
+          leverantör={leverantör}
+          setLeverantör={setLeverantör}
+          fakturanummer={fakturanummer}
+          setFakturanummer={setFakturanummer}
+          fakturadatum={fakturadatum}
+          setFakturadatum={setFakturadatum}
+          förfallodatum={förfallodatum}
+          setFörfallodatum={setFörfallodatum}
+          betaldatum={betaldatum}
+          setBetaldatum={setBetaldatum}
         />
       )}
 
@@ -132,6 +154,12 @@ export default function Bokför({
           extrafält={extrafält}
           utlaggMode={utlaggMode}
           levfaktMode={levfaktMode}
+          // Leverantörsfaktura-specifika props
+          leverantör={leverantör}
+          fakturanummer={fakturanummer}
+          fakturadatum={fakturadatum}
+          förfallodatum={förfallodatum}
+          betaldatum={betaldatum}
         />
       )}
 

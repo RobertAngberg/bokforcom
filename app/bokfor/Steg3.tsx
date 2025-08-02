@@ -45,6 +45,12 @@ interface Step3Props {
   extrafält?: Record<string, ExtrafältRad>;
   utlaggMode?: boolean;
   levfaktMode?: boolean;
+  // Leverantörsfaktura-specifika props
+  leverantör?: string | null;
+  fakturanummer?: string | null;
+  fakturadatum?: string | null;
+  förfallodatum?: string | null;
+  betaldatum?: string | null;
 }
 // #endregion
 
@@ -60,6 +66,12 @@ export default function Steg3({
   extrafält = {},
   utlaggMode = false,
   levfaktMode = false,
+  // Leverantörsfaktura-specifika props
+  leverantör = null,
+  fakturanummer = null,
+  fakturadatum = null,
+  förfallodatum = null,
+  betaldatum = null,
 }: Step3Props) {
   // State för anställda och vald anställd
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
@@ -77,6 +89,13 @@ export default function Steg3({
   const momsSats = valtFörval?.momssats ?? 0;
   const moms = +(belopp * (momsSats / (1 + momsSats))).toFixed(2);
   const beloppUtanMoms = +(belopp - moms).toFixed(2);
+
+  // Kolla om det är försäljning inom leverantörsfaktura-mode
+  const ärFörsäljning =
+    levfaktMode &&
+    (valtFörval?.namn?.toLowerCase().includes("försäljning") ||
+      valtFörval?.typ?.toLowerCase().includes("intäkt") ||
+      valtFörval?.kategori?.toLowerCase().includes("försäljning"));
   // #endregion
 
   // #region Hämta beskrivning för konto 2890 från DB
@@ -117,6 +136,15 @@ export default function Steg3({
     formData.set("levfaktMode", levfaktMode ? "true" : "false");
     if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
 
+    // Leverantörsfaktura-specifika fält
+    if (levfaktMode) {
+      if (leverantör) formData.set("leverantör", leverantör);
+      if (fakturanummer) formData.set("fakturanummer", fakturanummer);
+      if (fakturadatum) formData.set("fakturadatum", fakturadatum);
+      if (förfallodatum) formData.set("förfallodatum", förfallodatum);
+      if (betaldatum) formData.set("betaldatum", betaldatum);
+    }
+
     const result = await saveTransaction(formData);
     if (result.success) setCurrentStep(4);
   };
@@ -143,10 +171,16 @@ export default function Steg3({
               namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
               beloppAttVisa = belopp;
             }
-            // Om leverantörsfaktura-mode, byt ut 1930 mot 2440
-            else if (levfaktMode && kontoNr === "1930") {
+            // Om leverantörsfaktura-mode (inköp), byt ut 1930 mot 2440
+            else if (levfaktMode && !ärFörsäljning && kontoNr === "1930") {
               kontoNr = "2440";
               namn = `2440 Leverantörsskulder`;
+              beloppAttVisa = belopp;
+            }
+            // Om kundfaktura (försäljning), byt ut 1930 mot 1510
+            else if (levfaktMode && ärFörsäljning && kontoNr === "1930") {
+              kontoNr = "1510";
+              namn = `1510 Kundfordringar`;
               beloppAttVisa = belopp;
             } else if (kontoNr?.startsWith("26")) {
               beloppAttVisa = moms;
@@ -160,8 +194,19 @@ export default function Steg3({
             return {
               key: i,
               konto: namn,
-              debet: rad.debet ? round(beloppAttVisa) : 0,
-              kredit: rad.kredit ? round(beloppAttVisa) : 0,
+              // För försäljning: vänd om debet/kredit för intäkts- och momskonton
+              debet:
+                ärFörsäljning && (kontoNr?.startsWith("3") || kontoNr?.startsWith("261"))
+                  ? 0
+                  : rad.debet
+                    ? round(beloppAttVisa)
+                    : 0,
+              kredit:
+                ärFörsäljning && (kontoNr?.startsWith("3") || kontoNr?.startsWith("261"))
+                  ? round(beloppAttVisa)
+                  : rad.kredit
+                    ? round(beloppAttVisa)
+                    : 0,
             };
           })
         : [];
@@ -176,14 +221,28 @@ export default function Steg3({
 
       <h1 className="text-3xl mb-4 text-center">
         {levfaktMode
-          ? "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
+          ? ärFörsäljning
+            ? "Steg 3: Kundfaktura - Kontrollera och slutför"
+            : "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
           : "Steg 3: Kontrollera och slutför"}
       </h1>
       <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
       <p className="text-center text-gray-300 mb-8">
         {transaktionsdatum ? new Date(transaktionsdatum).toLocaleDateString("sv-SE") : ""}
       </p>
-      {levfaktMode && (
+      {levfaktMode && ärFörsäljning && (
+        <div className="mb-6 flex items-center px-4 py-3 bg-green-900 text-green-100 rounded-lg text-base">
+          <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-green-700 text-white text-lg font-bold">
+            💰
+          </span>
+          <div className="flex-1 text-center">
+            <strong>Kundfaktura bokförs som fordran (1510).</strong>
+            <br />
+            När kunden betalar fakturan kommer fordran att kvittas mot ditt företagskonto.
+          </div>
+        </div>
+      )}
+      {levfaktMode && !ärFörsäljning && (
         <div className="mb-6 flex items-center px-4 py-3 bg-purple-900 text-purple-100 rounded-lg text-base">
           <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-purple-700 text-white text-lg font-bold">
             📋

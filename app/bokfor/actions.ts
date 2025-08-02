@@ -451,6 +451,11 @@ export async function saveTransaction(formData: FormData) {
           console.log(`💰 Returning belopp ${belopp} for debet 1930 (försäljning)`);
           return belopp;
         }
+        // KUNDFAKTURA FIX: 1510 ska få hela beloppet som debet (kundfordringar)
+        if (nr === "1510") {
+          console.log(`💰 Returning belopp ${belopp} for debet 1510 (kundfordringar)`);
+          return belopp;
+        }
         // Alla andra klass 1-konton får beloppUtanMoms som tidigare
         if (klass === "1") return beloppUtanMoms;
         if (klass === "2") return moms; // FIXED: 2640 moms-konton som debet
@@ -463,6 +468,11 @@ export async function saveTransaction(formData: FormData) {
       // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
       if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
         console.log(`💰 Returning 0 for kredit 1930 (försäljning) - should not be credit`);
+        return 0;
+      }
+      // KUNDFAKTURA FIX: 1510 ska inte vara kredit
+      if (nr === "1510") {
+        console.log(`💰 Returning 0 for kredit 1510 (kundfordringar) - should not be credit`);
         return 0;
       }
       // UTLÄGG FIX: 2890 ska få hela beloppet som kredit (ersätter 1930)
@@ -509,6 +519,16 @@ export async function saveTransaction(formData: FormData) {
           }
         }
 
+        // KUNDFAKTURA FIX: 1510 ska få hela beloppet som debet
+        if (nr === "1510") {
+          if (debet > 0) {
+            debet = belopp; // Hela beloppet som debet
+          }
+          if (kredit > 0) {
+            kredit = 0; // 1510 ska inte vara kredit
+          }
+        }
+
         if (debet === 0 && kredit === 0) continue;
 
         console.log(`➕ Extrafält  ${nr}: D ${debet}  K ${kredit}`);
@@ -521,11 +541,16 @@ export async function saveTransaction(formData: FormData) {
         let nr = k.kontonummer?.toString().trim();
         if (!nr) continue;
 
-        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode, eller mot 2440 om leverantörsfaktura-mode
+        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode, eller mot 2440 om leverantörsfaktura-mode, eller mot 1510 om försäljning
         if (utlaggMode && nr === "1930") {
           nr = "2890";
         } else if (levfaktMode && nr === "1930") {
-          nr = "2440";
+          // Kolla om det är försäljning (kundfaktura)
+          if (valtFörval.namn?.includes("Försäljning")) {
+            nr = "1510"; // Kundfordringar för kundfakturor
+          } else {
+            nr = "2440"; // Leverantörsskulder för leverantörsfakturor
+          }
         }
         console.log(
           `🔍 Kontokonvertering: utlaggMode=${utlaggMode}, levfaktMode=${levfaktMode}, nr=${nr}`
@@ -572,6 +597,59 @@ export async function saveTransaction(formData: FormData) {
         [userId, transaktionsId, anstalldId]
       );
       console.log("📝 Utlägg SQL-result:", res.rows);
+    }
+
+    // Skapa leverantörsfaktura-rad om levfakt-mode
+    if (levfaktMode) {
+      const leverantör = formData.get("leverantör")?.toString() || null;
+      const fakturanummer = formData.get("fakturanummer")?.toString() || null;
+      const fakturadatum = formData.get("fakturadatum")?.toString() || null;
+      const förfallodatum = formData.get("förfallodatum")?.toString() || null;
+      const betaldatum = formData.get("betaldatum")?.toString() || null;
+
+      console.log("🔍 Leverantörsfaktura formData:", {
+        userId,
+        transaktionsId,
+        leverantör,
+        fakturanummer,
+        fakturadatum,
+        förfallodatum,
+        betaldatum,
+        belopp,
+      });
+
+      // Formatera datum korrekt för PostgreSQL
+      const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return null;
+        try {
+          const date = new Date(dateStr);
+          return !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : null;
+        } catch {
+          return null;
+        }
+      };
+
+      const formattedFakturadatum = formatDate(fakturadatum);
+      const formattedFörfallodatum = formatDate(förfallodatum);
+      const formattedBetaldatum = formatDate(betaldatum);
+
+      const res = await client.query(
+        `INSERT INTO leverantörsfakturor (
+          "userId", transaktions_id, leverantör_namn, fakturanummer, 
+          fakturadatum, förfallodatum, betaldatum, belopp
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [
+          userId,
+          transaktionsId,
+          leverantör,
+          fakturanummer,
+          formattedFakturadatum,
+          formattedFörfallodatum,
+          formattedBetaldatum,
+          belopp,
+        ]
+      );
+      console.log("📝 Leverantörsfaktura SQL-result:", res.rows);
     }
     client.release();
     await invalidateBokförCache();

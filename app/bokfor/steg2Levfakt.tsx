@@ -35,23 +35,41 @@ type Förval = {
   specialtyp?: string | null;
 };
 
-type Step2LevfaktProps = {
+interface Step2LevfaktProps {
+  favoritFörvalen: Förval[];
   setCurrentStep: (step: number) => void;
-  fil: File | null;
-  setFil: (file: File | null) => void;
-  pdfUrl: string | null;
+  setKontonummer: (konto: string) => void;
+  setKontobeskrivning: (beskrivning: string) => void;
+  setFil: (fil: File | null) => void;
   setPdfUrl: (url: string | null) => void;
-  belopp: number | null;
-  setBelopp: (amount: number | null) => void;
-  transaktionsdatum: string | null;
-  setTransaktionsdatum: (date: string | null) => void;
-  kommentar: string | null;
-  setKommentar: (comment: string | null) => void;
-  valtFörval: Förval | null;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  setBelopp: (belopp: number | null) => void;
+  setTransaktionsdatum: (datum: string | null) => void;
+  setKommentar: (kommentar: string | null) => void;
+  setValtFörval: (förval: Förval | null) => void;
+  setExtrafält: (
+    extrafält: Record<string, { label: string; debet: number; kredit: number }>
+  ) => void;
   utlaggMode?: boolean;
-};
+  // Aktuella states behövs för visning
+  fil?: File | null;
+  pdfUrl?: string | null;
+  belopp?: number | null;
+  transaktionsdatum?: string | null;
+  kommentar?: string | null;
+  valtFörval?: Förval | null;
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
+  // Leverantörsfaktura-specifika props
+  leverantör: string | null;
+  setLeverantör: (leverantör: string | null) => void;
+  fakturanummer: string | null;
+  setFakturanummer: (nummer: string | null) => void;
+  fakturadatum: string | null;
+  setFakturadatum: (datum: string | null) => void;
+  förfallodatum: string | null;
+  setFörfallodatum: (datum: string | null) => void;
+  betaldatum: string | null;
+  setBetaldatum: (datum: string | null) => void;
+}
 // #endregion
 
 export default function Steg2Levfakt({
@@ -69,13 +87,17 @@ export default function Steg2Levfakt({
   valtFörval,
   extrafält,
   setExtrafält,
+  leverantör,
+  setLeverantör,
+  fakturanummer,
+  setFakturanummer,
+  fakturadatum,
+  setFakturadatum,
+  förfallodatum,
+  setFörfallodatum,
+  betaldatum,
+  setBetaldatum,
 }: Step2LevfaktProps) {
-  // Leverantörsfaktura-specifika states
-  const [leverantör, setLeverantör] = useState("");
-  const [fakturadatum, setFakturadatum] = useState<string | null>(null);
-  const [förfallodatum, setFörfallodatum] = useState<string | null>(null);
-  const [fakturanummer, setFakturanummer] = useState("");
-
   // Dummy leverantörer - här skulle du hämta från din databas
   const leverantörOptions = [
     { label: "Välj leverantör...", value: "" },
@@ -164,7 +186,7 @@ export default function Steg2Levfakt({
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFilLevfakt
-              fil={fil}
+              fil={fil || null}
               setFil={setFil}
               setPdfUrl={setPdfUrl}
               setBelopp={setBelopp}
@@ -179,7 +201,7 @@ export default function Steg2Levfakt({
             <div className="mb-4">
               <Dropdown
                 label="Leverantör"
-                value={leverantör}
+                value={leverantör || ""}
                 options={leverantörOptions}
                 onChange={setLeverantör}
                 placeholder="Välj leverantör..."
@@ -222,7 +244,7 @@ export default function Steg2Levfakt({
                 label="Fakturanummer"
                 name="fakturanummer"
                 type="text"
-                value={fakturanummer}
+                value={fakturanummer || ""}
                 onChange={(e) => setFakturanummer(e.target.value)}
                 placeholder="Ange fakturanummer..."
               />
