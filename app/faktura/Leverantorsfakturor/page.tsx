@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import MainLayout from "../../_components/MainLayout";
-import BokfordaFakturor from "../BokfordaFakturor";
 import TillbakaPil from "../../_components/TillbakaPil";
+import LeverantörFlik from "../Leverantorer/LeverantorFlik";
+import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
 
 export default function LeverantorsfakturorPage() {
   const router = useRouter();
@@ -26,9 +27,14 @@ export default function LeverantorsfakturorPage() {
         </Link>
       </div>
 
-      {/* Bokförda leverantörsfakturor lista */}
+      {/* Leverantörer flik */}
+      <div className="mb-6">
+        <LeverantörFlik />
+      </div>
+
+      {/* Bokförda leverantörsfakturor flik */}
       <div className="mb-8">
-        <BokfordaFakturor />
+        <BokfordaFakturorFlik />
       </div>
     </MainLayout>
   );

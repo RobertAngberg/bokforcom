@@ -1,0 +1,39 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import AnimeradFlik from "../../_components/AnimeradFlik";
+import BokfordaFakturor from "../BokfordaFakturor";
+import { hamtaBokfordaFakturor } from "../actions";
+
+export default function BokfordaFakturorFlik() {
+  const [fakturorAntal, setFakturorAntal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const loadFakturorAntal = async () => {
+    try {
+      const result = await hamtaBokfordaFakturor();
+      if (result.success && result.fakturor) {
+        setFakturorAntal(result.fakturor.length);
+      }
+    } catch (error) {
+      console.error("Fel vid hämtning av fakturor:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFakturorAntal();
+  }, []);
+
+  return (
+    <AnimeradFlik
+      title="Bokförda fakturor"
+      icon="📊"
+      visaSummaDirekt={loading ? "..." : `${fakturorAntal} st`}
+      forcedOpen={true}
+    >
+      <BokfordaFakturor />
+    </AnimeradFlik>
+  );
+}

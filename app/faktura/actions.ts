@@ -1025,3 +1025,92 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     client.release();
   }
 }
+
+export type Leverantör = {
+  id?: number;
+  namn: string;
+  organisationsnummer?: string;
+  adress?: string;
+  postnummer?: string;
+  ort?: string;
+  telefon?: string;
+  email?: string;
+  kontaktperson?: string;
+  hemsida?: string;
+  anteckningar?: string;
+  skapad?: string;
+  uppdaterad?: string;
+};
+
+export async function saveLeverantör(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    const namn = formData.get("namn")?.toString();
+    const organisationsnummer = formData.get("organisationsnummer")?.toString();
+    const adress = formData.get("adress")?.toString();
+    const postnummer = formData.get("postnummer")?.toString();
+    const ort = formData.get("ort")?.toString();
+    const telefon = formData.get("telefon")?.toString();
+    const email = formData.get("email")?.toString();
+    const kontaktperson = formData.get("kontaktperson")?.toString();
+    const hemsida = formData.get("hemsida")?.toString();
+    const anteckningar = formData.get("anteckningar")?.toString();
+
+    if (!namn) {
+      return { success: false, error: "Namn är obligatoriskt" };
+    }
+
+    const result = await client.query(
+      `INSERT INTO leverantörer (
+        userId, namn, organisationsnummer, adress, postnummer, ort, 
+        telefon, email, kontaktperson, hemsida, anteckningar
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+      RETURNING *`,
+      [
+        userId,
+        namn,
+        organisationsnummer,
+        adress,
+        postnummer,
+        ort,
+        telefon,
+        email,
+        kontaktperson,
+        hemsida,
+        anteckningar,
+      ]
+    );
+
+    return { success: true, leverantör: result.rows[0] };
+  } catch (error) {
+    console.error("Fel vid sparande av leverantör:", error);
+    return { success: false, error: "Kunde inte spara leverantör" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function getLeverantörer() {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `SELECT * FROM leverantörer WHERE userId = $1 ORDER BY namn ASC`,
+      [userId]
+    );
+
+    return { success: true, leverantörer: result.rows };
+  } catch (error) {
+    console.error("Fel vid hämtning av leverantörer:", error);
+    return { success: false, error: "Kunde inte hämta leverantörer" };
+  } finally {
+    client.release();
+  }
+}

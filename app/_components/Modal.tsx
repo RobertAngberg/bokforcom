@@ -73,8 +73,8 @@ export default function Modal({
         className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} w-full mx-4 max-h-[90vh] overflow-y-auto`}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-cyan-400">{title}</h2>
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-2xl text-white text-center flex-1 mt-2">{title}</h2>
           {showCloseButton && (
             <button
               onClick={onClose}
