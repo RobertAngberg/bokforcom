@@ -19,11 +19,21 @@ export default function Navbar() {
     { href: "/faktura", label: "Fakturor" },
     { href: "/rapporter", label: "Rapporter" },
     { href: "/personal", label: "Personal" },
+    { href: "/signup", label: "Sign up" },
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
+  // Länkar för icke-inloggade användare
+  const guestLinks = [
+    { href: "/", label: "Hem" },
+    { href: "/signup", label: "Sign up" },
+    { href: "/login", label: "Logga in" },
+  ];
+
+  const currentLinks = session?.user ? navLinks : guestLinks;
+
   // Hanterar aktiv path + marker
-  const { markerStyle, linksRef, handleClick } = useActivePathMarker(navLinks, pathname);
+  const { markerStyle, linksRef, handleClick } = useActivePathMarker(currentLinks, pathname);
 
   return (
     <div className="sticky top-0 z-50 flex items-center justify-center w-full h-20 px-4 bg-cyan-950">
@@ -38,7 +48,7 @@ export default function Navbar() {
           }}
         />
 
-        {navLinks.map(({ href, label }) => (
+        {currentLinks.map(({ href, label }) => (
           <Link
             key={href}
             href={href}
@@ -62,7 +72,7 @@ export default function Navbar() {
   );
 }
 
-function useActivePathMarker(navLinks: { href: string; label: string }[], pathname: string) {
+function useActivePathMarker(currentLinks: { href: string; label: string }[], pathname: string) {
   const [selectedPath, setSelectedPath] = useState(pathname);
   const [markerStyle, setMarkerStyle] = useState({ left: 0, width: 0 });
   const linksRef = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -77,7 +87,7 @@ function useActivePathMarker(navLinks: { href: string; label: string }[], pathna
       const { offsetLeft, offsetWidth } = activeEl;
       setMarkerStyle({ left: offsetLeft, width: offsetWidth });
     }
-  }, [selectedPath, navLinks.length]);
+  }, [selectedPath, currentLinks.length]);
 
   const handleClick = (path: string) => {
     setSelectedPath(path);
