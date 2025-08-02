@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import MainLayout from "../_components/MainLayout";
-import BokfordaFakturor from "./BokfordaFakturor";
 
 const fakturaAlternativ = [
   {
@@ -14,7 +13,7 @@ const fakturaAlternativ = [
     emoji: "📋",
     title: "Leverantörsfakturor",
     description: "Hantera inkommande fakturor från leverantörer.",
-    href: "/bokfor?levfakt=true",
+    href: "/faktura/Leverantorsfakturor",
   },
   {
     emoji: "📝",
@@ -28,11 +27,6 @@ export default function FakturaPage() {
   return (
     <MainLayout>
       <h1 className="text-3xl mb-10 text-center text-white">Fakturor</h1>
-
-      {/* Bokförda fakturor sektion */}
-      <div className="mb-8">
-        <BokfordaFakturor />
-      </div>
 
       {/* Alternativ för fakturhantering */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

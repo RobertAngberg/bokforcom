@@ -6,7 +6,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "./actions";
 import Knapp from "../_components/Knapp";
 import Dropdown from "../_components/Dropdown";
-import TextFält from "../_components/TextFält";
+import TextFalt from "../_components/TextFalt";
 
 type KundSaveResponse = {
   success: boolean;
@@ -153,49 +153,49 @@ export default function KundUppgifter() {
       {kundStatus === "editing" && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TextFält
+            <TextFalt
               label="Kundnamn"
               name="kundnamn"
               value={formData.kundnamn}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Organisationsnummer"
               name="kundorganisationsnummer"
               value={formData.kundorganisationsnummer}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Kundnummer"
               name="kundnummer"
               value={formData.kundnummer}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Momsnummer"
               name="kundmomsnummer"
               value={formData.kundmomsnummer}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="E‑post"
               name="kundemail"
               value={formData.kundemail}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Adress"
               name="kundadress"
               value={formData.kundadress}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Postnummer"
               name="kundpostnummer"
               value={formData.kundpostnummer}
               onChange={handleChange}
             />
-            <TextFält
+            <TextFalt
               label="Stad"
               name="kundstad"
               value={formData.kundstad}

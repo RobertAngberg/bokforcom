@@ -1,7 +1,7 @@
 // #region Huvud
 "use client";
 
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import Dropdown from "../../_components/Dropdown";
 
 interface LönProps {
@@ -49,7 +49,7 @@ export default function Lön({ editData, handleChange, anställd, viewMode }: L�
     <div className="bg-slate-800 p-6 rounded-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Lön</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TextFält
+        <TextFalt
           label="Kompensation (kr)"
           name="kompensation"
           type="number"

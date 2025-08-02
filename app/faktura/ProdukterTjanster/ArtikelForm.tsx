@@ -1,4 +1,4 @@
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 
 interface ArtikelFormProps {
   beskrivning: string;
@@ -31,25 +31,25 @@ export default function ArtikelForm({
 }: ArtikelFormProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <TextFält
+      <TextFalt
         label="Beskrivning"
         name="beskrivning"
         value={beskrivning}
         onChange={(e) => onChangeBeskrivning(e.target.value)}
       />
-      <TextFält
+      <TextFalt
         label="Antal"
         name="antal"
         value={antal.toString()}
         onChange={(e) => onChangeAntal(parseFloat(e.target.value))}
       />
-      <TextFält
+      <TextFalt
         label="Pris per enhet"
         name="prisPerEnhet"
         value={prisPerEnhet.toString()}
         onChange={(e) => onChangePrisPerEnhet(parseFloat(e.target.value))}
       />
-      <TextFält
+      <TextFalt
         label="Moms (%)"
         name="moms"
         value={moms.toString()}

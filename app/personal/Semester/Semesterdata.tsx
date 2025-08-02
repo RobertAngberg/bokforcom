@@ -1,7 +1,7 @@
 // #region Huvud
 "use client";
 
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import InfoTooltip from "../../_components/InfoTooltip";
 
 interface SemesterdataProps {
@@ -46,7 +46,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               <label className="block text-sm font-medium text-white">Semesterdagar per år</label>
               <InfoTooltip text={infoTexts.semesterdagarPerÅr} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="semesterdagarPerÅr"
               type="number"
@@ -60,7 +60,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               <label className="block text-sm font-medium text-white">Kvarvarande dagar</label>
               <InfoTooltip text={infoTexts.kvarandeDagar} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="kvarandeDagar"
               type="number"
@@ -74,7 +74,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               <label className="block text-sm font-medium text-white">Sparade dagar</label>
               <InfoTooltip text={infoTexts.sparadeDagar} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="sparadeDagar"
               type="number"
@@ -90,7 +90,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               </label>
               <InfoTooltip text={infoTexts.användaFörskott} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="användaFörskott"
               type="number"
@@ -106,7 +106,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               </label>
               <InfoTooltip text={infoTexts.kvarandeFörskott} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="kvarandeFörskott"
               type="number"
@@ -122,7 +122,7 @@ export default function Semesterdata({ editData, handleChange, isEditing }: Seme
               </label>
               <InfoTooltip text={infoTexts.innestående} />
             </div>
-            <TextFält
+            <TextFalt
               label=""
               name="innestående"
               type="number"

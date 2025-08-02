@@ -1,10 +1,12 @@
 // #region Huvud
 "use client";
 
+import { useState } from "react";
 import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
+import TextFalt from "../../_components/TextFalt";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -35,7 +37,7 @@ interface Props {
 }
 // #endregion
 
-export default function InkopVarorUtanfEU({
+export default function Importmoms({
   mode,
   renderMode = "standard",
   belopp = null,
@@ -60,6 +62,10 @@ export default function InkopVarorUtanfEU({
   förfallodatum,
   setFörfallodatum,
 }: Props) {
+  const [tull, setTull] = useState("");
+  const [fiktiv, setFiktiv] = useState("");
+  const [ovrigt, setOvrigt] = useState("");
+
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
@@ -71,18 +77,64 @@ export default function InkopVarorUtanfEU({
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
         "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
-        "4010": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4500": { label: "Inköp varor utanför Sverige", debet: belopp ?? 0, kredit: 0 },
-        "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
+        "2615": {
+          label: "Utgående moms import av varor, 25%",
+          debet: 0,
+          kredit: parseFloat(fiktiv || "0"),
+        },
+        "2640": { label: "Ingående moms", debet: parseFloat(tull || "0") * 0.2, kredit: 0 },
+        "2645": {
+          label: "Beräknad ingående moms på förvärv från utlandet",
+          debet: parseFloat(fiktiv || "0"),
+          kredit: 0,
+        },
+        "4545": {
+          label: "Import av varor, 25 % moms",
+          debet: parseFloat(fiktiv || "0") * 4,
+          kredit: 0,
+        },
+        "4549": {
+          label: "Motkonto beskattningsunderlag import",
+          debet: 0,
+          kredit: parseFloat(fiktiv || "0") * 4,
+        },
+        "5720": {
+          label: "Tull- och speditionskostnader m.m.",
+          debet: parseFloat(tull || "0") * 0.8 + parseFloat(ovrigt || "0"),
+          kredit: 0,
+        },
       };
       setExtrafält?.(extrafältObj);
     } else {
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
         "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-        "4010": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4500": { label: "Inköp varor utanför Sverige", debet: belopp ?? 0, kredit: 0 },
-        "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
+        "2615": {
+          label: "Utgående moms import av varor, 25%",
+          debet: 0,
+          kredit: parseFloat(fiktiv || "0"),
+        },
+        "2640": { label: "Ingående moms", debet: parseFloat(tull || "0") * 0.2, kredit: 0 },
+        "2645": {
+          label: "Beräknad ingående moms på förvärv från utlandet",
+          debet: parseFloat(fiktiv || "0"),
+          kredit: 0,
+        },
+        "4545": {
+          label: "Import av varor, 25 % moms",
+          debet: parseFloat(fiktiv || "0") * 4,
+          kredit: 0,
+        },
+        "4549": {
+          label: "Motkonto beskattningsunderlag import",
+          debet: 0,
+          kredit: parseFloat(fiktiv || "0") * 4,
+        },
+        "5720": {
+          label: "Tull- och speditionskostnader m.m.",
+          debet: parseFloat(tull || "0") * 0.8 + parseFloat(ovrigt || "0"),
+          kredit: 0,
+        },
       };
       setExtrafält?.(extrafältObj);
     }
@@ -116,9 +168,52 @@ export default function InkopVarorUtanfEU({
         setFakturadatum={setFakturadatum}
         förfallodatum={förfallodatum}
         setFörfallodatum={setFörfallodatum}
-        title="Inköp varor utanför EU"
+        title="Importmoms"
       >
-        {/* InkopVarorUtanfEU-specifikt innehåll */}
+        {/* Importmoms-specifika fält */}
+        <div className="space-y-4 mb-4">
+          <TextFalt
+            label="Tull inkl. moms (kr)"
+            name="tull"
+            type="number"
+            value={tull}
+            onChange={(e) => setTull(e.target.value)}
+            required={false}
+          />
+
+          <TextFalt
+            label="Fiktiv moms (kr)"
+            name="fiktiv"
+            type="number"
+            value={fiktiv}
+            onChange={(e) => setFiktiv(e.target.value)}
+            required={false}
+          />
+
+          <TextFalt
+            label="Övriga kostnader utan moms (kr)"
+            name="ovrigt"
+            type="number"
+            value={ovrigt}
+            onChange={(e) => setOvrigt(e.target.value)}
+            required={false}
+          />
+        </div>
+
+        <div className="mb-4 p-4 bg-red-50 rounded-lg">
+          <h3 className="font-medium text-red-900 mb-2">Importmoms - Komplicerat! 😅</h3>
+          <p className="text-sm text-red-700 mb-2">
+            <strong>Exempel:</strong> Vara värd 5000 kr, tull 1250 kr (inkl moms), övriga kostnader
+            200 kr
+          </p>
+          <p className="text-sm text-red-700 mb-2">
+            <strong>Fiktiv moms:</strong> moms 25% av varans värde (1250 kr)
+          </p>
+          <p className="text-sm text-red-700">
+            <strong>Resultat:</strong> Varor (5000), Tull utan moms (1000), Moms på tull (250),
+            Fiktiv moms (1250), Övriga (200)
+          </p>
+        </div>
       </Layout>
     );
   }
@@ -128,20 +223,20 @@ export default function InkopVarorUtanfEU({
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
-          kontonummer="4500"
-          kontobeskrivning="Inköp varor utanför EU"
+          kontonummer="4545"
+          kontobeskrivning="Importmoms"
           belopp={belopp ?? 0}
           transaktionsdatum={transaktionsdatum ?? ""}
           kommentar={kommentar ?? ""}
           valtFörval={{
             id: 0,
-            namn: "Inköp varor utanför EU",
+            namn: "Importmoms",
             beskrivning: "",
             typ: "",
             kategori: "",
             konton: [],
-            momssats: 0,
-            specialtyp: "InkopVarorUtanfEU",
+            momssats: 0.25,
+            specialtyp: "Importmoms",
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

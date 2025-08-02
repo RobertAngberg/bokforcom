@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import TextFält from "../../../_components/TextFält";
+import TextFalt from "../../../_components/TextFalt";
 import Knapp from "../../../_components/Knapp";
 import { sparaAnställd } from "../../actions";
 
@@ -158,21 +158,21 @@ export default function Personalinformation({
       <div className="space-y-4">
         <h2 className="text-2xl text-white">Personalinformation</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <TextFält
+          <TextFalt
             label="Förnamn"
             name="förnamn"
             value={personalData.förnamn || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Efternamn"
             name="efternamn"
             value={personalData.efternamn || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Personnummer"
             name="personnummer"
             type="number"
@@ -180,28 +180,28 @@ export default function Personalinformation({
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Jobbtitel"
             name="jobbtitel"
             value={personalData.jobbtitel || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Clearingnummer"
             name="clearingnummer"
             value={personalData.clearingnummer || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Bankkonto"
             name="bankkonto"
             value={personalData.bankkonto || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Mail"
             name="mail"
             type="email"
@@ -209,21 +209,21 @@ export default function Personalinformation({
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Adress"
             name="adress"
             value={personalData.adress || ""}
             onChange={handleChange}
           />
 
-          <TextFält
+          <TextFalt
             label="Postnummer"
             name="postnummer"
             value={personalData.postnummer || ""}
             onChange={handleChange}
           />
 
-          <TextFält label="Ort" name="ort" value={personalData.ort || ""} onChange={handleChange} />
+          <TextFalt label="Ort" name="ort" value={personalData.ort || ""} onChange={handleChange} />
         </div>
       </div>
     );
@@ -257,62 +257,62 @@ export default function Personalinformation({
           {isEditing ? (
             // Edit mode
             <>
-              <TextFält
+              <TextFalt
                 label="Förnamn"
                 name="förnamn"
                 value={editData.förnamn}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Efternamn"
                 name="efternamn"
                 value={editData.efternamn}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Personnummer"
                 name="personnummer"
                 value={editData.personnummer}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Jobbtitel"
                 name="jobbtitel"
                 value={editData.jobbtitel}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="E-post"
                 name="mail"
                 type="email"
                 value={editData.mail}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Clearingnummer"
                 name="clearingnummer"
                 value={editData.clearingnummer}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Bankkonto"
                 name="bankkonto"
                 value={editData.bankkonto}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Adress"
                 name="adress"
                 value={editData.adress}
                 onChange={handleEditChange}
               />
-              <TextFält
+              <TextFalt
                 label="Postnummer"
                 name="postnummer"
                 value={editData.postnummer}
                 onChange={handleEditChange}
               />
-              <TextFält label="Ort" name="ort" value={editData.ort} onChange={handleEditChange} />
+              <TextFalt label="Ort" name="ort" value={editData.ort} onChange={handleEditChange} />
             </>
           ) : (
             // View mode

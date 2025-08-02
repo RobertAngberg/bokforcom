@@ -3,7 +3,7 @@
 
 import { useFakturaContext } from "../FakturaProvider";
 import { useEffect, useMemo } from "react";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 
 type RotRutFormProps = {
   showCheckbox?: boolean;
@@ -201,7 +201,7 @@ export default function RotRutForm({}: RotRutFormProps) {
 
           {/* Två kolumner för alla fält */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextFält
+            <TextFalt
               label="Arbetskostnad exkl. moms"
               name="arbetskostnadExMoms"
               type="number"
@@ -211,7 +211,7 @@ export default function RotRutForm({}: RotRutFormProps) {
             />
 
             {formData.rotRutTyp === "ROT" && (
-              <TextFält
+              <TextFalt
                 label="Personnummer (den som får avdraget)"
                 name="personnummer"
                 type="text"
@@ -267,7 +267,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                 </div>
                 {/* Fastighetsbeteckning */}
                 {formData.rotBoendeTyp !== "brf" && (
-                  <TextFält
+                  <TextFalt
                     label="Fastighetsbeteckning"
                     name="fastighetsbeteckning"
                     type="text"
@@ -279,7 +279,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                 {/* Bostadsrättsförening */}
                 {formData.rotBoendeTyp === "brf" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextFält
+                    <TextFalt
                       label="Organisationsnummer (BRF)"
                       name="brfOrganisationsnummer"
                       type="text"
@@ -287,7 +287,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                       onChange={handleChange}
                       required={true}
                     />
-                    <TextFält
+                    <TextFalt
                       label="Lägenhetsnummer"
                       name="brfLagenhetsnummer"
                       type="text"

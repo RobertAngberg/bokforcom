@@ -12,7 +12,7 @@ import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
 import SparadeFakturor from "../SparadeFakturor";
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 import Knapp from "../../_components/Knapp";
 import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";
@@ -164,9 +164,9 @@ function FakturorComponent({
         <div className="relative mb-8 flex items-center justify-center">
           {showAllFlikar && (
             <div className="absolute left-0 top-1">
-              <BakåtPil onClick={() => setShowAllFlikar(false)} className="">
+              <TillbakaPil onClick={() => setShowAllFlikar(false)} className="">
                 Tillbaka
-              </BakåtPil>
+              </TillbakaPil>
             </div>
           )}
           {!showAllFlikar && (

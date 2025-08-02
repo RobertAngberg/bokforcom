@@ -3,11 +3,11 @@
 
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -61,7 +61,7 @@ export default function AvrakningsnotaUtanMoms({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Avräkningsnota utan moms</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
@@ -74,7 +74,7 @@ export default function AvrakningsnotaUtanMoms({
                 setTransaktionsdatum={setTransaktionsdatum}
               />
 
-              <TextFält
+              <TextFalt
                 label="Belopp"
                 name="belopp"
                 value={belopp ?? ""}
@@ -94,7 +94,7 @@ export default function AvrakningsnotaUtanMoms({
                 required
               />
 
-              <TextFält
+              <TextFalt
                 label="Kommentar"
                 name="kommentar"
                 value={kommentar ?? ""}
@@ -121,7 +121,7 @@ export default function AvrakningsnotaUtanMoms({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="6064"
             kontobeskrivning="Avräkningsnota utan moms"

@@ -4,11 +4,11 @@
 import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -80,7 +80,7 @@ export default function UberAvgift({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Uberavgift</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
@@ -93,7 +93,7 @@ export default function UberAvgift({
                 setBelopp={setBelopp}
               />
 
-              <TextFält
+              <TextFalt
                 label="Summa Uber-avgift exkl moms"
                 name="belopp"
                 value={belopp ?? ""}
@@ -112,7 +112,7 @@ export default function UberAvgift({
                 required
               />
 
-              <TextFält
+              <TextFalt
                 label="Kommentar"
                 name="kommentar"
                 value={kommentar ?? ""}
@@ -139,7 +139,7 @@ export default function UberAvgift({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="4535"
             kontobeskrivning="Uberavgift"

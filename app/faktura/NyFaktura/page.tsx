@@ -11,7 +11,7 @@ import KundUppgifter from "../KundUppgifter";
 import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 import Knapp from "../../_components/Knapp";
 import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";

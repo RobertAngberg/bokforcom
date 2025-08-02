@@ -1,4 +1,4 @@
-type TextFältProps = {
+type TextFaltProps = {
   label: string;
   name: string;
   type?: string; // "text", "number", "date", "textarea", etc.
@@ -8,7 +8,7 @@ type TextFältProps = {
   placeholder?: string; // ✅ Lägg till placeholder
 };
 
-export default function TextFält({
+export default function TextFalt({
   label,
   name,
   type = "text",
@@ -16,7 +16,7 @@ export default function TextFält({
   onChange,
   required = true,
   placeholder,
-}: TextFältProps) {
+}: TextFaltProps) {
   return (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-white mb-2">

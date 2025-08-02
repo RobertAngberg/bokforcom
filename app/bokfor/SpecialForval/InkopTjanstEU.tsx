@@ -4,7 +4,7 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -152,7 +152,7 @@ export default function InkopTjanstEU({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep?.(2)} />
+        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
           kontonummer="4535"
           kontobeskrivning="Inköp tjänst EU"

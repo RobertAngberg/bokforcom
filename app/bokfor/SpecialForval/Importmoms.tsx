@@ -5,8 +5,8 @@ import { useState } from "react";
 import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import BakåtPil from "../../_components/BakåtPil";
-import TextFält from "../../_components/TextFält";
+import TillbakaPil from "../../_components/TillbakaPil";
+import TextFalt from "../../_components/TextFalt";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -187,7 +187,7 @@ export default function Importmoms({
         </div>
 
         <div className="space-y-4 mb-4">
-          <TextFält
+          <TextFalt
             label="Tull och spedition m.m. inkl. moms"
             name="tull"
             type="number"
@@ -196,7 +196,7 @@ export default function Importmoms({
             required={false}
           />
 
-          <TextFält
+          <TextFalt
             label="Ingående fiktiv moms på förvärv från utlandet"
             name="fiktiv"
             type="number"
@@ -205,7 +205,7 @@ export default function Importmoms({
             required={false}
           />
 
-          <TextFält
+          <TextFalt
             label="Övriga kostnader utan moms"
             name="ovrigt"
             type="number"
@@ -221,7 +221,7 @@ export default function Importmoms({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep?.(2)} />
+        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
           kontonummer="4545"
           kontobeskrivning="Importmoms"

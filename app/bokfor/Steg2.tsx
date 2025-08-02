@@ -5,7 +5,7 @@ import LaddaUppFil from "./LaddaUppFil";
 import Information from "./Information";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
-import BakåtPil from "../_components/BakåtPil";
+import TillbakaPil from "../_components/TillbakaPil";
 import KnappFullWidth from "../_components/KnappFullWidth";
 
 type KontoRad = {
@@ -100,7 +100,7 @@ export default function Steg2({
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep(1)} />
+        <TillbakaPil onClick={() => setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Fyll i uppgifter</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">

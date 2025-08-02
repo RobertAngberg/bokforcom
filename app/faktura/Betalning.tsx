@@ -6,7 +6,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { sv } from "date-fns/locale";
-import TextFält from "../_components/TextFält";
+import TextFalt from "../_components/TextFalt";
 import { hämtaSenasteBetalningsmetod } from "./actions";
 import { useSession } from "next-auth/react";
 //#endregion
@@ -156,14 +156,14 @@ export default function Betalning() {
           />
         </div>
 
-        <TextFält
+        <TextFalt
           label="Betalningsvillkor (dagar)"
           name="betalningsvillkor"
           value={formData.betalningsvillkor ?? ""}
           onChange={hanteraÄndradText}
         />
 
-        <TextFält
+        <TextFalt
           label="Dröjsmålsränta (%)"
           name="drojsmalsranta"
           value={formData.drojsmalsranta ?? ""}
@@ -190,7 +190,7 @@ export default function Betalning() {
           </select>
         </div>
 
-        <TextFält
+        <TextFalt
           label="Nummer"
           name="nummer"
           value={formData.nummer ?? ""}

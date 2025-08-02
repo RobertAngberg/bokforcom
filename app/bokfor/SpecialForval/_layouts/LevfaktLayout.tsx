@@ -9,10 +9,10 @@ registerLocale("sv", sv);
 import LaddaUppFilLevfakt from "../../LaddaUppFilLevfakt";
 import Kommentar from "../../Kommentar";
 import Forhandsgranskning from "../../Forhandsgranskning";
-import BakåtPil from "../../../_components/BakåtPil";
+import TillbakaPil from "../../../_components/TillbakaPil";
 import KnappFullWidth from "../../../_components/KnappFullWidth";
 import Dropdown from "../../../_components/Dropdown";
-import TextFält from "../../../_components/TextFält";
+import TextFalt from "../../../_components/TextFalt";
 
 interface LevfaktLayoutProps {
   // Specialförval basics
@@ -111,7 +111,7 @@ export default function LevfaktLayout({
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep?.(1)} />
+        <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">{title}</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
@@ -139,7 +139,7 @@ export default function LevfaktLayout({
             />
 
             {/* Fakturanummer */}
-            <TextFält
+            <TextFalt
               label="Fakturanummer"
               name="fakturanummer"
               value={fakturanummer}
@@ -170,7 +170,7 @@ export default function LevfaktLayout({
             />
 
             {/* Belopp */}
-            <TextFält
+            <TextFalt
               label="Total kostnad inkl. moms"
               name="kostnad"
               value={belopp ?? ""}

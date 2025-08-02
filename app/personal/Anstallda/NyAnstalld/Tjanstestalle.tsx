@@ -1,7 +1,7 @@
 // #region Imports och Types
 "use client";
 
-import TextFält from "../../../_components/TextFält";
+import TextFalt from "../../../_components/TextFalt";
 
 interface TjänsteställeProps {
   tjänsteställeAdress: string;
@@ -22,14 +22,14 @@ export default function Tjänsteställe({
       <h2 className="text-2xl text-white">Tjänsteställe</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TextFält
+        <TextFalt
           label="Tjänsteställe adress"
           name="tjänsteställeAdress"
           value={tjänsteställeAdress}
           onChange={(e) => setTjänsteställeAdress(e.target.value)}
         />
 
-        <TextFält
+        <TextFalt
           label="Tjänsteställe ort"
           name="tjänsteställeOrt"
           value={tjänsteställeOrt}

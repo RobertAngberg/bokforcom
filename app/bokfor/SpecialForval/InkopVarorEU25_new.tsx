@@ -22,6 +22,8 @@ interface Props {
   setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  formRef?: React.RefObject<HTMLFormElement>;
+  handleSubmit?: (formData: FormData) => void;
 
   // Levfakt-specifika props (optional)
   leverantör?: string;
@@ -35,7 +37,7 @@ interface Props {
 }
 // #endregion
 
-export default function InkopVarorUtanfEU({
+export default function InkopVarorEU25({
   mode,
   renderMode = "standard",
   belopp = null,
@@ -67,12 +69,24 @@ export default function InkopVarorUtanfEU({
       : !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
+    const moms = (belopp ?? 0) * 0.25;
+
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
         "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
-        "4010": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4500": { label: "Inköp varor utanför Sverige", debet: belopp ?? 0, kredit: 0 },
+        "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
+        "2645": {
+          label: "Beräknad ingående moms på förvärv från utlandet",
+          debet: moms,
+          kredit: 0,
+        },
+        "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
+        "4515": {
+          label: "Inköp av varor från annat EU-land, 25 %",
+          debet: belopp ?? 0,
+          kredit: 0,
+        },
         "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
       };
       setExtrafält?.(extrafältObj);
@@ -80,8 +94,18 @@ export default function InkopVarorUtanfEU({
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
         "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-        "4010": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4500": { label: "Inköp varor utanför Sverige", debet: belopp ?? 0, kredit: 0 },
+        "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
+        "2645": {
+          label: "Beräknad ingående moms på förvärv från utlandet",
+          debet: moms,
+          kredit: 0,
+        },
+        "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
+        "4515": {
+          label: "Inköp av varor från annat EU-land, 25 %",
+          debet: belopp ?? 0,
+          kredit: 0,
+        },
         "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
       };
       setExtrafält?.(extrafältObj);
@@ -116,9 +140,9 @@ export default function InkopVarorUtanfEU({
         setFakturadatum={setFakturadatum}
         förfallodatum={förfallodatum}
         setFörfallodatum={setFörfallodatum}
-        title="Inköp varor utanför EU"
+        title="Inköp varor inom EU 25%"
       >
-        {/* InkopVarorUtanfEU-specifikt innehåll */}
+        {/* InkopVarorEU25-specifikt innehåll */}
       </Layout>
     );
   }
@@ -128,20 +152,20 @@ export default function InkopVarorUtanfEU({
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
-          kontonummer="4500"
-          kontobeskrivning="Inköp varor utanför EU"
+          kontonummer="4515"
+          kontobeskrivning="Inköp varor inom EU 25%"
           belopp={belopp ?? 0}
           transaktionsdatum={transaktionsdatum ?? ""}
           kommentar={kommentar ?? ""}
           valtFörval={{
             id: 0,
-            namn: "Inköp varor utanför EU",
+            namn: "Inköp varor inom EU 25%",
             beskrivning: "",
             typ: "",
             kategori: "",
             konton: [],
-            momssats: 0,
-            specialtyp: "InkopVarorUtanfEU",
+            momssats: 0.25,
+            specialtyp: "inkopvaroreu25",
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

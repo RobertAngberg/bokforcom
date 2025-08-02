@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../personal/actions";
 import AnstalldDropdown, { Anstalld } from "./AnstalldDropdown";
 import { saveTransaction } from "./actions";
-import KnappFullWidth from "../_components/KnappFullWidth";
-import BakåtPil from "../_components/BakåtPil";
+import Knapp from "../_components/Knapp";
+import TillbakaPil from "../_components/TillbakaPil";
 import { formatSEK, round } from "../_utils/format";
 
 type KontoRad = {
@@ -76,6 +76,7 @@ export default function Steg3({
   // State för anställda och vald anställd
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
   const [anstalldId, setAnstalldId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (utlaggMode) {
@@ -122,31 +123,44 @@ export default function Steg3({
   const handleSubmit = async (formData: FormData) => {
     if (!valtFörval || !setCurrentStep) return;
 
-    if (fil) formData.set("fil", fil);
-    formData.set("valtFörval", JSON.stringify(valtFörval));
-    formData.set("extrafält", JSON.stringify(extrafält));
-    formData.set("transaktionsdatum", transaktionsdatum);
-    formData.set("kommentar", kommentar);
-    formData.set("kontonummer", kontonummer);
-    formData.set("kontobeskrivning", kontobeskrivning);
-    formData.set("belopp", belopp.toString());
-    formData.set("moms", moms.toString());
-    formData.set("beloppUtanMoms", beloppUtanMoms.toString());
-    formData.set("utlaggMode", utlaggMode ? "true" : "false");
-    formData.set("levfaktMode", levfaktMode ? "true" : "false");
-    if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
+    setLoading(true);
+    try {
+      if (fil) formData.set("fil", fil);
+      formData.set("valtFörval", JSON.stringify(valtFörval));
+      formData.set("extrafält", JSON.stringify(extrafält));
+      formData.set("transaktionsdatum", transaktionsdatum);
+      formData.set("kommentar", kommentar);
+      formData.set("kontonummer", kontonummer);
+      formData.set("kontobeskrivning", kontobeskrivning);
+      formData.set("belopp", belopp.toString());
+      formData.set("moms", moms.toString());
+      formData.set("beloppUtanMoms", beloppUtanMoms.toString());
+      formData.set("utlaggMode", utlaggMode ? "true" : "false");
+      formData.set("levfaktMode", levfaktMode ? "true" : "false");
+      if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
 
-    // Leverantörsfaktura-specifika fält
-    if (levfaktMode) {
-      if (leverantör) formData.set("leverantör", leverantör);
-      if (fakturanummer) formData.set("fakturanummer", fakturanummer);
-      if (fakturadatum) formData.set("fakturadatum", fakturadatum);
-      if (förfallodatum) formData.set("förfallodatum", förfallodatum);
-      if (betaldatum) formData.set("betaldatum", betaldatum);
+      // Leverantörsfaktura-specifika fält
+      if (levfaktMode) {
+        if (leverantör) formData.set("leverantör", leverantör);
+        if (fakturanummer) formData.set("fakturanummer", fakturanummer);
+        if (fakturadatum) formData.set("fakturadatum", fakturadatum);
+        if (förfallodatum) formData.set("förfallodatum", förfallodatum);
+        if (betaldatum) formData.set("betaldatum", betaldatum);
+      }
+
+      const result = await saveTransaction(formData);
+      if (result.success) setCurrentStep(4);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const result = await saveTransaction(formData);
-    if (result.success) setCurrentStep(4);
+  const handleButtonClick = () => {
+    const form = document.getElementById("bokforingForm") as HTMLFormElement;
+    if (form) {
+      const formData = new FormData(form);
+      handleSubmit(formData);
+    }
   };
   // #endregion
 
@@ -217,7 +231,7 @@ export default function Steg3({
 
   return (
     <div className="relative">
-      <BakåtPil onClick={() => setCurrentStep?.(2)} />
+      <TillbakaPil onClick={() => setCurrentStep?.(2)} />
 
       <h1 className="text-3xl mb-4 text-center">
         {levfaktMode
@@ -278,7 +292,7 @@ export default function Steg3({
       )}
       {kommentar && <p className="text-center text-gray-400 mb-4 italic">{kommentar}</p>}
 
-      <form action={handleSubmit}>
+      <form id="bokforingForm">
         <table className="w-full text-left border border-gray-700 text-sm md:text-base bg-slate-900 rounded-xl overflow-hidden">
           <thead className="bg-slate-800 text-white">
             <tr>
@@ -310,12 +324,14 @@ export default function Steg3({
         </table>
 
         <div className="mt-8 flex justify-center">
-          <button
-            type="submit"
-            className="w-full max-w-lg px-8 py-6 bg-cyan-700 hover:bg-cyan-800 text-white rounded font-bold text-lg shadow"
-          >
-            Bokför
-          </button>
+          <Knapp
+            text="Bokför"
+            loadingText="Bokför..."
+            onClick={handleButtonClick}
+            loading={loading}
+            disabled={loading}
+            className="w-full max-w-lg px-8 py-6 text-lg font-bold shadow"
+          />
         </div>
       </form>
     </div>

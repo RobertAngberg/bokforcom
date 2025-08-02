@@ -4,7 +4,7 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -22,7 +22,7 @@ interface Props {
   setPdfUrl: (val: string) => void;
   extrafält: Record<string, { label: string; debet: number; kredit: number }>;
   setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  
+
   // Levfakt-specifika props (optional)
   leverantör?: string;
   setLeverantör?: (val: string) => void;
@@ -61,9 +61,10 @@ export default function ITtjansterUtanfEU({
   setFörfallodatum,
 }: Props) {
   // Olika valideringslogik beroende på renderMode
-  const giltigt = renderMode === "levfakt" 
-    ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-    : !!belopp && !!transaktionsdatum;
+  const giltigt =
+    renderMode === "levfakt"
+      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
+      : !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const moms = (belopp ?? 0) * 0.25;
@@ -144,18 +145,6 @@ export default function ITtjansterUtanfEU({
         title="IT-tjänster utanför EU"
       >
         {/* ITtjansterUtanfEU-specifikt innehåll */}
-        <div className="mb-4 p-4 bg-purple-50 rounded-lg">
-          <h3 className="font-medium text-purple-900 mb-2">IT-tjänster från land utanför EU</h3>
-          <p className="text-sm text-purple-700 mb-2">
-            <strong>Omvänd skattskyldighet:</strong> Du betalar momsen i Sverige för tjänster från tredjeland.
-          </p>
-          <p className="text-sm text-purple-700 mb-2">
-            <strong>Momshantering:</strong> 25% utgående moms + 25% ingående moms (kvittar varandra)
-          </p>
-          <p className="text-sm text-purple-700">
-            <strong>Konto:</strong> 4531 - Import tjänster land utanför EU
-          </p>
-        </div>
       </Layout>
     );
   }
@@ -163,7 +152,7 @@ export default function ITtjansterUtanfEU({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep?.(2)} />
+        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
           kontonummer="4531"
           kontobeskrivning="IT-tjänster utanför EU"

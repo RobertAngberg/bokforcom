@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import TextFält from "../_components/TextFält";
+import TextFalt from "../_components/TextFalt";
 import { hämtaFöretagsprofil, sparaFöretagsprofil } from "./actions";
 import Knapp from "../_components/Knapp";
 //#endregion
@@ -139,40 +139,40 @@ export default function Avsandare() {
   return (
     <div className="max-w-4xl mx-auto bg-slate-900 text-white rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <TextFält
+        <TextFalt
           label="Företagsnamn"
           name="företagsnamn"
           value={form.företagsnamn}
           onChange={hanteraTangentNer}
         />
-        <TextFält label="Adress" name="adress" value={form.adress} onChange={hanteraTangentNer} />
-        <TextFält
+        <TextFalt label="Adress" name="adress" value={form.adress} onChange={hanteraTangentNer} />
+        <TextFalt
           label="Postnummer"
           name="postnummer"
           value={form.postnummer}
           onChange={hanteraTangentNer}
         />
-        <TextFält label="Stad" name="stad" value={form.stad} onChange={hanteraTangentNer} />
-        <TextFält
+        <TextFalt label="Stad" name="stad" value={form.stad} onChange={hanteraTangentNer} />
+        <TextFalt
           label="Organisationsnummer"
           name="organisationsnummer"
           value={form.organisationsnummer}
           onChange={hanteraTangentNer}
         />
-        <TextFält
+        <TextFalt
           label="Momsregistreringsnummer"
           name="momsregistreringsnummer"
           value={form.momsregistreringsnummer}
           onChange={hanteraTangentNer}
         />
-        <TextFält
+        <TextFalt
           label="Telefonnummer"
           name="telefonnummer"
           value={form.telefonnummer}
           onChange={hanteraTangentNer}
         />
-        <TextFält label="E-post" name="epost" value={form.epost} onChange={hanteraTangentNer} />
-        <TextFält
+        <TextFalt label="E-post" name="epost" value={form.epost} onChange={hanteraTangentNer} />
+        <TextFalt
           label="Webbplats"
           name="webbplats"
           value={form.webbplats}

@@ -2,7 +2,7 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import TextFält from "../../../_components/TextFält";
+import TextFalt from "../../../_components/TextFalt";
 import Dropdown from "../../../_components/Dropdown";
 
 interface KompensationProps {
@@ -110,7 +110,7 @@ export default function Kompensation({
           ]}
         />
 
-        <TextFält
+        <TextFalt
           label="Kompensation (kr)"
           name="kompensation"
           type="number"
@@ -118,7 +118,7 @@ export default function Kompensation({
           onChange={(e) => setKompensation(e.target.value)}
         />
 
-        <TextFält
+        <TextFalt
           label="Arbetsvecka (timmar)"
           name="arbetsvecka"
           type="number"
@@ -139,7 +139,7 @@ export default function Kompensation({
 
         {/* Visa Deltid (%) endast om Deltid är valt */}
         {arbetsbelastning === "Deltid" && (
-          <TextFält
+          <TextFalt
             label="Deltid (%)"
             name="deltidProcent"
             type="number"

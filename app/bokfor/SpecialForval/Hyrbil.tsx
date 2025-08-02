@@ -5,7 +5,7 @@ import Steg3 from "../Steg3";
 import { formatSEK } from "../../_utils/format";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -135,7 +135,7 @@ export default function Hyrbil({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="5820"
             kontobeskrivning="Hyrbil"

@@ -3,11 +3,11 @@
 
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -59,7 +59,7 @@ export default function EgetUttag({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Eget uttag</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
@@ -72,7 +72,7 @@ export default function EgetUttag({
                 setBelopp={setBelopp}
               />
 
-              <TextFält
+              <TextFalt
                 label="Belopp"
                 name="belopp"
                 value={belopp ?? ""}
@@ -92,7 +92,7 @@ export default function EgetUttag({
                 required
               />
 
-              <TextFält
+              <TextFalt
                 label="Kommentar"
                 name="kommentar"
                 value={kommentar ?? ""}
@@ -119,7 +119,7 @@ export default function EgetUttag({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="2013"
             kontobeskrivning="Eget uttag"

@@ -1,18 +1,18 @@
 import React from "react";
 
-type BakåtPilProps = {
+type TillbakaPilProps = {
   onClick: () => void;
   className?: string;
   children?: React.ReactNode;
   ariaLabel?: string;
 };
 
-export default function BakåtPil({
+export default function TillbakaPil({
   onClick,
   className = "",
   children = "Tillbaka",
   ariaLabel = "Tillbaka",
-}: BakåtPilProps) {
+}: TillbakaPilProps) {
   return (
     <button
       type="button"

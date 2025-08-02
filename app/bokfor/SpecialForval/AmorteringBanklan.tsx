@@ -3,11 +3,11 @@
 
 import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 import Forhandsgranskning from "../Forhandsgranskning";
 
 interface Props {
@@ -73,7 +73,7 @@ export default function AmorteringBanklan({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Amortering av banklån</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
@@ -86,14 +86,14 @@ export default function AmorteringBanklan({
                 setBelopp={setBelopp}
               />
 
-              <TextFält
+              <TextFalt
                 label="Amorteringsbelopp"
                 name="amortering"
                 value={belopp ?? 0}
                 onChange={(e) => setBelopp(Number(e.target.value))}
               />
 
-              <TextFält
+              <TextFalt
                 label="Varav räntekostnad"
                 name="ränta"
                 value={ränta}
@@ -113,7 +113,7 @@ export default function AmorteringBanklan({
                 required
               />
 
-              <TextFält
+              <TextFalt
                 label="Kommentar"
                 name="kommentar"
                 value={kommentar ?? ""}
@@ -140,7 +140,7 @@ export default function AmorteringBanklan({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="2350"
             kontobeskrivning="Amortering av banklån"

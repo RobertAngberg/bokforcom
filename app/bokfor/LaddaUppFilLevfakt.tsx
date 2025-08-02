@@ -254,15 +254,7 @@ export default function LaddaUppFilLevfakt({
         setIsLoading(false);
       }
     })();
-  }, [
-    recognizedText,
-    setBelopp,
-    setTransaktionsdatum,
-    setLeverantör,
-    setFakturadatum,
-    setFörfallodatum,
-    setFakturanummer,
-  ]);
+  }, [recognizedText]);
 
   return (
     <>

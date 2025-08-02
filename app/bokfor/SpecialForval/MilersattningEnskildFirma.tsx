@@ -4,13 +4,13 @@
 import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import { formatSEK, parseNumber } from "../../_utils/format";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
-import BakåtPil from "../../_components/BakåtPil";
+import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -97,7 +97,7 @@ export default function MilersattningEnskildFirma({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Milersättning</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
@@ -110,7 +110,7 @@ export default function MilersattningEnskildFirma({
                 setBelopp={setBelopp}
               />
 
-              <TextFält
+              <TextFalt
                 name="mil"
                 label="Antal mil"
                 type="number"
@@ -118,7 +118,7 @@ export default function MilersattningEnskildFirma({
                 onChange={(e) => setMil(e.target.value)}
               />
 
-              <TextFält
+              <TextFalt
                 name="ersPerMil"
                 label="Ersättning per mil"
                 type="number"
@@ -149,7 +149,7 @@ export default function MilersattningEnskildFirma({
                 required
               />
 
-              <TextFält
+              <TextFalt
                 name="kommentar"
                 label="Kommentar"
                 type="textarea"
@@ -171,7 +171,7 @@ export default function MilersattningEnskildFirma({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <BakåtPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
             kontonummer="7331"
             kontobeskrivning="Milersättning"

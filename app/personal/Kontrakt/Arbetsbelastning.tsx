@@ -1,7 +1,7 @@
 // #region Huvud
 "use client";
 
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 import Dropdown from "../../_components/Dropdown";
 
 interface ArbetsbelastningProps {
@@ -62,7 +62,7 @@ export default function Arbetsbelastning({
           onChange={(value) => handleChange?.("arbetsbelastning", value)}
           options={dropdownOptions.arbetsbelastning}
         />
-        <TextFält
+        <TextFalt
           label="Arbetsvecka (timmar)"
           name="arbetsveckaTimmar"
           type="number"
@@ -70,7 +70,7 @@ export default function Arbetsbelastning({
           onChange={(e) => handleChange?.("arbetsveckaTimmar", e.target.value)}
         />
         {editData.arbetsbelastning === "Deltidsanställd" && (
-          <TextFält
+          <TextFalt
             label="Deltid (%)"
             name="deltidProcent"
             type="number"

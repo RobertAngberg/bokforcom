@@ -12,10 +12,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
-import BakåtPil from "../_components/BakåtPil";
+import TillbakaPil from "../_components/TillbakaPil";
 import KnappFullWidth from "../_components/KnappFullWidth";
 import Dropdown from "../_components/Dropdown";
-import TextFält from "../_components/TextFält";
+import TextFalt from "../_components/TextFalt";
 
 type KontoRad = {
   beskrivning: string;
@@ -179,7 +179,7 @@ export default function Steg2Levfakt({
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <BakåtPil onClick={() => setCurrentStep(1)} />
+        <TillbakaPil onClick={() => setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Leverantörsfaktura</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
@@ -239,7 +239,7 @@ export default function Steg2Levfakt({
 
             {/* Fakturanummer */}
             <div className="mb-4">
-              <TextFält
+              <TextFalt
                 label="Fakturanummer"
                 name="fakturanummer"
                 type="text"

@@ -1,7 +1,7 @@
 // #region Huvud
 "use client";
 
-import TextFält from "../../_components/TextFält";
+import TextFalt from "../../_components/TextFalt";
 
 interface JobbtitelProps {
   editData?: any;
@@ -30,7 +30,7 @@ export default function Jobbtitel({ editData, handleChange, anställd, viewMode 
     <div className="bg-slate-800 p-6 rounded-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Jobbtitel</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TextFält
+        <TextFalt
           label="Jobbtitel"
           name="jobbtitel"
           value={editData.jobbtitel || ""}
