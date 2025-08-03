@@ -18,6 +18,7 @@ export default function Navbar() {
     { href: "/historik", label: "Historik" },
     { href: "/faktura", label: "Fakturor" },
     { href: "/rapporter", label: "Rapporter" },
+    { href: "/sie", label: "SIE" },
     { href: "/personal", label: "Personal" },
     { href: "/signup", label: "Sign up" },
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
