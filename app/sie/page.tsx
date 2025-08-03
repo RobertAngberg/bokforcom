@@ -187,6 +187,7 @@ export default function SiePage() {
         sieData={sieData}
         saknadeKonton={saknadeKonton}
         analys={analys}
+        selectedFile={selectedFile}
         onCancel={() => setVisaWizard(false)}
       />
     );

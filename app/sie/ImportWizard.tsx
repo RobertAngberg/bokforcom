@@ -48,6 +48,7 @@ interface ImportWizardProps {
   saknadeKonton: string[];
   analys: Analys;
   onCancel: () => void;
+  selectedFile?: File | null;
 }
 
 type WizardStep = "konton" | "inställningar" | "förhandsvisning" | "import" | "resultat";
@@ -57,6 +58,7 @@ export default function ImportWizard({
   saknadeKonton,
   analys,
   onCancel,
+  selectedFile,
 }: ImportWizardProps) {
   const [currentStep, setCurrentStep] = useState<WizardStep>("konton");
   const [importResultat, setImportResultat] = useState<any>(null);
@@ -213,6 +215,7 @@ export default function ImportWizard({
               sieData={sieData}
               saknadeKonton={saknadeKonton}
               settings={importSettings}
+              selectedFile={selectedFile}
               onComplete={(resultat) => {
                 setImportResultat(resultat);
                 setCurrentStep("resultat");
@@ -541,11 +544,13 @@ function ImportSteg({
   sieData,
   saknadeKonton,
   settings,
+  selectedFile,
   onComplete,
 }: {
   sieData: SieData;
   saknadeKonton: string[];
   settings: any;
+  selectedFile?: File | null;
   onComplete: (resultat: any) => void;
 }) {
   const [progress, setProgress] = useState(0);
@@ -584,7 +589,14 @@ function ImportSteg({
         setCurrentTask("Importerar SIE-data...");
         setProgress(60);
 
-        const importResult = await importeraSieData(sieData, saknadeKonton, settings);
+        const fileInfo = selectedFile
+          ? {
+              filnamn: selectedFile.name,
+              filstorlek: selectedFile.size,
+            }
+          : undefined;
+
+        const importResult = await importeraSieData(sieData, saknadeKonton, settings, fileInfo);
         if (!importResult.success) {
           throw new Error(importResult.error || "Kunde inte importera data");
         }

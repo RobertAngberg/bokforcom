@@ -923,7 +923,11 @@ interface ImportSettings {
 export async function importeraSieData(
   sieData: SieData,
   saknadeKonton: string[],
-  settings: ImportSettings
+  settings: ImportSettings,
+  fileInfo?: {
+    filnamn: string;
+    filstorlek: number;
+  }
 ): Promise<{ success: boolean; error?: string; resultat?: any }> {
   try {
     // Hämta session för userId
@@ -944,11 +948,68 @@ export async function importeraSieData(
     let client;
     let clientReleased = false;
     let poolEnded = false;
+    let importId = null;
 
     try {
       client = await pool.connect();
 
-      // STEG 0: Kontrollera duplicates FÖRE transaktion
+      // STEG 0: Skapa import-logg FÖRST
+      if (fileInfo) {
+        const startDatum =
+          sieData.verifikationer.length > 0
+            ? sieData.verifikationer.reduce(
+                (earliest, v) => (v.datum < earliest ? v.datum : earliest),
+                sieData.verifikationer[0].datum
+              )
+            : null;
+
+        const slutDatum =
+          sieData.verifikationer.length > 0
+            ? sieData.verifikationer.reduce(
+                (latest, v) => (v.datum > latest ? v.datum : latest),
+                sieData.verifikationer[0].datum
+              )
+            : null;
+
+        // Räkna alla poster från SIE-filen
+        const antalTransaktionsposter = sieData.verifikationer.reduce(
+          (total, ver) => total + ver.transaktioner.length,
+          0
+        );
+        const antalBalansposter =
+          sieData.balanser.ingående.length + sieData.balanser.utgående.length;
+        const antalResultatposter = sieData.resultat.length;
+
+        const importResult = await client.query(
+          `
+          INSERT INTO sie_importer (
+            "userId", filnamn, filstorlek, sie_program, sie_organisationsnummer, 
+            sie_företagsnamn, sie_datumintervall_från, sie_datumintervall_till,
+            antal_verifikationer, antal_transaktionsposter, antal_balansposter, 
+            antal_resultatposter, status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pågående')
+          RETURNING id
+        `,
+          [
+            userId,
+            fileInfo.filnamn,
+            fileInfo.filstorlek,
+            sieData.header.program,
+            sieData.header.organisationsnummer,
+            sieData.header.företagsnamn,
+            startDatum,
+            slutDatum,
+            sieData.verifikationer.length,
+            antalTransaktionsposter,
+            antalBalansposter,
+            antalResultatposter,
+          ]
+        );
+
+        importId = importResult.rows[0].id;
+      }
+
+      // STEG 1: Kontrollera duplicates
       if (settings.inkluderaVerifikationer && sieData.verifikationer.length > 0) {
         const verifikationsNamn = sieData.verifikationer.map(
           (v) => `Verifikation ${v.serie}:${v.nummer}`
@@ -971,6 +1032,20 @@ export async function importeraSieData(
             )
             .join("\n");
 
+          // Uppdatera import-logg med duplikat-fel
+          if (importId) {
+            await client.query(
+              `
+              UPDATE sie_importer SET
+                status = 'misslyckad',
+                felmeddelande = 'Duplicata verifikationer upptäckta',
+                uppdaterad = NOW()
+              WHERE id = $1
+            `,
+              [importId]
+            );
+          }
+
           // Markera att vi kommer att stänga
           client.release();
           clientReleased = true;
@@ -988,7 +1063,9 @@ ${duplicatesList}
 💡 Detta förhindrar oavsiktliga dubbletter. Om du vill importera ändå, ta först bort de befintliga verifikationerna.`,
           };
         }
-      } // Nu börja transaktion
+      }
+
+      // Nu börja transaktion
       await client.query("BEGIN");
 
       let resultat = {
@@ -998,7 +1075,7 @@ ${duplicatesList}
         resultatImporterat: 0,
       };
 
-      // Steg 1: Hitta ALLA använda konton som saknas (inte bara specialkonton)
+      // Steg 2: Hitta ALLA använda konton som saknas (inte bara specialkonton)
       if (settings.skapaKonton) {
         // Samla alla konton som faktiskt används i SIE-filen
         const anvandaKonton = new Set<string>();
@@ -1320,6 +1397,31 @@ ${duplicatesList}
         resultat.resultatImporterat = sieData.resultat.length;
       }
 
+      // Uppdatera import-logg med slutresultat
+      if (importId) {
+        await client.query(
+          `
+          UPDATE sie_importer SET
+            antal_konton_skapade = $1,
+            antal_verifikationer = $2,
+            antal_transaktionsposter = $3,
+            antal_balansposter = $4,
+            antal_resultatposter = $5,
+            status = 'slutförd',
+            uppdaterad = NOW()
+          WHERE id = $6
+        `,
+          [
+            resultat.kontonSkapade,
+            resultat.verifikationerImporterade,
+            0, // Vi räknar inte transaktionsposter separat än
+            resultat.balanserImporterade,
+            resultat.resultatImporterat,
+            importId,
+          ]
+        );
+      }
+
       // Committa transaktionen
       await client.query("COMMIT");
 
@@ -1328,6 +1430,24 @@ ${duplicatesList}
         resultat,
       };
     } catch (error) {
+      // Uppdatera import-logg med fel
+      if (importId) {
+        try {
+          await client.query(
+            `
+            UPDATE sie_importer SET
+              status = 'misslyckad',
+              felmeddelande = $1,
+              uppdaterad = NOW()
+            WHERE id = $2
+          `,
+            [error instanceof Error ? error.message : String(error), importId]
+          );
+        } catch (updateError) {
+          console.error("Kunde inte uppdatera import-logg:", updateError);
+        }
+      }
+
       // Rollback vid fel
       try {
         await client.query("ROLLBACK");
