@@ -29,9 +29,20 @@ interface SieData {
   resultat: Array<{ konto: string; belopp: number }>;
 }
 
-export async function uploadSieFile(
-  formData: FormData
-): Promise<{ success: boolean; data?: SieData; error?: string }> {
+interface SieUploadResult {
+  success: boolean;
+  data?: SieData;
+  saknade?: string[];
+  analys?: {
+    totaltAntal: number;
+    standardKonton: number;
+    specialKonton: number;
+    kritiskaKonton: string[];
+  };
+  error?: string;
+}
+
+export async function uploadSieFile(formData: FormData): Promise<SieUploadResult> {
   try {
     const file = formData.get("file") as File;
 
@@ -120,10 +131,395 @@ export async function uploadSieFile(
     // Parsa SIE-data
     const sieData = parseSieContent(content);
 
-    return { success: true, data: sieData };
+    // Kontrollera vilka konton som saknas i databasen
+    const sieKonton = sieData.konton.map((k) => k.nummer);
+    const { saknade, analys } = await kontrollSaknade(sieKonton);
+
+    return {
+      success: true,
+      data: sieData,
+      saknade: saknade,
+      analys: analys,
+    };
   } catch (error) {
     console.error("Fel vid parsning av SIE-fil:", error);
     return { success: false, error: "Kunde inte läsa SIE-filen" };
+  }
+}
+
+async function kontrollSaknade(sieKonton: string[]) {
+  try {
+    const { Pool } = require("pg");
+    const tempPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+
+    const client = await tempPool.connect();
+
+    // Hämta alla befintliga konton från databasen
+    const { rows } = await client.query("SELECT kontonummer FROM konton");
+    const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
+
+    client.release();
+    await tempPool.end();
+
+    // Hitta konton som finns i SIE men inte i databasen
+    const allaSaknade = sieKonton.filter((kontonr) => !befintligaKonton.has(kontonr));
+
+    // BAS 2025 standardkonton (grundläggande kontoplan)
+    const basStandardKonton = new Set([
+      "1010",
+      "1020",
+      "1030",
+      "1040",
+      "1050",
+      "1060",
+      "1070",
+      "1080",
+      "1090",
+      "1110",
+      "1120",
+      "1130",
+      "1140",
+      "1150",
+      "1160",
+      "1170",
+      "1180",
+      "1190",
+      "1210",
+      "1220",
+      "1230",
+      "1240",
+      "1250",
+      "1260",
+      "1270",
+      "1280",
+      "1290",
+      "1310",
+      "1320",
+      "1330",
+      "1340",
+      "1350",
+      "1360",
+      "1370",
+      "1380",
+      "1390",
+      "1410",
+      "1420",
+      "1430",
+      "1440",
+      "1450",
+      "1460",
+      "1470",
+      "1480",
+      "1490",
+      "1510",
+      "1520",
+      "1530",
+      "1540",
+      "1550",
+      "1560",
+      "1570",
+      "1580",
+      "1590",
+      "1610",
+      "1620",
+      "1630",
+      "1640",
+      "1650",
+      "1660",
+      "1670",
+      "1680",
+      "1690",
+      "1710",
+      "1720",
+      "1730",
+      "1740",
+      "1750",
+      "1760",
+      "1770",
+      "1780",
+      "1790",
+      "1810",
+      "1820",
+      "1830",
+      "1840",
+      "1850",
+      "1860",
+      "1870",
+      "1880",
+      "1890",
+      "1910",
+      "1920",
+      "1930",
+      "1940",
+      "1950",
+      "1960",
+      "1970",
+      "1980",
+      "1990",
+      "2010",
+      "2020",
+      "2030",
+      "2040",
+      "2050",
+      "2060",
+      "2070",
+      "2080",
+      "2090",
+      "2110",
+      "2120",
+      "2130",
+      "2140",
+      "2150",
+      "2160",
+      "2170",
+      "2180",
+      "2190",
+      "2210",
+      "2220",
+      "2230",
+      "2240",
+      "2250",
+      "2260",
+      "2270",
+      "2280",
+      "2290",
+      "2310",
+      "2320",
+      "2330",
+      "2340",
+      "2350",
+      "2360",
+      "2370",
+      "2380",
+      "2390",
+      "2410",
+      "2420",
+      "2430",
+      "2440",
+      "2450",
+      "2460",
+      "2470",
+      "2480",
+      "2490",
+      "2510",
+      "2520",
+      "2530",
+      "2540",
+      "2550",
+      "2560",
+      "2570",
+      "2580",
+      "2590",
+      "2610",
+      "2620",
+      "2630",
+      "2640",
+      "2650",
+      "2660",
+      "2670",
+      "2680",
+      "2690",
+      "2710",
+      "2720",
+      "2730",
+      "2740",
+      "2750",
+      "2760",
+      "2770",
+      "2780",
+      "2790",
+      "2810",
+      "2820",
+      "2830",
+      "2840",
+      "2850",
+      "2860",
+      "2870",
+      "2880",
+      "2890",
+      "2910",
+      "2920",
+      "2930",
+      "2940",
+      "2950",
+      "2960",
+      "2970",
+      "2980",
+      "2990",
+      "3010",
+      "3020",
+      "3030",
+      "3040",
+      "3050",
+      "3060",
+      "3070",
+      "3080",
+      "3090",
+      "3110",
+      "3120",
+      "3130",
+      "3140",
+      "3150",
+      "3160",
+      "3170",
+      "3180",
+      "3190",
+      "3210",
+      "3220",
+      "3230",
+      "3240",
+      "3250",
+      "3260",
+      "3270",
+      "3280",
+      "3290",
+      "3310",
+      "3320",
+      "3330",
+      "3340",
+      "3350",
+      "3360",
+      "3370",
+      "3380",
+      "3390",
+      "3410",
+      "3420",
+      "3430",
+      "3440",
+      "3450",
+      "3460",
+      "3470",
+      "3480",
+      "3490",
+      "3510",
+      "3520",
+      "3530",
+      "3540",
+      "3550",
+      "3560",
+      "3570",
+      "3580",
+      "3590",
+      "3610",
+      "3620",
+      "3630",
+      "3640",
+      "3650",
+      "3660",
+      "3670",
+      "3680",
+      "3690",
+      "3710",
+      "3720",
+      "3730",
+      "3740",
+      "3750",
+      "3760",
+      "3770",
+      "3780",
+      "3790",
+      "3810",
+      "3820",
+      "3830",
+      "3840",
+      "3850",
+      "3860",
+      "3870",
+      "3880",
+      "3890",
+      "3910",
+      "3920",
+      "3930",
+      "3940",
+      "3950",
+      "3960",
+      "3970",
+      "3980",
+      "3990",
+      "4010",
+      "4020",
+      "4030",
+      "4040",
+      "4050",
+      "4060",
+      "4070",
+      "4080",
+      "4090",
+      "5010",
+      "5020",
+      "5030",
+      "5040",
+      "5050",
+      "5060",
+      "5070",
+      "5080",
+      "5090",
+      "6010",
+      "6020",
+      "6030",
+      "6040",
+      "6050",
+      "6060",
+      "6070",
+      "6080",
+      "6090",
+      "7010",
+      "7020",
+      "7030",
+      "7040",
+      "7050",
+      "7060",
+      "7070",
+      "7080",
+      "7090",
+      "8010",
+      "8020",
+      "8030",
+      "8040",
+      "8050",
+      "8060",
+      "8070",
+      "8080",
+      "8090",
+    ]);
+
+    // Separera mellan standard BAS-konton och specialkonton
+    const standardKonton = allaSaknade.filter((konto) => basStandardKonton.has(konto));
+    const specialKonton = allaSaknade.filter((konto) => !basStandardKonton.has(konto));
+
+    // Kritiska konton som bör finnas (exempel)
+    const kritiskaKonton = specialKonton.filter((konto) => {
+      // Konton som börjar med 99xx är ofta företagsspecifika
+      // Konton mellan 8900-8999 är ofta företagsspecifika
+      // Konton som innehåller fler än 4 siffror är ofta detaljkonton
+      return konto.startsWith("99") || (konto >= "8900" && konto <= "8999") || konto.length > 4;
+    });
+
+    const analys = {
+      totaltAntal: allaSaknade.length,
+      standardKonton: standardKonton.length,
+      specialKonton: specialKonton.length,
+      kritiskaKonton: kritiskaKonton,
+    };
+
+    // Returnera endast specialkonton som "saknade" för att undvika att visa hundratals BAS-konton
+    return {
+      saknade: specialKonton,
+      analys: analys,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid kontroll av saknade konton:", error);
+    return {
+      saknade: [],
+      analys: {
+        totaltAntal: 0,
+        standardKonton: 0,
+        specialKonton: 0,
+        kritiskaKonton: [],
+      },
+    };
   }
 }
 
