@@ -38,6 +38,8 @@ interface SieUploadResult {
     standardKonton: number;
     specialKonton: number;
     kritiskaKonton: string[];
+    anvandaSaknade: number;
+    totaltAnvanda: number;
   };
   error?: string;
 }
@@ -133,7 +135,21 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
 
     // Kontrollera vilka konton som saknas i databasen
     const sieKonton = sieData.konton.map((k) => k.nummer);
-    const { saknade, analys } = await kontrollSaknade(sieKonton);
+
+    // Hitta konton som faktiskt används i transaktioner
+    const anvandaKonton = new Set<string>();
+    sieData.verifikationer.forEach((ver) => {
+      ver.transaktioner.forEach((trans) => {
+        anvandaKonton.add(trans.konto);
+      });
+    });
+
+    // Lägg även till konton från balanser och resultat
+    sieData.balanser.ingående.forEach((b) => anvandaKonton.add(b.konto));
+    sieData.balanser.utgående.forEach((b) => anvandaKonton.add(b.konto));
+    sieData.resultat.forEach((r) => anvandaKonton.add(r.konto));
+
+    const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton));
 
     return {
       success: true,
@@ -147,7 +163,7 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
   }
 }
 
-async function kontrollSaknade(sieKonton: string[]) {
+async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[]) {
   try {
     const { Pool } = require("pg");
     const tempPool = new Pool({
@@ -483,18 +499,119 @@ async function kontrollSaknade(sieKonton: string[]) {
       "8070",
       "8080",
       "8090",
+      "8110",
+      "8120",
+      "8130",
+      "8140",
+      "8150",
+      "8160",
+      "8170",
+      "8180",
+      "8190",
+      "8210",
+      "8220",
+      "8230",
+      "8240",
+      "8250",
+      "8260",
+      "8270",
+      "8280",
+      "8290",
+      "8310",
+      "8320",
+      "8330",
+      "8340",
+      "8350",
+      "8360",
+      "8370",
+      "8380",
+      "8390",
+      "8410",
+      "8420",
+      "8430",
+      "8440",
+      "8450",
+      "8460",
+      "8470",
+      "8480",
+      "8490",
+      "8510",
+      "8520",
+      "8530",
+      "8540",
+      "8550",
+      "8560",
+      "8570",
+      "8580",
+      "8590",
+      "8610",
+      "8620",
+      "8630",
+      "8640",
+      "8650",
+      "8660",
+      "8670",
+      "8680",
+      "8690",
+      "8710",
+      "8720",
+      "8730",
+      "8740",
+      "8750",
+      "8760",
+      "8770",
+      "8780",
+      "8790",
+      "8810",
+      "8820",
+      "8830",
+      "8840",
+      "8850",
+      "8860",
+      "8870",
+      "8880",
+      "8890",
+      "8910",
+      "8920",
+      "8930",
+      "8940",
+      "8950",
+      "8960",
+      "8970",
+      "8980",
+      "8990",
+      "8999",
     ]);
 
     // Separera mellan standard BAS-konton och specialkonton
     const standardKonton = allaSaknade.filter((konto) => basStandardKonton.has(konto));
     const specialKonton = allaSaknade.filter((konto) => !basStandardKonton.has(konto));
 
-    // Kritiska konton som bör finnas (exempel)
+    // Om vi har information om använda konton, fokusera på dem
+    const anvandaSaknade = anvandaKonton
+      ? allaSaknade.filter((konto) => anvandaKonton.includes(konto))
+      : allaSaknade;
+
+    // Kritiska konton som bör finnas - endast RIKTIGT företagsspecifika konton SOM OCKSÅ ANVÄNDS
     const kritiskaKonton = specialKonton.filter((konto) => {
-      // Konton som börjar med 99xx är ofta företagsspecifika
-      // Konton mellan 8900-8999 är ofta företagsspecifika
-      // Konton som innehåller fler än 4 siffror är ofta detaljkonton
-      return konto.startsWith("99") || (konto >= "8900" && konto <= "8999") || konto.length > 4;
+      // Hoppa över konton som inte används om vi har den informationen
+      if (anvandaKonton && !anvandaKonton.includes(konto)) return false;
+
+      // Endast konton som är:
+      // - Längre än 4 siffror (detaljkonton som 19301, 24401 etc)
+      // - Konton som INTE är inom BAS-standardintervall
+      // - Konton som börjar på 9 men INTE är 8910-8999 (som är BAS-resultatdisposition)
+      const kontoNum = parseInt(konto);
+
+      // Konton längre än 4 siffror är nästan alltid företagsspecifika
+      if (konto.length > 4) return true;
+
+      // Konton utanför BAS-intervall (under 1000 eller över 9000 men inte 9900-9999)
+      if (kontoNum < 1000) return true;
+      if (kontoNum > 9000 && kontoNum < 9900) return true;
+      if (kontoNum > 9999) return true;
+
+      return false;
     });
 
     const analys = {
@@ -502,11 +619,17 @@ async function kontrollSaknade(sieKonton: string[]) {
       standardKonton: standardKonton.length,
       specialKonton: specialKonton.length,
       kritiskaKonton: kritiskaKonton,
+      anvandaSaknade: anvandaSaknade.length,
+      totaltAnvanda: anvandaKonton ? anvandaKonton.length : 0,
     };
 
-    // Returnera endast specialkonton som "saknade" för att undvika att visa hundratals BAS-konton
+    // Returnera endast använda specialkonton som "saknade" om vi har den informationen
+    const saknadeAttVisa = anvandaKonton
+      ? specialKonton.filter((konto) => anvandaKonton.includes(konto))
+      : specialKonton;
+
     return {
-      saknade: specialKonton,
+      saknade: saknadeAttVisa,
       analys: analys,
     };
   } catch (error) {
@@ -518,6 +641,8 @@ async function kontrollSaknade(sieKonton: string[]) {
         standardKonton: 0,
         specialKonton: 0,
         kritiskaKonton: [],
+        anvandaSaknade: 0,
+        totaltAnvanda: 0,
       },
     };
   }

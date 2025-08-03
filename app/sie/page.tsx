@@ -38,16 +38,19 @@ export default function SiePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sieData, setSieData] = useState<SieData | null>(null);
   const [saknadeKonton, setSaknadeKonton] = useState<string[]>([]);
+  const [visaSaknade, setVisaSaknade] = useState(false);
   const [analys, setAnalys] = useState<{
     totaltAntal: number;
     standardKonton: number;
     specialKonton: number;
     kritiskaKonton: string[];
+    anvandaSaknade: number;
+    totaltAnvanda: number;
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "översikt" | "konton" | "verifikationer" | "balanser" | "resultat" | "saknade"
+    "översikt" | "konton" | "verifikationer" | "balanser" | "resultat"
   >("översikt");
 
   // Pagination state
@@ -61,6 +64,7 @@ export default function SiePage() {
       setError(null);
       setSieData(null);
       setSaknadeKonton([]);
+      setVisaSaknade(false);
       setAnalys(null);
       setCurrentPage(1);
     }
@@ -77,6 +81,7 @@ export default function SiePage() {
       setError(null);
       setSieData(null);
       setSaknadeKonton([]);
+      setVisaSaknade(false);
       setAnalys(null);
       setCurrentPage(1);
     } else {
@@ -106,10 +111,7 @@ export default function SiePage() {
         setAnalys(result.analys || null);
         setCurrentPage(1);
 
-        // Växla till saknade-fliken om det finns saknade konton
-        if (result.saknade && result.saknade.length > 0) {
-          setActiveTab("saknade");
-        }
+        // Fil uppladdad framgångsrikt - visa översikt
       } else {
         setError(result.error || "Fel vid uppladdning av fil");
       }
@@ -256,31 +258,57 @@ export default function SiePage() {
               {/* Varning för saknade konton */}
               {analys && (analys.specialKonton > 0 || analys.kritiskaKonton.length > 0) && (
                 <div className="mt-4 space-y-2">
-                  {/* Specialkonton varning */}
-                  {analys.specialKonton > 0 && (
-                    <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
-                      <strong>⚠️ Varning:</strong> {analys.specialKonton} specialkonton från
-                      SIE-filen saknas i din kontoplan.
-                      <button
-                        onClick={() => setActiveTab("saknade")}
-                        className="ml-2 underline hover:no-underline"
-                      >
-                        Visa saknade konton →
-                      </button>
+                  {/* Info om kontoanalys */}
+                  <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <strong>ℹ️ Kontoanalys:</strong> SIE-filen innehåller {analys.totaltAntal}{" "}
+                        konton från hela BAS-kontoplanen.{" "}
+                        {saknadeKonton.length > 0
+                          ? `${saknadeKonton.length} specialkonto behöver granskas.`
+                          : "Alla använda konton finns redan i din kontoplan."}
+                      </div>
+                      {saknadeKonton.length > 0 && (
+                        <button
+                          onClick={() => setVisaSaknade(!visaSaknade)}
+                          className="ml-4 underline hover:no-underline text-sm"
+                        >
+                          {visaSaknade ? "Dölj specialkonton" : "Visa specialkonton"} →
+                        </button>
+                      )}
                     </div>
-                  )}
 
-                  {/* Kritiska konton varning */}
+                    {/* Expanderbar lista med saknade konton */}
+                    {visaSaknade && saknadeKonton.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-blue-400/30">
+                        <h4 className="font-semibold text-blue-300 mb-3">
+                          Specialkonton som saknas ({saknadeKonton.length} st)
+                        </h4>
+                        <p className="text-blue-300 text-sm mb-3">
+                          Dessa konton är inte BAS-standardkonton och bör granskas:
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                          {saknadeKonton.map((kontonummer) => {
+                            const kontoInfo = sieData?.konton.find((k) => k.nummer === kontonummer);
+                            return (
+                              <div key={kontonummer} className="bg-blue-900/30 rounded-lg p-2">
+                                <div className="text-sm font-bold text-blue-200">{kontonummer}</div>
+                                {kontoInfo && (
+                                  <div className="text-blue-300 text-xs mt-1">{kontoInfo.namn}</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Kritiska konton varning - behåll denna */}
                   {analys.kritiskaKonton.length > 0 && (
                     <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded">
                       <strong>🚨 Kritisk:</strong> {analys.kritiskaKonton.length} kritiska
-                      företagsspecifika konton saknas.
-                      <button
-                        onClick={() => setActiveTab("saknade")}
-                        className="ml-2 underline hover:no-underline"
-                      >
-                        Visa kritiska konton →
-                      </button>
+                      företagsspecifika konton saknas som behöver skapas för korrekt import.
                     </div>
                   )}
 
@@ -298,35 +326,22 @@ export default function SiePage() {
             {/* Flikar */}
             <div className="mb-6">
               <div className="flex space-x-1 bg-slate-700 p-1 rounded-lg">
-                {["översikt", "konton", "verifikationer", "balanser", "resultat"]
-                  .concat(
-                    analys && (analys.specialKonton > 0 || analys.kritiskaKonton.length > 0)
-                      ? ["saknade"]
-                      : []
-                  )
-                  .map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => {
-                        setActiveTab(tab as any);
-                        setCurrentPage(1);
-                      }}
-                      className={`px-4 py-2 rounded-md capitalize transition-colors relative ${
-                        activeTab === tab
-                          ? "bg-cyan-600 text-white"
-                          : "text-gray-300 hover:text-white hover:bg-slate-600"
-                      }`}
-                    >
-                      {tab}
-                      {tab === "saknade" && analys && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {analys.kritiskaKonton.length > 0
-                            ? analys.kritiskaKonton.length
-                            : analys.specialKonton}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                {["översikt", "konton", "verifikationer", "balanser", "resultat"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab as any);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-4 py-2 rounded-md capitalize transition-colors ${
+                      activeTab === tab
+                        ? "bg-cyan-600 text-white"
+                        : "text-gray-300 hover:text-white hover:bg-slate-600"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -355,137 +370,6 @@ export default function SiePage() {
               </div>
             )}
 
-            {activeTab === "saknade" && (
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4">
-                  Kontoanalys för SIE-import
-                </h3>
-
-                {analys && (
-                  <div className="space-y-4">
-                    {/* Översikt */}
-                    <div className="bg-slate-700 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-2">📊 Analys översikt</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <div className="text-gray-400">Totalt antal konton</div>
-                          <div className="text-lg font-bold text-white">{analys.totaltAntal}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-400">BAS-standardkonton</div>
-                          <div className="text-lg font-bold text-blue-400">
-                            {analys.standardKonton}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-gray-400">Specialkonton</div>
-                          <div className="text-lg font-bold text-yellow-400">
-                            {analys.specialKonton}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-gray-400">Kritiska konton</div>
-                          <div className="text-lg font-bold text-red-400">
-                            {analys.kritiskaKonton.length}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Kritiska konton */}
-                    {analys.kritiskaKonton.length > 0 && (
-                      <div className="bg-red-500/20 border border-red-500 rounded-lg p-4">
-                        <h4 className="font-semibold text-red-400 mb-3">
-                          🚨 Kritiska företagsspecifika konton
-                        </h4>
-                        <p className="text-red-300 text-sm mb-3">
-                          Dessa konton är troligen viktiga för ditt företag och bör läggas till
-                          omedelbart:
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {analys.kritiskaKonton.map((kontonummer) => {
-                            const kontoInfo = sieData.konton.find((k) => k.nummer === kontonummer);
-                            return (
-                              <div key={kontonummer} className="bg-red-900/30 rounded-lg p-3">
-                                <div className="text-lg font-bold text-red-300">{kontonummer}</div>
-                                {kontoInfo && (
-                                  <div className="text-red-400 text-sm mt-1">{kontoInfo.namn}</div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Specialkonton */}
-                    {saknadeKonton.length > 0 && (
-                      <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-4">
-                        <h4 className="font-semibold text-yellow-400 mb-3">
-                          ⚠️ Övriga specialkonton som saknas
-                        </h4>
-                        <p className="text-yellow-300 text-sm mb-3">
-                          Dessa konton från SIE-filen saknas i din kontoplan:
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {saknadeKonton.map((kontonummer) => {
-                            const kontoInfo = sieData.konton.find((k) => k.nummer === kontonummer);
-                            return (
-                              <div key={kontonummer} className="bg-yellow-900/30 rounded-lg p-3">
-                                <div className="text-lg font-bold text-yellow-300">
-                                  {kontonummer}
-                                </div>
-                                {kontoInfo && (
-                                  <div className="text-yellow-400 text-sm mt-1">
-                                    {kontoInfo.namn}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Info om standardkonton */}
-                    {analys.standardKonton > 0 && (
-                      <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4">
-                        <h4 className="font-semibold text-blue-400 mb-2">ℹ️ BAS-standardkonton</h4>
-                        <p className="text-blue-300 text-sm">
-                          {analys.standardKonton} BAS-standardkonton hittades som inte finns i din
-                          kontoplan. Detta är normalt - du behöver bara lägga till de konton du
-                          faktiskt använder.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Nästa steg */}
-                    {(analys.kritiskaKonton.length > 0 || saknadeKonton.length > 0) && (
-                      <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
-                        <h4 className="font-semibold text-white mb-2">💡 Nästa steg</h4>
-                        <ol className="list-decimal list-inside space-y-1 text-sm text-gray-300">
-                          <li>Gå till Admin → Visa Konton för att lägga till saknade konton</li>
-                          <li>Prioritera kritiska konton (företagsspecifika) först</li>
-                          <li>Kontakta din revisor för att få rätt kontobeskrivningar</li>
-                          <li>
-                            Kom tillbaka hit för att importera när alla nödvändiga konton finns
-                          </li>
-                        </ol>
-                      </div>
-                    )}
-
-                    {/* Allt OK meddelande */}
-                    {analys.kritiskaKonton.length === 0 && saknadeKonton.length === 0 && (
-                      <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded">
-                        ✅ Alla viktiga konton från SIE-filen finns redan i din kontoplan! Du kan
-                        säkert importera.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
             {activeTab === "konton" && (
               <div>
                 <div className="overflow-x-auto">
@@ -494,7 +378,6 @@ export default function SiePage() {
                       <tr className="border-b border-slate-600">
                         <th className="text-left py-3 px-4">Kontonummer</th>
                         <th className="text-left py-3 px-4">Kontonamn</th>
-                        <th className="text-left py-3 px-4">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -502,13 +385,6 @@ export default function SiePage() {
                         <tr key={index} className="border-b border-slate-700 hover:bg-slate-700">
                           <td className="py-3 px-4">{konto.nummer}</td>
                           <td className="py-3 px-4">{konto.namn}</td>
-                          <td className="py-3 px-4">
-                            {saknadeKonton.includes(konto.nummer) ? (
-                              <span className="text-red-400">❌ Saknas</span>
-                            ) : (
-                              <span className="text-green-400">✅ Finns</span>
-                            )}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -542,7 +418,6 @@ export default function SiePage() {
                             <tr className="border-b border-slate-600">
                               <th className="text-left py-2 text-gray-300">Konto</th>
                               <th className="text-right py-2 text-gray-300">Belopp</th>
-                              <th className="text-center py-2 text-gray-300">Status</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -552,13 +427,6 @@ export default function SiePage() {
                                   <td className="py-1">{trans.konto}</td>
                                   <td className="py-1 text-right">
                                     {formatCurrency(trans.belopp)}
-                                  </td>
-                                  <td className="py-1 text-center">
-                                    {saknadeKonton.includes(trans.konto) ? (
-                                      <span className="text-red-400 text-xs">❌</span>
-                                    ) : (
-                                      <span className="text-green-400 text-xs">✅</span>
-                                    )}
                                   </td>
                                 </tr>
                               )
@@ -587,7 +455,6 @@ export default function SiePage() {
                         <tr className="border-b border-slate-600">
                           <th className="text-left py-2">Konto</th>
                           <th className="text-right py-2">Belopp</th>
-                          <th className="text-center py-2">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -595,13 +462,6 @@ export default function SiePage() {
                           <tr key={index} className="border-b border-slate-700">
                             <td className="py-2">{balans.konto}</td>
                             <td className="py-2 text-right">{formatCurrency(balans.belopp)}</td>
-                            <td className="py-2 text-center">
-                              {saknadeKonton.includes(balans.konto) ? (
-                                <span className="text-red-400 text-xs">❌</span>
-                              ) : (
-                                <span className="text-green-400 text-xs">✅</span>
-                              )}
-                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -616,7 +476,6 @@ export default function SiePage() {
                         <tr className="border-b border-slate-600">
                           <th className="text-left py-2">Konto</th>
                           <th className="text-right py-2">Belopp</th>
-                          <th className="text-center py-2">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -624,13 +483,6 @@ export default function SiePage() {
                           <tr key={index} className="border-b border-slate-700">
                             <td className="py-2">{balans.konto}</td>
                             <td className="py-2 text-right">{formatCurrency(balans.belopp)}</td>
-                            <td className="py-2 text-center">
-                              {saknadeKonton.includes(balans.konto) ? (
-                                <span className="text-red-400 text-xs">❌</span>
-                              ) : (
-                                <span className="text-green-400 text-xs">✅</span>
-                              )}
-                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -649,7 +501,6 @@ export default function SiePage() {
                       <tr className="border-b border-slate-600">
                         <th className="text-left py-2">Konto</th>
                         <th className="text-right py-2">Belopp</th>
-                        <th className="text-center py-2">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -657,13 +508,6 @@ export default function SiePage() {
                         <tr key={index} className="border-b border-slate-700">
                           <td className="py-2">{resultat.konto}</td>
                           <td className="py-2 text-right">{formatCurrency(resultat.belopp)}</td>
-                          <td className="py-2 text-center">
-                            {saknadeKonton.includes(resultat.konto) ? (
-                              <span className="text-red-400 text-xs">❌</span>
-                            ) : (
-                              <span className="text-green-400 text-xs">✅</span>
-                            )}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -680,6 +524,7 @@ export default function SiePage() {
                   setSieData(null);
                   setSelectedFile(null);
                   setSaknadeKonton([]);
+                  setVisaSaknade(false);
                   setAnalys(null);
                   setActiveTab("översikt");
                   setCurrentPage(1);
