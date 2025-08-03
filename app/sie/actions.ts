@@ -918,7 +918,6 @@ interface ImportSettings {
   inkluderaBalanser: boolean;
   inkluderaResultat: boolean;
   skapaKonton: boolean;
-  ersättDuplicates: boolean;
 }
 
 export async function importeraSieData(
@@ -935,17 +934,61 @@ export async function importeraSieData(
         error: "Ingen giltig session - måste vara inloggad",
       };
     }
-    const userId = Number(session.user.id);
+    const userId = session.user.id; // Behåll som string - det verkar vara UUID
 
     const { Pool } = require("pg");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
     });
 
-    const client = await pool.connect();
+    let client;
+    let clientReleased = false;
+    let poolEnded = false;
 
     try {
-      // Börja transaktion
+      client = await pool.connect();
+
+      // STEG 0: Kontrollera duplicates FÖRE transaktion
+      if (settings.inkluderaVerifikationer && sieData.verifikationer.length > 0) {
+        const verifikationsNamn = sieData.verifikationer.map(
+          (v) => `Verifikation ${v.serie}:${v.nummer}`
+        );
+
+        const { rows: duplicateRows } = await client.query(
+          `SELECT kontobeskrivning, transaktionsdatum 
+           FROM transaktioner 
+           WHERE kontobeskrivning = ANY($1) 
+           AND "userId" = $2 
+           AND kommentar LIKE 'SIE Import%'`,
+          [verifikationsNamn, userId]
+        );
+
+        if (duplicateRows.length > 0) {
+          const duplicatesList = duplicateRows
+            .map(
+              (row: any) =>
+                `• ${row.kontobeskrivning} (${row.transaktionsdatum.toISOString().split("T")[0]})`
+            )
+            .join("\n");
+
+          // Markera att vi kommer att stänga
+          client.release();
+          clientReleased = true;
+          await pool.end();
+          poolEnded = true;
+
+          return {
+            success: false,
+            error: `🚨 Import avbruten - Duplicata verifikationer upptäckta!
+
+Följande verifikationer finns redan i din databas:
+
+${duplicatesList}
+
+💡 Detta förhindrar oavsiktliga dubbletter. Om du vill importera ändå, ta först bort de befintliga verifikationerna.`,
+          };
+        }
+      } // Nu börja transaktion
       await client.query("BEGIN");
 
       let resultat = {
@@ -1286,17 +1329,25 @@ export async function importeraSieData(
       };
     } catch (error) {
       // Rollback vid fel
-      await client.query("ROLLBACK");
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Rollback fel:", rollbackError);
+      }
       throw error;
     } finally {
-      client.release();
-      await pool.end();
+      if (client && !clientReleased) {
+        client.release();
+      }
+      if (!poolEnded) {
+        await pool.end();
+      }
     }
   } catch (error) {
     console.error("Fel vid import av SIE-data:", error);
     return {
       success: false,
-      error: "Kunde inte importera SIE-data",
+      error: `Kunde inte importera SIE-data: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

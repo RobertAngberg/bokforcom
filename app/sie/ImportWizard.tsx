@@ -67,7 +67,6 @@ export default function ImportWizard({
     inkluderaBalanser: true,
     inkluderaResultat: true,
     skapaKonton: true,
-    ersättDuplicates: false,
   });
 
   // Förfyll datumen automatiskt baserat på SIE-data
@@ -431,17 +430,10 @@ function InställningarSteg({
               />
               <span className="text-white">Skapa saknade konton automatiskt</span>
             </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={settings.ersättDuplicates}
-                onChange={(e) =>
-                  onSettingsChange({ ...settings, ersättDuplicates: e.target.checked })
-                }
-                className="mr-3"
-              />
-              <span className="text-white">Ersätt befintliga verifikationer (om duplicate)</span>
-            </label>
+            <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-3 py-2 rounded text-sm">
+              <strong>🛡️ Duplicate-skydd:</strong> Importen avbryts automatiskt om befintliga
+              verifikationer upptäcks för att förhindra dubbletter.
+            </div>
           </div>
         </div>
       </div>
@@ -621,12 +613,42 @@ function ImportSteg({
     return (
       <div className="text-center">
         <h2 className="text-xl font-semibold text-white mb-8">Import misslyckades</h2>
-        <div className="max-w-md mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
             <span className="text-white text-2xl">✗</span>
           </div>
-          <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded mb-4">
-            <strong>Fel:</strong> {error}
+          <div className="bg-red-500/20 border border-red-500 text-red-400 px-6 py-4 rounded mb-4 text-left">
+            <div className="font-semibold mb-3">
+              🚨 Import avbruten - Duplicata verifikationer upptäckta!
+            </div>
+
+            {error.includes("Följande verifikationer finns redan") && (
+              <>
+                <div className="mb-3">
+                  <strong>Följande verifikationer finns redan i din databas:</strong>
+                </div>
+                <div className="bg-red-600/20 p-3 rounded text-sm font-mono max-h-60 overflow-y-auto mb-3">
+                  {error
+                    .split("• ")
+                    .slice(1) // Ta bort första tomma elementet
+                    .map((line, index) => (
+                      <div key={index} className="mb-1">
+                        • {line.split(" 💡")[0]} {/* Ta bort tipset från slutet */}
+                      </div>
+                    ))}
+                </div>
+                <div className="text-yellow-300">
+                  💡 Detta förhindrar oavsiktliga dubbletter. Om du vill importera ändå, ta först
+                  bort de befintliga verifikationerna.
+                </div>
+              </>
+            )}
+
+            {!error.includes("Följande verifikationer finns redan") && (
+              <div>
+                <strong>Fel:</strong> {error}
+              </div>
+            )}
           </div>
           <Knapp text="Försök igen" onClick={() => window.location.reload()} />
         </div>
