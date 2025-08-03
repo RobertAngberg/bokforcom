@@ -672,10 +672,27 @@ function ImportSteg({
     <div className="text-center">
       <h2 className="text-xl font-semibold text-white mb-8">Steg 4: Importerar data</h2>
 
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin"></div>
           <div className="text-lg text-white mb-2">{currentTask}</div>
+
+          {progress === 60 && currentTask.includes("Importerar SIE-data") && (
+            <div className="bg-blue-500/20 border border-blue-500 text-blue-300 px-4 py-3 rounded mt-4 text-sm">
+              <div className="font-semibold mb-2">⏳ Detta kan ta en stund...</div>
+              <div className="text-left text-xs">
+                • Skapar konton i databasen
+                <br />• Importerar {sieData.verifikationer.length} verifikationer
+                <br />• Bearbetar{" "}
+                {sieData.verifikationer.reduce(
+                  (total, ver) => total + ver.transaktioner.length,
+                  0
+                )}{" "}
+                transaktionsposter
+                <br />• Validerar all data för korrekthet
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="w-full bg-slate-600 rounded-full h-3 mb-4">
@@ -703,7 +720,7 @@ function ResultatSteg({ resultat, onFinish }: { resultat: any; onFinish: () => v
         </div>
 
         <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded mb-6">
-          <strong>🎉 Framgång!</strong> All data har importerats till din databas.
+          <strong>🎉 Klart!</strong> All data har importerats till din databas.
         </div>
 
         {resultat && (
