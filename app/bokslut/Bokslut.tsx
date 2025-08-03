@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   hamtaKontosaldo,
   hamtaSenasteTransaktioner,
-  hamtaBokslutsjusteringar,
   hamtaBokslutschecklista,
   testDatabaseConnection,
 } from "./actions";
@@ -30,14 +29,13 @@ interface BokslutPost {
 
 export default function Bokslut() {
   const [aktivPeriod, setAktivPeriod] = useState<string>("2025");
-  const [aktivFlik, setAktivFlik] = useState<
-    "oversikt" | "poster" | "rapporter" | "checklista" | "konton" | "nebilaga" | "info"
-  >("oversikt");
+  const [aktivFlik, setAktivFlik] = useState<"oversikt" | "nebilaga" | "checklista" | "info">(
+    "oversikt"
+  );
 
   // State för riktig data
   const [saldo, setSaldo] = useState<any[]>([]);
   const [transaktioner, setTransaktioner] = useState<any[]>([]);
-  const [justeringar, setJusteringar] = useState<any[]>([]);
   const [lista, setLista] = useState<any[]>([]);
   const [neBilaga, setNeBilaga] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -59,10 +57,9 @@ export default function Bokslut() {
         } else {
           console.log("[CLIENT] No users found with transactions in database");
         }
-        const [saldo, transaktioner, justeringar, lista, neBilagaData] = await Promise.all([
+        const [saldo, transaktioner, lista, neBilagaData] = await Promise.all([
           hamtaKontosaldo(ar),
           hamtaSenasteTransaktioner(ar, 20),
-          hamtaBokslutsjusteringar(ar),
           hamtaBokslutschecklista(ar),
           genereraNEBilaga(ar),
         ]);
@@ -70,14 +67,12 @@ export default function Bokslut() {
         console.log("[CLIENT] Results:", {
           saldo,
           transaktioner,
-          justeringar,
           lista,
           neBilagaData,
         });
 
         setSaldo(saldo);
         setTransaktioner(transaktioner);
-        setJusteringar(justeringar);
         setLista(lista);
         setNeBilaga(neBilagaData);
       } catch (error) {
@@ -219,11 +214,8 @@ export default function Bokslut() {
         <nav className="flex space-x-8 border-b border-gray-700">
           {[
             { key: "oversikt", label: "Översikt", icon: "📊" },
-            { key: "poster", label: "Bokslutsposter", icon: "📝" },
-            { key: "konton", label: "Viktiga konton", icon: "🏦" },
-            { key: "rapporter", label: "Rapporter", icon: "📋" },
+            { key: "nebilaga", label: "NE-bilaga", icon: "�" },
             { key: "checklista", label: "Checklista", icon: "✅" },
-            { key: "nebilaga", label: "NE-bilaga", icon: "📄" },
             { key: "info", label: "Information", icon: "ℹ️" },
           ].map(({ key, label, icon }) => (
             <button
@@ -244,7 +236,7 @@ export default function Bokslut() {
 
       {/* Tab Content */}
       {aktivFlik === "oversikt" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {loading ? (
             <div className="col-span-full text-center py-8">
               <div className="text-gray-400">Laddar bokslutdata...</div>
@@ -254,28 +246,11 @@ export default function Bokslut() {
               <div className="bg-gray-900 rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="text-2xl">📝</div>
+                    <div className="text-2xl">�</div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-400">Bokslutsposter</p>
-                    <p className="text-2xl font-semibold text-white">{justeringar.length}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-900 rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="text-2xl">💰</div>
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-400">Totala justeringar</p>
-                    <p className="text-2xl font-semibold text-white">
-                      {(
-                        justeringar.reduce((sum: number, post: any) => sum + post.belopp, 0) / 1000
-                      ).toFixed(0)}
-                      k
-                    </p>
+                    <p className="text-sm font-medium text-gray-400">Kontosaldo</p>
+                    <p className="text-2xl font-semibold text-white">{saldo.length} konton</p>
                   </div>
                 </div>
               </div>
@@ -312,75 +287,7 @@ export default function Bokslut() {
         </div>
       )}
 
-      {aktivFlik === "poster" && (
-        <div className="bg-gray-900 rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-700">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-white">Bokslutsposter</h3>
-              <button className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors">
-                Ny post
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Typ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Beskrivning
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Konto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Belopp
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Åtgärder
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-gray-900 divide-y divide-gray-700">
-                {justeringar.map((post: any) => (
-                  <tr key={post.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white capitalize">
-                      {post.typ}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      {post.beskrivning}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                      {post.konto}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      {post.belopp.toLocaleString("sv-SE")} kr
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(post.status)}`}
-                      >
-                        {getStatusText(post.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-cyan-400 hover:text-cyan-300 mr-3">Redigera</button>
-                      <button className="text-red-400 hover:text-red-300">Ta bort</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {aktivFlik === "konton" && (
+      {aktivFlik === "nebilaga" && (
         <div className="space-y-6">
           <div className="bg-gray-900 rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-white mb-4">
@@ -488,70 +395,6 @@ export default function Bokslut() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {aktivFlik === "rapporter" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-900 rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-white mb-4">Årsbokslut rapporter</h3>
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Resultaträkning</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Balansräkning</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Kassaflödesanalys</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Huvudbok</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-gray-900 rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-white mb-4">Skatterapporter</h3>
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Självdeklaration</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Momsdeklaration</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Kontrolluppgifter</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
-              <button className="w-full text-left px-4 py-3 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-white">SIE-export för revisor</span>
-                  <span className="text-lg">📄</span>
-                </div>
-              </button>
             </div>
           </div>
         </div>
