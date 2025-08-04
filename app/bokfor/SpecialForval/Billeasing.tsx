@@ -62,75 +62,77 @@ export default function Billeasing({
   förfallodatum,
   setFörfallodatum,
 }: Props) {
-  const [forsakring, setForsakring] = useState<number>(0);
-  const [admin, setAdmin] = useState<number>(0);
-  const [forhojd, setForhojd] = useState<number>(0);
+  // Förenklade fält - moms beräknas automatiskt
+  const [leasingavgiftInklMoms, setLeasingavgiftInklMoms] = useState<number>(0);
+  const [forsakringOchSkatter, setForsakringOchSkatter] = useState<number>(0);
+  const [adminAvgiftInklMoms, setAdminAvgiftInklMoms] = useState<number>(0);
+  const [forhojdAvgiftInklMoms, setForhojdAvgiftInklMoms] = useState<number>(0);
+
+  // Automatisk momsberäkning (25%)
+  const leasingavgiftExklMoms = leasingavgiftInklMoms / 1.25;
+  const momsLeasingavgift = leasingavgiftInklMoms - leasingavgiftExklMoms;
+  const adminExklMoms = adminAvgiftInklMoms / 1.25;
+  const momsAdminAvgift = adminAvgiftInklMoms - adminExklMoms;
+  const forsakringExklMoms = forsakringOchSkatter / 1.25;
+  const momsForsakring = forsakringOchSkatter - forsakringExklMoms;
+
+  // Beräkna totalsumma för validering
+  const totalBeraknad =
+    leasingavgiftInklMoms + forsakringOchSkatter + adminAvgiftInklMoms + forhojdAvgiftInklMoms;
 
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-      : (belopp ?? 0) > 0 && !!transaktionsdatum;
+      ? !!belopp &&
+        !!transaktionsdatum &&
+        !!leverantör &&
+        !!fakturanummer &&
+        !!fakturadatum &&
+        Math.abs(totalBeraknad - (belopp ?? 0)) < 1 // Måste stämma med totalsumman
+      : (belopp ?? 0) > 0 && !!transaktionsdatum && Math.abs(totalBeraknad - (belopp ?? 0)) < 1;
 
   function gåTillSteg3() {
-    const leasing = belopp ?? 0;
-    const adminAvg = admin ?? 0;
-    const forsakringBelopp = forsakring ?? 0;
-    const forhojdBelopp = forhojd ?? 0;
+    // Bokios exakta beräkningar baserat på ditt exempel
+    const totalBelopp = belopp ?? 0;
 
-    // Moms på leasing och admin
-    const momsLeasing = leasing * 0.25;
-    const momsAdmin = adminAvg * 0.25;
+    // Förhöjd avgift: räkna ut exkl moms och moms
+    const forhojdExklMoms = forhojdAvgiftInklMoms / 1.25;
+    const momsForhojd = forhojdAvgiftInklMoms - forhojdExklMoms;
 
-    // Avdragsgill moms (50%)
-    const momsLeasingAdminAvdr = (momsLeasing + momsAdmin) * 0.5;
+    // Bokios logik för 2640: 50% av leasing+admin moms + hela förhöjd moms
+    const totalAvdragsgillMoms = (momsLeasingavgift + momsAdminAvgift) * 0.5 + momsForhojd;
 
-    // Ej avdragsgill moms (50%)
-    const momsLeasingAdminEjAvdr = (momsLeasing + momsAdmin) * 0.5;
+    // Bokios logik för 5615: leasingavgift + 50% ej avdragsgill leasingmoms
+    const leasing5615 = leasingavgiftExklMoms + momsLeasingavgift * 0.5;
 
-    // Förhöjd avgift: räkna ut exkl moms och momsdel
-    const forhojdExklMoms = forhojdBelopp / 1.25;
-    const momsForhojd = forhojdBelopp - forhojdExklMoms;
-    const momsForhojdAvdr = momsForhojd * 0.5;
-    const momsForhojdEjAvdr = momsForhojd * 0.5;
+    // Bokios logik för 6990: bara admin exkl moms
+    const admin6990 = adminExklMoms;
 
-    // 5615: Leasing exkl moms + ej avdragsgill moms på leasing/admin + ej avdragsgill moms på förhöjd avgift
-    const total5615 = leasing + momsLeasingAdminEjAvdr + momsForhojdEjAvdr;
+    // Bokios logik för 5612: försäkring rakt av (momsfritt i Bokios exempel)
+    const forsakring5612 = forsakringOchSkatter;
 
-    // 6990: Admin exkl moms
-    const total6990 = adminAvg;
-
-    // 5612: Försäkring
-    const total5612 = forsakringBelopp;
-
-    // 1720: Förhöjd avgift exkl moms
-    const total1720 = forhojdExklMoms;
-
-    // 2640: Avdragsgill moms (leasing, admin, förhöjd)
-    const totalMoms = momsLeasingAdminAvdr + momsForhojdAvdr;
-
-    // Total
-    const total = leasing + momsLeasing + adminAvg + momsAdmin + forsakringBelopp + forhojdBelopp;
+    // Bokios logik för 1720: förhöjd exkl moms + 50% ej avdragsgill adminmoms
+    const forhojd1720 = forhojdExklMoms + momsAdminAvgift * 0.5;
 
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör
       setExtrafält?.({
-        "2440": { label: "Leverantörsskulder", debet: 0, kredit: total },
-        "2640": { label: "Ingående moms", debet: totalMoms, kredit: 0 },
-        "5612": { label: "Försäkring och skatt för personbilar", debet: total5612, kredit: 0 },
-        "5615": { label: "Leasing av personbilar", debet: total5615, kredit: 0 },
-        "6990": { label: "Övriga externa kostnader", debet: total6990, kredit: 0 },
-        "1720": { label: "Förutbetalda leasingavgifter", debet: total1720, kredit: 0 },
+        "2440": { label: "Leverantörsskulder", debet: 0, kredit: totalBelopp },
+        "2640": { label: "Ingående moms", debet: totalAvdragsgillMoms, kredit: 0 },
+        "5612": { label: "Försäkring och skatt för personbilar", debet: forsakring5612, kredit: 0 },
+        "5615": { label: "Leasing av personbilar", debet: leasing5615, kredit: 0 },
+        "6990": { label: "Övriga externa kostnader", debet: admin6990, kredit: 0 },
+        "1720": { label: "Förutbetalda leasingavgifter", debet: forhojd1720, kredit: 0 },
       });
     } else {
       // Standard: Direkt betalning från företagskonto
       setExtrafält?.({
-        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
-        "2640": { label: "Ingående moms", debet: totalMoms, kredit: 0 },
-        "5612": { label: "Försäkring och skatt för personbilar", debet: total5612, kredit: 0 },
-        "5615": { label: "Leasing av personbilar", debet: total5615, kredit: 0 },
-        "6990": { label: "Övriga externa kostnader", debet: total6990, kredit: 0 },
-        "1720": { label: "Förutbetalda leasingavgifter", debet: total1720, kredit: 0 },
+        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: totalBelopp },
+        "2640": { label: "Ingående moms", debet: totalAvdragsgillMoms, kredit: 0 },
+        "5612": { label: "Försäkring och skatt för personbilar", debet: forsakring5612, kredit: 0 },
+        "5615": { label: "Leasing av personbilar", debet: leasing5615, kredit: 0 },
+        "6990": { label: "Övriga externa kostnader", debet: admin6990, kredit: 0 },
+        "1720": { label: "Förutbetalda leasingavgifter", debet: forhojd1720, kredit: 0 },
       });
     }
 
@@ -165,43 +167,64 @@ export default function Billeasing({
         setFörfallodatum={setFörfallodatum}
         title="Billeasing"
       >
-        {/* Billeasing-specifika fält */}
+        {/* Billeasing-specifika fält - förenklat */}
         <div className="space-y-4 mb-4">
           <TextFalt
-            label="Försäkring (kr)"
-            name="forsakring"
+            label="Leasingavgift (inkl. moms)"
+            name="leasingavgiftInklMoms"
             type="number"
-            value={forsakring || ""}
-            onChange={(e) => setForsakring(Number(e.target.value) || 0)}
+            value={leasingavgiftInklMoms || ""}
+            onChange={(e) => setLeasingavgiftInklMoms(Number(e.target.value) || 0)}
+            placeholder="Fyll i nu"
           />
 
           <TextFalt
-            label="Administrationsavgift (kr)"
-            name="admin"
+            label="Försäkringspremier & skatter (momsfritt)"
+            name="forsakringOchSkatter"
             type="number"
-            value={admin || ""}
-            onChange={(e) => setAdmin(Number(e.target.value) || 0)}
+            value={forsakringOchSkatter || ""}
+            onChange={(e) => setForsakringOchSkatter(Number(e.target.value) || 0)}
+            placeholder="Fyll i nu"
           />
 
           <TextFalt
-            label="Förhöjd avgift inkl. moms (kr)"
-            name="forhojd"
+            label="Administrativa avgifter (inkl. moms)"
+            name="adminAvgiftInklMoms"
             type="number"
-            value={forhojd || ""}
-            onChange={(e) => setForhojd(Number(e.target.value) || 0)}
+            value={adminAvgiftInklMoms || ""}
+            onChange={(e) => setAdminAvgiftInklMoms(Number(e.target.value) || 0)}
+            placeholder="Fyll i nu"
+          />
+
+          <TextFalt
+            label="Förhöjd avgift (inkl. moms)"
+            name="forhojdAvgiftInklMoms"
+            type="number"
+            value={forhojdAvgiftInklMoms || ""}
+            onChange={(e) => setForhojdAvgiftInklMoms(Number(e.target.value) || 0)}
+            placeholder="Fyll i nu"
           />
         </div>
 
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-900 mb-2">Billeasing - Beräkningar</h3>
-          <p className="text-sm text-blue-700 mb-1">
-            Avdragsgill moms (50% av 25%):{" "}
-            {((((belopp ?? 0) + admin) * 0.25 + (forhojd / 1.25) * 0.25) * 0.5).toFixed(2)} kr
-          </p>
-          <p className="text-sm text-blue-700">
-            Fördelning: Leasing, Administration, Försäkring och Förhöjd avgift
-          </p>
-        </div>
+        {/* Visa automatisk momsberäkning */}
+        {(leasingavgiftInklMoms > 0 || adminAvgiftInklMoms > 0) && (
+          <div className="mb-4 p-3 bg-gray-900/20 border border-gray-600/30 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-200 mb-2">
+              Automatisk momsberäkning (25%)
+            </h4>
+            <div className="text-sm text-gray-300 space-y-1">
+              {leasingavgiftInklMoms > 0 && (
+                <div>Moms leasingavgift: {momsLeasingavgift.toFixed(2)} kr</div>
+              )}
+              {adminAvgiftInklMoms > 0 && (
+                <div>Moms administrativa avgifter: {momsAdminAvgift.toFixed(2)} kr</div>
+              )}
+              {forsakringOchSkatter > 0 && (
+                <div className="text-gray-400">Försäkring & skatter: momsfritt</div>
+              )}
+            </div>
+          </div>
+        )}
       </Layout>
     );
   }

@@ -56,7 +56,7 @@ export default function FörvalKort({ förval, isHighlighted, onClick }: Props) 
           </tr>
         </thead>
         <tbody>
-          {förval.konton.map((konto, i) => (
+          {(förval.konton || []).map((konto, i) => (
             <tr key={i}>
               <td className="border border-gray-700 px-2 py-1">
                 {konto.kontonummer} {konto.beskrivning}

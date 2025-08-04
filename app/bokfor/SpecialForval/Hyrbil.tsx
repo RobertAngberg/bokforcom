@@ -62,8 +62,11 @@ export default function Hyrbil({
   setFörfallodatum,
 }: Props) {
   // #region Beräkningar
-  const moms = +(Number(belopp ?? 0) * 0.25 * 0.5).toFixed(2);
-  const netto = +(Number(belopp ?? 0) - moms).toFixed(2);
+  // Beräkna korrekt för hyrbil: 50% av momsen är avdragsgill
+  const totalBelopp = Number(belopp ?? 0);
+  const fullMoms = (totalBelopp / 1.25) * 0.25; // Full moms (25%)
+  const moms = +(fullMoms * 0.5).toFixed(2); // Endast 50% avdragsgill
+  const netto = +(totalBelopp - moms).toFixed(2); // Resterande blir kostnad
 
   // Olika valideringslogik beroende på renderMode
   const giltigt =
@@ -120,12 +123,32 @@ export default function Hyrbil({
         title="Hyrbil"
       >
         {/* Hyrbil-specifikt innehåll */}
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-900 mb-2">Hyrbil - Momsberäkning</h3>
-          <p className="text-sm text-blue-700 mb-2">
-            Avdragbar moms (25% × 50%): {formatSEK(moms)} kr
-          </p>
-          <p className="text-sm text-blue-700">Nettokostnad: {formatSEK(netto)} kr</p>
+        <div className="mb-4 p-4 bg-gray-800 border border-gray-700 rounded-lg shadow-sm">
+          <h3 className="font-semibold text-white mb-3 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
+            </svg>
+            Hyrbil - Momsberäkning
+          </h3>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-300 bg-gray-700/50 px-3 py-2 rounded">
+              <span className="font-medium text-white">Avdragbar moms (25% × 50%):</span>{" "}
+              {formatSEK(moms)} kr
+            </p>
+            <p className="text-sm text-gray-300 bg-gray-700/50 px-3 py-2 rounded">
+              <span className="font-medium text-white">Nettokostnad:</span> {formatSEK(netto)} kr
+            </p>
+          </div>
         </div>
       </Layout>
     );

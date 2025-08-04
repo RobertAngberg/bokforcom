@@ -171,37 +171,30 @@ export default function Importmoms({
         title="Importmoms"
       >
         {/* Importmoms-specifika fält */}
-        <div className="mb-4 p-4 border border-gray-700 rounded-lg">
-          <p className="text-sm text-gray-400">
-            <strong>💡 Importmoms steg-för-steg:</strong>
-            <br />
-            <br />
-            1️ - Du köper varor utanför EU (ex. 20 000 kr) - ingen moms betalas till säljaren
-            <br />
-            <br />
-            2 - Transportföretaget skickar tullfaktura (ex. 300 kr totalt)
-            <br />
-            <br />3 - Fyll i: Total tullfaktura (300), Tull/frakt inkl. moms (100), Fiktiv moms 25%
-            av varans värde (5000), Övriga kostnader utan moms (200)
-          </p>
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-600/30 rounded text-sm text-blue-200 flex items-center gap-2">
+          <svg
+            className="w-4 h-4 text-blue-400 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p>Beloppet ovan ska vara = summan av de två beloppen nedan.</p>
         </div>
 
-        <div className="space-y-4 mb-4">
+        <div className="space-y-2 mb-4">
           <TextFalt
             label="Tull och spedition m.m. inkl. moms"
             name="tull"
             type="number"
             value={tull}
             onChange={(e) => setTull(e.target.value)}
-            required={false}
-          />
-
-          <TextFalt
-            label="Ingående fiktiv moms på förvärv från utlandet"
-            name="fiktiv"
-            type="number"
-            value={fiktiv}
-            onChange={(e) => setFiktiv(e.target.value)}
             required={false}
           />
 
@@ -213,6 +206,47 @@ export default function Importmoms({
             onChange={(e) => setOvrigt(e.target.value)}
             required={false}
           />
+
+          {/* Separator */}
+          <div className="py-4">
+            <hr className="border-gray-600" />
+          </div>
+
+          <TextFalt
+            label="Ingående fiktiv moms på förvärv från utlandet"
+            name="fiktiv"
+            type="number"
+            value={fiktiv}
+            onChange={(e) => setFiktiv(e.target.value)}
+            required={false}
+          />
+
+          <div className="mt-2 p-2 bg-blue-900/20 border border-blue-600/30 rounded text-sm text-blue-200 flex items-start gap-2">
+            <svg
+              className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div>
+              <p>
+                Fiktiv moms innebär att du bokför moms på utländska inköp som om köpet skett i
+                Sverige.
+              </p>
+              <p>
+                Ingen moms betalas i verkligheten eftersom beloppen kvittas mot varandra i
+                bokföringen.
+              </p>
+              <p>Exempel: Import av varor för 1000kr - fiktiv moms ska anges som 250kr.</p>
+            </div>
+          </div>
         </div>
       </Layout>
     );
