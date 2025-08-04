@@ -20,7 +20,7 @@ export default function RotRutCheckbox({
           onChange={(e) => onChange(e.target.checked)}
           className={className}
         />
-        🛠️ Aktivera ROT/RUT-avdrag
+        Aktivera ROT/RUT-avdrag
       </label>
     </div>
   );

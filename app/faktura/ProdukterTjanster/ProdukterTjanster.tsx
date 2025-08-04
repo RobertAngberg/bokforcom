@@ -199,7 +199,7 @@ export default function ProdukterTjanster() {
   //#endregion
 
   //#region Vars: Gemensam storlek för checkbox och label
-  const checkboxSize = "w-6 h-6";
+  const checkboxSize = "w-5 h-5";
   const labelSize = "text-base";
   //#endregion
 
@@ -219,63 +219,77 @@ export default function ProdukterTjanster() {
         onRemove={handleRemove}
       />
 
-      <ArtikelForm
-        beskrivning={beskrivning}
-        antal={antal}
-        prisPerEnhet={prisPerEnhet}
-        moms={moms}
-        valuta={valuta}
-        typ={typ}
-        onChangeBeskrivning={setBeskrivning}
-        onChangeAntal={setAntal}
-        onChangePrisPerEnhet={setPrisPerEnhet}
-        onChangeMoms={setMoms}
-        onChangeValuta={setValuta}
-        onChangeTyp={setTyp}
-      />
+      {/* Formulär för att lägga till ny artikel */}
+      <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
+          <h3 className="text-white font-medium">Skapa och lägg till vara / tjänst</h3>
+        </div>
 
-      <RotRutCheckbox
-        checked={visaRotRutForm}
-        onChange={(checked) => {
-          setVisaRotRutForm(checked);
-          setFormData((prev) => ({
-            ...prev,
-            rotRutAktiverat: checked,
-            ...(checked
-              ? {}
-              : {
-                  rotRutTyp: undefined,
-                  rotRutKategori: undefined,
-                  avdragProcent: undefined,
-                  arbetskostnadExMoms: undefined,
-                  avdragBelopp: undefined,
-                  personnummer: undefined,
-                  fastighetsbeteckning: undefined,
-                  rotBoendeTyp: undefined,
-                  brfOrganisationsnummer: undefined,
-                  brfLagenhetsnummer: undefined,
-                }),
-          }));
-        }}
-        className={checkboxSize}
-        labelClassName={labelSize + " text-white"}
-      />
+        {/* Formulär innehåll */}
+        <div className="p-4 space-y-4">
+          <ArtikelForm
+            beskrivning={beskrivning}
+            antal={antal}
+            prisPerEnhet={prisPerEnhet}
+            moms={moms}
+            valuta={valuta}
+            typ={typ}
+            onChangeBeskrivning={setBeskrivning}
+            onChangeAntal={setAntal}
+            onChangePrisPerEnhet={setPrisPerEnhet}
+            onChangeMoms={setMoms}
+            onChangeValuta={setValuta}
+            onChangeTyp={setTyp}
+          />
 
-      {/* Visa RotRutForm endast om användaren själv aktiverat det */}
-      {visaRotRutForm && <RotRutForm showCheckbox={false} />}
+          <RotRutCheckbox
+            checked={visaRotRutForm}
+            onChange={(checked) => {
+              setVisaRotRutForm(checked);
+              setFormData((prev) => ({
+                ...prev,
+                rotRutAktiverat: checked,
+                ...(checked
+                  ? {}
+                  : {
+                      rotRutTyp: undefined,
+                      rotRutKategori: undefined,
+                      avdragProcent: undefined,
+                      arbetskostnadExMoms: undefined,
+                      avdragBelopp: undefined,
+                      personnummer: undefined,
+                      fastighetsbeteckning: undefined,
+                      rotBoendeTyp: undefined,
+                      brfOrganisationsnummer: undefined,
+                      brfLagenhetsnummer: undefined,
+                    }),
+              }));
+            }}
+            className={checkboxSize}
+            labelClassName={labelSize + " text-white"}
+          />
 
-      <div className="flex items-center justify-between">
-        <LäggTillFavoritartikel
-          checked={saveAsFavorite}
-          onChange={setSaveAsFavorite}
-          className={checkboxSize}
-          labelClassName={`text-white cursor-pointer ${labelSize}`}
-        />
-        <Knapp
-          onClick={handleAdd}
-          text={loading ? "✚ Sparar…" : "✚ Lägg till och spara"}
-          disabled={!beskrivning.trim() || loading}
-        />
+          {/* Visa RotRutForm endast om användaren själv aktiverat det */}
+          {visaRotRutForm && <RotRutForm showCheckbox={false} />}
+
+          <div className="flex items-center justify-between pt-2">
+            <LäggTillFavoritartikel
+              checked={saveAsFavorite}
+              onChange={setSaveAsFavorite}
+              className={checkboxSize}
+              labelClassName={`text-white cursor-pointer ${labelSize}`}
+            />
+          </div>
+
+          <div className="flex justify-end pt-6 border-t border-slate-600">
+            <Knapp
+              onClick={handleAdd}
+              text={loading ? "✚ Sparar…" : "✚ Lägg till och spara"}
+              disabled={!beskrivning.trim() || loading}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

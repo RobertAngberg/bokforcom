@@ -33,34 +33,42 @@ export default function FavoritArtiklarList({
 }: Props) {
   if (favoritArtiklar.length === 0) return null;
   return (
-    <div className="space-y-4">
-      <Knapp
-        onClick={() => onToggle(!showFavoritArtiklar)}
-        text={showFavoritArtiklar ? "🔼 Dölj sparade artiklar" : "📂 Ladda in sparade artiklar"}
-      />
+    <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+      {/* Knapp som header */}
+      <div className="border-b border-slate-600">
+        <Knapp
+          onClick={() => onToggle(!showFavoritArtiklar)}
+          text={showFavoritArtiklar ? "🔼 Dölj sparade artiklar" : "📂 Ladda in sparade artiklar"}
+          className="w-full rounded-none border-none"
+        />
+      </div>
+
+      {/* Artiklar som expanderar nedåt */}
       {showFavoritArtiklar && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-          {favoritArtiklar.map((a) => (
-            <div
-              key={a.id}
-              className="bg-slate-800 hover:bg-slate-700 cursor-pointer p-3 rounded border border-slate-600 flex flex-col justify-between relative"
-            >
-              <button
-                onClick={() => onDelete(a.id)}
-                className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-                title="Ta bort favoritartikel"
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favoritArtiklar.map((a) => (
+              <div
+                key={a.id}
+                className="bg-slate-700 hover:bg-slate-600 cursor-pointer p-3 rounded border border-slate-500 flex flex-col justify-between relative"
               >
-                🗑️
-              </button>
-              <div onClick={() => onSelect(a)} className="flex-1">
-                <div className="text-white font-semibold">📌 {a.beskrivning}</div>
-                <div className="text-gray-400 text-sm mt-1">
-                  {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
-                  {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
+                <button
+                  onClick={() => onDelete(a.id)}
+                  className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                  title="Ta bort favoritartikel"
+                >
+                  🗑️
+                </button>
+                <div onClick={() => onSelect(a)} className="flex-1">
+                  <div className="text-white font-semibold">📌 {a.beskrivning}</div>
+                  <div className="text-gray-400 text-sm mt-1">
+                    {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
+                    {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

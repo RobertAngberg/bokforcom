@@ -21,7 +21,7 @@ export default function LäggTillFavoritartikel({
         className={className}
       />
       <label htmlFor="saveAsFavorite" className={labelClassName}>
-        📌 Lägg till som favoritartikel
+        Lägg till som favoritartikel 📌
       </label>
     </div>
   );

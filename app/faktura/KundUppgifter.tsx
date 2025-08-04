@@ -121,7 +121,7 @@ export default function KundUppgifter() {
           </div>
         )}
 
-        <Knapp onClick={handleCreateNewCustomer} text="🧑 Skapa ny kund" />
+        <Knapp onClick={handleCreateNewCustomer} text="👤 Skapa ny kund" />
       </div>
 
       {kundStatus === "loaded" && (
