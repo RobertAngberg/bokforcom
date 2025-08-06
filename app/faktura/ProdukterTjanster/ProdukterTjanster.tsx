@@ -110,15 +110,21 @@ export default function ProdukterTjanster() {
     }
 
     if (saveAsFavorite) {
-      const favArtikel: FavoritArtikel = { ...newArtikel };
-      if (favArtikel.arbetskostnadExMoms !== undefined) {
-        favArtikel.arbetskostnadExMoms = Number(favArtikel.arbetskostnadExMoms);
-        if (isNaN(favArtikel.arbetskostnadExMoms)) favArtikel.arbetskostnadExMoms = undefined;
-      }
-      await sparaFavoritArtikel({
-        ...favArtikel,
-        arbetskostnadExMoms: favArtikel.arbetskostnadExMoms as number | undefined,
-      });
+      // För favoritartiklar sparar vi bara grunddata, inte ROT/RUT-specifika fält
+      const favArtikel: Artikel = {
+        beskrivning,
+        antal,
+        prisPerEnhet,
+        moms,
+        valuta,
+        typ,
+      };
+
+      await sparaFavoritArtikel(favArtikel);
+
+      // Uppdatera favoritlistan efter att ha sparat
+      const uppdateradeFavoriter = await hämtaSparadeArtiklar();
+      setFavoritArtiklar(uppdateradeFavoriter as FavoritArtikel[]);
     }
 
     setBeskrivning("");

@@ -6,6 +6,7 @@ export interface ColumnDefinition<T> {
   label?: string;
   render?: (value: any, row: T) => React.ReactNode;
   hiddenOnMobile?: boolean;
+  className?: string;
 }
 
 interface TableRowProps<T> {
@@ -44,7 +45,7 @@ export default function TabellRad<T>({
         return (
           <td
             key={String(col.key)}
-            className={`${paddingClass} text-left ${
+            className={`${paddingClass} ${col.className || "text-left"} ${
               col.hiddenOnMobile ? "hidden md:table-cell" : ""
             }`}
           >

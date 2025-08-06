@@ -35,7 +35,7 @@ export default function Tabell<T>({
               return (
                 <th
                   key={String(col.key)}
-                  className={`${paddingClass} ${col.hiddenOnMobile ? "hidden md:table-cell" : ""}`}
+                  className={`${paddingClass} ${col.className || "text-left"} ${col.hiddenOnMobile ? "hidden md:table-cell" : ""}`}
                 >
                   {col.label ?? String(col.key)}
                 </th>

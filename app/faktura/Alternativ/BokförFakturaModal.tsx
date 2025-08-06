@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFakturaContext } from "../FakturaProvider";
-import { bokförFaktura } from "../actions";
+import { bokförFaktura, hämtaBokföringsmetod, hämtaFakturaStatus } from "../actions";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Modal from "../../_components/Modal";
 
@@ -22,8 +22,33 @@ interface BokföringsPost {
 export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaModalProps) {
   const { formData } = useFakturaContext();
   const [loading, setLoading] = useState(false);
+  const [bokföringsmetod, setBokföringsmetod] = useState<string>("kontantmetoden");
+  const [fakturaStatus, setFakturaStatus] = useState<{
+    status_betalning?: string;
+    status_bokförd?: string;
+  }>({});
+
+  // Hämta användarens bokföringsmetod och fakturaSTATUS från databasen
+  useEffect(() => {
+    if (isOpen) {
+      hämtaBokföringsmetod().then(setBokföringsmetod);
+
+      // Hämta fakturaSTATUS om ID finns
+      if (formData.id) {
+        console.log("🔍 Hämtar status för faktura ID:", formData.id);
+        hämtaFakturaStatus(parseInt(formData.id)).then((status) => {
+          console.log("📊 Fakturasstatus:", status);
+          setFakturaStatus(status);
+        });
+      } else {
+        console.log("❌ Inget faktura ID hittades");
+      }
+    }
+  }, [isOpen, formData.id]);
 
   if (!isOpen) return null;
+
+  const ärKontantmetod = bokföringsmetod === "kontantmetoden";
 
   // Analysera fakturan och föreslå bokföringsposter
   const analyseraBokföring = (): { poster: BokföringsPost[]; varningar: string[] } => {
@@ -54,6 +79,36 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       return { poster, varningar };
     }
 
+    // KONTROLLERA OM FAKTURAN REDAN ÄR BOKFÖRD
+    if (fakturaStatus.status_bokförd === "Bokförd") {
+      // Fakturan är redan bokförd - visa bara betalningsregistrering
+      if (fakturaStatus.status_betalning !== "Betald") {
+        poster.push({
+          konto: "1930", // Bank/Kassa
+          kontoNamn: "Företagskonto/Bankkonto",
+          beskrivning: `Betalning faktura ${formData.fakturanummer}`,
+          debet: totalInkMoms,
+          kredit: 0,
+        });
+
+        poster.push({
+          konto: "1510",
+          kontoNamn: "Kundfordringar",
+          beskrivning: `Betalning faktura ${formData.fakturanummer}`,
+          debet: 0,
+          kredit: totalInkMoms,
+        });
+
+        varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalning.");
+      } else {
+        varningar.push("✅ Fakturan är redan bokförd och betald.");
+        return { poster, varningar };
+      }
+
+      return { poster, varningar };
+    }
+
+    // NORMAL BOKFÖRING (om ej bokförd)
     // Avgör om det är vara eller tjänst (majoriteten)
     const varor = formData.artiklar.filter((a) => a.typ === "vara").length;
     const tjänster = formData.artiklar.filter((a) => a.typ === "tjänst").length;
@@ -74,13 +129,16 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     }
 
     // Skapa bokföringsposter
-    // 1. Kundfordran (debet)
+    // 1. Kundfordran eller Bank/Kassa beroende på metod
+    const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
+    const skuld_tillgångsnamn = ärKontantmetod ? "Bank/Kassa" : "Kundfordringar";
+
     poster.push({
-      konto: "1510",
-      kontoNamn: "Kundfordringar",
+      konto: skuld_tillgångskonto,
+      kontoNamn: skuld_tillgångsnamn,
       debet: totalInkMoms,
       kredit: 0,
-      beskrivning: `Faktura ${formData.fakturanummer} - ${formData.kundnamn}`,
+      beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
     });
 
     // 2. Intäkt (kredit)
@@ -89,7 +147,7 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       kontoNamn: kontoNamn,
       debet: 0,
       kredit: totalExMoms,
-      beskrivning: `Faktura ${formData.fakturanummer} - ${formData.kundnamn}`,
+      beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
     });
 
     // 3. Utgående moms (kredit) - endast om det finns moms
@@ -108,65 +166,34 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
 
   const { poster, varningar } = analyseraBokföring();
 
-  // Kolumndefinitioner för tabellen
+  // Kolumn-definitioner för tabellen
   const columns: ColumnDefinition<BokföringsPost>[] = [
     {
       key: "konto",
       label: "Konto",
-      render: (value) => <span className="text-cyan-400">{value}</span>,
     },
     {
       key: "kontoNamn",
       label: "Kontonamn",
-      render: (value) => <span className="text-white">{value}</span>,
     },
     {
       key: "beskrivning",
       label: "Beskrivning",
-      render: (value, row) => (
-        <span
-          className={`${row.beskrivning?.includes("SUMMA") ? "text-white font-semibold" : "text-gray-300"}`}
-        >
-          {value}
-        </span>
-      ),
     },
     {
       key: "debet",
       label: "Debet",
-      render: (value, row) => (
-        <span
-          className={`text-right block ${row.beskrivning?.includes("SUMMA") ? "text-white font-semibold" : "text-white"}`}
-        >
-          {value > 0 ? value.toFixed(2) : ""}
-        </span>
-      ),
+      render: (value) => (value > 0 ? value.toFixed(2) : ""),
     },
     {
       key: "kredit",
       label: "Kredit",
-      render: (value, row) => (
-        <span
-          className={`text-right block ${row.beskrivning?.includes("SUMMA") ? "text-white font-semibold" : "text-white"}`}
-        >
-          {value > 0 ? value.toFixed(2) : ""}
-        </span>
-      ),
+      render: (value) => (value > 0 ? value.toFixed(2) : ""),
     },
   ];
 
-  // Lägg till summeringsrad
-  const posterMedSumma = [
-    ...poster,
-    {
-      konto: "",
-      kontoNamn: "",
-      beskrivning: "--- SUMMA ---",
-      debet: poster.reduce((sum, p) => sum + p.debet, 0),
-      kredit: poster.reduce((sum, p) => sum + p.kredit, 0),
-    } as BokföringsPost,
-  ];
-
+  // Använd poster direkt utan summa-rad
+  const posterMedSumma = poster;
   const hanteraBokför = async () => {
     setLoading(true);
     try {
@@ -177,6 +204,7 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         ) || 0;
 
       const result = await bokförFaktura({
+        fakturaId: formData.id ? parseInt(formData.id) : undefined,
         fakturanummer: formData.fakturanummer,
         kundnamn: formData.kundnamn,
         totaltBelopp: totalInkMoms,
@@ -253,6 +281,7 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       {poster.length > 0 && (
         <div className="mb-6">
           <h3 className="text-white font-semibold mb-4">Föreslagna bokföringsposter:</h3>
+
           <Tabell
             data={posterMedSumma}
             columns={columns}
@@ -272,10 +301,31 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         <button
           onClick={hanteraBokför}
           disabled={loading || poster.length === 0 || varningar.length > 0}
-          className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {loading ? "Bokför..." : "📊 Bokför"}
+          {loading ? (
+            <>⏳ Bokför...</>
+          ) : ärKontantmetod ? (
+            <>📚 Bokför betalning till Bank/Kassa</>
+          ) : (
+            <>📚 Bokför faktura till Kundfordringar</>
+          )}
         </button>
+      </div>
+
+      {/* Info längst ner */}
+      <div className="mt-4 text-xs text-slate-400 space-y-1">
+        <div>
+          Bokföringsmetod:{" "}
+          <span className="text-white">
+            {ärKontantmetod ? "💰 Kontantmetod" : "📄 Fakturametoden"}
+          </span>
+        </div>
+        <div>
+          {ärKontantmetod
+            ? "💡 Intäkten registreras när betalning kommer in."
+            : "💡 Intäkten registreras nu, betalning bokförs senare."}
+        </div>
       </div>
     </Modal>
   );

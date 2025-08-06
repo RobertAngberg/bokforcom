@@ -196,8 +196,8 @@ export default function SignupPage() {
                     className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
                   >
                     <option value="">Välj metod...</option>
-                    <option value="faktura">Fakturametoden</option>
-                    <option value="kontant">Kontantmetoden</option>
+                    <option value="fakturametoden">Fakturametoden</option>
+                    <option value="kontantmetoden">Kontantmetoden</option>
                   </select>
                 </div>
 

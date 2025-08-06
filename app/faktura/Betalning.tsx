@@ -39,6 +39,7 @@ export default function Betalning() {
 
       // ✅ Hämta SENASTE betalningsmetod för denna användare
       let senasteBetalning = { betalningsmetod: null, nummer: null };
+
       if (session?.user?.id) {
         senasteBetalning = await hämtaSenasteBetalningsmetod(session.user.id);
       }

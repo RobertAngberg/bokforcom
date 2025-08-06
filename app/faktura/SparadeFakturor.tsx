@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { deleteFaktura, hämtaFakturaMedRader } from "./actions";
+import { deleteFaktura, hämtaFakturaMedRader, registreraKundfakturaBetalning } from "./actions";
 import { useFakturaContext } from "./FakturaProvider";
 
 interface Props {
@@ -15,6 +15,30 @@ interface Props {
 export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInvoice }: Props) {
   const { setFormData, setKundStatus } = useFakturaContext();
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<number | null>(null);
+  const [betalningsModal, setBetalningsModal] = useState<{
+    fakturaId: number;
+    belopp: number;
+  } | null>(null);
+
+  const hanteraRegistreraBetalning = async (
+    fakturaId: number,
+    belopp: number,
+    kontoklass: string
+  ) => {
+    try {
+      const result = await registreraKundfakturaBetalning(fakturaId, belopp, kontoklass);
+      if (result.success) {
+        alert("✅ Betalning registrerad!");
+        window.dispatchEvent(new Event("reloadFakturor"));
+        setBetalningsModal(null);
+      } else {
+        alert(`❌ ${result.error || "Kunde inte registrera betalning"}`);
+      }
+    } catch (error) {
+      console.error("Fel vid betalningsregistrering:", error);
+      alert("❌ Fel vid registrering av betalning");
+    }
+  };
 
   // Om onSelectInvoice finns, använd den istället för att ladda data själv
   const handleSelectInvoice = async (id: number) => {
@@ -122,68 +146,135 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-      <div className="max-w-[260px]">
-        {fakturor.length === 0 ? (
-          <p className="text-gray-400 italic">Inga fakturor hittades.</p>
-        ) : (
-          <ul className="space-y-2">
-            {fakturor.map((faktura) => {
-              const datum = faktura.fakturadatum
-                ? new Date(faktura.fakturadatum).toLocaleDateString("sv-SE", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "";
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+        <div className="max-w-[260px]">
+          {fakturor.length === 0 ? (
+            <p className="text-gray-400 italic">Inga fakturor hittades.</p>
+          ) : (
+            <ul className="space-y-2">
+              {fakturor.map((faktura) => {
+                const datum = faktura.fakturadatum
+                  ? new Date(faktura.fakturadatum).toLocaleDateString("sv-SE", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "";
 
-              const isActive = activeInvoiceId === faktura.id;
-              const isLoading = loadingInvoiceId === faktura.id;
+                const isActive = activeInvoiceId === faktura.id;
+                const isLoading = loadingInvoiceId === faktura.id;
 
-              return (
-                <li
-                  key={faktura.id}
-                  className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm flex items-center gap-0 ${
-                    isActive ? "border-green-500" : "border-slate-700"
-                  } ${isLoading ? "opacity-75" : ""}`}
-                >
-                  <div
-                    className={`cursor-pointer flex-1 ${isLoading ? "pointer-events-none" : ""}`}
-                    onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
+                return (
+                  <li
+                    key={faktura.id}
+                    className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm flex items-center gap-0 ${
+                      isActive ? "border-green-500" : "border-slate-700"
+                    } ${isLoading ? "opacity-75" : ""}`}
                   >
-                    <div>
-                      <span className="mr-1">🧾</span>#{faktura.fakturanummer} –{" "}
-                      {faktura.kundnamn ?? "Okänd kund"}
+                    <div
+                      className={`cursor-pointer flex-1 ${isLoading ? "pointer-events-none" : ""}`}
+                      onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
+                    >
+                      <div>
+                        #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}
+                      </div>
+                      <div className="text-gray-400 text-sm">{datum}</div>
+
+                      {faktura.betaldatum && (
+                        <div className="text-green-400 text-xs mt-1">
+                          Betald: {new Date(faktura.betaldatum).toLocaleDateString("sv-SE")}
+                        </div>
+                      )}
+
+                      {isLoading && (
+                        <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
+                          <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
+                          Laddar...
+                        </div>
+                      )}
                     </div>
-                    <div className="text-gray-400 text-sm">{datum}</div>
 
-                    {isLoading && (
-                      <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
-                        <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
-                        Laddar...
-                      </div>
-                    )}
-
-                    {isActive && !isLoading && (
-                      <div className="text-green-400 text-xs mt-1 flex items-center gap-1">
-                        ✅ Inladdad
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => hanteraRaderaFaktura(faktura.id)}
-                    className="hover:text-red-500 text-lg"
-                    title="Ta bort faktura"
-                    disabled={isLoading}
-                  >
-                    🗑️
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    <button
+                      onClick={() => hanteraRaderaFaktura(faktura.id)}
+                      className="hover:text-red-500 text-lg"
+                      title="Ta bort faktura"
+                      disabled={isLoading}
+                    >
+                      🗑️
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Betalningsmodal */}
+      {betalningsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-white mb-4">💰 Registrera betalning</h3>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const kontoklass = formData.get("kontoklass")?.toString() || "1930";
+                hanteraRegistreraBetalning(
+                  betalningsModal.fakturaId,
+                  betalningsModal.belopp,
+                  kontoklass
+                );
+              }}
+            >
+              <div className="mb-4">
+                <label className="block text-white text-sm font-bold mb-2">
+                  Belopp att registrera:
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  defaultValue={betalningsModal.belopp}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                  readOnly
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-white text-sm font-bold mb-2">
+                  Konto för betalning:
+                </label>
+                <select
+                  name="kontoklass"
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                  defaultValue="1930"
+                >
+                  <option value="1930">1930 - Företagskonto/Bankkonto</option>
+                  <option value="1910">1910 - Kassa</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  ✅ Registrera betalning
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBetalningsModal(null)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  ❌ Avbryt
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -283,8 +283,12 @@ export async function hämtaSparadeKunder() {
 
 export async function hämtaSparadeFakturor() {
   const session = await auth();
-  if (!session?.user?.id) return [];
+  if (!session?.user?.id) {
+    console.log("❌ No session or user ID");
+    return [];
+  }
   const userId = parseInt(session.user.id, 10);
+  console.log("🔍 Looking for fakturor with userId:", userId);
 
   const client = await pool.connect();
   try {
@@ -292,6 +296,8 @@ export async function hämtaSparadeFakturor() {
       `
       SELECT
         f.id, f.fakturanummer, f.fakturadatum, f."kundId",
+        f.status_betalning, f.status_bokförd, f.betaldatum,
+        f.transaktions_id, 'kund' as typ,
         k.kundnamn
       FROM fakturor f
       LEFT JOIN kunder k ON f."kundId" = k.id
@@ -300,6 +306,8 @@ export async function hämtaSparadeFakturor() {
       `,
       [userId]
     );
+    console.log("🔍 Found fakturor:", res.rows.length);
+    console.log("🔍 Rows:", res.rows);
     return res.rows;
   } catch (err) {
     console.error("❌ hämtaSparadeFakturor error:", err);
@@ -705,6 +713,60 @@ export async function hämtaSenasteBetalningsmetod(userId: string) {
   }
 }
 
+export async function hämtaBokföringsmetod() {
+  const session = await auth();
+  if (!session?.user?.id) return "kontantmetoden"; // Default
+
+  try {
+    const result = await pool.query("SELECT bokföringsmetod FROM users WHERE id = $1", [
+      parseInt(session.user.id),
+    ]);
+
+    return result.rows[0]?.bokföringsmetod || "kontantmetoden";
+  } catch (error) {
+    console.error("Fel vid hämtning av bokföringsmetod:", error);
+    return "kontantmetoden";
+  }
+}
+
+// Hämta fakturas status
+export async function hämtaFakturaStatus(fakturaId: number): Promise<{
+  status_betalning?: string;
+  status_bokförd?: string;
+  betaldatum?: string;
+}> {
+  const session = await auth();
+  if (!session?.user?.id) return {};
+
+  try {
+    const result = await pool.query(
+      'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "userId" = $2',
+      [fakturaId, parseInt(session.user.id)]
+    );
+    return result.rows[0] || {};
+  } catch (error) {
+    console.error("Fel vid hämtning av fakturaSTATUS:", error);
+    return {};
+  }
+}
+
+export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Inte inloggad" };
+
+  try {
+    await pool.query("UPDATE users SET bokföringsmetod = $1, uppdaterad = NOW() WHERE id = $2", [
+      metod,
+      parseInt(session.user.id),
+    ]);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Fel vid sparande av bokföringsmetod:", error);
+    return { success: false, error: "Databasfel" };
+  }
+}
+
 interface BokföringsPost {
   konto: string;
   kontoNamn: string;
@@ -714,6 +776,7 @@ interface BokföringsPost {
 }
 
 interface BokförFakturaData {
+  fakturaId?: number;
   fakturanummer: string;
   kundnamn: string;
   totaltBelopp: number;
@@ -783,6 +846,30 @@ export async function bokförFaktura(data: BokförFakturaData) {
       await client.query(insertPostQuery, [transaktionsId, kontoId, post.debet, post.kredit]);
 
       console.log(`📘 Bokförd post ${post.konto}: D ${post.debet}  K ${post.kredit}`);
+    }
+
+    // Uppdatera fakturas status när den bokförs
+    if (data.fakturaId) {
+      // Kolla om det är en betalningsregistrering (innehåller 1930 och 1510)
+      const harBankKonto = data.poster.some((p) => p.konto === "1930" || p.konto === "1910");
+      const harKundfordringar = data.poster.some((p) => p.konto === "1510");
+      const ärBetalning = harBankKonto && harKundfordringar && data.poster.length === 2;
+
+      if (ärBetalning) {
+        // Detta är en betalningsregistrering
+        await client.query(
+          "UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4",
+          ["Betald", new Date().toISOString().split("T")[0], transaktionsId, data.fakturaId]
+        );
+        console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till Betald`);
+      } else {
+        // Detta är normal bokföring
+        await client.query(
+          "UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3",
+          ["Bokförd", transaktionsId, data.fakturaId]
+        );
+        console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd`);
+      }
     }
 
     await client.query("COMMIT");
@@ -1038,6 +1125,101 @@ export type Leverantör = {
   skapad?: string;
   uppdaterad?: string;
 };
+
+// Registrera betalning av kundfaktura
+export async function registreraKundfakturaBetalning(
+  fakturaId: number,
+  betalningsbelopp: number,
+  kontoklass: string
+): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Inte inloggad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+  try {
+    // Hämta fakturauppgifter
+    const fakturaResult = await client.query(
+      "SELECT * FROM fakturor WHERE id = $1 AND user_id = $2",
+      [fakturaId, userId]
+    );
+
+    if (fakturaResult.rows.length === 0) {
+      return { success: false, error: "Faktura hittades inte" };
+    }
+
+    const faktura = fakturaResult.rows[0];
+
+    // Kontrollera att fakturan är en kundfaktura och inte redan betald
+    if (faktura.typ !== "kund" || faktura.status_betalning === "betald") {
+      return { success: false, error: "Fakturan kan inte betalas" };
+    }
+
+    await client.query("BEGIN");
+
+    // Skapa ny transaktion för betalningen
+    const transaktionResult = await client.query(
+      "INSERT INTO transaktioner (user_id, datum, beskrivning, typ) VALUES ($1, $2, $3, $4) RETURNING id",
+      [
+        userId,
+        new Date().toISOString().split("T")[0],
+        `Betalning kundfaktura ${faktura.fakturanummer}`,
+        "kundfaktura_betalning",
+      ]
+    );
+
+    const transaktionsId = transaktionResult.rows[0].id;
+
+    // Debitera bank/kassa konto
+    const bankKonto = kontoklass === "1930" ? "1930" : "1910";
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktion_id, konto, debet, kredit, beskrivning) VALUES ($1, $2, $3, $4, $5)",
+      [
+        transaktionsId,
+        bankKonto,
+        betalningsbelopp,
+        0,
+        `Betalning kundfaktura ${faktura.fakturanummer}`,
+      ]
+    );
+
+    // Kreditera kundfordringar
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktion_id, konto, debet, kredit, beskrivning) VALUES ($1, $2, $3, $4, $5)",
+      [
+        transaktionsId,
+        "1510",
+        0,
+        betalningsbelopp,
+        `Betalning kundfaktura ${faktura.fakturanummer}`,
+      ]
+    );
+
+    // Uppdatera fakturastatus
+    await client.query(
+      "UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4",
+      ["betald", new Date().toISOString().split("T")[0], transaktionsId, fakturaId]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      success: true,
+      transaktionsId: transaktionsId,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Fel vid registrering av kundfakturabetalning:", error);
+    return {
+      success: false,
+      error: "Kunde inte registrera betalning",
+    };
+  } finally {
+    client.release();
+  }
+}
 
 export async function saveLeverantör(formData: FormData) {
   const session = await auth();

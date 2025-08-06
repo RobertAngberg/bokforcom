@@ -5,8 +5,9 @@ interface BetalningsInfoProps {
 
 export default function BetalningsInfo({ formData, summaAttBetala }: BetalningsInfoProps) {
   return (
-    <div className="grid grid-cols-4 gap-4 mb-10 text-[10pt]">
+    <div className="grid grid-cols-5 gap-4 mb-10 text-[10pt]">
       {[
+        ["Fakturadatum", formData.fakturadatum],
         ["Förfallodatum", formData.forfallodatum],
         [
           "Summa att betala",
