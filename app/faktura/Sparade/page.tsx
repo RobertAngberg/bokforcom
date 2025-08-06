@@ -1,4 +1,4 @@
-// Kom ihåg; loggan sparas i localStorage
+// Sparade fakturor komponent
 
 //#region Imports och types
 "use client";
@@ -230,7 +230,11 @@ function FakturorComponent({
 
             <AnimeradFlik title="Alternativ" icon="⚙️">
               <Alternativ
-                onReload={() => window.location.reload()}
+                onReload={() => {
+                  if (confirm("🔄 Vill du verkligen återställa? All ifylld data försvinner.")) {
+                    window.location.reload();
+                  }
+                }}
                 onPreview={() => setShowPreview(true)}
               />
             </AnimeradFlik>

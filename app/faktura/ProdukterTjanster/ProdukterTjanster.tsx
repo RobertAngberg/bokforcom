@@ -70,6 +70,12 @@ export default function ProdukterTjanster() {
       return;
     }
 
+    // Kontrollera att kund är vald innan sparning
+    if (!formData.kundId || formData.kundId.trim() === "") {
+      alert("❌ Välj en kund innan du lägger till artiklar");
+      return;
+    }
+
     const newArtikel: Artikel = {
       beskrivning,
       antal,

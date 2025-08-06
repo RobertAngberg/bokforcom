@@ -93,11 +93,18 @@ export default function KundUppgifter() {
   const handleDeleteCustomer = async () => {
     if (!formData.kundId) return;
     if (!confirm("Är du säker på att du vill ta bort kunden?")) return;
-    await deleteKund(parseInt(formData.kundId, 10));
-    resetKund();
-    setKundStatus("none");
-    const sparade = await hämtaSparadeKunder();
-    setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
+
+    try {
+      await deleteKund(parseInt(formData.kundId, 10));
+      resetKund();
+      setKundStatus("none");
+      const sparade = await hämtaSparadeKunder();
+      setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
+      alert("✅ Kund raderad");
+    } catch (error) {
+      console.error("Fel vid radering av kund:", error);
+      alert("❌ Kunde inte radera kunden");
+    }
   };
   //#endregion
 

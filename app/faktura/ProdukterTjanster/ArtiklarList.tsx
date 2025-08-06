@@ -46,7 +46,15 @@ export default function ArtiklarList({ artiklar, blinkIndex, onRemove }: Artikla
                 {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
               </div>
             </div>
-            <button onClick={() => onRemove(idx)} className="text-red-400 hover:text-red-600 p-1">
+            <button
+              onClick={() => {
+                if (confirm(`Ta bort "${a.beskrivning}"?`)) {
+                  onRemove(idx);
+                }
+              }}
+              className="text-red-400 hover:text-red-600 p-1"
+              title="Ta bort artikel"
+            >
               🗑️
             </button>
           </div>

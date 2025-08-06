@@ -39,7 +39,7 @@ export default function Avsandare() {
         if (data) setForm(data); // Inkluderar logoWidth från databas
 
         // Endast logo från localStorage (inte logoWidth)
-        const logo = localStorage.getItem("bokfor_logo");
+        const logo = localStorage.getItem("company_logo");
         if (logo) setForm((prev) => ({ ...prev, logo }));
       }
     };
@@ -91,7 +91,7 @@ export default function Avsandare() {
       const compressedData = canvas.toDataURL("image/jpeg", 0.8); // 80% kvalitet
 
       setForm((prev) => ({ ...prev, logo: compressedData }));
-      localStorage.setItem("bokioclone_logo", compressedData);
+      localStorage.setItem("company_logo", compressedData);
     };
 
     // Ladda bilden
@@ -100,7 +100,7 @@ export default function Avsandare() {
 
   const hanteraTaBortLogga = () => {
     setForm((prev) => ({ ...prev, logo: "" }));
-    localStorage.removeItem("bokioclone_logo");
+    localStorage.removeItem("company_logo");
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Nollställ inputen!
     }

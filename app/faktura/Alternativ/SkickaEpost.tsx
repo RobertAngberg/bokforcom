@@ -72,7 +72,7 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
         throw new Error(data.error || "Kunde inte skicka e-post");
       }
 
-      alert("✅ Faktura skickad! Kolla din inbox.");
+      alert("✅ Faktura skickad till kunden!");
       onSuccess?.();
     } catch (error) {
       console.error("❌ E-postfel:", error);
@@ -137,17 +137,33 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
         <div className="flex justify-between items-center pt-4">
           <div className="flex-1">
             <p className="text-slate-400 text-sm">
-              E-posten skickas till{" "}
-              <code className="bg-slate-700 px-1 py-0.5 rounded">
-                {mottagareEmail || "ingen e-post angiven"}
-              </code>
+              {!formData.id ? (
+                <span className="text-orange-400">
+                  ⚠️ Spara fakturan först innan du skickar den
+                </span>
+              ) : (
+                <>
+                  E-posten skickas till{" "}
+                  <code className="bg-slate-700 px-1 py-0.5 rounded">
+                    {mottagareEmail || "ingen e-post angiven"}
+                  </code>
+                </>
+              )}
             </p>
           </div>
 
           <Knapp
             onClick={skickaTestmail}
-            text={isSending ? "📤 Skickar..." : "📧 Skicka faktura"}
-            disabled={isSending || !formData.fakturanummer || !mottagareEmail.trim()}
+            text={
+              isSending
+                ? "📤 Skickar..."
+                : !formData.id
+                  ? "❌ Spara faktura först"
+                  : "📧 Skicka faktura"
+            }
+            disabled={
+              isSending || !formData.fakturanummer || !mottagareEmail.trim() || !formData.id
+            }
           />
         </div>
       </div>

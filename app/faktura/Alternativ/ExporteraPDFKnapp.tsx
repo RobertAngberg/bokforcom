@@ -2,7 +2,15 @@
 import Knapp from "../../_components/Knapp";
 import { generatePDFFromElement } from "../../_utils/pdfGenerator";
 
-export default function ExporteraPDFKnapp() {
+interface ExporteraPDFKnappProps {
+  disabled?: boolean;
+  text?: string;
+}
+
+export default function ExporteraPDFKnapp({
+  disabled = false,
+  text = "📤 Spara PDF",
+}: ExporteraPDFKnappProps) {
   const handleExport = async () => {
     try {
       const pdf = await generatePDFFromElement();
@@ -13,5 +21,5 @@ export default function ExporteraPDFKnapp() {
     }
   };
 
-  return <Knapp onClick={handleExport} text="📤 Spara PDF" />;
+  return <Knapp onClick={handleExport} text={text} disabled={disabled} />;
 }

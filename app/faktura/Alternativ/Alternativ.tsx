@@ -15,6 +15,15 @@ import {
 } from "../actions";
 import { useFakturaContext } from "../FakturaProvider";
 
+// Lokal typ för bokföringsposter
+interface BokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
 interface Props {
   onReload: () => void;
   onPreview: () => void;
@@ -125,7 +134,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         ) || 0;
 
       // Skapa bokföringsposter (samma logik som i modalen)
-      const poster = [];
+      const poster: BokföringsPost[] = [];
 
       // Avgör om det är vara eller tjänst
       const varor = formData.artiklar?.filter((a) => a.typ === "vara").length || 0;
@@ -228,12 +237,24 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
 
+  const granskKnappText = !harKund
+    ? "❌ Välj kund först"
+    : !harArtiklar
+      ? "❌ Lägg till artiklar"
+      : "👁️ Granska";
+
+  const pdfKnappText = !harKund
+    ? "❌ Välj kund först"
+    : !harArtiklar
+      ? "❌ Lägg till artiklar"
+      : "📤 Spara PDF";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Knapp onClick={hanteraSpara} text={sparaKnappText} disabled={!kanSpara} />
-        <Knapp onClick={onPreview} text="👁️ Granska" />
-        <ExporteraPDFKnapp />
+        <Knapp onClick={onPreview} text={granskKnappText} disabled={!kanSpara} />
+        <ExporteraPDFKnapp disabled={!kanSpara} text={pdfKnappText} />
         <Knapp onClick={onReload} text={återställKnappText} disabled={ärFakturanBetald} />
         <Knapp
           onClick={hanteraBokför}

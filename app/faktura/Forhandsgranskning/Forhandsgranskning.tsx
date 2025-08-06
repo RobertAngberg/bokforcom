@@ -27,7 +27,7 @@ export default function Forhandsgranskning() {
     setLogoSliderValue(value);
     const calculated = 50 + (value / 100) * 150;
     setFormData((prev) => ({ ...prev, logoWidth: calculated }));
-    localStorage.setItem("bokioclone_logoWidth", calculated.toString());
+    localStorage.setItem("company_logoWidth", calculated.toString());
   };
 
   const logoSize = formData.logoWidth ?? 200;

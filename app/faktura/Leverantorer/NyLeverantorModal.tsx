@@ -180,7 +180,6 @@ export default function NyLeverantorModal({
               text="Avbryt"
               type="button"
               onClick={onClose}
-              disabled={loading}
               className="bg-gray-600 hover:bg-gray-700"
             />
             <Knapp
