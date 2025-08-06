@@ -135,7 +135,27 @@ export default function Steg3({
       if (fil) formData.set("fil", fil);
       formData.set("valtFörval", JSON.stringify(valtFörval));
       formData.set("extrafält", JSON.stringify(extrafält));
-      formData.set("transaktionsdatum", transaktionsdatum);
+      // För leverantörsfakturor använd betaldatum, annars transaktionsdatum
+      const datumAttAnvända = levfaktMode && betaldatum ? betaldatum : transaktionsdatum;
+      console.log(
+        "🔍 Debug datum - levfaktMode:",
+        levfaktMode,
+        "betaldatum:",
+        betaldatum,
+        "transaktionsdatum:",
+        transaktionsdatum,
+        "datumAttAnvända:",
+        datumAttAnvända
+      );
+
+      // Säkerställ att vi har ett datum
+      if (!datumAttAnvända) {
+        const idag = new Date().toISOString();
+        console.log("⚠️ Inget datum fanns, använder dagens datum:", idag);
+        formData.set("transaktionsdatum", idag);
+      } else {
+        formData.set("transaktionsdatum", datumAttAnvända);
+      }
       formData.set("kommentar", kommentar);
       formData.set("kontonummer", kontonummer);
       formData.set("kontobeskrivning", kontobeskrivning);

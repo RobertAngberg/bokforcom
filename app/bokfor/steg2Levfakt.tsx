@@ -121,7 +121,11 @@ export default function Steg2Levfakt({
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       setFörfallodatum(thirtyDaysFromNow.toISOString());
     }
-  }, [fakturadatum, förfallodatum]);
+    if (!betaldatum) {
+      // Default betaldatum till idag
+      setBetaldatum(new Date().toISOString());
+    }
+  }, [fakturadatum, förfallodatum, betaldatum]);
 
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
@@ -274,9 +278,9 @@ export default function Steg2Levfakt({
               <label className="block mb-2 text-white">Betaldatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={transaktionsdatum ? new Date(transaktionsdatum) : new Date()}
+                selected={betaldatum ? new Date(betaldatum) : new Date()}
                 onChange={(date) => {
-                  setTransaktionsdatum(date ? date.toISOString() : "");
+                  setBetaldatum(date ? date.toISOString() : "");
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"

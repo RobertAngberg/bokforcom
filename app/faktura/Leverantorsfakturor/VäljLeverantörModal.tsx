@@ -36,7 +36,8 @@ export default function VäljLeverantörModal({ isOpen, onClose }: VäljLeverant
   const handleContinue = () => {
     if (selectedLeverantör) {
       onClose();
-      router.push(`/faktura/Leverantorsfakturor/bokfor?leverantorId=${selectedLeverantör}`);
+      // Gå direkt till bokföringssystemet med levfakt=true
+      router.push(`/bokfor?levfakt=true&leverantorId=${selectedLeverantör}`);
     }
   };
 

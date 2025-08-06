@@ -66,32 +66,26 @@ export default function SokForval({
       if (input.length < 2) {
         let baseResults = favoritFörvalen;
 
-        // Filtrera bort försäljningsförval när vi är i leverantörsfaktura-mode
+        // Filtrera för att bara visa kostnadskonton (4xxx, 5xxx, 6xxx) i leverantörsfaktura-mode
         if (levfaktMode) {
           baseResults = baseResults.filter((f) => {
-            // Kolla om förvalet har några inköpsrelaterade konton (4xxx, 5xxx, 6xxx)
-            const harInköpsKonton = f.konton.some((k: KontoRad) => {
+            // Filtrera bort alla konton som inte är 1930, 2440 eller kostnadskonton (4xxx, 5xxx, 6xxx)
+            const relevantaKonton = f.konton.filter((k: KontoRad) => {
+              const kontonummer = k.kontonummer || "";
+              // Behåll alltid 1930 (Förutbetald moms) och 2440 (Leverantörsskulder)
+              if (kontonummer === "1930" || kontonummer === "2440") return true;
+              // Behåll endast kostnadskonton (4xxx, 5xxx, 6xxx)
+              return /^[456]/.test(kontonummer);
+            });
+
+            // Visa bara förval som har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
+            // eller som är specialförval för leverantörsfakturor
+            const harKostnadskonto = relevantaKonton.some((k: KontoRad) => {
               const kontonummer = k.kontonummer || "";
               return /^[456]/.test(kontonummer);
             });
 
-            // Kolla om förvalet bara har icke-inköpsrelaterade konton
-            const harBaraIckeInköpsKonton =
-              f.konton.length > 0 &&
-              f.konton
-                .filter(
-                  (k: KontoRad) =>
-                    k.kontonummer && k.kontonummer !== "1930" && k.kontonummer !== "2440"
-                )
-                .every((k: KontoRad) => {
-                  const kontonummer = k.kontonummer || "";
-                  return !/^[456]/.test(kontonummer);
-                });
-
-            // Visa förvalet om det antingen:
-            // 1. Har inköpsrelaterade konton (5xxx, 6xxx), ELLER
-            // 2. Inte bara har icke-inköpsrelaterade konton (dvs har specialförval eller andra typer)
-            return harInköpsKonton || !harBaraIckeInköpsKonton;
+            return harKostnadskonto;
           });
         }
 
@@ -135,27 +129,16 @@ export default function SokForval({
         .sort((a, b) => b.poäng - a.poäng)
         .map((x) => x.förval);
 
-      // Filtrera även sökresultat för leverantörsfakturor
+      // Filtrera även sökresultat för leverantörsfakturor - bara kostnadskonton (4xxx, 5xxx, 6xxx)
       if (levfaktMode) {
         träffar = träffar.filter((f) => {
-          const harInköpsKonton = f.konton.some((k: KontoRad) => {
+          // Kontrollera att förvalet har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
+          const harKostnadskonto = f.konton.some((k: KontoRad) => {
             const kontonummer = k.kontonummer || "";
             return /^[456]/.test(kontonummer);
           });
 
-          const harBaraIckeInköpsKonton =
-            f.konton.length > 0 &&
-            f.konton
-              .filter(
-                (k: KontoRad) =>
-                  k.kontonummer && k.kontonummer !== "1930" && k.kontonummer !== "2440"
-              )
-              .every((k: KontoRad) => {
-                const kontonummer = k.kontonummer || "";
-                return !/^[456]/.test(kontonummer);
-              });
-
-          return harInköpsKonton || !harBaraIckeInköpsKonton;
+          return harKostnadskonto;
         });
       }
 
