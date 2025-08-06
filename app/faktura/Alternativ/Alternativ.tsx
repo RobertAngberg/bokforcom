@@ -18,7 +18,8 @@ interface Props {
 //#endregion
 
 export default function Alternativ({ onReload, onPreview }: Props) {
-  const { formData } = useFakturaContext();
+  const { formData, setFormData } = useFakturaContext();
+  const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
 
   const hanteraSpara = async () => {
@@ -32,6 +33,15 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
       if (res.success) {
         alert("✅ Faktura sparad!");
+
+        // UPPDATERA FORMDATA MED NYTT ID!
+        if (res.id) {
+          setFormData((prev) => ({
+            ...prev,
+            id: res.id.toString(),
+          }));
+        }
+
         // Trigga reload event så Fakturor.tsx uppdaterar sin lista
         window.dispatchEvent(new Event("reloadFakturor"));
       } else {

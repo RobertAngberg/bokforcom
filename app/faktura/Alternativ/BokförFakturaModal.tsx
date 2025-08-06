@@ -27,10 +27,12 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     status_betalning?: string;
     status_bokförd?: string;
   }>({});
+  const [statusLoaded, setStatusLoaded] = useState(false);
 
   // Hämta användarens bokföringsmetod och fakturaSTATUS från databasen
   useEffect(() => {
     if (isOpen) {
+      setStatusLoaded(false);
       hämtaBokföringsmetod().then(setBokföringsmetod);
 
       // Hämta fakturaSTATUS om ID finns
@@ -39,14 +41,32 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         hämtaFakturaStatus(parseInt(formData.id)).then((status) => {
           console.log("📊 Fakturasstatus:", status);
           setFakturaStatus(status);
+          setStatusLoaded(true);
         });
       } else {
         console.log("❌ Inget faktura ID hittades");
+        setStatusLoaded(true);
       }
     }
   }, [isOpen, formData.id]);
 
   if (!isOpen) return null;
+
+  // Wait for status to be loaded before rendering the modal content
+  if (!statusLoaded) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={`📊 Bokför faktura ${formData.fakturanummer}`}
+        maxWidth="4xl"
+      >
+        <div className="text-center py-8">
+          <div className="text-white">⏳ Laddar fakturasstatus...</div>
+        </div>
+      </Modal>
+    );
+  }
 
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
 
@@ -198,6 +218,13 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
   const hanteraBokför = async () => {
     setLoading(true);
     try {
+      // KOLLA OM FAKTURAN ÄR SPARAD FÖRST
+      if (!formData.id) {
+        alert("❌ Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.");
+        setLoading(false);
+        return;
+      }
+
       const totalInkMoms =
         formData.artiklar?.reduce(
           (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
@@ -307,11 +334,13 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         </button>
         <button
           onClick={hanteraBokför}
-          disabled={loading || poster.length === 0 || varningar.length > 0}
+          disabled={loading || poster.length === 0}
           className="px-6 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {loading ? (
             <>⏳ Bokför...</>
+          ) : fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd" ? (
+            <>💰 Registrera betalning</>
           ) : ärKontantmetod ? (
             <>📚 Bokför betalning till Bank/Kassa</>
           ) : (

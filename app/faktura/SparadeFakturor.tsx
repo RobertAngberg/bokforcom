@@ -66,7 +66,7 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
       const { faktura, artiklar, rotRut } = data;
       setFormData((prev) => ({
         ...prev,
-        id: faktura.id,
+        id: id.toString(), // Använd parametern direkt!
         fakturanummer: faktura.fakturanummer ?? "",
         fakturadatum: faktura.fakturadatum?.toISOString
           ? faktura.fakturadatum.toISOString().slice(0, 10)
