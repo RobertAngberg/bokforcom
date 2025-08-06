@@ -28,6 +28,20 @@ export async function saveInvoice(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return { success: false };
   const userId = parseInt(session.user.id);
+
+  // VALIDERING: Kolla att kund är vald
+  const kundId = formData.get("kundId")?.toString();
+  if (!kundId || kundId.trim() === "") {
+    return { success: false, error: "Kund måste väljas" };
+  }
+
+  // VALIDERING: Kolla att det finns artiklar
+  const artiklarRaw = formData.get("artiklar") as string;
+  const artiklar = JSON.parse(artiklarRaw || "[]") as Artikel[];
+  if (artiklar.length === 0) {
+    return { success: false, error: "Fakturan måste ha minst en artikel" };
+  }
+
   const client = await pool.connect();
 
   const formatDate = (str: string | null) => {
@@ -42,9 +56,6 @@ export async function saveInvoice(formData: FormData) {
   console.log("FITTLOGG: saveInvoice formData", Object.fromEntries(formData.entries()));
 
   try {
-    const artiklarRaw = formData.get("artiklar") as string;
-    const artiklar = JSON.parse(artiklarRaw || "[]") as Artikel[];
-
     const fakturadatum = formatDate(formData.get("fakturadatum")?.toString() ?? null);
     const forfallodatum = formatDate(formData.get("forfallodatum")?.toString() ?? null);
     const fakturaIdRaw = formData.get("id");
@@ -238,8 +249,38 @@ export async function saveInvoice(formData: FormData) {
 export async function deleteFaktura(id: number) {
   const client = await pool.connect();
   try {
+    // Först hämta transaktions_id från fakturan
+    const fakturaRes = await client.query(`SELECT transaktions_id FROM fakturor WHERE id = $1`, [
+      id,
+    ]);
+
+    const transaktionsId = fakturaRes.rows[0]?.transaktions_id;
+
+    // Radera i rätt ordning (child tables först)
+    // 1. Radera transaktionsposter (om det finns en transaktion)
+    if (transaktionsId) {
+      await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [
+        transaktionsId,
+      ]);
+
+      // 2. Radera transaktionen
+      await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
+    }
+
+    // 3. Radera ROT/RUT data
+    await client.query(`DELETE FROM rot_rut WHERE faktura_id = $1`, [id]);
+
+    // 4. Radera faktura_artiklar
     await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
+
+    // 5. Radera fakturan själv
     await client.query(`DELETE FROM fakturor WHERE id = $1`, [id]);
+
+    console.log(`✅ Raderade faktura ${id} med alla relaterade data`);
+    if (transaktionsId) {
+      console.log(`✅ Raderade transaktion ${transaktionsId} och dess poster`);
+    }
+
     return { success: true };
   } catch (err) {
     console.error("❌ deleteFaktura error:", err);
@@ -306,9 +347,30 @@ export async function hämtaSparadeFakturor() {
       `,
       [userId]
     );
-    console.log("🔍 Found fakturor:", res.rows.length);
-    console.log("🔍 Rows:", res.rows);
-    return res.rows;
+
+    // Hämta artiklar och beräkna totalt belopp för varje faktura
+    const fakturorMedTotaler = await Promise.all(
+      res.rows.map(async (faktura) => {
+        const artiklarRes = await client.query(
+          `SELECT antal, pris_per_enhet, moms FROM faktura_artiklar WHERE faktura_id = $1`,
+          [faktura.id]
+        );
+
+        const totalBelopp = artiklarRes.rows.reduce((sum, artikel) => {
+          const prisInkMoms = artikel.pris_per_enhet * (1 + artikel.moms / 100);
+          return sum + artikel.antal * prisInkMoms;
+        }, 0);
+
+        return {
+          ...faktura,
+          totalBelopp: Math.round(totalBelopp * 100) / 100, // Avrunda till 2 decimaler
+          antalArtiklar: artiklarRes.rows.length,
+        };
+      })
+    );
+
+    console.log("🔍 Found fakturor:", fakturorMedTotaler.length);
+    return fakturorMedTotaler;
   } catch (err) {
     console.error("❌ hämtaSparadeFakturor error:", err);
     return [];

@@ -267,13 +267,18 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       title={`📊 Bokför faktura ${formData.fakturanummer}`}
       maxWidth="4xl"
     >
-      {/* Varningar */}
+      {/* Information */}
       {varningar.length > 0 && (
-        <div className="mb-6 p-4 bg-yellow-900/50 border border-yellow-600 rounded">
-          <h3 className="text-yellow-400 font-semibold mb-2">⚠️ Varningar:</h3>
-          <ul className="text-yellow-200 space-y-1">
+        <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/50 rounded">
+          <h3 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+            💡 Information:
+          </h3>
+          <ul className="text-blue-200 space-y-1">
             {varningar.map((varning, index) => (
-              <li key={index}>• {varning}</li>
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-blue-400 mt-0.5">•</span>
+                <span>{varning.replace(/^⚠️\s*/, "")}</span>
+              </li>
             ))}
           </ul>
         </div>
@@ -358,9 +363,15 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
           </span>
         </div>
         <div>
-          {ärKontantmetod
-            ? "💡 Intäkten registreras när betalning kommer in."
-            : "💡 Intäkten registreras nu, betalning bokförs senare."}
+          {/* Visa olika text beroende på vad som händer */}
+          {fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd"
+            ? // Betalningsregistrering - fakturan är redan bokförd
+              "💰 Intäkten är redan registrerad, nu registreras betalningen."
+            : ärKontantmetod
+              ? // Kontantmetod - intäkt och betalning samtidigt
+                "💡 Intäkten registreras när betalning kommer in."
+              : // Fakturametoden - intäkt först, betalning senare
+                "💡 Intäkten registreras nu, betalning bokförs senare."}
         </div>
       </div>
     </Modal>

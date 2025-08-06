@@ -165,6 +165,21 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
                 const isActive = activeInvoiceId === faktura.id;
                 const isLoading = loadingInvoiceId === faktura.id;
 
+                // Avgör status
+                let statusBadge = null;
+                let statusColor = "text-gray-400";
+
+                if (faktura.status_betalning === "Betald") {
+                  statusBadge = "✅ Betald";
+                  statusColor = "text-green-400";
+                } else if (faktura.status_bokförd && faktura.status_bokförd !== "Ej bokförd") {
+                  statusBadge = "📚 Bokförd, ej betald";
+                  statusColor = "text-orange-400";
+                } else {
+                  statusBadge = "⭕ Ej bokförd";
+                  statusColor = "text-yellow-400";
+                }
+
                 return (
                   <li
                     key={faktura.id}
@@ -176,11 +191,29 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
                       className={`cursor-pointer flex-1 ${isLoading ? "pointer-events-none" : ""}`}
                       onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
                     >
-                      <div>
+                      {/* Huvudrad med nummer och kund */}
+                      <div className="font-medium">
                         #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}
                       </div>
-                      <div className="text-gray-400 text-sm">{datum}</div>
 
+                      {/* Datum och belopp */}
+                      <div className="flex justify-between items-center text-gray-400 text-xs mt-1">
+                        <span>{datum}</span>
+                        <span className="font-medium text-white">
+                          {faktura.totalBelopp?.toFixed(2) ?? "0.00"} kr
+                        </span>
+                      </div>
+
+                      {/* Status och antal artiklar */}
+                      <div className="flex justify-between items-center mt-1">
+                        <span className={`text-xs ${statusColor}`}>{statusBadge}</span>
+                        <span className="text-xs text-gray-500">
+                          {faktura.antalArtiklar ?? 0} artikel
+                          {(faktura.antalArtiklar ?? 0) !== 1 ? "ar" : ""}
+                        </span>
+                      </div>
+
+                      {/* Extra info om betald */}
                       {faktura.betaldatum && (
                         <div className="text-green-400 text-xs mt-1">
                           Betald: {new Date(faktura.betaldatum).toLocaleDateString("sv-SE")}
