@@ -228,14 +228,18 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
                       )}
                     </div>
 
-                    <button
-                      onClick={() => hanteraRaderaFaktura(faktura.id)}
-                      className="hover:text-red-500 text-lg"
-                      title="Ta bort faktura"
-                      disabled={isLoading}
-                    >
-                      🗑️
-                    </button>
+                    {/* Visa bara radera-knappen om fakturan kan raderas */}
+                    {faktura.status_betalning !== "Betald" &&
+                      (!faktura.status_bokförd || faktura.status_bokförd === "Ej bokförd") && (
+                        <button
+                          onClick={() => hanteraRaderaFaktura(faktura.id)}
+                          className="hover:text-red-500 text-lg"
+                          title="Ta bort faktura"
+                          disabled={isLoading}
+                        >
+                          🗑️
+                        </button>
+                      )}
                   </li>
                 );
               })}

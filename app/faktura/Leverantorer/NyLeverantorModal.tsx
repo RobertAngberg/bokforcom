@@ -70,7 +70,10 @@ export default function NyLeverantorModal({
       if (isEditing && editLeverantör) {
         const data = {
           namn: formData.get("namn") as string,
-          organisationsnummer: (formData.get("organisationsnummer") as string) || undefined,
+          organisationsnummer:
+            (formData.get("organisationsnummer") as string) ||
+            (formData.get("vatnummer") as string) ||
+            undefined,
           adress: (formData.get("adress") as string) || undefined,
           postnummer: (formData.get("postnummer") as string) || undefined,
           ort: (formData.get("ort") as string) || undefined,
@@ -129,12 +132,17 @@ export default function NyLeverantorModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
-              label="Org-nummer / VAT-nummer"
+              label="Organisationsnummer"
               name="organisationsnummer"
-              placeholder="XXXXXX-XXXX eller SE############01"
+              placeholder="XXXXXX-XXXX"
               defaultValue={editLeverantör?.organisationsnummer}
             />
-            <div></div> {/* Tom div för att hålla grid layout */}
+            <InputField
+              label="VAT-nummer"
+              name="vatnummer"
+              placeholder="SE############01"
+              defaultValue={editLeverantör?.organisationsnummer}
+            />
           </div>
 
           <InputField

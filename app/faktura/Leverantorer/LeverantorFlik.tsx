@@ -16,6 +16,9 @@ export default function LeverantörFlik() {
     show: false,
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [bokförModal, setBokförModal] = useState<{ show: boolean; leverantör?: Leverantör }>({
+    show: false,
+  });
 
   const loadLeverantörer = async () => {
     setLoading(true);
@@ -43,6 +46,10 @@ export default function LeverantörFlik() {
     setDeleteModal({ show: true, leverantör });
   };
 
+  const handleBokförLeverantör = (leverantör: Leverantör) => {
+    setBokförModal({ show: true, leverantör });
+  };
+
   const confirmDelete = async () => {
     if (!deleteModal.leverantör) return;
 
@@ -63,7 +70,12 @@ export default function LeverantörFlik() {
 
   return (
     <>
-      <AnimeradFlik title="Leverantörer" icon="🏢" visaSummaDirekt={`${leverantörer.length} st`}>
+      <AnimeradFlik
+        title="Leverantörer"
+        icon="🏢"
+        visaSummaDirekt={`${leverantörer.length} st`}
+        forcedOpen={true}
+      >
         <div className="space-y-4">
           <div className="flex justify-end">
             <Knapp text="+ Lägg till leverantör" onClick={() => setShowModal(true)} />
@@ -127,6 +139,12 @@ export default function LeverantörFlik() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 ml-4">
+                      <button
+                        onClick={() => handleBokförLeverantör(leverantör)}
+                        className="text-green-400 hover:text-green-300 text-sm px-2 py-1 rounded bg-green-900/20 hover:bg-green-900/30 transition-colors"
+                      >
+                        Bokför
+                      </button>
                       <button
                         onClick={() => handleEditLeverantör(leverantör)}
                         className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 rounded"

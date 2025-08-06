@@ -1344,7 +1344,8 @@ export async function saveLeverantör(formData: FormData) {
 
   try {
     const namn = formData.get("namn")?.toString();
-    const organisationsnummer = formData.get("organisationsnummer")?.toString();
+    const organisationsnummer =
+      formData.get("organisationsnummer")?.toString() || formData.get("vatnummer")?.toString();
     const adress = formData.get("adress")?.toString();
     const postnummer = formData.get("postnummer")?.toString();
     const ort = formData.get("ort")?.toString();
