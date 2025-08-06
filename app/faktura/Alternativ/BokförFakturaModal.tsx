@@ -80,7 +80,8 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     }
 
     // KONTROLLERA OM FAKTURAN REDAN ÄR BOKFÖRD
-    if (fakturaStatus.status_bokförd === "Bokförd") {
+    console.log("🔍 Kollar fakturaStatus:", fakturaStatus);
+    if (fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd") {
       // Fakturan är redan bokförd - visa bara betalningsregistrering
       if (fakturaStatus.status_betalning !== "Betald") {
         poster.push({
@@ -210,6 +211,12 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         totaltBelopp: totalInkMoms,
         poster: poster,
         kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
+      });
+
+      console.log("🔥 BOKFÖR DATA:", {
+        fakturaId: formData.id ? parseInt(formData.id) : undefined,
+        formDataId: formData.id,
+        fakturanummer: formData.fakturanummer,
       });
 
       if (result.success) {

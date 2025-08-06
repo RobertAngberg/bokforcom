@@ -1126,7 +1126,60 @@ export type Leverantör = {
   uppdaterad?: string;
 };
 
-// Registrera betalning av kundfaktura
+// ENKEL betalningsregistrering - BARA 1510 ↔ 1930
+export async function registreraBetalningEnkel(
+  fakturaId: number,
+  belopp: number
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Inte inloggad" };
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Skapa transaktion
+    const transResult = await client.query(
+      'INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, "userId") VALUES ($1, $2, $3, $4) RETURNING id',
+      [new Date(), `Betalning faktura ${fakturaId}`, belopp, userId]
+    );
+    const transId = transResult.rows[0].id;
+
+    // Hämta konto-IDn
+    const bankResult = await client.query("SELECT id FROM konton WHERE kontonummer = '1930'");
+    const kundResult = await client.query("SELECT id FROM konton WHERE kontonummer = '1510'");
+
+    // 1930 Bank - DEBET
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
+      [transId, bankResult.rows[0].id, belopp, 0]
+    );
+
+    // 1510 Kundfordringar - KREDIT
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
+      [transId, kundResult.rows[0].id, 0, belopp]
+    );
+
+    // Uppdatera fakturaSTATUS
+    await client.query("UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3", [
+      "Betald",
+      new Date().toISOString().split("T")[0],
+      fakturaId,
+    ]);
+
+    await client.query("COMMIT");
+    return { success: true };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Fel:", error);
+    return { success: false, error: "Kunde inte registrera betalning" };
+  } finally {
+    client.release();
+  }
+}
 export async function registreraKundfakturaBetalning(
   fakturaId: number,
   betalningsbelopp: number,
