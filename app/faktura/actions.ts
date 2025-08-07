@@ -21,6 +21,11 @@ export type Artikel = {
   rotRutKategori?: string;
   avdragProcent?: number;
   arbetskostnadExMoms?: number;
+  rotRutAntalTimmar?: number;
+  rotRutPrisPerTimme?: number;
+  rotRutBeskrivning?: string;
+  rotRutStartdatum?: string;
+  rotRutSlutdatum?: string;
 };
 //#endregion
 
@@ -186,9 +191,11 @@ export async function saveInvoice(formData: FormData) {
         await client.query(
           `INSERT INTO faktura_artiklar (
             faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
-            rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms
+            rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
+            rot_rut_antal_timmar, rot_rut_pris_per_timme,
+            rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
           [
             newId,
             rad.beskrivning,
@@ -201,6 +208,11 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutKategori ?? null,
             rad.avdragProcent ?? null,
             rad.arbetskostnadExMoms ?? null,
+            rad.rotRutAntalTimmar ?? null,
+            rad.rotRutPrisPerTimme ?? null,
+            rad.rotRutBeskrivning ?? null,
+            rad.rotRutStartdatum ?? null,
+            rad.rotRutSlutdatum ?? null,
           ]
         );
       }
@@ -209,9 +221,10 @@ export async function saveInvoice(formData: FormData) {
         await client.query(
           `INSERT INTO rot_rut (
             faktura_id, typ, arbetskostnad_ex_moms, materialkostnad_ex_moms, avdrag_procent, avdrag_belopp,
-            personnummer, fastighetsbeteckning, rot_boende_typ, brf_organisationsnummer, brf_lagenhetsnummer
+            personnummer, fastighetsbeteckning, rot_boende_typ, brf_organisationsnummer, brf_lagenhetsnummer,
+            antal_timmar, pris_per_timme, beskrivning, startdatum, slutdatum, kategori
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
           [
             newId,
             formData.get("rotRutTyp"),
@@ -232,6 +245,16 @@ export async function saveInvoice(formData: FormData) {
             formData.get("rotBoendeTyp"),
             formData.get("brfOrganisationsnummer"),
             formData.get("brfLagenhetsnummer"),
+            formData.get("rotRutAntalTimmar")
+              ? parseFloat(formData.get("rotRutAntalTimmar")!.toString())
+              : null,
+            formData.get("rotRutPrisPerTimme")
+              ? parseFloat(formData.get("rotRutPrisPerTimme")!.toString())
+              : null,
+            formData.get("rotRutBeskrivning"),
+            formData.get("rotRutStartdatum") || null,
+            formData.get("rotRutSlutdatum") || null,
+            formData.get("rotRutKategori"),
           ]
         );
       }
@@ -720,6 +743,8 @@ export async function hämtaFakturaMedRader(id: number) {
       id,
     ]);
     const rotRut = rotRutRes.rows[0] || {};
+
+    console.log(`🏗️ hämtaFakturaMedRader(${id}) - Fullständig rotRut från DB:`, rotRut);
 
     return { faktura, artiklar, rotRut };
   } finally {

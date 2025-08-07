@@ -92,6 +92,17 @@ export default function ProdukterTjanster() {
               typeof formData.arbetskostnadExMoms === "string"
                 ? Number(formData.arbetskostnadExMoms)
                 : formData.arbetskostnadExMoms,
+            rotRutAntalTimmar:
+              typeof formData.rotRutAntalTimmar === "string"
+                ? Number(formData.rotRutAntalTimmar)
+                : formData.rotRutAntalTimmar,
+            rotRutPrisPerTimme:
+              typeof formData.rotRutPrisPerTimme === "string"
+                ? Number(formData.rotRutPrisPerTimme)
+                : formData.rotRutPrisPerTimme,
+            rotRutBeskrivning: formData.rotRutBeskrivning,
+            rotRutStartdatum: formData.rotRutStartdatum,
+            rotRutSlutdatum: formData.rotRutSlutdatum,
           }
         : {}),
     };

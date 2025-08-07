@@ -1,6 +1,6 @@
 // Sparade fakturor komponent
 
-//#region Imports och types
+//#region Import
 "use client";
 
 import { useEffect, useState } from "react";
@@ -51,6 +51,14 @@ function FakturorComponent({
       return;
     }
     const { faktura, artiklar, rotRut } = data;
+
+    console.log(
+      "� Laddar faktura ID:",
+      fakturaId,
+      "- Har ROT/RUT:",
+      Object.keys(rotRut).length > 0
+    );
+
     setFormData((prev: any) => ({
       ...prev,
       id: faktura.id,
@@ -99,17 +107,23 @@ function FakturorComponent({
         arbetskostnadExMoms: rad.arbetskostnad_ex_moms ?? rad.arbetskostnadExMoms,
       })),
       // ROT/RUT-fält från rot_rut-tabellen
-      rotRutAktiverat: !!rotRut.typ,
-      rotRutTyp: rotRut.typ ?? "",
-      rotRutKategori: rotRut.rot_rut_kategori ?? "",
-      avdragProcent: rotRut.avdrag_procent ?? "",
-      arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms ?? "",
-      avdragBelopp: rotRut.avdrag_belopp ?? "",
-      personnummer: rotRut.personnummer ?? "",
-      fastighetsbeteckning: rotRut.fastighetsbeteckning ?? "",
-      rotBoendeTyp: rotRut.rot_boende_typ ?? "",
-      brfOrganisationsnummer: rotRut.brf_organisationsnummer ?? "",
-      brfLagenhetsnummer: rotRut.brf_lagenhetsnummer ?? "",
+      rotRutAktiverat: !!(rotRut.typ && rotRut.typ !== ""),
+      rotRutTyp: rotRut.typ || undefined,
+      rotRutKategori: rotRut.kategori || undefined,
+      avdragProcent: rotRut.avdrag_procent || undefined,
+      arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms || undefined,
+      avdragBelopp: rotRut.avdrag_belopp || undefined,
+      personnummer: rotRut.personnummer || "",
+      fastighetsbeteckning: rotRut.fastighetsbeteckning || "",
+      rotBoendeTyp: rotRut.rot_boende_typ || undefined,
+      brfOrganisationsnummer: rotRut.brf_organisationsnummer || "",
+      brfLagenhetsnummer: rotRut.brf_lagenhetsnummer || "",
+      // Nya ROT/RUT-fält
+      rotRutBeskrivning: rotRut.beskrivning || "",
+      rotRutStartdatum: rotRut.startdatum || "",
+      rotRutSlutdatum: rotRut.slutdatum || "",
+      rotRutAntalTimmar: rotRut.antal_timmar || undefined,
+      rotRutPrisPerTimme: rotRut.pris_per_timme || undefined,
     }));
     setShowAllFlikar(true);
   };

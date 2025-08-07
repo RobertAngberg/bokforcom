@@ -51,6 +51,11 @@ export type FakturaFormData = {
   avdragBelopp?: number;
   arbetskostnadExMoms?: number | string;
   materialkostnadExMoms?: number | string;
+  rotRutAntalTimmar?: number | string;
+  rotRutPrisPerTimme?: number | string;
+  rotRutBeskrivning?: string;
+  rotRutStartdatum?: string;
+  rotRutSlutdatum?: string;
 
   artiklar: Array<{
     beskrivning: string;

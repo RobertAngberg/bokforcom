@@ -64,6 +64,14 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
         return;
       }
       const { faktura, artiklar, rotRut } = data;
+
+      console.log(
+        "� SparadeFakturor - Laddar faktura ID:",
+        id,
+        "- Har ROT/RUT:",
+        Object.keys(rotRut).length > 0
+      );
+
       setFormData((prev) => ({
         ...prev,
         id: id.toString(), // Använd parametern direkt!
@@ -112,17 +120,23 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
           arbetskostnadExMoms: rad.arbetskostnad_ex_moms ?? rad.arbetskostnadExMoms,
         })),
         // ROT/RUT-fält från rot_rut-tabellen
-        rotRutAktiverat: !!rotRut.typ,
-        rotRutTyp: rotRut.typ ?? "",
-        rotRutKategori: rotRut.rot_rut_kategori ?? "",
-        avdragProcent: rotRut.avdrag_procent ?? "",
-        arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms ?? "",
-        avdragBelopp: rotRut.avdrag_belopp ?? "",
-        personnummer: rotRut.personnummer ?? "",
-        fastighetsbeteckning: rotRut.fastighetsbeteckning ?? "",
-        rotBoendeTyp: rotRut.rot_boende_typ ?? "",
-        brfOrganisationsnummer: rotRut.brf_organisationsnummer ?? "",
-        brfLagenhetsnummer: rotRut.brf_lagenhetsnummer ?? "",
+        rotRutAktiverat: !!(rotRut.typ && rotRut.typ !== ""),
+        rotRutTyp: rotRut.typ || undefined,
+        rotRutKategori: rotRut.kategori || undefined,
+        avdragProcent: rotRut.avdrag_procent || undefined,
+        arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms || undefined,
+        avdragBelopp: rotRut.avdrag_belopp || undefined,
+        personnummer: rotRut.personnummer || "",
+        fastighetsbeteckning: rotRut.fastighetsbeteckning || "",
+        rotBoendeTyp: rotRut.rot_boende_typ || undefined,
+        brfOrganisationsnummer: rotRut.brf_organisationsnummer || "",
+        brfLagenhetsnummer: rotRut.brf_lagenhetsnummer || "",
+        // Nya ROT/RUT-fält
+        rotRutBeskrivning: rotRut.beskrivning || "",
+        rotRutStartdatum: rotRut.startdatum || "",
+        rotRutSlutdatum: rotRut.slutdatum || "",
+        rotRutAntalTimmar: rotRut.antal_timmar || undefined,
+        rotRutPrisPerTimme: rotRut.pris_per_timme || undefined,
       }));
       setKundStatus("loaded");
     } catch (error) {
