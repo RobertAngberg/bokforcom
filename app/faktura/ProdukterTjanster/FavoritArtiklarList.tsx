@@ -31,7 +31,7 @@ export default function FavoritArtiklarList({
   onSelect,
   onDelete,
 }: Props) {
-  if (favoritArtiklar.length === 0) return null;
+  if (!favoritArtiklar || favoritArtiklar.length === 0) return null;
   return (
     <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
       {/* Knapp som header */}

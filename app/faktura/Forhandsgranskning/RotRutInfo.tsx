@@ -12,7 +12,7 @@ export default function RotRutInfo({ formData }: RotRutInfoProps) {
   }
 
   return (
-    <div className="mb-8 p-4 rounded bg-yellow-50 border border-yellow-200 text-[10pt] text-black">
+    <div className="mb-8 p-4 rounded bg-gray-50 border border-gray-200 text-[10pt] text-black">
       <div className="font-bold mb-2">
         {formData.rotRutTyp === "ROT" ? "ROT-avdrag" : "RUT-avdrag"}
       </div>
@@ -86,7 +86,7 @@ export default function RotRutInfo({ formData }: RotRutInfoProps) {
 
       {/* Beskrivning och period för arbetet */}
       {(formData.rotRutBeskrivning || formData.rotRutStartdatum || formData.rotRutSlutdatum) && (
-        <div className="mt-4 pt-4 border-t border-yellow-300">
+        <div className="mt-4 pt-4 border-t border-gray-300">
           <div className="font-bold mb-2">Arbetets beskrivning och period</div>
           {formData.rotRutBeskrivning && (
             <div className="mb-2">

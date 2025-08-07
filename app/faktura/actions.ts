@@ -211,8 +211,12 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutAntalTimmar ?? null,
             rad.rotRutPrisPerTimme ?? null,
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum ?? null,
-            rad.rotRutSlutdatum ?? null,
+            rad.rotRutStartdatum 
+              ? new Date(rad.rotRutStartdatum).toISOString().split('T')[0]
+              : null,
+            rad.rotRutSlutdatum
+              ? new Date(rad.rotRutSlutdatum).toISOString().split('T')[0]
+              : null,
           ]
         );
       }
@@ -252,8 +256,12 @@ export async function saveInvoice(formData: FormData) {
               ? parseFloat(formData.get("rotRutPrisPerTimme")!.toString())
               : null,
             formData.get("rotRutBeskrivning"),
-            formData.get("rotRutStartdatum") || null,
-            formData.get("rotRutSlutdatum") || null,
+            formData.get("rotRutStartdatum") 
+              ? new Date(formData.get("rotRutStartdatum")!.toString()).toISOString().split('T')[0]
+              : null,
+            formData.get("rotRutSlutdatum")
+              ? new Date(formData.get("rotRutSlutdatum")!.toString()).toISOString().split('T')[0]
+              : null,
             formData.get("rotRutKategori"),
           ]
         );
@@ -653,9 +661,11 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
     await pool.query(
       `INSERT INTO faktura_artiklar (
         faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
-        rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms
+        rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
+        rot_rut_antal_timmar, rot_rut_pris_per_timme,
+        rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum
       )
-      VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         artikel.beskrivning,
         artikel.antal.toString(),
@@ -667,6 +677,15 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         artikel.rotRutKategori ?? null,
         artikel.avdragProcent ?? null,
         artikel.arbetskostnadExMoms ?? null,
+        artikel.rotRutAntalTimmar ?? null,
+        artikel.rotRutPrisPerTimme ?? null,
+        artikel.rotRutBeskrivning ?? null,
+        artikel.rotRutStartdatum 
+          ? new Date(artikel.rotRutStartdatum).toISOString().split('T')[0]
+          : null,
+        artikel.rotRutSlutdatum
+          ? new Date(artikel.rotRutSlutdatum).toISOString().split('T')[0]
+          : null,
       ]
     );
 
@@ -681,7 +700,9 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
   try {
     const res = await pool.query(`
       SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
-        rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms
+        rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
+        rot_rut_antal_timmar, rot_rut_pris_per_timme, rot_rut_beskrivning,
+        rot_rut_startdatum, rot_rut_slutdatum
       FROM faktura_artiklar
       WHERE faktura_id IS NULL
       ORDER BY beskrivning ASC
@@ -699,6 +720,11 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
       rotRutKategori: row.rot_rut_kategori,
       avdragProcent: row.avdrag_procent,
       arbetskostnadExMoms: row.arbetskostnad_ex_moms,
+      rotRutAntalTimmar: row.rot_rut_antal_timmar,
+      rotRutPrisPerTimme: row.rot_rut_pris_per_timme,
+      rotRutBeskrivning: row.rot_rut_beskrivning,
+      rotRutStartdatum: row.rot_rut_startdatum,
+      rotRutSlutdatum: row.rot_rut_slutdatum,
     }));
   } catch (err) {
     console.error("❌ Kunde inte hämta sparade artiklar:", err);

@@ -81,9 +81,11 @@ export default function RotRutForm({}: RotRutFormProps) {
 
     if (name === "rotRutTyp") {
       const procent = value === "ROT" ? 30 : value === "RUT" ? 50 : undefined;
+      const isActive = value === "ROT" || value === "RUT";
       setFormData((prev) => ({
         ...prev,
-        rotRutTyp: value === "ROT" || value === "RUT" ? value : undefined,
+        rotRutAktiverat: isActive,
+        rotRutTyp: isActive ? value : undefined,
         avdragProcent: procent,
         rotRutKategori: undefined,
       }));
