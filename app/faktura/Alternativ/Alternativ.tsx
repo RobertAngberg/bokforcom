@@ -36,6 +36,8 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const { formData, setFormData } = useFakturaContext();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
+  const [sparaLoading, setSparaLoading] = useState(false);
+  const [bokförLoading, setBokförLoading] = useState(false);
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
     status_bokförd?: string;
@@ -53,6 +55,9 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   }, [formData.id]);
 
   const hanteraSpara = async () => {
+    if (sparaLoading) return; // Förhindra dubbla sparningar
+
+    setSparaLoading(true);
     const fd = new FormData();
     try {
       fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
@@ -79,43 +84,52 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       }
     } catch {
       alert("❌ Kunde inte konvertera artiklar");
+    } finally {
+      setSparaLoading(false);
     }
   };
 
   const hanteraBokför = async () => {
-    // Om fakturan inte är sparad, spara den först
-    if (!formData.id) {
-      // SPARA FÖRST
-      const fd = new FormData();
-      try {
-        fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
-        Object.entries(formData).forEach(([k, v]) => {
-          if (k !== "artiklar" && v != null) fd.append(k, String(v));
-        });
-        const res = await saveInvoice(fd);
+    if (bokförLoading) return; // Förhindra dubbla bokföringar
 
-        if (res.success && res.id) {
-          // UPPDATERA FORMDATA MED NYTT ID!
-          setFormData((prev) => ({
-            ...prev,
-            id: res.id.toString(),
-          }));
-          // Trigga reload event så Fakturor.tsx uppdaterar sin lista
-          window.dispatchEvent(new Event("reloadFakturor"));
+    setBokförLoading(true);
+    try {
+      // Om fakturan inte är sparad, spara den först
+      if (!formData.id) {
+        // SPARA FÖRST
+        const fd = new FormData();
+        try {
+          fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
+          Object.entries(formData).forEach(([k, v]) => {
+            if (k !== "artiklar" && v != null) fd.append(k, String(v));
+          });
+          const res = await saveInvoice(fd);
 
-          // NU BOKFÖR AUTOMATISKT
-          await genomförBokföring(res.id.toString());
-        } else {
+          if (res.success && res.id) {
+            // UPPDATERA FORMDATA MED NYTT ID!
+            setFormData((prev) => ({
+              ...prev,
+              id: res.id.toString(),
+            }));
+            // Trigga reload event så Fakturor.tsx uppdaterar sin lista
+            window.dispatchEvent(new Event("reloadFakturor"));
+
+            // NU BOKFÖR AUTOMATISKT
+            await genomförBokföring(res.id.toString());
+          } else {
+            alert("❌ Kunde inte spara fakturan innan bokföring.");
+            return;
+          }
+        } catch {
           alert("❌ Kunde inte spara fakturan innan bokföring.");
           return;
         }
-      } catch {
-        alert("❌ Kunde inte spara fakturan innan bokföring.");
-        return;
+      } else {
+        // Fakturan är redan sparad, öppna bara modalen
+        setBokförModalOpen(true);
       }
-    } else {
-      // Fakturan är redan sparad, öppna bara modalen
-      setBokförModalOpen(true);
+    } finally {
+      setBokförLoading(false);
     }
   };
 
@@ -219,21 +233,25 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const ärFakturanBetald = fakturaStatus.status_betalning === "Betald";
 
   // Knapptexter och disabled-logik
-  const sparaKnappText = !harKund
-    ? "❌ Välj kund först"
-    : !harArtiklar
-      ? "❌ Lägg till artiklar"
-      : "💾 Spara faktura";
-
-  const bokförKnappText = ärFakturanBetald
-    ? "✅ Redan betald"
+  const sparaKnappText = sparaLoading
+    ? "💾 Sparar..."
     : !harKund
       ? "❌ Välj kund först"
       : !harArtiklar
         ? "❌ Lägg till artiklar"
-        : formData.id
-          ? "📊 Bokför"
-          : "📊 Spara & Bokför";
+        : "💾 Spara faktura";
+
+  const bokförKnappText = bokförLoading
+    ? "📊 Sparar & Bokför..."
+    : ärFakturanBetald
+      ? "✅ Redan betald"
+      : !harKund
+        ? "❌ Välj kund först"
+        : !harArtiklar
+          ? "❌ Lägg till artiklar"
+          : formData.id
+            ? "📊 Bokför"
+            : "📊 Spara & Bokför";
 
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
 
@@ -252,14 +270,14 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Knapp onClick={hanteraSpara} text={sparaKnappText} disabled={!kanSpara} />
+        <Knapp onClick={hanteraSpara} text={sparaKnappText} disabled={!kanSpara || sparaLoading} />
         <Knapp onClick={onPreview} text={granskKnappText} disabled={!kanSpara} />
         <ExporteraPDFKnapp disabled={!kanSpara} text={pdfKnappText} />
         <Knapp onClick={onReload} text={återställKnappText} disabled={ärFakturanBetald} />
         <Knapp
           onClick={hanteraBokför}
           text={bokförKnappText}
-          disabled={ärFakturanBetald || !kanSpara}
+          disabled={ärFakturanBetald || !kanSpara || bokförLoading}
         />
       </div>
 

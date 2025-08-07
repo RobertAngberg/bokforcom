@@ -26,6 +26,11 @@ export type Artikel = {
   rotRutBeskrivning?: string;
   rotRutStartdatum?: string;
   rotRutSlutdatum?: string;
+  rotRutPersonnummer?: string;
+  rotRutFastighetsbeteckning?: string;
+  rotRutBoendeTyp?: string;
+  rotRutBrfOrg?: string;
+  rotRutBrfLagenhet?: string;
 };
 //#endregion
 
@@ -70,7 +75,6 @@ export async function saveInvoice(formData: FormData) {
     if (isUpdate && fakturaId) {
       // ta bort och lägger till helt nytt längre ner
       await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [fakturaId]);
-      await client.query(`DELETE FROM rot_rut WHERE faktura_id = $1`, [fakturaId]);
 
       await client.query(
         `UPDATE fakturor SET
@@ -122,37 +126,6 @@ export async function saveInvoice(formData: FormData) {
         );
       }
 
-      if (formData.get("rotRutAktiverat") === "true") {
-        await client.query(
-          `INSERT INTO rot_rut (
-            faktura_id, typ, arbetskostnad_ex_moms, materialkostnad_ex_moms, avdrag_procent, avdrag_belopp,
-            personnummer, fastighetsbeteckning, rot_boende_typ, brf_organisationsnummer, brf_lagenhetsnummer
-          )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-          [
-            fakturaId,
-            formData.get("rotRutTyp"),
-            formData.get("arbetskostnadExMoms")
-              ? parseFloat(formData.get("arbetskostnadExMoms")!.toString())
-              : null,
-            formData.get("materialkostnadExMoms")
-              ? parseFloat(formData.get("materialkostnadExMoms")!.toString())
-              : null,
-            formData.get("avdragProcent")
-              ? parseFloat(formData.get("avdragProcent")!.toString())
-              : null,
-            formData.get("avdragBelopp")
-              ? parseFloat(formData.get("avdragBelopp")!.toString())
-              : null,
-            formData.get("personnummer"),
-            formData.get("fastighetsbeteckning"),
-            formData.get("rotBoendeTyp"),
-            formData.get("brfOrganisationsnummer"),
-            formData.get("brfLagenhetsnummer"),
-          ]
-        );
-      }
-
       return { success: true, id: fakturaId };
     } else {
       let fakturanummer = formData.get("fakturanummer")?.toString();
@@ -193,9 +166,11 @@ export async function saveInvoice(formData: FormData) {
             faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
             rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
             rot_rut_antal_timmar, rot_rut_pris_per_timme,
-            rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum
+            rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
+            rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
+            rot_rut_brf_org, rot_rut_brf_lagenhet, är_favorit
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
           [
             newId,
             rad.beskrivning,
@@ -211,58 +186,16 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutAntalTimmar ?? null,
             rad.rotRutPrisPerTimme ?? null,
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum 
-              ? new Date(rad.rotRutStartdatum).toISOString().split('T')[0]
+            rad.rotRutStartdatum
+              ? new Date(rad.rotRutStartdatum).toISOString().split("T")[0]
               : null,
-            rad.rotRutSlutdatum
-              ? new Date(rad.rotRutSlutdatum).toISOString().split('T')[0]
-              : null,
-          ]
-        );
-      }
-
-      if (formData.get("rotRutAktiverat") === "true") {
-        await client.query(
-          `INSERT INTO rot_rut (
-            faktura_id, typ, arbetskostnad_ex_moms, materialkostnad_ex_moms, avdrag_procent, avdrag_belopp,
-            personnummer, fastighetsbeteckning, rot_boende_typ, brf_organisationsnummer, brf_lagenhetsnummer,
-            antal_timmar, pris_per_timme, beskrivning, startdatum, slutdatum, kategori
-          )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
-          [
-            newId,
-            formData.get("rotRutTyp"),
-            formData.get("arbetskostnadExMoms")
-              ? parseFloat(formData.get("arbetskostnadExMoms")!.toString())
-              : null,
-            formData.get("materialkostnadExMoms")
-              ? parseFloat(formData.get("materialkostnadExMoms")!.toString())
-              : null,
-            formData.get("avdragProcent")
-              ? parseFloat(formData.get("avdragProcent")!.toString())
-              : null,
-            formData.get("avdragBelopp")
-              ? parseFloat(formData.get("avdragBelopp")!.toString())
-              : null,
-            formData.get("personnummer"),
-            formData.get("fastighetsbeteckning"),
-            formData.get("rotBoendeTyp"),
-            formData.get("brfOrganisationsnummer"),
-            formData.get("brfLagenhetsnummer"),
-            formData.get("rotRutAntalTimmar")
-              ? parseFloat(formData.get("rotRutAntalTimmar")!.toString())
-              : null,
-            formData.get("rotRutPrisPerTimme")
-              ? parseFloat(formData.get("rotRutPrisPerTimme")!.toString())
-              : null,
-            formData.get("rotRutBeskrivning"),
-            formData.get("rotRutStartdatum") 
-              ? new Date(formData.get("rotRutStartdatum")!.toString()).toISOString().split('T')[0]
-              : null,
-            formData.get("rotRutSlutdatum")
-              ? new Date(formData.get("rotRutSlutdatum")!.toString()).toISOString().split('T')[0]
-              : null,
-            formData.get("rotRutKategori"),
+            rad.rotRutSlutdatum ? new Date(rad.rotRutSlutdatum).toISOString().split("T")[0] : null,
+            rad.rotRutPersonnummer ?? null,
+            rad.rotRutFastighetsbeteckning ?? null,
+            rad.rotRutBoendeTyp ?? null,
+            rad.rotRutBrfOrg ?? null,
+            rad.rotRutBrfLagenhet ?? null,
+            false, // är_favorit = false för fakturaartiklar
           ]
         );
       }
@@ -298,13 +231,10 @@ export async function deleteFaktura(id: number) {
       await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
     }
 
-    // 3. Radera ROT/RUT data
-    await client.query(`DELETE FROM rot_rut WHERE faktura_id = $1`, [id]);
-
-    // 4. Radera faktura_artiklar
+    // 3. Radera faktura_artiklar (inklusive ROT/RUT data)
     await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
 
-    // 5. Radera fakturan själv
+    // 4. Radera fakturan själv
     await client.query(`DELETE FROM fakturor WHERE id = $1`, [id]);
 
     console.log(`✅ Raderade faktura ${id} med alla relaterade data`);
@@ -663,9 +593,11 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
         rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
         rot_rut_antal_timmar, rot_rut_pris_per_timme,
-        rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum
+        rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
+        rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
+        rot_rut_brf_org, rot_rut_brf_lagenhet, är_favorit
       )
-      VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
       [
         artikel.beskrivning,
         artikel.antal.toString(),
@@ -680,12 +612,18 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         artikel.rotRutAntalTimmar ?? null,
         artikel.rotRutPrisPerTimme ?? null,
         artikel.rotRutBeskrivning ?? null,
-        artikel.rotRutStartdatum 
-          ? new Date(artikel.rotRutStartdatum).toISOString().split('T')[0]
+        artikel.rotRutStartdatum
+          ? new Date(artikel.rotRutStartdatum).toISOString().split("T")[0]
           : null,
         artikel.rotRutSlutdatum
-          ? new Date(artikel.rotRutSlutdatum).toISOString().split('T')[0]
+          ? new Date(artikel.rotRutSlutdatum).toISOString().split("T")[0]
           : null,
+        artikel.rotRutPersonnummer ?? null,
+        artikel.rotRutFastighetsbeteckning ?? null,
+        artikel.rotRutBoendeTyp ?? null,
+        artikel.rotRutBrfOrg ?? null,
+        artikel.rotRutBrfLagenhet ?? null,
+        true, // är_favorit = true för favoriter
       ]
     );
 
@@ -702,9 +640,11 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
       SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
         rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
         rot_rut_antal_timmar, rot_rut_pris_per_timme, rot_rut_beskrivning,
-        rot_rut_startdatum, rot_rut_slutdatum
+        rot_rut_startdatum, rot_rut_slutdatum,
+        rot_rut_personnummer, rot_rut_fastighetsbeteckning,
+        rot_rut_boende_typ, rot_rut_brf_org, rot_rut_brf_lagenhet
       FROM faktura_artiklar
-      WHERE faktura_id IS NULL
+      WHERE är_favorit = TRUE
       ORDER BY beskrivning ASC
     `);
 
@@ -725,6 +665,11 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
       rotRutBeskrivning: row.rot_rut_beskrivning,
       rotRutStartdatum: row.rot_rut_startdatum,
       rotRutSlutdatum: row.rot_rut_slutdatum,
+      rotRutPersonnummer: row.rot_rut_personnummer,
+      rotRutFastighetsbeteckning: row.rot_rut_fastighetsbeteckning,
+      rotRutBoendeTyp: row.rot_rut_boende_typ,
+      rotRutBrfOrg: row.rot_rut_brf_org,
+      rotRutBrfLagenhet: row.rot_rut_brf_lagenhet,
     }));
   } catch (err) {
     console.error("❌ Kunde inte hämta sparade artiklar:", err);
@@ -757,20 +702,39 @@ export async function hämtaFakturaMedRader(id: number) {
     );
     const faktura = fakturaRes.rows[0];
 
-    // Hämta artiklar
+    // Hämta artiklar (inklusive ROT/RUT data som nu finns i samma tabell)
     const artiklarRes = await client.query(
       `SELECT * FROM faktura_artiklar WHERE faktura_id = $1 ORDER BY id ASC`,
       [id]
     );
     const artiklar = artiklarRes.rows;
 
-    // Hämta rot_rut-data
-    const rotRutRes = await client.query(`SELECT * FROM rot_rut WHERE faktura_id = $1 LIMIT 1`, [
-      id,
-    ]);
-    const rotRut = rotRutRes.rows[0] || {};
+    // ROT/RUT data finns nu i artiklarna, så vi kan skapa ett rotRut-objekt från första artikeln som har ROT/RUT data
+    const rotRutArtikel = artiklar.find((artikel) => artikel.rot_rut_typ);
+    const rotRut = rotRutArtikel
+      ? {
+          typ: rotRutArtikel.rot_rut_typ,
+          personnummer: rotRutArtikel.rot_rut_personnummer,
+          fastighetsbeteckning: rotRutArtikel.rot_rut_fastighetsbeteckning,
+          rot_boende_typ: rotRutArtikel.rot_rut_boende_typ,
+          brf_organisationsnummer: rotRutArtikel.rot_rut_brf_org,
+          brf_lagenhetsnummer: rotRutArtikel.rot_rut_brf_lagenhet,
+          // Beräkna totaler från alla ROT/RUT artiklar
+          arbetskostnad_ex_moms: artiklar
+            .filter((a) => a.rot_rut_typ)
+            .reduce((sum, a) => sum + (parseFloat(a.arbetskostnad_ex_moms) || 0), 0),
+          avdrag_procent: rotRutArtikel.avdrag_procent,
+          avdrag_belopp: artiklar
+            .filter((a) => a.rot_rut_typ)
+            .reduce((sum, a) => {
+              const arbetskostnad = parseFloat(a.arbetskostnad_ex_moms) || 0;
+              const procent = parseFloat(a.avdrag_procent) || 0;
+              return sum + (arbetskostnad * procent) / 100;
+            }, 0),
+        }
+      : {};
 
-    console.log(`🏗️ hämtaFakturaMedRader(${id}) - Fullständig rotRut från DB:`, rotRut);
+    console.log(`🏗️ hämtaFakturaMedRader(${id}) - ROT/RUT data från artiklar:`, rotRut);
 
     return { faktura, artiklar, rotRut };
   } finally {

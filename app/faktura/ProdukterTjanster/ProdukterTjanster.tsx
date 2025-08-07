@@ -33,6 +33,11 @@ type Artikel = {
   rotRutBeskrivning?: string;
   rotRutStartdatum?: string;
   rotRutSlutdatum?: string;
+  rotRutPersonnummer?: string;
+  rotRutFastighetsbeteckning?: string;
+  rotRutBoendeTyp?: string;
+  rotRutBrfOrg?: string;
+  rotRutBrfLagenhet?: string;
 };
 
 type FavoritArtikel = Omit<Artikel, "arbetskostnadExMoms"> & {
@@ -118,6 +123,12 @@ export default function ProdukterTjanster() {
             rotRutBeskrivning: formData.rotRutBeskrivning,
             rotRutStartdatum: formData.rotRutStartdatum,
             rotRutSlutdatum: formData.rotRutSlutdatum,
+            // Lägg till de nya ROT/RUT-fälten
+            rotRutPersonnummer: formData.personnummer,
+            rotRutFastighetsbeteckning: formData.fastighetsbeteckning,
+            rotRutBoendeTyp: formData.rotBoendeTyp,
+            rotRutBrfOrg: formData.brfOrganisationsnummer,
+            rotRutBrfLagenhet: formData.brfLagenhetsnummer,
           }
         : {}),
     };
@@ -152,6 +163,12 @@ export default function ProdukterTjanster() {
               rotRutBeskrivning: formData.rotRutBeskrivning,
               rotRutStartdatum: formData.rotRutStartdatum,
               rotRutSlutdatum: formData.rotRutSlutdatum,
+              // Lägg till de nya ROT/RUT-fälten
+              rotRutPersonnummer: formData.personnummer,
+              rotRutFastighetsbeteckning: formData.fastighetsbeteckning,
+              rotRutBoendeTyp: formData.rotBoendeTyp,
+              rotRutBrfOrg: formData.brfOrganisationsnummer,
+              rotRutBrfLagenhet: formData.brfLagenhetsnummer,
             }
           : {}),
       };
@@ -168,17 +185,20 @@ export default function ProdukterTjanster() {
       }
     }
 
+    // Skapa den uppdaterade artikellistan
+    const uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
+
     // Lägg ALLTID till artikeln i fakturan (oavsett om den sparas som favorit)
     setFormData((prev) => ({
       ...prev,
-      artiklar: [...(prev.artiklar ?? []), newArtikel],
+      artiklar: uppdateradeArtiklar,
     }));
 
     // Spara ALLTID till fakturan (oavsett om den sparas som favorit)
     try {
       setLoading(true);
       const fd = new FormData();
-      fd.append("artiklar", JSON.stringify([...(formData.artiklar ?? []), newArtikel]));
+      fd.append("artiklar", JSON.stringify(uppdateradeArtiklar)); // Använd den uppdaterade listan
       Object.entries(formData).forEach(([k, v]) => {
         if (k !== "artiklar" && v != null) fd.append(k, String(v));
       });
@@ -213,18 +233,18 @@ export default function ProdukterTjanster() {
 
   // När man väljer en favoritartikel: sätt ROT/RUT-data men visa INTE formuläret och toggla INTE checkboxen
   const handleSelectFavorit = (artikel: FavoritArtikel) => {
-    const { 
-      id, 
-      rotRutTyp, 
-      rotRutKategori, 
-      avdragProcent, 
+    const {
+      id,
+      rotRutTyp,
+      rotRutKategori,
+      avdragProcent,
       arbetskostnadExMoms,
       rotRutAntalTimmar,
       rotRutPrisPerTimme,
       rotRutBeskrivning,
       rotRutStartdatum,
       rotRutSlutdatum,
-      ...artikelUtanId 
+      ...artikelUtanId
     } = artikel;
 
     const artikelMedRutRot = {
@@ -239,9 +259,7 @@ export default function ProdukterTjanster() {
                 ? Number(arbetskostnadExMoms)
                 : arbetskostnadExMoms,
             rotRutAntalTimmar:
-              typeof rotRutAntalTimmar === "string"
-                ? Number(rotRutAntalTimmar)
-                : rotRutAntalTimmar,
+              typeof rotRutAntalTimmar === "string" ? Number(rotRutAntalTimmar) : rotRutAntalTimmar,
             rotRutPrisPerTimme:
               typeof rotRutPrisPerTimme === "string"
                 ? Number(rotRutPrisPerTimme)
@@ -268,9 +286,7 @@ export default function ProdukterTjanster() {
                 : undefined,
             // Lägg till de nya ROT/RUT-fälten i formData också
             rotRutAntalTimmar:
-              typeof rotRutAntalTimmar === "string"
-                ? Number(rotRutAntalTimmar)
-                : rotRutAntalTimmar,
+              typeof rotRutAntalTimmar === "string" ? Number(rotRutAntalTimmar) : rotRutAntalTimmar,
             rotRutPrisPerTimme:
               typeof rotRutPrisPerTimme === "string"
                 ? Number(rotRutPrisPerTimme)
@@ -281,12 +297,14 @@ export default function ProdukterTjanster() {
             // Beräkna avdragBelopp om alla värden finns
             avdragBelopp: (() => {
               if (rotRutAntalTimmar && rotRutPrisPerTimme && avdragProcent) {
-                const antalTimmar = typeof rotRutAntalTimmar === "string" 
-                  ? Number(rotRutAntalTimmar) 
-                  : rotRutAntalTimmar;
-                const prisPerTimme = typeof rotRutPrisPerTimme === "string" 
-                  ? Number(rotRutPrisPerTimme) 
-                  : rotRutPrisPerTimme;
+                const antalTimmar =
+                  typeof rotRutAntalTimmar === "string"
+                    ? Number(rotRutAntalTimmar)
+                    : rotRutAntalTimmar;
+                const prisPerTimme =
+                  typeof rotRutPrisPerTimme === "string"
+                    ? Number(rotRutPrisPerTimme)
+                    : rotRutPrisPerTimme;
                 const arbetskostnadExMoms = antalTimmar * prisPerTimme;
                 const moms = artikel.moms || 25; // Använd artikelns moms eller 25% som default
                 const arbetskostnadInklMoms = arbetskostnadExMoms * (1 + moms / 100);
