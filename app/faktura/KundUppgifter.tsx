@@ -47,6 +47,7 @@ export default function KundUppgifter() {
     fd.append("kundpostnummer", formData.kundpostnummer);
     fd.append("kundstad", formData.kundstad);
     fd.append("kundemail", formData.kundemail);
+    fd.append("personnummer", formData.personnummer || "");
 
     const res: KundSaveResponse = formData.kundId
       ? await uppdateraKund(parseInt(formData.kundId, 10), fd)
@@ -81,6 +82,7 @@ export default function KundUppgifter() {
       kundpostnummer: valdKund.kundpostnummer,
       kundstad: valdKund.kundstad,
       kundemail: valdKund.kundemail,
+      personnummer: valdKund.personnummer || "",
     }));
     setKundStatus("loaded");
   };
@@ -139,6 +141,11 @@ export default function KundUppgifter() {
           <p>
             <strong>Organisationsnummer:</strong> {formData.kundorganisationsnummer}
           </p>
+          {formData.personnummer && (
+            <p>
+              <strong>Personnummer:</strong> {formData.personnummer}
+            </p>
+          )}
           <p>
             <strong>Kundnummer:</strong> {formData.kundnummer}
           </p>
@@ -171,6 +178,13 @@ export default function KundUppgifter() {
               name="kundorganisationsnummer"
               value={formData.kundorganisationsnummer}
               onChange={handleChange}
+            />
+            <TextFalt
+              label="Personnummer"
+              name="personnummer"
+              value={formData.personnummer || ""}
+              onChange={handleChange}
+              placeholder="YYYYMMDD-XXXX (för ROT/RUT)"
             />
             <TextFalt
               label="Kundnummer"

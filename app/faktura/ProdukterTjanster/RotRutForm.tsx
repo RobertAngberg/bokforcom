@@ -326,18 +326,17 @@ export default function RotRutForm({}: RotRutFormProps) {
               />
             </div>
 
-            {formData.rotRutTyp === "ROT" && (
-              <TextFalt
-                label="Personnummer (den som får avdraget)"
-                name="personnummer"
-                type="text"
-                value={formData.personnummer ?? ""}
-                onChange={handleChange}
-                required={true}
-              />
-            )}
+            {/* Personnummer för både ROT och RUT */}
+            <TextFalt
+              label="Personnummer (den som får avdraget) *"
+              name="personnummer"
+              type="text"
+              value={formData.personnummer ?? ""}
+              onChange={handleChange}
+              placeholder="YYYYMMDD-XXXX"
+              required={true}
+            />
 
-            {/* Fastighetsbeteckning eller BRF */}
             {formData.rotRutTyp === "ROT" && (
               <div className="md:col-span-2">
                 <div className="flex items-center gap-6 mb-4">

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCRLevFakt } from "./actions";
 import Tesseract from "tesseract.js";
-
 import { type Leverantör } from "../faktura/actions";
 
 interface FileUploadLevfaktProps {
@@ -177,10 +176,10 @@ export default function LaddaUppFilLevfakt({
     setTimeoutTriggered(false);
 
     const timeout = setTimeout(() => {
-      console.log("⏰ Timeout efter 30 sekunder!");
+      console.log("⏰ Timeout efter 10 sekunder!");
       setIsLoading(false);
       setTimeoutTriggered(true);
-    }, 30000);
+    }, 10000);
 
     try {
       let text = "";
@@ -188,7 +187,8 @@ export default function LaddaUppFilLevfakt({
       if (file.type === "application/pdf") {
         console.log("🔍 Extraherar text från PDF...");
         try {
-          text = (await extractTextFromPDF(file, "clean")) || "";
+          const pdfText = await extractTextFromPDF(file, "clean");
+          text = pdfText || "";
           console.log("✅ PDF text extraherad:", text ? `${text.length} tecken` : "tom");
         } catch (pdfError) {
           console.error("❌ PDF extraktion misslyckades:", pdfError);
@@ -201,15 +201,6 @@ export default function LaddaUppFilLevfakt({
 
       if (!text || text.trim().length === 0) {
         console.log("⚠️ Ingen text extraherad från fil");
-        // För PDF-filer, ge en mer specifik varning istället för timeout
-        if (file.type === "application/pdf") {
-          console.log("📄 PDF kunde inte läsas automatiskt - visa manuell inmatning");
-          setRecognizedText(""); // Sätt tom text för att indikera att PDF laddades upp men inte kunde läsas
-          clearTimeout(timeout);
-          setIsLoading(false);
-          // Sätt INTE timeoutTriggered till true - låt användaren fylla i manuellt
-          return;
-        }
         setTimeoutTriggered(true);
         setIsLoading(false);
         clearTimeout(timeout);
@@ -292,25 +283,6 @@ export default function LaddaUppFilLevfakt({
         {fil ? `📎 ${fil.name}` : "Ladda upp leverantörsfaktura"}
       </label>
 
-      {fil && (
-        <div className="mb-4 p-3 bg-slate-700 rounded">
-          <div className="text-sm text-slate-300">
-            📄 <strong>{fil.name}</strong>
-          </div>
-          <div className="text-xs text-slate-400">
-            {fil.size >= 1024 * 1024
-              ? `${(fil.size / (1024 * 1024)).toFixed(1)} MB`
-              : `${(fil.size / 1024).toFixed(1)} KB`}{" "}
-            • {fil.type}
-          </div>
-          <div className="text-xs text-green-400 mt-1">
-            {fil.type.startsWith("image/")
-              ? "🗜️ Komprimerad bild (läsbar kvalitet)"
-              : "📄 Original PDF (under 2MB-gränsen)"}
-          </div>
-        </div>
-      )}
-
       {isLoading && (
         <div className="flex flex-col items-center justify-center mb-6 text-white">
           <div className="w-6 h-6 mb-2 border-4 rounded-full border-cyan-400 border-t-transparent animate-spin" />
@@ -322,10 +294,7 @@ export default function LaddaUppFilLevfakt({
 
       {timeoutTriggered && (
         <div className="mb-6 text-sm text-center text-yellow-300">
-          {fil?.type === "application/pdf" 
-            ? "📄 PDF-filen kunde inte läsas automatiskt – fyll i uppgifterna manuellt."
-            : "⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt."
-          }
+          ⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt.
         </div>
       )}
     </>

@@ -125,7 +125,14 @@ export default function Steg2Levfakt({
       // Default betaldatum till idag
       setBetaldatum(new Date().toISOString());
     }
-  }, [fakturadatum, förfallodatum, betaldatum]);
+  }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
+
+  // Fyll i leverantörens namn i kommentaren när leverantör väljs/ändras
+  useEffect(() => {
+    if (leverantör && leverantör.namn && (!kommentar || kommentar.trim() === "")) {
+      setKommentar(leverantör.namn);
+    }
+  }, [leverantör, kommentar, setKommentar]);
 
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {

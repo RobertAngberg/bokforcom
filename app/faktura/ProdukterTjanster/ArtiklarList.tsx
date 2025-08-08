@@ -9,15 +9,31 @@ type Artikel = {
   rotRutKategori?: string;
   avdragProcent?: number;
   arbetskostnadExMoms?: number;
+  rotRutAntalTimmar?: number;
+  rotRutPrisPerTimme?: number;
+  rotRutBeskrivning?: string;
+  rotRutStartdatum?: string;
+  rotRutSlutdatum?: string;
+  rotRutPersonnummer?: string;
+  rotRutFastighetsbeteckning?: string;
+  rotRutBoendeTyp?: string;
+  rotRutBrfOrg?: string;
+  rotRutBrfLagenhet?: string;
 };
 
 interface ArtiklarListProps {
   artiklar: Artikel[];
   blinkIndex: number | null;
   onRemove: (idx: number) => void;
+  onEdit?: (artikel: Artikel, idx: number) => void;
 }
 
-export default function ArtiklarList({ artiklar, blinkIndex, onRemove }: ArtiklarListProps) {
+export default function ArtiklarList({
+  artiklar,
+  blinkIndex,
+  onRemove,
+  onEdit,
+}: ArtiklarListProps) {
   if (artiklar.length === 0) return null;
 
   return (
@@ -36,7 +52,15 @@ export default function ArtiklarList({ artiklar, blinkIndex, onRemove }: Artikla
               blinkIndex === idx ? "background-pulse" : ""
             }`}
           >
-            <div>
+            <div
+              className="flex-1 cursor-pointer"
+              onClick={() => {
+                console.log("🔍 ArtiklarList: Klick registrerat på artikel:", a);
+                console.log("🔍 ArtiklarList: onEdit finns?", !!onEdit);
+                onEdit?.(a, idx);
+              }}
+              title="Klicka för att redigera"
+            >
               <div className="text-white font-semibold flex items-center">
                 <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
                 {a.beskrivning}
@@ -52,7 +76,7 @@ export default function ArtiklarList({ artiklar, blinkIndex, onRemove }: Artikla
                   onRemove(idx);
                 }
               }}
-              className="text-red-400 hover:text-red-600 p-1"
+              className="text-red-400 hover:text-red-600 p-1 ml-2"
               title="Ta bort artikel"
             >
               🗑️

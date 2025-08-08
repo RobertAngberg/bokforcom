@@ -5,11 +5,13 @@ import { generatePDFFromElement } from "../../_utils/pdfGenerator";
 interface ExporteraPDFKnappProps {
   disabled?: boolean;
   text?: string;
+  className?: string;
 }
 
 export default function ExporteraPDFKnapp({
   disabled = false,
   text = "📤 Spara PDF",
+  className = "",
 }: ExporteraPDFKnappProps) {
   const handleExport = async () => {
     try {
@@ -21,5 +23,5 @@ export default function ExporteraPDFKnapp({
     }
   };
 
-  return <Knapp onClick={handleExport} text={text} disabled={disabled} />;
+  return <Knapp onClick={handleExport} text={text} disabled={disabled} className={className} />;
 }

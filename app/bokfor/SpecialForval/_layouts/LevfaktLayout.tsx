@@ -147,13 +147,22 @@ export default function LevfaktLayout({
               setFakturanummer={setFakturanummer || (() => {})}
             />
 
-            {/* Leverantör dropdown */}
-            <Dropdown
-              label="Leverantör"
-              value={typeof leverantör === "string" ? leverantör : leverantör?.namn || ""}
-              onChange={(value) => setLeverantör?.(value)}
-              options={leverantörOptions}
-            />
+            {/* Leverantör - alltid från första steget */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-white mb-2">Leverantör</label>
+              <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
+                <div className="text-white font-medium">
+                  {typeof leverantör === "string"
+                    ? leverantör
+                    : leverantör?.namn || "Ingen leverantör vald"}
+                </div>
+                {typeof leverantör === "object" && leverantör?.organisationsnummer && (
+                  <div className="text-sm text-gray-400 mt-1">
+                    Org-nr: {leverantör.organisationsnummer}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Fakturanummer */}
             <TextFalt

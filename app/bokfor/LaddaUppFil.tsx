@@ -176,7 +176,22 @@ export default function LaddaUppFil({
 
       if (file.type === "application/pdf") {
         console.log("🔍 Extraherar text från PDF...");
-        text = (await extractTextFromPDF(file, "clean")) || "";
+        try {
+          // Försök textextraktion först (snabbt för text-baserade PDF:er)
+          text = (await extractTextFromPDF(file, "clean")) || "";
+          console.log("✅ PDF textextraktion:", text ? `${text.length} tecken` : "ingen text");
+
+          // Om ingen text hittades, acceptera att vi inte kan läsa skannade PDFs
+          if (!text || text.trim().length === 0) {
+            console.log("� PDF innehåller ingen markerbar text (troligen skannad)");
+            console.log("⚠️ OCR på PDF-filer stöds inte för tillfället");
+            text = "";
+          }
+        } catch (pdfError) {
+          console.error("❌ PDF textextraktion misslyckades:", pdfError);
+          console.log("� Kunde inte läsa PDF - accepterar att ingen text extraherats");
+          text = "";
+        }
       } else if (file.type.startsWith("image/")) {
         console.log("🔍 OCR på komprimerad bild...");
         text = await förbättraOchLäsBild(file);
@@ -240,25 +255,6 @@ export default function LaddaUppFil({
       >
         {fil ? `📎 ${fil.name}` : "Ladda upp underlag"}
       </label>
-
-      {fil && (
-        <div className="mb-4 p-3 bg-slate-700 rounded">
-          <div className="text-sm text-slate-300">
-            📄 <strong>{fil.name}</strong>
-          </div>
-          <div className="text-xs text-slate-400">
-            {fil.size >= 1024 * 1024
-              ? `${(fil.size / (1024 * 1024)).toFixed(1)} MB`
-              : `${(fil.size / 1024).toFixed(1)} KB`}{" "}
-            • {fil.type}
-          </div>
-          <div className="text-xs text-green-400 mt-1">
-            {fil.type.startsWith("image/")
-              ? "🗜️ Komprimerad bild (läsbar kvalitet)"
-              : "📄 Original PDF (under 2MB-gränsen)"}
-          </div>
-        </div>
-      )}
 
       {isLoading && (
         <div className="flex flex-col items-center justify-center mb-6 text-white">

@@ -43,8 +43,13 @@ type FavoritArtikel = Omit<Artikel, "arbetskostnadExMoms"> & {
   rotRutAntalTimmar?: number | string;
   rotRutPrisPerTimme?: number | string;
   rotRutBeskrivning?: string;
-  rotRutStartdatum?: string;
-  rotRutSlutdatum?: string;
+  rotRutStartdatum?: string | Date;
+  rotRutSlutdatum?: string | Date;
+  rotRutPersonnummer?: string;
+  rotRutFastighetsbeteckning?: string;
+  rotRutBoendeTyp?: string;
+  rotRutBrfOrg?: string;
+  rotRutBrfLagenhet?: string;
   id?: number;
 };
 //#endregion
@@ -219,95 +224,208 @@ export default function ProdukterTjanster() {
     }));
   };
 
-  // När man väljer en favoritartikel: sätt ROT/RUT-data men visa INTE formuläret och toggla INTE checkboxen
-  const handleSelectFavorit = (artikel: FavoritArtikel) => {
-    const {
-      id,
-      rotRutTyp,
-      rotRutKategori,
-      avdragProcent,
-      arbetskostnadExMoms,
-      rotRutAntalTimmar,
-      rotRutPrisPerTimme,
-      rotRutBeskrivning,
-      rotRutStartdatum,
-      rotRutSlutdatum,
-      ...artikelUtanId
-    } = artikel;
+  const handleEdit = (artikel: Artikel, index: number) => {
+    console.log("🔍 handleEdit körs med artikel:", artikel);
+    console.log("🔍 handleEdit körs med index:", index);
 
-    const artikelMedRutRot = {
-      ...artikelUtanId,
-      ...(rotRutTyp
+    // Fyll i formuläret med artikelns data
+    console.log("🔍 Innan state-uppdateringar:", {
+      beskrivning,
+      antal,
+      prisPerEnhet,
+      moms,
+      valuta,
+      typ,
+    });
+
+    setBeskrivning(artikel.beskrivning);
+    setAntal(artikel.antal);
+    setPrisPerEnhet(artikel.prisPerEnhet);
+    setMoms(artikel.moms);
+    setValuta(artikel.valuta);
+    setTyp(artikel.typ);
+
+    console.log("🔍 Satte lokala states:", {
+      beskrivning: artikel.beskrivning,
+      antal: artikel.antal,
+      prisPerEnhet: artikel.prisPerEnhet,
+      moms: artikel.moms,
+      valuta: artikel.valuta,
+      typ: artikel.typ,
+    });
+
+    // Debugging: Kontrollera värdena efter en kort fördröjning
+    setTimeout(() => {
+      console.log("🔍 State efter uppdatering:", {
+        beskrivning,
+        antal,
+        prisPerEnhet,
+        moms,
+        valuta,
+        typ,
+      });
+    }, 100);
+
+    // Om artikeln har ROT/RUT-data, aktivera det och fyll i formuläret
+    if (artikel.rotRutTyp) {
+      console.log("🔍 Artikel har ROT/RUT-data:", {
+        rotRutTyp: artikel.rotRutTyp,
+        rotRutKategori: artikel.rotRutKategori,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        rotRutAktiverat: true,
+        rotRutTyp: artikel.rotRutTyp,
+        rotRutKategori: artikel.rotRutKategori,
+        avdragProcent: artikel.avdragProcent,
+        arbetskostnadExMoms: artikel.arbetskostnadExMoms,
+        // Lägg till alla ROT/RUT-fält från artikeln
+        rotRutBeskrivning: artikel.rotRutBeskrivning || "",
+        rotRutStartdatum: artikel.rotRutStartdatum || "",
+        rotRutSlutdatum: artikel.rotRutSlutdatum || "",
+        personnummer: artikel.rotRutPersonnummer || "",
+        fastighetsbeteckning: artikel.rotRutFastighetsbeteckning || "",
+        brfOrganisationsnummer: artikel.rotRutBrfOrg || "",
+        brfLagenhetsnummer: artikel.rotRutBrfLagenhet || "",
+        rotRutAntalTimmar: artikel.rotRutAntalTimmar,
+        rotRutPrisPerTimme: artikel.rotRutPrisPerTimme,
+      }));
+      setVisaRotRutForm(true);
+    } else {
+      console.log("🔍 Artikel har INGEN ROT/RUT-data");
+      // Rensa ROT/RUT om artikeln inte har det
+      setFormData((prev) => ({
+        ...prev,
+        rotRutAktiverat: false,
+        rotRutTyp: undefined,
+        rotRutKategori: undefined,
+        avdragProcent: undefined,
+        arbetskostnadExMoms: undefined,
+        rotRutBeskrivning: "",
+        rotRutStartdatum: "",
+        rotRutSlutdatum: "",
+        personnummer: "",
+        fastighetsbeteckning: "",
+        brfOrganisationsnummer: "",
+        brfLagenhetsnummer: "",
+        rotRutAntalTimmar: undefined,
+        rotRutPrisPerTimme: undefined,
+      }));
+      setVisaRotRutForm(false);
+    }
+
+    // Ta bort artikeln från listan så den kan läggas till igen med ändringar
+    handleRemove(index);
+
+    console.log("🔍 handleEdit slutförd");
+  };
+
+  // När man väljer en favoritartikel: fyll i formuläret för redigering OCH lägg till i listan
+  const handleSelectFavorit = (artikel: FavoritArtikel) => {
+    console.log("🔍 handleSelectFavorit körs med artikel:", artikel);
+
+    // FÖRST: Fyll i formulärfälten för redigering
+    setBeskrivning(artikel.beskrivning);
+    setAntal(artikel.antal);
+    setPrisPerEnhet(artikel.prisPerEnhet);
+    setMoms(artikel.moms);
+    setValuta(artikel.valuta);
+    setTyp(artikel.typ);
+
+    console.log("🔍 Fyllde formulärfält:", {
+      beskrivning: artikel.beskrivning,
+      antal: artikel.antal,
+      prisPerEnhet: artikel.prisPerEnhet,
+      moms: artikel.moms,
+      valuta: artikel.valuta,
+      typ: artikel.typ,
+    });
+
+    // Skapa artikelobjekt för att lägga till i listan
+    const nyArtikel: Artikel = {
+      beskrivning: artikel.beskrivning,
+      antal: artikel.antal,
+      prisPerEnhet: artikel.prisPerEnhet,
+      moms: artikel.moms,
+      valuta: artikel.valuta,
+      typ: artikel.typ,
+      ...(artikel.rotRutTyp
         ? {
-            rotRutTyp,
-            rotRutKategori,
-            avdragProcent,
+            rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
+            rotRutKategori: artikel.rotRutKategori,
+            avdragProcent: artikel.avdragProcent,
             arbetskostnadExMoms:
-              typeof arbetskostnadExMoms === "string"
-                ? Number(arbetskostnadExMoms)
-                : arbetskostnadExMoms,
-            rotRutAntalTimmar:
-              typeof rotRutAntalTimmar === "string" ? Number(rotRutAntalTimmar) : rotRutAntalTimmar,
-            rotRutPrisPerTimme:
-              typeof rotRutPrisPerTimme === "string"
-                ? Number(rotRutPrisPerTimme)
-                : rotRutPrisPerTimme,
-            rotRutBeskrivning,
-            rotRutStartdatum,
-            rotRutSlutdatum,
+              typeof artikel.arbetskostnadExMoms === "string"
+                ? Number(artikel.arbetskostnadExMoms)
+                : artikel.arbetskostnadExMoms,
           }
         : {}),
     };
 
+    // Lägg till artikeln i "Tillagda artiklar" listan
     setFormData((prev) => ({
       ...prev,
-      artiklar: [...(prev.artiklar ?? []), artikelMedRutRot],
-      ...(rotRutTyp
+      artiklar: [...(prev.artiklar ?? []), nyArtikel],
+      // Om artikeln har ROT/RUT-data, aktivera det
+      ...(artikel.rotRutTyp
         ? {
             rotRutAktiverat: true,
-            rotRutTyp: rotRutTyp as "ROT" | "RUT" | undefined,
-            rotRutKategori,
-            avdragProcent,
+            rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
+            rotRutKategori: artikel.rotRutKategori,
+            avdragProcent: artikel.avdragProcent,
             arbetskostnadExMoms:
-              arbetskostnadExMoms !== undefined && arbetskostnadExMoms !== null
-                ? Number(arbetskostnadExMoms)
-                : undefined,
-            // Lägg till de nya ROT/RUT-fälten i formData också
+              typeof artikel.arbetskostnadExMoms === "string"
+                ? Number(artikel.arbetskostnadExMoms)
+                : artikel.arbetskostnadExMoms,
+            // Lägg till de extra ROT/RUT-fälten
+            rotRutBeskrivning: artikel.rotRutBeskrivning || "",
+            rotRutStartdatum: artikel.rotRutStartdatum
+              ? typeof artikel.rotRutStartdatum === "string"
+                ? artikel.rotRutStartdatum
+                : (artikel.rotRutStartdatum as Date).toISOString().split("T")[0]
+              : "",
+            rotRutSlutdatum: artikel.rotRutSlutdatum
+              ? typeof artikel.rotRutSlutdatum === "string"
+                ? artikel.rotRutSlutdatum
+                : (artikel.rotRutSlutdatum as Date).toISOString().split("T")[0]
+              : "",
+            personnummer: artikel.rotRutPersonnummer || "",
+            fastighetsbeteckning: artikel.rotRutFastighetsbeteckning || "",
+            brfOrganisationsnummer: artikel.rotRutBrfOrg || "",
+            brfLagenhetsnummer: artikel.rotRutBrfLagenhet || "",
             rotRutAntalTimmar:
-              typeof rotRutAntalTimmar === "string" ? Number(rotRutAntalTimmar) : rotRutAntalTimmar,
+              typeof artikel.rotRutAntalTimmar === "string"
+                ? Number(artikel.rotRutAntalTimmar)
+                : artikel.rotRutAntalTimmar,
             rotRutPrisPerTimme:
-              typeof rotRutPrisPerTimme === "string"
-                ? Number(rotRutPrisPerTimme)
-                : rotRutPrisPerTimme,
-            rotRutBeskrivning: rotRutBeskrivning || "",
-            rotRutStartdatum: rotRutStartdatum || "",
-            rotRutSlutdatum: rotRutSlutdatum || "",
-            // Beräkna avdragBelopp om alla värden finns
-            avdragBelopp: (() => {
-              if (rotRutAntalTimmar && rotRutPrisPerTimme && avdragProcent) {
-                const antalTimmar =
-                  typeof rotRutAntalTimmar === "string"
-                    ? Number(rotRutAntalTimmar)
-                    : rotRutAntalTimmar;
-                const prisPerTimme =
-                  typeof rotRutPrisPerTimme === "string"
-                    ? Number(rotRutPrisPerTimme)
-                    : rotRutPrisPerTimme;
-                const arbetskostnadExMoms = antalTimmar * prisPerTimme;
-                const moms = artikel.moms || 25; // Använd artikelns moms eller 25% som default
-                const arbetskostnadInklMoms = arbetskostnadExMoms * (1 + moms / 100);
-                return Math.round(arbetskostnadInklMoms * (avdragProcent / 100) * 100) / 100;
-              }
-              return undefined;
-            })(),
+              typeof artikel.rotRutPrisPerTimme === "string"
+                ? Number(artikel.rotRutPrisPerTimme)
+                : artikel.rotRutPrisPerTimme,
           }
-        : {}),
+        : {
+            rotRutAktiverat: false,
+            rotRutTyp: undefined,
+            rotRutKategori: undefined,
+            avdragProcent: undefined,
+            arbetskostnadExMoms: undefined,
+          }),
     }));
 
+    // Visa ROT/RUT-formuläret om artikeln har ROT/RUT-data
+    if (artikel.rotRutTyp) {
+      setVisaRotRutForm(true);
+    } else {
+      setVisaRotRutForm(false);
+    }
+
+    // Sätt blinkindex för att visa att artikeln lades till
     setTimeout(() => {
       setBlinkIndex(formData.artiklar?.length ?? 0);
       setTimeout(() => setBlinkIndex(null), 500);
     }, 50);
+
+    console.log("🔍 handleSelectFavorit slutförd - artikel tillagd i listan");
   };
 
   const handleDeleteFavorit = async (id?: number) => {
@@ -341,6 +459,7 @@ export default function ProdukterTjanster() {
         artiklar={formData.artiklar as Artikel[]}
         blinkIndex={blinkIndex}
         onRemove={handleRemove}
+        onEdit={handleEdit}
       />
 
       {/* Formulär för att lägga till ny artikel */}

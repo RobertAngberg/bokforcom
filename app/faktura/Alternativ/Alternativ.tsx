@@ -14,6 +14,7 @@ import {
   hämtaBokföringsmetod,
 } from "../actions";
 import { useFakturaContext } from "../FakturaProvider";
+import { laddaNerHUSFil } from "../../_utils/husFilGenerator";
 
 // Lokal typ för bokföringsposter
 interface BokföringsPost {
@@ -225,9 +226,40 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         alert(`❌ Bokföringsfel: ${result.error}`);
       }
     } catch (error) {
-      console.error("Bokföringsfel:", error);
+      console.error("Fel vid automatisk bokföring:", error);
       alert("❌ Fel vid automatisk bokföring");
     }
+  };
+
+  const hanteraHUSFil = () => {
+    if (!formData.rotRutAktiverat || !formData.rotRutTyp) return;
+
+    // Validera att nödvändiga fält finns
+    if (!formData.fakturanummer || !formData.personnummer) {
+      alert("❌ Fakturanummer och personnummer krävs för HUS-fil");
+      return;
+    }
+
+    const totalInkMoms =
+      formData.artiklar?.reduce((sum, artikel) => {
+        return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+      }, 0) ?? 0;
+
+    const begartBelopp = Math.round(totalInkMoms * 0.5); // 50% avdrag
+
+    laddaNerHUSFil({
+      fakturanummer: formData.fakturanummer,
+      kundPersonnummer: formData.personnummer,
+      betalningsdatum: new Date().toISOString().split("T")[0],
+      prisForArbete: Math.round(totalInkMoms),
+      betaltBelopp: Math.round(totalInkMoms),
+      begartBelopp: begartBelopp,
+      rotRutTyp: formData.rotRutTyp,
+      rotRutKategori: formData.rotRutKategori || "Städa",
+      fastighetsbeteckning: formData.fastighetsbeteckning,
+      lägenhetsNummer: formData.brfLagenhetsnummer,
+      brfOrgNummer: formData.brfOrganisationsnummer,
+    });
   };
 
   // Kontrollera vad som saknas för att kunna spara/bokföra
@@ -278,18 +310,64 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       ? "❌ Lägg till artiklar"
       : "📤 Spara PDF";
 
+  // Visa HUS-fil knapp för ROT/RUT-fakturor
+  const ärROTRUTFaktura = formData.rotRutAktiverat && formData.rotRutTyp;
+  const harPersonnummer = formData.personnummer && formData.personnummer.trim() !== "";
+
+  // Debug logging
+  console.log("🔍 HUS-fil debug:", {
+    rotRutAktiverat: formData.rotRutAktiverat,
+    rotRutTyp: formData.rotRutTyp,
+    personnummer: formData.personnummer,
+    harPersonnummer: harPersonnummer,
+  });
+
+  const husFilKnappText = !harKund
+    ? "❌ Välj kund först"
+    : !harArtiklar
+      ? "❌ Lägg till artiklar"
+      : !harPersonnummer
+        ? "❌ Personnummer saknas"
+        : `📄 Ladda ner HUS-fil (${formData.rotRutTyp})`;
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Knapp onClick={hanteraSpara} text={sparaKnappText} disabled={!kanSpara || sparaLoading} />
-        <Knapp onClick={onPreview} text={granskKnappText} disabled={!kanSpara} />
-        <ExporteraPDFKnapp disabled={!kanSpara} text={pdfKnappText} />
-        <Knapp onClick={onReload} text={återställKnappText} disabled={ärFakturanBetald} />
+      <div className="flex flex-wrap gap-4">
+        <Knapp
+          onClick={hanteraSpara}
+          text={sparaKnappText}
+          disabled={!kanSpara || sparaLoading}
+          className="flex-1 min-w-40"
+        />
+        <Knapp
+          onClick={onPreview}
+          text={granskKnappText}
+          disabled={!kanSpara}
+          className="flex-1 min-w-40"
+        />
+        <div className="flex-1 min-w-40">
+          <ExporteraPDFKnapp disabled={!kanSpara} text={pdfKnappText} className="w-full" />
+        </div>
+        <Knapp
+          onClick={onReload}
+          text={återställKnappText}
+          disabled={ärFakturanBetald}
+          className="flex-1 min-w-40"
+        />
         {!doljBokförKnapp && (
           <Knapp
             onClick={hanteraBokför}
             text={bokförKnappText}
             disabled={ärFakturanBetald || !kanSpara || bokförLoading}
+            className="flex-1 min-w-40"
+          />
+        )}
+        {ärROTRUTFaktura && (
+          <Knapp
+            onClick={hanteraHUSFil}
+            text={husFilKnappText}
+            disabled={!kanSpara || !harPersonnummer}
+            className="flex-1 min-w-40"
           />
         )}
       </div>
