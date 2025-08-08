@@ -36,6 +36,8 @@ type Artikel = {
   rotRutBoendeTyp?: string;
   rotRutBrfOrg?: string;
   rotRutBrfLagenhet?: string;
+  // För att hålla reda på om artikeln kommer från en favoritartikel
+  ursprungligFavoritId?: number;
 };
 
 type FavoritArtikel = Omit<Artikel, "arbetskostnadExMoms"> & {
@@ -68,6 +70,7 @@ export default function ProdukterTjanster() {
   const [showFavoritArtiklar, setShowFavoritArtiklar] = useState(false);
   const [blinkIndex, setBlinkIndex] = useState<number | null>(null);
   const [visaRotRutForm, setVisaRotRutForm] = useState(false);
+  const [ursprungligFavoritId, setUrsprungligFavoritId] = useState<number | null>(null);
   //#endregion
 
   //#region Ladda favoritartiklar
@@ -85,12 +88,39 @@ export default function ProdukterTjanster() {
   }, []);
   //#endregion
 
+  //#region Visa ROT/RUT-formulär automatiskt när data finns
+  useEffect(() => {
+    // Visa ROT/RUT-formuläret automatiskt om det är aktiverat i formData
+    if (formData.rotRutAktiverat) {
+      console.log("🔍 ROT/RUT är aktiverat, visar formulär. FormData:", {
+        rotRutAktiverat: formData.rotRutAktiverat,
+        rotRutTyp: formData.rotRutTyp,
+        rotRutKategori: formData.rotRutKategori,
+        personnummer: formData.personnummer,
+        rotRutBeskrivning: formData.rotRutBeskrivning,
+        rotRutStartdatum: formData.rotRutStartdatum,
+        rotRutSlutdatum: formData.rotRutSlutdatum,
+      });
+      setVisaRotRutForm(true);
+    }
+  }, [formData.rotRutAktiverat]);
+  //#endregion
+
   //#region Handlers
   const handleAdd = async () => {
     if (!beskrivning.trim()) {
       alert("❌ Beskrivning krävs");
       return;
     }
+
+    console.log("🔍 handleAdd - formData ROT/RUT-fält:", {
+      rotRutAktiverat: formData.rotRutAktiverat,
+      rotRutBeskrivning: formData.rotRutBeskrivning,
+      rotRutStartdatum: formData.rotRutStartdatum,
+      rotRutSlutdatum: formData.rotRutSlutdatum,
+      personnummer: formData.personnummer,
+      fastighetsbeteckning: formData.fastighetsbeteckning,
+    });
 
     const newArtikel: Artikel = {
       beskrivning,
@@ -124,26 +154,26 @@ export default function ProdukterTjanster() {
     // Skapa den uppdaterade artikellistan
     const uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
 
-    // Lägg ALLTID till artikeln i fakturan (oavsett om den sparas som favorit)
+    // Lägg till artikeln i listan (UTAN att spara till databas än)
     setFormData((prev) => ({
       ...prev,
       artiklar: uppdateradeArtiklar,
     }));
 
-    // Spara ALLTID till fakturan (oavsett om den sparas som favorit)
-    try {
-      setLoading(true);
-      const fd = new FormData();
-      fd.append("artiklar", JSON.stringify(uppdateradeArtiklar)); // Använd den uppdaterade listan
-      Object.entries(formData).forEach(([k, v]) => {
-        if (k !== "artiklar" && v != null) fd.append(k, String(v));
-      });
-      await saveInvoice(fd);
-    } catch (err) {
-      alert("❌ Fel vid sparande");
-    } finally {
-      setLoading(false);
-    }
+    // BORT: Spara inte till databas här - låt användaren själv klicka "Spara faktura"
+    // try {
+    //   setLoading(true);
+    //   const fd = new FormData();
+    //   fd.append("artiklar", JSON.stringify(uppdateradeArtiklar));
+    //   Object.entries(formData).forEach(([k, v]) => {
+    //     if (k !== "artiklar" && v != null) fd.append(k, String(v));
+    //   });
+    //   await saveInvoice(fd);
+    // } catch (err) {
+    //   alert("❌ Fel vid sparande");
+    // } finally {
+    //   setLoading(false);
+    // }
 
     setBeskrivning("");
     setAntal(1);
@@ -151,6 +181,34 @@ export default function ProdukterTjanster() {
     setMoms(25);
     setValuta("SEK");
     setTyp("vara");
+    setUrsprungligFavoritId(null); // Rensa spårning av ursprunglig favorit
+
+    // Rensa formulärfälten men behåll ROT/RUT-aktiverat om det finns ROT/RUT-artiklar
+    const harRotRutArtiklar = uppdateradeArtiklar.some((artikel: any) => artikel.rotRutTyp);
+
+    setFormData((prev) => ({
+      ...prev,
+      rotRutAktiverat: harRotRutArtiklar, // Behåll aktiverat om det finns ROT/RUT-artiklar
+      // Rensa endast formulärfält, inte hela ROT/RUT-data
+      ...(harRotRutArtiklar
+        ? {}
+        : {
+            // Rensa endast om det inte finns några ROT/RUT-artiklar
+            rotRutTyp: undefined,
+            rotRutKategori: undefined,
+            avdragProcent: undefined,
+            arbetskostnadExMoms: undefined,
+            rotRutBeskrivning: "",
+            rotRutStartdatum: "",
+            rotRutSlutdatum: "",
+            personnummer: "",
+            fastighetsbeteckning: "",
+            rotBoendeTyp: undefined,
+            brfOrganisationsnummer: "",
+            brfLagenhetsnummer: "",
+          }),
+    }));
+    setVisaRotRutForm(false);
 
     setTimeout(() => {
       setBlinkIndex(formData.artiklar?.length ?? 0);
@@ -161,6 +219,12 @@ export default function ProdukterTjanster() {
   const handleSaveAsFavorite = async () => {
     if (!beskrivning.trim()) {
       alert("❌ Beskrivning krävs för att spara som favorit");
+      return;
+    }
+
+    // Kontrollera om denna artikel redan kommer från en favorit
+    if (ursprungligFavoritId) {
+      alert("ℹ️ Denna artikel kommer redan från en favoritartikel och behöver inte sparas igen");
       return;
     }
 
@@ -271,6 +335,13 @@ export default function ProdukterTjanster() {
       console.log("🔍 Artikel har ROT/RUT-data:", {
         rotRutTyp: artikel.rotRutTyp,
         rotRutKategori: artikel.rotRutKategori,
+        rotRutBeskrivning: artikel.rotRutBeskrivning,
+        rotRutStartdatum: artikel.rotRutStartdatum,
+        rotRutSlutdatum: artikel.rotRutSlutdatum,
+        rotRutPersonnummer: artikel.rotRutPersonnummer,
+        rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning,
+        rotRutBrfOrg: artikel.rotRutBrfOrg,
+        rotRutBrfLagenhet: artikel.rotRutBrfLagenhet,
       });
 
       setFormData((prev) => ({
@@ -315,8 +386,12 @@ export default function ProdukterTjanster() {
       setVisaRotRutForm(false);
     }
 
-    // Ta bort artikeln från listan så den kan läggas till igen med ändringar
-    handleRemove(index);
+    // Sätt spårning för ursprunglig favorit om artikeln har det
+    if (artikel.ursprungligFavoritId) {
+      setUrsprungligFavoritId(artikel.ursprungligFavoritId);
+    } else {
+      setUrsprungligFavoritId(null);
+    }
 
     console.log("🔍 handleEdit slutförd");
   };
@@ -324,6 +399,9 @@ export default function ProdukterTjanster() {
   // När man väljer en favoritartikel: fyll i formuläret för redigering OCH lägg till i listan
   const handleSelectFavorit = (artikel: FavoritArtikel) => {
     console.log("🔍 handleSelectFavorit körs med artikel:", artikel);
+
+    // Sätt ursprungligt favorit-ID för att förhindra dubletter
+    setUrsprungligFavoritId(artikel.id ?? null);
 
     // FÖRST: Fyll i formulärfälten för redigering
     setBeskrivning(artikel.beskrivning);
@@ -350,15 +428,34 @@ export default function ProdukterTjanster() {
       moms: artikel.moms,
       valuta: artikel.valuta,
       typ: artikel.typ,
+      // Markera att denna artikel kommer från en favoritartikel
+      ursprungligFavoritId: artikel.id,
       ...(artikel.rotRutTyp
         ? {
             rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
             rotRutKategori: artikel.rotRutKategori,
-            avdragProcent: artikel.avdragProcent,
+            avdragProcent: 50, // Använd rätt procentsats (50% för både ROT och RUT)
             arbetskostnadExMoms:
               typeof artikel.arbetskostnadExMoms === "string"
                 ? Number(artikel.arbetskostnadExMoms)
                 : artikel.arbetskostnadExMoms,
+            // Inkludera ALLA ROT/RUT-fält från favoriten
+            rotRutBeskrivning: artikel.rotRutBeskrivning,
+            rotRutStartdatum: artikel.rotRutStartdatum
+              ? typeof artikel.rotRutStartdatum === "string"
+                ? artikel.rotRutStartdatum
+                : (artikel.rotRutStartdatum as Date).toISOString().split("T")[0]
+              : undefined,
+            rotRutSlutdatum: artikel.rotRutSlutdatum
+              ? typeof artikel.rotRutSlutdatum === "string"
+                ? artikel.rotRutSlutdatum
+                : (artikel.rotRutSlutdatum as Date).toISOString().split("T")[0]
+              : undefined,
+            rotRutPersonnummer: artikel.rotRutPersonnummer,
+            rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning,
+            rotRutBoendeTyp: artikel.rotRutBoendeTyp,
+            rotRutBrfOrg: artikel.rotRutBrfOrg,
+            rotRutBrfLagenhet: artikel.rotRutBrfLagenhet,
           }
         : {}),
     };
@@ -373,7 +470,7 @@ export default function ProdukterTjanster() {
             rotRutAktiverat: true,
             rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
             rotRutKategori: artikel.rotRutKategori,
-            avdragProcent: artikel.avdragProcent,
+            avdragProcent: 50, // Använd rätt procentsats (50% för både ROT och RUT)
             arbetskostnadExMoms:
               typeof artikel.arbetskostnadExMoms === "string"
                 ? Number(artikel.arbetskostnadExMoms)
@@ -538,7 +635,8 @@ export default function ProdukterTjanster() {
                 return sum + artikel.antal * artikel.prisPerEnhet * (artikel.moms / 100);
               }, 0);
               const totalInklMoms = totalSumExkl + totalMoms;
-              const avdragProcent = formData.rotRutTyp === "ROT" ? 30 : 50;
+              // Använd sparad avdragsprocent om den finns, annars 50% för både ROT och RUT
+              const avdragProcent = formData.avdragProcent || 50;
               const beraknatAvdrag = totalInklMoms * (avdragProcent / 100);
 
               return (
@@ -565,11 +663,7 @@ export default function ProdukterTjanster() {
 
           <div className="flex items-center justify-between pt-6 border-t border-slate-600">
             <Knapp onClick={handleSaveAsFavorite} text="📌 Lägg till som favoritartikel" />
-            <Knapp
-              onClick={handleAdd}
-              text={loading ? "✚ Sparar…" : "✚ Lägg till och spara"}
-              disabled={!beskrivning.trim() || loading}
-            />
+            <Knapp onClick={handleAdd} text="✚ Lägg till artikel" disabled={!beskrivning.trim()} />
           </div>
         </div>
       </div>

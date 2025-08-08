@@ -52,7 +52,7 @@ export default function RotRutForm({}: RotRutFormProps) {
     "VVS",
   ];
 
-  // Sätt dagens datum som default för startdatum om det är tomt
+  // Sätt dagens datum som default för startdatum om det är tomt OCH det inte redan finns data
   useEffect(() => {
     if (!formData.rotRutStartdatum && formData.rotRutAktiverat) {
       const today = dateTillÅÅÅÅMMDD(new Date());
@@ -158,9 +158,9 @@ export default function RotRutForm({}: RotRutFormProps) {
     nyArtikel.moms,
   ]);
 
-  // Automatisk ifyllning av arbetskostnad från nyArtikel eller artikel
+  // Automatisk ifyllning av arbetskostnad från nyArtikel eller artikel (bara om det inte redan finns)
   useEffect(() => {
-    if (formData.rotRutAktiverat) {
+    if (formData.rotRutAktiverat && !formData.arbetskostnadExMoms) {
       let arbetskostnad: number | undefined = undefined;
 
       if (
@@ -184,7 +184,7 @@ export default function RotRutForm({}: RotRutFormProps) {
         }));
       }
     }
-  }, [formData.rotRutAktiverat, artiklar, nyArtikel, setFormData]);
+  }, [formData.rotRutAktiverat, formData.arbetskostnadExMoms, artiklar, nyArtikel, setFormData]);
 
   // DatePicker styling för att matcha applikationens tema
   useEffect(() => {

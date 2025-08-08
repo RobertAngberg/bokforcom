@@ -12,6 +12,7 @@ interface HUSFilData {
   fastighetsbeteckning?: string;
   lägenhetsNummer?: string;
   brfOrgNummer?: string;
+  antalTimmar?: number; // Lägg till faktiska timmar
 }
 
 export function genereraHUSFil(data: HUSFilData): string {
@@ -49,8 +50,8 @@ export function genereraHUSFil(data: HUSFilData): string {
     "Tvätt vid tvättinrättning": "TvattVidTvattinrattning",
   };
 
-  // Beräkna timmar baserat på arbetstid (enkel uppskattning)
-  const antalTimmar = Math.round(data.prisForArbete / 500); // Anta 500 kr/timme
+  // Använd faktiska timmar från artikeldata, annars gissa baserat på pris
+  const antalTimmar = data.antalTimmar || Math.max(1, Math.round(data.prisForArbete / 500));
 
   if (data.rotRutTyp === "ROT") {
     const valdRotArbetstyp =

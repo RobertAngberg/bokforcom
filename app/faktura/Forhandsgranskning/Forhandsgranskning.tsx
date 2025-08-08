@@ -46,7 +46,7 @@ export default function Forhandsgranskning() {
     return acc + antal * pris * (moms / 100);
   }, 0);
 
-  // ROT/RUT-avdrag enligt Skatteverket: 30% av arbetskostnad inkl moms
+  // ROT/RUT-avdrag enligt Skatteverket: 50% av arbetskostnad inkl moms
   // Bara beräkna avdrag om ROT/RUT är aktiverat på formulärnivå
   const arbetskostnadInklMoms = sumExkl + totalMoms;
   const rotRutAvdrag =

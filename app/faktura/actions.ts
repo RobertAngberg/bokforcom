@@ -29,6 +29,8 @@ export type Artikel = {
   rotRutBoendeTyp?: string;
   rotRutBrfOrg?: string;
   rotRutBrfLagenhet?: string;
+  // För att hålla reda på om artikeln kommer från en favoritartikel
+  ursprungligFavoritId?: number;
 };
 //#endregion
 
@@ -117,12 +119,25 @@ export async function saveInvoice(formData: FormData) {
       );
 
       for (const rad of artiklar) {
+        console.log("🔍 Sparar artikel i DB (UPDATE):", {
+          beskrivning: rad.beskrivning,
+          rotRutTyp: rad.rotRutTyp,
+          rotRutBeskrivning: rad.rotRutBeskrivning,
+          rotRutPersonnummer: rad.rotRutPersonnummer,
+          rotRutStartdatum: rad.rotRutStartdatum,
+          rotRutSlutdatum: rad.rotRutSlutdatum,
+        });
+
         await client.query(
           `INSERT INTO faktura_artiklar (
             faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
-            rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms
+            rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
+            rot_rut_antal_timmar, rot_rut_pris_per_timme,
+            rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
+            rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
+            rot_rut_brf_org, rot_rut_brf_lagenhet
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
           [
             fakturaId,
             rad.beskrivning,
@@ -135,6 +150,18 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutKategori ?? null,
             rad.avdragProcent ?? null,
             rad.arbetskostnadExMoms ?? null,
+            rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
+            rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
+            rad.rotRutBeskrivning ?? null,
+            rad.rotRutStartdatum
+              ? new Date(rad.rotRutStartdatum).toISOString().split("T")[0]
+              : null,
+            rad.rotRutSlutdatum ? new Date(rad.rotRutSlutdatum).toISOString().split("T")[0] : null,
+            rad.rotRutPersonnummer ?? null,
+            rad.rotRutFastighetsbeteckning ?? null,
+            rad.rotRutBoendeTyp ?? null,
+            rad.rotRutBrfOrg ?? null,
+            rad.rotRutBrfLagenhet ?? null,
           ]
         );
       }
@@ -181,9 +208,9 @@ export async function saveInvoice(formData: FormData) {
             rot_rut_antal_timmar, rot_rut_pris_per_timme,
             rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
             rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
-            rot_rut_brf_org, rot_rut_brf_lagenhet, är_favorit
+            rot_rut_brf_org, rot_rut_brf_lagenhet
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
           [
             newId,
             rad.beskrivning,
@@ -208,7 +235,6 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutBoendeTyp ?? null,
             rad.rotRutBrfOrg ?? null,
             rad.rotRutBrfLagenhet ?? null,
-            false, // är_favorit = false för fakturaartiklar
           ]
         );
       }
@@ -356,7 +382,7 @@ export async function hämtaSparadeFakturor() {
 export async function deleteFavoritArtikel(id: number) {
   const client = await pool.connect();
   try {
-    await client.query(`DELETE FROM faktura_artiklar WHERE id = $1 AND faktura_id IS NULL`, [id]);
+    await client.query(`DELETE FROM faktura_favoritartiklar WHERE id = $1`, [id]);
     return { success: true };
   } catch (err) {
     console.error("❌ deleteFavoritArtikel error:", err);
@@ -571,10 +597,10 @@ export async function sparaFöretagsprofil(
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
   try {
+    // Kolla om en liknande favorit redan finns
     const existing = await pool.query(
-      `SELECT id FROM faktura_artiklar
-       WHERE faktura_id IS NULL
-         AND beskrivning = $1
+      `SELECT id FROM faktura_favoritartiklar
+       WHERE beskrivning = $1
          AND antal = $2
          AND pris_per_enhet = $3
          AND moms = $4
@@ -604,16 +630,17 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
       return { success: true, alreadyExists: true };
     }
 
+    // Spara till den nya favoritartiklar-tabellen
     await pool.query(
-      `INSERT INTO faktura_artiklar (
-        faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
+      `INSERT INTO faktura_favoritartiklar (
+        beskrivning, antal, pris_per_enhet, moms, valuta, typ,
         rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
         rot_rut_antal_timmar, rot_rut_pris_per_timme,
         rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
         rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
-        rot_rut_brf_org, rot_rut_brf_lagenhet, är_favorit
+        rot_rut_brf_org, rot_rut_brf_lagenhet
       )
-      VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
       [
         artikel.beskrivning,
         artikel.antal.toString(),
@@ -639,7 +666,6 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         artikel.rotRutBoendeTyp ?? null,
         artikel.rotRutBrfOrg ?? null,
         artikel.rotRutBrfLagenhet ?? null,
-        true, // är_favorit = true för favoriter
       ]
     );
 
@@ -659,8 +685,7 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
         rot_rut_startdatum, rot_rut_slutdatum,
         rot_rut_personnummer, rot_rut_fastighetsbeteckning,
         rot_rut_boende_typ, rot_rut_brf_org, rot_rut_brf_lagenhet
-      FROM faktura_artiklar
-      WHERE är_favorit = TRUE
+      FROM faktura_favoritartiklar
       ORDER BY beskrivning ASC
     `);
 
@@ -722,28 +747,50 @@ export async function hämtaFakturaMedRader(id: number) {
       `SELECT * FROM faktura_artiklar WHERE faktura_id = $1 ORDER BY id ASC`,
       [id]
     );
-    const artiklar = artiklarRes.rows;
+
+    // Mappa databaskolumner till camelCase för frontend
+    const artiklar = artiklarRes.rows.map((row) => ({
+      id: row.id,
+      beskrivning: row.beskrivning,
+      antal: Number(row.antal),
+      prisPerEnhet: Number(row.pris_per_enhet),
+      moms: Number(row.moms),
+      valuta: row.valuta,
+      typ: row.typ,
+      rotRutTyp: row.rot_rut_typ,
+      rotRutKategori: row.rot_rut_kategori,
+      avdragProcent: row.avdrag_procent,
+      arbetskostnadExMoms: row.arbetskostnad_ex_moms,
+      rotRutBeskrivning: row.rot_rut_beskrivning,
+      rotRutStartdatum: row.rot_rut_startdatum,
+      rotRutSlutdatum: row.rot_rut_slutdatum,
+      rotRutPersonnummer: row.rot_rut_personnummer,
+      rotRutFastighetsbeteckning: row.rot_rut_fastighetsbeteckning,
+      rotRutBoendeTyp: row.rot_rut_boende_typ,
+      rotRutBrfOrg: row.rot_rut_brf_org,
+      rotRutBrfLagenhet: row.rot_rut_brf_lagenhet,
+    }));
 
     // ROT/RUT data finns nu i artiklarna, så vi kan skapa ett rotRut-objekt från första artikeln som har ROT/RUT data
-    const rotRutArtikel = artiklar.find((artikel) => artikel.rot_rut_typ);
+    const rotRutArtikel = artiklar.find((artikel) => artikel.rotRutTyp);
     const rotRut = rotRutArtikel
       ? {
-          typ: rotRutArtikel.rot_rut_typ,
-          personnummer: rotRutArtikel.rot_rut_personnummer,
-          fastighetsbeteckning: rotRutArtikel.rot_rut_fastighetsbeteckning,
-          rot_boende_typ: rotRutArtikel.rot_rut_boende_typ,
-          brf_organisationsnummer: rotRutArtikel.rot_rut_brf_org,
-          brf_lagenhetsnummer: rotRutArtikel.rot_rut_brf_lagenhet,
+          typ: rotRutArtikel.rotRutTyp,
+          personnummer: rotRutArtikel.rotRutPersonnummer,
+          fastighetsbeteckning: rotRutArtikel.rotRutFastighetsbeteckning,
+          rot_boende_typ: rotRutArtikel.rotRutBoendeTyp,
+          brf_organisationsnummer: rotRutArtikel.rotRutBrfOrg,
+          brf_lagenhetsnummer: rotRutArtikel.rotRutBrfLagenhet,
           // Beräkna totaler från alla ROT/RUT artiklar
           arbetskostnad_ex_moms: artiklar
-            .filter((a) => a.rot_rut_typ)
-            .reduce((sum, a) => sum + (parseFloat(a.arbetskostnad_ex_moms) || 0), 0),
-          avdrag_procent: rotRutArtikel.avdrag_procent,
+            .filter((a) => a.rotRutTyp)
+            .reduce((sum, a) => sum + (parseFloat(a.arbetskostnadExMoms) || 0), 0),
+          avdrag_procent: rotRutArtikel.avdragProcent,
           avdrag_belopp: artiklar
-            .filter((a) => a.rot_rut_typ)
+            .filter((a) => a.rotRutTyp)
             .reduce((sum, a) => {
-              const arbetskostnad = parseFloat(a.arbetskostnad_ex_moms) || 0;
-              const procent = parseFloat(a.avdrag_procent) || 0;
+              const arbetskostnad = parseFloat(a.arbetskostnadExMoms) || 0;
+              const procent = parseFloat(a.avdragProcent) || 0;
               return sum + (arbetskostnad * procent) / 100;
             }, 0),
         }

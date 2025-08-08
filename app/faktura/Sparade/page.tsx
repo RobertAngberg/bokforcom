@@ -97,53 +97,69 @@ function FakturorComponent({
       artiklar: artiklar.map((rad: any) => ({
         beskrivning: rad.beskrivning,
         antal: Number(rad.antal),
-        prisPerEnhet: Number(rad.pris_per_enhet ?? rad.prisPerEnhet),
+        prisPerEnhet: Number(rad.prisPerEnhet),
         moms: Number(rad.moms),
         valuta: rad.valuta ?? "SEK",
         typ: rad.typ === "tjänst" ? "tjänst" : "vara",
-        rotRutTyp: rad.rot_rut_typ ?? rad.rotRutTyp,
-        rotRutKategori: rad.rot_rut_kategori ?? rad.rotRutKategori,
-        avdragProcent: rad.avdrag_procent ?? rad.avdragProcent,
-        arbetskostnadExMoms: rad.arbetskostnad_ex_moms ?? rad.arbetskostnadExMoms,
-        // rotRutAntalTimmar och rotRutPrisPerTimme ersätts av antal och prisPerEnhet
-        rotRutBeskrivning: rad.rot_rut_beskrivning ?? rad.rotRutBeskrivning,
-        rotRutStartdatum: rad.rot_rut_startdatum ?? rad.rotRutStartdatum,
-        rotRutSlutdatum: rad.rot_rut_slutdatum ?? rad.rotRutSlutdatum,
+        rotRutTyp: rad.rotRutTyp,
+        rotRutKategori: rad.rotRutKategori,
+        avdragProcent: rad.avdragProcent,
+        arbetskostnadExMoms: rad.arbetskostnadExMoms,
+        rotRutBeskrivning: rad.rotRutBeskrivning,
+        rotRutStartdatum: rad.rotRutStartdatum,
+        rotRutSlutdatum: rad.rotRutSlutdatum,
+        rotRutPersonnummer: rad.rotRutPersonnummer,
+        rotRutFastighetsbeteckning: rad.rotRutFastighetsbeteckning,
+        rotRutBoendeTyp: rad.rotRutBoendeTyp,
+        rotRutBrfOrg: rad.rotRutBrfOrg,
+        rotRutBrfLagenhet: rad.rotRutBrfLagenhet,
       })),
       // ROT/RUT-fält från rot_rut-tabellen eller första artikeln med ROT/RUT-data
       rotRutAktiverat:
-        !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rot_rut_typ),
-      rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rot_rut_typ)?.rot_rut_typ || undefined,
+        !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rotRutTyp),
+      rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rotRutTyp)?.rotRutTyp || undefined,
       rotRutKategori:
-        (rotRut as any).rot_rut_kategori ||
-        artiklar.find((a: any) => a.rot_rut_kategori)?.rot_rut_kategori ||
+        (rotRut as any).rotRutKategori ||
+        artiklar.find((a: any) => a.rotRutKategori)?.rotRutKategori ||
         undefined,
       avdragProcent:
         rotRut.avdrag_procent ||
-        artiklar.find((a: any) => a.avdrag_procent)?.avdrag_procent ||
+        artiklar.find((a: any) => a.avdragProcent)?.avdragProcent ||
         undefined,
       arbetskostnadExMoms:
         rotRut.arbetskostnad_ex_moms ||
-        artiklar.find((a: any) => a.arbetskostnad_ex_moms)?.arbetskostnad_ex_moms ||
+        artiklar.find((a: any) => a.arbetskostnadExMoms)?.arbetskostnadExMoms ||
         undefined,
       avdragBelopp: rotRut.avdrag_belopp || undefined,
-      personnummer: rotRut.personnummer || "",
-      fastighetsbeteckning: rotRut.fastighetsbeteckning || "",
+      personnummer:
+        rotRut.personnummer ||
+        artiklar.find((a: any) => a.rotRutPersonnummer)?.rotRutPersonnummer ||
+        "",
+      fastighetsbeteckning:
+        rotRut.fastighetsbeteckning ||
+        artiklar.find((a: any) => a.rotRutFastighetsbeteckning)?.rotRutFastighetsbeteckning ||
+        "",
       rotBoendeTyp: rotRut.rot_boende_typ || undefined,
-      brfOrganisationsnummer: rotRut.brf_organisationsnummer || "",
-      brfLagenhetsnummer: rotRut.brf_lagenhetsnummer || "",
+      brfOrganisationsnummer:
+        rotRut.brf_organisationsnummer ||
+        artiklar.find((a: any) => a.rotRutBrfOrg)?.rotRutBrfOrg ||
+        "",
+      brfLagenhetsnummer:
+        rotRut.brf_lagenhetsnummer ||
+        artiklar.find((a: any) => a.rotRutBrfLagenhet)?.rotRutBrfLagenhet ||
+        "",
       // Nya ROT/RUT-fält från rot_rut-tabellen eller första artikeln
       rotRutBeskrivning:
-        (rotRut as any).rot_rut_beskrivning ||
-        artiklar.find((a: any) => a.rot_rut_beskrivning)?.rot_rut_beskrivning ||
+        (rotRut as any).rotRutBeskrivning ||
+        artiklar.find((a: any) => a.rotRutBeskrivning)?.rotRutBeskrivning ||
         "",
       rotRutStartdatum:
-        (rotRut as any).rot_rut_startdatum ||
-        artiklar.find((a: any) => a.rot_rut_startdatum)?.rot_rut_startdatum ||
+        (rotRut as any).rotRutStartdatum ||
+        artiklar.find((a: any) => a.rotRutStartdatum)?.rotRutStartdatum ||
         "",
       rotRutSlutdatum:
-        (rotRut as any).rot_rut_slutdatum ||
-        artiklar.find((a: any) => a.rot_rut_slutdatum)?.rot_rut_slutdatum ||
+        (rotRut as any).rotRutSlutdatum ||
+        artiklar.find((a: any) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
         "",
     }));
     setShowAllFlikar(true);

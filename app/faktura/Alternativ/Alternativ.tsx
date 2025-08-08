@@ -236,6 +236,12 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
     // Validera att nödvändiga fält finns
     if (!formData.fakturanummer || !formData.personnummer) {
+      console.log("🔍 HUS-fil validering misslyckades:", {
+        fakturanummer: formData.fakturanummer,
+        personnummer: formData.personnummer,
+        rotRutAktiverat: formData.rotRutAktiverat,
+        rotRutTyp: formData.rotRutTyp,
+      });
       alert("❌ Fakturanummer och personnummer krävs för HUS-fil");
       return;
     }
@@ -245,11 +251,21 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
       }, 0) ?? 0;
 
+    // Beräkna totala timmar från ROT/RUT-artiklar
+    const totalTimmar =
+      formData.artiklar?.reduce((sum, artikel: any) => {
+        // Om det är en tjänst med ROT/RUT, använd antal som timmar
+        if (artikel.typ === "tjänst" && artikel.rotRutTyp) {
+          return sum + artikel.antal;
+        }
+        return sum;
+      }, 0) ?? 0;
+
     const begartBelopp = Math.round(totalInkMoms * 0.5); // 50% avdrag
 
     laddaNerHUSFil({
       fakturanummer: formData.fakturanummer,
-      kundPersonnummer: formData.personnummer,
+      kundPersonnummer: formData.personnummer!,
       betalningsdatum: new Date().toISOString().split("T")[0],
       prisForArbete: Math.round(totalInkMoms),
       betaltBelopp: Math.round(totalInkMoms),
@@ -259,6 +275,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       fastighetsbeteckning: formData.fastighetsbeteckning,
       lägenhetsNummer: formData.brfLagenhetsnummer,
       brfOrgNummer: formData.brfOrganisationsnummer,
+      antalTimmar: totalTimmar, // Skicka faktiska timmar
     });
   };
 
@@ -312,7 +329,13 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
   // Visa HUS-fil knapp för ROT/RUT-fakturor
   const ärROTRUTFaktura = formData.rotRutAktiverat && formData.rotRutTyp;
-  const harPersonnummer = formData.personnummer && formData.personnummer.trim() !== "";
+  // Kolla om det finns personnummer antingen i formData eller i någon artikel
+  const harPersonnummer =
+    (formData.personnummer && formData.personnummer.trim() !== "") ||
+    (formData.artiklar &&
+      formData.artiklar.some(
+        (artikel: any) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
+      ));
 
   // Debug logging
   console.log("🔍 HUS-fil debug:", {
