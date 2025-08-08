@@ -8,6 +8,7 @@ registerLocale("sv", sv);
 
 import LaddaUppFilLevfakt from "../../LaddaUppFilLevfakt";
 import Kommentar from "../../Kommentar";
+import { type Leverantör } from "../../../faktura/actions";
 import Forhandsgranskning from "../../Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import KnappFullWidth from "../../../_components/KnappFullWidth";
@@ -32,8 +33,8 @@ interface LevfaktLayoutProps {
   isValid: boolean;
 
   // Leverantörsfaktura-specifika props
-  leverantör?: string;
-  setLeverantör?: (val: string) => void;
+  leverantör?: string | Leverantör;
+  setLeverantör?: (val: string | Leverantör | null) => void;
   fakturanummer?: string;
   setFakturanummer?: (val: string) => void;
   fakturadatum?: string;
@@ -71,9 +72,15 @@ export default function LevfaktLayout({
   children,
 }: LevfaktLayoutProps) {
   // Extra validering för leverantörsfaktura-specifika fält
-  const leverantörIsValid = leverantör && leverantör.trim() !== "";
-  const fakturanummerIsValid = fakturanummer && fakturanummer.trim() !== "";
-  const fakturadatumIsValid = fakturadatum && fakturadatum.trim() !== "";
+  const leverantörIsValid =
+    leverantör &&
+    (typeof leverantör === "string"
+      ? leverantör.trim() !== ""
+      : typeof leverantör === "object" && leverantör.namn && leverantör.namn.trim() !== "");
+  const fakturanummerIsValid =
+    fakturanummer && typeof fakturanummer === "string" && fakturanummer.trim() !== "";
+  const fakturadatumIsValid =
+    fakturadatum && typeof fakturadatum === "string" && fakturadatum.trim() !== "";
   const fullIsValid = isValid && leverantörIsValid && fakturanummerIsValid && fakturadatumIsValid;
   const leverantörOptions = [
     { label: "Välj leverantör...", value: "" },
@@ -122,7 +129,17 @@ export default function LevfaktLayout({
               setPdfUrl={setPdfUrl}
               setBelopp={setBelopp}
               setTransaktionsdatum={setTransaktionsdatum}
-              setLeverantör={setLeverantör || (() => {})}
+              setLeverantör={
+                setLeverantör
+                  ? (leverantör) => {
+                      if (typeof leverantör === "string") {
+                        setLeverantör(leverantör);
+                      } else {
+                        setLeverantör(leverantör);
+                      }
+                    }
+                  : () => {}
+              }
               setFakturadatum={setFakturadatum ? (datum) => setFakturadatum(datum || "") : () => {}}
               setFörfallodatum={
                 setFörfallodatum ? (datum) => setFörfallodatum(datum || "") : () => {}
@@ -133,7 +150,7 @@ export default function LevfaktLayout({
             {/* Leverantör dropdown */}
             <Dropdown
               label="Leverantör"
-              value={leverantör}
+              value={typeof leverantör === "string" ? leverantör : leverantör?.namn || ""}
               onChange={(value) => setLeverantör?.(value)}
               options={leverantörOptions}
             />

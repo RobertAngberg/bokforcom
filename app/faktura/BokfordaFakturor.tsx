@@ -5,6 +5,7 @@ import { formatSEK } from "../_utils/format";
 import { hamtaBokfordaFakturor, hamtaTransaktionsposter, registreraBetalning } from "./actions";
 import VerifikatModal from "./VerifikatModal";
 import BetalningsbekräftelseModal from "./BetalningsbekraftelseModal";
+import Knapp from "../_components/Knapp";
 
 type BokfordFaktura = {
   id: number; // leverantörsfaktura.id
@@ -178,23 +179,19 @@ export default function BokfordaFakturor() {
                 </td>
                 <td className="py-2 text-gray-300 max-w-xs truncate">{faktura.kommentar}</td>
                 <td className="py-2 text-center">
-                  <button
+                  <Knapp
+                    text="📄 Verifikat"
                     onClick={() => öppnaVerifikat(faktura)}
-                    className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                    title="Visa verifikat"
-                  >
-                    📄 Verifikat
-                  </button>
+                    className="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1"
+                  />
                 </td>
                 <td className="py-2 text-center">
                   {faktura.status_betalning === "Obetald" ? (
-                    <button
+                    <Knapp
+                      text="💰 Betala"
                       onClick={() => handleRegistreraBetalning(faktura)}
-                      className="px-3 py-1 text-xs bg-green-700 hover:bg-green-600 text-white rounded transition-colors"
-                      title="Registrera betalning"
-                    >
-                      💰 Betala
-                    </button>
+                      className="bg-green-700 hover:bg-green-600 text-xs px-3 py-1"
+                    />
                   ) : (
                     <span className="text-gray-500 text-xs">Betald</span>
                   )}

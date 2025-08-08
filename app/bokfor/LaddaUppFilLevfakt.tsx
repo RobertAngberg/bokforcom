@@ -177,17 +177,23 @@ export default function LaddaUppFilLevfakt({
     setTimeoutTriggered(false);
 
     const timeout = setTimeout(() => {
-      console.log("⏰ Timeout efter 10 sekunder!");
+      console.log("⏰ Timeout efter 30 sekunder!");
       setIsLoading(false);
       setTimeoutTriggered(true);
-    }, 10000);
+    }, 30000);
 
     try {
       let text = "";
 
       if (file.type === "application/pdf") {
         console.log("🔍 Extraherar text från PDF...");
-        text = (await extractTextFromPDF(file, "clean")) || "";
+        try {
+          text = (await extractTextFromPDF(file, "clean")) || "";
+          console.log("✅ PDF text extraherad:", text ? `${text.length} tecken` : "tom");
+        } catch (pdfError) {
+          console.error("❌ PDF extraktion misslyckades:", pdfError);
+          text = "";
+        }
       } else if (file.type.startsWith("image/")) {
         console.log("🔍 OCR på komprimerad bild...");
         text = await förbättraOchLäsBild(file);
@@ -195,6 +201,15 @@ export default function LaddaUppFilLevfakt({
 
       if (!text || text.trim().length === 0) {
         console.log("⚠️ Ingen text extraherad från fil");
+        // För PDF-filer, ge en mer specifik varning istället för timeout
+        if (file.type === "application/pdf") {
+          console.log("📄 PDF kunde inte läsas automatiskt - visa manuell inmatning");
+          setRecognizedText(""); // Sätt tom text för att indikera att PDF laddades upp men inte kunde läsas
+          clearTimeout(timeout);
+          setIsLoading(false);
+          // Sätt INTE timeoutTriggered till true - låt användaren fylla i manuellt
+          return;
+        }
         setTimeoutTriggered(true);
         setIsLoading(false);
         clearTimeout(timeout);
@@ -307,7 +322,10 @@ export default function LaddaUppFilLevfakt({
 
       {timeoutTriggered && (
         <div className="mb-6 text-sm text-center text-yellow-300">
-          ⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt.
+          {fil?.type === "application/pdf" 
+            ? "📄 PDF-filen kunde inte läsas automatiskt – fyll i uppgifterna manuellt."
+            : "⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt."
+          }
         </div>
       )}
     </>

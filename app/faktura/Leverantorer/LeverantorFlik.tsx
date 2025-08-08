@@ -139,24 +139,16 @@ export default function LeverantörFlik() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 ml-4">
-                      <button
-                        onClick={() => handleBokförLeverantör(leverantör)}
-                        className="text-green-400 hover:text-green-300 text-sm px-2 py-1 rounded bg-green-900/20 hover:bg-green-900/30 transition-colors"
-                      >
-                        Bokför
-                      </button>
-                      <button
+                      <Knapp
+                        text="✏️ Redigera"
                         onClick={() => handleEditLeverantör(leverantör)}
-                        className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 rounded"
-                      >
-                        Redigera
-                      </button>
-                      <button
+                        className="bg-cyan-600 hover:bg-cyan-700 text-sm px-2 py-1"
+                      />
+                      <Knapp
+                        text="🗑️ Ta bort"
                         onClick={() => handleDeleteLeverantör(leverantör)}
-                        className="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded"
-                      >
-                        Ta bort
-                      </button>
+                        className="bg-red-600 hover:bg-red-700 text-sm px-2 py-1"
+                      />
                     </div>
                   </div>
                 </div>
