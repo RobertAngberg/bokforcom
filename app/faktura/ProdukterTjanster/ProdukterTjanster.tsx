@@ -404,6 +404,46 @@ export default function ProdukterTjanster() {
             </div>
           )}
 
+          {/* Visa beräknat avdrag om ROT/RUT är aktiverat och det finns artiklar */}
+          {formData.rotRutAktiverat &&
+            formData.rotRutTyp &&
+            formData.artiklar &&
+            formData.artiklar.length > 0 &&
+            (() => {
+              // Beräkna totalt avdrag baserat på alla artiklar
+              const totalSumExkl = formData.artiklar.reduce(
+                (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet,
+                0
+              );
+              const totalMoms = formData.artiklar.reduce((sum, artikel) => {
+                return sum + artikel.antal * artikel.prisPerEnhet * (artikel.moms / 100);
+              }, 0);
+              const totalInklMoms = totalSumExkl + totalMoms;
+              const avdragProcent = formData.rotRutTyp === "ROT" ? 30 : 50;
+              const beraknatAvdrag = totalInklMoms * (avdragProcent / 100);
+
+              return (
+                <div className="p-3 bg-slate-800 border border-slate-600 rounded-lg">
+                  <div className="text-white font-semibold text-sm">
+                    📊 Beräknat {formData.rotRutTyp}-avdrag ({avdragProcent}%):
+                  </div>
+                  <div className="text-green-400 font-bold text-lg">
+                    {beraknatAvdrag.toLocaleString("sv-SE", {
+                      style: "currency",
+                      currency: "SEK",
+                    })}
+                  </div>
+                  <div className="text-gray-400 text-xs mt-1">
+                    Baserat på totalsumma inkl. moms:{" "}
+                    {totalInklMoms.toLocaleString("sv-SE", {
+                      style: "currency",
+                      currency: "SEK",
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
           <div className="flex items-center justify-between pt-6 border-t border-slate-600">
             <Knapp onClick={handleSaveAsFavorite} text="📌 Lägg till som favoritartikel" />
             <Knapp

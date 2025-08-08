@@ -47,6 +47,7 @@ export default function Forhandsgranskning() {
   }, 0);
 
   // ROT/RUT-avdrag enligt Skatteverket: 30% av arbetskostnad inkl moms
+  // Bara beräkna avdrag om ROT/RUT är aktiverat på formulärnivå
   const arbetskostnadInklMoms = sumExkl + totalMoms;
   const rotRutAvdrag =
     formData.rotRutAktiverat && formData.rotRutTyp === "ROT"
@@ -81,7 +82,7 @@ export default function Forhandsgranskning() {
 
           <BetalningsInfo formData={formData} summaAttBetala={summaAttBetala} />
 
-          <RotRutInfo formData={formData} />
+          <RotRutInfo formData={formData} beraknatAvdrag={rotRutAvdrag} />
 
           <ArtiklarLista rows={rows} />
 

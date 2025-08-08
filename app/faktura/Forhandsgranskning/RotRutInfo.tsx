@@ -3,11 +3,16 @@ import React from "react";
 
 interface RotRutInfoProps {
   formData: any;
+  beraknatAvdrag?: number;
 }
 
-export default function RotRutInfo({ formData }: RotRutInfoProps) {
-  // Visa ROT/RUT-info om typ är vald (oavsett rotRutAktiverat status)
-  if (!formData.rotRutTyp || (formData.rotRutTyp !== "ROT" && formData.rotRutTyp !== "RUT")) {
+export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoProps) {
+  // Visa ROT/RUT-info endast om ROT/RUT är aktiverat på formulärnivå
+  if (
+    !formData.rotRutAktiverat ||
+    !formData.rotRutTyp ||
+    (formData.rotRutTyp !== "ROT" && formData.rotRutTyp !== "RUT")
+  ) {
     return null;
   }
 
@@ -64,8 +69,8 @@ export default function RotRutInfo({ formData }: RotRutInfoProps) {
           </div>
           <div>
             <span className="font-semibold">Beräknat avdrag:</span>{" "}
-            {formData.avdragBelopp !== undefined
-              ? Number(formData.avdragBelopp).toLocaleString("sv-SE", {
+            {beraknatAvdrag > 0
+              ? beraknatAvdrag.toLocaleString("sv-SE", {
                   style: "currency",
                   currency: "SEK",
                 })

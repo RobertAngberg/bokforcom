@@ -122,7 +122,7 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
         // ROT/RUT-fält från rot_rut-tabellen
         rotRutAktiverat: !!(rotRut.typ && rotRut.typ !== ""),
         rotRutTyp: rotRut.typ || undefined,
-        rotRutKategori: rotRut.kategori || undefined,
+        rotRutKategori: (rotRut as any).kategori || undefined,
         avdragProcent: rotRut.avdrag_procent || undefined,
         arbetskostnadExMoms: rotRut.arbetskostnad_ex_moms || undefined,
         avdragBelopp: rotRut.avdrag_belopp || undefined,
@@ -132,11 +132,11 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
         brfOrganisationsnummer: rotRut.brf_organisationsnummer || "",
         brfLagenhetsnummer: rotRut.brf_lagenhetsnummer || "",
         // Nya ROT/RUT-fält
-        rotRutBeskrivning: rotRut.beskrivning || "",
-        rotRutStartdatum: rotRut.startdatum || "",
-        rotRutSlutdatum: rotRut.slutdatum || "",
-        rotRutAntalTimmar: rotRut.antal_timmar || undefined,
-        rotRutPrisPerTimme: rotRut.pris_per_timme || undefined,
+        rotRutBeskrivning: (rotRut as any).beskrivning || "",
+        rotRutStartdatum: (rotRut as any).startdatum || "",
+        rotRutSlutdatum: (rotRut as any).slutdatum || "",
+        rotRutAntalTimmar: (rotRut as any).antal_timmar || undefined,
+        rotRutPrisPerTimme: (rotRut as any).pris_per_timme || undefined,
       }));
       setKundStatus("loaded");
     } catch (error) {
@@ -161,105 +161,100 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-        <div className="max-w-[260px]">
-          {fakturor.length === 0 ? (
-            <p className="text-gray-400 italic">Inga fakturor hittades.</p>
-          ) : (
-            <ul className="space-y-2">
-              {fakturor.map((faktura) => {
-                const datum = faktura.fakturadatum
-                  ? new Date(faktura.fakturadatum).toLocaleDateString("sv-SE", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "";
+      <div className="text-white">
+        {fakturor.length === 0 ? (
+          <p className="text-gray-400 italic">Inga fakturor hittades.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {fakturor.map((faktura) => {
+              const datum = faktura.fakturadatum
+                ? new Date(faktura.fakturadatum).toLocaleDateString("sv-SE", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "";
 
-                const isActive = activeInvoiceId === faktura.id;
-                const isLoading = loadingInvoiceId === faktura.id;
+              const isActive = activeInvoiceId === faktura.id;
+              const isLoading = loadingInvoiceId === faktura.id;
 
-                // Avgör status
-                let statusBadge = null;
-                let statusColor = "text-gray-400";
+              // Avgör status
+              let statusBadge = null;
+              let statusColor = "text-white";
 
-                if (faktura.status_betalning === "Betald") {
-                  statusBadge = "✅ Betald";
-                  statusColor = "text-green-400";
-                } else if (faktura.status_bokförd && faktura.status_bokförd !== "Ej bokförd") {
-                  statusBadge = "📚 Bokförd, ej betald";
-                  statusColor = "text-orange-400";
-                } else {
-                  statusBadge = "⭕ Ej bokförd";
-                  statusColor = "text-yellow-400";
-                }
+              if (faktura.status_betalning === "Betald") {
+                statusBadge = "✅ Betald";
+                statusColor = "text-green-400";
+              } else if (faktura.status_bokförd && faktura.status_bokförd !== "Ej bokförd") {
+                statusBadge = "📚 Bokförd, ej betald";
+                statusColor = "text-white";
+              } else {
+                statusBadge = "❌ Ej bokförd";
+                statusColor = "text-white";
+              }
 
-                return (
-                  <li
-                    key={faktura.id}
-                    className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm flex items-center gap-0 ${
-                      isActive ? "border-green-500" : "border-slate-700"
-                    } ${isLoading ? "opacity-75" : ""}`}
+              return (
+                <div
+                  key={faktura.id}
+                  className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm relative ${
+                    isActive ? "border-green-500" : "border-slate-700"
+                  } ${isLoading ? "opacity-75" : ""}`}
+                >
+                  {/* Radera-knapp i övre högra hörnet */}
+                  {faktura.status_betalning !== "Betald" &&
+                    (!faktura.status_bokförd || faktura.status_bokförd === "Ej bokförd") && (
+                      <button
+                        onClick={() => hanteraRaderaFaktura(faktura.id)}
+                        className="absolute top-2 right-2 hover:text-red-500 text-lg z-10"
+                        title="Ta bort faktura"
+                        disabled={isLoading}
+                      >
+                        🗑️
+                      </button>
+                    )}
+
+                  <div
+                    className={`cursor-pointer ${isLoading ? "pointer-events-none" : ""} pr-8`}
+                    onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
                   >
-                    <div
-                      className={`cursor-pointer flex-1 ${isLoading ? "pointer-events-none" : ""}`}
-                      onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
-                    >
-                      {/* Huvudrad med nummer och kund */}
-                      <div className="font-medium">
-                        #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}
-                      </div>
-
-                      {/* Datum och belopp */}
-                      <div className="flex justify-between items-center text-gray-400 text-xs mt-1">
-                        <span>{datum}</span>
-                        <span className="font-medium text-white">
-                          {faktura.totalBelopp?.toFixed(2) ?? "0.00"} kr
-                        </span>
-                      </div>
-
-                      {/* Status och antal artiklar */}
-                      <div className="flex justify-between items-center mt-1">
-                        <span className={`text-xs ${statusColor}`}>{statusBadge}</span>
-                        <span className="text-xs text-gray-500">
-                          {faktura.antalArtiklar ?? 0} artikel
-                          {(faktura.antalArtiklar ?? 0) !== 1 ? "ar" : ""}
-                        </span>
-                      </div>
-
-                      {/* Extra info om betald */}
-                      {faktura.betaldatum && (
-                        <div className="text-green-400 text-xs mt-1">
-                          Betald: {new Date(faktura.betaldatum).toLocaleDateString("sv-SE")}
-                        </div>
-                      )}
-
-                      {isLoading && (
-                        <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
-                          <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
-                          Laddar...
-                        </div>
-                      )}
+                    {/* Huvudrad med nummer och kund */}
+                    <div className="font-semibold text-base mb-3">
+                      #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}
                     </div>
 
-                    {/* Visa bara radera-knappen om fakturan kan raderas */}
-                    {faktura.status_betalning !== "Betald" &&
-                      (!faktura.status_bokförd || faktura.status_bokförd === "Ej bokförd") && (
-                        <button
-                          onClick={() => hanteraRaderaFaktura(faktura.id)}
-                          className="hover:text-red-500 text-lg"
-                          title="Ta bort faktura"
-                          disabled={isLoading}
-                        >
-                          🗑️
-                        </button>
-                      )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+                    {/* Avskiljare */}
+                    <hr className="border-slate-600 mb-3" />
+
+                    {/* Datum */}
+                    <div className="text-white text-sm mb-2">{datum}</div>
+
+                    {/* Belopp */}
+                    <div className="font-medium text-white text-sm mb-2">
+                      {faktura.totalBelopp?.toFixed(2) ?? "0.00"} kr
+                    </div>
+
+                    {/* Status */}
+                    <div className={`text-sm ${statusColor} mb-2`}>{statusBadge}</div>
+
+                    {/* Extra info om betald */}
+                    {faktura.betaldatum && (
+                      <div className="text-white text-xs mt-1">
+                        Betald: {new Date(faktura.betaldatum).toLocaleDateString("sv-SE")}
+                      </div>
+                    )}
+
+                    {isLoading && (
+                      <div className="text-blue-400 text-xs mt-1 flex items-center gap-1">
+                        <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
+                        Laddar...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Betalningsmodal */}
