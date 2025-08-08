@@ -380,9 +380,16 @@ export async function hämtaSparadeFakturor() {
 }
 
 export async function deleteFavoritArtikel(id: number) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+
   const client = await pool.connect();
   try {
-    await client.query(`DELETE FROM faktura_favoritartiklar WHERE id = $1`, [id]);
+    await client.query(`DELETE FROM faktura_favoritartiklar WHERE id = $1 AND user_id = $2`, [
+      id,
+      userId,
+    ]);
     return { success: true };
   } catch (err) {
     console.error("❌ deleteFavoritArtikel error:", err);
@@ -596,22 +603,28 @@ export async function sparaFöretagsprofil(
 }
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+
   try {
-    // Kolla om en liknande favorit redan finns
+    // Kolla om en liknande favorit redan finns för denna användare
     const existing = await pool.query(
       `SELECT id FROM faktura_favoritartiklar
-       WHERE beskrivning = $1
-         AND antal = $2
-         AND pris_per_enhet = $3
-         AND moms = $4
-         AND valuta = $5
-         AND typ = $6
-         AND (rot_rut_typ IS NOT DISTINCT FROM $7)
-         AND (rot_rut_kategori IS NOT DISTINCT FROM $8)
-         AND (avdrag_procent IS NOT DISTINCT FROM $9)
-         AND (arbetskostnad_ex_moms IS NOT DISTINCT FROM $10)
+       WHERE user_id = $1
+         AND beskrivning = $2
+         AND antal = $3
+         AND pris_per_enhet = $4
+         AND moms = $5
+         AND valuta = $6
+         AND typ = $7
+         AND (rot_rut_typ IS NOT DISTINCT FROM $8)
+         AND (rot_rut_kategori IS NOT DISTINCT FROM $9)
+         AND (avdrag_procent IS NOT DISTINCT FROM $10)
+         AND (arbetskostnad_ex_moms IS NOT DISTINCT FROM $11)
        LIMIT 1`,
       [
+        userId,
         artikel.beskrivning,
         artikel.antal.toString(),
         artikel.prisPerEnhet.toString(),
@@ -633,15 +646,16 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
     // Spara till den nya favoritartiklar-tabellen
     await pool.query(
       `INSERT INTO faktura_favoritartiklar (
-        beskrivning, antal, pris_per_enhet, moms, valuta, typ,
+        user_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
         rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
         rot_rut_antal_timmar, rot_rut_pris_per_timme,
         rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
         rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
         rot_rut_brf_org, rot_rut_brf_lagenhet
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
       [
+        userId,
         artikel.beskrivning,
         artikel.antal.toString(),
         artikel.prisPerEnhet.toString(),
@@ -677,8 +691,13 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
 }
 
 export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+  const userId = parseInt(session.user.id);
+
   try {
-    const res = await pool.query(`
+    const res = await pool.query(
+      `
       SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
         rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
         rot_rut_antal_timmar, rot_rut_pris_per_timme, rot_rut_beskrivning,
@@ -686,8 +705,11 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
         rot_rut_personnummer, rot_rut_fastighetsbeteckning,
         rot_rut_boende_typ, rot_rut_brf_org, rot_rut_brf_lagenhet
       FROM faktura_favoritartiklar
+      WHERE user_id = $1
       ORDER BY beskrivning ASC
-    `);
+    `,
+      [userId]
+    );
 
     return res.rows.map((row) => ({
       id: row.id,
