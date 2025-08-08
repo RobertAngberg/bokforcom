@@ -269,7 +269,9 @@ export default function ProdukterTjanster() {
           // Uppdatera favoritlistan efter att ha sparat
           const uppdateradeFavoriter = await hämtaSparadeArtiklar();
           setFavoritArtiklar((uppdateradeFavoriter as FavoritArtikel[]) || []);
-          alert("✅ Sparad som favoritartikel!");
+          alert(
+            "✅ Sparad som favoritartikel!\n\nOBS: Du måste fortfarande lägga till den på fakturan om du inte redan gjort det."
+          );
         }
       } else {
         alert("❌ Fel vid sparande av favoritartikel");
