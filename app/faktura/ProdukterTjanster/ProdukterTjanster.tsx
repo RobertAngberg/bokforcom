@@ -14,8 +14,6 @@ import RotRutForm from "./RotRutForm";
 import FavoritArtiklarList from "./FavoritArtiklarList";
 import ArtiklarList from "./ArtiklarList";
 import ArtikelForm from "./ArtikelForm";
-import RotRutCheckbox from "./RotRutCheckbox";
-import LäggTillFavoritartikel from "./LaggTillFavoritartikel";
 
 type Artikel = {
   beskrivning: string;
@@ -61,7 +59,6 @@ export default function ProdukterTjanster() {
   const [valuta, setValuta] = useState("SEK");
   const [typ, setTyp] = useState<"vara" | "tjänst">("vara");
   const [loading, setLoading] = useState(false);
-  const [saveAsFavorite, setSaveAsFavorite] = useState(false);
   const [favoritArtiklar, setFavoritArtiklar] = useState<FavoritArtikel[]>([]);
   const [showFavoritArtiklar, setShowFavoritArtiklar] = useState(false);
   const [blinkIndex, setBlinkIndex] = useState<number | null>(null);
@@ -90,12 +87,6 @@ export default function ProdukterTjanster() {
       return;
     }
 
-    // Kontrollera att kund är vald innan sparning
-    if (!formData.kundId || formData.kundId.trim() === "") {
-      alert("❌ Välj en kund innan du lägger till artiklar");
-      return;
-    }
-
     const newArtikel: Artikel = {
       beskrivning,
       antal,
@@ -112,14 +103,6 @@ export default function ProdukterTjanster() {
               typeof formData.arbetskostnadExMoms === "string"
                 ? Number(formData.arbetskostnadExMoms)
                 : formData.arbetskostnadExMoms,
-            rotRutAntalTimmar:
-              typeof formData.rotRutAntalTimmar === "string"
-                ? Number(formData.rotRutAntalTimmar)
-                : formData.rotRutAntalTimmar,
-            rotRutPrisPerTimme:
-              typeof formData.rotRutPrisPerTimme === "string"
-                ? Number(formData.rotRutPrisPerTimme)
-                : formData.rotRutPrisPerTimme,
             rotRutBeskrivning: formData.rotRutBeskrivning,
             rotRutStartdatum: formData.rotRutStartdatum,
             rotRutSlutdatum: formData.rotRutSlutdatum,
@@ -132,58 +115,6 @@ export default function ProdukterTjanster() {
           }
         : {}),
     };
-
-    if (saveAsFavorite) {
-      // För favoritartiklar sparar vi ALL data inklusive ROT/RUT-information
-      const favArtikel: Artikel = {
-        beskrivning,
-        antal,
-        prisPerEnhet,
-        moms,
-        valuta,
-        typ,
-        // Inkludera ROT/RUT-data om det finns
-        ...(formData.rotRutAktiverat
-          ? {
-              rotRutTyp: formData.rotRutTyp,
-              rotRutKategori: formData.rotRutKategori,
-              avdragProcent: formData.avdragProcent,
-              arbetskostnadExMoms:
-                typeof formData.arbetskostnadExMoms === "string"
-                  ? Number(formData.arbetskostnadExMoms)
-                  : formData.arbetskostnadExMoms,
-              rotRutAntalTimmar:
-                typeof formData.rotRutAntalTimmar === "string"
-                  ? Number(formData.rotRutAntalTimmar)
-                  : formData.rotRutAntalTimmar,
-              rotRutPrisPerTimme:
-                typeof formData.rotRutPrisPerTimme === "string"
-                  ? Number(formData.rotRutPrisPerTimme)
-                  : formData.rotRutPrisPerTimme,
-              rotRutBeskrivning: formData.rotRutBeskrivning,
-              rotRutStartdatum: formData.rotRutStartdatum,
-              rotRutSlutdatum: formData.rotRutSlutdatum,
-              // Lägg till de nya ROT/RUT-fälten
-              rotRutPersonnummer: formData.personnummer,
-              rotRutFastighetsbeteckning: formData.fastighetsbeteckning,
-              rotRutBoendeTyp: formData.rotBoendeTyp,
-              rotRutBrfOrg: formData.brfOrganisationsnummer,
-              rotRutBrfLagenhet: formData.brfLagenhetsnummer,
-            }
-          : {}),
-      };
-
-      // Spara som favorit
-      await sparaFavoritArtikel(favArtikel);
-
-      // Uppdatera favoritlistan efter att ha sparat
-      try {
-        const uppdateradeFavoriter = await hämtaSparadeArtiklar();
-        setFavoritArtiklar((uppdateradeFavoriter as FavoritArtikel[]) || []);
-      } catch (error) {
-        console.error("Fel vid uppdatering av favoritlistan:", error);
-      }
-    }
 
     // Skapa den uppdaterade artikellistan
     const uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
@@ -215,12 +146,69 @@ export default function ProdukterTjanster() {
     setMoms(25);
     setValuta("SEK");
     setTyp("vara");
-    setSaveAsFavorite(false);
 
     setTimeout(() => {
       setBlinkIndex(formData.artiklar?.length ?? 0);
       setTimeout(() => setBlinkIndex(null), 500);
     }, 50);
+  };
+
+  const handleSaveAsFavorite = async () => {
+    if (!beskrivning.trim()) {
+      alert("❌ Beskrivning krävs för att spara som favorit");
+      return;
+    }
+
+    try {
+      // Skapa favoritartikeln
+      const favArtikel: Artikel = {
+        beskrivning,
+        antal,
+        prisPerEnhet,
+        moms,
+        valuta,
+        typ,
+        // Inkludera ROT/RUT-data om det finns
+        ...(formData.rotRutAktiverat
+          ? {
+              rotRutTyp: formData.rotRutTyp,
+              rotRutKategori: formData.rotRutKategori,
+              avdragProcent: formData.avdragProcent,
+              arbetskostnadExMoms:
+                typeof formData.arbetskostnadExMoms === "string"
+                  ? Number(formData.arbetskostnadExMoms)
+                  : formData.arbetskostnadExMoms,
+              rotRutBeskrivning: formData.rotRutBeskrivning,
+              rotRutStartdatum: formData.rotRutStartdatum,
+              rotRutSlutdatum: formData.rotRutSlutdatum,
+              rotRutPersonnummer: formData.personnummer,
+              rotRutFastighetsbeteckning: formData.fastighetsbeteckning,
+              rotRutBoendeTyp: formData.rotBoendeTyp,
+              rotRutBrfOrg: formData.brfOrganisationsnummer,
+              rotRutBrfLagenhet: formData.brfLagenhetsnummer,
+            }
+          : {}),
+      };
+
+      // Spara till databas
+      const result = await sparaFavoritArtikel(favArtikel);
+
+      if (result.success) {
+        if (result.alreadyExists) {
+          alert("ℹ️ Artikeln finns redan som favorit");
+        } else {
+          // Uppdatera favoritlistan efter att ha sparat
+          const uppdateradeFavoriter = await hämtaSparadeArtiklar();
+          setFavoritArtiklar((uppdateradeFavoriter as FavoritArtikel[]) || []);
+          alert("✅ Sparad som favoritartikel!");
+        }
+      } else {
+        alert("❌ Fel vid sparande av favoritartikel");
+      }
+    } catch (error) {
+      console.error("Fel vid sparande av favoritartikel:", error);
+      alert("❌ Fel vid sparande av favoritartikel");
+    }
   };
 
   const handleRemove = (index: number) => {
@@ -369,56 +357,55 @@ export default function ProdukterTjanster() {
             antal={antal}
             prisPerEnhet={prisPerEnhet}
             moms={moms}
-            valuta={valuta}
             typ={typ}
             onChangeBeskrivning={setBeskrivning}
             onChangeAntal={setAntal}
             onChangePrisPerEnhet={setPrisPerEnhet}
             onChangeMoms={setMoms}
-            onChangeValuta={setValuta}
             onChangeTyp={setTyp}
           />
 
-          <RotRutCheckbox
-            checked={visaRotRutForm}
-            onChange={(checked) => {
-              setVisaRotRutForm(checked);
-              setFormData((prev) => ({
-                ...prev,
-                rotRutAktiverat: checked,
-                ...(checked
-                  ? {}
-                  : {
-                      rotRutTyp: undefined,
-                      rotRutKategori: undefined,
-                      avdragProcent: undefined,
-                      arbetskostnadExMoms: undefined,
-                      avdragBelopp: undefined,
-                      personnummer: undefined,
-                      fastighetsbeteckning: undefined,
-                      rotBoendeTyp: undefined,
-                      brfOrganisationsnummer: undefined,
-                      brfLagenhetsnummer: undefined,
-                    }),
-              }));
-            }}
-            className={checkboxSize}
-            labelClassName={labelSize + " text-white"}
-          />
-
-          {/* Visa RotRutForm endast om användaren själv aktiverat det */}
-          {visaRotRutForm && <RotRutForm showCheckbox={false} />}
-
-          <div className="flex items-center justify-between pt-2">
-            <LäggTillFavoritartikel
-              checked={saveAsFavorite}
-              onChange={setSaveAsFavorite}
-              className={checkboxSize}
-              labelClassName={`text-white cursor-pointer ${labelSize}`}
+          <div className="mb-4">
+            <Knapp
+              onClick={() => {
+                const newValue = !visaRotRutForm;
+                setVisaRotRutForm(newValue);
+                // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
+                if (newValue) {
+                  setTyp("tjänst");
+                }
+                setFormData((prev) => ({
+                  ...prev,
+                  rotRutAktiverat: newValue,
+                  ...(newValue
+                    ? {}
+                    : {
+                        rotRutTyp: undefined,
+                        rotRutKategori: undefined,
+                        avdragProcent: undefined,
+                        arbetskostnadExMoms: undefined,
+                        avdragBelopp: undefined,
+                        personnummer: undefined,
+                        fastighetsbeteckning: undefined,
+                        rotBoendeTyp: undefined,
+                        brfOrganisationsnummer: undefined,
+                        brfLagenhetsnummer: undefined,
+                      }),
+                }));
+              }}
+              text={visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"}
             />
           </div>
 
-          <div className="flex justify-end pt-6 border-t border-slate-600">
+          {/* Visa RotRutForm endast om användaren själv aktiverat det */}
+          {visaRotRutForm && (
+            <div className="border border-slate-500 rounded-lg mt-4">
+              <RotRutForm showCheckbox={false} />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+            <Knapp onClick={handleSaveAsFavorite} text="📌 Lägg till som favoritartikel" />
             <Knapp
               onClick={handleAdd}
               text={loading ? "✚ Sparar…" : "✚ Lägg till och spara"}

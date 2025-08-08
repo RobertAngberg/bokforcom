@@ -38,10 +38,16 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [sparaLoading, setSparaLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
+  const [bokföringsmetod, setBokföringsmetod] = useState<string>("fakturametoden");
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
     status_bokförd?: string;
   }>({});
+
+  // Hämta bokföringsmetod när komponenten laddas
+  useEffect(() => {
+    hämtaBokföringsmetod().then(setBokföringsmetod);
+  }, []);
 
   // Hämta fakturasstatus när formData.id ändras
   useEffect(() => {
@@ -253,6 +259,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
             ? "📊 Bokför"
             : "📊 Spara & Bokför";
 
+  // Dölj bokför-knappen för nya fakturor med kontantmetod
+  const ärKontantmetod = bokföringsmetod === "kontantmetoden";
+  const ärNyFaktura = !formData.id;
+  const doljBokförKnapp = ärKontantmetod && ärNyFaktura;
+
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
 
   const granskKnappText = !harKund
@@ -274,11 +285,13 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         <Knapp onClick={onPreview} text={granskKnappText} disabled={!kanSpara} />
         <ExporteraPDFKnapp disabled={!kanSpara} text={pdfKnappText} />
         <Knapp onClick={onReload} text={återställKnappText} disabled={ärFakturanBetald} />
-        <Knapp
-          onClick={hanteraBokför}
-          text={bokförKnappText}
-          disabled={ärFakturanBetald || !kanSpara || bokförLoading}
-        />
+        {!doljBokförKnapp && (
+          <Knapp
+            onClick={hanteraBokför}
+            text={bokförKnappText}
+            disabled={ärFakturanBetald || !kanSpara || bokförLoading}
+          />
+        )}
       </div>
 
       <SkickaEpost

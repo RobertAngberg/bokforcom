@@ -21,8 +21,6 @@ export type Artikel = {
   rotRutKategori?: string;
   avdragProcent?: number;
   arbetskostnadExMoms?: number;
-  rotRutAntalTimmar?: number;
-  rotRutPrisPerTimme?: number;
   rotRutBeskrivning?: string;
   rotRutStartdatum?: string;
   rotRutSlutdatum?: string;
@@ -72,6 +70,21 @@ export async function saveInvoice(formData: FormData) {
     const isUpdate = !!fakturaIdRaw;
     const fakturaId = isUpdate ? parseInt(fakturaIdRaw!.toString(), 10) : undefined;
 
+    // För nya fakturor: sätt dagens datum som default om inget fakturadatum anges
+    const fakturaDateString = isUpdate
+      ? fakturadatum
+      : fakturadatum || new Date().toISOString().split("T")[0];
+
+    // För nya fakturor: sätt 30 dagar från idag som default för förfallodatum om inget anges
+    const forfalloDatumsString = isUpdate
+      ? forfallodatum
+      : forfallodatum ||
+        (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 30);
+          return d.toISOString().split("T")[0];
+        })();
+
     if (isUpdate && fakturaId) {
       // ta bort och lägger till helt nytt längre ner
       await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [fakturaId]);
@@ -90,8 +103,8 @@ export async function saveInvoice(formData: FormData) {
         WHERE id = $10 AND "userId" = $11`,
         [
           formData.get("fakturanummer"),
-          fakturadatum,
-          forfallodatum,
+          fakturaDateString,
+          forfalloDatumsString,
           formData.get("betalningsmetod"),
           formData.get("betalningsvillkor"),
           formData.get("drojsmalsranta"),
@@ -147,8 +160,8 @@ export async function saveInvoice(formData: FormData) {
         [
           userId,
           fakturanummer,
-          fakturadatum,
-          forfallodatum,
+          fakturaDateString,
+          forfalloDatumsString,
           formData.get("betalningsmetod"),
           formData.get("betalningsvillkor"),
           formData.get("drojsmalsranta"),
@@ -183,8 +196,8 @@ export async function saveInvoice(formData: FormData) {
             rad.rotRutKategori ?? null,
             rad.avdragProcent ?? null,
             rad.arbetskostnadExMoms ?? null,
-            rad.rotRutAntalTimmar ?? null,
-            rad.rotRutPrisPerTimme ?? null,
+            rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
+            rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
             rad.rotRutBeskrivning ?? null,
             rad.rotRutStartdatum
               ? new Date(rad.rotRutStartdatum).toISOString().split("T")[0]
@@ -609,8 +622,8 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         artikel.rotRutKategori ?? null,
         artikel.avdragProcent ?? null,
         artikel.arbetskostnadExMoms ?? null,
-        artikel.rotRutAntalTimmar ?? null,
-        artikel.rotRutPrisPerTimme ?? null,
+        artikel.antal ?? null, // Använd antal istället för rotRutAntalTimmar
+        artikel.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
         artikel.rotRutBeskrivning ?? null,
         artikel.rotRutStartdatum
           ? new Date(artikel.rotRutStartdatum).toISOString().split("T")[0]
@@ -660,8 +673,7 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
       rotRutKategori: row.rot_rut_kategori,
       avdragProcent: row.avdrag_procent,
       arbetskostnadExMoms: row.arbetskostnad_ex_moms,
-      rotRutAntalTimmar: row.rot_rut_antal_timmar,
-      rotRutPrisPerTimme: row.rot_rut_pris_per_timme,
+      // rotRutAntalTimmar och rotRutPrisPerTimme ersätts av antal och prisPerEnhet
       rotRutBeskrivning: row.rot_rut_beskrivning,
       rotRutStartdatum: row.rot_rut_startdatum,
       rotRutSlutdatum: row.rot_rut_slutdatum,
@@ -933,19 +945,41 @@ export async function bokförFaktura(data: BokförFakturaData) {
       const ärBetalning = harBankKonto && harKundfordringar && data.poster.length === 2;
 
       if (ärBetalning) {
-        // Detta är en betalningsregistrering
+        // Detta är en betalningsregistrering (Fakturametoden: Bank → Kundfordringar)
         await client.query(
           "UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4",
           ["Betald", new Date().toISOString().split("T")[0], transaktionsId, data.fakturaId]
         );
         console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till Betald`);
       } else {
-        // Detta är normal bokföring
-        await client.query(
-          "UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3",
-          ["Bokförd", transaktionsId, data.fakturaId]
-        );
-        console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd`);
+        // Kolla om det är kontantmetod (Bank + Försäljning/Moms, men ingen Kundfordringar)
+        const harBankKontantmetod = data.poster.some((p) => p.konto === "1930");
+        const harIngenKundfordringar = !data.poster.some((p) => p.konto === "1510");
+        const ärKontantmetod = harBankKontantmetod && harIngenKundfordringar;
+
+        if (ärKontantmetod) {
+          // Kontantmetod: sätt både bokförd OCH betald
+          await client.query(
+            "UPDATE fakturor SET status_bokförd = $1, status_betalning = $2, betaldatum = $3, transaktions_id = $4 WHERE id = $5",
+            [
+              "Bokförd",
+              "Betald",
+              new Date().toISOString().split("T")[0],
+              transaktionsId,
+              data.fakturaId,
+            ]
+          );
+          console.log(
+            `💰📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd och Betald (kontantmetod)`
+          );
+        } else {
+          // Normal fakturametods-bokföring
+          await client.query(
+            "UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3",
+            ["Bokförd", transaktionsId, data.fakturaId]
+          );
+          console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd`);
+        }
       }
     }
 

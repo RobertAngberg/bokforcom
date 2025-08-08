@@ -8,6 +8,7 @@ import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
+import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 
 // Registrera svensk locale för DatePicker
 registerLocale("sv", sv);
@@ -51,6 +52,17 @@ export default function RotRutForm({}: RotRutFormProps) {
     "VVS",
   ];
 
+  // Sätt dagens datum som default för startdatum om det är tomt
+  useEffect(() => {
+    if (!formData.rotRutStartdatum && formData.rotRutAktiverat) {
+      const today = dateTillÅÅÅÅMMDD(new Date());
+      setFormData((prev) => ({
+        ...prev,
+        rotRutStartdatum: today,
+      }));
+    }
+  }, [formData.rotRutAktiverat, formData.rotRutStartdatum, setFormData]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -80,7 +92,7 @@ export default function RotRutForm({}: RotRutFormProps) {
     }
 
     if (name === "rotRutTyp") {
-      const procent = value === "ROT" ? 30 : value === "RUT" ? 50 : undefined;
+      const procent = value === "ROT" ? 50 : value === "RUT" ? 50 : undefined; // 50% för både ROT och RUT
       const isActive = value === "ROT" || value === "RUT";
       setFormData((prev) => ({
         ...prev,
@@ -100,27 +112,28 @@ export default function RotRutForm({}: RotRutFormProps) {
 
   // Automatisk beräkning av arbetskostnadExMoms och avdragBelopp
   useEffect(() => {
-    if (formData.rotRutAktiverat && formData.rotRutAntalTimmar && formData.rotRutPrisPerTimme) {
-      const antalTimmar =
-        typeof formData.rotRutAntalTimmar === "string"
-          ? parseFloat(formData.rotRutAntalTimmar)
-          : formData.rotRutAntalTimmar;
+    // Använd antal och prisPerEnhet från nyArtikel istället för de borttagna fälten
+    if (formData.rotRutAktiverat && nyArtikel.antal && nyArtikel.prisPerEnhet) {
+      const antalTimmar = parseFloat(nyArtikel.antal);
+      const prisPerTimme = parseFloat(nyArtikel.prisPerEnhet);
 
-      const prisPerTimme =
-        typeof formData.rotRutPrisPerTimme === "string"
-          ? parseFloat(formData.rotRutPrisPerTimme)
-          : formData.rotRutPrisPerTimme;
+      // Kontrollera att vi har giltiga nummer
+      if (isNaN(antalTimmar) || isNaN(prisPerTimme)) {
+        return;
+      }
 
       const arbetskostnadExMoms = antalTimmar * prisPerTimme;
 
       // Beräkna avdragBelopp om procentsats finns
       let avdragBelopp = undefined;
       if (formData.avdragProcent !== undefined) {
-        // Hämta momssats från första tjänsteartikel, annars 25%
+        // Hämta momssats från nyArtikel eller använd 25% som standard
         let moms = 25;
-        const tjänsteArtiklar = artiklar.filter((a) => a.typ === "tjänst");
-        if (tjänsteArtiklar.length > 0 && tjänsteArtiklar[0].moms !== undefined) {
-          moms = Number(tjänsteArtiklar[0].moms);
+        if (nyArtikel.moms) {
+          const parsedMoms = parseFloat(nyArtikel.moms);
+          if (!isNaN(parsedMoms)) {
+            moms = parsedMoms;
+          }
         }
 
         // Räkna ut arbetskostnad inkl moms
@@ -136,12 +149,13 @@ export default function RotRutForm({}: RotRutFormProps) {
       }));
     }
   }, [
-    formData.rotRutAntalTimmar,
-    formData.rotRutPrisPerTimme,
+    nyArtikel.antal,
+    nyArtikel.prisPerEnhet,
     formData.avdragProcent,
     formData.rotRutAktiverat,
     artiklar,
     setFormData,
+    nyArtikel.moms,
   ]);
 
   // Automatisk ifyllning av arbetskostnad från nyArtikel eller artikel
@@ -232,51 +246,20 @@ export default function RotRutForm({}: RotRutFormProps) {
             </div>
           )}
 
-          {/* Två kolumner för alla fält */}
+          {/* ROT/RUT-specifika fält */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-white font-semibold mb-1">Antal timmar *</label>
-              <input
-                type="number"
-                name="rotRutAntalTimmar"
-                value={formData.rotRutAntalTimmar ?? ""}
-                onChange={handleChange}
-                step="0.5"
-                min="0"
-                placeholder="Ex: 8"
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-white font-semibold mb-1">
-                Pris per timme exkl. moms *
-              </label>
-              <input
-                type="number"
-                name="rotRutPrisPerTimme"
-                value={formData.rotRutPrisPerTimme ?? ""}
-                onChange={handleChange}
-                step="0.01"
-                min="0"
-                placeholder="Ex: 500"
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
-                required
-              />
-            </div>
-
-            {/* Visa beräknad arbetskostnad */}
-            {formData.rotRutAntalTimmar && formData.rotRutPrisPerTimme && (
+            {/* Visa beräknad arbetskostnad baserat på huvudformulär */}
+            {nyArtikel.antal && nyArtikel.prisPerEnhet && (
               <div className="md:col-span-2 p-3 bg-slate-700 rounded">
                 <div className="text-white">
                   <span className="font-semibold">Beräknad arbetskostnad exkl. moms:</span>{" "}
-                  {(
-                    Number(formData.rotRutAntalTimmar) * Number(formData.rotRutPrisPerTimme)
-                  ).toLocaleString("sv-SE", {
-                    style: "currency",
-                    currency: "SEK",
-                  })}
+                  {(Number(nyArtikel.antal) * Number(nyArtikel.prisPerEnhet)).toLocaleString(
+                    "sv-SE",
+                    {
+                      style: "currency",
+                      currency: "SEK",
+                    }
+                  )}
                 </div>
               </div>
             )}
@@ -305,7 +288,9 @@ export default function RotRutForm({}: RotRutFormProps) {
                 Startdatum för arbetet *
               </label>
               <DatePicker
-                selected={formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : null}
+                selected={
+                  formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : new Date()
+                }
                 onChange={(date) => {
                   setFormData((prev) => ({
                     ...prev,

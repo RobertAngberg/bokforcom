@@ -62,7 +62,11 @@ export default function FavoritArtiklarList({
                 <div onClick={() => onSelect(a)} className="flex-1">
                   <div className="text-white font-semibold">📌 {a.beskrivning}</div>
                   <div className="text-gray-400 text-sm mt-1">
-                    {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
+                    {a.antal} × {a.prisPerEnhet} {a.valuta} ={" "}
+                    {(a.antal * a.prisPerEnhet).toLocaleString("sv-SE")} {a.valuta}
+                  </div>
+                  <div className="text-gray-400 text-sm">
+                    ({a.moms}% moms) — {a.typ}
                     {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
                   </div>
                 </div>

@@ -18,19 +18,35 @@ export default function RotRutInfo({ formData }: RotRutInfoProps) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          {formData.rotRutAntalTimmar && formData.rotRutPrisPerTimme ? (
-            <>
-              <div>
-                <span className="font-semibold">Antal timmar:</span> {formData.rotRutAntalTimmar} h
-              </div>
-              <div>
-                <span className="font-semibold">Pris per timme exkl. moms:</span>{" "}
-                {Number(formData.rotRutPrisPerTimme).toLocaleString("sv-SE", {
-                  style: "currency",
-                  currency: "SEK",
-                })}
-              </div>
-            </>
+          {/* Visa information från ROT/RUT-artiklar */}
+          {formData.artiklar && formData.artiklar.some((a: any) => a.rotRutTyp) ? (
+            (() => {
+              const rotRutArtiklar = formData.artiklar.filter((a: any) => a.rotRutTyp);
+              const totalAntal = rotRutArtiklar.reduce(
+                (sum: number, a: any) => sum + (a.antal || 0),
+                0
+              );
+              const genomsnittsPris =
+                rotRutArtiklar.length > 0
+                  ? rotRutArtiklar.reduce((sum: number, a: any) => sum + (a.prisPerEnhet || 0), 0) /
+                    rotRutArtiklar.length
+                  : 0;
+
+              return (
+                <>
+                  <div>
+                    <span className="font-semibold">Antal timmar:</span> {totalAntal} h
+                  </div>
+                  <div>
+                    <span className="font-semibold">Genomsnittligt pris per timme exkl. moms:</span>{" "}
+                    {genomsnittsPris.toLocaleString("sv-SE", {
+                      style: "currency",
+                      currency: "SEK",
+                    })}
+                  </div>
+                </>
+              );
+            })()
           ) : (
             <div>
               <span className="font-semibold">Arbetskostnad exkl. moms:</span>{" "}

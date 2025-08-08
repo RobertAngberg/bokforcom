@@ -94,7 +94,13 @@ function NyFakturaComponent({ kunder, artiklar }: { kunder: any[]; artiklar: any
               Tillbaka
             </Link>
           </div>
-          <h1 className="text-2xl text-center w-full">Ny Faktura</h1>
+          <h1 className="text-2xl text-center w-full">
+            {formData.fakturanummer && formData.kundnamn
+              ? `🧾 Faktura #${formData.fakturanummer} - ${formData.kundnamn}`
+              : formData.fakturanummer
+                ? `🧾 Faktura #${formData.fakturanummer}`
+                : "Ny Faktura"}
+          </h1>
         </div>
 
         <AnimeradFlik title="Avsändare" icon="🧑‍💻">

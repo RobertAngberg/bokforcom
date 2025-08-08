@@ -5,13 +5,11 @@ interface ArtikelFormProps {
   antal: number;
   prisPerEnhet: number;
   moms: number;
-  valuta: string;
   typ: "vara" | "tjänst";
   onChangeBeskrivning: (v: string) => void;
   onChangeAntal: (v: number) => void;
   onChangePrisPerEnhet: (v: number) => void;
   onChangeMoms: (v: number) => void;
-  onChangeValuta: (v: string) => void;
   onChangeTyp: (v: "vara" | "tjänst") => void;
 }
 
@@ -20,13 +18,11 @@ export default function ArtikelForm({
   antal,
   prisPerEnhet,
   moms,
-  valuta,
   typ,
   onChangeBeskrivning,
   onChangeAntal,
   onChangePrisPerEnhet,
   onChangeMoms,
-  onChangeValuta,
   onChangeTyp,
 }: ArtikelFormProps) {
   return (
@@ -55,20 +51,6 @@ export default function ArtikelForm({
         value={moms.toString()}
         onChange={(e) => onChangeMoms(parseFloat(e.target.value))}
       />
-      <div>
-        <label htmlFor="valuta" className="block text-sm font-medium text-white mb-2">
-          Valuta
-        </label>
-        <select
-          id="valuta"
-          value={valuta}
-          onChange={(e) => onChangeValuta(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white"
-        >
-          <option value="SEK">SEK</option>
-          <option value="EUR">EUR</option>
-        </select>
-      </div>
       <div>
         <label htmlFor="typ" className="block text-sm font-medium text-white mb-2">
           Typ

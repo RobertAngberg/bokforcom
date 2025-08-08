@@ -130,7 +130,7 @@ export default function Betalning() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-white mb-2">Fakturadatum</label>
           <DatePicker
@@ -170,9 +170,7 @@ export default function Betalning() {
           value={formData.drojsmalsranta ?? ""}
           onChange={hanteraÄndradText}
         />
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-white mb-2">Välj betalningsmetod</label>
           <select

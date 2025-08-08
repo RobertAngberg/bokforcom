@@ -248,6 +248,8 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
 
       if (result.success) {
         alert(`✅ ${result.message}`);
+        // Skicka event för att uppdatera fakturaslistan
+        window.dispatchEvent(new Event("reloadFakturor"));
         onClose();
       } else {
         alert(`❌ Bokföringsfel: ${result.error}`);
@@ -369,7 +371,7 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
               "💰 Intäkten är redan registrerad, nu registreras betalningen."
             : ärKontantmetod
               ? // Kontantmetod - intäkt och betalning samtidigt
-                "💡 Intäkten registreras när betalning kommer in."
+                "💡 Intäkten och betalningen registreras samtidigt till Bank/Kassa."
               : // Fakturametoden - intäkt först, betalning senare
                 "💡 Intäkten registreras nu, betalning bokförs senare."}
         </div>

@@ -105,8 +105,7 @@ function FakturorComponent({
         rotRutKategori: rad.rot_rut_kategori ?? rad.rotRutKategori,
         avdragProcent: rad.avdrag_procent ?? rad.avdragProcent,
         arbetskostnadExMoms: rad.arbetskostnad_ex_moms ?? rad.arbetskostnadExMoms,
-        rotRutAntalTimmar: rad.rot_rut_antal_timmar ?? rad.rotRutAntalTimmar,
-        rotRutPrisPerTimme: rad.rot_rut_pris_per_timme ?? rad.rotRutPrisPerTimme,
+        // rotRutAntalTimmar och rotRutPrisPerTimme ersätts av antal och prisPerEnhet
         rotRutBeskrivning: rad.rot_rut_beskrivning ?? rad.rotRutBeskrivning,
         rotRutStartdatum: rad.rot_rut_startdatum ?? rad.rotRutStartdatum,
         rotRutSlutdatum: rad.rot_rut_slutdatum ?? rad.rotRutSlutdatum,
@@ -116,7 +115,7 @@ function FakturorComponent({
         !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rot_rut_typ),
       rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rot_rut_typ)?.rot_rut_typ || undefined,
       rotRutKategori:
-        rotRut.kategori ||
+        (rotRut as any).rot_rut_kategori ||
         artiklar.find((a: any) => a.rot_rut_kategori)?.rot_rut_kategori ||
         undefined,
       avdragProcent:
@@ -135,23 +134,17 @@ function FakturorComponent({
       brfLagenhetsnummer: rotRut.brf_lagenhetsnummer || "",
       // Nya ROT/RUT-fält från rot_rut-tabellen eller första artikeln
       rotRutBeskrivning:
-        rotRut.beskrivning ||
+        (rotRut as any).rot_rut_beskrivning ||
         artiklar.find((a: any) => a.rot_rut_beskrivning)?.rot_rut_beskrivning ||
         "",
       rotRutStartdatum:
-        rotRut.startdatum ||
+        (rotRut as any).rot_rut_startdatum ||
         artiklar.find((a: any) => a.rot_rut_startdatum)?.rot_rut_startdatum ||
         "",
       rotRutSlutdatum:
-        rotRut.slutdatum || artiklar.find((a: any) => a.rot_rut_slutdatum)?.rot_rut_slutdatum || "",
-      rotRutAntalTimmar:
-        rotRut.antal_timmar ||
-        artiklar.find((a: any) => a.rot_rut_antal_timmar)?.rot_rut_antal_timmar ||
-        undefined,
-      rotRutPrisPerTimme:
-        rotRut.pris_per_timme ||
-        artiklar.find((a: any) => a.rot_rut_pris_per_timme)?.rot_rut_pris_per_timme ||
-        undefined,
+        (rotRut as any).rot_rut_slutdatum ||
+        artiklar.find((a: any) => a.rot_rut_slutdatum)?.rot_rut_slutdatum ||
+        "",
     }));
     setShowAllFlikar(true);
   };
@@ -200,13 +193,25 @@ function FakturorComponent({
   }, []);
   //#endregion
 
+  // Funktion för att hantera tillbaka-klick
+  const hanteraTillbaka = async () => {
+    setShowAllFlikar(false);
+    // Uppdatera fakturaslistan när vi går tillbaka
+    try {
+      const nyaFakturor = await hämtaSparadeFakturor();
+      setFakturor(nyaFakturor);
+    } catch (error) {
+      console.error("Fel vid uppdatering av fakturaslista:", error);
+    }
+  };
+
   return (
     <>
       <MainLayout>
         <div className="relative mb-8 flex items-center justify-center">
           {showAllFlikar && (
             <div className="absolute left-0 top-1">
-              <TillbakaPil onClick={() => setShowAllFlikar(false)} className="">
+              <TillbakaPil onClick={hanteraTillbaka} className="">
                 Tillbaka
               </TillbakaPil>
             </div>
