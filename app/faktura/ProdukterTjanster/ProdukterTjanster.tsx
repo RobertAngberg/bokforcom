@@ -594,7 +594,7 @@ export default function ProdukterTjanster() {
   //#endregion
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <FavoritArtiklarList
         favoritArtiklar={favoritArtiklar}
         showFavoritArtiklar={showFavoritArtiklar}
@@ -613,42 +613,26 @@ export default function ProdukterTjanster() {
       />
 
       {/* Knapp för att visa/dölja artikelformuläret */}
-      <div>
-        {!visaArtikelForm ? (
-          <button
-            onClick={handleToggleArtikelForm}
-            className="bg-cyan-700 hover:bg-cyan-800 text-white px-4 py-2 rounded font-medium transition-colors duration-150"
-          >
-            <span className="text-green-400 font-bold mr-2">+</span>
-            Lägg till ny artikel
-          </button>
-        ) : (
-          <Knapp onClick={handleToggleArtikelForm} text="❌ Avsluta lägg till ny artikel" />
-        )}
-      </div>
-      {/* Visa "Lägg till artikel"-knapp när man redigerar */}
-      {redigerarIndex !== null && (
-        <div className="text-center">
-          <Knapp onClick={handleResetForm} text="✚ Lägg till en till artikel" />
+      <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+        {/* Knapp som header */}
+        <div className="border-b border-slate-600">
+          {visaArtikelForm ? (
+            <Knapp
+              onClick={handleToggleArtikelForm}
+              text="❌ Avsluta lägg till ny artikel"
+              className="w-full rounded-none border-none"
+            />
+          ) : (
+            <Knapp
+              onClick={handleToggleArtikelForm}
+              text="✚ Lägg till ny artikel"
+              className="w-full rounded-none border-none"
+            />
+          )}
         </div>
-      )}
 
-      {/* Visa "Lägg till artikel"-knapp när favoritartikel är vald */}
-      {favoritArtikelVald && (
-        <div className="text-center mb-4">
-          <Knapp onClick={handleAdd} text="✚ Lägg till artikel" />
-        </div>
-      )}
-
-      {/* Formulär för att lägga till/redigera artikel - visa när visaArtikelForm är true ELLER när man redigerar */}
-      {(visaArtikelForm || redigerarIndex !== null) && (
-        <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
-            <h3 className="text-white font-medium">Skapa och lägg till vara / tjänst</h3>
-          </div>
-
-          {/* Formulär innehåll */}
+        {/* Formulär som expanderar nedåt */}
+        {visaArtikelForm && (
           <div className="p-4 space-y-4">
             <ArtikelForm
               beskrivning={beskrivning}
@@ -663,132 +647,29 @@ export default function ProdukterTjanster() {
               onChangeTyp={setTyp}
               disabled={favoritArtikelVald}
             />
-
-            {/* Visa ROT/RUT-knapp endast om favoritartikel INTE är vald */}
-            {!favoritArtikelVald && (
-              <div className="mb-4">
-                <Knapp
-                  onClick={() => {
-                    // Blockera ROT/RUT för varor
-                    if (typ === "vara") {
-                      alert(
-                        "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
-                      );
-                      return;
-                    }
-
-                    const newValue = !visaRotRutForm;
-                    setVisaRotRutForm(newValue);
-                    // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
-                    if (newValue) {
-                      setTyp("tjänst");
-                    }
-                    setFormData((prev) => ({
-                      ...prev,
-                      rotRutAktiverat: newValue,
-                      ...(newValue
-                        ? {}
-                        : {
-                            rotRutTyp: undefined,
-                            rotRutKategori: undefined,
-                            avdragProcent: undefined,
-                            arbetskostnadExMoms: undefined,
-                            avdragBelopp: undefined,
-                            personnummer: undefined,
-                            fastighetsbeteckning: undefined,
-                            rotBoendeTyp: undefined,
-                            brfOrganisationsnummer: undefined,
-                            brfLagenhetsnummer: undefined,
-                          }),
-                    }));
-                  }}
-                  text={
-                    visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"
-                  }
-                  disabled={typ === "vara" || redigerarIndex !== null}
-                  className={
-                    typ === "vara" || redigerarIndex !== null ? "opacity-50 cursor-not-allowed" : ""
-                  }
-                />
-              </div>
-            )}
-
-            {/* Visa RotRutForm endast om användaren själv aktiverat det */}
-            {visaRotRutForm && (
-              <div className="border border-slate-500 rounded-lg mt-4">
-                <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
-              </div>
-            )}
-
-            {/* Visa beräknat avdrag om ROT/RUT är aktiverat och det finns artiklar */}
-            {formData.rotRutAktiverat &&
-              formData.rotRutTyp &&
-              formData.artiklar &&
-              formData.artiklar.length > 0 &&
-              (() => {
-                // Beräkna totalt avdrag baserat på alla artiklar
-                const totalSumExkl = formData.artiklar.reduce(
-                  (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet,
-                  0
-                );
-                const totalMoms = formData.artiklar.reduce((sum, artikel) => {
-                  return sum + artikel.antal * artikel.prisPerEnhet * (artikel.moms / 100);
-                }, 0);
-                const totalInklMoms = totalSumExkl + totalMoms;
-                // Använd sparad avdragsprocent om den finns, annars 50% för både ROT och RUT
-                const avdragProcent = formData.avdragProcent || 50;
-                const beraknatAvdrag = totalInklMoms * (avdragProcent / 100);
-
-                return (
-                  <div className="p-3 bg-slate-800 border border-slate-600 rounded-lg">
-                    <div className="text-white font-semibold text-sm">
-                      📊 Beräknat {formData.rotRutTyp}-avdrag ({avdragProcent}%):
-                    </div>
-                    <div className="text-green-400 font-bold text-lg">
-                      {beraknatAvdrag.toLocaleString("sv-SE", {
-                        style: "currency",
-                        currency: "SEK",
-                      })}
-                    </div>
-                    <div className="text-gray-400 text-xs mt-1">
-                      Baserat på totalsumma inkl. moms:{" "}
-                      {totalInklMoms.toLocaleString("sv-SE", {
-                        style: "currency",
-                        currency: "SEK",
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-            {/* Visa knappar endast om favoritartikel INTE är vald */}
-            {!favoritArtikelVald && (
-              <div className="flex items-center justify-between pt-6 border-t border-slate-600">
-                <Knapp
-                  onClick={handleSaveAsFavorite}
-                  text="📌 Lägg till som favoritartikel"
-                  disabled={
-                    !beskrivning.trim() ||
-                    !antal ||
-                    !prisPerEnhet ||
-                    Number(prisPerEnhet) <= 0 ||
-                    redigerarIndex !== null ||
-                    favoritArtikelVald ||
-                    artikelSparadSomFavorit
-                  }
-                />
-                <Knapp
-                  onClick={handleAdd}
-                  text={redigerarIndex !== null ? "💾 Uppdatera artikel" : "✚ Lägg till artikel"}
-                  disabled={!beskrivning.trim()}
-                />
-              </div>
-            )}
           </div>
+        )}
+      </div>
+      {/* Visa "Lägg till artikel"-knapp när man redigerar */}
+      {redigerarIndex !== null && (
+        <div className="text-center">
+          <Knapp onClick={handleResetForm} text="✚ Lägg till en till artikel" />
         </div>
       )}
-      {/* Redigeringsformulär - visa när artikel redigeras */}
-      {redigerarIndex !== null && (
+
+      {/* Visa "Lägg till artikel"-knapp när favoritartikel är vald */}
+      {favoritArtikelVald && (
+        <div className="mb-4">
+          <Knapp
+            onClick={handleAdd}
+            text="✚ Lägg till artikel"
+            className="w-full bg-green-800 hover:bg-green-700"
+          />
+        </div>
+      )}
+
+      {/* Redigeringsformulär - visa när artikel redigeras OCH expandable form INTE visas */}
+      {redigerarIndex !== null && !visaArtikelForm && (
         <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
           {/* Header */}
           <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
