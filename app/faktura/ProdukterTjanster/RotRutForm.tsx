@@ -15,10 +15,11 @@ registerLocale("sv", sv);
 
 type RotRutFormProps = {
   showCheckbox?: boolean;
+  disabled?: boolean;
 };
 //#endregion
 
-export default function RotRutForm({}: RotRutFormProps) {
+export default function RotRutForm({ disabled = false }: RotRutFormProps) {
   const { formData, setFormData, nyArtikel } = useFakturaContext();
   // Använd useMemo för artiklar för att slippa eslint-varning
   const artiklar = useMemo(() => formData.artiklar || [], [formData.artiklar]);
@@ -219,7 +220,10 @@ export default function RotRutForm({}: RotRutFormProps) {
               name="rotRutTyp"
               value={formData.rotRutTyp ?? ""}
               onChange={handleChange}
-              className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
+              disabled={disabled}
+              className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                disabled ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <option value="">Välj typ</option>
               <option value="ROT">ROT</option>
@@ -234,7 +238,10 @@ export default function RotRutForm({}: RotRutFormProps) {
                 name="rotRutKategori"
                 value={formData.rotRutKategori ?? ""}
                 onChange={handleChange}
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
+                disabled={disabled}
+                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <option value="">Välj kategori</option>
                 {(formData.rotRutTyp === "ROT" ? rotKategorier : rutKategorier).map((kategori) => (
@@ -274,7 +281,10 @@ export default function RotRutForm({}: RotRutFormProps) {
                 value={formData.rotRutBeskrivning ?? ""}
                 onChange={handleChange}
                 placeholder="Beskriv de avdraggivna tjänsterna..."
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white h-20 resize-none"
+                disabled={disabled}
+                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white h-20 resize-none ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 required
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -300,7 +310,10 @@ export default function RotRutForm({}: RotRutFormProps) {
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 placeholderText="Välj startdatum"
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
+                disabled={disabled}
+                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 required
               />
             </div>
@@ -321,7 +334,10 @@ export default function RotRutForm({}: RotRutFormProps) {
                 minDate={
                   formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : undefined
                 }
-                className="w-full p-2 rounded bg-slate-900 border border-slate-700 text-white"
+                disabled={disabled}
+                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 required
               />
             </div>
@@ -335,6 +351,7 @@ export default function RotRutForm({}: RotRutFormProps) {
               onChange={handleChange}
               placeholder="YYYYMMDD-XXXX"
               required={true}
+              disabled={disabled}
             />
 
             {formData.rotRutTyp === "ROT" && (
@@ -348,6 +365,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                         name="rotBoendeTyp"
                         value="fastighet"
                         checked={formData.rotBoendeTyp !== "brf"}
+                        disabled={disabled}
                         onChange={() =>
                           setFormData((prev) => ({
                             ...prev,
@@ -357,7 +375,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                             brfLagenhetsnummer: "",
                           }))
                         }
-                        className="mr-2"
+                        className={`mr-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                       />
                       Fastighetsbeteckning
                     </label>
@@ -367,6 +385,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                         name="rotBoendeTyp"
                         value="brf"
                         checked={formData.rotBoendeTyp === "brf"}
+                        disabled={disabled}
                         onChange={() =>
                           setFormData((prev) => ({
                             ...prev,
@@ -376,7 +395,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                             brfLagenhetsnummer: "",
                           }))
                         }
-                        className="mr-2"
+                        className={`mr-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                       />
                       Bostadsrättsförening
                     </label>
@@ -391,6 +410,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                     value={formData.fastighetsbeteckning ?? ""}
                     onChange={handleChange}
                     required={true}
+                    disabled={disabled}
                   />
                 )}
                 {/* Bostadsrättsförening */}
@@ -403,6 +423,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                       value={formData.brfOrganisationsnummer ?? ""}
                       onChange={handleChange}
                       required={true}
+                      disabled={disabled}
                     />
                     <TextFalt
                       label="Lägenhetsnummer"
@@ -411,6 +432,7 @@ export default function RotRutForm({}: RotRutFormProps) {
                       value={formData.brfLagenhetsnummer ?? ""}
                       onChange={handleChange}
                       required={true}
+                      disabled={disabled}
                     />
                   </div>
                 )}

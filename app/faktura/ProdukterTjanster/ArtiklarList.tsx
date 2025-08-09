@@ -26,6 +26,7 @@ interface ArtiklarListProps {
   blinkIndex: number | null;
   onRemove: (idx: number) => void;
   onEdit?: (artikel: Artikel, idx: number) => void;
+  onShow?: (artikel: Artikel) => void;
 }
 
 export default function ArtiklarList({
@@ -33,6 +34,7 @@ export default function ArtiklarList({
   blinkIndex,
   onRemove,
   onEdit,
+  onShow,
 }: ArtiklarListProps) {
   if (artiklar.length === 0) return null;
 
@@ -56,10 +58,10 @@ export default function ArtiklarList({
               className="flex-1 cursor-pointer"
               onClick={() => {
                 console.log("🔍 ArtiklarList: Klick registrerat på artikel:", a);
-                console.log("🔍 ArtiklarList: onEdit finns?", !!onEdit);
-                onEdit?.(a, idx);
+                console.log("🔍 ArtiklarList: onShow finns?", !!onShow);
+                onShow?.(a);
               }}
-              title="Klicka för att redigera"
+              title="Klicka för att visa detaljer"
             >
               <div className="text-white font-semibold flex items-center">
                 <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
@@ -70,17 +72,19 @@ export default function ArtiklarList({
                 {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
               </div>
             </div>
-            <button
-              onClick={() => {
-                if (confirm(`Ta bort "${a.beskrivning}"?`)) {
-                  onRemove(idx);
-                }
-              }}
-              className="text-red-400 hover:text-red-600 p-1 ml-2"
-              title="Ta bort artikel"
-            >
-              🗑️
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (confirm(`Ta bort "${a.beskrivning}"?`)) {
+                    onRemove(idx);
+                  }
+                }}
+                className="text-red-400 hover:text-red-600 p-1"
+                title="Ta bort artikel"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
         ))}
       </div>

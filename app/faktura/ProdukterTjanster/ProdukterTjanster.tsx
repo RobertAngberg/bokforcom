@@ -10,6 +10,7 @@ import {
   deleteFavoritArtikel,
 } from "../actions";
 import Knapp from "../../_components/Knapp";
+import Modal from "../../_components/Modal";
 import RotRutForm from "./RotRutForm";
 import FavoritArtiklarList from "./FavoritArtiklarList";
 import ArtiklarList from "./ArtiklarList";
@@ -71,6 +72,11 @@ export default function ProdukterTjanster() {
   const [blinkIndex, setBlinkIndex] = useState<number | null>(null);
   const [visaRotRutForm, setVisaRotRutForm] = useState(false);
   const [ursprungligFavoritId, setUrsprungligFavoritId] = useState<number | null>(null);
+  const [redigerarIndex, setRedigerarIndex] = useState<number | null>(null); // Nytt: håll reda på vilket index som redigeras
+  const [favoritArtikelVald, setFavoritArtikelVald] = useState(false); // Nytt: håll reda på om en favoritartikel är vald
+  const [visaArtikelForm, setVisaArtikelForm] = useState(false); // Nytt: visa/dölj artikelformuläret
+  const [visaArtikelModal, setVisaArtikelModal] = useState(false); // Modal för att visa artikeldetaljer
+  const [valtArtikel, setValtArtikel] = useState<Artikel | null>(null); // Den valda artikeln för modalen
   //#endregion
 
   //#region Ladda favoritartiklar
@@ -108,6 +114,16 @@ export default function ProdukterTjanster() {
 
   //#region Handlers
   const handleAdd = async () => {
+    console.log("🔍 handleAdd körs - DEBUG INFO:", {
+      beskrivning: beskrivning,
+      beskrivningTrimmed: beskrivning.trim(),
+      beskrivningLength: beskrivning.length,
+      antal: antal,
+      prisPerEnhet: prisPerEnhet,
+      favoritArtikelVald: favoritArtikelVald,
+      redigerarIndex: redigerarIndex,
+    });
+
     if (!beskrivning.trim()) {
       alert("❌ Beskrivning krävs");
       return;
@@ -152,13 +168,30 @@ export default function ProdukterTjanster() {
     };
 
     // Skapa den uppdaterade artikellistan
-    const uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
+    let uppdateradeArtiklar;
 
-    // Lägg till artikeln i listan (UTAN att spara till databas än)
+    if (redigerarIndex !== null) {
+      // Uppdatera befintlig artikel
+      uppdateradeArtiklar = [...(formData.artiklar ?? [])];
+      uppdateradeArtiklar[redigerarIndex] = newArtikel;
+    } else {
+      // Lägg till ny artikel
+      uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
+    }
+
+    // Uppdatera artikellistan
+    console.log("🔍 Före artikeluppdatering:", {
+      artiklarAntal: formData.artiklar?.length ?? 0,
+      redigerarIndex: redigerarIndex,
+      nyArtikelBeskrivning: newArtikel.beskrivning,
+    });
+
     setFormData((prev) => ({
       ...prev,
       artiklar: uppdateradeArtiklar,
     }));
+
+    console.log("🔍 Efter artikeluppdatering - nya artiklar:", uppdateradeArtiklar.length);
 
     // BORT: Spara inte till databas här - låt användaren själv klicka "Spara faktura"
     // try {
@@ -182,6 +215,9 @@ export default function ProdukterTjanster() {
     setValuta("SEK");
     setTyp("vara");
     setUrsprungligFavoritId(null); // Rensa spårning av ursprunglig favorit
+    setRedigerarIndex(null); // Rensa redigeringsläge
+    setFavoritArtikelVald(false); // Lås upp formuläret
+    setVisaArtikelForm(false); // Stäng formuläret efter att artikel läggs till
 
     // Rensa formulärfälten men behåll ROT/RUT-aktiverat om det finns ROT/RUT-artiklar
     const harRotRutArtiklar = uppdateradeArtiklar.some((artikel: any) => artikel.rotRutTyp);
@@ -210,10 +246,13 @@ export default function ProdukterTjanster() {
     }));
     setVisaRotRutForm(false);
 
-    setTimeout(() => {
-      setBlinkIndex(formData.artiklar?.length ?? 0);
-      setTimeout(() => setBlinkIndex(null), 500);
-    }, 50);
+    // Blinka bara vid ny artikel, inte vid uppdatering
+    if (redigerarIndex === null) {
+      setTimeout(() => {
+        setBlinkIndex(formData.artiklar?.length ?? 0);
+        setTimeout(() => setBlinkIndex(null), 500);
+      }, 50);
+    }
   };
 
   const handleSaveAsFavorite = async () => {
@@ -282,6 +321,39 @@ export default function ProdukterTjanster() {
     }
   };
 
+  const handleResetForm = () => {
+    // Rensa formuläret och avsluta redigeringsläge
+    setBeskrivning("");
+    setAntal(1);
+    setPrisPerEnhet(0);
+    setMoms(25);
+    setValuta("SEK");
+    setTyp("vara");
+    setUrsprungligFavoritId(null);
+    setRedigerarIndex(null);
+    setVisaRotRutForm(false);
+    setFavoritArtikelVald(false); // Lås upp formuläret
+    setVisaArtikelForm(true); // Håll formuläret öppet för ny artikel
+
+    // Rensa ROT/RUT-formuläret
+    setFormData((prev) => ({
+      ...prev,
+      rotRutAktiverat: false,
+      rotRutTyp: undefined,
+      rotRutKategori: undefined,
+      avdragProcent: undefined,
+      arbetskostnadExMoms: undefined,
+      rotRutBeskrivning: "",
+      rotRutStartdatum: "",
+      rotRutSlutdatum: "",
+      personnummer: "",
+      fastighetsbeteckning: "",
+      rotBoendeTyp: undefined,
+      brfOrganisationsnummer: "",
+      brfLagenhetsnummer: "",
+    }));
+  };
+
   const handleRemove = (index: number) => {
     const nyaArtiklar = (formData.artiklar ?? []).filter((_, i) => i !== index);
     setFormData((prev) => ({
@@ -293,6 +365,10 @@ export default function ProdukterTjanster() {
   const handleEdit = (artikel: Artikel, index: number) => {
     console.log("🔍 handleEdit körs med artikel:", artikel);
     console.log("🔍 handleEdit körs med index:", index);
+
+    // Sätt redigeringsindex
+    setRedigerarIndex(index);
+    setVisaArtikelForm(true); // Öppna formuläret för redigering
 
     // Fyll i formuläret med artikelns data
     console.log("🔍 Innan state-uppdateringar:", {
@@ -398,86 +474,26 @@ export default function ProdukterTjanster() {
     console.log("🔍 handleEdit slutförd");
   };
 
-  // När man väljer en favoritartikel: fyll i formuläret för redigering OCH lägg till i listan
+  // När man väljer en favoritartikel: lägg till direkt i listan
   const handleSelectFavorit = (artikel: FavoritArtikel) => {
     console.log("🔍 handleSelectFavorit körs med artikel:", artikel);
 
-    // Sätt ursprungligt favorit-ID för att förhindra dubletter
-    setUrsprungligFavoritId(artikel.id ?? null);
-
-    // FÖRST: Fyll i formulärfälten för redigering
-    setBeskrivning(artikel.beskrivning);
-    setAntal(artikel.antal);
-    setPrisPerEnhet(artikel.prisPerEnhet);
-    setMoms(artikel.moms);
-    setValuta(artikel.valuta);
-    setTyp(artikel.typ);
-
-    console.log("🔍 Fyllde formulärfält:", {
+    // Konvertera FavoritArtikel till Artikel och lägg till direkt i listan
+    const newArtikel: Artikel = {
       beskrivning: artikel.beskrivning,
       antal: artikel.antal,
       prisPerEnhet: artikel.prisPerEnhet,
       moms: artikel.moms,
       valuta: artikel.valuta,
       typ: artikel.typ,
-    });
-
-    // Skapa artikelobjekt för att lägga till i listan
-    const nyArtikel: Artikel = {
-      beskrivning: artikel.beskrivning,
-      antal: artikel.antal,
-      prisPerEnhet: artikel.prisPerEnhet,
-      moms: artikel.moms,
-      valuta: artikel.valuta,
-      typ: artikel.typ,
-      // Markera att denna artikel kommer från en favoritartikel
-      ursprungligFavoritId: artikel.id,
       ...(artikel.rotRutTyp
         ? {
             rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
             rotRutKategori: artikel.rotRutKategori,
-            avdragProcent: 50, // Använd rätt procentsats (50% för både ROT och RUT)
-            arbetskostnadExMoms:
-              typeof artikel.arbetskostnadExMoms === "string"
-                ? Number(artikel.arbetskostnadExMoms)
-                : artikel.arbetskostnadExMoms,
-            // Inkludera ALLA ROT/RUT-fält från favoriten
-            rotRutBeskrivning: artikel.rotRutBeskrivning,
-            rotRutStartdatum: artikel.rotRutStartdatum
-              ? typeof artikel.rotRutStartdatum === "string"
-                ? artikel.rotRutStartdatum
-                : (artikel.rotRutStartdatum as Date).toISOString().split("T")[0]
+            avdragProcent: artikel.avdragProcent ? Number(artikel.avdragProcent) : 50,
+            arbetskostnadExMoms: artikel.arbetskostnadExMoms
+              ? Number(artikel.arbetskostnadExMoms)
               : undefined,
-            rotRutSlutdatum: artikel.rotRutSlutdatum
-              ? typeof artikel.rotRutSlutdatum === "string"
-                ? artikel.rotRutSlutdatum
-                : (artikel.rotRutSlutdatum as Date).toISOString().split("T")[0]
-              : undefined,
-            rotRutPersonnummer: artikel.rotRutPersonnummer,
-            rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning,
-            rotRutBoendeTyp: artikel.rotRutBoendeTyp,
-            rotRutBrfOrg: artikel.rotRutBrfOrg,
-            rotRutBrfLagenhet: artikel.rotRutBrfLagenhet,
-          }
-        : {}),
-    };
-
-    // Lägg till artikeln i "Tillagda artiklar" listan
-    setFormData((prev) => ({
-      ...prev,
-      artiklar: [...(prev.artiklar ?? []), nyArtikel],
-      // Om artikeln har ROT/RUT-data, aktivera det
-      ...(artikel.rotRutTyp
-        ? {
-            rotRutAktiverat: true,
-            rotRutTyp: artikel.rotRutTyp as "ROT" | "RUT",
-            rotRutKategori: artikel.rotRutKategori,
-            avdragProcent: 50, // Använd rätt procentsats (50% för både ROT och RUT)
-            arbetskostnadExMoms:
-              typeof artikel.arbetskostnadExMoms === "string"
-                ? Number(artikel.arbetskostnadExMoms)
-                : artikel.arbetskostnadExMoms,
-            // Lägg till de extra ROT/RUT-fälten
             rotRutBeskrivning: artikel.rotRutBeskrivning || "",
             rotRutStartdatum: artikel.rotRutStartdatum
               ? typeof artikel.rotRutStartdatum === "string"
@@ -489,42 +505,36 @@ export default function ProdukterTjanster() {
                 ? artikel.rotRutSlutdatum
                 : (artikel.rotRutSlutdatum as Date).toISOString().split("T")[0]
               : "",
-            personnummer: artikel.rotRutPersonnummer || "",
-            fastighetsbeteckning: artikel.rotRutFastighetsbeteckning || "",
-            brfOrganisationsnummer: artikel.rotRutBrfOrg || "",
-            brfLagenhetsnummer: artikel.rotRutBrfLagenhet || "",
-            rotRutAntalTimmar:
-              typeof artikel.rotRutAntalTimmar === "string"
-                ? Number(artikel.rotRutAntalTimmar)
-                : artikel.rotRutAntalTimmar,
-            rotRutPrisPerTimme:
-              typeof artikel.rotRutPrisPerTimme === "string"
-                ? Number(artikel.rotRutPrisPerTimme)
-                : artikel.rotRutPrisPerTimme,
+            rotRutPersonnummer: artikel.rotRutPersonnummer || "",
+            rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning || "",
+            rotRutBoendeTyp: artikel.rotRutBoendeTyp,
+            rotRutBrfOrg: artikel.rotRutBrfOrg || "",
+            rotRutBrfLagenhet: artikel.rotRutBrfLagenhet || "",
           }
-        : {
-            rotRutAktiverat: false,
-            rotRutTyp: undefined,
-            rotRutKategori: undefined,
-            avdragProcent: undefined,
-            arbetskostnadExMoms: undefined,
-          }),
+        : {}),
+    };
+
+    // Lägg till artikeln direkt i listan
+    const uppdateradeArtiklar = [...(formData.artiklar ?? []), newArtikel];
+
+    setFormData((prev) => ({
+      ...prev,
+      artiklar: uppdateradeArtiklar,
+      // Om artikeln har ROT/RUT-data, aktivera det
+      ...(artikel.rotRutTyp
+        ? {
+            rotRutAktiverat: true,
+          }
+        : {}),
     }));
 
-    // Visa ROT/RUT-formuläret om artikeln har ROT/RUT-data
-    if (artikel.rotRutTyp) {
-      setVisaRotRutForm(true);
-    } else {
-      setVisaRotRutForm(false);
-    }
+    console.log("🔍 Favoritartikel tillagd direkt i listan:", newArtikel.beskrivning);
 
-    // Sätt blinkindex för att visa att artikeln lades till
+    // Blinka den nya artikeln
     setTimeout(() => {
-      setBlinkIndex(formData.artiklar?.length ?? 0);
+      setBlinkIndex(uppdateradeArtiklar.length - 1);
       setTimeout(() => setBlinkIndex(null), 500);
     }, 50);
-
-    console.log("🔍 handleSelectFavorit slutförd - artikel tillagd i listan");
   };
 
   const handleDeleteFavorit = async (id?: number) => {
@@ -535,6 +545,42 @@ export default function ProdukterTjanster() {
       setFavoritArtiklar((prev) => prev.filter((a) => a.id !== id));
     } else {
       alert("❌ Kunde inte ta bort favoritartikel");
+    }
+  };
+
+  const handleShowArtikelDetaljer = (artikel: Artikel) => {
+    setValtArtikel(artikel);
+    setVisaArtikelModal(true);
+  };
+
+  const handleCloseArtikelModal = () => {
+    setVisaArtikelModal(false);
+    setValtArtikel(null);
+  };
+
+  const handleToggleArtikelForm = () => {
+    const newValue = !visaArtikelForm;
+    setVisaArtikelForm(newValue);
+
+    // Om vi öppnar formuläret för en ny artikel (inte redigering), återställ ROT/RUT-tillståndet
+    if (newValue && redigerarIndex === null) {
+      setVisaRotRutForm(false);
+      setFormData((prev) => ({
+        ...prev,
+        rotRutAktiverat: false,
+        rotRutTyp: undefined,
+        rotRutKategori: undefined,
+        avdragProcent: undefined,
+        arbetskostnadExMoms: undefined,
+        rotRutBeskrivning: "",
+        rotRutStartdatum: "",
+        rotRutSlutdatum: "",
+        personnummer: "",
+        fastighetsbeteckning: "",
+        rotBoendeTyp: undefined,
+        brfOrganisationsnummer: "",
+        brfLagenhetsnummer: "",
+      }));
     }
   };
   //#endregion
@@ -552,6 +598,7 @@ export default function ProdukterTjanster() {
         onToggle={setShowFavoritArtiklar}
         onSelect={handleSelectFavorit}
         onDelete={handleDeleteFavorit}
+        inladdadFavoritId={favoritArtikelVald ? ursprungligFavoritId : null}
       />
 
       <ArtiklarList
@@ -559,116 +606,432 @@ export default function ProdukterTjanster() {
         blinkIndex={blinkIndex}
         onRemove={handleRemove}
         onEdit={handleEdit}
+        onShow={handleShowArtikelDetaljer}
       />
 
-      {/* Formulär för att lägga till ny artikel */}
-      <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
-          <h3 className="text-white font-medium">Skapa och lägg till vara / tjänst</h3>
+      {/* Knapp för att visa/dölja artikelformuläret */}
+      <div>
+        {!visaArtikelForm ? (
+          <button
+            onClick={handleToggleArtikelForm}
+            className="bg-cyan-700 hover:bg-cyan-800 text-white px-4 py-2 rounded font-medium transition-colors duration-150"
+          >
+            <span className="text-green-400 font-bold mr-2">+</span>
+            Lägg till ny artikel
+          </button>
+        ) : (
+          <Knapp onClick={handleToggleArtikelForm} text="❌ Avsluta lägg till ny artikel" />
+        )}
+      </div>
+      {/* Visa "Lägg till artikel"-knapp när man redigerar */}
+      {redigerarIndex !== null && (
+        <div className="text-center">
+          <Knapp onClick={handleResetForm} text="✚ Lägg till en till artikel" />
         </div>
+      )}
 
-        {/* Formulär innehåll */}
-        <div className="p-4 space-y-4">
-          <ArtikelForm
-            beskrivning={beskrivning}
-            antal={antal}
-            prisPerEnhet={prisPerEnhet}
-            moms={moms}
-            typ={typ}
-            onChangeBeskrivning={setBeskrivning}
-            onChangeAntal={setAntal}
-            onChangePrisPerEnhet={setPrisPerEnhet}
-            onChangeMoms={setMoms}
-            onChangeTyp={setTyp}
-          />
+      {/* Visa "Lägg till artikel"-knapp när favoritartikel är vald */}
+      {favoritArtikelVald && (
+        <div className="text-center mb-4">
+          <Knapp onClick={handleAdd} text="✚ Lägg till artikel" />
+        </div>
+      )}
 
-          <div className="mb-4">
-            <Knapp
-              onClick={() => {
-                const newValue = !visaRotRutForm;
-                setVisaRotRutForm(newValue);
-                // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
-                if (newValue) {
-                  setTyp("tjänst");
-                }
-                setFormData((prev) => ({
-                  ...prev,
-                  rotRutAktiverat: newValue,
-                  ...(newValue
-                    ? {}
-                    : {
-                        rotRutTyp: undefined,
-                        rotRutKategori: undefined,
-                        avdragProcent: undefined,
-                        arbetskostnadExMoms: undefined,
-                        avdragBelopp: undefined,
-                        personnummer: undefined,
-                        fastighetsbeteckning: undefined,
-                        rotBoendeTyp: undefined,
-                        brfOrganisationsnummer: undefined,
-                        brfLagenhetsnummer: undefined,
-                      }),
-                }));
-              }}
-              text={visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"}
-            />
+      {/* Formulär för att lägga till/redigera artikel - visa när visaArtikelForm är true ELLER när man redigerar */}
+      {(visaArtikelForm || redigerarIndex !== null) && (
+        <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
+            <h3 className="text-white font-medium">Skapa och lägg till vara / tjänst</h3>
           </div>
 
-          {/* Visa RotRutForm endast om användaren själv aktiverat det */}
-          {visaRotRutForm && (
-            <div className="border border-slate-500 rounded-lg mt-4">
-              <RotRutForm showCheckbox={false} />
+          {/* Formulär innehåll */}
+          <div className="p-4 space-y-4">
+            <ArtikelForm
+              beskrivning={beskrivning}
+              antal={antal}
+              prisPerEnhet={prisPerEnhet}
+              moms={moms}
+              typ={typ}
+              onChangeBeskrivning={setBeskrivning}
+              onChangeAntal={setAntal}
+              onChangePrisPerEnhet={setPrisPerEnhet}
+              onChangeMoms={setMoms}
+              onChangeTyp={setTyp}
+              disabled={favoritArtikelVald}
+            />
+
+            {/* Visa ROT/RUT-knapp endast om favoritartikel INTE är vald */}
+            {!favoritArtikelVald && (
+              <div className="mb-4">
+                <Knapp
+                  onClick={() => {
+                    // Blockera ROT/RUT för varor
+                    if (typ === "vara") {
+                      alert(
+                        "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
+                      );
+                      return;
+                    }
+
+                    const newValue = !visaRotRutForm;
+                    setVisaRotRutForm(newValue);
+                    // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
+                    if (newValue) {
+                      setTyp("tjänst");
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      rotRutAktiverat: newValue,
+                      ...(newValue
+                        ? {}
+                        : {
+                            rotRutTyp: undefined,
+                            rotRutKategori: undefined,
+                            avdragProcent: undefined,
+                            arbetskostnadExMoms: undefined,
+                            avdragBelopp: undefined,
+                            personnummer: undefined,
+                            fastighetsbeteckning: undefined,
+                            rotBoendeTyp: undefined,
+                            brfOrganisationsnummer: undefined,
+                            brfLagenhetsnummer: undefined,
+                          }),
+                    }));
+                  }}
+                  text={
+                    visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"
+                  }
+                  disabled={typ === "vara" || redigerarIndex !== null}
+                  className={
+                    typ === "vara" || redigerarIndex !== null ? "opacity-50 cursor-not-allowed" : ""
+                  }
+                />
+              </div>
+            )}
+
+            {/* Visa RotRutForm endast om användaren själv aktiverat det */}
+            {visaRotRutForm && (
+              <div className="border border-slate-500 rounded-lg mt-4">
+                <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
+              </div>
+            )}
+
+            {/* Visa beräknat avdrag om ROT/RUT är aktiverat och det finns artiklar */}
+            {formData.rotRutAktiverat &&
+              formData.rotRutTyp &&
+              formData.artiklar &&
+              formData.artiklar.length > 0 &&
+              (() => {
+                // Beräkna totalt avdrag baserat på alla artiklar
+                const totalSumExkl = formData.artiklar.reduce(
+                  (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet,
+                  0
+                );
+                const totalMoms = formData.artiklar.reduce((sum, artikel) => {
+                  return sum + artikel.antal * artikel.prisPerEnhet * (artikel.moms / 100);
+                }, 0);
+                const totalInklMoms = totalSumExkl + totalMoms;
+                // Använd sparad avdragsprocent om den finns, annars 50% för både ROT och RUT
+                const avdragProcent = formData.avdragProcent || 50;
+                const beraknatAvdrag = totalInklMoms * (avdragProcent / 100);
+
+                return (
+                  <div className="p-3 bg-slate-800 border border-slate-600 rounded-lg">
+                    <div className="text-white font-semibold text-sm">
+                      📊 Beräknat {formData.rotRutTyp}-avdrag ({avdragProcent}%):
+                    </div>
+                    <div className="text-green-400 font-bold text-lg">
+                      {beraknatAvdrag.toLocaleString("sv-SE", {
+                        style: "currency",
+                        currency: "SEK",
+                      })}
+                    </div>
+                    <div className="text-gray-400 text-xs mt-1">
+                      Baserat på totalsumma inkl. moms:{" "}
+                      {totalInklMoms.toLocaleString("sv-SE", {
+                        style: "currency",
+                        currency: "SEK",
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+            {/* Visa knappar endast om favoritartikel INTE är vald */}
+            {!favoritArtikelVald && (
+              <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+                <Knapp
+                  onClick={handleSaveAsFavorite}
+                  text="📌 Lägg till som favoritartikel"
+                  disabled={
+                    !beskrivning.trim() ||
+                    !antal ||
+                    !prisPerEnhet ||
+                    Number(prisPerEnhet) <= 0 ||
+                    redigerarIndex !== null ||
+                    favoritArtikelVald
+                  }
+                />
+                <Knapp
+                  onClick={handleAdd}
+                  text={redigerarIndex !== null ? "💾 Uppdatera artikel" : "✚ Lägg till artikel"}
+                  disabled={!beskrivning.trim()}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Redigeringsformulär - visa när artikel redigeras */}
+      {redigerarIndex !== null && (
+        <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
+            <h3 className="text-white font-medium">Redigera artikel {redigerarIndex + 1}</h3>
+          </div>
+
+          {/* Formulär innehåll för redigering */}
+          <div className="p-4 space-y-4">
+            <ArtikelForm
+              beskrivning={beskrivning}
+              antal={antal}
+              prisPerEnhet={prisPerEnhet}
+              moms={moms}
+              typ={typ}
+              onChangeBeskrivning={setBeskrivning}
+              onChangeAntal={setAntal}
+              onChangePrisPerEnhet={setPrisPerEnhet}
+              onChangeMoms={setMoms}
+              onChangeTyp={setTyp}
+            />
+
+            <div className="mb-4">
+              <Knapp
+                onClick={() => {
+                  // Blockera ROT/RUT för varor
+                  if (typ === "vara") {
+                    alert(
+                      "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
+                    );
+                    return;
+                  }
+
+                  const newValue = !visaRotRutForm;
+                  setVisaRotRutForm(newValue);
+                  // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
+                  if (newValue) {
+                    setTyp("tjänst");
+                  }
+                  setFormData((prev) => ({
+                    ...prev,
+                    rotRutAktiverat: newValue,
+                    ...(newValue
+                      ? {}
+                      : {
+                          rotRutTyp: undefined,
+                          rotRutKategori: undefined,
+                          avdragProcent: undefined,
+                          arbetskostnadExMoms: undefined,
+                          avdragBelopp: undefined,
+                          personnummer: undefined,
+                          fastighetsbeteckning: undefined,
+                          rotBoendeTyp: undefined,
+                          brfOrganisationsnummer: undefined,
+                          brfLagenhetsnummer: undefined,
+                        }),
+                  }));
+                }}
+                text={
+                  visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"
+                }
+                disabled={typ === "vara" || redigerarIndex !== null}
+                className={
+                  typ === "vara" || redigerarIndex !== null ? "opacity-50 cursor-not-allowed" : ""
+                }
+              />
             </div>
-          )}
 
-          {/* Visa beräknat avdrag om ROT/RUT är aktiverat och det finns artiklar */}
-          {formData.rotRutAktiverat &&
-            formData.rotRutTyp &&
-            formData.artiklar &&
-            formData.artiklar.length > 0 &&
-            (() => {
-              // Beräkna totalt avdrag baserat på alla artiklar
-              const totalSumExkl = formData.artiklar.reduce(
-                (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet,
-                0
-              );
-              const totalMoms = formData.artiklar.reduce((sum, artikel) => {
-                return sum + artikel.antal * artikel.prisPerEnhet * (artikel.moms / 100);
-              }, 0);
-              const totalInklMoms = totalSumExkl + totalMoms;
-              // Använd sparad avdragsprocent om den finns, annars 50% för både ROT och RUT
-              const avdragProcent = formData.avdragProcent || 50;
-              const beraknatAvdrag = totalInklMoms * (avdragProcent / 100);
+            {/* Visa RotRutForm endast om användaren själv aktiverat det */}
+            {visaRotRutForm && (
+              <div className="border border-slate-500 rounded-lg mt-4">
+                <RotRutForm showCheckbox={false} />
+              </div>
+            )}
 
-              return (
-                <div className="p-3 bg-slate-800 border border-slate-600 rounded-lg">
-                  <div className="text-white font-semibold text-sm">
-                    📊 Beräknat {formData.rotRutTyp}-avdrag ({avdragProcent}%):
-                  </div>
-                  <div className="text-green-400 font-bold text-lg">
-                    {beraknatAvdrag.toLocaleString("sv-SE", {
-                      style: "currency",
-                      currency: "SEK",
-                    })}
-                  </div>
-                  <div className="text-gray-400 text-xs mt-1">
-                    Baserat på totalsumma inkl. moms:{" "}
-                    {totalInklMoms.toLocaleString("sv-SE", {
-                      style: "currency",
-                      currency: "SEK",
-                    })}
+            <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+              <Knapp
+                onClick={handleResetForm}
+                text="❌ Avbryt redigering"
+                className="bg-red-600 hover:bg-red-700"
+              />
+              <Knapp
+                onClick={handleAdd}
+                text="💾 Uppdatera artikel"
+                disabled={!beskrivning.trim()}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal för att visa artikeldetaljer */}
+      <Modal
+        isOpen={visaArtikelModal && !!valtArtikel}
+        onClose={handleCloseArtikelModal}
+        title="Artikeldetaljer"
+      >
+        {valtArtikel && (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Beskrivning</label>
+                <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                  {valtArtikel.beskrivning}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Antal</label>
+                  <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                    {valtArtikel.antal}
                   </div>
                 </div>
-              );
-            })()}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Pris per enhet
+                  </label>
+                  <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                    {valtArtikel.prisPerEnhet} {valtArtikel.valuta}
+                  </div>
+                </div>
+              </div>
 
-          <div className="flex items-center justify-between pt-6 border-t border-slate-600">
-            <Knapp onClick={handleSaveAsFavorite} text="📌 Lägg till som favoritartikel" />
-            <Knapp onClick={handleAdd} text="✚ Lägg till artikel" disabled={!beskrivning.trim()} />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Moms (%)</label>
+                  <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                    {valtArtikel.moms}%
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Typ</label>
+                  <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                    {valtArtikel.typ}
+                  </div>
+                </div>
+              </div>
+
+              {valtArtikel.rotRutTyp && (
+                <>
+                  <div className="border-t border-slate-600 pt-4">
+                    <h3 className="text-lg font-semibold text-white mb-3">ROT/RUT-avdrag</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Typ av avdrag
+                      </label>
+                      <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                        {valtArtikel.rotRutTyp}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Kategori
+                      </label>
+                      <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                        {valtArtikel.rotRutKategori || "Ej angiven"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {valtArtikel.rotRutBeskrivning && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Beskrivning av arbetet
+                      </label>
+                      <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                        {valtArtikel.rotRutBeskrivning}
+                      </div>
+                    </div>
+                  )}
+
+                  {(valtArtikel.rotRutStartdatum || valtArtikel.rotRutSlutdatum) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          Startdatum
+                        </label>
+                        <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                          {valtArtikel.rotRutStartdatum || "Ej angiven"}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          Slutdatum
+                        </label>
+                        <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                          {valtArtikel.rotRutSlutdatum || "Ej angiven"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {valtArtikel.rotRutPersonnummer && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Personnummer
+                      </label>
+                      <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                        {valtArtikel.rotRutPersonnummer}
+                      </div>
+                    </div>
+                  )}
+
+                  {valtArtikel.rotRutFastighetsbeteckning && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Fastighetsbeteckning
+                      </label>
+                      <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                        {valtArtikel.rotRutFastighetsbeteckning}
+                      </div>
+                    </div>
+                  )}
+
+                  {(valtArtikel.rotRutBrfOrg || valtArtikel.rotRutBrfLagenhet) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          BRF Organisationsnummer
+                        </label>
+                        <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                          {valtArtikel.rotRutBrfOrg || "Ej angiven"}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          Lägenhetsnummer
+                        </label>
+                        <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
+                          {valtArtikel.rotRutBrfLagenhet || "Ej angiven"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Knapp onClick={handleCloseArtikelModal} text="Stäng" />
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </Modal>
     </div>
   );
 }

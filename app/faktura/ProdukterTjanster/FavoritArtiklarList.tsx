@@ -21,6 +21,7 @@ interface Props {
   onToggle: (v: boolean) => void;
   onSelect: (a: FavoritArtikel) => void;
   onDelete: (id?: number) => void;
+  inladdadFavoritId?: number | null;
 }
 //#endregion
 
@@ -30,6 +31,7 @@ export default function FavoritArtiklarList({
   onToggle,
   onSelect,
   onDelete,
+  inladdadFavoritId,
 }: Props) {
   if (!favoritArtiklar || favoritArtiklar.length === 0) return null;
   return (
@@ -60,7 +62,12 @@ export default function FavoritArtiklarList({
                   🗑️
                 </button>
                 <div onClick={() => onSelect(a)} className="flex-1">
-                  <div className="text-white font-semibold">📌 {a.beskrivning}</div>
+                  <div className="text-white font-semibold">
+                    📌 {a.beskrivning}
+                    {inladdadFavoritId === a.id && (
+                      <span className="text-green-400 ml-2">— Inladdad</span>
+                    )}
+                  </div>
                   <div className="text-gray-400 text-sm mt-1">
                     {a.antal} × {a.prisPerEnhet} {a.valuta} ={" "}
                     {(a.antal * a.prisPerEnhet).toLocaleString("sv-SE")} {a.valuta}

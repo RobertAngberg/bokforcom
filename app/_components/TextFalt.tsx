@@ -6,6 +6,7 @@ type TextFaltProps = {
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   required?: boolean;
   placeholder?: string; // ✅ Lägg till placeholder
+  disabled?: boolean;
 };
 
 export default function TextFalt({
@@ -16,6 +17,7 @@ export default function TextFalt({
   onChange,
   required = true,
   placeholder,
+  disabled = false,
 }: TextFaltProps) {
   return (
     <div>
@@ -31,7 +33,10 @@ export default function TextFalt({
           onChange={onChange}
           required={required}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white mb-4 h-24 resize-y placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+          disabled={disabled}
+          className={`w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white mb-4 h-24 resize-y placeholder-slate-400 focus:border-blue-500 focus:outline-none ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         />
       ) : (
         <input
@@ -42,7 +47,10 @@ export default function TextFalt({
           onChange={onChange}
           required={required}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white mb-4 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+          disabled={disabled}
+          className={`w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white mb-4 placeholder-slate-400 focus:border-blue-500 focus:outline-none ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         />
       )}
     </div>
