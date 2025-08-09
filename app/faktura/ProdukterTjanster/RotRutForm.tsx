@@ -205,15 +205,6 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
     <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
       {formData.rotRutAktiverat && (
         <>
-          {/* ROT infotext */}
-          {formData.rotRutTyp === "ROT" && (
-            <div className="bg-yellow-100 text-yellow-900 rounded px-4 py-2 mb-2 text-sm">
-              <strong>OBS!</strong> Bara arbetskostnaden (inkl. moms) får ligga till grund för
-              ROT-avdrag. För andra kostnader såsom materialkostnad, skapa en ny artikel utan
-              ROT-avdrag.
-            </div>
-          )}
-
           <div className="text-white">
             <label className="block mb-1">Typ av avdrag</label>
             <select

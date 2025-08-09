@@ -299,32 +299,66 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       return;
     }
 
+    // Beräkna total kostnad för alla artiklar
     const totalInkMoms =
       formData.artiklar?.reduce((sum, artikel) => {
         return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
       }, 0) ?? 0;
 
-    // Beräkna totala timmar från ROT/RUT-artiklar
+    // Beräkna kostnad för endast ROT/RUT-tjänster (för avdragsberäkning)
+    const rotRutTjänsterInkMoms =
+      formData.artiklar?.reduce((sum, artikel: any) => {
+        // Bara tjänster med ROT/RUT, inte material
+        console.log("Tjänst-check:", {
+          beskrivning: artikel.beskrivning,
+          typ: artikel.typ,
+          rotRutTyp: artikel.rotRutTyp,
+          rotRutMaterial: artikel.rotRutMaterial,
+          matchesCondition:
+            artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial,
+        });
+        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
+          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+        }
+        return sum;
+      }, 0) ?? 0;
+
+    // Beräkna material kostnad separat
+    const rotRutMaterialKostnad =
+      formData.artiklar?.reduce((sum, artikel: any) => {
+        console.log("Material-check:", {
+          beskrivning: artikel.beskrivning,
+          rotRutMaterial: artikel.rotRutMaterial,
+          matchesCondition: !!artikel.rotRutMaterial,
+        });
+        if (artikel.rotRutMaterial) {
+          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+        }
+        return sum;
+      }, 0) ?? 0;
+
+    // Beräkna totala timmar från ROT/RUT-tjänster (inte material)
     const totalTimmar =
       formData.artiklar?.reduce((sum, artikel: any) => {
-        // Om det är en tjänst med ROT/RUT, använd antal som timmar
-        if (artikel.typ === "tjänst" && artikel.rotRutTyp) {
+        // Om det är en tjänst med ROT/RUT (inte material), använd antal som timmar
+        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
           return sum + artikel.antal;
         }
         return sum;
       }, 0) ?? 0;
 
-    const begartBelopp = Math.round(totalInkMoms * 0.5); // 50% avdrag
+    const begartBelopp = Math.round(rotRutTjänsterInkMoms * 0.5); // 50% avdrag bara på tjänster
 
     laddaNerHUSFil({
       fakturanummer: formData.fakturanummer,
       kundPersonnummer: personnummer!,
       betalningsdatum: new Date().toISOString().split("T")[0],
-      prisForArbete: Math.round(totalInkMoms),
-      betaltBelopp: Math.round(totalInkMoms),
-      begartBelopp: begartBelopp,
+      prisForArbete: Math.round(rotRutTjänsterInkMoms), // Bara tjänster
+      betaltBelopp: Math.round(totalInkMoms), // Total kostnad
+      begartBelopp: begartBelopp, // Avdrag bara på tjänster
       rotRutTyp: rotRutTyp,
       rotRutKategori: rotRutKategori,
+      materialKostnad: Math.round(rotRutMaterialKostnad), // Material separat
       fastighetsbeteckning: formData.fastighetsbeteckning,
       lägenhetsNummer: formData.brfLagenhetsnummer,
       brfOrgNummer: formData.brfOrganisationsnummer,

@@ -66,6 +66,7 @@ export default function ProdukterTjanster() {
   const [moms, setMoms] = useState(25);
   const [valuta, setValuta] = useState("SEK");
   const [typ, setTyp] = useState<"vara" | "tjänst">("tjänst");
+  const [rotRutMaterial, setRotRutMaterial] = useState(false);
   const [loading, setLoading] = useState(false);
   const [favoritArtiklar, setFavoritArtiklar] = useState<FavoritArtikel[]>([]);
   const [showFavoritArtiklar, setShowFavoritArtiklar] = useState(false);
@@ -130,6 +131,24 @@ export default function ProdukterTjanster() {
       return;
     }
 
+    // Kontrollera blandade ROT/RUT-typer
+    if (formData.rotRutAktiverat && formData.artiklar && formData.artiklar.length > 0) {
+      const befintligTyp = formData.rotRutTyp;
+      const befintligaROTRUTArtiklar = formData.artiklar.filter(
+        (artikel: any) => artikel.rotRutTyp
+      );
+
+      if (befintligaROTRUTArtiklar.length > 0) {
+        const förstaBefintligTyp = (befintligaROTRUTArtiklar[0] as any).rotRutTyp;
+        if (befintligTyp !== förstaBefintligTyp) {
+          alert(
+            `❌ Du kan inte blanda ${förstaBefintligTyp} och ${befintligTyp} på samma faktura.\n\nVälj samma typ för alla artiklar eller skapa separata fakturor.`
+          );
+          return;
+        }
+      }
+    }
+
     console.log("🔍 handleAdd - formData ROT/RUT-fält:", {
       rotRutAktiverat: formData.rotRutAktiverat,
       rotRutBeskrivning: formData.rotRutBeskrivning,
@@ -146,6 +165,8 @@ export default function ProdukterTjanster() {
       moms,
       valuta,
       typ,
+      // Lägg till ROT/RUT-material flagga för varor
+      ...(typ === "vara" && rotRutMaterial ? { rotRutMaterial: true } : {}),
       ...(formData.rotRutAktiverat
         ? {
             rotRutTyp: formData.rotRutTyp as "ROT" | "RUT",
@@ -215,6 +236,7 @@ export default function ProdukterTjanster() {
     setMoms(25);
     setValuta("SEK");
     setTyp("vara");
+    setRotRutMaterial(false);
     setUrsprungligFavoritId(null); // Rensa spårning av ursprunglig favorit
     setRedigerarIndex(null); // Rensa redigeringsläge
     setFavoritArtikelVald(false); // Lås upp formuläret
@@ -331,6 +353,7 @@ export default function ProdukterTjanster() {
     setMoms(25);
     setValuta("SEK");
     setTyp("vara");
+    setRotRutMaterial(false);
     setUrsprungligFavoritId(null);
     setRedigerarIndex(null);
     setVisaRotRutForm(false);
@@ -604,6 +627,35 @@ export default function ProdukterTjanster() {
         inladdadFavoritId={favoritArtikelVald ? ursprungligFavoritId : null}
       />
 
+      {/* ROT/RUT infobox - visas alltid när aktiverat */}
+      {(formData.rotRutAktiverat ||
+        (formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp))) && (
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-white">
+                {formData.rotRutTyp || "ROT/RUT"} är aktiverat
+              </h3>
+              <div className="mt-1 text-sm text-slate-300">
+                <p>
+                  Tjänster/arbete berättigar 50% avdrag. Lägg till eventuell materialkostnad som en
+                  separat artikel.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ArtiklarList
         artiklar={formData.artiklar as Artikel[]}
         blinkIndex={blinkIndex}
@@ -640,11 +692,13 @@ export default function ProdukterTjanster() {
               prisPerEnhet={prisPerEnhet}
               moms={moms}
               typ={typ}
+              rotRutMaterial={rotRutMaterial}
               onChangeBeskrivning={setBeskrivning}
               onChangeAntal={setAntal}
               onChangePrisPerEnhet={setPrisPerEnhet}
               onChangeMoms={setMoms}
               onChangeTyp={setTyp}
+              onChangeRotRutMaterial={setRotRutMaterial}
               disabled={favoritArtikelVald}
             />
 

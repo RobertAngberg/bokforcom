@@ -6,11 +6,13 @@ interface ArtikelFormProps {
   prisPerEnhet: number;
   moms: number;
   typ: "vara" | "tjänst";
+  rotRutMaterial?: boolean;
   onChangeBeskrivning: (v: string) => void;
   onChangeAntal: (v: number) => void;
   onChangePrisPerEnhet: (v: number) => void;
   onChangeMoms: (v: number) => void;
   onChangeTyp: (v: "vara" | "tjänst") => void;
+  onChangeRotRutMaterial?: (v: boolean) => void;
   disabled?: boolean;
 }
 
@@ -20,11 +22,13 @@ export default function ArtikelForm({
   prisPerEnhet,
   moms,
   typ,
+  rotRutMaterial = false,
   onChangeBeskrivning,
   onChangeAntal,
   onChangePrisPerEnhet,
   onChangeMoms,
   onChangeTyp,
+  onChangeRotRutMaterial,
   disabled = false,
 }: ArtikelFormProps) {
   return (
@@ -74,6 +78,25 @@ export default function ArtikelForm({
           <option value="tjänst">Tjänst</option>
         </select>
       </div>
+
+      {/* ROT/RUT Material checkbox */}
+      {typ === "vara" && onChangeRotRutMaterial && (
+        <div>
+          <label className="flex items-center space-x-2 text-sm text-white mt-4">
+            <input
+              type="checkbox"
+              checked={rotRutMaterial}
+              onChange={(e) => onChangeRotRutMaterial(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-slate-900 border-slate-700 rounded focus:ring-blue-500"
+              disabled={disabled}
+            />
+            <span>ROT/RUT-material</span>
+          </label>
+          <p className="text-xs text-slate-400 mt-1">
+            Material rapporteras till Skatteverket men får inget avdrag
+          </p>
+        </div>
+      )}
     </div>
   );
 }

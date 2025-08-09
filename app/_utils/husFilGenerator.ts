@@ -13,11 +13,38 @@ interface HUSFilData {
   lägenhetsNummer?: string;
   brfOrgNummer?: string;
   antalTimmar?: number; // Lägg till faktiska timmar
+  materialKostnad?: number; // Kostnad för ROT/RUT-material
 }
 
 export function genereraHUSFil(data: HUSFilData): string {
   const idag = new Date().toISOString().split("T")[0].replace(/-/g, "");
-  const ärendeId = `${data.rotRutTyp}${idag}${data.fakturanummer.padStart(8, "0")}`;
+  // Korta ned ärendeId till max 16 tecken
+  const ärendeId = `${data.rotRutTyp}${idag.slice(2)}${data.fakturanummer.padStart(3, "0")}`.slice(
+    0,
+    16
+  );
+
+  // Formatera personnummer till 12 siffror (YYYYMMDDNNNN)
+  const formatPersonnummer = (pnr: string): string => {
+    // Ta bort alla icke-siffror
+    const cleaned = pnr.replace(/\D/g, "");
+
+    if (cleaned.length === 10) {
+      // Om 10 siffror (YYMMDDNNNN), lägg till 19 eller 20 beroende på ålder
+      const year = parseInt(cleaned.substring(0, 2));
+      const currentYear = new Date().getFullYear() % 100;
+      const century = year <= currentYear ? "20" : "19";
+      return century + cleaned;
+    } else if (cleaned.length === 12) {
+      // Om redan 12 siffror, returnera som det är
+      return cleaned;
+    } else {
+      // Felaktigt format, försök med 19 som prefix
+      return "19" + cleaned.padEnd(10, "0");
+    }
+  };
+
+  const formattatPersonnummer = formatPersonnummer(data.kundPersonnummer);
 
   // ROT arbetstyper enligt Skatteverkets schema
   const rotArbetstyper = {
@@ -52,6 +79,7 @@ export function genereraHUSFil(data: HUSFilData): string {
 
   // Använd faktiska timmar från artikeldata, annars gissa baserat på pris
   const antalTimmar = data.antalTimmar || Math.max(1, Math.round(data.prisForArbete / 500));
+  const materialKostnad = data.materialKostnad || 0;
 
   if (data.rotRutTyp === "ROT") {
     const valdRotArbetstyp =
@@ -73,7 +101,7 @@ export function genereraHUSFil(data: HUSFilData): string {
   <ns2:NamnPaBegaran>${ärendeId}</ns2:NamnPaBegaran>
   <ns2:RotBegaran>
     <ns2:Arenden>
-      <ns2:Kopare>${data.kundPersonnummer}</ns2:Kopare>
+      <ns2:Kopare>${formattatPersonnummer}</ns2:Kopare>
       <ns2:BetalningsDatum>${data.betalningsdatum}</ns2:BetalningsDatum>
       <ns2:PrisForArbete>${data.prisForArbete}</ns2:PrisForArbete>
       <ns2:BetaltBelopp>${data.betaltBelopp}</ns2:BetaltBelopp>
@@ -89,7 +117,7 @@ export function genereraHUSFil(data: HUSFilData): string {
             const ärVald = xmlTag === valdRotArbetstyp;
             return `<ns2:${xmlTag}>
           <ns2:AntalTimmar>${ärVald ? antalTimmar : 0}</ns2:AntalTimmar>
-          <ns2:Materialkostnad>0</ns2:Materialkostnad>
+          <ns2:Materialkostnad>${ärVald ? materialKostnad : 0}</ns2:Materialkostnad>
         </ns2:${xmlTag}>`;
           })
           .join("\n        ")}
@@ -126,7 +154,7 @@ export function genereraHUSFil(data: HUSFilData): string {
   <ns2:NamnPaBegaran>${ärendeId}</ns2:NamnPaBegaran>
   <ns2:HushallBegaran>
     <ns2:Arenden>
-      <ns2:Kopare>${data.kundPersonnummer}</ns2:Kopare>
+      <ns2:Kopare>${formattatPersonnummer}</ns2:Kopare>
       <ns2:BetalningsDatum>${data.betalningsdatum}</ns2:BetalningsDatum>
       <ns2:PrisForArbete>${data.prisForArbete}</ns2:PrisForArbete>
       <ns2:BetaltBelopp>${data.betaltBelopp}</ns2:BetaltBelopp>
@@ -146,7 +174,7 @@ export function genereraHUSFil(data: HUSFilData): string {
             } else {
               return `<ns2:${xmlTag}>
           <ns2:AntalTimmar>${ärVald ? antalTimmar : 0}</ns2:AntalTimmar>
-          <ns2:Materialkostnad>0</ns2:Materialkostnad>
+          <ns2:Materialkostnad>${ärVald ? materialKostnad : 0}</ns2:Materialkostnad>
         </ns2:${xmlTag}>`;
             }
           })

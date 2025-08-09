@@ -55,12 +55,37 @@ export default function Forhandsgranskning() {
     (harROTRUTArtiklar &&
       (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
 
+  // Beräkna arbetskostnad bara för ROT/RUT-tjänster (inte material)
+  const rotRutTjänsterSumExkl =
+    formData.artiklar?.reduce((acc, rad: any) => {
+      if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
+        const antal = parseFloat(String(rad.antal) || "0");
+        const pris = parseFloat(String(rad.prisPerEnhet) || "0");
+        return acc + antal * pris;
+      }
+      return acc;
+    }, 0) || 0;
+
+  const rotRutTjänsterMoms =
+    formData.artiklar?.reduce((acc, rad: any) => {
+      if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
+        const antal = parseFloat(String(rad.antal) || "0");
+        const pris = parseFloat(String(rad.prisPerEnhet) || "0");
+        const moms = parseFloat(String(rad.moms) || "0");
+        return acc + antal * pris * (moms / 100);
+      }
+      return acc;
+    }, 0) || 0;
+
+  const rotRutTjänsterInklMoms = rotRutTjänsterSumExkl + rotRutTjänsterMoms;
   const arbetskostnadInklMoms = sumExkl + totalMoms;
+
+  // Avdrag bara på tjänstekostnaden, inte material
   const rotRutAvdrag =
     (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "ROT"
-      ? 0.3 * arbetskostnadInklMoms
+      ? 0.5 * rotRutTjänsterInklMoms
       : (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "RUT"
-        ? 0.5 * arbetskostnadInklMoms
+        ? 0.5 * rotRutTjänsterInklMoms
         : 0;
 
   const totalSum = arbetskostnadInklMoms - rotRutAvdrag;

@@ -5,6 +5,7 @@ type Artikel = {
   moms: number;
   valuta: string;
   typ: "vara" | "tjänst";
+  rotRutMaterial?: boolean;
   rotRutTyp?: "ROT" | "RUT";
   rotRutKategori?: string;
   avdragProcent?: number;
@@ -69,6 +70,7 @@ export default function ArtiklarList({
               </div>
               <div className="text-gray-400 text-sm">
                 {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
+                {a.rotRutMaterial ? " — ROT/RUT-material" : ""}
                 {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
               </div>
             </div>
