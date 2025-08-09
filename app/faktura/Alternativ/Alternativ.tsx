@@ -254,15 +254,46 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   };
 
   const hanteraHUSFil = () => {
-    if (!formData.rotRutAktiverat || !formData.rotRutTyp) return;
+    // Kolla om ROT/RUT finns antingen i formData eller i artiklar
+    const harROTRUTArtiklar =
+      formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+    const rotRutTyp =
+      formData.rotRutTyp ||
+      (formData.artiklar &&
+        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+
+    if (!formData.rotRutAktiverat && !harROTRUTArtiklar) {
+      console.log("🔍 Ingen ROT/RUT-data hittad");
+      return;
+    }
+    if (!rotRutTyp) {
+      console.log("🔍 Ingen ROT/RUT-typ hittad");
+      return;
+    }
+
+    // Hämta personnummer från formData eller artiklar
+    const personnummer =
+      formData.personnummer ||
+      (formData.artiklar &&
+        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutPersonnummer)
+          ?.rotRutPersonnummer);
+
+    // Hämta ROT/RUT-kategori från formData eller artiklar
+    const rotRutKategori =
+      formData.rotRutKategori ||
+      (formData.artiklar &&
+        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutKategori)
+          ?.rotRutKategori) ||
+      "Städa";
 
     // Validera att nödvändiga fält finns
-    if (!formData.fakturanummer || !formData.personnummer) {
+    if (!formData.fakturanummer || !personnummer) {
       console.log("🔍 HUS-fil validering misslyckades:", {
         fakturanummer: formData.fakturanummer,
-        personnummer: formData.personnummer,
+        personnummer: personnummer,
         rotRutAktiverat: formData.rotRutAktiverat,
-        rotRutTyp: formData.rotRutTyp,
+        rotRutTyp: rotRutTyp,
+        harROTRUTArtiklar: harROTRUTArtiklar,
       });
       alert("❌ Fakturanummer och personnummer krävs för HUS-fil");
       return;
@@ -287,13 +318,13 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
     laddaNerHUSFil({
       fakturanummer: formData.fakturanummer,
-      kundPersonnummer: formData.personnummer!,
+      kundPersonnummer: personnummer!,
       betalningsdatum: new Date().toISOString().split("T")[0],
       prisForArbete: Math.round(totalInkMoms),
       betaltBelopp: Math.round(totalInkMoms),
       begartBelopp: begartBelopp,
-      rotRutTyp: formData.rotRutTyp,
-      rotRutKategori: formData.rotRutKategori || "Städa",
+      rotRutTyp: rotRutTyp,
+      rotRutKategori: rotRutKategori,
       fastighetsbeteckning: formData.fastighetsbeteckning,
       lägenhetsNummer: formData.brfLagenhetsnummer,
       brfOrgNummer: formData.brfOrganisationsnummer,
@@ -372,7 +403,9 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       : "📤 Spara PDF";
 
   // Visa HUS-fil knapp för ROT/RUT-fakturor
-  const ärROTRUTFaktura = formData.rotRutAktiverat && formData.rotRutTyp;
+  const harROTRUTArtiklar =
+    formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+  const ärROTRUTFaktura = (formData.rotRutAktiverat && formData.rotRutTyp) || harROTRUTArtiklar;
   // Kolla om det finns personnummer antingen i formData eller i någon artikel
   const harPersonnummer =
     (formData.personnummer && formData.personnummer.trim() !== "") ||
@@ -389,13 +422,20 @@ export default function Alternativ({ onReload, onPreview }: Props) {
     harPersonnummer: harPersonnummer,
   });
 
+  const rotRutTyp =
+    formData.rotRutTyp ||
+    (formData.artiklar &&
+      (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+
   const husFilKnappText = !harKund
     ? "❌ Välj kund först"
     : !harArtiklar
       ? "❌ Lägg till artiklar"
       : !harPersonnummer
         ? "❌ Personnummer saknas"
-        : `📄 Ladda ner HUS-fil (${formData.rotRutTyp})`;
+        : !formData.fakturanummer
+          ? "❌ Spara fakturan först"
+          : `📄 Ladda ner HUS-fil (${rotRutTyp})`;
 
   return (
     <div className="space-y-6">
@@ -437,7 +477,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
           <Knapp
             onClick={hanteraHUSFil}
             text={husFilKnappText}
-            disabled={!kanSpara || !harPersonnummer}
+            disabled={!kanSpara || !harPersonnummer || !formData.fakturanummer}
             className=""
           />
           {formData.id && (

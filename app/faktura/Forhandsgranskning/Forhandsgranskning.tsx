@@ -47,12 +47,19 @@ export default function Forhandsgranskning() {
   }, 0);
 
   // ROT/RUT-avdrag enligt Skatteverket: 50% av arbetskostnad inkl moms
-  // Bara beräkna avdrag om ROT/RUT är aktiverat på formulärnivå
+  // Kolla om ROT/RUT är aktiverat på formulärnivå ELLER om det finns ROT/RUT-artiklar
+  const harROTRUTArtiklar =
+    formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+  const rotRutTyp =
+    formData.rotRutTyp ||
+    (harROTRUTArtiklar &&
+      (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+
   const arbetskostnadInklMoms = sumExkl + totalMoms;
   const rotRutAvdrag =
-    formData.rotRutAktiverat && formData.rotRutTyp === "ROT"
+    (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "ROT"
       ? 0.3 * arbetskostnadInklMoms
-      : formData.rotRutAktiverat && formData.rotRutTyp === "RUT"
+      : (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "RUT"
         ? 0.5 * arbetskostnadInklMoms
         : 0;
 
