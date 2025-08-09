@@ -104,11 +104,24 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     if (fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd") {
       // Fakturan är redan bokförd - visa bara betalningsregistrering
       if (fakturaStatus.status_betalning !== "Betald") {
+        // Kolla om det finns ROT/RUT-artiklar för att beräkna kundens del
+        const harRotRutArtiklar =
+          formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+        const betalningsbelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : totalInkMoms; // Endast kundens del för ROT/RUT
+
+        // Om det är "Delvis betald" (ROT/RUT där kunden redan betalat), visa inte betalningsregistrering
+        if (fakturaStatus.status_betalning === "Delvis betald") {
+          varningar.push(
+            "💰 Fakturan är delvis betald. Kunden har betalat sin del. Använd ROT/RUT-betalningsknappen för SKV:s del."
+          );
+          return { poster, varningar };
+        }
+
         poster.push({
           konto: "1930", // Bank/Kassa
           kontoNamn: "Företagskonto/Bankkonto",
           beskrivning: `Betalning faktura ${formData.fakturanummer}`,
-          debet: totalInkMoms,
+          debet: betalningsbelopp,
           kredit: 0,
         });
 
@@ -117,10 +130,16 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
           kontoNamn: "Kundfordringar",
           beskrivning: `Betalning faktura ${formData.fakturanummer}`,
           debet: 0,
-          kredit: totalInkMoms,
+          kredit: betalningsbelopp,
         });
 
-        varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalning.");
+        if (harRotRutArtiklar) {
+          varningar.push(
+            "⚠️ Fakturan är redan bokförd. Detta registrerar KUNDENS betalning (50%). ROT/RUT-delen registreras separat när SKV betalar."
+          );
+        } else {
+          varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalning.");
+        }
       } else {
         varningar.push("✅ Fakturan är redan bokförd och betald.");
         return { poster, varningar };
@@ -149,18 +168,34 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       kontoNamn = "Försäljning tjänster";
     }
 
+    // Kolla om det finns ROT/RUT-artiklar
+    const harRotRutArtiklar = formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+    const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
+    const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
+
     // Skapa bokföringsposter
-    // 1. Kundfordran eller Bank/Kassa beroende på metod
+    // 1. Kundfordran eller Bank/Kassa beroende på metod (kundens del)
     const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
     const skuld_tillgångsnamn = ärKontantmetod ? "Bank/Kassa" : "Kundfordringar";
 
     poster.push({
       konto: skuld_tillgångskonto,
       kontoNamn: skuld_tillgångsnamn,
-      debet: totalInkMoms,
+      debet: kundBelopp,
       kredit: 0,
       beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
     });
+
+    // 1b. ROT/RUT-fordran (SKV:s del) - om det finns ROT/RUT
+    if (harRotRutArtiklar && rotRutBelopp > 0) {
+      poster.push({
+        konto: "1513",
+        kontoNamn: "Kundfordringar – delad faktura",
+        debet: rotRutBelopp,
+        kredit: 0,
+        beskrivning: `ROT/RUT-del faktura ${formData.fakturanummer}`,
+      });
+    }
 
     // 2. Intäkt (kredit)
     poster.push({

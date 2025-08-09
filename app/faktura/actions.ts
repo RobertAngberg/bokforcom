@@ -338,7 +338,7 @@ export async function hämtaSparadeFakturor() {
       SELECT
         f.id, f.fakturanummer, f.fakturadatum, f."kundId",
         f.status_betalning, f.status_bokförd, f.betaldatum,
-        f.transaktions_id, 'kund' as typ,
+        f.transaktions_id, f.rot_rut_status, 'kund' as typ,
         k.kundnamn
       FROM fakturor f
       LEFT JOIN kunder k ON f."kundId" = k.id
@@ -352,7 +352,7 @@ export async function hämtaSparadeFakturor() {
     const fakturorMedTotaler = await Promise.all(
       res.rows.map(async (faktura) => {
         const artiklarRes = await client.query(
-          `SELECT antal, pris_per_enhet, moms FROM faktura_artiklar WHERE faktura_id = $1`,
+          `SELECT antal, pris_per_enhet, moms, rot_rut_typ FROM faktura_artiklar WHERE faktura_id = $1`,
           [faktura.id]
         );
 
@@ -361,10 +361,25 @@ export async function hämtaSparadeFakturor() {
           return sum + artikel.antal * prisInkMoms;
         }, 0);
 
+        // Kolla om fakturan har ROT/RUT-artiklar
+        const rotRutArtiklar = artiklarRes.rows.filter((artikel) => artikel.rot_rut_typ);
+        const harROT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "ROT");
+        const harRUT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "RUT");
+
+        let rotRutTyp = null;
+        if (harROT && harRUT) {
+          rotRutTyp = "ROT+RUT";
+        } else if (harROT) {
+          rotRutTyp = "ROT";
+        } else if (harRUT) {
+          rotRutTyp = "RUT";
+        }
+
         return {
           ...faktura,
           totalBelopp: Math.round(totalBelopp * 100) / 100, // Avrunda till 2 decimaler
           antalArtiklar: artiklarRes.rows.length,
+          rotRutTyp, // ✅ Lägg till ROT/RUT-info
         };
       })
     );
@@ -1018,11 +1033,25 @@ export async function bokförFaktura(data: BokförFakturaData) {
 
       if (ärBetalning) {
         // Detta är en betalningsregistrering (Fakturametoden: Bank → Kundfordringar)
+        // Kolla om fakturan har ROT/RUT-artiklar för att avgöra om det är delvis betald
+        const rotRutCheck = await client.query(
+          "SELECT COUNT(*) as count FROM faktura_artiklar WHERE faktura_id = $1 AND rot_rut_typ IS NOT NULL",
+          [data.fakturaId]
+        );
+
+        let status = "Betald";
+        const harRotRutArtiklar = parseInt(rotRutCheck.rows[0].count) > 0;
+
+        if (harRotRutArtiklar) {
+          // För ROT/RUT-fakturor: Bara kundens del är betald, väntar på SKV
+          status = "Delvis betald";
+        }
+
         await client.query(
           "UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4",
-          ["Betald", new Date().toISOString().split("T")[0], transaktionsId, data.fakturaId]
+          [status, new Date().toISOString().split("T")[0], transaktionsId, data.fakturaId]
         );
-        console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till Betald`);
+        console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till ${status}`);
       } else {
         // Kolla om det är kontantmetod (Bank + Försäljning/Moms, men ingen Kundfordringar)
         const harBankKontantmetod = data.poster.some((p) => p.konto === "1930");
@@ -1376,9 +1405,9 @@ export async function registreraKundfakturaBetalning(
   const userId = parseInt(session.user.id);
   const client = await pool.connect();
   try {
-    // Hämta fakturauppgifter
+    // Hämta fakturauppgifter och artiklar
     const fakturaResult = await client.query(
-      "SELECT * FROM fakturor WHERE id = $1 AND user_id = $2",
+      'SELECT * FROM fakturor WHERE id = $1 AND "userId" = $2',
       [fakturaId, userId]
     );
 
@@ -1392,6 +1421,14 @@ export async function registreraKundfakturaBetalning(
     if (faktura.typ !== "kund" || faktura.status_betalning === "betald") {
       return { success: false, error: "Fakturan kan inte betalas" };
     }
+
+    // Kolla om fakturan har ROT/RUT-artiklar
+    const artiklarResult = await client.query(
+      "SELECT rot_rut_typ FROM faktura_artiklar WHERE faktura_id = $1",
+      [fakturaId]
+    );
+
+    const harRotRut = artiklarResult.rows.some((row) => row.rot_rut_typ);
 
     await client.query("BEGIN");
 
@@ -1421,7 +1458,8 @@ export async function registreraKundfakturaBetalning(
       ]
     );
 
-    // Kreditera kundfordringar
+    // Kreditera kundfordringar (bara 1510 för vanliga fakturor, även för ROT/RUT)
+    // För ROT/RUT: betalningsbelopp ska vara kundens del (50%), 1513 förblir orörd
     await client.query(
       "INSERT INTO transaktionsposter (transaktion_id, konto, debet, kredit, beskrivning) VALUES ($1, $2, $3, $4, $5)",
       [
@@ -1429,7 +1467,7 @@ export async function registreraKundfakturaBetalning(
         "1510",
         0,
         betalningsbelopp,
-        `Betalning kundfaktura ${faktura.fakturanummer}`,
+        `Betalning kundfaktura ${faktura.fakturanummer}${harRotRut ? " (kundens del)" : ""}`,
       ]
     );
 
@@ -1560,6 +1598,143 @@ export async function updateLeverantör(
   } catch (error) {
     console.error("Fel vid uppdatering av leverantör:", error);
     return { success: false, error: "Kunde inte uppdatera leverantör" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function uppdateraRotRutStatus(
+  fakturaId: number,
+  status: "ej_inskickad" | "väntar" | "godkänd"
+) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `UPDATE fakturor SET rot_rut_status = $1 WHERE id = $2 AND "userId" = $3`,
+      [status, fakturaId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, error: "Faktura hittades inte" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Fel vid uppdatering av ROT/RUT status:", error);
+    return { success: false, error: "Kunde inte uppdatera status" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function registreraRotRutBetalning(
+  fakturaId: number
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Inte inloggad" };
+  }
+
+  const userId = parseInt(session.user.id);
+  const client = await pool.connect();
+
+  try {
+    // Hämta faktura för att kolla ROT/RUT-belopp
+    const fakturaResult = await client.query(
+      'SELECT * FROM fakturor WHERE id = $1 AND "userId" = $2',
+      [fakturaId, userId]
+    );
+
+    if (fakturaResult.rows.length === 0) {
+      return { success: false, error: "Faktura hittades inte" };
+    }
+
+    const faktura = fakturaResult.rows[0];
+
+    // Kolla om fakturan har ROT/RUT-artiklar
+    const artiklarResult = await client.query(
+      "SELECT * FROM faktura_artiklar WHERE faktura_id = $1 AND rot_rut_typ IS NOT NULL",
+      [fakturaId]
+    );
+
+    if (artiklarResult.rows.length === 0) {
+      return { success: false, error: "Inga ROT/RUT-artiklar hittades" };
+    }
+
+    // Beräkna totalt ROT/RUT-belopp (50% av fakturasumman)
+    const totalArtiklarResult = await client.query(
+      "SELECT SUM(antal * pris_per_enhet * (1 + moms/100)) as total FROM faktura_artiklar WHERE faktura_id = $1",
+      [fakturaId]
+    );
+
+    const totalBelopp = totalArtiklarResult.rows[0].total || 0;
+    const rotRutBelopp = Math.round(totalBelopp * 0.5 * 100) / 100; // 50% avrundad
+
+    await client.query("BEGIN");
+
+    // Skapa transaktion för ROT/RUT-betalning
+    const transaktionResult = await client.query(
+      `INSERT INTO transaktioner (
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+      ) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [
+        new Date(),
+        `ROT/RUT-betalning faktura ${faktura.fakturanummer}`,
+        rotRutBelopp,
+        `ROT/RUT-utbetalning från Skatteverket för faktura ${faktura.fakturanummer}`,
+        userId,
+      ]
+    );
+
+    const transaktionsId = transaktionResult.rows[0].id;
+
+    // Hämta konto_id för 1930 (Bank/Kassa)
+    const konto1930Result = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+      "1930",
+    ]);
+    if (konto1930Result.rows.length === 0) {
+      throw new Error("Konto 1930 (Bank/Kassa) finns inte i databasen");
+    }
+    const konto1930Id = konto1930Result.rows[0].id;
+
+    // Hämta konto_id för 1513 (Kundfordringar – delad faktura)
+    const konto1513Result = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+      "1513",
+    ]);
+    if (konto1513Result.rows.length === 0) {
+      throw new Error("Konto 1513 (Kundfordringar – delad faktura) finns inte i databasen");
+    }
+    const konto1513Id = konto1513Result.rows[0].id;
+
+    // Debitera Bank/Kassa (pengarna kommer in)
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
+      [transaktionsId, konto1930Id, rotRutBelopp, 0]
+    );
+
+    // Kreditera 1513 (nollar SKV-fordran)
+    await client.query(
+      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
+      [transaktionsId, konto1513Id, 0, rotRutBelopp]
+    );
+
+    // Uppdatera fakturas betalningsstatus till "Betald" när SKV har betalat
+    await client.query("UPDATE fakturor SET status_betalning = $1 WHERE id = $2", [
+      "Betald",
+      fakturaId,
+    ]);
+
+    await client.query("COMMIT");
+
+    return { success: true };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Fel vid registrering av ROT/RUT-betalning:", error);
+    return { success: false, error: "Kunde inte registrera ROT/RUT-betalning" };
   } finally {
     client.release();
   }

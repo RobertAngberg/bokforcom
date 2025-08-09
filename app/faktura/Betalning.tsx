@@ -98,16 +98,14 @@ export default function Betalning() {
     : null;
   const forfalloDate = parseISODate(formData.forfallodatum) ?? fallbackForfallo;
 
-  // Håller förfallodatum i synk med fakturadatum + betalningsvillkor.
+  // Sätter förfallodatum automatiskt BARA om det är tomt (låter användaren ändra manuellt)
   useEffect(() => {
-    if (!fakturadatumDate) return;
+    if (!fakturadatumDate || formData.forfallodatum) return; // ✅ Kör bara om förfallodatum är tomt
     const days = parseInt(formData.betalningsvillkor || "30", 10);
     const calc = addDays(fakturadatumDate, isNaN(days) ? 30 : days)
       .toISOString()
       .slice(0, 10);
-    if (calc !== formData.forfallodatum) {
-      setFormData((prev) => ({ ...prev, forfallodatum: calc }));
-    }
+    setFormData((prev) => ({ ...prev, forfallodatum: calc }));
   }, [fakturadatumDate, formData.betalningsvillkor, formData.forfallodatum, setFormData]);
 
   //#region Hanterare

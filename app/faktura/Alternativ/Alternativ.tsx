@@ -6,12 +6,15 @@ import Knapp from "../../_components/Knapp";
 import ExporteraPDFKnapp from "./ExporteraPDFKnapp";
 import SkickaEpost from "./SkickaEpost";
 import BokförFakturaModal from "./BokförFakturaModal";
+import RotRutBetalningModal from "./RotRutBetalningModal";
 import {
   saveInvoice,
   hämtaSparadeFakturor,
   hämtaFakturaStatus,
   bokförFaktura,
   hämtaBokföringsmetod,
+  uppdateraRotRutStatus,
+  registreraRotRutBetalning,
 } from "../actions";
 import { useFakturaContext } from "../FakturaProvider";
 import { laddaNerHUSFil } from "../../_utils/husFilGenerator";
@@ -37,12 +40,14 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const { formData, setFormData } = useFakturaContext();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
+  const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
   const [sparaLoading, setSparaLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
   const [bokföringsmetod, setBokföringsmetod] = useState<string>("fakturametoden");
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
     status_bokförd?: string;
+    rot_rut_status?: string;
   }>({});
 
   // Hämta bokföringsmetod när komponenten laddas
@@ -177,15 +182,32 @@ export default function Alternativ({ onReload, onPreview }: Props) {
           0
         ) || 0;
 
-      // 1. Kundfordran eller Bank/Kassa
+      // Kolla om det finns ROT/RUT-artiklar
+      const harRotRutArtiklar =
+        formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+      const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
+      const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
+
+      // 1. Kundfordran eller Bank/Kassa (kundens del)
       const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
       poster.push({
         konto: skuld_tillgångskonto,
         kontoNamn: ärKontantmetod ? "Bank/Kassa" : "Kundfordringar",
-        debet: totalInkMoms,
+        debet: kundBelopp,
         kredit: 0,
         beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
       });
+
+      // 1b. ROT/RUT-fordran (SKV:s del) - om det finns ROT/RUT
+      if (harRotRutArtiklar && rotRutBelopp > 0) {
+        poster.push({
+          konto: "1513",
+          kontoNamn: "Kundfordringar – delad faktura",
+          debet: rotRutBelopp,
+          kredit: 0,
+          beskrivning: `ROT/RUT-del faktura ${formData.fakturanummer}`,
+        });
+      }
 
       // 2. Intäkt
       poster.push({
@@ -277,6 +299,28 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       brfOrgNummer: formData.brfOrganisationsnummer,
       antalTimmar: totalTimmar, // Skicka faktiska timmar
     });
+  };
+
+  const hanteraRotRutStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!formData.id) return;
+
+    const nyStatus = e.target.value as "ej_inskickad" | "väntar" | "godkänd";
+
+    const result = await uppdateraRotRutStatus(parseInt(formData.id), nyStatus);
+    if (result.success) {
+      setFakturaStatus((prev) => ({ ...prev, rot_rut_status: nyStatus }));
+    } else {
+      alert("❌ Kunde inte uppdatera status");
+    }
+  };
+
+  const hanteraRotRutBetalning = async () => {
+    if (!formData.id) return;
+    setRotRutModalOpen(true);
+  };
+
+  const hanteraRotRutSuccess = (nyStatus: { rot_rut_status: string; status_betalning: string }) => {
+    setFakturaStatus((prev) => ({ ...prev, ...nyStatus }));
   };
 
   // Kontrollera vad som saknas för att kunna spara/bokföra
@@ -385,15 +429,45 @@ export default function Alternativ({ onReload, onPreview }: Props) {
             className="flex-1 min-w-40"
           />
         )}
-        {ärROTRUTFaktura && (
+      </div>
+
+      {/* HUS-fil knapp på egen rad */}
+      {ärROTRUTFaktura && (
+        <div className="flex justify-center items-center gap-4">
           <Knapp
             onClick={hanteraHUSFil}
             text={husFilKnappText}
             disabled={!kanSpara || !harPersonnummer}
-            className="flex-1 min-w-40"
+            className=""
           />
-        )}
-      </div>
+          {formData.id && (
+            <div className="flex flex-row gap-3 items-center">
+              <select
+                value={fakturaStatus.rot_rut_status || ""}
+                onChange={hanteraRotRutStatusChange}
+                className="px-3 py-2 rounded text-sm font-medium bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition-colors"
+              >
+                <option value="" disabled>
+                  ROT/RUT-status
+                </option>
+                <option value="ej_inskickad">📄 Ej inskickad till SKV</option>
+                <option value="väntar">⏳ Väntar på SKV</option>
+                <option value="godkänd">✅ Godkänd av SKV</option>
+              </select>
+
+              {(fakturaStatus.rot_rut_status === "väntar" ||
+                fakturaStatus.status_betalning === "Delvis betald") && (
+                <button
+                  onClick={hanteraRotRutBetalning}
+                  className="px-3 py-2 rounded text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+                >
+                  💰 Registrera utbetalning från SKV
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <SkickaEpost
         onSuccess={() => console.log("E-post skickad")}
@@ -401,6 +475,21 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       />
 
       <BokförFakturaModal isOpen={bokförModalOpen} onClose={() => setBokförModalOpen(false)} />
+
+      <RotRutBetalningModal
+        isOpen={rotRutModalOpen}
+        onClose={() => setRotRutModalOpen(false)}
+        fakturaId={formData.id ? parseInt(formData.id) : 0}
+        fakturanummer={formData.fakturanummer || ""}
+        kundnamn={formData.kundnamn || ""}
+        totalBelopp={
+          formData.artiklar?.reduce(
+            (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
+            0
+          ) || 0
+        }
+        onSuccess={hanteraRotRutSuccess}
+      />
     </div>
   );
 }

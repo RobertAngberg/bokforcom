@@ -250,6 +250,25 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
                       </div>
                     )}
                   </div>
+
+                  {/* ROT/RUT-label i nedre högra hörnet */}
+                  {faktura.rotRutTyp && (
+                    <div className="absolute bottom-2 right-2 flex flex-col gap-1 items-end">
+                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                        {faktura.rotRutTyp}
+                      </span>
+                      {faktura.rot_rut_status === "godkänd" && (
+                        <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                          ✅ SKV
+                        </span>
+                      )}
+                      {faktura.rot_rut_status === "väntar" && (
+                        <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded">
+                          ⏳ SKV
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
