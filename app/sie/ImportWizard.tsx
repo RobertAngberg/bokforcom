@@ -69,6 +69,7 @@ export default function ImportWizard({
     inkluderaBalanser: true,
     inkluderaResultat: true,
     skapaKonton: true,
+    exkluderaVerifikationer: [] as string[], // Array av verifikationsnummer att skippa
   });
 
   // Förfyll datumen automatiskt baserat på SIE-data
@@ -395,6 +396,45 @@ function InställningarSteg({
                 Verifikationer ({sieData.verifikationer.length} st)
               </span>
             </label>
+
+            {/* Visa verifikationer för exkludering */}
+            {settings.inkluderaVerifikationer && sieData.verifikationer.length > 0 && (
+              <div className="ml-6 mt-2 bg-slate-700 rounded p-3">
+                <h4 className="text-sm font-medium text-white mb-2">
+                  Exkludera specifika verifikationer:
+                </h4>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {sieData.verifikationer.slice(0, 20).map((v) => (
+                    <label key={`${v.serie}-${v.nummer}`} className="flex items-center text-sm">
+                      <input
+                        type="checkbox"
+                        checked={settings.exkluderaVerifikationer.includes(
+                          `${v.serie}-${v.nummer}`
+                        )}
+                        onChange={(e) => {
+                          const verifikationId = `${v.serie}-${v.nummer}`;
+                          const newExkludera = e.target.checked
+                            ? [...settings.exkluderaVerifikationer, verifikationId]
+                            : settings.exkluderaVerifikationer.filter(
+                                (id: string) => id !== verifikationId
+                              );
+                          onSettingsChange({ ...settings, exkluderaVerifikationer: newExkludera });
+                        }}
+                        className="mr-2 scale-75"
+                      />
+                      <span className="text-gray-300">
+                        V{v.nummer}: {v.beskrivning} ({v.datum})
+                      </span>
+                    </label>
+                  ))}
+                  {sieData.verifikationer.length > 20 && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Visar första 20 av {sieData.verifikationer.length} verifikationer
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -597,6 +637,9 @@ function ImportSteg({
           : undefined;
 
         const importResult = await importeraSieData(sieData, saknadeKonton, settings, fileInfo);
+        console.log("📊 SIE Data ingående balanser:", sieData.balanser.ingående);
+        console.log("📊 Import result:", importResult);
+
         if (!importResult.success) {
           throw new Error(importResult.error || "Kunde inte importera data");
         }

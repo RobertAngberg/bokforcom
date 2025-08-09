@@ -28,12 +28,18 @@ type GroupedTransactions = {
 
 type Props = {
   initialData: TransactionItem[];
+  ingaendeBalanser: Record<string, number>;
   företagsnamn?: string;
   organisationsnummer?: string;
 };
 // #endregion
 
-export default function Huvudbok({ initialData, företagsnamn, organisationsnummer }: Props) {
+export default function Huvudbok({
+  initialData,
+  ingaendeBalanser,
+  företagsnamn,
+  organisationsnummer,
+}: Props) {
   //#region State & Variables
   const [groupedData, setGroupedData] = useState<GroupedTransactions>({});
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
@@ -241,8 +247,8 @@ export default function Huvudbok({ initialData, företagsnamn, organisationsnumm
               const showHeading = section !== lastSection;
               lastSection = section;
 
-              // Beräkna slutsaldo för detta konto
-              let slutSaldo = 0;
+              // Beräkna slutsaldo för detta konto (ingående balans + transaktioner)
+              let slutSaldo = ingaendeBalanser[kontoNummer] || 0;
               items.forEach((item) => {
                 slutSaldo += (item.debet ?? 0) - (item.kredit ?? 0);
               });
@@ -254,7 +260,9 @@ export default function Huvudbok({ initialData, företagsnamn, organisationsnumm
                   )}
                   <AnimeradFlik title={konto} icon="📂" visaSummaDirekt={formatSEK(slutSaldo)}>
                     {(() => {
-                      let saldo = 0;
+                      // Börja med ingående balans
+                      let saldo = ingaendeBalanser[kontoNummer] || 0;
+
                       const rows = items.map((item) => {
                         saldo += (item.debet ?? 0) - (item.kredit ?? 0);
 
@@ -290,7 +298,7 @@ export default function Huvudbok({ initialData, företagsnamn, organisationsnumm
                       return (
                         <div className="space-y-2">
                           <div className="text-sm text-white font-semibold mb-2">
-                            Ingående balans 0,00 kr
+                            Ingående balans {formatSEK(ingaendeBalanser[kontoNummer] || 0)}
                           </div>
                           <InreTabell rows={rows} />
                           <div className="text-sm text-white font-semibold mt-4 text-right">

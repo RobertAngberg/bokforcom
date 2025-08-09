@@ -17,7 +17,8 @@ export default async function Page() {
 
   return (
     <Huvudbok
-      initialData={result}
+      initialData={result.transaktioner}
+      ingaendeBalanser={result.ingaendeBalanser}
       företagsnamn={profil?.företagsnamn ?? ""}
       organisationsnummer={profil?.organisationsnummer ?? ""}
     />

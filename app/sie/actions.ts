@@ -918,6 +918,7 @@ interface ImportSettings {
   inkluderaBalanser: boolean;
   inkluderaResultat: boolean;
   skapaKonton: boolean;
+  exkluderaVerifikationer?: string[];
 }
 
 export async function importeraSieData(
@@ -1168,6 +1169,27 @@ ${duplicatesList}
           });
         }
 
+        // Filtrera bort användarvalde verifikationer
+        if (settings.exkluderaVerifikationer && settings.exkluderaVerifikationer.length > 0) {
+          const ursprungligAntal = filtradeVerifikationer.length;
+          filtradeVerifikationer = filtradeVerifikationer.filter((v) => {
+            const verifikationId = `${v.serie}-${v.nummer}`;
+            const shouldExclude =
+              settings.exkluderaVerifikationer?.includes(verifikationId) || false;
+            if (shouldExclude) {
+              console.log(
+                `⚠️ Exkluderar verifikation V${v.nummer}: "${v.beskrivning}" (användarval)`
+              );
+            }
+            return !shouldExclude;
+          });
+          console.log(
+            `📊 Exkluderade ${ursprungligAntal - filtradeVerifikationer.length} verifikationer baserat på användarval`
+          );
+        }
+
+        console.log(`📊 Antal verifikationer att importera: ${filtradeVerifikationer.length}`);
+
         // Importera varje verifikation som en transaktion med flera transaktionsposter
         for (const verifikation of filtradeVerifikationer) {
           // Konvertera SIE-datum till PostgreSQL-datum
@@ -1235,166 +1257,199 @@ ${duplicatesList}
 
       // Steg 3: Importera balanser (om aktiverat)
       if (settings.inkluderaBalanser) {
-        // Skapa en ingående balanstransaktion
+        let ingaendeImporterade = 0;
+
+        // ALLTID importera ingående balanser (föregående års slutbalans)
         if (sieData.balanser.ingående.length > 0) {
-          const { rows: transaktionRows } = await client.query(
-            `INSERT INTO transaktioner (
-              transaktionsdatum, 
-              kontobeskrivning, 
-              kommentar, 
-              "userId"
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING id`,
-            [
-              settings.startDatum || "2025-01-01",
-              "Ingående balanser",
-              "SIE Import - Ingående balanser",
-              userId,
-            ]
-          );
+          console.log("📥 Importerar ingående balanser (föregående års slutbalans)");
+          console.log("📊 Ingående balanser i SIE-fil:", sieData.balanser.ingående);
 
-          const transaktionsId = transaktionRows[0].id;
+          // Skapa en ingående balanstransaktion
+          if (sieData.balanser.ingående.length > 0) {
+            const { rows: transaktionRows } = await client.query(
+              `INSERT INTO transaktioner (
+                transaktionsdatum, 
+                kontobeskrivning, 
+                kommentar, 
+                "userId"
+              ) VALUES ($1, $2, $3, $4)
+              RETURNING id`,
+              [
+                settings.startDatum || "2025-01-01",
+                "Ingående balanser",
+                "SIE Import - Ingående balanser",
+                userId,
+              ]
+            );
 
-          // Skapa transaktionsposter för varje balanspost
-          for (const balans of sieData.balanser.ingående) {
-            if (balans.belopp !== 0) {
-              // Hämta konto_id
-              const { rows: kontoRows } = await client.query(
-                "SELECT id FROM konton WHERE kontonummer = $1",
-                [balans.konto]
-              );
+            const transaktionsId = transaktionRows[0].id;
 
-              if (kontoRows.length === 0) {
-                console.warn(`Konto ${balans.konto} hittades inte för ingående balans`);
-                continue;
+            // Skapa transaktionsposter för varje balanspost
+            for (const balans of sieData.balanser.ingående) {
+              if (balans.belopp !== 0) {
+                console.log(
+                  `🔍 Försöker importera ingående balans för konto ${balans.konto}: ${balans.belopp}`
+                );
+
+                // Hämta konto_id
+                const { rows: kontoRows } = await client.query(
+                  "SELECT id FROM konton WHERE kontonummer = $1",
+                  [balans.konto]
+                );
+
+                if (kontoRows.length === 0) {
+                  console.warn(`❌ Konto ${balans.konto} hittades inte för ingående balans`);
+                  continue;
+                }
+
+                const kontoId = kontoRows[0].id;
+                const debet = balans.belopp > 0 ? balans.belopp : 0;
+                const kredit = balans.belopp < 0 ? Math.abs(balans.belopp) : 0;
+
+                console.log(
+                  `✅ Skapar ingående balans för konto ${balans.konto}: debet=${debet}, kredit=${kredit}`
+                );
+
+                await client.query(
+                  `INSERT INTO transaktionsposter (
+                    transaktions_id,
+                    konto_id,
+                    debet,
+                    kredit
+                  ) VALUES ($1, $2, $3, $4)`,
+                  [transaktionsId, kontoId, debet, kredit]
+                );
+
+                ingaendeImporterade++;
+                console.log(`📈 Räknare för ingående balanser nu: ${ingaendeImporterade}`);
               }
-
-              const kontoId = kontoRows[0].id;
-              const debet = balans.belopp > 0 ? balans.belopp : 0;
-              const kredit = balans.belopp < 0 ? Math.abs(balans.belopp) : 0;
-
-              await client.query(
-                `INSERT INTO transaktionsposter (
-                  transaktions_id,
-                  konto_id,
-                  debet,
-                  kredit
-                ) VALUES ($1, $2, $3, $4)`,
-                [transaktionsId, kontoId, debet, kredit]
-              );
             }
           }
         }
 
-        // Skapa en utgående balanstransaktion
-        if (sieData.balanser.utgående.length > 0) {
-          const { rows: transaktionRows } = await client.query(
-            `INSERT INTO transaktioner (
-              transaktionsdatum, 
-              kontobeskrivning, 
-              kommentar, 
-              "userId"
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING id`,
-            [
-              settings.slutDatum || "2025-07-29",
-              "Utgående balanser",
-              "SIE Import - Utgående balanser",
-              userId,
-            ]
-          );
+        // Endast importera utgående balanser om INGA verifikationer finns
+        if (sieData.verifikationer.length === 0 && sieData.balanser.utgående.length > 0) {
+          console.log("📤 Importerar utgående balanser (eftersom inga verifikationer finns)");
 
-          const transaktionsId = transaktionRows[0].id;
+          // Skapa en utgående balanstransaktion bara om inga verifikationer finns
+          if (sieData.balanser.utgående.length > 0) {
+            const { rows: transaktionRows } = await client.query(
+              `INSERT INTO transaktioner (
+                transaktionsdatum, 
+                kontobeskrivning, 
+                kommentar, 
+                "userId"
+              ) VALUES ($1, $2, $3, $4)
+              RETURNING id`,
+              [
+                settings.slutDatum || "2025-07-29",
+                "Utgående balanser",
+                "SIE Import - Utgående balanser",
+                userId,
+              ]
+            );
 
-          // Skapa transaktionsposter för varje balanspost
-          for (const balans of sieData.balanser.utgående) {
-            if (balans.belopp !== 0) {
-              // Hämta konto_id
-              const { rows: kontoRows } = await client.query(
-                "SELECT id FROM konton WHERE kontonummer = $1",
-                [balans.konto]
-              );
+            const transaktionsId = transaktionRows[0].id;
 
-              if (kontoRows.length === 0) {
-                console.warn(`Konto ${balans.konto} hittades inte för utgående balans`);
-                continue;
+            // Skapa transaktionsposter för varje balanspost
+            for (const balans of sieData.balanser.utgående) {
+              if (balans.belopp !== 0) {
+                // Hämta konto_id
+                const { rows: kontoRows } = await client.query(
+                  "SELECT id FROM konton WHERE kontonummer = $1",
+                  [balans.konto]
+                );
+
+                if (kontoRows.length === 0) {
+                  console.warn(`Konto ${balans.konto} hittades inte för utgående balans`);
+                  continue;
+                }
+
+                const kontoId = kontoRows[0].id;
+                const debet = balans.belopp > 0 ? balans.belopp : 0;
+                const kredit = balans.belopp < 0 ? Math.abs(balans.belopp) : 0;
+
+                await client.query(
+                  `INSERT INTO transaktionsposter (
+                    transaktions_id,
+                    konto_id,
+                    debet,
+                    kredit
+                  ) VALUES ($1, $2, $3, $4)`,
+                  [transaktionsId, kontoId, debet, kredit]
+                );
               }
-
-              const kontoId = kontoRows[0].id;
-              const debet = balans.belopp > 0 ? balans.belopp : 0;
-              const kredit = balans.belopp < 0 ? Math.abs(balans.belopp) : 0;
-
-              await client.query(
-                `INSERT INTO transaktionsposter (
-                  transaktions_id,
-                  konto_id,
-                  debet,
-                  kredit
-                ) VALUES ($1, $2, $3, $4)`,
-                [transaktionsId, kontoId, debet, kredit]
-              );
             }
           }
+
+          console.log(`📊 Slutlig räknare för ingående balanser: ${ingaendeImporterade}`);
         }
 
-        resultat.balanserImporterade =
-          sieData.balanser.ingående.length + sieData.balanser.utgående.length;
+        // Sätt slutresultatet för balanser (ingående är alltid importerade om de finns)
+        resultat.balanserImporterade = ingaendeImporterade;
       }
 
       // Steg 4: Importera resultatdata (om aktiverat)
       if (settings.inkluderaResultat) {
         if (sieData.resultat.length > 0) {
-          // Skapa en resultatdatatransaktion
-          const { rows: transaktionRows } = await client.query(
-            `INSERT INTO transaktioner (
-              transaktionsdatum, 
-              kontobeskrivning, 
-              kommentar, 
-              "userId"
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING id`,
-            [
-              settings.slutDatum || "2025-07-29",
-              "Resultatdata",
-              "SIE Import - Resultatdata",
-              userId,
-            ]
-          );
+          // Om vi har verifikationer, skippa resultatdata för att undvika dubblering
+          if (sieData.verifikationer.length > 0) {
+            console.log(
+              "⚠️ Skippar resultatdata eftersom verifikationer redan finns (undviker dubblering)"
+            );
+            resultat.resultatImporterat = 0;
+          } else {
+            // Skapa en resultatdatatransaktion bara om inga verifikationer finns
+            const { rows: transaktionRows } = await client.query(
+              `INSERT INTO transaktioner (
+                transaktionsdatum, 
+                kontobeskrivning, 
+                kommentar, 
+                "userId"
+              ) VALUES ($1, $2, $3, $4)
+              RETURNING id`,
+              [
+                settings.slutDatum || "2025-07-29",
+                "Resultatdata",
+                "SIE Import - Resultatdata",
+                userId,
+              ]
+            );
 
-          const transaktionsId = transaktionRows[0].id;
+            const transaktionsId = transaktionRows[0].id;
 
-          // Skapa transaktionsposter för varje resultatpost
-          for (const resultatpost of sieData.resultat) {
-            if (resultatpost.belopp !== 0) {
-              // Hämta konto_id
-              const { rows: kontoRows } = await client.query(
-                "SELECT id FROM konton WHERE kontonummer = $1",
-                [resultatpost.konto]
-              );
+            // Skapa transaktionsposter för varje resultatpost
+            for (const resultatpost of sieData.resultat) {
+              if (resultatpost.belopp !== 0) {
+                // Hämta konto_id
+                const { rows: kontoRows } = await client.query(
+                  "SELECT id FROM konton WHERE kontonummer = $1",
+                  [resultatpost.konto]
+                );
 
-              if (kontoRows.length === 0) {
-                console.warn(`Konto ${resultatpost.konto} hittades inte för resultatdata`);
-                continue;
+                if (kontoRows.length === 0) {
+                  console.warn(`Konto ${resultatpost.konto} hittades inte för resultatdata`);
+                  continue;
+                }
+
+                const kontoId = kontoRows[0].id;
+                const debet = resultatpost.belopp > 0 ? resultatpost.belopp : 0;
+                const kredit = resultatpost.belopp < 0 ? Math.abs(resultatpost.belopp) : 0;
+
+                await client.query(
+                  `INSERT INTO transaktionsposter (
+                    transaktions_id,
+                    konto_id,
+                    debet,
+                    kredit
+                  ) VALUES ($1, $2, $3, $4)`,
+                  [transaktionsId, kontoId, debet, kredit]
+                );
               }
-
-              const kontoId = kontoRows[0].id;
-              const debet = resultatpost.belopp > 0 ? resultatpost.belopp : 0;
-              const kredit = resultatpost.belopp < 0 ? Math.abs(resultatpost.belopp) : 0;
-
-              await client.query(
-                `INSERT INTO transaktionsposter (
-                  transaktions_id,
-                  konto_id,
-                  debet,
-                  kredit
-                ) VALUES ($1, $2, $3, $4)`,
-                [transaktionsId, kontoId, debet, kredit]
-              );
             }
+            resultat.resultatImporterat = sieData.resultat.length;
           }
         }
-
-        resultat.resultatImporterat = sieData.resultat.length;
       }
 
       // Uppdatera import-logg med slutresultat

@@ -19,7 +19,9 @@ export async function fetchHuvudbok() {
 
   try {
     const client = await pool.connect();
-    const query = `
+
+    // Hämta alla transaktioner (exklusive ingående balanser)
+    const transaktionerQuery = `
       SELECT 
         k.kontonummer,
         k.beskrivning as kontobeskrivning_konto,
@@ -34,14 +36,50 @@ export async function fetchHuvudbok() {
       JOIN transaktionsposter tp ON tp.transaktions_id = t.id
       JOIN konton k ON k.id = tp.konto_id
       WHERE t."userId" = $1
+        AND NOT (t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser')
       ORDER BY k.kontonummer::int, t.transaktionsdatum DESC
     `;
-    const res = await client.query(query, [userId]);
+
+    // Hämta ingående balanser (från SIE-import)
+    const ingaendeBalanserQuery = `
+      SELECT 
+        k.kontonummer,
+        SUM(tp.debet - tp.kredit) as ingaende_balans
+      FROM transaktioner t
+      JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      JOIN konton k ON k.id = tp.konto_id
+      WHERE t."userId" = $1
+        AND t.kontobeskrivning = 'Ingående balanser'
+        AND t.kommentar = 'SIE Import - Ingående balanser'
+      GROUP BY k.kontonummer
+    `;
+
+    const [transaktionerRes, ingaendeRes] = await Promise.all([
+      client.query(transaktionerQuery, [userId]),
+      client.query(ingaendeBalanserQuery, [userId]),
+    ]);
+
     client.release();
-    return res.rows;
+
+    // Skapa en lookup för ingående balanser
+    const ingaendeBalanser = ingaendeRes.rows.reduce(
+      (acc, row) => {
+        acc[row.kontonummer] = parseFloat(row.ingaende_balans);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return {
+      transaktioner: transaktionerRes.rows,
+      ingaendeBalanser,
+    };
   } catch (error) {
     console.error("❌ fetchHuvudbok error:", error);
-    return [];
+    return {
+      transaktioner: [],
+      ingaendeBalanser: {},
+    };
   }
 }
 
