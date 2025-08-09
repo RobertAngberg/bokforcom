@@ -488,6 +488,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
             0
           ) || 0
         }
+        bokföringsmetod={bokföringsmetod}
         onSuccess={hanteraRotRutSuccess}
       />
     </div>

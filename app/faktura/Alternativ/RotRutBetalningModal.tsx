@@ -11,6 +11,7 @@ interface RotRutBetalningModalProps {
   fakturanummer: string;
   kundnamn: string;
   totalBelopp: number;
+  bokföringsmetod: string;
   onSuccess: (nyStatus: { rot_rut_status: string; status_betalning: string }) => void;
 }
 
@@ -21,6 +22,7 @@ export default function RotRutBetalningModal({
   fakturanummer,
   kundnamn,
   totalBelopp,
+  bokföringsmetod,
   onSuccess,
 }: RotRutBetalningModalProps) {
   const [loading, setLoading] = useState(false);
@@ -42,9 +44,12 @@ export default function RotRutBetalningModal({
           onClose();
           // Visa bekräftelse efter att modalen stängs
           setTimeout(() => {
-            alert(
-              `✅ ROT/RUT-utbetalning registrerad!\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nFakturan är nu helt betald.`
-            );
+            const ärKontantmetod = bokföringsmetod === "kontantmetoden";
+            const meddelande = ärKontantmetod
+              ? `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nKunden betalade sin del vid fakturering.`
+              : `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nFakturan är nu avslutad och klar.`;
+
+            alert(meddelande);
           }, 100);
         }
       } else {
