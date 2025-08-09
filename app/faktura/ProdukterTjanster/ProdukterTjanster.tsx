@@ -273,7 +273,7 @@ export default function ProdukterTjanster() {
     if (redigerarIndex === null) {
       setTimeout(() => {
         setBlinkIndex(formData.artiklar?.length ?? 0);
-        setTimeout(() => setBlinkIndex(null), 2000); // Matchar den nya CSS-animationen
+        setTimeout(() => setBlinkIndex(null), 500);
       }, 50);
     }
   };
@@ -382,15 +382,9 @@ export default function ProdukterTjanster() {
 
   const handleRemove = (index: number) => {
     const nyaArtiklar = (formData.artiklar ?? []).filter((_, i) => i !== index);
-
-    // Kontrollera om det finns några ROT/RUT-artiklar kvar
-    const harRotRutArtiklar = nyaArtiklar.some((artikel: any) => artikel.rotRutTyp);
-
     setFormData((prev) => ({
       ...prev,
       artiklar: nyaArtiklar,
-      // Inaktivera ROT/RUT om inga ROT/RUT-artiklar finns kvar
-      rotRutAktiverat: harRotRutArtiklar ? prev.rotRutAktiverat : false,
     }));
   };
 
@@ -562,16 +556,11 @@ export default function ProdukterTjanster() {
 
     console.log("🔍 Favoritartikel tillagd direkt i listan:", newArtikel.beskrivning);
 
-    // Kollapsa favoritlistan automatiskt efter val med en kort delay för smidig UX
-    setTimeout(() => {
-      setShowFavoritArtiklar(false);
-    }, 200);
-
     // Blinka den nya artikeln
     setTimeout(() => {
       setBlinkIndex(uppdateradeArtiklar.length - 1);
-      setTimeout(() => setBlinkIndex(null), 2000); // Matchar CSS-animationens 2s duration
-    }, 400);
+      setTimeout(() => setBlinkIndex(null), 500);
+    }, 50);
   };
 
   const handleDeleteFavorit = async (id?: number) => {
@@ -651,7 +640,7 @@ export default function ProdukterTjanster() {
         formData.artiklar &&
         formData.artiklar.length > 0 &&
         formData.artiklar.some((artikel: any) => artikel.rotRutTyp) && (
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
