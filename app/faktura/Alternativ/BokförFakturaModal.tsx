@@ -141,7 +141,18 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
           varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalning.");
         }
       } else {
-        varningar.push("✅ Fakturan är redan bokförd och betald.");
+        // Kolla om det finns ROT/RUT-artiklar för att visa rätt meddelande
+        const harRotRutArtiklar =
+          formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+
+        if (harRotRutArtiklar) {
+          varningar.push("✅ Fakturan är redan bokförd och betald.");
+          varningar.push(
+            "För ROT/RUT-utbetalning från SKV: ändra ROT/RUT-status till 'Väntar på SKV' och använd sen ROT/RUT-betalningsknappen."
+          );
+        } else {
+          varningar.push("✅ Fakturan är redan bokförd och betald.");
+        }
         return { poster, varningar };
       }
 
@@ -314,7 +325,14 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
             {varningar.map((varning, index) => (
               <li key={index} className="flex items-start gap-2">
                 <span className="text-blue-400 mt-0.5">•</span>
-                <span>{varning.replace(/^⚠️\s*/, "")}</span>
+                <div>
+                  {varning
+                    .replace(/^⚠️\s*/, "")
+                    .split("\n")
+                    .map((line, lineIndex) => (
+                      <div key={lineIndex}>{line}</div>
+                    ))}
+                </div>
               </li>
             ))}
           </ul>
