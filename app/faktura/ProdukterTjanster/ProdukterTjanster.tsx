@@ -273,7 +273,7 @@ export default function ProdukterTjanster() {
     if (redigerarIndex === null) {
       setTimeout(() => {
         setBlinkIndex(formData.artiklar?.length ?? 0);
-        setTimeout(() => setBlinkIndex(null), 500);
+        setTimeout(() => setBlinkIndex(null), 2000); // Matchar den nya CSS-animationen
       }, 50);
     }
   };
@@ -382,9 +382,15 @@ export default function ProdukterTjanster() {
 
   const handleRemove = (index: number) => {
     const nyaArtiklar = (formData.artiklar ?? []).filter((_, i) => i !== index);
+
+    // Kontrollera om det finns några ROT/RUT-artiklar kvar
+    const harRotRutArtiklar = nyaArtiklar.some((artikel: any) => artikel.rotRutTyp);
+
     setFormData((prev) => ({
       ...prev,
       artiklar: nyaArtiklar,
+      // Inaktivera ROT/RUT om inga ROT/RUT-artiklar finns kvar
+      rotRutAktiverat: harRotRutArtiklar ? prev.rotRutAktiverat : false,
     }));
   };
 
@@ -556,11 +562,16 @@ export default function ProdukterTjanster() {
 
     console.log("🔍 Favoritartikel tillagd direkt i listan:", newArtikel.beskrivning);
 
+    // Kollapsa favoritlistan automatiskt efter val med en kort delay för smidig UX
+    setTimeout(() => {
+      setShowFavoritArtiklar(false);
+    }, 200);
+
     // Blinka den nya artikeln
     setTimeout(() => {
       setBlinkIndex(uppdateradeArtiklar.length - 1);
-      setTimeout(() => setBlinkIndex(null), 500);
-    }, 50);
+      setTimeout(() => setBlinkIndex(null), 2000); // Matchar CSS-animationens 2s duration
+    }, 400);
   };
 
   const handleDeleteFavorit = async (id?: number) => {
@@ -627,35 +638,6 @@ export default function ProdukterTjanster() {
         inladdadFavoritId={favoritArtikelVald ? ursprungligFavoritId : null}
       />
 
-      {/* ROT/RUT infobox - visas alltid när aktiverat */}
-      {(formData.rotRutAktiverat ||
-        (formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp))) && (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-white">
-                {formData.rotRutTyp || "ROT/RUT"} är aktiverat
-              </h3>
-              <div className="mt-1 text-sm text-slate-300">
-                <p>
-                  Tjänster/arbete berättigar 50% avdrag. Lägg till eventuell materialkostnad som en
-                  separat artikel.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <ArtiklarList
         artiklar={formData.artiklar as Artikel[]}
         blinkIndex={blinkIndex}
@@ -663,6 +645,37 @@ export default function ProdukterTjanster() {
         onEdit={handleEdit}
         onShow={handleShowArtikelDetaljer}
       />
+
+      {/* ROT/RUT infobox - visas under artikellistan */}
+      {formData.rotRutAktiverat &&
+        formData.artiklar &&
+        formData.artiklar.length > 0 &&
+        formData.artiklar.some((artikel: any) => artikel.rotRutTyp) && (
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-white">
+                  {formData.rotRutTyp || "ROT/RUT"} är aktiverat
+                </h3>
+                <div className="mt-1 text-sm text-slate-300">
+                  <p>
+                    Tjänster/arbete berättigar 50% avdrag. Lägg till eventuell materialkostnad som
+                    en separat artikel.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* Knapp för att visa/dölja artikelformuläret */}
       <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">

@@ -26,6 +26,26 @@
     details[open] .rotate-arrow {
         @apply rotate-180;
     }
+
+    /* Blink animation för nyligen tillagda artiklar */
+    .background-pulse {
+        animation: backgroundPulse 2s ease-in-out;
+    }
+
+    @keyframes backgroundPulse {
+
+        0%,
+        100% {
+            background-color: rgb(51 65 85);
+            /* slate-700 */
+        }
+
+        50% {
+            background-color: rgb(16 185 129);
+            /* emerald-500 */
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+    }
 }
 
 /* 🖨 Print + Export styles */
