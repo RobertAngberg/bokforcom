@@ -65,7 +65,7 @@ export default function ProdukterTjanster() {
   const [prisPerEnhet, setPrisPerEnhet] = useState(0);
   const [moms, setMoms] = useState(25);
   const [valuta, setValuta] = useState("SEK");
-  const [typ, setTyp] = useState<"vara" | "tjänst">("vara");
+  const [typ, setTyp] = useState<"vara" | "tjänst">("tjänst");
   const [loading, setLoading] = useState(false);
   const [favoritArtiklar, setFavoritArtiklar] = useState<FavoritArtikel[]>([]);
   const [showFavoritArtiklar, setShowFavoritArtiklar] = useState(false);
@@ -647,6 +647,81 @@ export default function ProdukterTjanster() {
               onChangeTyp={setTyp}
               disabled={favoritArtikelVald}
             />
+
+            {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
+            <div className="mb-4">
+              <Knapp
+                onClick={() => {
+                  if (typ === "vara") {
+                    alert(
+                      "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
+                    );
+                    return;
+                  }
+
+                  const newValue = !visaRotRutForm;
+                  setVisaRotRutForm(newValue);
+                  if (newValue) {
+                    setTyp("tjänst");
+                  }
+                  setFormData((prev) => ({
+                    ...prev,
+                    rotRutAktiverat: newValue,
+                    ...(newValue
+                      ? {}
+                      : {
+                          rotRutTyp: undefined,
+                          rotRutKategori: undefined,
+                          avdragProcent: undefined,
+                          arbetskostnadExMoms: undefined,
+                          avdragBelopp: undefined,
+                          personnummer: undefined,
+                          fastighetsbeteckning: undefined,
+                          rotBoendeTyp: undefined,
+                          brfOrganisationsnummer: undefined,
+                          brfLagenhetsnummer: undefined,
+                        }),
+                  }));
+                }}
+                text={
+                  visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Lägg till ROT/RUT-avdrag"
+                }
+                disabled={typ === "vara"}
+                className={typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}
+              />
+            </div>
+
+            {/* ROT/RUT formulär */}
+            {visaRotRutForm && (
+              <div className="border border-slate-500 rounded-lg mt-4">
+                <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
+              </div>
+            )}
+
+            {/* Spara som favorit knapp */}
+            <div className="mb-4">
+              <Knapp
+                onClick={handleSaveAsFavorite}
+                text="📌 Lägg till som favoritartikel"
+                disabled={
+                  !beskrivning.trim() ||
+                  !antal ||
+                  !prisPerEnhet ||
+                  Number(prisPerEnhet) <= 0 ||
+                  favoritArtikelVald ||
+                  artikelSparadSomFavorit
+                }
+              />
+            </div>
+
+            {/* Lägg till artikel knapp */}
+            <div className="border-t border-slate-600 pt-4 flex justify-end">
+              <Knapp
+                onClick={handleAdd}
+                text="✚ Lägg till artikel"
+                disabled={!beskrivning.trim()}
+              />
+            </div>
           </div>
         )}
       </div>
