@@ -40,7 +40,7 @@ export default function TabellRad<T>({
           ? col.render(rawValue, item)
           : (rawValue as React.ReactNode);
 
-        const paddingClass = colIndex === 0 ? "pl-6 pr-4 py-3" : "px-4 py-3";
+        const paddingClass = colIndex === 0 ? "pl-6 pr-6 py-3" : "px-6 py-3";
 
         return (
           <td

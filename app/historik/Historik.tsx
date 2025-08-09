@@ -34,15 +34,41 @@ type Props = {
 
 export default function Historik({ initialData }: Props) {
   const [year, setYear] = useState("2025");
+  const [month, setMonth] = useState(""); // Tom sträng = alla månader
+  const [searchTerm, setSearchTerm] = useState(""); // Nytt sökfält
   const [historyData] = useState<HistoryItem[]>(
-    [...initialData].sort((a, b) => b.transaktions_id - a.transaktions_id)
+    [...initialData].sort((a, b) => {
+      // Sortera efter datum DESC, sedan ID DESC
+      const dateCompare =
+        new Date(b.transaktionsdatum).getTime() - new Date(a.transaktionsdatum).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return b.transaktions_id - a.transaktions_id;
+    })
   );
   const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
   const [activeId, setActiveId] = useState<number | null>(null);
 
-  // Filtrera data på valt år
-  const filteredData = historyData.filter((item) => item.transaktionsdatum.slice(0, 4) === year);
+  // Filtrera data på valt år, månad och sökterm
+  const filteredData = historyData.filter((item) => {
+    const itemYear = item.transaktionsdatum.slice(0, 4);
+    const itemMonth = item.transaktionsdatum.slice(5, 7);
 
+    // År och månad filter
+    if (itemYear !== year) return false;
+    if (month && itemMonth !== month) return false;
+
+    // Sökterm filter (sök i verifikat och kommentar)
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesVerifikat = item.kontobeskrivning.toLowerCase().includes(searchLower);
+      const matchesComment = item.kommentar?.toLowerCase().includes(searchLower);
+      const matchesId = item.transaktions_id.toString().includes(searchTerm);
+
+      if (!matchesVerifikat && !matchesComment && !matchesId) return false;
+    }
+
+    return true;
+  });
   const handleRowClick = (id: string | number) => {
     const numericId = typeof id === "string" ? parseInt(id) : id;
 
@@ -79,7 +105,7 @@ export default function Historik({ initialData }: Props) {
   const columns: ColumnDefinition<HistoryItem>[] = [
     { key: "transaktions_id", label: "ID" },
     { key: "transaktionsdatum", label: "Datum" },
-    { key: "kontobeskrivning", label: "Konto" },
+    { key: "kontobeskrivning", label: "Verifikat" },
     {
       key: "belopp",
       label: "Belopp",
@@ -103,7 +129,7 @@ export default function Historik({ initialData }: Props) {
     <MainLayout>
       <div className="text-center mb-8 space-y-4">
         <h1 className="text-3xl">Historik</h1>
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4 flex-wrap">
           <div className="max-w-[8rem] w-full">
             <Dropdown
               value={year}
@@ -118,6 +144,42 @@ export default function Historik({ initialData }: Props) {
                 { label: "2020", value: "2020" },
               ]}
             />
+          </div>
+          <div className="max-w-[10rem] w-full">
+            <Dropdown
+              value={month}
+              onChange={setMonth}
+              placeholder="Månad"
+              options={[
+                { label: "Januari", value: "01" },
+                { label: "Februari", value: "02" },
+                { label: "Mars", value: "03" },
+                { label: "April", value: "04" },
+                { label: "Maj", value: "05" },
+                { label: "Juni", value: "06" },
+                { label: "Juli", value: "07" },
+                { label: "Augusti", value: "08" },
+                { label: "September", value: "09" },
+                { label: "Oktober", value: "10" },
+                { label: "November", value: "11" },
+                { label: "December", value: "12" },
+              ]}
+            />
+          </div>
+          <div className="max-w-[12rem] w-full">
+            <input
+              type="text"
+              placeholder="🔍 Sök..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all duration-200"
+            />
+          </div>
+          <div className="border border-slate-500 rounded-lg px-3 py-2 bg-gray-800 h-[44px]">
+            <div className="flex items-center text-slate-400 text-sm gap-2 h-full">
+              <span>📄</span>
+              <span>{filteredData.length} transaktioner</span>
+            </div>
           </div>
         </div>
 
@@ -134,43 +196,59 @@ export default function Historik({ initialData }: Props) {
           const rows = detailsMap[item.transaktions_id] ?? [];
           if (rows.length === 0) return null;
 
+          // Kolumndefinitioner för expanderad tabell
+          const detailColumns: ColumnDefinition<TransactionDetail>[] = [
+            {
+              key: "kontonummer",
+              label: "Konto",
+              render: (_, detail) => (
+                <>
+                  <span className="text-sm">{detail.kontonummer}</span> – {detail.beskrivning}
+                </>
+              ),
+            },
+            {
+              key: "debet",
+              label: "Debet",
+              render: (value) =>
+                value > 0
+                  ? value.toLocaleString("sv-SE", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) + " kr"
+                  : "—",
+              className: "text-right",
+            },
+            {
+              key: "kredit",
+              label: "Kredit",
+              render: (value) =>
+                value > 0
+                  ? value.toLocaleString("sv-SE", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) + " kr"
+                  : "—",
+              className: "text-right",
+            },
+          ];
+
           return (
-            <tr className="bg-slate-800">
+            <tr className="bg-gray-800">
               <td colSpan={5} className="p-0">
                 <div className="p-4">
-                  <table className="w-full text-sm">
-                    <thead className="border-b border-slate-600">
-                      <tr>
-                        <th className="text-left py-2 pl-6">Konto</th>
-                        <th className="text-right py-2 pr-4">Debet</th>
-                        <th className="text-right py-2 pr-6">Kredit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((detail) => (
-                        <tr key={detail.transaktionspost_id} className="border-b border-slate-700">
-                          <td className="py-2 pl-6 pr-4">
-                            {detail.kontonummer} – {detail.beskrivning}
-                          </td>
-                          <td className="py-2 pr-4 text-right">
-                            {detail.debet.toLocaleString("sv-SE", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }) + " kr"}
-                          </td>
-                          <td className="py-2 pr-6 text-right">
-                            {detail.kredit.toLocaleString("sv-SE", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }) + " kr"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-300">
+                    📋 {item.kontobeskrivning.replace("Verifikation ", "")}
+                  </h4>
+
+                  <Tabell
+                    data={rows}
+                    columns={detailColumns}
+                    getRowId={(detail) => detail.transaktionspost_id}
+                  />
 
                   {item.blob_url && (
-                    <div className="pt-4 border-slate-600 text-center">
+                    <div className="pt-4 text-center">
                       <Knapp
                         text="👁️ Se verifikat"
                         onClick={() => window.open(item.blob_url, "_blank")}

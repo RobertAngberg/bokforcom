@@ -20,15 +20,17 @@ export async function fetchTransaktioner(fromYear?: string) {
     const result = await client.query(
       `
       SELECT 
-        id,
-        transaktionsdatum,
-        kontobeskrivning,
-        belopp,
-        kommentar,
-        fil,
-        blob_url
-      FROM transaktioner
-      ORDER BY transaktionsdatum DESC, id DESC
+        t.id,
+        t.transaktionsdatum,
+        t.kontobeskrivning,
+        COALESCE(SUM(tp.debet), 0) as belopp,
+        t.kommentar,
+        t.fil,
+        t.blob_url
+      FROM transaktioner t
+      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.kommentar, t.fil, t.blob_url
+      ORDER BY t.transaktionsdatum DESC, t.id DESC
       `
     );
     client.release();

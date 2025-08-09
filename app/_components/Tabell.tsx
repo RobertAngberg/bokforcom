@@ -31,7 +31,7 @@ export default function Tabell<T>({
         <thead className="bg-slate-800 text-left">
           <tr>
             {columns.map((col, colIndex) => {
-              const paddingClass = colIndex === 0 ? "pl-6 pr-4 py-3" : "px-4 py-3";
+              const paddingClass = colIndex === 0 ? "pl-6 pr-6 py-3" : "px-6 py-3";
               return (
                 <th
                   key={String(col.key)}
