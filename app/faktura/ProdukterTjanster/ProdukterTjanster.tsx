@@ -77,6 +77,7 @@ export default function ProdukterTjanster() {
   const [visaArtikelForm, setVisaArtikelForm] = useState(false); // Nytt: visa/dölj artikelformuläret
   const [visaArtikelModal, setVisaArtikelModal] = useState(false); // Modal för att visa artikeldetaljer
   const [valtArtikel, setValtArtikel] = useState<FavoritArtikel | null>(null); // Den valda artikeln för modalen
+  const [artikelSparadSomFavorit, setArtikelSparadSomFavorit] = useState(false); // Håll reda på om artikeln precis sparats som favorit
   //#endregion
 
   //#region Ladda favoritartiklar
@@ -308,6 +309,7 @@ export default function ProdukterTjanster() {
           // Uppdatera favoritlistan efter att ha sparat
           const uppdateradeFavoriter = await hämtaSparadeArtiklar();
           setFavoritArtiklar((uppdateradeFavoriter as FavoritArtikel[]) || []);
+          setArtikelSparadSomFavorit(true); // Markera att artikeln har sparats
           alert(
             "✅ Sparad som favoritartikel!\n\nOBS: Du måste fortfarande lägga till den på fakturan om du inte redan gjort det."
           );
@@ -333,6 +335,7 @@ export default function ProdukterTjanster() {
     setRedigerarIndex(null);
     setVisaRotRutForm(false);
     setFavoritArtikelVald(false); // Lås upp formuläret
+    setArtikelSparadSomFavorit(false); // Återställ favoritsparning-flaggan
     setVisaArtikelForm(true); // Håll formuläret öppet för ny artikel
 
     // Rensa ROT/RUT-formuläret
@@ -770,7 +773,8 @@ export default function ProdukterTjanster() {
                     !prisPerEnhet ||
                     Number(prisPerEnhet) <= 0 ||
                     redigerarIndex !== null ||
-                    favoritArtikelVald
+                    favoritArtikelVald ||
+                    artikelSparadSomFavorit
                   }
                 />
                 <Knapp
@@ -883,7 +887,9 @@ export default function ProdukterTjanster() {
       >
         {valtArtikel && (
           <div className="space-y-4">
-            <div className="text-sm text-gray-400 mb-4">Denna artikel kan inte redigeras.</div>
+            <div className="text-sm text-gray-400 mb-4 text-center">
+              Detta är bara en översikt. Om du vill ändra något måste du skapa en ny artikel.
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Beskrivning</label>
