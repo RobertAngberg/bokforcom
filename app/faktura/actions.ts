@@ -705,6 +705,73 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
   }
 }
 
+export async function updateFavoritArtikel(id: number, artikel: any) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false };
+  const userId = parseInt(session.user.id);
+
+  try {
+    const result = await pool.query(
+      `UPDATE faktura_favoritartiklar SET
+        beskrivning = $1,
+        antal = $2,
+        pris_per_enhet = $3,
+        moms = $4,
+        valuta = $5,
+        typ = $6,
+        rot_rut_typ = $7,
+        rot_rut_kategori = $8,
+        avdrag_procent = $9,
+        arbetskostnad_ex_moms = $10,
+        rot_rut_antal_timmar = $11,
+        rot_rut_pris_per_timme = $12,
+        rot_rut_beskrivning = $13,
+        rot_rut_startdatum = $14,
+        rot_rut_slutdatum = $15,
+        rot_rut_personnummer = $16,
+        rot_rut_fastighetsbeteckning = $17,
+        rot_rut_boende_typ = $18,
+        rot_rut_brf_org = $19,
+        rot_rut_brf_lagenhet = $20,
+        uppdaterad = CURRENT_TIMESTAMP
+       WHERE id = $21 AND user_id = $22`,
+      [
+        artikel.beskrivning,
+        artikel.antal.toString(),
+        artikel.prisPerEnhet.toString(),
+        artikel.moms.toString(),
+        artikel.valuta,
+        artikel.typ,
+        artikel.rotRutTyp ?? null,
+        artikel.rotRutKategori ?? null,
+        artikel.avdragProcent ?? null,
+        artikel.arbetskostnadExMoms ? parseFloat(artikel.arbetskostnadExMoms.toString()) : null,
+        artikel.antal ?? null, // Använd antal istället för rotRutAntalTimmar
+        artikel.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
+        artikel.rotRutBeskrivning ?? null,
+        artikel.rotRutStartdatum
+          ? new Date(artikel.rotRutStartdatum).toISOString().split("T")[0]
+          : null,
+        artikel.rotRutSlutdatum
+          ? new Date(artikel.rotRutSlutdatum).toISOString().split("T")[0]
+          : null,
+        artikel.rotRutPersonnummer ?? null,
+        artikel.rotRutFastighetsbeteckning ?? null,
+        artikel.rotRutBoendeTyp ?? null,
+        artikel.rotRutBrfOrg ?? null,
+        artikel.rotRutBrfLagenhet ?? null,
+        id,
+        userId,
+      ]
+    );
+
+    return { success: true };
+  } catch (err) {
+    console.error("❌ Kunde inte uppdatera favoritartikel:", err);
+    return { success: false };
+  }
+}
+
 export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
   const session = await auth();
   if (!session?.user?.id) return [];

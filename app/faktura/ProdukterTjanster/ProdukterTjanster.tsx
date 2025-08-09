@@ -76,7 +76,7 @@ export default function ProdukterTjanster() {
   const [favoritArtikelVald, setFavoritArtikelVald] = useState(false); // Nytt: håll reda på om en favoritartikel är vald
   const [visaArtikelForm, setVisaArtikelForm] = useState(false); // Nytt: visa/dölj artikelformuläret
   const [visaArtikelModal, setVisaArtikelModal] = useState(false); // Modal för att visa artikeldetaljer
-  const [valtArtikel, setValtArtikel] = useState<Artikel | null>(null); // Den valda artikeln för modalen
+  const [valtArtikel, setValtArtikel] = useState<FavoritArtikel | null>(null); // Den valda artikeln för modalen
   //#endregion
 
   //#region Ladda favoritartiklar
@@ -883,6 +883,7 @@ export default function ProdukterTjanster() {
       >
         {valtArtikel && (
           <div className="space-y-4">
+            <div className="text-sm text-gray-400 mb-4">Denna artikel kan inte redigeras.</div>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Beskrivning</label>
