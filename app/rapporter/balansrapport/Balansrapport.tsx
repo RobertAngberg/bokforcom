@@ -1,11 +1,9 @@
 // #region
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import Totalrad from "../../_components/Totalrad";
-import InreTabell from "../../_components/InreTabell";
 import Knapp from "../../_components/Knapp";
 import VerifikatModal from "../../_components/VerifikatModal";
 import jsPDF from "jspdf";
@@ -23,7 +21,9 @@ type Transaktion = {
 type Konto = {
   kontonummer: string;
   beskrivning: string;
-  saldo: number;
+  ingaendeSaldo: number;
+  aretsResultat: number;
+  utgaendeSaldo: number;
   transaktioner: Transaktion[];
 };
 
@@ -45,6 +45,38 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   //#endregion
 
+  //#region Business Logic - Bokio-kompatibel beräkning
+  // Hitta och extrahera beräknat resultat från skulderOchEgetKapital
+  const beraknatResultatKonto = initialData.skulderOchEgetKapital.find(
+    (k) => k.kontonummer === "9999"
+  );
+  const beraknatResultatData = beraknatResultatKonto
+    ? {
+        ingaende: beraknatResultatKonto.ingaendeSaldo,
+        arets: beraknatResultatKonto.aretsResultat,
+        utgaende: beraknatResultatKonto.utgaendeSaldo,
+      }
+    : { ingaende: 0, arets: 0, utgaende: 0 };
+
+  // Ta bort beräknat resultat från den vanliga listan
+  const skulderOchEgetKapitalUtanBeraknat = initialData.skulderOchEgetKapital.filter(
+    (k) => k.kontonummer !== "9999"
+  );
+
+  const processedData = {
+    ...initialData,
+    tillgangar: initialData.tillgangar.map((konto) => ({
+      ...konto,
+      // Använd beskrivningarna exakt som Bokio
+      beskrivning: konto.kontonummer === "1930" ? "Företagskonto / affärskonto" : konto.beskrivning,
+    })),
+    skulderOchEgetKapital: skulderOchEgetKapitalUtanBeraknat,
+  };
+
+  // Beräknat resultat ska läggas till eget kapital, inte visa som egen kategori
+  const beraknatResultatVarde = beraknatResultatData.utgaende;
+  //#endregion
+
   //#region Helper Functions
   // Formatering för SEK med behållet minustecken
   const formatSEK = (val: number) => {
@@ -62,11 +94,13 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     const { year, tillgangar, skulderOchEgetKapital } = data;
 
     const sumKonton = (konton: Konto[]) =>
-      konton.reduce((sum, konto) => sum + (konto.saldo ?? 0), 0);
+      konton.reduce((sum, konto) => sum + (konto.utgaendeSaldo ?? 0), 0);
 
     const sumTillgangar = sumKonton(tillgangar);
-    const sumSkulderEK = sumKonton(skulderOchEgetKapital);
-    const differens = sumTillgangar - sumSkulderEK;
+    const sumSkulderEKUtan = sumKonton(skulderOchEgetKapital);
+
+    // Lägg till beräknat resultat för att balansera (men använd det riktiga värdet)
+    const sumSkulderEK = sumSkulderEKUtan + beraknatResultatVarde;
 
     return {
       year,
@@ -74,12 +108,12 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
       skulderOchEgetKapital,
       sumTillgangar,
       sumSkulderEK,
-      differens,
+      beraknatResultat: beraknatResultatVarde, // Använd det riktiga värdet
     };
   }
 
-  const { year, tillgangar, skulderOchEgetKapital, sumTillgangar, sumSkulderEK, differens } =
-    skapaBalansSammanställning(initialData);
+  const { year, tillgangar, skulderOchEgetKapital, sumTillgangar, sumSkulderEK, beraknatResultat } =
+    skapaBalansSammanställning(processedData);
   //#endregion
 
   //#region Export Functions
@@ -137,11 +171,11 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
       const rows: any[][] = konton.map((konto) => [
         konto.kontonummer,
         konto.beskrivning,
-        formatSEK(konto.saldo),
+        formatSEK(konto.utgaendeSaldo),
       ]);
 
       // Summeringsrad med colSpan
-      const summa = konton.reduce((sum, k) => sum + (k.saldo ?? 0), 0);
+      const summa = konton.reduce((sum, k) => sum + (k.utgaendeSaldo ?? 0), 0);
       rows.push([
         { content: `Summa ${titel.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
         { content: formatSEK(summa), styles: { fontStyle: "bold", halign: "left" } },
@@ -168,15 +202,17 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
       y += 4;
     });
 
-    // Differens
+    // Balanskontroll
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    if (differens === 0) {
-      doc.setTextColor(0, 128, 0);
-      doc.text("Balanskontroll", 14, y);
-    } else {
-      doc.setTextColor(200, 0, 0);
-      doc.text(`Obalans (${formatSEK(differens)})`, 14, y);
+    doc.setTextColor(0, 128, 0);
+    doc.text("Balanskontroll", 14, y);
+    if (beraknatResultat !== 0) {
+      y += 7;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150, 150, 0);
+      doc.text(`Beräknat resultat: ${formatSEK(beraknatResultat)} ingår i eget kapital`, 14, y);
     }
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "normal");
@@ -188,17 +224,24 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     let csv = `Balansrapport ${year}\n\n`;
     csv += "Tillgångar\nKonto;Beskrivning;Saldo\n";
     tillgangar.forEach((konto) => {
-      csv += [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.saldo)].join(";") + "\n";
+      csv +=
+        [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
+        "\n";
     });
     csv += `;Summa tillgångar;${formatSEK(sumTillgangar)}\n\n`;
 
     csv += "Eget kapital och skulder\nKonto;Beskrivning;Saldo\n";
     skulderOchEgetKapital.forEach((konto) => {
-      csv += [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.saldo)].join(";") + "\n";
+      csv +=
+        [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
+        "\n";
     });
     csv += `;Summa eget kapital och skulder;${formatSEK(sumSkulderEK)}\n\n`;
 
-    csv += differens === 0 ? "Balanskontroll\n" : `Obalans;${formatSEK(differens)}\n`;
+    csv += "Balanskontroll\n";
+    if (beraknatResultat !== 0) {
+      csv += `Beräknat resultat;${formatSEK(beraknatResultat)}\n`;
+    }
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -210,117 +253,175 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  //#endregion
-
-  //#region Render Functions
-  const renderaKategori = (titel: string, icon: string, konton: Konto[]) => {
-    const summa = konton.reduce((a, b) => a + b.saldo, 0);
+  //#region Render Functions - Snygg AnimeradFlik layout
+  // Snygg kategori-rendering med AnimeradFlik
+  const renderaKategoriMedKolumner = (titel: string, icon: string, konton: Konto[]) => {
+    const summa = konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
 
     if (konton.length === 0) {
       return (
-        <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(summa)}>
-          <InreTabell rows={[]} totalLabel={`Summa ${titel.toLowerCase()}`} totalValue={summa} />
+        <AnimeradFlik title={titel} icon={icon} visaSummaDirekt="0 kr" forcedOpen={true}>
+          <div className="bg-gray-900 rounded-lg p-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-600">
+                  <th className="text-left py-2 font-semibold text-gray-300">Konto</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Ing. balans
+                    <br />
+                    {year}-01-01
+                  </th>
+                  <th className="text-right py-2 font-semibold text-gray-300">Resultat</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Utg. balans
+                    <br />
+                    {year}-12-31
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t-2 border-gray-500">
+                  <td className="py-2 font-bold text-white">Summa {titel.toLowerCase()}</td>
+                  <td className="py-2 text-right font-bold text-white">0 kr</td>
+                  <td className="py-2 text-right font-bold text-white">0 kr</td>
+                  <td className="py-2 text-right font-bold text-white">0 kr</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </AnimeradFlik>
       );
     }
 
     return (
-      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(summa)}>
-        <div className="space-y-4">
-          {konton.map((konto) => (
-            <AnimeradFlik
-              key={konto.kontonummer}
-              title={`${konto.kontonummer} – ${konto.beskrivning}`}
-              icon=""
-              visaSummaDirekt={formatSEK(konto.saldo)}
-            >
-              {(() => {
-                // Skapa rader för transaktioner
-                const rows = konto.transaktioner.map((transaktion) => {
-                  let belopp = transaktion.belopp;
-
-                  // För kortfristiga skulder: olika logik för olika konton
-                  if (titel === "Kortfristiga skulder") {
-                    if (konto.kontonummer === "2640" || konto.kontonummer === "2645") {
-                      // För 2640 och 2645: invertera så negativa blir positiva
-                      belopp = -belopp;
-                    } else {
-                      // För andra konton (2610, 2614): sätt minus framför positiva värden
-                      belopp = -belopp;
-                    }
-                  }
-
-                  return {
-                    Datum: `${new Date(transaktion.datum).toISOString().slice(0, 10)}     ${transaktion.beskrivning || ""}`,
-                    Verifikat: (
-                      <div className="text-left pl-2">
-                        <button
-                          className={`underline transition-colors ${
-                            transaktion.transaktion_id
-                              ? "text-blue-400 hover:text-blue-300 cursor-pointer"
-                              : "text-gray-500 cursor-not-allowed"
-                          }`}
-                          onClick={() => {
-                            if (transaktion.transaktion_id) {
-                              setVerifikatId(transaktion.transaktion_id);
-                            }
-                          }}
-                          disabled={!transaktion.transaktion_id}
-                        >
-                          {transaktion.verifikatNummer || "Inget verifikat"}
-                        </button>
-                      </div>
-                    ),
-                    Belopp: formatSEK(belopp),
-                  };
-                });
-
-                return (
-                  <div className="space-y-2">
-                    <InreTabell rows={rows} />
-                  </div>
-                );
-              })()}
-            </AnimeradFlik>
-          ))}
-          <div className="text-sm text-white font-semibold mt-4 text-right bg-gray-800 p-2 rounded">
-            Summa {titel.toLowerCase()}: {formatSEK(summa)}
-          </div>
+      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(summa)} forcedOpen={true}>
+        <div className="bg-gray-900 rounded-lg p-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-600">
+                <th className="text-left py-2 font-semibold text-gray-300">Konto</th>
+                <th className="text-right py-2 font-semibold text-gray-300">
+                  Ing. balans
+                  <br />
+                  {year}-01-01
+                </th>
+                <th className="text-right py-2 font-semibold text-gray-300">Resultat</th>
+                <th className="text-right py-2 font-semibold text-gray-300">
+                  Utg. balans
+                  <br />
+                  {year}-12-31
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {konton.map((konto) => (
+                <tr key={konto.kontonummer} className="border-b border-gray-700">
+                  <td className="py-2 text-white">
+                    {konto.kontonummer} – {konto.beskrivning}
+                  </td>
+                  <td className="py-2 text-right text-white">{formatSEK(konto.ingaendeSaldo)}</td>
+                  <td className="py-2 text-right text-white">{formatSEK(konto.aretsResultat)}</td>
+                  <td className="py-2 text-right text-white font-medium">
+                    {formatSEK(konto.utgaendeSaldo)}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-gray-500">
+                <td className="py-2 font-bold text-white">Summa {titel.toLowerCase()}</td>
+                <td className="py-2 text-right font-bold text-white">
+                  {formatSEK(konton.reduce((sum, k) => sum + k.ingaendeSaldo, 0))}
+                </td>
+                <td className="py-2 text-right font-bold text-white">
+                  {formatSEK(konton.reduce((sum, k) => sum + k.aretsResultat, 0))}
+                </td>
+                <td className="py-2 text-right font-bold text-white">{formatSEK(summa)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </AnimeradFlik>
     );
   };
 
-  // Speciell renderare för Eget kapital (ej expanderbart)
-  const renderaEgetKapital = (
+  // Snygg rendering för eget kapital med beräknat resultat
+  const renderaEgetKapitalMedKolumner = (
     titel: string,
     icon: string,
     konton: Konto[],
-    beraknatResultat: number
+    beraknatResultatSaldo: number
   ) => {
-    const egetKapitalSumma = konton.reduce((a, b) => a + b.saldo, 0);
-    const totalSumma = egetKapitalSumma + beraknatResultat;
-
-    const rows = [
-      ...konton.map((konto) => ({
-        Konto: `${konto.kontonummer} – ${konto.beskrivning}`,
-        Beskrivning: "",
-        Belopp: formatSEK(konto.saldo),
-      })),
-      {
-        Konto: "Beräknat resultat",
-        Beskrivning: "",
-        Belopp: formatSEK(-beraknatResultat), // Minus för negativt resultat
-      },
-    ];
+    const kontonSumma = konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
+    const totalSumma = kontonSumma + beraknatResultatSaldo;
 
     return (
-      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(totalSumma)}>
-        <div className="space-y-2">
-          <InreTabell rows={rows} />
-          <div className="text-sm text-white font-semibold mt-4 text-right bg-gray-800 p-2 rounded">
-            Summa {titel.toLowerCase()}: {formatSEK(totalSumma)}
-          </div>
+      <AnimeradFlik
+        title={titel}
+        icon={icon}
+        visaSummaDirekt={formatSEK(totalSumma)}
+        forcedOpen={true}
+      >
+        <div className="bg-gray-900 rounded-lg p-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-600">
+                <th className="text-left py-2 font-semibold text-gray-300">Konto</th>
+                <th className="text-right py-2 font-semibold text-gray-300">
+                  Ing. balans
+                  <br />
+                  {year}-01-01
+                </th>
+                <th className="text-right py-2 font-semibold text-gray-300">Resultat</th>
+                <th className="text-right py-2 font-semibold text-gray-300">
+                  Utg. balans
+                  <br />
+                  {year}-12-31
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {konton.map((konto) => (
+                <tr key={konto.kontonummer} className="border-b border-gray-700">
+                  <td className="py-2 text-white">
+                    {konto.kontonummer} – {konto.beskrivning}
+                  </td>
+                  <td className="py-2 text-right text-white">{formatSEK(konto.ingaendeSaldo)}</td>
+                  <td className="py-2 text-right text-white">{formatSEK(konto.aretsResultat)}</td>
+                  <td className="py-2 text-right text-white font-medium">
+                    {formatSEK(konto.utgaendeSaldo)}
+                  </td>
+                </tr>
+              ))}
+              {beraknatResultatSaldo !== 0 && (
+                <tr className="border-b border-gray-700">
+                  <td className="py-2 text-white">Beräknat resultat</td>
+                  <td className="py-2 text-right text-white">
+                    {formatSEK(beraknatResultatData.ingaende)}
+                  </td>
+                  <td className="py-2 text-right text-white">
+                    {formatSEK(beraknatResultatData.arets)}
+                  </td>
+                  <td className="py-2 text-right text-white font-medium">
+                    {formatSEK(beraknatResultatData.utgaende)}
+                  </td>
+                </tr>
+              )}
+              <tr className="border-t-2 border-gray-500">
+                <td className="py-2 font-bold text-white">Summa {titel.toLowerCase()}</td>
+                <td className="py-2 text-right font-bold text-white">
+                  {formatSEK(
+                    konton.reduce((sum, k) => sum + k.ingaendeSaldo, 0) +
+                      beraknatResultatData.ingaende
+                  )}
+                </td>
+                <td className="py-2 text-right font-bold text-white">
+                  {formatSEK(
+                    konton.reduce((sum, k) => sum + k.aretsResultat, 0) + beraknatResultatData.arets
+                  )}
+                </td>
+                <td className="py-2 text-right font-bold text-white">{formatSEK(totalSumma)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </AnimeradFlik>
     );
@@ -335,10 +436,6 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   const avsättningar = skulderOchEgetKapital.filter((k) => /^21/.test(k.kontonummer));
   const långfristigaSkulder = skulderOchEgetKapital.filter((k) => /^2[2-3]/.test(k.kontonummer));
   const kortfristigaSkulder = skulderOchEgetKapital.filter((k) => /^2[4-9]/.test(k.kontonummer));
-
-  // Beräknat resultat från 99xx-konton
-  const beräknatResultat = skulderOchEgetKapital.filter((k) => /^99/.test(k.kontonummer));
-  const beräknatResultatSaldo = beräknatResultat.reduce((sum, k) => sum + k.saldo, 0);
   //#endregion
 
   return (
@@ -346,29 +443,269 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Balansrapport</h1>
 
-        <h2 className="text-xl mb-4 border-b border-gray-500 pb-1">Tillgångar</h2>
-        {renderaKategori("Anläggningstillgångar", "🏗️", anläggningstillgångar)}
-        {renderaKategori("Omsättningstillgångar", "💼", omsättningstillgångar)}
-        <Totalrad label="Summa tillgångar" values={{ [year]: sumTillgangar }} />
-
-        <h2 className="text-xl mt-12 mb-4 border-b border-gray-500 pb-1">
-          Eget kapital och skulder
-        </h2>
-        {renderaEgetKapital("Eget kapital", "💰", egetKapital, beräknatResultatSaldo)}
-        {avsättningar.length > 0 && renderaKategori("Avsättningar", "📊", avsättningar)}
-        {renderaKategori("Långfristiga skulder", "🏦", långfristigaSkulder)}
-        {renderaKategori("Kortfristiga skulder", "⏳", kortfristigaSkulder)}
-        <Totalrad label="Summa eget kapital och skulder" values={{ [year]: sumSkulderEK }} />
-
-        <section className="mt-8">
-          {differens === 0 ? (
-            <p className="text-green-400 font-bold text-center text-lg">Balanskontroll – {year}</p>
-          ) : (
-            <p className="text-red-400 font-bold text-center text-lg">
-              Obalans ({formatSEK(differens)})
-            </p>
+        {/* TILLGÅNGAR - Elegant AnimeradFlik layout */}
+        <AnimeradFlik
+          title="Tillgångar"
+          icon="💼"
+          visaSummaDirekt={formatSEK(
+            [...anläggningstillgångar, ...omsättningstillgångar].reduce(
+              (sum, k) => sum + k.utgaendeSaldo,
+              0
+            )
           )}
-        </section>
+          forcedOpen={true}
+        >
+          <div className="bg-gray-900 rounded-lg p-4">
+            {anläggningstillgångar.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-white font-semibold mb-2">Anläggningstillgångar</h4>
+                <table className="w-full text-sm mb-2">
+                  <tbody>
+                    {anläggningstillgångar.map((konto) => (
+                      <tr key={konto.kontonummer} className="border-b border-gray-700">
+                        <td className="py-2 text-white">
+                          {konto.kontonummer} – {konto.beskrivning}
+                        </td>
+                        <td className="py-2 text-right text-white">
+                          {formatSEK(konto.ingaendeSaldo)}
+                        </td>
+                        <td className="py-2 text-right text-white">
+                          {formatSEK(konto.aretsResultat)}
+                        </td>
+                        <td className="py-2 text-right text-white font-medium">
+                          {formatSEK(konto.utgaendeSaldo)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <h4 className="text-white font-semibold mb-2">Omsättningstillgångar</h4>
+              <table className="w-full text-sm mb-2">
+                <tbody>
+                  {omsättningstillgångar.map((konto) => (
+                    <tr key={konto.kontonummer} className="border-b border-gray-700">
+                      <td className="py-2 text-white">
+                        {konto.kontonummer} – {konto.beskrivning}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.ingaendeSaldo)}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.aretsResultat)}
+                      </td>
+                      <td className="py-2 text-right text-white font-medium">
+                        {formatSEK(konto.utgaendeSaldo)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-600">
+                  <th className="text-left py-2 font-semibold text-gray-300">Konto</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Ing. balans
+                    <br />
+                    {year}-01-01
+                  </th>
+                  <th className="text-right py-2 font-semibold text-gray-300">Resultat</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Utg. balans
+                    <br />
+                    {year}-12-31
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t-2 border-gray-500">
+                  <td className="py-2 font-bold text-white">Summa tillgångar</td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...anläggningstillgångar, ...omsättningstillgångar].reduce(
+                        (sum, k) => sum + k.ingaendeSaldo,
+                        0
+                      )
+                    )}
+                  </td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...anläggningstillgångar, ...omsättningstillgångar].reduce(
+                        (sum, k) => sum + k.aretsResultat,
+                        0
+                      )
+                    )}
+                  </td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...anläggningstillgångar, ...omsättningstillgångar].reduce(
+                        (sum, k) => sum + k.utgaendeSaldo,
+                        0
+                      )
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </AnimeradFlik>
+
+        {/* EGET KAPITAL OCH SKULDER - Elegant AnimeradFlik layout */}
+        <AnimeradFlik
+          title="Eget kapital och skulder"
+          icon="🏛️"
+          visaSummaDirekt={formatSEK(
+            [...egetKapital, ...långfristigaSkulder, ...kortfristigaSkulder].reduce(
+              (sum, k) => sum + k.utgaendeSaldo,
+              0
+            ) + (beraknatResultatKonto ? beraknatResultatKonto.utgaendeSaldo : 0)
+          )}
+          forcedOpen={true}
+        >
+          <div className="bg-gray-900 rounded-lg p-4">
+            <div className="mb-4">
+              <h4 className="text-white font-semibold mb-2">Eget kapital</h4>
+              <table className="w-full text-sm mb-2">
+                <tbody>
+                  {egetKapital.map((konto) => (
+                    <tr key={konto.kontonummer} className="border-b border-gray-700">
+                      <td className="py-2 text-white">
+                        {konto.kontonummer} – {konto.beskrivning}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.ingaendeSaldo)}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.aretsResultat)}
+                      </td>
+                      <td className="py-2 text-right text-white font-medium">
+                        {formatSEK(konto.utgaendeSaldo)}
+                      </td>
+                    </tr>
+                  ))}
+                  {beraknatResultatKonto && (
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-white">Beräknat resultat</td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(beraknatResultatKonto.ingaendeSaldo)}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(beraknatResultatKonto.aretsResultat)}
+                      </td>
+                      <td className="py-2 text-right text-white font-medium">
+                        {formatSEK(beraknatResultatKonto.utgaendeSaldo)}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {långfristigaSkulder.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-white font-semibold mb-2">Långfristiga skulder</h4>
+                <table className="w-full text-sm mb-2">
+                  <tbody>
+                    {långfristigaSkulder.map((konto) => (
+                      <tr key={konto.kontonummer} className="border-b border-gray-700">
+                        <td className="py-2 text-white">
+                          {konto.kontonummer} – {konto.beskrivning}
+                        </td>
+                        <td className="py-2 text-right text-white">
+                          {formatSEK(konto.ingaendeSaldo)}
+                        </td>
+                        <td className="py-2 text-right text-white">
+                          {formatSEK(konto.aretsResultat)}
+                        </td>
+                        <td className="py-2 text-right text-white font-medium">
+                          {formatSEK(konto.utgaendeSaldo)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <h4 className="text-white font-semibold mb-2">Kortfristiga skulder</h4>
+              <table className="w-full text-sm mb-2">
+                <tbody>
+                  {kortfristigaSkulder.map((konto) => (
+                    <tr key={konto.kontonummer} className="border-b border-gray-700">
+                      <td className="py-2 text-white">
+                        {konto.kontonummer} – {konto.beskrivning}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.ingaendeSaldo)}
+                      </td>
+                      <td className="py-2 text-right text-white">
+                        {formatSEK(konto.aretsResultat)}
+                      </td>
+                      <td className="py-2 text-right text-white font-medium">
+                        {formatSEK(konto.utgaendeSaldo)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-600">
+                  <th className="text-left py-2 font-semibold text-gray-300">Konto</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Ing. balans
+                    <br />
+                    {year}-01-01
+                  </th>
+                  <th className="text-right py-2 font-semibold text-gray-300">Resultat</th>
+                  <th className="text-right py-2 font-semibold text-gray-300">
+                    Utg. balans
+                    <br />
+                    {year}-12-31
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t-2 border-gray-500">
+                  <td className="py-2 font-bold text-white">Summa eget kapital och skulder</td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...egetKapital, ...långfristigaSkulder, ...kortfristigaSkulder].reduce(
+                        (sum, k) => sum + k.ingaendeSaldo,
+                        0
+                      ) + (beraknatResultatKonto ? beraknatResultatKonto.ingaendeSaldo : 0)
+                    )}
+                  </td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...egetKapital, ...långfristigaSkulder, ...kortfristigaSkulder].reduce(
+                        (sum, k) => sum + k.aretsResultat,
+                        0
+                      ) + (beraknatResultatKonto ? beraknatResultatKonto.aretsResultat : 0)
+                    )}
+                  </td>
+                  <td className="py-2 text-right font-bold text-white">
+                    {formatSEK(
+                      [...egetKapital, ...långfristigaSkulder, ...kortfristigaSkulder].reduce(
+                        (sum, k) => sum + k.utgaendeSaldo,
+                        0
+                      ) + (beraknatResultatKonto ? beraknatResultatKonto.utgaendeSaldo : 0)
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </AnimeradFlik>
       </div>
 
       {/* Modal för verifikat */}

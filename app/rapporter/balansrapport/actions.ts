@@ -9,11 +9,27 @@ const pool = new Pool({
 export async function fetchBalansData(year: string) {
   const start = `${year}-01-01`;
   const end = `${year}-12-31`;
+  const previousYearEnd = `${parseInt(year) - 1}-12-31`;
 
-  console.log("🟡 Hämtar balansdata för:", { start, end });
+  // Ingående balans - tillgångar (1xxx) från öppningsbalans-transaktioner
+  const ingaendeTillgangarRes = await pool.query(
+    `
+    SELECT
+      k.kontonummer,
+      k.beskrivning,
+      SUM(COALESCE(tp.debet, 0) - COALESCE(tp.kredit, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE k.kontonummer LIKE '1%'
+      AND t.kontobeskrivning = 'Ingående balanser'
+    GROUP BY k.kontonummer, k.beskrivning
+    ORDER BY k.kontonummer
+    `
+  );
 
-  // Tillgångar (1xxx)
-  const tillgangarRes = await pool.query(
+  // Årets förändring - tillgångar (1xxx) under året (EXKLUSIVE öppningsbalans)
+  const aretsTillgangarRes = await pool.query(
     `
     SELECT
       k.kontonummer,
@@ -34,14 +50,50 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum BETWEEN $1 AND $2
       AND k.kontonummer LIKE '1%'
+      AND t.kontobeskrivning != 'Ingående balanser'
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
     [start, end]
   );
 
-  // Skulder och eget kapital (2xxx)
-  const skulderRes = await pool.query(
+  // Utgående balans - tillgångar (1xxx) fram till och med året
+  const utgaendeTillgangarRes = await pool.query(
+    `
+    SELECT
+      k.kontonummer,
+      k.beskrivning,
+      SUM(COALESCE(tp.debet, 0) - COALESCE(tp.kredit, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE t.transaktionsdatum <= $1
+      AND k.kontonummer LIKE '1%'
+    GROUP BY k.kontonummer, k.beskrivning
+    ORDER BY k.kontonummer
+    `,
+    [end]
+  );
+
+  // Ingående balans - skulder och eget kapital (2xxx) från öppningsbalans-transaktioner
+  const ingaendeSkulderRes = await pool.query(
+    `
+    SELECT
+      k.kontonummer,
+      k.beskrivning,
+      SUM(COALESCE(tp.kredit, 0) - COALESCE(tp.debet, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE k.kontonummer LIKE '2%'
+      AND t.kontobeskrivning = 'Ingående balanser'
+    GROUP BY k.kontonummer, k.beskrivning
+    ORDER BY k.kontonummer
+    `
+  );
+
+  // Årets förändring - skulder och eget kapital (2xxx) (EXKLUSIVE öppningsbalans)
+  const aretsSkulderRes = await pool.query(
     `
     SELECT
       k.kontonummer,
@@ -62,14 +114,46 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum BETWEEN $1 AND $2
       AND k.kontonummer LIKE '2%'
+      AND t.kontobeskrivning != 'Ingående balanser'
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
     [start, end]
   );
 
-  // Resultatkonton (3xxx–8xxx)
-  const resultatRes = await pool.query(
+  // Utgående balans - skulder och eget kapital (2xxx)
+  const utgaendeSkulderRes = await pool.query(
+    `
+    SELECT
+      k.kontonummer,
+      k.beskrivning,
+      SUM(COALESCE(tp.kredit, 0) - COALESCE(tp.debet, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE t.transaktionsdatum <= $1
+      AND k.kontonummer LIKE '2%'
+    GROUP BY k.kontonummer, k.beskrivning
+    ORDER BY k.kontonummer
+    `,
+    [end]
+  );
+
+  // Beräknat resultat - ingående balans (fram till föregående år)
+  const ingaendeResultatRes = await pool.query(
+    `
+    SELECT SUM(COALESCE(tp.kredit, 0) - COALESCE(tp.debet, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE t.transaktionsdatum <= $1
+      AND k.kontonummer ~ '^[3-8]'
+    `,
+    [previousYearEnd]
+  );
+
+  // Årets resultat (bara detta år)
+  const aretsResultatRes = await pool.query(
     `
     SELECT SUM(COALESCE(tp.kredit, 0) - COALESCE(tp.debet, 0)) AS saldo
     FROM transaktionsposter tp
@@ -81,45 +165,123 @@ export async function fetchBalansData(year: string) {
     [start, end]
   );
 
-  const tillgangar = tillgangarRes.rows.map((row) => ({
-    kontonummer: row.kontonummer,
-    beskrivning: row.beskrivning,
-    saldo: parseFloat(row.saldo),
-    transaktioner: row.transaktioner || [],
-  }));
+  // Beräknat resultat - utgående balans (totalt ackumulerat)
+  const utgaendeResultatRes = await pool.query(
+    `
+    SELECT SUM(COALESCE(tp.kredit, 0) - COALESCE(tp.debet, 0)) AS saldo
+    FROM transaktionsposter tp
+    JOIN konton k ON k.id = tp.konto_id
+    JOIN transaktioner t ON t.id = tp.transaktions_id
+    WHERE t.transaktionsdatum <= $1
+      AND k.kontonummer ~ '^[3-8]'
+    `,
+    [end]
+  );
 
-  const skulderOchEgetKapital = skulderRes.rows.map((row) => ({
-    kontonummer: row.kontonummer,
-    beskrivning: row.beskrivning,
-    saldo: parseFloat(row.saldo),
-    transaktioner: row.transaktioner || [],
-  }));
+  // Skapa datastrukturer för alla konton
+  const createKontoMap = (rows: any[]) => {
+    const map = new Map();
+    rows.forEach((row: any) => {
+      map.set(row.kontonummer, {
+        kontonummer: row.kontonummer,
+        beskrivning: row.beskrivning,
+        saldo: parseFloat(row.saldo || 0),
+        transaktioner: row.transaktioner || [],
+      });
+    });
+    return map;
+  };
 
-  const resultatSaldo = parseFloat(resultatRes.rows[0].saldo ?? 0);
+  const ingaendeTillgangarMap = createKontoMap(ingaendeTillgangarRes.rows);
+  const aretsTillgangarMap = createKontoMap(aretsTillgangarRes.rows);
+  const utgaendeTillgangarMap = createKontoMap(utgaendeTillgangarRes.rows);
 
-  if (resultatSaldo !== 0) {
+  const ingaendeSkulderMap = createKontoMap(ingaendeSkulderRes.rows);
+  const aretsSkulderMap = createKontoMap(aretsSkulderRes.rows);
+  const utgaendeSkulderMap = createKontoMap(utgaendeSkulderRes.rows);
+
+  // Resultatdata
+  const ingaendeResultat = parseFloat(ingaendeResultatRes.rows[0]?.saldo ?? 0);
+  const aretsResultat = parseFloat(aretsResultatRes.rows[0]?.saldo ?? 0);
+  const utgaendeResultat = parseFloat(utgaendeResultatRes.rows[0]?.saldo ?? 0);
+
+  // Samla alla unika kontonummer
+  const allaTillgangarKonton = new Set([
+    ...ingaendeTillgangarMap.keys(),
+    ...aretsTillgangarMap.keys(),
+    ...utgaendeTillgangarMap.keys(),
+  ]);
+
+  const allaSkulderKonton = new Set([
+    ...ingaendeSkulderMap.keys(),
+    ...aretsSkulderMap.keys(),
+    ...utgaendeSkulderMap.keys(),
+  ]);
+
+  // Returnera rå data utan business logic
+  const tillgangar = Array.from(allaTillgangarKonton)
+    .map((kontonummer) => {
+      const ing = ingaendeTillgangarMap.get(kontonummer);
+      const aret = aretsTillgangarMap.get(kontonummer);
+      const utg = utgaendeTillgangarMap.get(kontonummer);
+
+      return {
+        kontonummer,
+        beskrivning: utg?.beskrivning || aret?.beskrivning || ing?.beskrivning || "",
+        ingaendeSaldo: ing?.saldo || 0,
+        aretsResultat: aret?.saldo || 0,
+        utgaendeSaldo: utg?.saldo || 0,
+        transaktioner: aret?.transaktioner || [],
+      };
+    })
+    .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
+
+  // Returnera rå data utan business logic
+  const skulderOchEgetKapital = Array.from(allaSkulderKonton)
+    .map((kontonummer) => {
+      const ing = ingaendeSkulderMap.get(kontonummer);
+      const aret = aretsSkulderMap.get(kontonummer);
+      const utg = utgaendeSkulderMap.get(kontonummer);
+
+      return {
+        kontonummer,
+        beskrivning: utg?.beskrivning || aret?.beskrivning || ing?.beskrivning || "",
+        ingaendeSaldo: ing?.saldo || 0,
+        aretsResultat: aret?.saldo || 0,
+        utgaendeSaldo: utg?.saldo || 0,
+        transaktioner: aret?.transaktioner || [],
+      };
+    })
+    .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
+
+  // Beräkna obalans istället för komplicerad resultat-logik
+  const sumTillgangar = tillgangar.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
+  const sumSkulderEK = skulderOchEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
+  const obalans = sumTillgangar - sumSkulderEK;
+
+  // Lägg till beräknat resultat baserat på obalans (Bokio-stil)
+  if (obalans !== 0) {
+    // Beräknat resultat i Bokio = tidigare års resultat + årets förändring
+    // Hitta årets resultat från konto 2099 för att få rätt fördelning
+    const aretsResultatKonto = skulderOchEgetKapital.find((k) => k.kontonummer === "2099");
+    const aretsResultatVarde = aretsResultat; // Från query
+
     skulderOchEgetKapital.push({
       kontonummer: "9999",
       beskrivning: "Beräknat resultat",
-      saldo: resultatSaldo,
+      ingaendeSaldo: obalans - aretsResultatVarde, // Tidigare års resultat
+      aretsResultat: aretsResultatVarde, // Årets förändring
+      utgaendeSaldo: obalans, // Total balansering
       transaktioner: [],
     });
   }
 
-  const sumTillgangar = tillgangar.reduce((sum, k) => sum + k.saldo, 0);
-  const sumSkulderEK = skulderOchEgetKapital.reduce((sum, k) => sum + k.saldo, 0);
-  const differens = sumTillgangar - sumSkulderEK;
-
-  console.log("🟢 Tillgångar:", tillgangar);
-  console.log("🟢 Skulder/EK:", skulderOchEgetKapital);
-  console.log("📊 Beräknat resultat:", resultatSaldo);
-  console.log("⚖️ Differens:", differens);
-
+  // Returnera rå data utan beräkningar
   return {
     year,
     tillgangar,
     skulderOchEgetKapital,
-    differens,
+    // Ta bort differens-beräkning, det ska göras i frontend
   };
 }
 
