@@ -20,30 +20,11 @@ export async function fetchHuvudbok() {
   try {
     const client = await pool.connect();
 
-    // Hämta alla transaktioner (exklusive ingående balanser)
-    const transaktionerQuery = `
-      SELECT 
-        k.kontonummer,
-        k.beskrivning as kontobeskrivning_konto,
-        t.kontobeskrivning,
-        t.transaktionsdatum,
-        t.fil,
-        t.id as transaktion_id,
-        tp.debet,
-        tp.kredit,
-        CONCAT('V', t.id) as verifikatNummer
-      FROM transaktioner t
-      JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      JOIN konton k ON k.id = tp.konto_id
-      WHERE t."userId" = $1
-        AND NOT (t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser')
-      ORDER BY k.kontonummer::int, t.transaktionsdatum DESC
-    `;
-
     // Hämta ingående balanser (från SIE-import)
     const ingaendeBalanserQuery = `
       SELECT 
         k.kontonummer,
+        k.beskrivning,
         SUM(tp.debet - tp.kredit) as ingaende_balans
       FROM transaktioner t
       JOIN transaktionsposter tp ON tp.transaktions_id = t.id
@@ -51,17 +32,46 @@ export async function fetchHuvudbok() {
       WHERE t."userId" = $1
         AND t.kontobeskrivning = 'Ingående balanser'
         AND t.kommentar = 'SIE Import - Ingående balanser'
-      GROUP BY k.kontonummer
+      GROUP BY k.kontonummer, k.beskrivning
     `;
 
-    const [transaktionerRes, ingaendeRes] = await Promise.all([
-      client.query(transaktionerQuery, [userId]),
+    // Hämta alla transaktioner för periodens saldo (exklusive ingående balanser)
+    const periodsTransaktionerQuery = `
+      SELECT 
+        k.kontonummer,
+        k.beskrivning,
+        SUM(tp.debet - tp.kredit) as periods_saldo
+      FROM transaktioner t
+      JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      JOIN konton k ON k.id = tp.konto_id
+      WHERE t."userId" = $1
+        AND NOT (t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser')
+      GROUP BY k.kontonummer, k.beskrivning
+    `;
+
+    // Hämta alla konton som använts
+    const allaKontonQuery = `
+      SELECT 
+        k.kontonummer,
+        k.beskrivning,
+        k.kontonummer::int as sort_order
+      FROM konton k
+      JOIN transaktionsposter tp ON k.id = tp.konto_id
+      JOIN transaktioner t ON tp.transaktions_id = t.id
+      WHERE t."userId" = $1
+      GROUP BY k.kontonummer, k.beskrivning
+      ORDER BY k.kontonummer::int
+    `;
+
+    const [ingaendeRes, periodsRes, kontonRes] = await Promise.all([
       client.query(ingaendeBalanserQuery, [userId]),
+      client.query(periodsTransaktionerQuery, [userId]),
+      client.query(allaKontonQuery, [userId]),
     ]);
 
     client.release();
 
-    // Skapa en lookup för ingående balanser
+    // Skapa lookup-objekt
     const ingaendeBalanser = ingaendeRes.rows.reduce(
       (acc, row) => {
         acc[row.kontonummer] = parseFloat(row.ingaende_balans);
@@ -70,16 +80,32 @@ export async function fetchHuvudbok() {
       {} as Record<string, number>
     );
 
-    return {
-      transaktioner: transaktionerRes.rows,
-      ingaendeBalanser,
-    };
+    const periodsSaldon = periodsRes.rows.reduce(
+      (acc, row) => {
+        acc[row.kontonummer] = parseFloat(row.periods_saldo);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    // Bygg huvudboksdata för alla konton
+    const huvudboksdata = kontonRes.rows.map((row) => {
+      const ingaendeBalans = ingaendeBalanser[row.kontonummer] || 0;
+      const periodsSaldo = periodsSaldon[row.kontonummer] || 0;
+      const utgaendeBalans = ingaendeBalans + periodsSaldo;
+
+      return {
+        kontonummer: row.kontonummer,
+        beskrivning: row.beskrivning,
+        ingaendeBalans,
+        utgaendeBalans,
+      };
+    });
+
+    return huvudboksdata;
   } catch (error) {
     console.error("❌ fetchHuvudbok error:", error);
-    return {
-      transaktioner: [],
-      ingaendeBalanser: {},
-    };
+    return [];
   }
 }
 

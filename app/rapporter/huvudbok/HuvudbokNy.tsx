@@ -3,7 +3,6 @@
 
 import React from "react";
 import MainLayout from "../../_components/MainLayout";
-import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -146,62 +145,45 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
 
-        <div className="space-y-6">
-          {kategoriseradeKonton.map((kategori) => {
-            // Beräkna totalsumma för kategorin
-            const totalSumma = kategori.konton.reduce(
-              (sum, konto) => sum + konto.utgaendeBalans,
-              0
-            );
+        {kategoriseradeKonton.map((kategori) => (
+          <div key={kategori.namn} className="mb-8">
+            <h2 className="text-xl text-white font-semibold mb-4 border-b border-gray-500 pb-1">
+              {kategori.namn}
+            </h2>
 
-            return (
-              <AnimeradFlik
-                key={kategori.namn}
-                title={kategori.namn}
-                icon={
-                  kategori.namn === "Tillgångar"
-                    ? "🏗️"
-                    : kategori.namn === "Eget kapital och skulder"
-                      ? "💰"
-                      : kategori.namn === "Intäkter"
-                        ? "💵"
-                        : "💸"
-                }
-                visaSummaDirekt={formatSEK(totalSumma)}
-              >
-                <div className="bg-gray-800 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-700">
-                        <th className="text-left p-3 font-semibold">Konto</th>
-                        <th className="text-left p-3 font-semibold">Beskrivning</th>
-                        <th className="text-right p-3 font-semibold">Ingående balans</th>
-                        <th className="text-right p-3 font-semibold">Utgående balans</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {kategori.konton.map((konto, index) => (
-                        <tr
-                          key={konto.kontonummer}
-                          className={`border-b border-gray-600 hover:bg-gray-750 ${
-                            index % 2 === 0 ? "bg-gray-800" : "bg-gray-750"
-                          }`}
-                        >
-                          <td className="p-3">{konto.kontonummer}</td>
-                          <td className="p-3">{konto.beskrivning}</td>
-                          <td className="p-3 text-right">{formatSEK(konto.ingaendeBalans)}</td>
-                          <td className="p-3 text-right font-semibold">
-                            {formatSEK(konto.utgaendeBalans)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </AnimeradFlik>
-            );
-          })}
-        </div>
+            <div className="bg-gray-800 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-700">
+                    <th className="text-left p-3 font-semibold">Konto</th>
+                    <th className="text-left p-3 font-semibold">Beskrivning</th>
+                    <th className="text-right p-3 font-semibold">Ingående balans</th>
+                    <th className="text-right p-3 font-semibold">Utgående balans</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kategori.konton.map((konto, index) => (
+                    <tr
+                      key={konto.kontonummer}
+                      className={`border-b border-gray-600 hover:bg-gray-750 ${
+                        index % 2 === 0 ? "bg-gray-800" : "bg-gray-750"
+                      }`}
+                    >
+                      <td className="p-3 font-mono">{konto.kontonummer}</td>
+                      <td className="p-3">{konto.beskrivning}</td>
+                      <td className="p-3 text-right font-mono">
+                        {formatSEK(konto.ingaendeBalans)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-semibold">
+                        {formatSEK(konto.utgaendeBalans)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
 
         <div className="flex mt-8 gap-4 justify-end">
           <Knapp text="Ladda ner PDF" onClick={handleExportPDF} />
