@@ -85,9 +85,9 @@ export default function Momsrapport({ initialData }: Props) {
         const ärRuta49 = row.fält === "49";
         const klass = ärRuta49
           ? !ärKorrekt
-            ? "text-red-600 font-bold"
+            ? "text-orange-500 font-bold"
             : momsAttBetalaEllerFaTillbaka > 0
-              ? "text-red-600 font-bold"
+              ? "text-orange-500 font-bold"
               : "text-green-600 font-bold"
           : "";
 
