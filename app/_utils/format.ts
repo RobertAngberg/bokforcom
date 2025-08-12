@@ -1,6 +1,6 @@
-// formaterar ett tal till svenskt format med två decimaler, t.ex. "1 234,00"
+// formaterar ett tal till svenskt format utan decimaler, t.ex. "1 234"
 export function formatSEK(v: number): string {
-  return v.toLocaleString("sv-SE", { minimumFractionDigits: 2 });
+  return v.toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 // rundar ett tal till två decimaler

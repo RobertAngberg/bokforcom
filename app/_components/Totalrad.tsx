@@ -13,8 +13,8 @@ export default function Totalrad({ label, values }: Props) {
           return (
             <span key={year} className="min-w-[100px] text-right">
               {num.toLocaleString("sv-SE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
               })}{" "}
               kr
             </span>

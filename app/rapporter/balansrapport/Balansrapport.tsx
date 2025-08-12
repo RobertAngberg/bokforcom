@@ -342,9 +342,7 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
             return (
               <tr
                 key={index}
-                className={`${
-                  index % 2 === 0 ? "bg-gray-800" : "bg-gray-900"
-                } hover:bg-gray-700 cursor-pointer`}
+                className="bg-gray-800 hover:bg-gray-700 cursor-pointer"
                 onClick={() =>
                   transaktion.transaktion_id && setVerifikatId(transaktion.transaktion_id)
                 }

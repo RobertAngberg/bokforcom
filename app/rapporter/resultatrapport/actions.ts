@@ -17,22 +17,31 @@ export async function hamtaResultatrapport() {
   const result = await pool.query(
     `
     SELECT
-      t.id AS transaktion_id,
-      t.transaktionsdatum,
-      EXTRACT(YEAR FROM t.transaktionsdatum) AS år,
-      tp.debet,
-      tp.kredit,
       k.kontonummer,
       k.beskrivning,
       k.kontoklass,
-      k.kategori
+      k.kategori,
+      EXTRACT(YEAR FROM t.transaktionsdatum) AS år,
+      SUM(COALESCE(tp.debet, 0) - COALESCE(tp.kredit, 0)) AS total_belopp,
+      json_agg(
+        json_build_object(
+          'id', CONCAT('ID', t.id),
+          'datum', t.transaktionsdatum,
+          'belopp', COALESCE(tp.debet, 0) - COALESCE(tp.kredit, 0),
+          'beskrivning', t.kontobeskrivning,
+          'transaktion_id', t.id,
+          'verifikatNummer', CONCAT('V', t.id)
+        ) ORDER BY t.transaktionsdatum
+      ) AS transaktioner
     FROM transaktioner t
     JOIN transaktionsposter tp ON tp.transaktions_id = t.id
     JOIN konton k ON k.id = tp.konto_id
-    WHERE t."userId" = $1
+    WHERE t."userId" = $1 
+      AND EXTRACT(YEAR FROM t.transaktionsdatum) IN ($2, $3)
+    GROUP BY k.kontonummer, k.beskrivning, k.kontoklass, k.kategori, år
     ORDER BY år DESC, k.kontonummer::int
     `,
-    [userId]
+    [userId, new Date().getFullYear(), new Date().getFullYear() - 1]
   );
 
   const rows = result.rows;
@@ -47,8 +56,7 @@ export async function hamtaResultatrapport() {
     const år = String(row.år);
     årsSet.add(år);
 
-    const { kontonummer, beskrivning, kontoklass, kategori, debet, kredit, transaktion_id } = row;
-    const belopp = debet - kredit;
+    const { kontonummer, beskrivning, kontoklass, kategori, total_belopp, transaktioner } = row;
 
     let målMap: Map<string, Map<string, any>> | null = null;
     let grupp = kategori || "Övrigt"; // Gruppnamn = kategori
@@ -72,15 +80,17 @@ export async function hamtaResultatrapport() {
       kontoMap.set(kontonummer, {
         kontonummer,
         beskrivning,
-        transaktion_id, // Lägg till transaktion_id för verifikat
-        [år]: belopp,
+        transaktioner, // Lägg till transaktioner array
+        [år]: total_belopp,
       });
     } else {
-      kontoMap.get(kontonummer)[år] = (kontoMap.get(kontonummer)[år] || 0) + belopp;
+      kontoMap.get(kontonummer)[år] = (kontoMap.get(kontonummer)[år] || 0) + total_belopp;
     }
   }
 
-  const years = Array.from(årsSet).sort((a, b) => b.localeCompare(a));
+  const years = Array.from(årsSet)
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 2);
 
   const formatData = (map: Map<string, Map<string, any>>) =>
     Array.from(map.entries()).map(([namn, kontoMap]) => {
