@@ -397,25 +397,16 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const ärFakturanBetald = fakturaStatus.status_betalning === "Betald";
 
   // Knapptexter och disabled-logik
-  const sparaKnappText = sparaLoading
-    ? "💾 Sparar..."
-    : !harKund
-      ? "❌ Välj kund först"
-      : !harArtiklar
-        ? "❌ Lägg till artiklar"
-        : "💾 Spara faktura";
+  // Knapptexter - visa alltid den normala texten
+  const sparaKnappText = sparaLoading ? "💾 Sparar..." : "💾 Spara faktura";
 
   const bokförKnappText = bokförLoading
     ? "📊 Sparar & Bokför..."
     : ärFakturanBetald
       ? "✅ Redan betald"
-      : !harKund
-        ? "❌ Välj kund först"
-        : !harArtiklar
-          ? "❌ Lägg till artiklar"
-          : formData.id
-            ? "📊 Bokför"
-            : "📊 Spara & Bokför";
+      : formData.id
+        ? "📊 Bokför"
+        : "📊 Spara & Bokför";
 
   // Dölj bokför-knappen för nya fakturor med kontantmetod
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
@@ -423,18 +414,15 @@ export default function Alternativ({ onReload, onPreview }: Props) {
   const doljBokförKnapp = ärKontantmetod && ärNyFaktura;
 
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
+  const granskKnappText = "👁️ Granska";
+  const pdfKnappText = "📤 Spara PDF";
 
-  const granskKnappText = !harKund
-    ? "❌ Välj kund först"
-    : !harArtiklar
-      ? "❌ Lägg till artiklar"
-      : "👁️ Granska";
-
-  const pdfKnappText = !harKund
-    ? "❌ Välj kund först"
-    : !harArtiklar
-      ? "❌ Lägg till artiklar"
-      : "📤 Spara PDF";
+  // Hjälptext som visas när knappar är disabled
+  const getDisabledReason = () => {
+    if (!harKund) return "Välj kund först";
+    if (!harArtiklar) return "Lägg till artiklar först";
+    return "";
+  };
 
   // Visa HUS-fil knapp för ROT/RUT-fakturor
   const harROTRUTArtiklar =
@@ -461,15 +449,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
     (formData.artiklar &&
       (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
 
-  const husFilKnappText = !harKund
-    ? "❌ Välj kund först"
-    : !harArtiklar
-      ? "❌ Lägg till artiklar"
-      : !harPersonnummer
-        ? "❌ Personnummer saknas"
-        : !formData.fakturanummer
-          ? "❌ Spara fakturan först"
-          : `📄 Ladda ner HUS-fil (${rotRutTyp})`;
+  const husFilKnappText = !harPersonnummer
+    ? "📄 Personnummer saknas"
+    : !formData.fakturanummer
+      ? "📄 Spara fakturan först"
+      : `📄 Ladda ner HUS-fil (${rotRutTyp})`;
 
   return (
     <div className="space-y-6">
@@ -505,41 +489,64 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         )}
       </div>
 
+      {/* Hjälptext när knappar är disabled - flytta nedanför */}
+      {!kanSpara && (
+        <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
+          <p className="text-slate-300 text-sm font-medium">⚠️ {getDisabledReason()}</p>
+        </div>
+      )}
+
       {/* HUS-fil knapp på egen rad */}
       {ärROTRUTFaktura && (
-        <div className="flex justify-center items-center gap-4">
-          <Knapp
-            onClick={hanteraHUSFil}
-            text={husFilKnappText}
-            disabled={!kanSpara || !harPersonnummer || !formData.fakturanummer}
-            className=""
-          />
-          {formData.id && (
-            <div className="flex flex-row gap-3 items-center">
-              <select
-                value={fakturaStatus.rot_rut_status || ""}
-                onChange={hanteraRotRutStatusChange}
-                className="px-3 py-2 rounded text-sm font-medium bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition-colors"
-              >
-                <option value="" disabled>
-                  ROT/RUT-status
-                </option>
-                <option value="ej_inskickad">📄 Ej inskickad till SKV</option>
-                <option value="väntar">⏳ Väntar på SKV</option>
-                <option value="godkänd">✅ Godkänd av SKV</option>
-              </select>
-
-              {(fakturaStatus.rot_rut_status === "väntar" ||
-                fakturaStatus.status_betalning === "Delvis betald") && (
-                <button
-                  onClick={hanteraRotRutBetalning}
-                  className="px-3 py-2 rounded text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
-                >
-                  💰 Registrera utbetalning från SKV
-                </button>
-              )}
+        <div className="flex flex-col items-center gap-2">
+          {/* Hjälptext för HUS-fil när disabled */}
+          {(!kanSpara || !harPersonnummer || !formData.fakturanummer) && (
+            <div className="bg-slate-800 border border-slate-600 rounded-lg p-2">
+              <p className="text-slate-300 text-sm">
+                ⚠️{" "}
+                {!kanSpara
+                  ? getDisabledReason()
+                  : !harPersonnummer
+                    ? "Personnummer saknas för HUS-fil"
+                    : "Spara fakturan först"}
+              </p>
             </div>
           )}
+
+          <div className="flex justify-center items-center gap-4">
+            <Knapp
+              onClick={hanteraHUSFil}
+              text={husFilKnappText}
+              disabled={!kanSpara || !harPersonnummer || !formData.fakturanummer}
+              className=""
+            />
+            {formData.id && (
+              <div className="flex flex-row gap-3 items-center">
+                <select
+                  value={fakturaStatus.rot_rut_status || ""}
+                  onChange={hanteraRotRutStatusChange}
+                  className="px-3 py-2 rounded text-sm font-medium bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition-colors"
+                >
+                  <option value="" disabled>
+                    ROT/RUT-status
+                  </option>
+                  <option value="ej_inskickad">📄 Ej inskickad till SKV</option>
+                  <option value="väntar">⏳ Väntar på SKV</option>
+                  <option value="godkänd">✅ Godkänd av SKV</option>
+                </select>
+
+                {(fakturaStatus.rot_rut_status === "väntar" ||
+                  fakturaStatus.status_betalning === "Delvis betald") && (
+                  <button
+                    onClick={hanteraRotRutBetalning}
+                    className="px-3 py-2 rounded text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+                  >
+                    💰 Registrera utbetalning från SKV
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -33,6 +33,16 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
     return isNegative ? `−${formatted}` : formatted;
   };
 
+  // PDF-biblioteket hanterar inte Unicode-tecken korrekt - använd enkel ASCII-formatering
+  const formatSEKforPDF = (val: number) => {
+    if (val === 0) return "0kr";
+    const isNegative = val < 0;
+    const absVal = Math.abs(val);
+    const rounded = Math.round(absVal);
+    const formatted = rounded.toLocaleString('sv-SE') + "kr";
+    return isNegative ? `-${formatted}` : formatted;
+  };
+
   // Kategorisera konton enligt BAS-kontoplan
   const kategoriseraKonton = (konton: HuvudboksKonto[]) => {
     const kategorier = [
@@ -90,8 +100,8 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
     const tableData = huvudboksdata.map((konto) => [
       konto.kontonummer,
       konto.beskrivning,
-      formatSEK(konto.ingaendeBalans),
-      formatSEK(konto.utgaendeBalans),
+      formatSEKforPDF(konto.ingaendeBalans),
+      formatSEKforPDF(konto.utgaendeBalans),
     ]);
 
     autoTable(doc, {

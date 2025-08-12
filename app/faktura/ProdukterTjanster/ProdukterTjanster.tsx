@@ -290,6 +290,8 @@ export default function ProdukterTjanster() {
       return;
     }
 
+    setLoading(true); // Börja ladda
+
     try {
       // Skapa favoritartikeln
       const favArtikel: Artikel = {
@@ -342,6 +344,8 @@ export default function ProdukterTjanster() {
     } catch (error) {
       console.error("Fel vid sparande av favoritartikel:", error);
       alert("❌ Fel vid sparande av favoritartikel");
+    } finally {
+      setLoading(false); // Sluta ladda
     }
   };
 
@@ -758,8 +762,9 @@ export default function ProdukterTjanster() {
             <div className="mb-4">
               <Knapp
                 onClick={handleSaveAsFavorite}
-                text="📌 Lägg till som favoritartikel"
+                text={loading ? "⏳ Sparar..." : "📌 Lägg till som favoritartikel"}
                 disabled={
+                  loading ||
                   !beskrivning.trim() ||
                   !antal ||
                   !prisPerEnhet ||
