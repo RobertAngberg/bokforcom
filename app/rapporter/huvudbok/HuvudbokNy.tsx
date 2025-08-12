@@ -25,11 +25,12 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
   //#region Helper Functions
   // Formatering för SEK med behållet minustecken
   const formatSEK = (val: number) => {
-    if (val === 0) return "0,00kr";
+    if (val === 0) return "0kr";
 
-    const absVal = Math.abs(val);
     const isNegative = val < 0;
-    const formatted = absVal.toFixed(2).replace(".", ",") + "kr";
+    const absVal = Math.abs(val);
+    const rounded = Math.round(absVal);
+    const formatted = rounded.toLocaleString("sv-SE") + "kr";
     return isNegative ? `−${formatted}` : formatted;
   };
 
@@ -39,7 +40,7 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
     const isNegative = val < 0;
     const absVal = Math.abs(val);
     const rounded = Math.round(absVal);
-    const formatted = rounded.toLocaleString('sv-SE') + "kr";
+    const formatted = rounded.toLocaleString("sv-SE") + "kr";
     return isNegative ? `-${formatted}` : formatted;
   };
 
