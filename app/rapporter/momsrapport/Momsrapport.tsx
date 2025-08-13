@@ -13,10 +13,12 @@ type MomsRad = {
 
 interface Props {
   initialData: MomsRad[];
+  organisationsnummer: string;
+  företagsnamn: string;
 }
 //#endregion
 
-export default function Momsrapport({ initialData }: Props) {
+export default function Momsrapport({ initialData, organisationsnummer, företagsnamn }: Props) {
   //#region State
   const [år, setÅr] = useState("2025");
   const [kvartal, setKvartal] = useState("Hela året");
@@ -31,6 +33,92 @@ export default function Momsrapport({ initialData }: Props) {
   //#region Helper Functions
   const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
   const sum = (...fält: string[]) => fält.reduce((acc, f) => acc + get(f), 0);
+
+  const generateXML = () => {
+    // Mapping från fält till XML-taggar enligt Skatteverkets specifikation
+    const fieldMapping: { [key: string]: string } = {
+      "05": "ForsMomsEjAnnan",
+      "06": "UttagMoms",
+      "07": "UlagMargbesk",
+      "08": "HyrinkomstFriv",
+      "10": "MomsUtgHog",
+      "11": "MomsUtgMedel",
+      "12": "MomsUtgLag",
+      "20": "InkopVaruAnnatEg",
+      "21": "InkopTjanstAnnatEg",
+      "22": "InkopTjanstUtomEg",
+      "23": "InkopVaruSverige",
+      "24": "InkopTjanstSverige",
+      "30": "MomsInkopUtgHog",
+      "31": "MomsInkopUtgMedel",
+      "32": "MomsInkopUtgLag",
+      "35": "ForsVaruAnnatEg",
+      "36": "ForsVaruUtomEg",
+      "37": "InkopVaruMellan3p",
+      "38": "ForsVaruMellan3p",
+      "39": "ForsTjSkskAnnatEg",
+      "40": "ForsTjOvrUtomEg",
+      "41": "ForsKopareSkskSverige",
+      "42": "ForsOvrigt",
+      "48": "MomsIngAvdr",
+      "49": "MomsBetala",
+      "50": "MomsUlagImport",
+      "60": "MomsImportUtgHog",
+      "61": "MomsImportUtgMedel",
+      "62": "MomsImportUtgLag",
+    };
+
+    // Formatera period baserat på år och kvartal
+    let period = "";
+    if (kvartal === "Hela året") {
+      period = `${år}12`; // Hela året = sista månaden
+    } else if (kvartal === "Q1") {
+      period = `${år}03`;
+    } else if (kvartal === "Q2") {
+      period = `${år}06`;
+    } else if (kvartal === "Q3") {
+      period = `${år}09`;
+    } else if (kvartal === "Q4") {
+      period = `${år}12`;
+    }
+
+    // Bygg XML-struktur med Bokio's format
+    let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
+    xml +=
+      '<!DOCTYPE eSKDUpload PUBLIC "-//Skatteverket, Sweden//DTD Skatteverket eSKDUpload-DTD Version 6.0//SV" "https://www.skatteverket.se/download/18.3f4496fd14864cc5ac99cb1/1415022101213/eSKDUpload_6p0.dtd">\n';
+    xml += '<eSKDUpload Version="6.0">\n';
+    xml += `  <OrgNr>${organisationsnummer || "XXXXXX-XXXX"}</OrgNr>\n`;
+    xml += "  <Moms>\n";
+    xml += `    <Period>${period}</Period>\n`;
+
+    // Lägg till alla fält som har värden != 0 med proper indentation
+    Object.entries(fieldMapping).forEach(([fältNr, xmlTag]) => {
+      const värde = get(fältNr);
+      if (värde !== 0) {
+        // Formatera som heltal enligt Skatteverkets krav
+        const belopp = Math.round(värde);
+        xml += `    <${xmlTag}>${belopp}</${xmlTag}>\n`;
+      }
+    });
+
+    xml += "  </Moms>\n";
+    xml += "</eSKDUpload>";
+
+    return xml;
+  };
+
+  const exportXML = () => {
+    const xmlContent = generateXML();
+    const blob = new Blob([xmlContent], { type: "application/xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `momsdeklaration_${år}_${kvartal}.xml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   //#endregion
 
   //#region Calculations
@@ -154,6 +242,21 @@ export default function Momsrapport({ initialData }: Props) {
           placeholder="Kvartal"
           options={kvartalLista.map((k) => ({ label: k, value: k }))}
         />
+
+        <button
+          onClick={exportXML}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Exportera XML
+        </button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 mb-10">

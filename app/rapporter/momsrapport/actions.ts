@@ -135,3 +135,21 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     .filter((r) => r.belopp !== 0)
     .sort((a, b) => Number(a.fält) - Number(b.fält));
 }
+
+export async function fetchFöretagsprofil(userId: number) {
+  try {
+    const client = await pool.connect();
+    const query = `
+      SELECT företagsnamn, organisationsnummer
+      FROM företagsprofil
+      WHERE id = $1
+      LIMIT 1
+    `;
+    const res = await client.query(query, [userId]);
+    client.release();
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("❌ fetchFöretagsprofil error:", error);
+    return null;
+  }
+}
