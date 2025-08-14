@@ -113,6 +113,7 @@ export default function LönespecView({
 
   //#region Render Content
   const [visaForhandsgranskning, setVisaForhandsgranskning] = useState(false);
+  const [visaBeräkningar, setVisaBeräkningar] = useState(false);
 
   const innehåll = (
     <div className="space-y-6">
@@ -136,6 +137,7 @@ export default function LönespecView({
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
         lönespecId={lönespec?.id}
         onUtläggAdded={handleUtläggAdded}
+        extrarader={extrarader[lönespec.id] || []}
       />
 
       <Sammanfattning
@@ -147,13 +149,16 @@ export default function LönespecView({
         skatt={visaSkatt}
         socialaAvgifter={visaSocialaAvgifter}
         lönekostnad={visaLönekostnad}
+        onVisaBeräkningar={() => setVisaBeräkningar(!visaBeräkningar)}
       />
 
-      <FormelVisning
-        beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
-        extrarader={extrarader[lönespec.id] || []}
-        lönespec={lönespec}
-      />
+      {visaBeräkningar && (
+        <FormelVisning
+          beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+          extrarader={extrarader[lönespec.id] || []}
+          lönespec={lönespec}
+        />
+      )}
 
       <div className="flex gap-3 mt-4 justify-between items-center">
         <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaForhandsgranskning(true)} />

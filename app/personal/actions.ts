@@ -646,10 +646,18 @@ export async function hämtaUtlägg(anställdId: number) {
 
     const query = `
       SELECT 
-        u.*, 
-        t.belopp,
-        t.kontobeskrivning as beskrivning,
-        t.transaktionsdatum as datum
+        u.id,
+        u.anställd_id,
+        u.user_id,
+        u.status,
+        u.skapad,
+        u.uppdaterad,
+        u.transaktion_id,
+        COALESCE(t.belopp, 0) as belopp,
+        COALESCE(t.kontobeskrivning, 'Utlägg') as beskrivning,
+        COALESCE(t.transaktionsdatum::text, u.skapad::date::text) as datum,
+        COALESCE(t.kommentar, '') as kategori,
+        t.fil as kvitto_fil
       FROM utlägg u 
       LEFT JOIN transaktioner t ON u.transaktion_id = t.id
       WHERE u.anställd_id = $1 
@@ -657,6 +665,8 @@ export async function hämtaUtlägg(anställdId: number) {
     `;
 
     const result = await client.query(query, [anställdId]);
+
+    console.log(`🔍 hämtaUtlägg för anställd ${anställdId}:`, result.rows);
 
     client.release();
     return result.rows;
@@ -1149,6 +1159,51 @@ export async function sparaUtlägg({
   }
 }
 
+export async function taBortUtlägg(utläggId: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Ingen inloggad användare");
+  }
+  const userId = parseInt(session.user.id, 10);
+
+  try {
+    const client = await pool.connect();
+
+    // Kontrollera att utlägget tillhör användaren
+    const checkQuery = `
+      SELECT u.id, u.transaktion_id, a.user_id 
+      FROM utlägg u 
+      JOIN anställda a ON u.anställd_id = a.id 
+      WHERE u.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [utläggId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Utlägg hittades inte eller tillhör inte dig");
+    }
+
+    const utlägg = checkResult.rows[0];
+
+    // Ta bort utlägg-posten
+    await client.query("DELETE FROM utlägg WHERE id = $1", [utläggId]);
+
+    // Om det finns en kopplad transaktion, ta bort den också
+    if (utlägg.transaktion_id) {
+      // Ta bort transaktionsposter först (foreign key constraint)
+      await client.query("DELETE FROM transaktionsposter WHERE transaktions_id = $1", [utlägg.transaktion_id]);
+      // Ta bort transaktionen
+      await client.query("DELETE FROM transaktioner WHERE id = $1", [utlägg.transaktion_id]);
+    }
+
+    client.release();
+    return { success: true };
+  } catch (error) {
+    console.error("❌ taBortUtlägg error:", error);
+    throw error;
+  }
+}
+
 export async function hämtaBetaldaSemesterdagar(anställdId: number) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1228,22 +1283,22 @@ export async function bokförLöneskatter({
 
     // Sociala avgifter - transaktionsposter
     if (socialaAvgifter > 0) {
-      // Hämta konto-id för 2012 och 2731
-      const konto2012 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "2012",
+      // Hämta konto-id för 1930 och 2731
+      const konto1930 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "1930",
       ]);
       const konto2731 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
         "2731",
       ]);
 
-      if (konto2012.rows.length === 0) throw new Error("Konto 2012 finns inte");
+      if (konto1930.rows.length === 0) throw new Error("Konto 1930 finns inte");
       if (konto2731.rows.length === 0) throw new Error("Konto 2731 finns inte");
 
-      // 2012 Avräkning för skatter och avgifter (kredit)
+      // 1930 Företagskonto (kredit)
       await client.query(
         `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
          VALUES ($1, $2, $3, $4)`,
-        [socialTransaktionsId, konto2012.rows[0].id, 0, socialaAvgifter]
+        [socialTransaktionsId, konto1930.rows[0].id, 0, socialaAvgifter]
       );
 
       // 2731 Avräkning lagstadgade sociala avgifter (debet)
@@ -1269,22 +1324,22 @@ export async function bokförLöneskatter({
 
     // Personalskatt - transaktionsposter
     if (personalskatt > 0) {
-      // Hämta konto-id för 2012 och 2710
-      const konto2012 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "2012",
+      // Hämta konto-id för 1930 och 2710
+      const konto1930 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
+        "1930",
       ]);
       const konto2710 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
         "2710",
       ]);
 
-      if (konto2012.rows.length === 0) throw new Error("Konto 2012 finns inte");
+      if (konto1930.rows.length === 0) throw new Error("Konto 1930 finns inte");
       if (konto2710.rows.length === 0) throw new Error("Konto 2710 finns inte");
 
-      // 2012 Avräkning för skatter och avgifter (kredit)
+      // 1930 Företagskonto (kredit)
       await client.query(
         `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
          VALUES ($1, $2, $3, $4)`,
-        [skattTransaktionsId, konto2012.rows[0].id, 0, personalskatt]
+        [skattTransaktionsId, konto1930.rows[0].id, 0, personalskatt]
       );
 
       // 2710 Personalskatt (debet)

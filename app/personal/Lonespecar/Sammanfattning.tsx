@@ -1,4 +1,6 @@
 //#region
+import InfoTooltip from "../../_components/InfoTooltip";
+
 interface SammanfattningProps {
   utbetalningsDatum: Date;
   nettolön: number;
@@ -8,6 +10,7 @@ interface SammanfattningProps {
   skatt: number;
   socialaAvgifter?: number;
   lönekostnad?: number;
+  onVisaBeräkningar?: () => void;
 }
 
 export default function Sammanfattning({
@@ -19,12 +22,20 @@ export default function Sammanfattning({
   skatt,
   socialaAvgifter,
   lönekostnad,
+  onVisaBeräkningar,
 }: SammanfattningProps) {
   //#endregion
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
-      <h4 className="text-lg font-bold text-white mb-4">Sammanfattning</h4>
+      <div className="flex items-center gap-2 mb-4">
+        <h4 className="text-lg font-bold text-white">Sammanfattning</h4>
+        {onVisaBeräkningar && (
+          <div onClick={onVisaBeräkningar} className="cursor-pointer">
+            <InfoTooltip text="Klicka för att visa hur beräkningarna görs" position="top" />
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="bg-slate-800 p-4 rounded">

@@ -3,6 +3,7 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 
 interface SkatteBokforingModalProps {
   skatteModalOpen: boolean;
@@ -34,15 +35,8 @@ export default function SkatteBokforingModal({
       title="💰 Bokför skatter"
       maxWidth="4xl"
     >
+      <div className="mb-8"></div>
       <div className="space-y-6">
-        {/* Info text */}
-        <div className="bg-slate-700 p-4 rounded-lg">
-          <p className="text-sm text-gray-300">
-            När dragningen/återbäringen av skatter syns på ditt skattekonto kan du bokföra dessa
-            här. Du kan inte bokföra det tidigare för du kan inte bokföra i framtiden.
-          </p>
-        </div>
-
         {/* Sammanfattning */}
         {valdaSpecar && valdaSpecar.length > 0 && (
           <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
@@ -52,7 +46,7 @@ export default function SkatteBokforingModal({
             </h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-cyan-400">
+                <div className="text-lg font-bold text-white">
                   {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -62,7 +56,7 @@ export default function SkatteBokforingModal({
                 <div className="text-sm text-gray-300">Sociala avgifter</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-lg font-bold text-white">
                   {skatteData.personalskatt.toLocaleString("sv-SE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -72,7 +66,7 @@ export default function SkatteBokforingModal({
                 <div className="text-sm text-gray-300">Personalskatt</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-yellow-400">
+                <div className="text-lg font-bold text-white">
                   {skatteData.totaltSkatter.toLocaleString("sv-SE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -85,69 +79,54 @@ export default function SkatteBokforingModal({
           </div>
         )}
 
-        {/* Sociala avgifter sektion */}
+        {/* Bokföringsposter */}
         <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
           <h3 className="text-lg text-white font-semibold mb-4">
             {utbetalningsdatum
               ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
               : "2025-08-19"}{" "}
-            - Sociala avgifter ({skatteData.socialaAvgifter.toFixed(2)} kr)
+            - Bokföringsposter för skatter
           </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center bg-slate-600 p-3 rounded">
-              <span className="text-gray-300">5010 - Löner</span>
-              <span className="text-white font-mono">
-                {skatteData.socialaAvgifter.toFixed(2)} kr (kredit)
-              </span>
-            </div>
-            <div className="flex justify-between items-center bg-slate-600 p-3 rounded">
-              <span className="text-gray-300">2730 - Avräkning sociala avgifter</span>
-              <span className="text-white font-mono">
-                {skatteData.socialaAvgifter.toFixed(2)} kr (debet)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Personalskatt sektion */}
-        <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
-          <h3 className="text-lg text-white font-semibold mb-4">
-            Personalskatt ({skatteData.personalskatt.toFixed(2)} kr)
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center bg-slate-600 p-3 rounded">
-              <span className="text-gray-300">5410 - Avräkning personalskatt</span>
-              <span className="text-white font-mono">
-                {skatteData.personalskatt.toFixed(2)} kr (debet)
-              </span>
-            </div>
-            <div className="flex justify-between items-center bg-slate-600 p-3 rounded">
-              <span className="text-gray-300">1930 - Företagskonto</span>
-              <span className="text-white font-mono">
-                {skatteData.personalskatt.toFixed(2)} kr (kredit)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Totalsumma */}
-        <div className="bg-slate-800 border border-slate-600 rounded-lg p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-white">
-              Total dragning från skattekonto:
-            </span>
-            <span className="text-xl font-bold text-yellow-400">
-              {skatteData.totaltSkatter.toFixed(2)} kr
-            </span>
-          </div>
+          <Tabell
+            data={[
+              {
+                id: "2731",
+                konto: "2731",
+                beskrivning: "Avräkning sociala avgifter",
+                debet: skatteData.socialaAvgifter.toFixed(2).replace(".", ",") + " kr",
+                kredit: "",
+              },
+              {
+                id: "2710",
+                konto: "2710",
+                beskrivning: "Personalskatt",
+                debet: skatteData.personalskatt.toFixed(2).replace(".", ",") + " kr",
+                kredit: "",
+              },
+              {
+                id: "1930",
+                konto: "1930",
+                beskrivning: "Företagskonto",
+                debet: "",
+                kredit: skatteData.totaltSkatter.toFixed(2).replace(".", ",") + " kr",
+              },
+            ]}
+            columns={[
+              { key: "konto", label: "Konto" },
+              { key: "beskrivning", label: "Beskrivning" },
+              { key: "debet", label: "Debet", className: "text-right" },
+              { key: "kredit", label: "Kredit", className: "text-right" },
+            ]}
+            getRowId={(item) => item.id}
+          />
         </div>
 
         {/* Datum sektion */}
         <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
           <h3 className="text-lg text-white font-semibold mb-4">Bokföringsdatum</h3>
           <div className="text-sm text-gray-300 mb-3">
-            Välj det datum när dragningen faktiskt syns på ditt skattekonto (inte tidigare än
-            betalningen skedde):
+            När dragningen av dessa skatter syns på ditt skattekonto kan du bokföra dessa här, inte
+            innan.
           </div>
           <div className="w-full">
             <DatePicker

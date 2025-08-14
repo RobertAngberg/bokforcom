@@ -1,11 +1,14 @@
 //#region Huvud
 import { läggTillUtläggSomExtrarad, uppdateraUtläggStatus } from "../actions";
+import { useEffect, useState } from "react";
+import Knapp from "../../_components/Knapp";
 
 interface UtläggProps {
   lönespecUtlägg: any[];
   getStatusBadge: (status: string) => React.ReactElement;
   lönespecId?: number;
   onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>; // Uppdaterad callback
+  extrarader?: any[]; // Lägg till extrarader för synkronisering
 }
 
 export default function Utlägg({
@@ -13,8 +16,47 @@ export default function Utlägg({
   getStatusBadge,
   lönespecId,
   onUtläggAdded,
+  extrarader = [],
 }: UtläggProps) {
   //#endregion
+
+  const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<any[]>(lönespecUtlägg);
+  const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
+
+  // Synkronisera utläggstatus med faktiska extrarader
+  useEffect(() => {
+    const synkronisera = async () => {
+      const uppdateradeUtlägg = await Promise.all(
+        lönespecUtlägg.map(async (utlägg) => {
+          // Kolla om utlägget faktiskt finns i extrarader
+          const finnsIExtrarader = extrarader.some((extrarad) => {
+            // Matcha baserat på beskrivning och belopp
+            const beskrivningsMatch =
+              extrarad.kolumn1?.includes(utlägg.beskrivning) ||
+              extrarad.kolumn1?.includes(`Utlägg - ${utlägg.datum}`);
+            const beloppMatch = Math.abs(parseFloat(extrarad.kolumn3) - utlägg.belopp) < 0.01;
+
+            return beskrivningsMatch && beloppMatch;
+          });
+
+          // Om utlägget är markerat som "Inkluderat" men inte finns i extrarader
+          if (utlägg.status === "Inkluderat i lönespec" && !finnsIExtrarader) {
+            // Återställ till "Väntande" i databasen
+            await uppdateraUtläggStatus(utlägg.id, "Väntande");
+            return { ...utlägg, status: "Väntande" };
+          }
+
+          return utlägg;
+        })
+      );
+
+      setSynkroniseradeUtlägg(uppdateradeUtlägg);
+    };
+
+    if (lönespecUtlägg.length > 0 && extrarader.length >= 0) {
+      synkronisera();
+    }
+  }, [lönespecUtlägg, extrarader]);
 
   const handleLäggTillUtlägg = async () => {
     if (!lönespecId) {
@@ -22,13 +64,14 @@ export default function Utlägg({
       return;
     }
 
-    const väntandeUtlägg = lönespecUtlägg.filter((u) => u.status === "Väntande");
+    const väntandeUtlägg = synkroniseradeUtlägg.filter((u) => u.status === "Väntande");
 
     if (väntandeUtlägg.length === 0) {
       alert("Inga väntande utlägg att lägga till");
       return;
     }
 
+    setLäggerTillUtlägg(true);
     try {
       const extraradResults = [];
       for (const utlägg of väntandeUtlägg) {
@@ -46,14 +89,18 @@ export default function Utlägg({
     } catch (error) {
       console.error("Fel:", error);
       alert("Något gick fel!");
+    } finally {
+      setLäggerTillUtlägg(false);
     }
   };
 
-  if (lönespecUtlägg.length === 0) return null;
+  if (synkroniseradeUtlägg.length === 0) return null;
 
-  // Visa bara komponenten om det finns väntande utlägg
-  const väntandeUtlägg = lönespecUtlägg.filter((u) => u.status === "Väntande");
-  if (väntandeUtlägg.length === 0) return null;
+  // Visa komponenten om det finns utlägg (väntande eller inkluderade)
+  const väntandeUtlägg = synkroniseradeUtlägg.filter((u) => u.status === "Väntande");
+  const inkluderadeUtlägg = synkroniseradeUtlägg.filter(
+    (u) => u.status === "Inkluderat i lönespec"
+  );
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
@@ -61,16 +108,19 @@ export default function Utlägg({
         💰 Väntande utlägg
       </h4>
       {/* Lägg till utlägg knapp i mitten */}
-      <div className="flex justify-center mb-4">
-        <button
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-          onClick={handleLäggTillUtlägg}
-        >
-          💰 Lägg till väntande utlägg
-        </button>
-      </div>{" "}
+      {väntandeUtlägg.length > 0 && (
+        <div className="flex justify-center mb-4">
+          <Knapp
+            text="💰 Lägg till väntande utlägg"
+            onClick={handleLäggTillUtlägg}
+            loading={läggerTillUtlägg}
+            loadingText="Lägger till utlägg..."
+            disabled={läggerTillUtlägg}
+          />
+        </div>
+      )}
       <div className="space-y-3">
-        {lönespecUtlägg.map((utläggItem) => (
+        {synkroniseradeUtlägg.map((utläggItem) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">
             <div className="flex justify-between items-start mb-2">
               <div>

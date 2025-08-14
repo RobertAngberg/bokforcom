@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LogoutButton } from "./start/LogoutKnapp";
 //#endregion
@@ -11,6 +11,7 @@ import { LogoutButton } from "./start/LogoutKnapp";
 export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
 
   const navLinks = [
     { href: "/", label: "Hem" },
@@ -35,7 +36,11 @@ export default function Navbar() {
   const currentLinks = session?.user ? navLinks : guestLinks;
 
   // Hanterar aktiv path + marker
-  const { markerStyle, linksRef, handleClick } = useActivePathMarker(currentLinks, pathname);
+  const { markerStyle, linksRef, handleClick } = useActivePathMarker(
+    currentLinks,
+    pathname,
+    router
+  );
 
   return (
     <div className="sticky top-0 z-50 flex items-center justify-center w-full h-20 px-4 bg-cyan-950">
@@ -74,7 +79,11 @@ export default function Navbar() {
   );
 }
 
-function useActivePathMarker(currentLinks: { href: string; label: string }[], pathname: string) {
+function useActivePathMarker(
+  currentLinks: { href: string; label: string }[],
+  pathname: string,
+  router: any
+) {
   const [selectedPath, setSelectedPath] = useState(pathname);
   const [markerStyle, setMarkerStyle] = useState({ left: 0, width: 0 });
   const linksRef = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -93,6 +102,12 @@ function useActivePathMarker(currentLinks: { href: string; label: string }[], pa
 
   const handleClick = (path: string) => {
     setSelectedPath(path);
+
+    // Om användaren klickar på samma sida som de redan är på, gör en "mjuk refresh"
+    if (path === pathname) {
+      router.push(path);
+      // Alternativt: window.location.reload() för en hårdare refresh
+    }
   };
 
   return { markerStyle, linksRef, handleClick };

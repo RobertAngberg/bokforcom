@@ -1,25 +1,8 @@
 "use client";
 
 import MainLayout from "../_components/MainLayout";
-import { useState } from "react";
-import Bokför from "../bokfor/Bokfor";
-import { fetchFavoritforval } from "../bokfor/actions";
 
 export default function PersonalPage() {
-  const [showUtlagg, setShowUtlagg] = useState(false);
-  const [favoritFörvalen, setFavoritFörvalen] = useState<any[] | null>(null);
-
-  const handleUtlaggClick = async () => {
-    if (!favoritFörvalen) {
-      const res = await fetchFavoritforval();
-      setFavoritFörvalen(res);
-    }
-    setShowUtlagg(true);
-  };
-
-  if (showUtlagg && favoritFörvalen) {
-    return <Bokför favoritFörvalen={favoritFörvalen} utlaggMode={true} />;
-  }
 
   return (
     <MainLayout>
@@ -50,10 +33,9 @@ export default function PersonalPage() {
               Hantera utbetalning och bokföring av löner.
             </p>
           </a>
-          <button
-            type="button"
-            className="block p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition w-full text-left"
-            onClick={handleUtlaggClick}
+          <a
+            href="/personal/utlagg"
+            className="block p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition w-full"
           >
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <span>🧾</span>
@@ -62,7 +44,7 @@ export default function PersonalPage() {
             <p className="text-sm italic text-gray-400 mt-1">
               Hantera och bokför utlägg för anställda. Du väljer anställd i steg 3.
             </p>
-          </button>
+          </a>
         </div>
       </div>
     </MainLayout>
