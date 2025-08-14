@@ -148,29 +148,24 @@ export default function UtlaggPage() {
     {
       key: "status",
       label: "Status",
+      className: "text-center",
       render: (value, row) => {
         console.log("🚦 Status render - value:", value, "row:", row);
         return (
-          <span
-            className={`px-2 py-1 rounded text-xs ${
-              row?.status === "Inkluderat i lönespec"
-                ? "bg-green-900 text-green-300"
-                : row?.status === "Väntande"
-                  ? "bg-yellow-900 text-yellow-300"
-                  : "bg-gray-700 text-gray-300"
-            }`}
-          >
-            {row?.status || "Okänd"}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-2 py-1 rounded text-xs ${
+                row?.status === "Inkluderat i lönespec"
+                  ? "bg-green-900 text-green-300"
+                  : row?.status === "Väntande"
+                    ? "bg-yellow-900 text-yellow-300"
+                    : "bg-gray-700 text-gray-300"
+              }`}
+            >
+              {row?.status === "Inkluderat i lönespec" ? "Inkluderat" : row?.status || "Okänd"}
+            </span>
+          </div>
         );
-      },
-    },
-    {
-      key: "kvitto_fil",
-      label: "Kvitto",
-      render: (value, row) => {
-        console.log("📎 Kvitto render - value:", value, "row:", row);
-        return row?.kvitto_fil ? "📎" : "-";
       },
     },
     {
@@ -235,8 +230,7 @@ export default function UtlaggPage() {
               lönespec ännu
             </p>
             <p>
-              • <strong>Inkluderat i lönespec:</strong> Utlägget är kopplat till en
-              lönespecifikation
+              • <strong>Inkluderat:</strong> Utlägget är kopplat till en lönespecifikation
             </p>
             <p>• Klicka på "Nytt utlägg" för att registrera ett nytt utlägg via bokföring</p>
           </div>
