@@ -1191,7 +1191,9 @@ export async function taBortUtlägg(utläggId: number) {
     // Om det finns en kopplad transaktion, ta bort den också
     if (utlägg.transaktion_id) {
       // Ta bort transaktionsposter först (foreign key constraint)
-      await client.query("DELETE FROM transaktionsposter WHERE transaktions_id = $1", [utlägg.transaktion_id]);
+      await client.query("DELETE FROM transaktionsposter WHERE transaktions_id = $1", [
+        utlägg.transaktion_id,
+      ]);
       // Ta bort transaktionen
       await client.query("DELETE FROM transaktioner WHERE id = $1", [utlägg.transaktion_id]);
     }

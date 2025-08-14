@@ -32,47 +32,47 @@ export default function UtlaggPage() {
   const hämtaAllaUtlägg = async () => {
     try {
       setLoading(true);
-      
+
       // Hämta alla anställda först
       const anställda = await hämtaAllaAnställda();
       console.log("🧑‍💼 Alla anställda:", anställda);
-      
+
       // Samla alla utlägg från alla anställda
       const allaUtlägg: Utlägg[] = [];
-      
+
       for (const anställd of anställda) {
         try {
           const anställdUtlägg = await hämtaUtlägg(anställd.id);
           console.log(`Utlägg för ${anställd.förnamn}:`, anställdUtlägg);
-          
+
           if (anställdUtlägg.length > 0) {
             console.log("🔍 Första utlägg structure:", anställdUtlägg[0]);
           }
-          
+
           const mappedUtlägg = anställdUtlägg
-            .filter((u: any) => u && typeof u === 'object' && u.id) // Filtrera bort tomma objekt och se till att id finns
+            .filter((u: any) => u && typeof u === "object" && u.id) // Filtrera bort tomma objekt och se till att id finns
             .map((u: any) => {
               const mapped = {
                 id: u.id,
                 belopp: u.belopp || 0,
-                beskrivning: u.beskrivning || 'Utlägg',
-                datum: u.datum || new Date().toISOString().split('T')[0],
-                kategori: u.kategori || '',
-                status: u.status || 'Väntande',
+                beskrivning: u.beskrivning || "Utlägg",
+                datum: u.datum || new Date().toISOString().split("T")[0],
+                kategori: u.kategori || "",
+                status: u.status || "Väntande",
                 kvitto_fil: u.kvitto_fil || null,
-                anställd_namn: `${anställd.förnamn} ${anställd.efternamn}`
+                anställd_namn: `${anställd.förnamn} ${anställd.efternamn}`,
               };
               console.log("🗂️ Mapped utlägg:", mapped);
               return mapped;
             });
-          
+
           console.log(`📋 Alla mappade utlägg för ${anställd.förnamn}:`, mappedUtlägg);
           allaUtlägg.push(...mappedUtlägg);
         } catch (error) {
           console.error(`Fel vid hämtning av utlägg för ${anställd.förnamn}:`, error);
         }
       }
-      
+
       setUtlägg(allaUtlägg);
       console.log("🎯 Final allaUtlägg:", allaUtlägg);
     } catch (error) {
@@ -98,7 +98,7 @@ export default function UtlaggPage() {
     try {
       setLoading(true);
       await taBortUtlägg(utläggId);
-      
+
       // Uppdatera listan
       await hämtaAllaUtlägg();
       alert("Utlägg borttaget!");
@@ -140,8 +140,8 @@ export default function UtlaggPage() {
       label: "Belopp",
       render: (value, row) => {
         console.log("💰 Belopp render - value:", value, "row:", row);
-        return row && row.belopp !== undefined && row.belopp !== null 
-          ? `${row.belopp.toLocaleString("sv-SE")} kr` 
+        return row && row.belopp !== undefined && row.belopp !== null
+          ? `${row.belopp.toLocaleString("sv-SE")} kr`
           : "-";
       },
     },
@@ -156,8 +156,8 @@ export default function UtlaggPage() {
               row?.status === "Inkluderat i lönespec"
                 ? "bg-green-900 text-green-300"
                 : row?.status === "Väntande"
-                ? "bg-yellow-900 text-yellow-300"
-                : "bg-gray-700 text-gray-300"
+                  ? "bg-yellow-900 text-yellow-300"
+                  : "bg-gray-700 text-gray-300"
             }`}
           >
             {row?.status || "Okänd"}
@@ -170,7 +170,7 @@ export default function UtlaggPage() {
       label: "Kvitto",
       render: (value, row) => {
         console.log("📎 Kvitto render - value:", value, "row:", row);
-        return (row?.kvitto_fil ? "📎" : "-");
+        return row?.kvitto_fil ? "📎" : "-";
       },
     },
     {
@@ -207,13 +207,13 @@ export default function UtlaggPage() {
           <h2 className="text-xl font-semibold text-white mb-4">Alla utlägg</h2>
 
           {loading ? (
-            <div className="text-center text-gray-400 py-8">
-              Laddar utlägg...
-            </div>
+            <div className="text-center text-gray-400 py-8">Laddar utlägg...</div>
           ) : utlägg.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
               <p>Inga utlägg hittades.</p>
-              <p className="text-sm mt-2">Klicka på "Nytt utlägg" för att skapa ditt första utlägg.</p>
+              <p className="text-sm mt-2">
+                Klicka på "Nytt utlägg" för att skapa ditt första utlägg.
+              </p>
             </div>
           ) : (
             <Tabell
@@ -230,8 +230,14 @@ export default function UtlaggPage() {
         <div className="bg-slate-700 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-white mb-2">ℹ️ Om utlägg</h3>
           <div className="text-gray-300 text-sm space-y-1">
-            <p>• <strong>Väntande:</strong> Utlägget är registrerat men inte inkluderat i någon lönespec ännu</p>
-            <p>• <strong>Inkluderat i lönespec:</strong> Utlägget är kopplat till en lönespecifikation</p>
+            <p>
+              • <strong>Väntande:</strong> Utlägget är registrerat men inte inkluderat i någon
+              lönespec ännu
+            </p>
+            <p>
+              • <strong>Inkluderat i lönespec:</strong> Utlägget är kopplat till en
+              lönespecifikation
+            </p>
             <p>• Klicka på "Nytt utlägg" för att registrera ett nytt utlägg via bokföring</p>
           </div>
         </div>

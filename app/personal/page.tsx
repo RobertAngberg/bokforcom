@@ -3,7 +3,6 @@
 import MainLayout from "../_components/MainLayout";
 
 export default function PersonalPage() {
-
   return (
     <MainLayout>
       <div className="">
