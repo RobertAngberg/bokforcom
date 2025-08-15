@@ -13,7 +13,7 @@ const pool = new Pool({
 //#endregion
 
 export async function extractDataFromOCR(text: string) {
-  console.log("🧠 Extracting data from OCR text:", text);
+  console.log("🧠 Extracting data from OCR text:", text.substring(0, 200) + "...");
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
@@ -33,6 +33,7 @@ export async function extractDataFromOCR(text: string) {
     });
 
     const content = response.choices[0]?.message?.content?.trim();
+    console.log("🤖 GPT RAW RESPONSE:", content);
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
