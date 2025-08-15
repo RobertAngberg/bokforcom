@@ -6,7 +6,6 @@ import { auth } from "../../auth";
 import OpenAI from "openai";
 import { invalidateBokförCache } from "../_utils/invalidateBokförCache";
 import { put } from "@vercel/blob";
-import * as pdfjsLib from "pdfjs-dist";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -355,35 +354,6 @@ export async function fetchTransactionWithBlob(transactionId: number) {
     return result.rows[0] || null;
   } finally {
     client.release();
-  }
-}
-
-export async function extractPDFText(pdfBase64: string): Promise<string> {
-  console.log("📄 Server PDF-extraktion startar...");
-
-  try {
-    const buffer = Buffer.from(pdfBase64, "base64");
-
-    // PDF.js vill ha Uint8Array
-    const uint8Array = new Uint8Array(buffer);
-
-    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-    const pdf = await loadingTask.promise;
-
-    let fullText = "";
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item: any) => item.str).join(" ");
-      fullText += pageText + "\n";
-    }
-
-    console.log("✅ Server PDF-extraktion klar");
-    return fullText.trim();
-  } catch (error) {
-    console.error("❌ Server PDF-extraktion fel:", error);
-    return "";
   }
 }
 
