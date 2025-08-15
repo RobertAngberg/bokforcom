@@ -7,7 +7,6 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { type Leverantör } from "../../faktura/actions";
-import { type Leverantör } from "../../faktura/actions";
 import TextFalt from "../../_components/TextFalt";
 
 interface Props {
