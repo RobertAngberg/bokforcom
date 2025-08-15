@@ -57,8 +57,8 @@ export async function extractDataFromOCR(text: string) {
     return { datum: "", belopp: 0 };
   } catch (error) {
     console.error("❌ extractDataFromOCR error:", error);
-    console.error("❌ Error type:", error.constructor.name);
-    console.error("❌ Error message:", error.message);
+    console.error("❌ Error type:", (error as any)?.constructor?.name || "Unknown");
+    console.error("❌ Error message:", (error as any)?.message || error);
     return { datum: "", belopp: 0 };
   }
 }
