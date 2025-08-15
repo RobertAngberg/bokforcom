@@ -5,6 +5,7 @@ import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
+import { type Leverantör } from "../../faktura/actions";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -27,7 +28,7 @@ interface Props {
 
   // Levfakt-specifika props (optional)
   leverantör?: string;
-  setLeverantör?: (val: string) => void;
+  setLeverantör?: (val: string | Leverantör | null) => void;
   fakturanummer?: string;
   setFakturanummer?: (val: string) => void;
   fakturadatum?: string;
