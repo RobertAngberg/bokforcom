@@ -11,6 +11,9 @@ interface FileUploadProps {
   setTransaktionsdatum: (datum: string) => void;
   setBelopp: (belopp: number) => void;
   fil: File | null;
+  onOcrTextChange?: (text: string) => void;
+  skipBasicAI?: boolean;
+  onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
 }
 
 export default function LaddaUppFil({
@@ -19,6 +22,9 @@ export default function LaddaUppFil({
   setTransaktionsdatum,
   setBelopp,
   fil,
+  onOcrTextChange,
+  skipBasicAI,
+  onReprocessTrigger,
 }: FileUploadProps) {
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
