@@ -93,7 +93,7 @@ export default function AnställdaLista({
 
       const nyLönespec = await skapaNyLönespec({
         anställd_id: anställd.id,
-        utbetalningsdatum: periodSlut.toISOString().split("T")[0], // Använd slutdatum som utbetalningsdatum
+        utbetalningsdatum: periodSlut.toISOString().split("T")[0], // Använd period_slut som utbetalningsdatum
       });
 
       setNyaLönespecar((prev) => ({
