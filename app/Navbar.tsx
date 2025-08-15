@@ -22,15 +22,13 @@ export default function Navbar() {
     { href: "/bokslut", label: "Bokslut" },
     { href: "/sie", label: "SIE" },
     { href: "/personal", label: "Personal" },
-    { href: "/signup", label: "Sign up" },
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   // Länkar för icke-inloggade användare
   const guestLinks = [
     { href: "/", label: "Hem" },
-    { href: "/signup", label: "Sign up" },
-    { href: "/login", label: "Logga in" },
+    { href: "/login", label: "Logga in med Google" },
   ];
 
   const currentLinks = session?.user ? navLinks : guestLinks;
