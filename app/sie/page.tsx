@@ -3,7 +3,7 @@
 import { useState } from "react";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
-import { uploadSieFile } from "./actions";
+import { uploadSieFile, exporteraSieData } from "./actions";
 import ImportWizard from "./ImportWizard";
 
 interface SieData {
@@ -41,6 +41,7 @@ export default function SiePage() {
   const [saknadeKonton, setSaknadeKonton] = useState<string[]>([]);
   const [visaSaknade, setVisaSaknade] = useState(false);
   const [visaWizard, setVisaWizard] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [analys, setAnalys] = useState<{
     totaltAntal: number;
     standardKonton: number;
@@ -124,6 +125,34 @@ export default function SiePage() {
     }
   };
 
+  const handleExport = async () => {
+    setExportLoading(true);
+    setError(null);
+
+    try {
+      const result = await exporteraSieData(2024);
+
+      if (result.success && result.data) {
+        // Skapa blob och ladda ner fil
+        const blob = new Blob([result.data], { type: "text/plain;charset=utf-8" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `export_${new Date().toISOString().slice(0, 10)}.se4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        setError(result.error || "Kunde inte exportera SIE-data");
+      }
+    } catch (err) {
+      setError("Fel vid export av SIE-data");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("sv-SE", {
       style: "currency",
@@ -199,6 +228,15 @@ export default function SiePage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-4">SIE Import</h1>
           <p className="text-gray-300">Ladda upp SIE-filer för att visa bokföringsdata</p>
+
+          {/* Export knapp */}
+          <div className="mt-6">
+            <Knapp
+              text={exportLoading ? "Exporterar..." : "📤 Exportera SIE-fil"}
+              onClick={handleExport}
+              disabled={exportLoading}
+            />
+          </div>
         </div>
 
         {/* Filuppladdning */}
