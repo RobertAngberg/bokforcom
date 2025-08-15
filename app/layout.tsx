@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Navbar from "./Navbar";
+import ConditionalNavbar from "./_components/ConditionalNavbar";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import React from "react";
@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>
         <SessionProvider>
           <LönespecProvider>
-            <Navbar />
+            <ConditionalNavbar />
             {children}
           </LönespecProvider>
         </SessionProvider>
