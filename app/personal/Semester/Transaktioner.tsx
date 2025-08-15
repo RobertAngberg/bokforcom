@@ -49,13 +49,7 @@ export default function Transaktioner({ anställd }: TransaktionerProps) {
     setError(null);
 
     try {
-      const data = await hämtaSemesterTransaktioner(
-        anställd.id,
-        startdatum.toISOString().split("T")[0],
-        slutdatum.toISOString().split("T")[0],
-        filterTyp === "Alla" ? undefined : filterTyp,
-        inkluderaBokfört ? true : undefined
-      );
+      const data = await hämtaSemesterTransaktioner(anställd.id);
 
       setTransaktioner(data);
     } catch (err) {

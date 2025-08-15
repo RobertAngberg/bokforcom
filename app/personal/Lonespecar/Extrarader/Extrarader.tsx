@@ -77,6 +77,7 @@ export default function ExtraRader({
       setState((prev) => ({ ...prev, [id]: false }));
       await sparaExtrarad({
         lönespecifikation_id: lönespecId,
+        typ: "extra", // Lägg till saknad typ
         kolumn1: id,
         kolumn2: "0",
         kolumn3: "0",

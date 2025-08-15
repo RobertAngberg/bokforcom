@@ -1731,7 +1731,7 @@ export async function exporteraSieData(
       // Skriv ut verifikationer
       for (const [transId, ver] of verifikationer) {
         // Kontrollera balansering
-        const summa = ver.poster.reduce((sum, post) => sum + post.belopp, 0);
+        const summa = ver.poster.reduce((sum: number, post: any) => sum + post.belopp, 0);
         if (Math.abs(summa) > 0.01) {
           console.warn(`Verifikation ${ver.nummer} balanserar inte: ${summa} kr`);
           continue;
