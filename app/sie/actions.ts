@@ -1533,7 +1533,7 @@ ${duplicatesList}
 }
 
 export async function exporteraSieData(
-  år: number = 2024
+  år: number = 2025
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   try {
     const session = await auth();
@@ -1550,83 +1550,58 @@ export async function exporteraSieData(
     );
 
     const företag = företagQuery.rows[0];
-    const idag = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const idag = new Date();
+    const datumSträng = `${idag.getFullYear()}${String(idag.getMonth() + 1).padStart(2, "0")}${String(idag.getDate()).padStart(2, "0")}`;
 
-    // Bygg SIE-fil med korrekt teckenuppsättning enligt SIE-specifikation
+    // Bygg SIE 4 fil enligt den fungerande standarden
     let sieContent = "";
+
+    // Obligatoriska SIE 4 huvud-poster
     sieContent += `#FLAGGA 0\n`;
-    sieContent += `#PROGRAM "BokforPunkt.com" "1.0"\n`;
+    sieContent += `#PROGRAM "BokforPunkt.com" 1.0\n`;
     sieContent += `#FORMAT PC8\n`;
-    sieContent += `#GEN ${idag}\n`;
+    sieContent += `#GEN ${datumSträng}\n`;
     sieContent += `#SIETYP 4\n`;
-    sieContent += `#PROSA "Exporterad fran BokforPunkt.com"\n`;
 
-    // Konvertera svenska tecken till ASCII för SIE-kompatibilitet
-    const företagsnamn = (företag?.företagsnamn || företag?.email || "Foretag")
-      .replace(/å/g, "a")
-      .replace(/ä/g, "a")
-      .replace(/ö/g, "o")
-      .replace(/Å/g, "A")
-      .replace(/Ä/g, "A")
-      .replace(/Ö/g, "O")
-      .replace(/[^\x20-\x7E]/g, ""); // Ta bort alla icke-ASCII tecken
-    sieContent += `#FNAMN "${företagsnamn}"\n`;
+    // Företagsinformation
+    const företagsnamn = företag?.företagsnamn || företag?.email || "Företag";
+    let organisationsnummer = företag?.organisationsnummer || "000000-0000";
 
-    // Validera och formatera organisationsnummer enligt SIE-specifikation
-    if (företag?.organisationsnummer) {
-      // Ta bort alla icke-siffror och kontrollera längd
-      const orgnrSiffror = företag.organisationsnummer.replace(/\D/g, "");
-      if (orgnrSiffror.length === 10) {
-        // Lägg till bindestreck efter sjätte siffran enligt SIE-standard
-        const formateratOrgnr = `${orgnrSiffror.slice(0, 6)}-${orgnrSiffror.slice(6)}`;
-        sieContent += `#ORGNR ${formateratOrgnr}\n`;
+    // Formatera organisationsnummer korrekt (utan bindestreck för SIE 4)
+    if (organisationsnummer) {
+      organisationsnummer = organisationsnummer.replace(/\D/g, "");
+      if (organisationsnummer.length === 12) {
+        // Personnummer för enskild firma - ta bara sista 10 siffrorna
+        organisationsnummer = organisationsnummer.slice(2);
       }
     }
 
-    sieContent += `#RAR 0 ${år}0101 ${år}1231\n`;
-    sieContent += `#KPTYP BAS95\n`; // Använd BAS95 som är standard
+    sieContent += `#ORGNR ${organisationsnummer}\n`;
+    sieContent += `#FNAMN "${sieEscape(företagsnamn)}"\n`;
 
-    // Hämta konton från BAS 95
+    // Räkenskapsår (generera flera år som i exemplet)
+    for (let i = 0; i >= -7; i--) {
+      const currentYear = år + i;
+      sieContent += `#RAR ${i} ${currentYear}0101 ${currentYear}1231\n`;
+    }
+
+    // Kontoplan
+    sieContent += `#KPTYP BAS2014\n`;
+
+    // Hämta konton
     const kontoQuery = await pool.query(`
       SELECT kontonummer, beskrivning 
       FROM konton 
       ORDER BY kontonummer::integer
     `);
 
-    // Lägg till konton med ASCII-kompatibla beskrivningar
+    // Lägg till #KONTO-poster
     for (const konto of kontoQuery.rows) {
-      const beskrivning = konto.beskrivning
-        .replace(/å/g, "a")
-        .replace(/ä/g, "a")
-        .replace(/ö/g, "o")
-        .replace(/Å/g, "A")
-        .replace(/Ä/g, "A")
-        .replace(/Ö/g, "O")
-        .replace(/[^\x20-\x7E]/g, ""); // Ta bort icke-ASCII tecken
+      const beskrivning = sieEscape(konto.beskrivning);
       sieContent += `#KONTO ${konto.kontonummer} "${beskrivning}"\n`;
     }
 
-    // Lägg till kontotyper enligt BAS-standard
-    for (const konto of kontoQuery.rows) {
-      const kontoNr = parseInt(konto.kontonummer);
-      let kontotyp = "";
-
-      if (kontoNr >= 1000 && kontoNr <= 1999) {
-        kontotyp = "T"; // Tillgång
-      } else if (kontoNr >= 2000 && kontoNr <= 2999) {
-        kontotyp = "S"; // Skuld/Eget kapital
-      } else if (kontoNr >= 3000 && kontoNr <= 3999) {
-        kontotyp = "I"; // Intäkt
-      } else if (kontoNr >= 4000 && kontoNr <= 8999) {
-        kontotyp = "K"; // Kostnad
-      }
-
-      if (kontotyp) {
-        sieContent += `#KTYP ${konto.kontonummer} ${kontotyp}\n`;
-      }
-    }
-
-    // Hämta transaktioner med kopplade konton för året
+    // Hämta transaktioner för alla år (inte bara nuvarande)
     const transaktionQuery = await pool.query(
       `
       SELECT 
@@ -1643,116 +1618,133 @@ export async function exporteraSieData(
       JOIN transaktionsposter tp ON t.id = tp.transaktions_id
       JOIN konton k ON tp.konto_id = k.id
       WHERE t."userId" = $1 
-        AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2
       ORDER BY t.transaktionsdatum, t.id
     `,
-      [session.user.id, år]
+      [session.user.id]
     );
 
-    // Gruppera transaktioner per transaktion för att skapa verifikationer
-    const verifikationer = new Map();
-    let verNummer = 1;
+    // Beräkna kontosaldon per år (från -7 till 0)
+    const kontoSaldonPerÅr = new Map<number, Map<string, number>>();
 
+    // Initiera alla år
+    for (let i = -7; i <= 0; i++) {
+      kontoSaldonPerÅr.set(i, new Map<string, number>());
+    }
+
+    // Beräkna ackumulerade saldon per år
     for (const row of transaktionQuery.rows) {
-      const transId = row.transaktion_id;
+      const transYear = new Date(row.transaktionsdatum).getFullYear();
+      const konto = row.kontonummer;
+      const belopp = row.debet > 0 ? row.debet : -row.kredit;
 
-      if (!verifikationer.has(transId)) {
-        const datum = new Date(row.transaktionsdatum).toISOString().slice(0, 10);
-        // Konvertera svenska tecken i beskrivningar
-        const beskrivning = (row.kommentar || row.kontobeskrivning || "Transaktion")
-          .replace(/å/g, "a")
-          .replace(/ä/g, "a")
-          .replace(/ö/g, "o")
-          .replace(/Å/g, "A")
-          .replace(/Ä/g, "A")
-          .replace(/Ö/g, "O")
-          .replace(/[^\x20-\x7E]/g, "");
+      // Lägg till belopp för detta år och alla framtida år
+      for (let i = -7; i <= 0; i++) {
+        const targetYear = år + i;
+        if (transYear <= targetYear) {
+          const årMap = kontoSaldonPerÅr.get(i)!;
+          const currentSaldo = årMap.get(konto) || 0;
+          årMap.set(konto, currentSaldo + belopp);
+        }
+      }
+    }
 
-        verifikationer.set(transId, {
-          nummer: verNummer++,
-          datum: datum,
-          beskrivning: beskrivning,
-          poster: [],
+    // Lägg till ingående balanser (#IB) för alla år
+    for (let i = -6; i <= 0; i++) {
+      const saldonFörÅr = kontoSaldonPerÅr.get(i - 1) || new Map(); // Föregående års saldon
+
+      for (const konto of kontoQuery.rows) {
+        const kontoNr = parseInt(konto.kontonummer);
+        if (kontoNr >= 1000 && kontoNr <= 2999) {
+          // Endast balanskonton
+          const saldo = saldonFörÅr.get(konto.kontonummer) || 0;
+          if (Math.abs(saldo) > 0.01) {
+            sieContent += `#IB ${i} ${konto.kontonummer} ${saldo.toFixed(2)}\n`;
+          }
+        }
+      }
+    }
+
+    // Lägg till utgående balanser (#UB) för alla år
+    for (let i = -7; i <= 0; i++) {
+      const saldonFörÅr = kontoSaldonPerÅr.get(i)!;
+
+      for (const [konto, saldo] of saldonFörÅr) {
+        const kontoNr = parseInt(konto);
+        if (kontoNr >= 1000 && kontoNr <= 2999) {
+          // Endast balanskonton
+          if (Math.abs(saldo) > 0.01) {
+            sieContent += `#UB ${i} ${konto} ${saldo.toFixed(2)}\n`;
+          }
+        }
+      }
+    }
+
+    // Lägg till resultatposter (#RES) för år -1 och 0
+    for (let i = -1; i <= 0; i++) {
+      const saldonFörÅr = kontoSaldonPerÅr.get(i)!;
+
+      for (const [konto, saldo] of saldonFörÅr) {
+        const kontoNr = parseInt(konto);
+        if (kontoNr >= 3000 && kontoNr <= 8999) {
+          // Endast resultatkonton
+          if (Math.abs(saldo) > 0.01) {
+            sieContent += `#RES ${i} ${konto} ${saldo.toFixed(2)}\n`;
+          }
+        }
+      }
+    }
+
+    // Lägg till verifikationer (#VER) för det aktuella året
+    const årsTransaktioner = transaktionQuery.rows.filter((row) => {
+      const transYear = new Date(row.transaktionsdatum).getFullYear();
+      return transYear === år;
+    });
+
+    if (årsTransaktioner.length > 0) {
+      const verifikationer = new Map();
+      let verNummer = 1;
+
+      // Gruppera transaktioner per verifikation
+      for (const row of årsTransaktioner) {
+        const transId = row.transaktion_id;
+
+        if (!verifikationer.has(transId)) {
+          const datum = new Date(row.transaktionsdatum);
+          const datumStr = `${datum.getFullYear()}${String(datum.getMonth() + 1).padStart(2, "0")}${String(datum.getDate()).padStart(2, "0")}`;
+          const beskrivning = sieEscape(row.kommentar || row.kontobeskrivning || "Transaktion");
+
+          verifikationer.set(transId, {
+            nummer: verNummer++,
+            datum: datumStr,
+            beskrivning: beskrivning,
+            poster: [],
+          });
+        }
+
+        const belopp = row.debet > 0 ? row.debet : -row.kredit;
+        verifikationer.get(transId).poster.push({
+          konto: row.kontonummer,
+          belopp: belopp,
         });
       }
 
-      // SIE använder kronor med punkt som decimalavgränsare, inte ören
-      const belopp = row.debet > 0 ? row.debet : -row.kredit;
+      // Skriv ut verifikationer
+      for (const [transId, ver] of verifikationer) {
+        // Kontrollera balansering
+        const summa = ver.poster.reduce((sum, post) => sum + post.belopp, 0);
+        if (Math.abs(summa) > 0.01) {
+          console.warn(`Verifikation ${ver.nummer} balanserar inte: ${summa} kr`);
+          continue;
+        }
 
-      verifikationer.get(transId).poster.push({
-        konto: row.kontonummer,
-        belopp: belopp,
-        beskrivning: row.kontonamn,
-      });
-    }
+        sieContent += `#VER "A" "${ver.nummer}" ${ver.datum} "${ver.beskrivning}" ${ver.datum}\n`;
+        sieContent += `{\n`;
 
-    // Lägg till verifikationer
-    for (const [transId, ver] of verifikationer) {
-      // Kontrollera att verifikationen balanserar
-      const summa = ver.poster.reduce((sum, post) => sum + post.belopp, 0);
+        for (const post of ver.poster) {
+          sieContent += `\t#TRANS ${post.konto} {} ${post.belopp.toFixed(2)}\n`;
+        }
 
-      // Hoppa över verifikationer som inte balanserar (tillåt liten avrundning)
-      if (Math.abs(summa) > 0.01) {
-        console.warn(`Verifikation ${ver.nummer} balanserar inte: ${summa} kr`);
-        continue;
-      }
-
-      const datum = ver.datum.replace(/-/g, "");
-      // Konvertera svenska tecken i verifikationsbeskrivning
-      const beskrivning = ver.beskrivning.replace(/"/g, "'");
-      sieContent += `#VER "A" ${ver.nummer} ${datum} "${beskrivning}"\n`;
-      sieContent += `{\n`;
-
-      for (const post of ver.poster) {
-        // Formatera belopp med punkt som decimalavgränsare
-        const beloppStr = post.belopp.toFixed(2);
-        sieContent += `#TRANS ${post.konto} {} ${beloppStr}\n`;
-      }
-
-      sieContent += `}\n`;
-    }
-
-    // Lägg till obligatoriska balansposter för SIE-validering
-    // Beräkna kontosaldon från transaktionerna
-    const kontoSaldon = new Map<string, number>();
-
-    for (const row of transaktionQuery.rows) {
-      const konto = row.kontonummer;
-      const saldo = kontoSaldon.get(konto) || 0;
-
-      if (row.debet > 0) {
-        kontoSaldon.set(konto, saldo + row.debet);
-      } else if (row.kredit > 0) {
-        kontoSaldon.set(konto, saldo - row.kredit);
-      }
-    }
-
-    // Lägg till ingående balanser (IB) - alla noll för första året
-    for (const [konto, saldo] of kontoSaldon) {
-      const kontoNr = parseInt(konto);
-      // Endast balansposter för balansräkningskonton (1000-2999)
-      if (kontoNr >= 1000 && kontoNr <= 2999) {
-        sieContent += `#IB 0 ${konto} 0.00\n`;
-      }
-    }
-
-    // Lägg till utgående balanser (UB)
-    for (const [konto, saldo] of kontoSaldon) {
-      const kontoNr = parseInt(konto);
-      // Endast balansposter för balansräkningskonton (1000-2999)
-      if (kontoNr >= 1000 && kontoNr <= 2999) {
-        const beloppStr = saldo.toFixed(2);
-        sieContent += `#UB 0 ${konto} ${beloppStr}\n`;
-      }
-    }
-
-    // Lägg till resultatkonton (RES) för resultaträkning
-    for (const [konto, saldo] of kontoSaldon) {
-      // Resultaträkningskonton (3000-8999)
-      const kontoNr = parseInt(konto);
-      if (kontoNr >= 3000 && kontoNr <= 8999) {
-        const beloppStr = saldo.toFixed(2);
-        sieContent += `#RES 0 ${konto} ${beloppStr}\n`;
+        sieContent += `}\n`;
       }
     }
 
@@ -1767,4 +1759,14 @@ export async function exporteraSieData(
       error: `Kunde inte exportera SIE-data: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
+}
+
+// Hjälpfunktion för SIE 4 text-escaping
+function sieEscape(text: string): string {
+  return text
+    .replace(/\\/g, "\\\\") // Escape backslashes
+    .replace(/"/g, '\\"') // Escape quotes
+    .replace(/\n/g, " ") // Replace newlines with spaces
+    .replace(/\r/g, " ") // Replace carriage returns with spaces
+    .replace(/\t/g, " "); // Replace tabs with spaces
 }

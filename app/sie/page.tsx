@@ -130,7 +130,7 @@ export default function SiePage() {
     setError(null);
 
     try {
-      const result = await exporteraSieData(2024);
+      const result = await exporteraSieData(2025);
 
       if (result.success && result.data) {
         // Skapa blob och ladda ner fil
