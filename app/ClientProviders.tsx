@@ -6,9 +6,7 @@ import { LönespecProvider } from "./personal/Lonespecar/LonespecContext";
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <LönespecProvider>
-        {children}
-      </LönespecProvider>
+      <LönespecProvider>{children}</LönespecProvider>
     </SessionProvider>
   );
 }
