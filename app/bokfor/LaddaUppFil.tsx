@@ -33,8 +33,6 @@ export default function LaddaUppFil({
   // Mjukare bildkomprimering - mål 100-200KB (läsbar)
   async function komprimeraImage(file: File): Promise<File> {
     return new Promise((resolve) => {
-      console.log(`🗜️ Komprimerar bild: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
-
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d")!;
       const img = new Image();
@@ -76,14 +74,10 @@ export default function LaddaUppFil({
                 );
 
                 const sizeKB = compressed.size / 1024;
-                console.log(`📊 Kvalitet ${(quality * 100).toFixed(1)}%: ${sizeKB.toFixed(1)}KB`);
 
                 // Mål: 100-200KB (läsbar men inte för stor)
                 if (sizeKB <= 200 || quality <= 0.3) {
                   const savings = (((file.size - compressed.size) / file.size) * 100).toFixed(1);
-                  console.log(
-                    `✅ BILD FINAL: ${(file.size / 1024).toFixed(1)}KB → ${sizeKB.toFixed(1)}KB (${savings}% mindre)`
-                  );
                   resolve(compressed);
                 } else {
                   // Minska kvalitet gradvis
@@ -100,7 +94,6 @@ export default function LaddaUppFil({
       };
 
       img.onerror = () => {
-        console.log("⚠️ Bildinladdning misslyckades, använder original");
         resolve(file);
       };
 
@@ -111,8 +104,6 @@ export default function LaddaUppFil({
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
-
-    console.log("📁 Original fil:", originalFile.name, (originalFile.size / 1024).toFixed(1), "KB");
 
     // VALIDERA FILSTORLEK FÖRST
     const sizeMB = originalFile.size / (1024 * 1024);
@@ -145,24 +136,16 @@ export default function LaddaUppFil({
 
     // Komprimera bilder mjukt - PDF behålls original
     if (originalFile.type.startsWith("image/")) {
-      console.log("🖼️ Startar mjuk bildkomprimering...");
       file = await komprimeraImage(originalFile);
     } else if (originalFile.type === "application/pdf") {
-      console.log(`📄 PDF (${sizeMB.toFixed(1)}MB) - behåller original`);
       file = originalFile;
     } else {
-      console.log("📄 Okänd filtyp - behåller original");
+      file = originalFile;
     }
 
     // Visa filstorlek efter eventuell komprimering
     const finalSizeKB = file.size / 1024;
     const finalSizeMB = finalSizeKB / 1024;
-
-    if (finalSizeMB >= 1) {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeMB.toFixed(1)}MB`);
-    } else {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeKB.toFixed(1)}KB`);
-    }
 
     const fileUrl = URL.createObjectURL(file);
     setPdfUrl(fileUrl);
@@ -172,7 +155,6 @@ export default function LaddaUppFil({
     setTimeoutTriggered(false);
 
     const timeout = setTimeout(() => {
-      console.log("⏰ Timeout efter 10 sekunder!");
       setIsLoading(false);
       setTimeoutTriggered(true);
     }, 10000);
@@ -181,30 +163,23 @@ export default function LaddaUppFil({
       let text = "";
 
       if (file.type === "application/pdf") {
-        console.log("🔍 Extraherar text från PDF...");
         try {
           // Försök textextraktion först (snabbt för text-baserade PDF:er)
           text = (await extractTextFromPDF(file, "clean")) || "";
-          console.log("✅ PDF textextraktion:", text ? `${text.length} tecken` : "ingen text");
 
           // Om ingen text hittades, acceptera att vi inte kan läsa skannade PDFs
           if (!text || text.trim().length === 0) {
-            console.log("� PDF innehåller ingen markerbar text (troligen skannad)");
-            console.log("⚠️ OCR på PDF-filer stöds inte för tillfället");
             text = "";
           }
         } catch (pdfError) {
           console.error("❌ PDF textextraktion misslyckades:", pdfError);
-          console.log("� Kunde inte läsa PDF - accepterar att ingen text extraherats");
           text = "";
         }
       } else if (file.type.startsWith("image/")) {
-        console.log("🔍 OCR på komprimerad bild...");
         text = await förbättraOchLäsBild(file);
       }
 
       if (!text || text.trim().length === 0) {
-        console.log("⚠️ Ingen text extraherad från fil");
         setTimeoutTriggered(true);
         setIsLoading(false);
         clearTimeout(timeout);
@@ -278,8 +253,6 @@ export default function LaddaUppFil({
 }
 
 async function förbättraOchLäsBild(file: File): Promise<string> {
-  console.log("🖼️ Förbereder bild för client-side OCR...");
-
   const img = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -302,8 +275,6 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
   }
   ctx.putImageData(imageData, 0, 0);
 
-  console.log("🔍 Startar Tesseract OCR...");
-
   try {
     // Använd Tesseract.js direkt på den förbättrade bilden
     const {
@@ -314,13 +285,12 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
       {
         logger: (m) => {
           if (m.status === "recognizing text") {
-            console.log(`📖 OCR progress: ${Math.round(m.progress * 100)}%`);
+            // Progress logging removed
           }
         },
       }
     );
 
-    console.log("✅ OCR klar! Extraherad text:", text.substring(0, 100) + "...");
     return text;
   } catch (error) {
     console.error("❌ Tesseract OCR fel:", error);
