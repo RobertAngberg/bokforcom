@@ -29,7 +29,7 @@ export default function InreTabell({ rows, totalLabel, totalValue, hideHeader = 
     if (React.isValidElement(value)) {
       return value; // Om det redan är en React-komponent
     }
-    return String(value || ''); // Konvertera till säker sträng
+    return String(value || ""); // Konvertera till säker sträng
   };
 
   const keys = Object.keys(rows[0]);
@@ -72,11 +72,13 @@ export default function InreTabell({ rows, totalLabel, totalValue, hideHeader = 
             const isNum = typeof val === "number";
             return (
               <div key={key} className={`${isNum ? "text-right" : "text-left"} break-words`}>
-                {isNum
-                  ? formatSEK(val as number)
-                  : val === null || val === undefined 
-                    ? <span className="text-gray-400 italic">—</span>
-                    : renderSafeText(val)}
+                {isNum ? (
+                  formatSEK(val as number)
+                ) : val === null || val === undefined ? (
+                  <span className="text-gray-400 italic">—</span>
+                ) : (
+                  renderSafeText(val)
+                )}
               </div>
             );
           })}

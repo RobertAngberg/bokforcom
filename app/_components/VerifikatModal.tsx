@@ -19,7 +19,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
     try {
       const urlObj = new URL(url);
       // Tillåt endast säkra protokoll
-      return ['https:', 'http:', 'data:'].includes(urlObj.protocol);
+      return ["https:", "http:", "data:"].includes(urlObj.protocol);
     } catch {
       return false;
     }

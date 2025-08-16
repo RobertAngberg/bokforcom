@@ -1,12 +1,12 @@
 // Tillåtna input-typer för säkerhet
-type AllowedInputTypes = 
-  | "text" 
-  | "number" 
-  | "email" 
-  | "password" 
-  | "date" 
+type AllowedInputTypes =
+  | "text"
+  | "number"
+  | "email"
+  | "password"
+  | "date"
   | "datetime-local"
-  | "tel" 
+  | "tel"
   | "url"
   | "textarea";
 
@@ -36,8 +36,8 @@ export default function TextFalt({
   pattern,
 }: TextFaltProps) {
   // Säker escaping av label för XSS-skydd
-  const safeLabel = String(label).replace(/[<>'"]/g, '');
-  
+  const safeLabel = String(label).replace(/[<>'"]/g, "");
+
   return (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-white mb-2">
