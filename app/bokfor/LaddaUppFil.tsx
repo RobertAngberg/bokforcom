@@ -226,18 +226,30 @@ export default function LaddaUppFil({
 
     (async () => {
       try {
+        console.log("🚨 CLIENT: About to call extractDataFromOCR");
+        console.log("🚨 CLIENT: Text length:", recognizedText.length);
+        console.log("🚨 CLIENT: First 200 chars:", recognizedText.substring(0, 200));
+
         const parsed = await extractDataFromOCR(recognizedText);
+
+        console.log("🚨 CLIENT: Got response from extractDataFromOCR");
         console.log("📄 Parsed data:", parsed);
 
         if (parsed?.datum) {
+          console.log("✅ CLIENT: Setting datum:", parsed.datum);
           setTransaktionsdatum(parsed.datum);
+        } else {
+          console.log("❌ CLIENT: No datum in response");
         }
 
         if (parsed?.belopp && !isNaN(parsed.belopp)) {
+          console.log("✅ CLIENT: Setting belopp:", parsed.belopp);
           setBelopp(Number(parsed.belopp));
+        } else {
+          console.log("❌ CLIENT: No valid belopp in response");
         }
       } catch (error) {
-        console.error("❌ OpenAI parsing error:", error);
+        console.error("❌ CLIENT: OpenAI parsing error:", error);
       } finally {
         setIsLoading(false);
       }
