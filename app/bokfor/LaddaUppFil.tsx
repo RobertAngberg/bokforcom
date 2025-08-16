@@ -234,7 +234,7 @@ export default function LaddaUppFil({
 
         console.log("🚨 CLIENT: Got response from extractDataFromOCR");
         console.log("📄 Parsed data:", parsed);
-
+        alert("🚨 SERVER RESPONSE: " + JSON.stringify(parsed));
         if (parsed?.datum) {
           console.log("✅ CLIENT: Setting datum:", parsed.datum);
           setTransaktionsdatum(parsed.datum);

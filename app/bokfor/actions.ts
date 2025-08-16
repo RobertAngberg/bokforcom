@@ -13,19 +13,11 @@ const pool = new Pool({
 //#endregion
 
 export async function extractDataFromOCR(text: string) {
-  console.log("🚨 DEBUG VERSION 3.0 🚨");
-  console.log("🧠 Full text length:", text.length);
-  console.log("🧠 First 300 chars:", text.substring(0, 300));
-  console.log("🧠 Last 200 chars:", text.substring(text.length - 200));
-  console.log("🔑 API Key exists:", !!process.env.OPENAI_API_KEY);
-  console.log("🔑 API Key length:", process.env.OPENAI_API_KEY?.length || 0);
-
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
   });
 
   try {
-    console.log("🚀 Starting OpenAI request...");
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-nano",
       messages: [
@@ -37,28 +29,17 @@ export async function extractDataFromOCR(text: string) {
         { role: "user", content: text },
       ],
     });
-    console.log("✅ OpenAI request completed!");
 
     const content = response.choices[0]?.message?.content?.trim();
-    console.log("🤖 GPT RAW RESPONSE:", content);
-    console.log("🤖 Response type:", typeof content);
-    console.log("🤖 Response length:", content?.length || 0);
-    console.log("🤖 Starts with {:", content?.startsWith("{"));
 
     if (content && content.startsWith("{")) {
-      console.log("🎯 Attempting JSON parse...");
       const parsed = JSON.parse(content);
-      console.log("✅ OCR extracted:", parsed);
-      console.log("✅ Parsed type:", typeof parsed);
       return parsed;
     }
 
-    console.warn("⚠️ GPT unstructured content:", content);
     return { datum: "", belopp: 0 };
   } catch (error) {
     console.error("❌ extractDataFromOCR error:", error);
-    console.error("❌ Error type:", (error as any)?.constructor?.name || "Unknown");
-    console.error("❌ Error message:", (error as any)?.message || error);
     return { datum: "", belopp: 0 };
   }
 }
