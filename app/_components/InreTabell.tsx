@@ -1,6 +1,8 @@
 // #region Huvud
 "use client";
 
+import React from "react";
+
 type Row = {
   [key: string]: string | number | null | undefined | React.ReactNode;
 };
@@ -21,6 +23,14 @@ export default function InreTabell({ rows, totalLabel, totalValue, hideHeader = 
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }) + " kr";
+
+  // Säker text-rendering för att förhindra XSS
+  const renderSafeText = (value: any): React.ReactNode => {
+    if (React.isValidElement(value)) {
+      return value; // Om det redan är en React-komponent
+    }
+    return String(value || ''); // Konvertera till säker sträng
+  };
 
   const keys = Object.keys(rows[0]);
   const colCount = keys.length;
@@ -64,7 +74,9 @@ export default function InreTabell({ rows, totalLabel, totalValue, hideHeader = 
               <div key={key} className={`${isNum ? "text-right" : "text-left"} break-words`}>
                 {isNum
                   ? formatSEK(val as number)
-                  : (val ?? <span className="text-gray-400 italic">—</span>)}
+                  : val === null || val === undefined 
+                    ? <span className="text-gray-400 italic">—</span>
+                    : renderSafeText(val)}
               </div>
             );
           })}

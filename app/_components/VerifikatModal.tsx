@@ -14,6 +14,17 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
   const [details, setDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Säker URL-validering
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      // Tillåt endast säkra protokoll
+      return ['https:', 'http:', 'data:'].includes(urlObj.protocol);
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!transaktionsId) return;
     setLoading(true);
@@ -135,7 +146,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                     </div>
                   )}
 
-                  {details[0]?.fil && (
+                  {details[0]?.fil && isValidUrl(details[0].fil) && (
                     <div className="flex justify-center">
                       <a
                         href={details[0].fil}
