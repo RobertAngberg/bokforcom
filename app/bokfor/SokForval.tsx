@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { fetchAllaForval, loggaFavoritförval } from "./actions";
 import FörvalKort from "./ForvalKort";
+import TextFalt from "../_components/TextFalt";
 
 type KontoRad = {
   beskrivning: string;
@@ -51,17 +52,25 @@ export default function SokForval({
   const [results, setResults] = useState<Forval[]>(favoritFörvalen ?? []);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  // Säker text-normalisering med escaping
+  const normalize = (s: string) => {
+    if (!s || typeof s !== "string") return "";
+    return s
+      .toLowerCase()
+      .replace(/[<>'"&]/g, "") // Ta bort farliga tecken
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 100); // Begränsa längd
+  };
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // TextFalt hanterar autoFocus automatiskt
   }, []);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
-      const input = searchText.trim();
+      const input = normalize(searchText); // Säker normalisering
 
       if (input.length < 2) {
         let baseResults = favoritFörvalen;
@@ -97,7 +106,7 @@ export default function SokForval({
 
       setLoading(true);
       const alla = await fetchAllaForval();
-      const q = normalize(input);
+      const q = input; // Redan normaliserad
 
       function score(f: Forval): number {
         let poäng = 0;
@@ -195,16 +204,21 @@ export default function SokForval({
         {levfaktMode ? "Steg 1: Välj förval för leverantörsfaktura" : "Steg 1: Sök förval"}
       </h1>
 
-      <input
-        ref={inputRef}
-        className="text-center w-full p-3 text-white border-2 border-gray-700 rounded-lg bg-slate-900 placeholder-gray-400"
-        type="text"
-        autoComplete="off"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Skriv t.ex. representation eller leasing..."
-      />
+      <div onKeyDown={handleKeyDown}>
+        <TextFalt
+          label=""
+          name="forval-search"
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Skriv t.ex. representation eller leasing..."
+          required={false}
+          maxLength={20}
+          pattern="[A-Za-z0-9åäöÅÄÖ\s\-\.]*"
+          autoFocus={true}
+          className="text-center border-2 border-gray-700"
+        />
+      </div>
 
       {loading && (
         <div className="flex justify-center mt-6">

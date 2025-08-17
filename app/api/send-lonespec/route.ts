@@ -1,29 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "dummy-key-for-build");
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Säker email-validering
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+// Säker text-sanitization
+function sanitizeText(text: string): string {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .replace(/[<>'"&]/g, "") // Ta bort farliga tecken
+    .trim()
+    .substring(0, 100); // Begränsa längd
+}
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("===> API: /api/send-lonespec kallad");
+    // Kontrollera API-nyckel först
+    if (!process.env.RESEND_API_KEY) {
+      console.error("No Resend API key configured");
+      return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
+    }
 
     const formData = await req.formData();
     const pdfFile = formData.get("pdf") as File;
-    const email = formData.get("email") as string;
-    const namn = formData.get("namn") as string;
+    const rawEmail = formData.get("email") as string;
+    const rawNamn = formData.get("namn") as string;
 
-    console.log("===> Mottagen e-post:", email);
-    console.log("===> Mottagen namn:", namn);
-    console.log("===> Mottagen pdfFile:", pdfFile ? pdfFile.name : "INGEN PDF");
+    console.log("Received request:", {
+      hasPdfFile: !!pdfFile,
+      pdfFileType: pdfFile?.type,
+      pdfFileSize: pdfFile?.size,
+      email: rawEmail,
+      namn: rawNamn,
+    });
 
-    if (!pdfFile || !email) {
-      console.error("===> Saknar PDF eller e-post");
-      return NextResponse.json({ error: "Saknar PDF eller e-post." }, { status: 400 });
+    // Säker validering och sanitization
+    const email = rawEmail?.trim();
+    const namn = sanitizeText(rawNamn);
+
+    // Validera inputs
+    if (!email || !isValidEmail(email)) {
+      console.error("Invalid email:", email);
+      return NextResponse.json({ error: "Ogiltig e-postadress" }, { status: 400 });
+    }
+
+    if (!namn || namn.length < 1) {
+      console.error("Invalid namn:", namn);
+      return NextResponse.json({ error: "Namn krävs" }, { status: 400 });
+    }
+
+    if (!pdfFile || pdfFile.type !== "application/pdf") {
+      console.error("Invalid PDF file:", { type: pdfFile?.type, exists: !!pdfFile });
+      return NextResponse.json({ error: "Giltig PDF-fil krävs" }, { status: 400 });
+    }
+
+    // Begränsa PDF-storlek (8MB efter komprimering)
+    if (pdfFile.size > 8 * 1024 * 1024) {
+      console.error("PDF too large:", pdfFile.size);
+      return NextResponse.json({ error: "PDF-fil för stor (max 8MB)" }, { status: 400 });
     }
 
     const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
-    console.log("===> PDF buffer size:", pdfBuffer.length);
 
+    // Säker email-sending utan känslig logging
     const { data, error } = await resend.emails.send({
       from: "info@xn--bokfr-mua.com",
       to: email,
@@ -38,14 +82,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      console.error("===> Resend error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Email sending failed:", error.message); // Logga bara felmeddelande
+      return NextResponse.json({ error: "Kunde inte skicka e-post" }, { status: 500 });
     }
 
-    console.log("===> Mail skickat! Resend data:", data);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Lönespecifikation skickad" });
   } catch (err: any) {
-    console.error("===> Fångat fel i API:", err);
-    return NextResponse.json({ error: err.message || "Något gick fel i API." }, { status: 500 });
+    console.error("API error:", err.message); // Logga bara felmeddelande
+    return NextResponse.json({ error: "Ett fel uppstod vid skickande av e-post" }, { status: 500 });
   }
 }

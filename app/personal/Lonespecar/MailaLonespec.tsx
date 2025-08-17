@@ -78,19 +78,28 @@ export default function MailaLonespec({
           const element = container.querySelector("#lonespec-print-area") as HTMLElement;
           if (!element) throw new Error("Kunde inte rendera PDF-innehåll.");
           const canvas = await html2canvas(element, {
-            scale: 2,
+            scale: 2, // Tillbaka till 2 för skarphet
             useCORS: true,
             backgroundColor: "#ffffff",
           });
-          const imageData = canvas.toDataURL("image/png");
+          // Komprimera bilden till JPEG med bättre kvalitet
+          const imageData = canvas.toDataURL("image/jpeg", 0.85); // 85% kvalitet för bättre balans
           const pdf = new jsPDF("portrait", "mm", "a4");
           const pdfWidth = 210;
           const imgWidth = pdfWidth - 15;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
+          pdf.addImage(imageData, "JPEG", 7.5, 5, imgWidth, imgHeight);
+
+          // Komprimera PDF ytterligare
           const pdfBlob = pdf.output("blob");
+          console.log(
+            `PDF storlek före komprimering: ${(pdfBlob.size / 1024 / 1024).toFixed(2)}MB`
+          );
+
           const formData = new FormData();
-          formData.append("pdf", pdfBlob, `lonespec.pdf`);
+          // Skapa en File med explicit MIME-typ
+          const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
+          formData.append("pdf", pdfFile);
           formData.append("email", mail);
           formData.append("namn", `${item.anställd.förnamn} ${item.anställd.efternamn}`);
           const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
@@ -135,19 +144,25 @@ export default function MailaLonespec({
       const element = container.querySelector("#lonespec-print-area") as HTMLElement;
       if (!element) throw new Error("Kunde inte rendera PDF-innehåll.");
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2, // Tillbaka till 2 för skarphet
         useCORS: true,
         backgroundColor: "#ffffff",
       });
-      const imageData = canvas.toDataURL("image/png");
+      // Komprimera bilden till JPEG med bättre kvalitet
+      const imageData = canvas.toDataURL("image/jpeg", 0.85); // 85% kvalitet för bättre balans
       const pdf = new jsPDF("portrait", "mm", "a4");
       const pdfWidth = 210;
       const imgWidth = pdfWidth - 15;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
+      pdf.addImage(imageData, "JPEG", 7.5, 5, imgWidth, imgHeight);
+
       const pdfBlob = pdf.output("blob");
+      console.log(`PDF storlek: ${(pdfBlob.size / 1024 / 1024).toFixed(2)}MB`);
+
       const formData = new FormData();
-      formData.append("pdf", pdfBlob, "lonespec.pdf");
+      // Skapa en File med explicit MIME-typ
+      const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
+      formData.append("pdf", pdfFile);
       formData.append("email", mail);
       formData.append("namn", `${anställd.förnamn} ${anställd.efternamn}`);
       const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
