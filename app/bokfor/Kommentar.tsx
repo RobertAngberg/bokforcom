@@ -1,4 +1,5 @@
 import React from "react";
+import TextFalt from "../_components/TextFalt";
 
 interface CommentProps {
   kommentar: string;
@@ -6,22 +7,21 @@ interface CommentProps {
 }
 
 export default function Kommentar({ kommentar, setKommentar }: CommentProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setKommentar(e.target.value);
+  };
+
   return (
-    <div className="mb-4">
-      <label htmlFor="kommentar" className="text-white block mb-2">
-        Kommentar:
-      </label>
-      <textarea
-        className="w-full p-2 mb-0 text-white bg-slate-900 border-2 border-gray-700 rounded"
-        id="kommentar"
-        name="kommentar"
-        maxLength={500}
-        placeholder="Valfritt"
-        rows={1}
-        value={kommentar}
-        onChange={(e) => setKommentar(e.target.value)}
-      />
-    </div>
+    <TextFalt
+      label="Kommentar:"
+      name="kommentar"
+      type="textarea"
+      value={kommentar}
+      onChange={handleChange}
+      required={false}
+      placeholder="Valfritt"
+      maxLength={500}
+    />
   );
 }
 

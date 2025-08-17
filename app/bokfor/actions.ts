@@ -12,12 +12,30 @@ const pool = new Pool({
 });
 //#endregion
 
+// Säker text-sanitization för OpenAI input
+function sanitizeOCRText(text: string): string {
+  if (!text || typeof text !== "string") return "";
+
+  return text
+    .replace(/[<>'"&{}]/g, "") // Ta bort potentiellt farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 2000); // Begränsa längd för API-anrop
+}
+
 export async function extractDataFromOCR(text: string) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
   });
 
   try {
+    // Sanitize input before sending to OpenAI
+    const safeText = sanitizeOCRText(text);
+
+    if (!safeText) {
+      return { datum: "", belopp: 0 };
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-nano",
       messages: [
@@ -26,7 +44,7 @@ export async function extractDataFromOCR(text: string) {
           content:
             'Extract date and amount from OCR text. Respond with *raw* JSON only (no markdown, no triple backticks). Format: { "datum": "YYYY-MM-DD", "belopp": 1234.56 }.',
         },
-        { role: "user", content: text },
+        { role: "user", content: safeText },
       ],
     });
 
@@ -39,19 +57,30 @@ export async function extractDataFromOCR(text: string) {
 
     return { datum: "", belopp: 0 };
   } catch (error) {
-    console.error("❌ extractDataFromOCR error:", error);
+    console.error("extractDataFromOCR error"); // Mindre detaljerade loggar
     return { datum: "", belopp: 0 };
   }
 }
 
 export async function extractDataFromOCRLevFakt(text: string) {
-  console.log("🧠 Extracting leverantörsfaktura data from OCR text:", text);
-
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
   });
 
   try {
+    // Sanitize input before sending to OpenAI
+    const safeText = sanitizeOCRText(text);
+
+    if (!safeText) {
+      return {
+        leverantör: "",
+        fakturadatum: null,
+        förfallodatum: null,
+        fakturanummer: "",
+        belopp: 0,
+        betaldatum: null,
+      };
+    }
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-nano",
       messages: [
@@ -79,7 +108,7 @@ export async function extractDataFromOCRLevFakt(text: string) {
           
           If a field cannot be determined, use empty string "" for text fields, null for dates, or 0 for amount.`,
         },
-        { role: "user", content: text },
+        { role: "user", content: safeText },
       ],
     });
 
@@ -219,8 +248,25 @@ export async function hämtaBokföringsmetod() {
 }
 
 export async function taBortTransaktion(id: number) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Inte inloggad");
+  }
+
   const client = await pool.connect();
   try {
+    // Säkerhetskontroll: Kontrollera att transaktionen tillhör användaren
+    const ownerCheck = await client.query(`SELECT user_id FROM transaktioner WHERE id = $1`, [id]);
+
+    if (ownerCheck.rows.length === 0) {
+      throw new Error("Transaktionen hittades inte");
+    }
+
+    if (ownerCheck.rows[0].user_id !== parseInt(session.user.id)) {
+      throw new Error("Ej behörig att ta bort denna transaktion");
+    }
+
+    // Ta bort transaktionen
     await client.query(`DELETE FROM transaktioner WHERE id = $1`, [id]);
   } finally {
     client.release();
@@ -280,26 +326,44 @@ export async function hamtaFavoritforval(): Promise<any[]> {
   }
 }
 
+// Säker sökning med whitelist-validering
+function validateSearchInput(input: string): string {
+  if (!input || typeof input !== "string") return "";
+
+  // Ta bort potentiellt farliga tecken
+  return input
+    .replace(/[<>'"&{}();-]/g, "") // Ta bort SQL-injection tecken
+    .trim()
+    .substring(0, 100); // Begränsa längd
+}
+
+// Whitelist för tillåtna kolumner
+const ALLOWED_CATEGORIES = ["Försäljning", "Inköp", "Moms", "Löner", "Administration", "Övriga"];
+const ALLOWED_TYPES = ["Kundfaktura", "Leverantörsfaktura", "Utlägg", "Allmän"];
+
 export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   let query = "SELECT * FROM förval";
   const values: any[] = [];
   const conditions: string[] = [];
 
   if (filters?.sök) {
-    conditions.push(
-      `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`
-    );
-    values.push(`%${filters.sök.toLowerCase()}%`);
+    const safeSearch = validateSearchInput(filters.sök);
+    if (safeSearch) {
+      conditions.push(
+        `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`
+      );
+      values.push(`%${safeSearch.toLowerCase()}%`);
+    }
   }
 
-  if (filters?.kategori) {
+  if (filters?.kategori && ALLOWED_CATEGORIES.includes(filters.kategori)) {
     conditions.push(`kategori = $${values.length + 1}`);
     values.push(filters.kategori);
   }
 
-  if (filters?.typ) {
-    conditions.push(`LOWER(typ) = $${values.length + 1}`);
-    values.push(filters.typ.toLowerCase());
+  if (filters?.typ && ALLOWED_TYPES.includes(filters.typ)) {
+    conditions.push(`typ = $${values.length + 1}`);
+    values.push(filters.typ);
   }
 
   if (conditions.length > 0) {
@@ -372,6 +436,14 @@ export async function hämtaAnställda() {
   }
 }
 
+// Säker filnamn-sanitization
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken
+    .substring(0, 100) // Begränsa längd
+    .toLowerCase();
+}
+
 export async function saveTransaction(formData: FormData) {
   const anstalldId = formData.get("anstalldId")?.toString();
   const leverantorId = formData.get("leverantorId")?.toString();
@@ -383,7 +455,8 @@ export async function saveTransaction(formData: FormData) {
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
 
-  console.log("📋 Sparar transaktion med leverantorId:", leverantorId);
+  // Säker dataloggning - undvik känsliga belopp
+  console.log("📋 Sparar transaktion");
 
   // Konvertera transaktionsdatum till korrekt format för PostgreSQL
   let formattedDate = "";
@@ -394,21 +467,19 @@ export async function saveTransaction(formData: FormData) {
         // Formatera som YYYY-MM-DD för PostgreSQL
         formattedDate = date.toISOString().split("T")[0];
       } else {
-        console.error("❌ Ogiltigt datum:", transaktionsdatum);
+        console.error("Ogiltigt transaktionsdatum");
         throw new Error("Ogiltigt transaktionsdatum");
       }
     } catch (error) {
-      console.error("❌ Fel vid datumkonvertering:", error, "Datum:", transaktionsdatum);
+      console.error("Fel vid datumkonvertering");
       throw new Error("Kunde inte konvertera transaktionsdatum");
     }
   } else {
     throw new Error("Transaktionsdatum saknas");
   }
 
-  console.log("📅 Datum konverterat:", transaktionsdatum, "→", formattedDate);
-
   const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
-  if (!valtFörval?.konton) throw new Error("⛔ Saknar valda förval");
+  if (!valtFörval?.konton) throw new Error("Saknar valda förval");
 
   const moms = Number(formData.get("moms")?.toString() || 0);
   const beloppUtanMoms = Number(formData.get("beloppUtanMoms")?.toString() || 0);
@@ -422,20 +493,9 @@ export async function saveTransaction(formData: FormData) {
   // NYTT: Kolla om vi är i utläggs-mode eller leverantörsfaktura-mode
   const utlaggMode = formData.get("utlaggMode") === "true";
   const levfaktMode = formData.get("levfaktMode") === "true";
-  console.log(`🔍 DEBUG: utlaggMode = ${utlaggMode}, levfaktMode = ${levfaktMode}`);
 
-  console.log("📥 formData:", {
-    transaktionsdatum: formattedDate, // Använd formaterade datumet i debug
-    belopp,
-    moms,
-    beloppUtanMoms,
-    utlaggMode,
-    levfaktMode,
-  });
-  console.log(
-    `🎯 Processing transaction: ${valtFörval.namn}, specialtyp: ${valtFörval.specialtyp}`
-  );
-  console.log(`📋 extrafält:`, extrafält);
+  // Säker loggning utan känsliga belopp
+  console.log(`🎯 Processing transaction: ${valtFörval.namn}`);
 
   let blobUrl = null;
   let filename = "";
@@ -445,7 +505,7 @@ export async function saveTransaction(formData: FormData) {
       const datum = new Date(transaktionsdatum).toISOString().slice(0, 10);
       const fileExtension = fil.name.split(".").pop() || "";
       const timestamp = Date.now();
-      const originalName = fil.name.split(".")[0];
+      const originalName = sanitizeFilename(fil.name.split(".")[0]);
       filename = `${originalName}-${timestamp}.${fileExtension}`;
 
       const blobPath = `bokforing/${userId}/${datum}/${filename}`;
@@ -457,10 +517,10 @@ export async function saveTransaction(formData: FormData) {
       });
 
       // blobUrl = blob.url;
-      console.log(`✅ Fil sparad till Blob Storage: ${blobUrl}`);
+      console.log(`✅ Fil sparad till Blob Storage`);
     } catch (blobError) {
-      console.error("❌ Kunde inte spara fil till Blob Storage:", blobError);
-      filename = fil.name;
+      console.error("Kunde inte spara fil till Blob Storage");
+      filename = sanitizeFilename(fil.name);
     }
   }
 

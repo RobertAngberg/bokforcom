@@ -95,9 +95,11 @@ export default function EgetUttag({
               <TextFalt
                 label="Kommentar"
                 name="kommentar"
+                type="textarea"
                 value={kommentar ?? ""}
                 onChange={(e) => setKommentar?.(e.target.value)}
                 required={false}
+                maxLength={500}
               />
 
               <KnappFullWidth

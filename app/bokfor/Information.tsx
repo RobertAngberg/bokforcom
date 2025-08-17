@@ -27,6 +27,19 @@ export default function Information({
   fakturadatum,
   setFakturadatum,
 }: InformationProps) {
+  // Säker beloppvalidering
+  const handleBeloppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numValue = Number(value);
+
+    // Begränsa till rimliga värden
+    if (isNaN(numValue) || numValue < 0 || numValue > 999999999) {
+      return; // Ignorera ogiltiga värden
+    }
+
+    setBelopp(numValue);
+  };
+
   // Datepicker
   useEffect(() => {
     const datePickerEl = document.querySelector(".react-datepicker-wrapper");
@@ -60,8 +73,11 @@ export default function Information({
         id="belopp"
         name="belopp"
         required
+        min="0"
+        max="999999999"
+        step="0.01"
         value={belopp}
-        onChange={(e) => setBelopp(Number(e.target.value))}
+        onChange={handleBeloppChange}
       />
 
       {/* Fakturadatum - visas endast om fakturametod är aktiverad */}

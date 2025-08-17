@@ -45,11 +45,8 @@ export default function TextFalt({
   const handleSafeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     let newValue = e.target.value;
 
-    // Ta bort farliga tecken i realtid
-    if (pattern && pattern.includes("[A-Za-z0-9")) {
-      // För sökfält - tillåt bara säkra tecken
-      newValue = newValue.replace(/[<>'"&{}()[\]]/g, "");
-    }
+    // ALLTID ta bort farliga tecken för alla fälttyper
+    newValue = newValue.replace(/[<>'"&{}()[\]]/g, "");
 
     // Begränsa längd
     if (maxLength && newValue.length > maxLength) {

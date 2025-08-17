@@ -5,6 +5,47 @@ import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR } from "./actions";
 import Tesseract from "tesseract.js";
 
+// Säker filvalidering
+const ALLOWED_FILE_TYPES = {
+  "application/pdf": ".pdf",
+  "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+function validateFile(file: File): { valid: boolean; error?: string } {
+  // Kontrollera filstorlek
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `Filen är för stor. Max storlek: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+    };
+  }
+
+  // Kontrollera filtyp
+  if (!ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES]) {
+    return { valid: false, error: "Endast PDF, JPG, PNG och WebP filer är tillåtna" };
+  }
+
+  // Kontrollera filnamn för säkra tecken
+  const unsafeChars = /[<>:"/\\|?*\x00-\x1f]/;
+  if (unsafeChars.test(file.name)) {
+    return { valid: false, error: "Filnamnet innehåller ogiltiga tecken" };
+  }
+
+  return { valid: true };
+}
+
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken med underscore
+    .substring(0, 100) // Begränsa längd
+    .toLowerCase();
+}
+
 interface FileUploadProps {
   setFil: (file: File | null) => void;
   setPdfUrl: (url: string) => void;
@@ -104,6 +145,14 @@ export default function LaddaUppFil({
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
+
+    // Säker filvalidering
+    const validation = validateFile(originalFile);
+    if (!validation.valid) {
+      alert(validation.error);
+      event.target.value = ""; // Rensa input
+      return;
+    }
 
     // VALIDERA FILSTORLEK FÖRST
     const sizeMB = originalFile.size / (1024 * 1024);
