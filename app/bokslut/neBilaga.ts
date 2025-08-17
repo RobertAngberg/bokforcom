@@ -60,25 +60,38 @@ function mappaKontoTillNEPunkt(kontonummer: string): string | null {
   return null; // Okänt konto
 }
 
+// Säkerhetsvalidering för årtal
+function validateYear(year: number): boolean {
+  const currentYear = new Date().getFullYear();
+  return year >= 2020 && year <= currentYear + 1 && Number.isInteger(year);
+}
+
 export async function genereraNEBilaga(ar: number = 2025) {
   const userId = await requireAuth();
+  
+  // Säkerhetsvalidering av årtal
+  if (!validateYear(ar)) {
+    throw new Error("Ogiltigt årtal för NE-bilaga");
+  }
+  
   const client = await pool.connect();
 
   try {
-    // Hämta alla kontosaldon för året
+    // Säker query med parametriserade värden
     const result = await client.query(
       `
       SELECT 
         k.kontonummer,
         k.beskrivning,
         k.kontoklass,
-        SUM(tp.debet - tp.kredit) as saldo
+        COALESCE(SUM(tp.debet - tp.kredit), 0) as saldo
       FROM konton k
       LEFT JOIN transaktionsposter tp ON k.id = tp.konto_id
       LEFT JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE (t."userId" = $1 OR t."userId" IS NULL)
+      WHERE t."userId" = $1
         AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2
       GROUP BY k.kontonummer, k.beskrivning, k.kontoklass
+      HAVING COALESCE(SUM(tp.debet - tp.kredit), 0) != 0
       ORDER BY k.kontonummer
     `,
       [userId, ar]

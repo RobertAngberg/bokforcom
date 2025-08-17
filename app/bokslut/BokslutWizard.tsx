@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
 import KnappFullWidth from "../_components/KnappFullWidth";
 import LoadingSpinner from "../_components/LoadingSpinner";
+import TextFalt from "../_components/TextFalt";
 import { hamtaKontosaldo, hamtaSenasteTransaktioner, hamtaBokslutschecklista } from "./actions";
 import { genereraNEBilaga } from "./neBilaga";
 
@@ -340,10 +341,12 @@ function BokningarSteg({
                 </label>
               </div>
               {periodiseringar.förutbetaldaIntäkter && (
-                <input
+                <TextFalt
+                  name="förutbetaldaIntäkterBelopp"
+                  label=""
                   type="number"
                   placeholder="Belopp i SEK"
-                  value={periodiseringar.förutbetaldaIntäkterBelopp}
+                  value={periodiseringar.förutbetaldaIntäkterBelopp.toString()}
                   onChange={(e) =>
                     handlePeriodiceringsChange(
                       "förutbetaldaIntäkterBelopp",
@@ -371,10 +374,12 @@ function BokningarSteg({
                 </label>
               </div>
               {periodiseringar.upplupnaKostnader && (
-                <input
+                <TextFalt
+                  name="upplupnaKostnaderBelopp"
+                  label=""
                   type="number"
                   placeholder="Belopp i SEK"
-                  value={periodiseringar.upplupnaKostnaderBelopp}
+                  value={periodiseringar.upplupnaKostnaderBelopp.toString()}
                   onChange={(e) =>
                     handlePeriodiceringsChange(
                       "upplupnaKostnaderBelopp",

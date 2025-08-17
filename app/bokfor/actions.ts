@@ -561,12 +561,12 @@ export async function saveTransaction(formData: FormData) {
       if (typ === "debet") {
         // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
         if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
-          console.log(`💰 Returning belopp ${belopp} for debet 1930 (försäljning)`);
+          console.log(`💰 Processing debet 1930 (försäljning)`);
           return belopp;
         }
         // KUNDFAKTURA FIX: 1510 ska få hela beloppet som debet (kundfordringar)
         if (nr === "1510") {
-          console.log(`💰 Returning belopp ${belopp} for debet 1510 (kundfordringar)`);
+          console.log(`💰 Processing debet 1510 (kundfordringar)`);
           return belopp;
         }
         // Alla andra klass 1-konton får beloppUtanMoms som tidigare
@@ -590,18 +590,18 @@ export async function saveTransaction(formData: FormData) {
       }
       // UTLÄGG FIX: 2890 ska få hela beloppet som kredit (ersätter 1930)
       if (nr === "2890") {
-        console.log(`💰 Returning belopp ${belopp} for kredit 2890 (utlägg)`);
+        console.log(`💰 Processing kredit 2890 (utlägg)`);
         return belopp;
       }
       // LEVERANTÖRSFAKTURA FIX: 2440 ska få hela beloppet som kredit (ersätter 1930)
       if (nr === "2440") {
-        console.log(`💰 Returning belopp ${belopp} for kredit 2440 (leverantörsfaktura)`);
+        console.log(`💰 Processing kredit 2440 (leverantörsfaktura)`);
         return belopp;
       }
       // Alla andra klass 1-konton får belopp som tidigare
       if (klass === "1") return belopp;
       if (klass === "2") {
-        console.log(`💰 Returning moms ${moms} for kredit klass 2 (konto ${nr})`);
+        console.log(`💰 Processing moms for kredit klass 2 (konto ${nr})`);
         return moms; // FIXED: 2610 utgående moms ska vara kredit vid försäljning
       }
       if (klass === "3") return beloppUtanMoms;
@@ -644,7 +644,7 @@ export async function saveTransaction(formData: FormData) {
 
         if (debet === 0 && kredit === 0) continue;
 
-        console.log(`➕ Extrafält  ${nr}: D ${debet}  K ${kredit}`);
+        console.log(`➕ Extrafält ${nr}: processed`);
         await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);
       }
     }
@@ -688,7 +688,7 @@ export async function saveTransaction(formData: FormData) {
           continue;
         }
 
-        console.log(`📘 Förvalskonto ${nr}: D ${debet}  K ${kredit}`);
+        console.log(`📘 Förvalskonto ${nr}: processed`);
         await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);
       }
     } else {
