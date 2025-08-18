@@ -92,61 +92,7 @@ async function logSignupSecurityEvent(
   }
 }
 
-function validateOrganisationsnummer(orgnr: string): { valid: boolean; error?: string } {
-  if (!orgnr) return { valid: false, error: "Organisationsnummer krävs" };
-
-  // Ta bort alla icke-siffror
-  const cleanOrgNr = orgnr.replace(/\D/g, "");
-
-  // Kontrollera längd (10 siffror för organisationsnummer, 12 för personnummer)
-  if (cleanOrgNr.length !== 10 && cleanOrgNr.length !== 12) {
-    return { valid: false, error: "Organisationsnummer måste vara 10 siffror (YYYYMMDDXX)" };
-  }
-
-  // För personnummer (12 siffror), ta bara de sista 10
-  const orgNrToValidate = cleanOrgNr.length === 12 ? cleanOrgNr.slice(2) : cleanOrgNr;
-
-  // Grundläggande format-kontroll
-  if (!/^\d{10}$/.test(orgNrToValidate)) {
-    return { valid: false, error: "Organisationsnummer har ogiltigt format" };
-  }
-
-  return { valid: true };
-}
-
-function validateCompanyName(name: string): { valid: boolean; error?: string } {
-  if (!name || name.trim().length === 0) {
-    return { valid: false, error: "Företagsnamn krävs" };
-  }
-
-  if (name.trim().length < 2) {
-    return { valid: false, error: "Företagsnamn måste vara minst 2 tecken" };
-  }
-
-  if (name.trim().length > 100) {
-    return { valid: false, error: "Företagsnamn får vara max 100 tecken" };
-  }
-
-  // Kontrollera för misstänkta mönster
-  const suspiciousPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /onload=/i,
-    /onerror=/i,
-    /DROP\s+TABLE/i,
-    /DELETE\s+FROM/i,
-    /INSERT\s+INTO/i,
-  ];
-
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(name)) {
-      return { valid: false, error: "Företagsnamn innehåller otillåtna tecken" };
-    }
-  }
-
-  return { valid: true };
-}
-
+// Säkerhets-sanitering (behåll detta)
 function sanitizeInput(input: string): string {
   return input
     .replace(/[<>'"&]/g, "")
@@ -262,7 +208,7 @@ export async function saveSignupData(formData: FormData) {
       clientIP
     );
 
-    // 🔒 INPUT-VALIDERING OCH SANITERING
+    // 🔒 INPUT-SANITERING (grundläggande säkerhet - frontend redan validerat)
     const rawOrganisationsnummer = formData.get("organisationsnummer")?.toString() || "";
     const rawFöretagsnamn = formData.get("företagsnamn")?.toString() || "";
     const rawMomsperiod = formData.get("momsperiod")?.toString() || "";
@@ -271,28 +217,15 @@ export async function saveSignupData(formData: FormData) {
     const rawStartdatum = formData.get("startdatum")?.toString() || "";
     const rawSlutdatum = formData.get("slutdatum")?.toString() || "";
 
-    // Validera organisationsnummer
-    const orgValidation = validateOrganisationsnummer(rawOrganisationsnummer);
-    if (!orgValidation.valid) {
+    // Grundläggande säkerhetskontroller (frontend validation redan gjord)
+    if (!rawOrganisationsnummer || !rawFöretagsnamn) {
       await logSignupSecurityEvent(
         userId,
         "signup_validation_failed",
-        `Invalid organisationsnummer: ${orgValidation.error}`,
+        "Missing required fields",
         clientIP
       );
-      return { success: false, error: orgValidation.error };
-    }
-
-    // Validera företagsnamn
-    const nameValidation = validateCompanyName(rawFöretagsnamn);
-    if (!nameValidation.valid) {
-      await logSignupSecurityEvent(
-        userId,
-        "signup_validation_failed",
-        `Invalid company name: ${nameValidation.error}`,
-        clientIP
-      );
-      return { success: false, error: nameValidation.error };
+      return { success: false, error: "Saknade obligatoriska fält" };
     }
 
     // Sanitera all input
@@ -304,28 +237,28 @@ export async function saveSignupData(formData: FormData) {
     const startdatum = rawStartdatum ? sanitizeInput(rawStartdatum) : null;
     const slutdatum = rawSlutdatum ? sanitizeInput(rawSlutdatum) : null;
 
-    // Validera att momsperiod är tillåten
+    // Säkerhetskontroller för tillåtna värden (även om frontend validerat)
     const allowedMomsperiods = ["månadsvis", "kvartalsvis", "årsvis"];
+    const allowedMethods = ["kassaredovisning", "fakturaredovisning"];
+
     if (momsperiod && !allowedMomsperiods.includes(momsperiod)) {
       await logSignupSecurityEvent(
         userId,
-        "signup_validation_failed",
+        "signup_security_violation",
         `Invalid momsperiod: ${momsperiod}`,
         clientIP
       );
-      return { success: false, error: "Ogiltig momsperiod" };
+      return { success: false, error: "Säkerhetsfel - ogiltig data" };
     }
 
-    // Validera att bokföringsmetod är tillåten
-    const allowedMethods = ["kassaredovisning", "fakturaredovisning"];
     if (bokföringsmetod && !allowedMethods.includes(bokföringsmetod)) {
       await logSignupSecurityEvent(
         userId,
-        "signup_validation_failed",
+        "signup_security_violation",
         `Invalid bokföringsmetod: ${bokföringsmetod}`,
         clientIP
       );
-      return { success: false, error: "Ogiltig bokföringsmetod" };
+      return { success: false, error: "Säkerhetsfel - ogiltig data" };
     }
 
     const client = await pool.connect();

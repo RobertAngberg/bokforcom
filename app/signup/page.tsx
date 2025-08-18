@@ -7,9 +7,81 @@ import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
+import TextFalt from "../_components/TextFalt";
 import { saveSignupData, checkUserSignupStatus } from "./actions";
 
 registerLocale("sv", sv);
+
+// Frontend validation functions - flyttade från actions.ts
+const validateOrganisationsnummer = (orgnr: string): { valid: boolean; error?: string } => {
+  if (!orgnr) return { valid: false, error: "Organisationsnummer krävs" };
+
+  // Ta bort alla icke-siffror
+  const cleanOrgNr = orgnr.replace(/\D/g, "");
+
+  // Kontrollera längd (10 siffror för organisationsnummer, 12 för personnummer)
+  if (cleanOrgNr.length !== 10 && cleanOrgNr.length !== 12) {
+    return { valid: false, error: "Organisationsnummer måste vara 10 siffror (YYYYMMDDXX)" };
+  }
+
+  // För personnummer (12 siffror), ta bara de sista 10
+  const orgNrToValidate = cleanOrgNr.length === 12 ? cleanOrgNr.slice(2) : cleanOrgNr;
+
+  // Grundläggande format-kontroll
+  if (!/^\d{10}$/.test(orgNrToValidate)) {
+    return { valid: false, error: "Organisationsnummer har ogiltigt format" };
+  }
+
+  return { valid: true };
+};
+
+const validateCompanyName = (name: string): { valid: boolean; error?: string } => {
+  if (!name || name.trim().length === 0) {
+    return { valid: false, error: "Företagsnamn krävs" };
+  }
+
+  if (name.trim().length < 2) {
+    return { valid: false, error: "Företagsnamn måste vara minst 2 tecken" };
+  }
+
+  if (name.trim().length > 100) {
+    return { valid: false, error: "Företagsnamn får vara max 100 tecken" };
+  }
+
+  // Kontrollera för misstänkta mönster
+  const suspiciousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /onload=/i,
+    /onerror=/i,
+    /DROP\s+TABLE/i,
+    /DELETE\s+FROM/i,
+    /INSERT\s+INTO/i,
+  ];
+
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(name)) {
+      return { valid: false, error: "Företagsnamn innehåller otillåtna tecken" };
+    }
+  }
+
+  return { valid: true };
+};
+
+const formatOrganisationsnummer = (value: string): string => {
+  // Ta bort alla icke-siffror
+  const clean = value.replace(/\D/g, "");
+
+  // Formatera som XXXXXX-XXXX för 10 siffror
+  if (clean.length >= 6) {
+    return clean.slice(0, 6) + "-" + clean.slice(6, 10);
+  }
+
+  return clean;
+};
+
+const allowedMomsperiods = ["månadsvis", "kvartalsvis", "årsvis"];
+const allowedMethods = ["kassaredovisning", "fakturaredovisning"];
 
 export default function SignupPage() {
   const [userStatus, setUserStatus] = useState<{
@@ -29,6 +101,10 @@ export default function SignupPage() {
     slutdatum: null as Date | null,
   });
 
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isFormValid, setIsFormValid] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,11 +114,75 @@ export default function SignupPage() {
     });
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Validation effect - kör validering när form data ändras
+  useEffect(() => {
+    const errors: Record<string, string> = {};
+
+    // Validera organisationsnummer
+    if (formData.organisationsnummer) {
+      const orgValidation = validateOrganisationsnummer(formData.organisationsnummer);
+      if (!orgValidation.valid) {
+        errors.organisationsnummer = orgValidation.error || "Ogiltigt organisationsnummer";
+      }
+    }
+
+    // Validera företagsnamn
+    if (formData.företagsnamn) {
+      const nameValidation = validateCompanyName(formData.företagsnamn);
+      if (!nameValidation.valid) {
+        errors.företagsnamn = nameValidation.error || "Ogiltigt företagsnamn";
+      }
+    }
+
+    // Validera required fields
+    const requiredFields = [
+      "organisationsnummer",
+      "företagsnamn",
+      "momsperiod",
+      "redovisningsmetod",
+      "första_bokslut",
+    ];
+    requiredFields.forEach((field) => {
+      if (!formData[field as keyof typeof formData]) {
+        errors[field] = "Detta fält krävs";
+      }
+    });
+
+    // Validera startdatum och slutdatum om första_bokslut är "nej"
+    if (formData.första_bokslut === "nej") {
+      if (!formData.startdatum) {
+        errors.startdatum = "Startdatum krävs";
+      }
+      if (!formData.slutdatum) {
+        errors.slutdatum = "Slutdatum krävs";
+      }
+      if (formData.startdatum && formData.slutdatum && formData.startdatum >= formData.slutdatum) {
+        errors.slutdatum = "Slutdatum måste vara efter startdatum";
+      }
+    }
+
+    setValidationErrors(errors);
+    setIsFormValid(
+      Object.keys(errors).length === 0 &&
+        requiredFields.every((field) => formData[field as keyof typeof formData])
+    );
+  }, [formData]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    // Auto-format organisationsnummer
+    if (name === "organisationsnummer") {
+      processedValue = formatOrganisationsnummer(value);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
   };
 
@@ -58,8 +198,15 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    // Frontend validation check
+    if (!isFormValid || Object.keys(validationErrors).length > 0) {
+      setError("Vänligen rätta till alla fel i formuläret");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Skapa FormData för backend
+      // Skapa FormData för backend - data är redan validerat frontend
       const submitData = new FormData();
       submitData.set("organisationsnummer", formData.organisationsnummer);
       submitData.set("företagsnamn", formData.företagsnamn);
@@ -134,34 +281,42 @@ export default function SignupPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Organisationsnummer */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Organisationsnummer *
-                  </label>
-                  <input
-                    type="text"
+                  <TextFalt
+                    label="Organisationsnummer *"
                     name="organisationsnummer"
                     value={formData.organisationsnummer}
                     onChange={handleInputChange}
                     placeholder="XXXXXX-XXXX"
+                    maxLength={11}
+                    pattern="[0-9]{6}-[0-9]{4}"
                     required
-                    className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                    className={validationErrors.organisationsnummer ? "border-red-500" : ""}
                   />
+                  {validationErrors.organisationsnummer && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {validationErrors.organisationsnummer}
+                    </p>
+                  )}
                 </div>
 
                 {/* Företagsnamn */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Företagsnamn *
-                  </label>
-                  <input
-                    type="text"
+                  <TextFalt
+                    label="Företagsnamn *"
                     name="företagsnamn"
                     value={formData.företagsnamn}
                     onChange={handleInputChange}
                     placeholder="Ditt företagsnamn"
+                    maxLength={100}
                     required
-                    className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                    className={validationErrors.företagsnamn ? "border-red-500" : ""}
                   />
+                  {validationErrors.företagsnamn && (
+                    <p className="text-red-400 text-sm mt-1">{validationErrors.företagsnamn}</p>
+                  )}
+                  <p className="text-gray-400 text-sm mt-1">
+                    {formData.företagsnamn.length}/100 tecken
+                  </p>
                 </div>
 
                 {/* Momsredovisningsperiod */}
@@ -174,13 +329,18 @@ export default function SignupPage() {
                     value={formData.momsperiod}
                     onChange={handleInputChange}
                     required
-                    className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                    className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
+                      validationErrors.momsperiod ? "border-red-500" : "border-slate-600"
+                    }`}
                   >
                     <option value="">Välj period...</option>
-                    <option value="helt_ar">Helt år</option>
-                    <option value="kvartal">Varje kvartal</option>
-                    <option value="manad">Varje månad</option>
+                    <option value="årsvis">Helt år</option>
+                    <option value="kvartalsvis">Varje kvartal</option>
+                    <option value="månadsvis">Varje månad</option>
                   </select>
+                  {validationErrors.momsperiod && (
+                    <p className="text-red-400 text-sm mt-1">{validationErrors.momsperiod}</p>
+                  )}
                 </div>
 
                 {/* Bokföringsmetod */}
@@ -193,12 +353,19 @@ export default function SignupPage() {
                     value={formData.redovisningsmetod}
                     onChange={handleInputChange}
                     required
-                    className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                    className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
+                      validationErrors.redovisningsmetod ? "border-red-500" : "border-slate-600"
+                    }`}
                   >
                     <option value="">Välj metod...</option>
-                    <option value="fakturametoden">Fakturametoden</option>
-                    <option value="kontantmetoden">Kontantmetoden</option>
+                    <option value="fakturaredovisning">Fakturaredovisning (normalt)</option>
+                    <option value="kassaredovisning">Kassaredovisning</option>
                   </select>
+                  {validationErrors.redovisningsmetod && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {validationErrors.redovisningsmetod}
+                    </p>
+                  )}
                 </div>
 
                 {/* Första bokslut */}
@@ -211,12 +378,17 @@ export default function SignupPage() {
                     value={formData.första_bokslut}
                     onChange={handleInputChange}
                     required
-                    className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                    className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
+                      validationErrors.första_bokslut ? "border-red-500" : "border-slate-600"
+                    }`}
                   >
                     <option value="">Välj...</option>
                     <option value="nej">Nej</option>
                     <option value="ja">Ja</option>
                   </select>
+                  {validationErrors.första_bokslut && (
+                    <p className="text-red-400 text-sm mt-1">{validationErrors.första_bokslut}</p>
+                  )}
                 </div>
 
                 {/* Datum för första bokslut */}
@@ -232,9 +404,14 @@ export default function SignupPage() {
                         dateFormat="yyyy-MM-dd"
                         locale="sv"
                         placeholderText="Välj startdatum"
-                        className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                        className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
+                          validationErrors.startdatum ? "border-red-500" : "border-slate-600"
+                        }`}
                         required={formData.första_bokslut === "nej"}
                       />
+                      {validationErrors.startdatum && (
+                        <p className="text-red-400 text-sm mt-1">{validationErrors.startdatum}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-white mb-2">
@@ -246,20 +423,36 @@ export default function SignupPage() {
                         dateFormat="yyyy-MM-dd"
                         locale="sv"
                         placeholderText="Välj slutdatum"
-                        className="bg-slate-900 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700"
+                        className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
+                          validationErrors.slutdatum ? "border-red-500" : "border-slate-600"
+                        }`}
                         required={formData.första_bokslut === "nej"}
                       />
+                      {validationErrors.slutdatum && (
+                        <p className="text-red-400 text-sm mt-1">{validationErrors.slutdatum}</p>
+                      )}
                     </div>
                   </div>
                 )}
 
                 <div className="pt-4">
                   <Knapp
-                    text={loading ? "Skapar konto..." : "Skapa företagskonto"}
+                    text={
+                      loading
+                        ? "Skapar konto..."
+                        : !isFormValid
+                          ? "Fyll i alla fält korrekt"
+                          : "Skapa företagskonto"
+                    }
                     type="submit"
-                    disabled={loading}
-                    className="w-full"
+                    disabled={loading || !isFormValid}
+                    className={`w-full ${!isFormValid ? "opacity-50" : ""}`}
                   />
+                  {!isFormValid && Object.keys(validationErrors).length > 0 && (
+                    <p className="text-yellow-400 text-sm mt-2 text-center">
+                      Kontrollera formuläret - {Object.keys(validationErrors).length} fel kvar
+                    </p>
+                  )}
                 </div>
               </form>
 
