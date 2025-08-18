@@ -72,22 +72,6 @@ function sanitizeInput(input: string): string {
   return input.replace(/[<>'"&]/g, "").trim();
 }
 
-function validateFileUpload(file: File): { valid: boolean; error?: string } {
-  const maxSize = 10 * 1024 * 1024; // 10MB max för PDF-filer
-  if (file.size > maxSize) {
-    return {
-      valid: false,
-      error: `Filen är för stor (${Math.round(file.size / 1024 / 1024)}MB). Max 10MB tillåtet.`,
-    };
-  }
-
-  if (file.type !== "application/pdf") {
-    return { valid: false, error: "Endast PDF-filer är tillåtna" };
-  }
-
-  return { valid: true };
-}
-
 export async function hämtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
@@ -244,7 +228,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
   }
 }
 
-export async function fetchDataFromYear(year: string) {
+export async function fetchRawYearData(year: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
     const session = await auth();
@@ -272,7 +256,7 @@ export async function fetchDataFromYear(year: string) {
     await logStartSecurityEvent(
       userId,
       "fetch_year_data_attempt",
-      `Fetching data for year: ${yearNum}`
+      `Fetching raw data for year: ${yearNum}`
     );
 
     const client = await pool.connect();
@@ -293,64 +277,14 @@ export async function fetchDataFromYear(year: string) {
       `;
 
       const result = await client.query(query, [start, end, userId]);
-      const rows = result.rows;
 
       await logStartSecurityEvent(
         userId,
-        "fetch_year_data_processing",
-        `Processing ${rows.length} records for year ${yearNum}`
+        "fetch_raw_year_data_success",
+        `Retrieved ${result.rows.length} raw records for year ${yearNum}`
       );
 
-      const grouped: Record<string, { inkomst: number; utgift: number }> = {};
-      let totalInkomst = 0;
-      let totalUtgift = 0;
-
-      rows.forEach((row, i) => {
-        const { transaktionsdatum, debet, kredit, kontonummer } = row;
-
-        if (!transaktionsdatum || !kontonummer) {
-          console.warn(`⚠️ Rad ${i + 1} saknar datum eller kontonummer:`, row);
-          return;
-        }
-
-        const date = new Date(transaktionsdatum);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
-
-        const deb = Number(debet ?? 0);
-        const kre = Number(kredit ?? 0);
-        const prefix = kontonummer?.toString()[0];
-
-        if (!grouped[key]) grouped[key] = { inkomst: 0, utgift: 0 };
-
-        if (prefix === "3") {
-          grouped[key].inkomst += kre;
-          totalInkomst += kre;
-        }
-
-        if (["5", "6", "7", "8"].includes(prefix)) {
-          grouped[key].utgift += deb;
-          totalUtgift += deb;
-        }
-      });
-
-      const yearData = Object.entries(grouped).map(([month, values]) => ({
-        month,
-        inkomst: values.inkomst,
-        utgift: values.utgift,
-      }));
-
-      await logStartSecurityEvent(
-        userId,
-        "fetch_year_data_success",
-        `Year data compiled: ${yearData.length} months, total income: ${totalInkomst}, total expense: ${totalUtgift}`
-      );
-
-      return {
-        totalInkomst: +totalInkomst.toFixed(2),
-        totalUtgift: +totalUtgift.toFixed(2),
-        totalResultat: +(totalInkomst - totalUtgift).toFixed(2),
-        yearData,
-      };
+      return result.rows;
     } finally {
       client.release();
     }
@@ -361,7 +295,7 @@ export async function fetchDataFromYear(year: string) {
       if (errorSession?.user?.id) {
         await logStartSecurityEvent(
           errorSession.user.id,
-          "fetch_year_data_error",
+          "fetch_raw_year_data_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
       }
@@ -369,13 +303,8 @@ export async function fetchDataFromYear(year: string) {
       console.error("Failed to log error:", logError);
     }
 
-    console.error("❌ fetchDataFromYear error:", error);
-    return {
-      totalInkomst: 0,
-      totalUtgift: 0,
-      totalResultat: 0,
-      yearData: [],
-    };
+    console.error("❌ fetchRawYearData error:", error);
+    return [];
   }
 }
 
