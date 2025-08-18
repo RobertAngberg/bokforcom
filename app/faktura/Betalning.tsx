@@ -6,7 +6,6 @@ import { useFakturaContext } from "./FakturaProvider";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { sv } from "date-fns/locale";
-import TextFalt from "../_components/TextFalt";
 import { hämtaSenasteBetalningsmetod } from "./actions";
 import { useSession } from "next-auth/react";
 //#endregion
@@ -118,7 +117,16 @@ export default function Betalning() {
   }
 
   function hanteraÄndradText(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    // Blockera farliga tecken för nummer-fältet
+    if (name === "nummer") {
+      const sanitizedValue = value.replace(/[<>'"&]/g, "");
+      setFormData((p) => ({ ...p, [name]: sanitizedValue }));
+      return;
+    }
+
+    setFormData((p) => ({ ...p, [name]: value }));
   }
 
   function hanteraÄndradDropdown(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -155,19 +163,31 @@ export default function Betalning() {
           />
         </div>
 
-        <TextFalt
-          label="Betalningsvillkor (dagar)"
-          name="betalningsvillkor"
-          value={formData.betalningsvillkor ?? ""}
-          onChange={hanteraÄndradText}
-        />
+        <div>
+          <label className="block text-sm font-medium text-white mb-2">
+            Betalningsvillkor (dagar)
+          </label>
+          <input
+            type="text"
+            name="betalningsvillkor"
+            value={formData.betalningsvillkor ?? ""}
+            onChange={hanteraÄndradText}
+            autoComplete="off"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+          />
+        </div>
 
-        <TextFalt
-          label="Dröjsmålsränta (%)"
-          name="drojsmalsranta"
-          value={formData.drojsmalsranta ?? ""}
-          onChange={hanteraÄndradText}
-        />
+        <div>
+          <label className="block text-sm font-medium text-white mb-2">Dröjsmålsränta (%)</label>
+          <input
+            type="text"
+            name="drojsmalsranta"
+            value={formData.drojsmalsranta ?? ""}
+            onChange={hanteraÄndradText}
+            autoComplete="off"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+          />
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-white mb-2">Välj betalningsmetod</label>
@@ -175,6 +195,7 @@ export default function Betalning() {
             name="betalningsmetod"
             value={formData.betalningsmetod ?? ""}
             onChange={hanteraÄndradDropdown}
+            autoComplete="off"
             className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
           >
             <option value="">Välj betalningsmetod</option>
@@ -187,12 +208,17 @@ export default function Betalning() {
           </select>
         </div>
 
-        <TextFalt
-          label="Nummer"
-          name="nummer"
-          value={formData.nummer ?? ""}
-          onChange={hanteraÄndradText}
-        />
+        <div>
+          <label className="block text-sm font-medium text-white mb-2">Nummer</label>
+          <input
+            type="text"
+            name="nummer"
+            value={formData.nummer ?? ""}
+            onChange={hanteraÄndradText}
+            autoComplete="off"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+          />
+        </div>
       </div>
     </div>
   );

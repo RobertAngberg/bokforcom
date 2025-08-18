@@ -1,7 +1,28 @@
-interface FotProps {
+//#region Huvud
+"use client";
+
+// Säker text-rendering för att förhindra XSS
+const sanitizeDisplay = (text: string | undefined | null): string => {
+  if (!text) return "—";
+  return String(text)
+    .replace(/[<>&"']/g, (match) => {
+      const escapeMap: { [key: string]: string } = {
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;",
+        '"': "&quot;",
+        "'": "&#x27;",
+      };
+      return escapeMap[match] || match;
+    })
+    .substring(0, 200);
+};
+
+type FotProps = {
   formData: any;
   session: any;
-}
+};
+//#endregion
 
 export default function Fot({ formData, session }: FotProps) {
   return (
@@ -13,15 +34,15 @@ export default function Fot({ formData, session }: FotProps) {
         <p className="font-bold" style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
           Namn
         </p>
-        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>{formData.adress}</p>
+        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>{sanitizeDisplay(formData.adress)}</p>
         <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
-          {formData.postnummer} {formData.stad}
+          {sanitizeDisplay(formData.postnummer)} {sanitizeDisplay(formData.stad)}
         </p>
         <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
-          Org.nr: {formData.organisationsnummer ?? "—"}
+          Org.nr: {sanitizeDisplay(formData.organisationsnummer)}
         </p>
         <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
-          Moms.nr: {formData.momsregistreringsnummer ?? "—"}
+          Moms.nr: {sanitizeDisplay(formData.momsregistreringsnummer)}
         </p>
       </div>
       <div className="text-right space-y-1">
@@ -29,12 +50,18 @@ export default function Fot({ formData, session }: FotProps) {
           Kontaktuppgifter
         </p>
         {/* Ej rätt????????????? Session */}
-        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>{formData.företagsnamn}</p>
         <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
-          Telefon: {formData.telefonnummer ?? "—"}
+          {sanitizeDisplay(formData.företagsnamn)}
         </p>
-        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>E-post: {formData.epost}</p>
-        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>Webb: {formData.webbplats ?? "—"}</p>
+        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
+          Telefon: {sanitizeDisplay(formData.telefonnummer)}
+        </p>
+        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
+          E-post: {sanitizeDisplay(formData.epost)}
+        </p>
+        <p style={{ lineHeight: 1.22, margin: "0 0 2px 0" }}>
+          Webb: {sanitizeDisplay(formData.webbplats)}
+        </p>
       </div>
     </div>
   );

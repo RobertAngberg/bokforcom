@@ -13,6 +13,29 @@ import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 // Registrera svensk locale för DatePicker
 registerLocale("sv", sv);
 
+// Säker input-sanitization för ROT/RUT
+const sanitizeRotRutInput = (text: string): string => {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 500); // Begränsa längd
+};
+
+// Validera numeriska värden säkert
+const validateRotRutNumeric = (value: string): boolean => {
+  const num = parseFloat(value);
+  return !isNaN(num) && isFinite(num) && num >= 0 && num < 10000000;
+};
+
+// Validera personnummer
+const validatePersonnummer = (personnummer: string): boolean => {
+  if (!personnummer) return false;
+  const clean = personnummer.replace(/[-\s]/g, "");
+  return /^\d{10}$/.test(clean) || /^\d{12}$/.test(clean);
+};
+
 type RotRutFormProps = {
   showCheckbox?: boolean;
   disabled?: boolean;
@@ -72,6 +95,22 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
 
     if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
       finalValue = e.target.checked;
+    } else if (typeof value === "string") {
+      // SÄKERHETSVALIDERING: Sanitera alla textvärden
+      if (name === "rotRutBeskrivning") {
+        finalValue = sanitizeRotRutInput(value);
+      } else if (name === "personnummer") {
+        // Tillåt bara siffror och bindestreck för personnummer
+        finalValue = value.replace(/[^\d-]/g, "").substring(0, 13);
+      } else if (
+        name === "fastighetsbeteckning" ||
+        name === "brfOrganisationsnummer" ||
+        name === "brfLagenhetsnummer"
+      ) {
+        finalValue = sanitizeRotRutInput(value);
+      } else if (typeof value === "string") {
+        finalValue = sanitizeRotRutInput(value);
+      }
     }
 
     if (name === "rotRutAktiverat" && finalValue === false) {
@@ -126,7 +165,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
       const arbetskostnadExMoms = antalTimmar * prisPerTimme;
 
       // Beräkna avdragBelopp om procentsats finns
-      let avdragBelopp = undefined;
+      let avdragBelopp: number | undefined = undefined;
       if (formData.avdragProcent !== undefined) {
         // Hämta momssats från nyArtikel eller använd 25% som standard
         let moms = 25;
@@ -264,19 +303,14 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
 
             {/* ROT/RUT-beskrivning - tar hela bredden */}
             <div className="md:col-span-2">
-              <label className="block text-white font-semibold mb-1">
-                Beskrivning av {formData.rotRutTyp}-tjänst *
-              </label>
-              <textarea
+              <TextFalt
+                label={`Beskrivning av ${formData.rotRutTyp}-tjänst *`}
                 name="rotRutBeskrivning"
                 value={formData.rotRutBeskrivning ?? ""}
                 onChange={handleChange}
                 placeholder="Beskriv de avdraggivna tjänsterna..."
                 disabled={disabled}
-                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white h-20 resize-none ${
-                  disabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                required
+                className={`${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               />
               <p className="text-xs text-gray-400 mt-1">
                 Ex: "Målning av sovrum och vardagsrum", "Städning av hela bostaden"

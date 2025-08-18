@@ -185,7 +185,7 @@ export async function hamtaSenasteTransaktioner(ar: number = 2025, limit: number
 // Säker input-sanitization för bokslutsjusteringar
 function sanitizeBokslutInput(text: string): string {
   if (!text || typeof text !== "string") return "";
-  
+
   return text
     .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
     .replace(/\s+/g, " ") // Normalisera whitespace
@@ -203,10 +203,8 @@ function validateDateInput(dateString: string): boolean {
   const date = new Date(dateString);
   const currentYear = new Date().getFullYear();
   const inputYear = date.getFullYear();
-  
-  return !isNaN(date.getTime()) && 
-         inputYear >= 2020 && 
-         inputYear <= currentYear + 1;
+
+  return !isNaN(date.getTime()) && inputYear >= 2020 && inputYear <= currentYear + 1;
 }
 
 // Skapa bokslutsjustering som vanlig transaktion
@@ -221,30 +219,30 @@ export async function skapaBokslutsjustering(data: {
   kommentar?: string;
 }) {
   const userId = await requireAuth();
-  
+
   // Säkerhetsvalidering av all input
   const beskrivning = sanitizeBokslutInput(data.beskrivning);
   const kommentar = sanitizeBokslutInput(data.kommentar || "");
-  
+
   if (!beskrivning || beskrivning.length < 2) {
     throw new Error("Ogiltig beskrivning för bokslutsjustering");
   }
-  
+
   if (!validateDateInput(data.datum)) {
     throw new Error("Ogiltigt datum för bokslutsjustering");
   }
-  
+
   // Validera alla poster
   for (const post of data.poster) {
     if (!validateNumericInput(post.debet) || !validateNumericInput(post.kredit)) {
       throw new Error("Ogiltiga belopp i bokslutsjusteringar");
     }
-    
+
     if (!/^\d{4}$/.test(post.kontonummer)) {
       throw new Error("Ogiltigt kontonummer i bokslutsjustering");
     }
   }
-  
+
   const client = await pool.connect();
 
   try {
@@ -462,9 +460,9 @@ export async function uppdateraChecklistepunkt(id: string, klar: boolean) {
       [klar, checklistId, userId]
     );
 
-    return { 
+    return {
       success: (result.rowCount ?? 0) > 0,
-      message: (result.rowCount ?? 0) > 0 ? "Checklista uppdaterad" : "Ingen post hittades"
+      message: (result.rowCount ?? 0) > 0 ? "Checklista uppdaterad" : "Ingen post hittades",
     };
   } catch (error) {
     console.error("Säkerhetsfel vid uppdatering av checklista:", error);
@@ -479,24 +477,24 @@ function validatePeriod(period: string): boolean {
   // Endast år-format accepteras (YYYY)
   const yearPattern = /^\d{4}$/;
   if (!yearPattern.test(period)) return false;
-  
+
   const year = parseInt(period);
   const currentYear = new Date().getFullYear();
-  
+
   return year >= 2020 && year <= currentYear + 1;
 }
 
 // Generera årsredovisning (PDF)
 export async function genereraArsredovisning(period: string) {
   const userId = await requireAuth();
-  
+
   // Säkerhetsvalidering av period
   if (!validatePeriod(period)) {
     throw new Error("Ogiltig period för årsredovisning");
   }
 
   const client = await pool.connect();
-  
+
   try {
     // Kontrollera att användaren har tillräckliga rättigheter
     const hasData = await client.query(
@@ -504,7 +502,7 @@ export async function genereraArsredovisning(period: string) {
        WHERE "userId" = $1 AND EXTRACT(YEAR FROM transaktionsdatum) = $2`,
       [userId, parseInt(period)]
     );
-    
+
     if (parseInt(hasData.rows[0].count) === 0) {
       throw new Error("Inga transaktioner hittades för vald period");
     }
@@ -514,10 +512,10 @@ export async function genereraArsredovisning(period: string) {
     // 2. Beräkna resultat- och balansräkning
     // 3. Generera PDF med årsredovisning
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       filnamn: `arsredovisning_${period}.pdf`,
-      period: period 
+      period: period,
     };
   } finally {
     client.release();
@@ -527,41 +525,41 @@ export async function genereraArsredovisning(period: string) {
 // Stäng period
 export async function stangPeriod(period: string) {
   const userId = await requireAuth();
-  
+
   // Säkerhetsvalidering av period
   if (!validatePeriod(period)) {
     throw new Error("Ogiltig period för stängning");
   }
 
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
+
     // Kontrollera att alla obligatoriska moment är klara
     const checkResult = await client.query(
       `SELECT COUNT(*) as incomplete FROM bokslutschecklista 
        WHERE user_id = $1 AND period = $2 AND klar = false AND obligatorisk = true`,
       [userId, period]
     );
-    
+
     const incompleteCount = parseInt(checkResult.rows[0]?.incomplete ?? "0");
     if (incompleteCount > 0) {
       throw new Error("Alla obligatoriska bokslutspunkter måste vara klara först");
     }
-    
+
     // Parametriserad uppdatering av period status
     const result = await client.query(
       `UPDATE periods SET status = 'stängd', stängd_datum = NOW() 
        WHERE period = $1 AND user_id = $2 AND status != 'stängd'`,
       [period, userId]
     );
-    
+
     await client.query("COMMIT");
-    
-    return { 
+
+    return {
       success: (result.rowCount ?? 0) > 0,
-      message: "Period stängd säkert"
+      message: "Period stängd säkert",
     };
   } catch (error) {
     await client.query("ROLLBACK");
@@ -575,50 +573,47 @@ export async function stangPeriod(period: string) {
 // Öppna period igen (endast för admin/under vissa förutsättningar)
 export async function oppnaPeriod(period: string) {
   const userId = await requireAuth();
-  
+
   // Säkerhetsvalidering av period
   if (!validatePeriod(period)) {
     throw new Error("Ogiltig period för öppning");
   }
 
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
+
     // Extra säkerhetskontroll - endast vissa användare eller conditions
-    const userCheck = await client.query(
-      `SELECT role FROM users WHERE id = $1`,
-      [userId]
-    );
-    
+    const userCheck = await client.query(`SELECT role FROM users WHERE id = $1`, [userId]);
+
     const userRole = userCheck.rows[0]?.role;
-    if (userRole !== 'admin' && userRole !== 'accountant') {
+    if (userRole !== "admin" && userRole !== "accountant") {
       throw new Error("Otillräckliga rättigheter för att öppna period");
     }
-    
+
     // Kontrollera att perioden verkligen är stängd
     const periodCheck = await client.query(
       `SELECT status FROM periods WHERE period = $1 AND user_id = $2`,
       [period, userId]
     );
-    
-    if (periodCheck.rows[0]?.status !== 'stängd') {
+
+    if (periodCheck.rows[0]?.status !== "stängd") {
       throw new Error("Period är inte stängd eller existerar inte");
     }
-    
+
     // Säker återöppning med parametriserad query
     const result = await client.query(
       `UPDATE periods SET status = 'öppen', öppnad_igen_datum = NOW() 
        WHERE period = $1 AND user_id = $2 AND status = 'stängd'`,
       [period, userId]
     );
-    
+
     await client.query("COMMIT");
-    
-    return { 
+
+    return {
       success: (result.rowCount ?? 0) > 0,
-      message: "Period öppnad igen säkert"
+      message: "Period öppnad igen säkert",
     };
   } catch (error) {
     await client.query("ROLLBACK");

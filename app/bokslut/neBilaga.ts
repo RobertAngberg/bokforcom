@@ -68,12 +68,12 @@ function validateYear(year: number): boolean {
 
 export async function genereraNEBilaga(ar: number = 2025) {
   const userId = await requireAuth();
-  
+
   // Säkerhetsvalidering av årtal
   if (!validateYear(ar)) {
     throw new Error("Ogiltigt årtal för NE-bilaga");
   }
-  
+
   const client = await pool.connect();
 
   try {

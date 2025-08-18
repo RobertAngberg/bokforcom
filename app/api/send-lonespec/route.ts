@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { emailRateLimit, createRateLimitIdentifier } from "../../_utils/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -20,6 +21,27 @@ function sanitizeText(text: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // SÄKERHETSVALIDERING: Rate limiting för lönespec-email
+    const identifier = createRateLimitIdentifier(req);
+    const rateLimitResult = emailRateLimit(identifier);
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "För många email-försök. Du kan skicka max 10 emails per timme.",
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": "10",
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
+    }
+
     // Kontrollera API-nyckel först
     if (!process.env.RESEND_API_KEY) {
       console.error("No Resend API key configured");

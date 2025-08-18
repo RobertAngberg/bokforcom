@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import EmailTemplate from "./EmailTemplate";
+import { emailRateLimit, createRateLimitIdentifier } from "../../_utils/rateLimit";
 
 const DEV_EMAIL = "info@xn--bokfr-mua.com";
 
@@ -30,6 +31,27 @@ function sanitizeFilename(filename: string): string {
 
 export async function POST(request: Request) {
   try {
+    // SÄKERHETSVALIDERING: Rate limiting för email-skickning
+    const identifier = createRateLimitIdentifier(request);
+    const rateLimitResult = emailRateLimit(identifier);
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "För många email-försök. Du kan skicka max 10 emails per timme.",
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": "10",
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
+    }
+
     if (!process.env.RESEND_API_KEY) {
       console.error("RESEND_API_KEY is missing");
       return NextResponse.json({ error: "Email service not configured" }, { status: 500 });

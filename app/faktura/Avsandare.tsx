@@ -58,31 +58,62 @@ export default function Avsandare() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Skapa canvas för komprimering
+    // SÄKERHETSVALIDERING: Kontrollera filtyp
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("❌ Endast bildformat tillåtna (JPEG, PNG, GIF, WebP)");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // SÄKERHETSVALIDERING: Kontrollera filstorlek (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert("❌ Filen är för stor. Max 5MB tillåtet.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // SÄKERHETSVALIDERING: Kontrollera filnamn
+    const filename = file.name;
+    if (!/^[a-zA-Z0-9._-]+\.(jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+      alert("❌ Ogiltigt filnamn. Använd bara bokstäver, siffror och punkt.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Skapa canvas för säker bildbehandling
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
 
     img.onload = () => {
-      // Sätt max storlek
+      // Sätt säkra max-gränser
       const maxWidth = 400;
       const maxHeight = 400;
       let { width, height } = img;
 
-      // Beräkna ny storlek
+      // Validera bildstorlek
+      if (width > 5000 || height > 5000) {
+        alert("❌ Bilden är för stor. Max 5000x5000 pixlar.");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      // Beräkna säker ny storlek
       if (width > height) {
         if (width > maxWidth) {
-          height = (height * maxWidth) / width;
+          height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
       } else {
         if (height > maxHeight) {
-          width = (width * maxHeight) / height;
+          width = Math.round((width * maxHeight) / height);
           height = maxHeight;
         }
       }
 
-      // Rita komprimerad bild
+      // Rita säkert komprimerad bild
       canvas.width = width;
       canvas.height = height;
       ctx?.drawImage(img, 0, 0, width, height);

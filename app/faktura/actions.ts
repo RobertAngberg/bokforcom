@@ -1,13 +1,64 @@
 //#region
 "use server";
 
-import { auth } from "@/auth";
+import { auth } from "../../auth";
 import { Pool } from "pg";
+import { withFormRateLimit, withEmailRateLimit } from "../_utils/actionRateLimit";
 // import { Resend } from "resend";
 // TA BORT DENNA RAD:
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Säker input-sanitization för faktura-modulen
+function sanitizeFakturaInput(text: string): string {
+  if (!text || typeof text !== "string") return "";
+
+  return text
+    .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 1000); // Begränsa längd för fakturatext
+}
+
+// Validera numeriska värden för fakturor
+function validateNumericFakturaInput(value: number): boolean {
+  return !isNaN(value) && isFinite(value) && value >= 0 && value < 100000000;
+}
+
+// Säker email-validering för fakturor
+function validateEmailInput(email: string): boolean {
+  if (!email || typeof email !== "string") return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+// Validera organisationsnummer
+function validateOrganisationsnummer(orgNr: string): boolean {
+  if (!orgNr || typeof orgNr !== "string") return true; // Frivilligt fält
+  const cleanOrgNr = orgNr.replace(/[-\s]/g, "");
+  return /^\d{10}$/.test(cleanOrgNr);
+}
+
+// Säker JSON-parsing med validering
+function safeParseFakturaJSON(jsonString: string): any[] {
+  try {
+    if (!jsonString || typeof jsonString !== "string") return [];
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) return [];
+
+    // Validera varje artikel i arrayen
+    return parsed.filter(
+      (artikel) =>
+        artikel &&
+        typeof artikel === "object" &&
+        typeof artikel.beskrivning === "string" &&
+        artikel.beskrivning.length <= 500
+    );
+  } catch {
+    return [];
+  }
+}
 
 export type Artikel = {
   id?: number;
@@ -34,20 +85,78 @@ export type Artikel = {
 };
 //#endregion
 
-export async function saveInvoice(formData: FormData) {
+// Intern funktion utan rate limiting (för wrappers)
+async function saveInvoiceInternal(formData: FormData) {
   const session = await auth();
-  if (!session?.user?.id) return { success: false };
+  if (!session?.user?.id) {
+    throw new Error("Ingen giltig session - måste vara inloggad");
+  }
   const userId = parseInt(session.user.id);
+  if (isNaN(userId)) {
+    throw new Error("Ogiltigt användar-ID i session");
+  }
 
-  // VALIDERING: Kolla att kund är vald
-  const kundId = formData.get("kundId")?.toString();
-  if (!kundId || kundId.trim() === "") {
+  // SÄKERHETSVALIDERING: Kolla att kund är vald och säker
+  const kundIdRaw = formData.get("kundId")?.toString();
+  if (!kundIdRaw || kundIdRaw.trim() === "") {
     return { success: false, error: "Kund måste väljas" };
   }
 
-  // VALIDERING: Kolla att det finns artiklar
+  const kundId = parseInt(kundIdRaw);
+  if (isNaN(kundId) || kundId <= 0) {
+    return { success: false, error: "Ogiltigt kund-ID" };
+  }
+
+  // SÄKERHETSVALIDERING: Säker parsing av artiklar
   const artiklarRaw = formData.get("artiklar") as string;
-  const artiklar = JSON.parse(artiklarRaw || "[]") as Artikel[];
+  const artiklar = safeParseFakturaJSON(artiklarRaw);
+  if (artiklar.length === 0) {
+    return { success: false, error: "Minst en artikel krävs" };
+  }
+
+  // SÄKERHETSVALIDERING: Validera alla artiklar
+  for (const artikel of artiklar) {
+    if (!artikel.beskrivning || sanitizeFakturaInput(artikel.beskrivning).length < 2) {
+      return { success: false, error: "Alla artiklar måste ha en giltig beskrivning" };
+    }
+
+    if (!validateNumericFakturaInput(artikel.antal) || artikel.antal <= 0) {
+      return { success: false, error: "Ogiltigt antal i artikel" };
+    }
+
+    if (!validateNumericFakturaInput(artikel.prisPerEnhet) || artikel.prisPerEnhet < 0) {
+      return { success: false, error: "Ogiltigt pris i artikel" };
+    }
+
+    if (!validateNumericFakturaInput(artikel.moms) || artikel.moms < 0 || artikel.moms > 100) {
+      return { success: false, error: "Ogiltig moms i artikel" };
+    }
+  }
+
+  // SÄKERHETSVALIDERING: Validera fakturauppgifter
+  const fakturaNummerRaw = formData.get("fakturanummer")?.toString();
+  const fakturanummer = sanitizeFakturaInput(fakturaNummerRaw || "");
+  if (!fakturanummer || fakturanummer.length < 1) {
+    return { success: false, error: "Fakturanummer krävs" };
+  }
+
+  // SÄKERHETSVALIDERING: Validera kunduppgifter
+  const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+  const kundEmail = formData.get("kundemail")?.toString() || "";
+
+  if (!kundnamn || kundnamn.length < 2) {
+    return { success: false, error: "Giltigt kundnamn krävs" };
+  }
+
+  if (kundEmail && !validateEmailInput(kundEmail)) {
+    return { success: false, error: "Ogiltig email-adress" };
+  }
+
+  // SÄKERHETSVALIDERING: Validera organisationsnummer om angivet
+  const orgNummer = formData.get("kundorganisationsnummer")?.toString() || "";
+  if (orgNummer && !validateOrganisationsnummer(orgNummer)) {
+    return { success: false, error: "Ogiltigt organisationsnummer" };
+  }
   if (artiklar.length === 0) {
     return { success: false, error: "Fakturan måste ha minst en artikel" };
   }
@@ -366,7 +475,7 @@ export async function hämtaSparadeFakturor() {
         const harROT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "ROT");
         const harRUT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "RUT");
 
-        let rotRutTyp = null;
+        let rotRutTyp: string | null = null;
         if (harROT && harRUT) {
           rotRutTyp = "ROT+RUT";
         } else if (harROT) {
@@ -445,11 +554,44 @@ export async function getAllInvoices() {
 
 export async function sparaNyKund(formData: FormData) {
   const session = await auth();
-  if (!session?.user?.id) return { success: false };
+  if (!session?.user?.id) {
+    throw new Error("Ingen giltig session - måste vara inloggad");
+  }
   const userId = parseInt(session.user.id, 10);
+  if (isNaN(userId)) {
+    throw new Error("Ogiltigt användar-ID i session");
+  }
+
+  // SÄKERHETSVALIDERING: Sanitera och validera all kundinformation
+  const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+  const kundEmail = formData.get("kundemail")?.toString() || "";
+  const orgNummer = formData.get("kundorgnummer")?.toString() || "";
+  const personnummer = formData.get("personnummer")?.toString() || "";
+
+  // Validera obligatoriska fält
+  if (!kundnamn || kundnamn.length < 2) {
+    return { success: false, error: "Kundnamn krävs (minst 2 tecken)" };
+  }
+
+  // Validera email om angivet
+  if (kundEmail && !validateEmailInput(kundEmail)) {
+    return { success: false, error: "Ogiltig email-adress" };
+  }
+
+  // Validera organisationsnummer om angivet
+  if (orgNummer && !validateOrganisationsnummer(orgNummer)) {
+    return { success: false, error: "Ogiltigt organisationsnummer" };
+  }
+
+  // Validera personnummer om angivet (grundläggande format)
+  if (personnummer && !/^\d{6}-?\d{4}$/.test(personnummer.replace(/\s/g, ""))) {
+    return { success: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
+  }
+
   const client = await pool.connect();
 
   try {
+    // Säker parametriserad query med saniterade värden
     const res = await client.query(
       `INSERT INTO kunder (
         "userId", kundnamn, kundorgnummer, kundnummer,
@@ -458,21 +600,21 @@ export async function sparaNyKund(formData: FormData) {
       RETURNING id`,
       [
         userId,
-        formData.get("kundnamn"),
-        formData.get("kundorgnummer"),
-        formData.get("kundnummer"),
-        formData.get("kundmomsnummer"),
-        formData.get("kundadress1"),
-        formData.get("kundpostnummer"),
-        formData.get("kundstad"),
-        formData.get("kundemail"),
-        formData.get("personnummer"),
+        kundnamn,
+        sanitizeFakturaInput(orgNummer),
+        sanitizeFakturaInput(formData.get("kundnummer")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundmomsnummer")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundadress1")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
+        kundEmail,
+        sanitizeFakturaInput(personnummer),
       ]
     );
     return { success: true, id: res.rows[0].id };
   } catch (err) {
-    console.error("❌ Kunde inte spara kund:", err);
-    return { success: false };
+    console.error("❌ Säkerhetsfel vid sparande av kund:", err);
+    return { success: false, error: "Kunde inte spara kund säkert" };
   } finally {
     client.release();
   }
@@ -483,8 +625,49 @@ export async function uppdateraKund(id: number, formData: FormData) {
   if (!session?.user?.id) return { success: false };
   const userId = parseInt(session.user.id, 10);
 
+  // SÄKERHETSVALIDERING: Validera kund-ID
+  if (isNaN(id) || id <= 0) {
+    return { success: false, error: "Ogiltigt kund-ID" };
+  }
+
+  // SÄKERHETSVALIDERING: Sanitera alla input-värden
+  const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+  const kundEmail = formData.get("kundemail")?.toString() || "";
+  const orgNummer = formData.get("kundorgnummer")?.toString() || "";
+  const personnummer = formData.get("personnummer")?.toString() || "";
+
+  // Validera obligatoriska fält
+  if (!kundnamn || kundnamn.length < 2) {
+    return { success: false, error: "Kundnamn krävs (minst 2 tecken)" };
+  }
+
+  // Validera email om angivet
+  if (kundEmail && !validateEmailInput(kundEmail)) {
+    return { success: false, error: "Ogiltig email-adress" };
+  }
+
+  // Validera organisationsnummer om angivet
+  if (orgNummer && !validateOrganisationsnummer(orgNummer)) {
+    return { success: false, error: "Ogiltigt organisationsnummer" };
+  }
+
+  // Validera personnummer om angivet
+  if (personnummer && !/^\d{6}-?\d{4}$/.test(personnummer.replace(/\s/g, ""))) {
+    return { success: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
+  }
+
   const client = await pool.connect();
   try {
+    // SÄKERHETSVALIDERING: Verifiera att kunden tillhör denna användare
+    const verifyRes = await client.query(`SELECT id FROM kunder WHERE id = $1 AND "userId" = $2`, [
+      id,
+      userId,
+    ]);
+
+    if (verifyRes.rows.length === 0) {
+      return { success: false, error: "Kunden finns inte eller tillhör inte dig" };
+    }
+
     await client.query(
       `
       UPDATE kunder SET
@@ -500,15 +683,15 @@ export async function uppdateraKund(id: number, formData: FormData) {
       WHERE id = $10 AND "userId" = $11
       `,
       [
-        formData.get("kundnamn"),
-        formData.get("kundnummer"),
-        formData.get("kundorgnummer"),
-        formData.get("kundmomsnummer"),
-        formData.get("kundadress1"),
-        formData.get("kundpostnummer"),
-        formData.get("kundstad"),
-        formData.get("kundemail"),
-        formData.get("personnummer"),
+        kundnamn,
+        sanitizeFakturaInput(formData.get("kundnummer")?.toString() || ""),
+        sanitizeFakturaInput(orgNummer),
+        sanitizeFakturaInput(formData.get("kundmomsnummer")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundadress1")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
+        sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
+        kundEmail,
+        sanitizeFakturaInput(personnummer),
         id,
         userId,
       ]
@@ -516,8 +699,8 @@ export async function uppdateraKund(id: number, formData: FormData) {
 
     return { success: true };
   } catch (err) {
-    console.error("❌ uppdateraKund error:", err);
-    return { success: false };
+    console.error("❌ Säkerhetsfel vid uppdatering av kund:", err);
+    return { success: false, error: "Kunde inte uppdatera kund säkert" };
   } finally {
     client.release();
   }
@@ -1566,22 +1749,36 @@ export async function saveLeverantör(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return { success: false };
   const userId = parseInt(session.user.id);
+
+  // SÄKERHETSVALIDERING: Sanitera och validera all input
+  const namn = sanitizeFakturaInput(formData.get("namn")?.toString() || "");
+  const organisationsnummer = sanitizeFakturaInput(
+    formData.get("organisationsnummer")?.toString() || formData.get("vatnummer")?.toString() || ""
+  );
+  const adress = sanitizeFakturaInput(formData.get("adress")?.toString() || "");
+  const postnummer = sanitizeFakturaInput(formData.get("postnummer")?.toString() || "");
+  const ort = sanitizeFakturaInput(formData.get("ort")?.toString() || "");
+  const telefon = sanitizeFakturaInput(formData.get("telefon")?.toString() || "");
+  const email = formData.get("email")?.toString() || "";
+
+  // Validera obligatoriska fält
+  if (!namn || namn.length < 2) {
+    return { success: false, error: "Leverantörsnamn krävs (minst 2 tecken)" };
+  }
+
+  // Validera email om angivet
+  if (email && !validateEmailInput(email)) {
+    return { success: false, error: "Ogiltig email-adress" };
+  }
+
+  // Validera organisationsnummer om angivet
+  if (organisationsnummer && !validateOrganisationsnummer(organisationsnummer)) {
+    return { success: false, error: "Ogiltigt organisationsnummer" };
+  }
+
   const client = await pool.connect();
 
   try {
-    const namn = formData.get("namn")?.toString();
-    const organisationsnummer =
-      formData.get("organisationsnummer")?.toString() || formData.get("vatnummer")?.toString();
-    const adress = formData.get("adress")?.toString();
-    const postnummer = formData.get("postnummer")?.toString();
-    const ort = formData.get("ort")?.toString();
-    const telefon = formData.get("telefon")?.toString();
-    const email = formData.get("email")?.toString();
-
-    if (!namn) {
-      return { success: false, error: "Namn är obligatoriskt" };
-    }
-
     const result = await client.query(
       `INSERT INTO "leverantörer" (
         "userId", "namn", "organisationsnummer", "adress", "postnummer", "ort", 
@@ -1593,8 +1790,8 @@ export async function saveLeverantör(formData: FormData) {
 
     return { success: true, leverantör: result.rows[0] };
   } catch (error) {
-    console.error("Fel vid sparande av leverantör:", error);
-    return { success: false, error: "Kunde inte spara leverantör" };
+    console.error("❌ Säkerhetsfel vid sparande av leverantör:", error);
+    return { success: false, error: "Kunde inte spara leverantör säkert" };
   } finally {
     client.release();
   }
@@ -1831,3 +2028,7 @@ export async function deleteLeverantör(id: number) {
     client.release();
   }
 }
+
+// SÄKRA EXPORTS MED RATE LIMITING
+// Skyddar kritiska funktioner från missbruk och spam-attacker
+export const saveInvoice = withFormRateLimit(saveInvoiceInternal);
