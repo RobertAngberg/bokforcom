@@ -107,10 +107,11 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
 
 export async function checkUserSignupStatus() {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session
+    // 🔒 SÄKERHETSVALIDERING - Session (optional för signup)
     const session = await auth();
     if (!session?.user?.email || !session?.user?.id) {
-      return { loggedIn: false };
+      // Returnera att användaren inte är inloggad - det är OK för signup-sidan
+      return { loggedIn: false, hasSignedUp: false };
     }
 
     const userId = session.user.id;
