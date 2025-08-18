@@ -6,6 +6,19 @@ import TextFalt from "../../../_components/TextFalt";
 import Knapp from "../../../_components/Knapp";
 import { sparaAnställd } from "../../actions";
 
+//#region Business Logic - Migrated from actions.ts
+// Säker input-sanitering för HR-data (flyttad från actions.ts)
+function sanitizeHRInput(input: string): string {
+  if (!input || typeof input !== "string") return "";
+
+  return input
+    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 200); // Begränsa längd
+}
+//#endregion
+
 interface PersonalinformationProps {
   anställd?: any;
   personalData?: {
@@ -45,6 +58,7 @@ export default function Personalinformation({
     ort: "",
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState({
     förnamn: "",
     efternamn: "",
@@ -84,8 +98,21 @@ export default function Personalinformation({
   // #region Edit handlers
   const handleEditChange = (e: any) => {
     const { name, value } = e.target;
-    const newData = { ...editData, [name]: value };
+
+    // Sanitera input för säkerhet
+    const sanitizedValue = ["förnamn", "efternamn", "jobbtitel", "mail", "adress", "ort"].includes(
+      name
+    )
+      ? sanitizeHRInput(value)
+      : value;
+
+    const newData = { ...editData, [name]: sanitizedValue };
     setEditData(newData);
+
+    // Rensa felmeddelanden när användaren börjar redigera
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
 
     // Check if there are changes
     const hasChangesNow = JSON.stringify(newData) !== JSON.stringify(originalData);
@@ -130,18 +157,18 @@ export default function Personalinformation({
       );
 
       if (result.success) {
-        alert("Personalinformation uppdaterad!");
         setIsEditing(false);
         setHasChanges(false);
         setOriginalData(editData);
+        setErrorMessage(null);
         // Uppdatera anställd objektet lokalt
         Object.assign(anställd, editData);
       } else {
-        alert("Fel: " + result.error);
+        setErrorMessage(result.error || "Ett fel uppstod vid sparande");
       }
     } catch (error) {
       console.error("Sparfel:", error);
-      alert("Ett fel uppstod vid sparande");
+      setErrorMessage("Ett fel uppstod vid sparande");
     }
   };
 
@@ -149,11 +176,40 @@ export default function Personalinformation({
     setEditData(originalData);
     setIsEditing(false);
     setHasChanges(false);
+    setErrorMessage(null);
   };
   // #endregion
 
   // FORMULÄR-LÄGE (om personalData och handleChange finns)
   if (personalData && handleChange) {
+    // Skapa förbättrad handleChange med sanitering
+    const handleSanitizedChange = (e: any) => {
+      const { name, value } = e.target;
+
+      // Sanitera input för säkerhet
+      const sanitizedValue = [
+        "förnamn",
+        "efternamn",
+        "jobbtitel",
+        "mail",
+        "adress",
+        "ort",
+      ].includes(name)
+        ? sanitizeHRInput(value)
+        : value;
+
+      // Skapa nytt event med saniterat värde
+      const sanitizedEvent = {
+        ...e,
+        target: {
+          ...e.target,
+          value: sanitizedValue,
+        },
+      };
+
+      handleChange(sanitizedEvent);
+    };
+
     return (
       <div className="space-y-4">
         <h2 className="text-2xl text-white">Personalinformation</h2>
@@ -162,14 +218,14 @@ export default function Personalinformation({
             label="Förnamn"
             name="förnamn"
             value={personalData.förnamn || ""}
-            onChange={handleChange}
+            onChange={handleSanitizedChange}
           />
 
           <TextFalt
             label="Efternamn"
             name="efternamn"
             value={personalData.efternamn || ""}
-            onChange={handleChange}
+            onChange={handleSanitizedChange}
           />
 
           <TextFalt
@@ -184,7 +240,7 @@ export default function Personalinformation({
             label="Jobbtitel"
             name="jobbtitel"
             value={personalData.jobbtitel || ""}
-            onChange={handleChange}
+            onChange={handleSanitizedChange}
           />
 
           <TextFalt
@@ -206,14 +262,14 @@ export default function Personalinformation({
             name="mail"
             type="email"
             value={personalData.mail || ""}
-            onChange={handleChange}
+            onChange={handleSanitizedChange}
           />
 
           <TextFalt
             label="Adress"
             name="adress"
             value={personalData.adress || ""}
-            onChange={handleChange}
+            onChange={handleSanitizedChange}
           />
 
           <TextFalt
@@ -223,7 +279,12 @@ export default function Personalinformation({
             onChange={handleChange}
           />
 
-          <TextFalt label="Ort" name="ort" value={personalData.ort || ""} onChange={handleChange} />
+          <TextFalt
+            label="Ort"
+            name="ort"
+            value={personalData.ort || ""}
+            onChange={handleSanitizedChange}
+          />
         </div>
       </div>
     );
@@ -252,6 +313,13 @@ export default function Personalinformation({
             )}
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong className="font-bold">Fel: </strong>
+            <span className="block sm:inline">{errorMessage}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isEditing ? (

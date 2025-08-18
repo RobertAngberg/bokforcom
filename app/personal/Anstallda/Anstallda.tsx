@@ -28,6 +28,7 @@ export default function Anstallda({
   const [anställdaLista, setAnställdaLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAnställdId, setLoadingAnställdId] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   //#endregion
 
   //#region Ladda anställda på mount
@@ -67,14 +68,14 @@ export default function Anstallda({
       try {
         const result = await taBortAnställd(id);
         if (result.success) {
-          alert("Anställd borttagen!");
+          setErrorMessage(null);
           await laddaAnställda();
         } else {
-          alert("Fel: " + result.error);
+          setErrorMessage(result.error || "Ett fel uppstod vid borttagning");
         }
       } catch (error) {
         console.error("Fel vid borttagning:", error);
-        alert("Ett fel uppstod");
+        setErrorMessage("Ett fel uppstod vid borttagning");
       }
     }
   };
@@ -89,6 +90,13 @@ export default function Anstallda({
             <h3 className="text-xl text-white font-semibold">Sparade anställda</h3>
             <Knapp text="Lägg till anställd" onClick={onLäggTillAnställd} />
           </div>
+
+          {errorMessage && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <strong className="font-bold">Fel: </strong>
+              <span className="block sm:inline">{errorMessage}</span>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex justify-center items-center py-8">

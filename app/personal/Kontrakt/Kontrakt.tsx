@@ -4,6 +4,20 @@
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import { sparaAnställd } from "../actions";
+
+//#region Business Logic - Migrated from actions.ts
+// Säker input-sanitering för HR-data (flyttad från actions.ts)
+function sanitizeHRInput(input: string): string {
+  if (!input || typeof input !== "string") return "";
+
+  return input
+    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 200); // Begränsa längd
+}
+//#endregion
+
 import Anställningstyp from "./Anstallningstyp";
 import KontraktPeriod from "./KontraktPeriod";
 import Lön from "./Lon";
@@ -60,6 +74,7 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     tjänsteställeOrt: "",
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<EditData>({
     anställningstyp: "",
     startdatum: new Date(),
@@ -114,6 +129,11 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     const newData = { ...editData, [name]: value };
     setEditData(newData);
     setHasChanges(JSON.stringify(newData) !== JSON.stringify(originalData));
+
+    // Rensa felmeddelanden när användaren börjar redigera
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
   };
 
   const handleSave = async () => {
@@ -144,10 +164,10 @@ export default function Kontrakt({ anställd }: KontraktProps) {
       );
 
       if (result.success) {
-        alert("Kontraktsinformation uppdaterad!");
         setIsEditing(false);
         setHasChanges(false);
         setOriginalData(editData);
+        setErrorMessage(null);
         Object.assign(anställd, {
           anställningstyp: editData.anställningstyp,
           startdatum: editData.startdatum.toISOString().split("T")[0],
@@ -167,10 +187,10 @@ export default function Kontrakt({ anställd }: KontraktProps) {
           tjänsteställe_ort: editData.tjänsteställeOrt,
         });
       } else {
-        alert("Fel: " + result.error);
+        setErrorMessage(result.error || "Ett fel uppstod vid sparande");
       }
     } catch (error) {
-      alert("Ett fel uppstod vid sparande");
+      setErrorMessage("Ett fel uppstod vid sparande");
     }
   };
 
@@ -178,6 +198,7 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     setEditData(originalData);
     setIsEditing(false);
     setHasChanges(false);
+    setErrorMessage(null);
   };
   // #endregion
 
@@ -200,6 +221,13 @@ export default function Kontrakt({ anställd }: KontraktProps) {
           )}
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong className="font-bold">Fel: </strong>
+          <span className="block sm:inline">{errorMessage}</span>
+        </div>
+      )}
 
       {isEditing ? (
         <div className="space-y-8">

@@ -52,6 +52,7 @@ export default function NyAnställd({
   const [växaStöd, setVäxaStöd] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Hantera ändring i personalData
   const handleChange = (e: any) => {
@@ -60,6 +61,11 @@ export default function NyAnställd({
       ...prev,
       [name]: value,
     }));
+
+    // Rensa felmeddelanden när användaren börjar redigera
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
   };
 
   // Spara ny anställd
@@ -85,13 +91,13 @@ export default function NyAnställd({
     try {
       const result = await sparaAnställd(data);
       if (result.success) {
-        alert("Anställd sparad!");
+        setErrorMessage(null);
         if (onSparad) onSparad();
       } else {
-        alert("Fel: " + result.error);
+        setErrorMessage(result.error || "Ett fel uppstod vid sparande");
       }
     } catch (error) {
-      alert("Ett fel uppstod vid sparande");
+      setErrorMessage("Ett fel uppstod vid sparande");
     } finally {
       setLoading(false);
     }
@@ -137,6 +143,13 @@ export default function NyAnställd({
         skattekolumn={skattekolumn}
         setSkattekolumn={setSkattekolumn}
       />
+
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong className="font-bold">Fel: </strong>
+          <span className="block sm:inline">{errorMessage}</span>
+        </div>
+      )}
 
       <div className="flex gap-4 pt-4">
         <Knapp text={loading ? "Sparar..." : "Spara"} onClick={handleSpara} disabled={loading} />
