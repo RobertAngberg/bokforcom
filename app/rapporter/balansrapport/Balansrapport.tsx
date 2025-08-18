@@ -45,6 +45,12 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   //#region State & Variables
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
+  const [exportMessage, setExportMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   //#endregion
 
   //#region Business Logic - Bokio-kompatibel beräkning
@@ -127,141 +133,184 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   //#endregion
 
   //#region Export Functions
-  const handleExportPDF = () => {
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
+  const handleExportPDF = async () => {
+    if (isExportingPDF) return;
 
-    // Header
-    let y = 30;
-    doc.setFontSize(32);
-    doc.text("Balansrapport", 105, y, { align: "center" });
+    setIsExportingPDF(true);
+    setExportMessage(null);
 
-    // Margin bottom under rubrik
-    y += 22;
+    try {
+      // Validera data
+      if (!processedData.tillgangar.length && !processedData.skulderOchEgetKapital.length) {
+        throw new Error("Ingen data att exportera");
+      }
 
-    // Företagsnamn (bold)
-    if (företagsnamn) {
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text(företagsnamn, 14, y);
-      y += 7;
-    }
-
-    // Organisationsnummer (normal)
-    if (organisationsnummer) {
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(organisationsnummer, 14, y);
-      y += 8;
-    }
-
-    // Utskriven datum
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Utskriven: ${new Date().toISOString().slice(0, 10)}`, 14, y);
-
-    y += 18;
-
-    // Dynamiska grupper
-    const grupper = [
-      { titel: "Tillgångar", konton: tillgangar },
-      { titel: "Eget kapital och skulder", konton: skulderOchEgetKapital },
-    ];
-
-    grupper.forEach(({ titel, konton }) => {
-      doc.setFontSize(15);
-      doc.setFont("helvetica", "bold");
-      doc.text(titel, 14, y);
-      y += 8;
-
-      // Tabellrader
-      const rows: any[][] = konton.map((konto) => [
-        konto.kontonummer,
-        konto.beskrivning,
-        formatSEK(konto.utgaendeSaldo),
-      ]);
-
-      // Summeringsrad med colSpan
-      const summa = konton.reduce((sum, k) => sum + (k.utgaendeSaldo ?? 0), 0);
-      rows.push([
-        { content: `Summa ${titel.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
-        { content: formatSEK(summa), styles: { fontStyle: "bold", halign: "left" } },
-      ]);
-
-      autoTable(doc, {
-        startY: y,
-        head: [["Konto", "Beskrivning", "Saldo"]],
-        body: rows,
-        theme: "plain",
-        styles: { fontSize: 12, textColor: "#111", halign: "left" },
-        headStyles: { fontStyle: "bold", textColor: "#111" },
-        margin: { left: 14, right: 14 },
-        columnStyles: {
-          0: { cellWidth: 32 },
-          1: { cellWidth: 110 },
-          2: { cellWidth: 34 },
-        },
-        didDrawPage: (data) => {
-          if (data.cursor) y = data.cursor.y + 8;
-        },
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
 
-      y += 4;
-    });
+      // Header
+      let y = 30;
+      doc.setFontSize(32);
+      doc.text("Balansrapport", 105, y, { align: "center" });
 
-    // Balanskontroll
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 128, 0);
-    doc.text("Balanskontroll", 14, y);
-    if (beraknatResultat !== 0) {
-      y += 7;
-      doc.setFontSize(10);
+      // Margin bottom under rubrik
+      y += 22;
+
+      // Företagsnamn (bold)
+      if (företagsnamn) {
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(företagsnamn, 14, y);
+        y += 7;
+      }
+
+      // Organisationsnummer (normal)
+      if (organisationsnummer) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        doc.text(organisationsnummer, 14, y);
+        y += 8;
+      }
+
+      // Utskriven datum
+      doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(150, 150, 0);
-      doc.text(`Beräknat resultat: ${formatSEK(beraknatResultat)} ingår i eget kapital`, 14, y);
-    }
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
+      doc.text(`Utskriven: ${new Date().toISOString().slice(0, 10)}`, 14, y);
 
-    doc.save("balansrapport.pdf");
+      y += 18;
+
+      // Dynamiska grupper
+      const grupper = [
+        { titel: "Tillgångar", konton: tillgangar },
+        { titel: "Eget kapital och skulder", konton: skulderOchEgetKapital },
+      ];
+
+      grupper.forEach(({ titel, konton }) => {
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.text(titel, 14, y);
+        y += 8;
+
+        // Tabellrader
+        const rows: any[][] = konton.map((konto) => [
+          konto.kontonummer,
+          konto.beskrivning,
+          formatSEK(konto.utgaendeSaldo),
+        ]);
+
+        // Summeringsrad med colSpan
+        const summa = konton.reduce((sum, k) => sum + (k.utgaendeSaldo ?? 0), 0);
+        rows.push([
+          { content: `Summa ${titel.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
+          { content: formatSEK(summa), styles: { fontStyle: "bold", halign: "left" } },
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: [["Konto", "Beskrivning", "Saldo"]],
+          body: rows,
+          theme: "plain",
+          styles: { fontSize: 12, textColor: "#111", halign: "left" },
+          headStyles: { fontStyle: "bold", textColor: "#111" },
+          margin: { left: 14, right: 14 },
+          columnStyles: {
+            0: { cellWidth: 32 },
+            1: { cellWidth: 110 },
+            2: { cellWidth: 34 },
+          },
+          didDrawPage: (data) => {
+            if (data.cursor) y = data.cursor.y + 8;
+          },
+        });
+
+        y += 4;
+      });
+
+      // Balanskontroll
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 128, 0);
+      doc.text("Balanskontroll", 14, y);
+      if (beraknatResultat !== 0) {
+        y += 7;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(150, 150, 0);
+        doc.text(`Beräknat resultat: ${formatSEK(beraknatResultat)} ingår i eget kapital`, 14, y);
+      }
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+
+      doc.save("balansrapport.pdf");
+      setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
+    } catch (error) {
+      console.error("PDF Export error:", error);
+      setExportMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Ett fel uppstod vid PDF-exporten",
+      });
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
-  const handleExportCSV = () => {
-    let csv = `Balansrapport ${year}\n\n`;
-    csv += "Tillgångar\nKonto;Beskrivning;Saldo\n";
-    tillgangar.forEach((konto) => {
-      csv +=
-        [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
-        "\n";
-    });
-    csv += `;Summa tillgångar;${formatSEK(sumTillgangar)}\n\n`;
+  const handleExportCSV = async () => {
+    if (isExportingCSV) return;
 
-    csv += "Eget kapital och skulder\nKonto;Beskrivning;Saldo\n";
-    skulderOchEgetKapital.forEach((konto) => {
-      csv +=
-        [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
-        "\n";
-    });
-    csv += `;Summa eget kapital och skulder;${formatSEK(sumSkulderEK)}\n\n`;
+    setIsExportingCSV(true);
+    setExportMessage(null);
 
-    csv += "Balanskontroll\n";
-    if (beraknatResultat !== 0) {
-      csv += `Beräknat resultat;${formatSEK(beraknatResultat)}\n`;
+    try {
+      // Validera data
+      if (!processedData.tillgangar.length && !processedData.skulderOchEgetKapital.length) {
+        throw new Error("Ingen data att exportera");
+      }
+
+      let csv = `Balansrapport ${year}\n\n`;
+      csv += "Tillgångar\nKonto;Beskrivning;Saldo\n";
+      tillgangar.forEach((konto) => {
+        csv +=
+          [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
+          "\n";
+      });
+      csv += `;Summa tillgångar;${formatSEK(sumTillgangar)}\n\n`;
+
+      csv += "Eget kapital och skulder\nKonto;Beskrivning;Saldo\n";
+      skulderOchEgetKapital.forEach((konto) => {
+        csv +=
+          [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
+          "\n";
+      });
+      csv += `;Summa eget kapital och skulder;${formatSEK(sumSkulderEK)}\n\n`;
+
+      csv += "Balanskontroll\n";
+      if (beraknatResultat !== 0) {
+        csv += `Beräknat resultat;${formatSEK(beraknatResultat)}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "balansrapport.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
+    } catch (error) {
+      console.error("CSV Export error:", error);
+      setExportMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Ett fel uppstod vid CSV-exporten",
+      });
+    } finally {
+      setIsExportingCSV(false);
     }
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "balansrapport.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
   //#region Render Functions - Snygg AnimeradFlik layout
   // ENKEL render funktion med din Tabell komponent + Bokio-stil summering + transaktioner!
@@ -545,9 +594,32 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
         <VerifikatModal transaktionsId={verifikatId} onClose={() => setVerifikatId(null)} />
       )}
 
+      {exportMessage && (
+        <div
+          className={`mb-4 p-3 rounded ${
+            exportMessage.type === "success"
+              ? "bg-green-100 border border-green-400 text-green-700"
+              : "bg-red-100 border border-red-400 text-red-700"
+          }`}
+        >
+          <strong className="font-bold">
+            {exportMessage.type === "success" ? "Klar!" : "Fel:"}
+          </strong>
+          <span className="block sm:inline"> {exportMessage.text}</span>
+        </div>
+      )}
+
       <div className="flex mt-8 gap-4 justify-end">
-        <Knapp text="Ladda ner PDF" onClick={handleExportPDF} />
-        <Knapp text="Ladda ner CSV" onClick={handleExportCSV} />
+        <Knapp
+          text={isExportingPDF ? "Skapar PDF..." : "Ladda ner PDF"}
+          onClick={handleExportPDF}
+          disabled={isExportingPDF || isExportingCSV}
+        />
+        <Knapp
+          text={isExportingCSV ? "Skapar CSV..." : "Ladda ner CSV"}
+          onClick={handleExportCSV}
+          disabled={isExportingPDF || isExportingCSV}
+        />
       </div>
     </MainLayout>
   );

@@ -23,6 +23,8 @@ export default function Momsrapport({ initialData, organisationsnummer, företag
   const [år, setÅr] = useState("2025");
   const [kvartal, setKvartal] = useState("Hela året");
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string>("");
   //#endregion
 
   //#region Constants
@@ -107,17 +109,62 @@ export default function Momsrapport({ initialData, organisationsnummer, företag
     return xml;
   };
 
-  const exportXML = () => {
-    const xmlContent = generateXML();
-    const blob = new Blob([xmlContent], { type: "application/xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `momsdeklaration_${år}_${kvartal}.xml`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const exportXML = async () => {
+    setIsExporting(true);
+    setExportMessage("");
+
+    try {
+      // Validera år och kvartal
+      const currentYear = new Date().getFullYear();
+      const selectedYear = parseInt(år);
+
+      if (!år || selectedYear < 2020 || selectedYear > currentYear + 1) {
+        throw new Error("Vänligen välj ett giltigt år mellan 2020 och nästa år");
+      }
+
+      if (!kvartal) {
+        throw new Error("Vänligen välj ett kvartal");
+      }
+
+      // Validera organisationsnummer
+      if (!organisationsnummer || organisationsnummer.length < 10) {
+        throw new Error("Giltigt organisationsnummer krävs för XML-export");
+      }
+
+      // Validera att det finns data att exportera
+      const hasData = initialData.some((rad) => rad.belopp !== 0);
+      if (!hasData) {
+        throw new Error("Ingen momsdata att exportera för vald period");
+      }
+
+      // Generera och exportera XML
+      const xmlContent = generateXML();
+
+      if (!xmlContent || xmlContent.length < 200) {
+        throw new Error("Fel vid generering av XML-fil");
+      }
+
+      const blob = new Blob([xmlContent], { type: "application/xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `momsdeklaration_${år}_${kvartal}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExportMessage("XML-fil exporterad framgångsrikt!");
+      setTimeout(() => setExportMessage(""), 3000);
+    } catch (error) {
+      console.error("Export error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Ett oväntat fel uppstod vid export";
+      setExportMessage(`Fel: ${errorMessage}`);
+      setTimeout(() => setExportMessage(""), 5000);
+    } finally {
+      setIsExporting(false);
+    }
   };
   //#endregion
 
@@ -245,19 +292,43 @@ export default function Momsrapport({ initialData, organisationsnummer, företag
 
         <button
           onClick={exportXML}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          disabled={isExporting}
+          className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
+            isExporting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          Exportera XML
+          {isExporting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Exporterar...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Exportera XML
+            </>
+          )}
         </button>
       </div>
+
+      {exportMessage && (
+        <div
+          className={`text-center mb-4 p-3 rounded-lg ${
+            exportMessage.startsWith("Fel:")
+              ? "bg-red-100 text-red-700 border border-red-300"
+              : "bg-green-100 text-green-700 border border-green-300"
+          }`}
+        >
+          {exportMessage}
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row gap-6 mb-10">
         {spawnaBlock("A. Momspliktig försäljning eller uttag exkl. moms", ["05", "06", "07", "08"])}

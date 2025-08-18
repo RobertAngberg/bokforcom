@@ -53,6 +53,9 @@ export default function Resultatrapport({ initialData }: Props) {
   const years = data.ar.slice(0, 2);
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string>("");
   //#endregion
 
   //#region Helper Functions
@@ -247,203 +250,275 @@ export default function Resultatrapport({ initialData }: Props) {
   //#endregion
 
   //#region Exportfunktioner
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true);
+    setExportMessage("");
 
-    // Header - förenklat utan session för nu
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Resultatrapport", 14, 20);
+    try {
+      // Validera data
+      if (!data || !data.ar || data.ar.length === 0) {
+        throw new Error("Ingen rapportdata att exportera");
+      }
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
+      if (!years || years.length === 0) {
+        throw new Error("Inga år valda för rapporten");
+      }
 
-    // Placeholder företagsinformation
-    doc.text("ANGBERG, ROBERT", 14, 30);
-    doc.text("8306186910", 14, 36);
+      // Kontrollera att det finns faktisk data att exportera
+      const hasData =
+        data.intakter?.some((gruppe) => gruppe.konton.length > 0) ||
+        data.rorelsensKostnader?.some((gruppe) => gruppe.konton.length > 0);
 
-    // Datum och period information
-    const currentDate = new Date().toLocaleDateString("sv-SE");
-    const currentYear = years[0];
+      if (!hasData) {
+        throw new Error("Ingen transaktionsdata att exportera för valt år");
+      }
 
-    doc.text(`Räkenskapsår: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 46);
-    doc.text(`Utskriven: ${currentDate}`, pageWidth - 60, 46);
-    doc.text(`Period: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 52);
-    doc.text(`Senaste ver. nr.: V116`, pageWidth - 60, 52);
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-    let y = 70;
-
-    // Rörelsens intäkter - sektion
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Rörelsens intäkter", 14, y);
-    y += 10;
-
-    // Nettoomsättning underrubrik
-    doc.setFontSize(11);
-    doc.text("Nettoomsättning", 20, y);
-    y += 8;
-
-    // Intäktskonton med belopp högerställt
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-
-    let nettoomsattningTotal = 0;
-    data.intakter.forEach((grupp) => {
-      grupp.konton.forEach((konto) => {
-        const belopp = (konto[years[0]] as number) || 0;
-        nettoomsattningTotal += belopp;
-        doc.text(`${konto.kontonummer} ${konto.beskrivning}`, 26, y);
-        doc.text(formatSEKforPDF(belopp), pageWidth - 40, y, { align: "right" });
-        y += 6;
-      });
-    });
-
-    // Nettoomsättning summa
-    y += 3;
-    doc.setFont("helvetica", "normal");
-    doc.text(formatSEKforPDF(nettoomsattningTotal), pageWidth - 40, y, { align: "right" });
-    y += 8;
-
-    // Summa rörelsens intäkter
-    doc.setFont("helvetica", "bold");
-    doc.text("Summa rörelsens intäkter", 14, y);
-    doc.text(formatSEKforPDF(nettoomsattningTotal), pageWidth - 40, y, { align: "right" });
-    y += 15;
-
-    // Rörelsens kostnader - sektion
-    doc.setFontSize(12);
-    doc.text("Rörelsens kostnader", 14, y);
-    y += 10;
-
-    let totalKostnader = 0;
-
-    // Gruppera kostnader enligt Bokio's struktur
-    data.rorelsensKostnader.forEach((grupp) => {
-      // Kategorinamn som underrubrik
-      doc.setFontSize(11);
+      // Header - förenklat utan session för nu
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(grupp.namn, 20, y);
-      y += 8;
+      doc.text("Resultatrapport", 14, 20);
 
-      // Konton under kategorin
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      let kategoriTotal = 0;
 
-      grupp.konton.forEach((konto) => {
-        const belopp = (konto[years[0]] as number) || 0;
-        kategoriTotal += belopp;
-        totalKostnader += belopp;
+      // Placeholder företagsinformation
+      doc.text("ANGBERG, ROBERT", 14, 30);
+      doc.text("8306186910", 14, 36);
 
-        doc.text(`${konto.kontonummer} ${konto.beskrivning}`, 26, y);
-        doc.text(formatSEKforPDF(belopp), pageWidth - 40, y, { align: "right" });
-        y += 6;
+      // Datum och period information
+      const currentDate = new Date().toLocaleDateString("sv-SE");
+      const currentYear = years[0];
+
+      doc.text(`Räkenskapsår: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 46);
+      doc.text(`Utskriven: ${currentDate}`, pageWidth - 60, 46);
+      doc.text(`Period: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 52);
+      doc.text(`Senaste ver. nr.: V116`, pageWidth - 60, 52);
+
+      let y = 70;
+
+      // Rörelsens intäkter - sektion
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Rörelsens intäkter", 14, y);
+      y += 10;
+
+      // Nettoomsättning underrubrik
+      doc.setFontSize(11);
+      doc.text("Nettoomsättning", 20, y);
+      y += 8;
+
+      // Intäktskonton med belopp högerställt
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      let nettoomsattningTotal = 0;
+      data.intakter.forEach((grupp) => {
+        grupp.konton.forEach((konto) => {
+          const belopp = (konto[years[0]] as number) || 0;
+          nettoomsattningTotal += belopp;
+          doc.text(`${konto.kontonummer} ${konto.beskrivning}`, 26, y);
+          doc.text(formatSEKforPDF(belopp), pageWidth - 40, y, { align: "right" });
+          y += 6;
+        });
       });
 
-      // Kategori summa
+      // Nettoomsättning summa
       y += 3;
       doc.setFont("helvetica", "normal");
-      doc.text(formatSEKforPDF(kategoriTotal), pageWidth - 40, y, { align: "right" });
+      doc.text(formatSEKforPDF(nettoomsattningTotal), pageWidth - 40, y, { align: "right" });
+      y += 8;
+
+      // Summa rörelsens intäkter
+      doc.setFont("helvetica", "bold");
+      doc.text("Summa rörelsens intäkter", 14, y);
+      doc.text(formatSEKforPDF(nettoomsattningTotal), pageWidth - 40, y, { align: "right" });
+      y += 15;
+
+      // Rörelsens kostnader - sektion
+      doc.setFontSize(12);
+      doc.text("Rörelsens kostnader", 14, y);
       y += 10;
-    });
 
-    // Summa rörelsens kostnader
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Summa rörelsens kostnader", 14, y);
-    doc.text(formatSEKforPDF(-totalKostnader), pageWidth - 40, y, { align: "right" });
-    y += 15;
+      let totalKostnader = 0;
 
-    // Rörelsens resultat
-    const rorelsensResultat = nettoomsattningTotal - totalKostnader;
-    doc.setFontSize(12);
-    doc.text("Rörelsens resultat", 14, y);
-    y += 8;
-    doc.setFontSize(11);
-    doc.text("Summa rörelsens resultat", 14, y);
-    doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
-    y += 15;
+      // Gruppera kostnader enligt Bokio's struktur
+      data.rorelsensKostnader.forEach((grupp) => {
+        // Kategorinamn som underrubrik
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(grupp.namn, 20, y);
+        y += 8;
 
-    // Resultat efter finansiella poster
-    doc.setFontSize(12);
-    doc.text("Resultat efter finansiella poster", 14, y);
-    y += 8;
-    doc.setFontSize(11);
-    doc.text("Resultat efter finansiella poster", 14, y);
-    doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
-    y += 15;
+        // Konton under kategorin
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        let kategoriTotal = 0;
 
-    // Beräknat resultat
-    doc.setFontSize(12);
-    doc.text("Beräknat resultat", 14, y);
-    y += 8;
-    doc.setFontSize(11);
-    doc.text("Beräknat resultat", 14, y);
-    doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
+        grupp.konton.forEach((konto) => {
+          const belopp = (konto[years[0]] as number) || 0;
+          kategoriTotal += belopp;
+          totalKostnader += belopp;
 
-    doc.save("resultatrapport.pdf");
+          doc.text(`${konto.kontonummer} ${konto.beskrivning}`, 26, y);
+          doc.text(formatSEKforPDF(belopp), pageWidth - 40, y, { align: "right" });
+          y += 6;
+        });
+
+        // Kategori summa
+        y += 3;
+        doc.setFont("helvetica", "normal");
+        doc.text(formatSEKforPDF(kategoriTotal), pageWidth - 40, y, { align: "right" });
+        y += 10;
+      });
+
+      // Summa rörelsens kostnader
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Summa rörelsens kostnader", 14, y);
+      doc.text(formatSEKforPDF(-totalKostnader), pageWidth - 40, y, { align: "right" });
+      y += 15;
+
+      // Rörelsens resultat
+      const rorelsensResultat = nettoomsattningTotal - totalKostnader;
+      doc.setFontSize(12);
+      doc.text("Rörelsens resultat", 14, y);
+      y += 8;
+      doc.setFontSize(11);
+      doc.text("Summa rörelsens resultat", 14, y);
+      doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
+      y += 15;
+
+      // Resultat efter finansiella poster
+      doc.setFontSize(12);
+      doc.text("Resultat efter finansiella poster", 14, y);
+      y += 8;
+      doc.setFontSize(11);
+      doc.text("Resultat efter finansiella poster", 14, y);
+      doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
+      y += 15;
+
+      // Beräknat resultat
+      doc.setFontSize(12);
+      doc.text("Beräknat resultat", 14, y);
+      y += 8;
+      doc.setFontSize(11);
+      doc.text("Beräknat resultat", 14, y);
+      doc.text(formatSEKforPDF(rorelsensResultat), pageWidth - 40, y, { align: "right" });
+
+      doc.save("resultatrapport.pdf");
+
+      setExportMessage("PDF-rapport exporterad framgångsrikt!");
+      setTimeout(() => setExportMessage(""), 3000);
+    } catch (error) {
+      console.error("PDF export error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Ett oväntat fel uppstod vid PDF-export";
+      setExportMessage(`Fel: ${errorMessage}`);
+      setTimeout(() => setExportMessage(""), 5000);
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
-  const handleExportCSV = () => {
-    let csv = "Rubrik;Konto;Belopp\n";
-    // Intäkter
-    data.intakter.forEach((grupp) => {
-      grupp.konton.forEach((konto) => {
-        csv += `Rörelsens intäkter;${konto.kontonummer} – ${konto.beskrivning};${-(konto[years[0]] as number)}\n`;
-      });
-      csv += `Rörelsens intäkter;Summa ${grupp.namn.toLowerCase()};${-grupp.summering[years[0]]}\n`;
-    });
-    csv += `Rörelsens intäkter;Summa rörelsens intäkter;${intaktsSum[years[0]]}\n`;
+  const handleExportCSV = async () => {
+    setIsExportingCSV(true);
+    setExportMessage("");
 
-    // Kostnader
-    data.rorelsensKostnader.forEach((grupp) => {
-      grupp.konton.forEach((konto) => {
-        csv += `Rörelsens kostnader;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
-      });
-      csv += `Rörelsens kostnader;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
-    });
-    csv += `Rörelsens kostnader;Summa rörelsens kostnader;${rorelsensSum[years[0]]}\n`;
+    try {
+      // Validera data
+      if (!data || !data.ar || data.ar.length === 0) {
+        throw new Error("Ingen rapportdata att exportera");
+      }
 
-    // Rörelsens resultat
-    csv += `Rörelsens resultat;Summa rörelsens resultat;${rorelsensResultat[years[0]]}\n`;
+      if (!years || years.length === 0) {
+        throw new Error("Inga år valda för rapporten");
+      }
 
-    // Finansiella intäkter
-    if (data.finansiellaIntakter && data.finansiellaIntakter.length > 0) {
-      data.finansiellaIntakter.forEach((grupp) => {
+      // Kontrollera att det finns faktisk data att exportera
+      const hasData =
+        data.intakter?.some((gruppe) => gruppe.konton.length > 0) ||
+        data.rorelsensKostnader?.some((gruppe) => gruppe.konton.length > 0);
+
+      if (!hasData) {
+        throw new Error("Ingen transaktionsdata att exportera för valt år");
+      }
+
+      let csv = "Rubrik;Konto;Belopp\n";
+      // Intäkter
+      data.intakter.forEach((grupp) => {
         grupp.konton.forEach((konto) => {
-          csv += `Finansiella intäkter;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
+          csv += `Rörelsens intäkter;${konto.kontonummer} – ${konto.beskrivning};${-(konto[years[0]] as number)}\n`;
         });
-        csv += `Finansiella intäkter;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
+        csv += `Rörelsens intäkter;Summa ${grupp.namn.toLowerCase()};${-grupp.summering[years[0]]}\n`;
       });
-      csv += `Finansiella intäkter;Summa finansiella intäkter;${finansiellaIntakterSum[years[0]]}\n`;
-    }
+      csv += `Rörelsens intäkter;Summa rörelsens intäkter;${intaktsSum[years[0]]}\n`;
 
-    // Finansiella kostnader
-    if (data.finansiellaKostnader && data.finansiellaKostnader.length > 0) {
-      data.finansiellaKostnader.forEach((grupp) => {
+      // Kostnader
+      data.rorelsensKostnader.forEach((grupp) => {
         grupp.konton.forEach((konto) => {
-          csv += `Finansiella kostnader;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
+          csv += `Rörelsens kostnader;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
         });
-        csv += `Finansiella kostnader;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
+        csv += `Rörelsens kostnader;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
       });
-      csv += `Finansiella kostnader;Summa finansiella kostnader;${finansiellaKostnaderSum[years[0]]}\n`;
+      csv += `Rörelsens kostnader;Summa rörelsens kostnader;${rorelsensSum[years[0]]}\n`;
+
+      // Rörelsens resultat
+      csv += `Rörelsens resultat;Summa rörelsens resultat;${rorelsensResultat[years[0]]}\n`;
+
+      // Finansiella intäkter
+      if (data.finansiellaIntakter && data.finansiellaIntakter.length > 0) {
+        data.finansiellaIntakter.forEach((grupp) => {
+          grupp.konton.forEach((konto) => {
+            csv += `Finansiella intäkter;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
+          });
+          csv += `Finansiella intäkter;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
+        });
+        csv += `Finansiella intäkter;Summa finansiella intäkter;${finansiellaIntakterSum[years[0]]}\n`;
+      }
+
+      // Finansiella kostnader
+      if (data.finansiellaKostnader && data.finansiellaKostnader.length > 0) {
+        data.finansiellaKostnader.forEach((grupp) => {
+          grupp.konton.forEach((konto) => {
+            csv += `Finansiella kostnader;${konto.kontonummer} – ${konto.beskrivning};${konto[years[0]]}\n`;
+          });
+          csv += `Finansiella kostnader;Summa ${grupp.namn.toLowerCase()};${grupp.summering[years[0]]}\n`;
+        });
+        csv += `Finansiella kostnader;Summa finansiella kostnader;${finansiellaKostnaderSum[years[0]]}\n`;
+      }
+
+      // Resultat efter finansiella poster
+      csv += `Resultat efter finansiella poster;Resultat efter finansiella poster;${resultatEfterFinansiella[years[0]]}\n`;
+
+      // Beräknat resultat
+      csv += `Beräknat resultat;Beräknat resultat;${resultat[years[0]]}\n`;
+
+      if (!csv || csv.length < 50) {
+        throw new Error("Fel vid generering av CSV-data");
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resultatrapport.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+
+      setExportMessage("CSV-rapport exporterad framgångsrikt!");
+      setTimeout(() => setExportMessage(""), 3000);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Ett oväntat fel uppstod vid CSV-export";
+      setExportMessage(`Fel: ${errorMessage}`);
+      setTimeout(() => setExportMessage(""), 5000);
+    } finally {
+      setIsExportingCSV(false);
     }
-
-    // Resultat efter finansiella poster
-    csv += `Resultat efter finansiella poster;Resultat efter finansiella poster;${resultatEfterFinansiella[years[0]]}\n`;
-
-    // Beräknat resultat
-    csv += `Beräknat resultat;Beräknat resultat;${resultat[years[0]]}\n`;
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "resultatrapport.csv";
-    a.click();
-    URL.revokeObjectURL(url);
   };
   //#endregion
 
@@ -531,9 +606,52 @@ export default function Resultatrapport({ initialData }: Props) {
         <VerifikatModal transaktionsId={verifikatId} onClose={() => setVerifikatId(null)} />
       )}
 
+      {exportMessage && (
+        <div
+          className={`text-center mb-4 p-3 rounded-lg ${
+            exportMessage.startsWith("Fel:")
+              ? "bg-red-100 text-red-700 border border-red-300"
+              : "bg-green-100 text-green-700 border border-green-300"
+          }`}
+        >
+          {exportMessage}
+        </div>
+      )}
+
       <div className="flex mt-8 gap-4 justify-end">
-        <Knapp text="Ladda ner PDF" onClick={handleExportPDF} />
-        <Knapp text="Ladda ner CSV" onClick={handleExportCSV} />
+        <button
+          onClick={handleExportPDF}
+          disabled={isExportingPDF}
+          className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
+            isExportingPDF ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {isExportingPDF ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Exporterar PDF...
+            </>
+          ) : (
+            "Ladda ner PDF"
+          )}
+        </button>
+
+        <button
+          onClick={handleExportCSV}
+          disabled={isExportingCSV}
+          className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
+            isExportingCSV ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {isExportingCSV ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Exporterar CSV...
+            </>
+          ) : (
+            "Ladda ner CSV"
+          )}
+        </button>
       </div>
     </MainLayout>
   );
