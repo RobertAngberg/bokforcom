@@ -43,25 +43,31 @@ export default function TextFalt({
 
   // Säker onChange-hantering med live-validering
   const handleSafeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    console.log("🐛 TextFalt handleSafeChange:", e.target.value);
     let newValue = e.target.value;
 
-    // ALLTID ta bort farliga tecken för alla fälttyper
-    newValue = newValue.replace(/[<>'"&{}()[\]]/g, "");
+    // ENDAST ta bort script-farliga tecken, inte vanliga tecken
+    newValue = newValue.replace(/[<>]/g, "");
 
     // Begränsa längd
     if (maxLength && newValue.length > maxLength) {
       newValue = newValue.substring(0, maxLength);
     }
 
-    // Skapa ny event med säkert värde
+    // Skapa ny event med säkert värde OCH behåll name
     const safeEvent = {
       ...e,
       target: {
         ...e.target,
+        name: name, // Säkerställ att name finns
         value: newValue,
       },
     } as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
 
+    console.log("🐛 Säkert event skapat:", {
+      name: safeEvent.target.name,
+      value: safeEvent.target.value,
+    });
     onChange(safeEvent);
   };
 

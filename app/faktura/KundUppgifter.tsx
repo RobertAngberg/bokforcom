@@ -20,6 +20,8 @@ export default function KundUppgifter() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const [kunder, setKunder] = useState<any[]>([]);
+
+  console.log("🐛 KundUppgifter render, kundStatus:", kundStatus);
   //#endregion
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function KundUppgifter() {
 
   //#region Formulärhanterare
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    console.log("🐛 handleChange anropad:", { name: e.target.name, value: e.target.value });
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
     if (kundStatus === "loaded") setKundStatus("editing");
@@ -88,8 +91,10 @@ export default function KundUppgifter() {
   };
 
   const handleCreateNewCustomer = () => {
+    console.log("🐛 Skapa ny kund klickad, nuvarande status:", kundStatus);
     resetKund();
     setKundStatus("editing");
+    console.log("🐛 Status ska nu vara editing");
   };
 
   const handleDeleteCustomer = async () => {
