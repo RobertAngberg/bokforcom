@@ -2,10 +2,71 @@
 
 import { auth } from "../../auth";
 import { Pool } from "pg";
+import crypto from "crypto";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR SIE-MODUL
+const sessionAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
+
+async function validateSessionAttempt(sessionId: string): Promise<boolean> {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minuter
+  const maxAttempts = 5; // Begränsa SIE-operationer till 5 per 15 min (mycket känsligt)
+
+  const userAttempts = sessionAttempts.get(sessionId) || { attempts: 0, lastAttempt: 0 };
+
+  if (now - userAttempts.lastAttempt > windowMs) {
+    userAttempts.attempts = 0;
+  }
+
+  if (userAttempts.attempts >= maxAttempts) {
+    await logSieSecurityEvent(
+      sessionId,
+      "rate_limit_exceeded",
+      `Rate limit exceeded: ${userAttempts.attempts} attempts`
+    );
+    return false;
+  }
+
+  userAttempts.attempts++;
+  userAttempts.lastAttempt = now;
+  sessionAttempts.set(sessionId, userAttempts);
+
+  return true;
+}
+
+async function logSieSecurityEvent(
+  userId: string,
+  eventType: string,
+  details: string
+): Promise<void> {
+  try {
+    await pool.query(
+      `INSERT INTO security_logs (user_id, event_type, details, timestamp, module) 
+       VALUES ($1, $2, $3, NOW(), 'SIE')`,
+      [userId, eventType, details]
+    );
+  } catch (error) {
+    console.error("Failed to log SIE security event:", error);
+  }
+}
+function validateFileSize(file: File): { valid: boolean; error?: string } {
+  const maxSize = 50 * 1024 * 1024; // 50MB max för SIE-filer
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: `Filen är för stor (${Math.round(file.size / 1024 / 1024)}MB). Max 50MB tillåtet.`,
+    };
+  }
+  return { valid: true };
+}
+
+function sanitizeInput(input: string): string {
+  return input.replace(/[<>'"&]/g, "").trim();
+}
 
 interface SieData {
   header: {
@@ -53,17 +114,42 @@ interface SieUploadResult {
 
 export async function uploadSieFile(formData: FormData): Promise<SieUploadResult> {
   try {
+    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
+    }
+
+    const userId = session.user.id;
+
+    // Rate limiting för SIE-uppladdningar
+    if (!(await validateSessionAttempt(userId))) {
+      return { success: false, error: "För många försök - vänta 15 minuter" };
+    }
+
+    await logSieSecurityEvent(userId, "sie_upload_attempt", "SIE file upload started");
+
     const file = formData.get("file") as File;
 
     if (!file) {
+      await logSieSecurityEvent(userId, "sie_upload_failed", "No file provided");
       return { success: false, error: "Ingen fil vald" };
     }
 
+    // 🔒 FILVALIDERING
+    const sizeValidation = validateFileSize(file);
+    if (!sizeValidation.valid) {
+      await logSieSecurityEvent(userId, "sie_upload_failed", `File too large: ${file.size} bytes`);
+      return { success: false, error: sizeValidation.error };
+    }
+
+    // Validera filtyp
     if (
       !file.name.toLowerCase().endsWith(".se4") &&
       !file.name.toLowerCase().endsWith(".sie") &&
       !file.name.toLowerCase().endsWith(".se")
     ) {
+      await logSieSecurityEvent(userId, "sie_upload_failed", `Invalid file type: ${file.name}`);
       return { success: false, error: "Endast SIE-filer (.sie, .se4, .se) stöds" };
     }
 
@@ -156,7 +242,14 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     sieData.balanser.utgående.forEach((b) => anvandaKonton.add(b.konto));
     sieData.resultat.forEach((r) => anvandaKonton.add(r.konto));
 
-    const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton));
+    // 🔒 SÄKER KONTOKONTROLL med userId
+    const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton), userId);
+
+    await logSieSecurityEvent(
+      userId,
+      "sie_upload_success",
+      `File uploaded: ${file.name}, ${sieData.verifikationer.length} verifications`
+    );
 
     return {
       success: true,
@@ -166,11 +259,24 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     };
   } catch (error) {
     console.error("Fel vid parsning av SIE-fil:", error);
+    // Logga fel om vi har userId från session
+    try {
+      const errorSession = await auth();
+      if (errorSession?.user?.id) {
+        await logSieSecurityEvent(
+          errorSession.user.id,
+          "sie_upload_error",
+          `Parse error: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } catch (logError) {
+      console.error("Failed to log error:", logError);
+    }
     return { success: false, error: "Kunde inte läsa SIE-filen" };
   }
 }
 
-async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[]) {
+async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[], userId?: string) {
   try {
     const { Pool } = require("pg");
     const tempPool = new Pool({
@@ -179,14 +285,20 @@ async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[]) {
 
     const client = await tempPool.connect();
 
-    // Hämta alla befintliga konton från databasen
-    const { rows } = await client.query("SELECT kontonummer FROM konton");
+    // 🔒 SÄKER DATABASKÖRNING - Hämta endast användarens egna konton
+    let query = "SELECT kontonummer FROM konton";
+    let params: any[] = [];
+
+    if (userId) {
+      query += ' WHERE "userId" = $1';
+      params = [userId];
+    }
+
+    const { rows } = await client.query(query, params);
     const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
 
     client.release();
-    await tempPool.end();
-
-    // Hitta konton som finns i SIE men inte i databasen
+    await tempPool.end(); // Hitta konton som finns i SIE men inte i databasen
     const allaSaknade = sieKonton.filter((kontonr) => !befintligaKonton.has(kontonr));
 
     // BAS 2025 standardkonton (grundläggande kontoplan)
@@ -844,6 +956,25 @@ export async function skapaKonton(
   kontoData: Array<{ nummer: string; namn: string }>
 ): Promise<{ success: boolean; error?: string; skapade?: number }> {
   try {
+    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
+    }
+
+    const userId = session.user.id;
+
+    // Rate limiting för kontoskapande
+    if (!(await validateSessionAttempt(userId))) {
+      return { success: false, error: "För många försök - vänta 15 minuter" };
+    }
+
+    await logSieSecurityEvent(
+      userId,
+      "sie_create_accounts_attempt",
+      `Attempting to create ${kontoData.length} accounts`
+    );
+
     const { Pool } = require("pg");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -886,21 +1017,33 @@ export async function skapaKonton(
           kategori = "Finansiella intäkter och kostnader";
         }
 
+        // 🔒 SÄKER DATABASSKAPNING - Konto kopplas till userId
         await client.query(
-          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord) 
-           VALUES ($1, $2, $3, $4, $5) 
-           ON CONFLICT (kontonummer) DO NOTHING`,
-          [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()]]
+          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord, "userId") 
+           VALUES ($1, $2, $3, $4, $5, $6) 
+           ON CONFLICT (kontonummer, "userId") DO NOTHING`,
+          [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()], userId]
         );
 
         skapadeAntal++;
       } catch (error) {
         console.error(`Fel vid skapande av konto ${konto.nummer}:`, error);
+        await logSieSecurityEvent(
+          userId,
+          "sie_create_account_error",
+          `Failed to create account ${konto.nummer}: ${error}`
+        );
       }
     }
 
     client.release();
     await pool.end();
+
+    await logSieSecurityEvent(
+      userId,
+      "sie_create_accounts_success",
+      `Created ${skapadeAntal} accounts`
+    );
 
     return {
       success: true,
@@ -908,6 +1051,19 @@ export async function skapaKonton(
     };
   } catch (error) {
     console.error("Fel vid skapande av konton:", error);
+    // Logga fel om vi har session
+    try {
+      const errorSession = await auth();
+      if (errorSession?.user?.id) {
+        await logSieSecurityEvent(
+          errorSession.user.id,
+          "sie_create_accounts_error",
+          `Failed to create accounts: ${error}`
+        );
+      }
+    } catch (logError) {
+      console.error("Failed to log error:", logError);
+    }
     return {
       success: false,
       error: "Kunde inte skapa konton",
@@ -936,7 +1092,7 @@ export async function importeraSieData(
   }
 ): Promise<{ success: boolean; error?: string; resultat?: any }> {
   try {
-    // Hämta session för userId
+    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
     const session = await auth();
     if (!session?.user?.id) {
       return {
@@ -944,7 +1100,21 @@ export async function importeraSieData(
         error: "Ingen giltig session - måste vara inloggad",
       };
     }
-    const userId = session.user.id; // Behåll som string - det verkar vara UUID
+    const userId = session.user.id;
+
+    // Rate limiting för SIE-import (mycket känslig operation)
+    if (!(await validateSessionAttempt(userId))) {
+      return {
+        success: false,
+        error: "För många försök - vänta 15 minuter",
+      };
+    }
+
+    await logSieSecurityEvent(
+      userId,
+      "sie_import_attempt",
+      `Import started: ${fileInfo?.filnamn || "unknown"}, verifications: ${sieData.verifikationer.length}`
+    );
 
     const { Pool } = require("pg");
     const pool = new Pool({
@@ -1536,17 +1706,25 @@ export async function exporteraSieData(
   år: number = 2025
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   try {
+    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
     const session = await auth();
     if (!session?.user?.id) {
-      return { success: false, error: "Inte inloggad" };
+      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    // Hämta företagsinfo
+    const userId = session.user.id;
+
+    // Rate limiting för SIE-export
+    if (!(await validateSessionAttempt(userId))) {
+      return { success: false, error: "För många försök - vänta 15 minuter" };
+    }
+
+    await logSieSecurityEvent(userId, "sie_export_attempt", `Export started for year: ${år}`);
+
+    // 🔒 SÄKER DATABASACCESS - Hämta endast användarens företagsinfo
     const företagQuery = await pool.query(
-      `
-      SELECT email, företagsnamn, organisationsnummer FROM users WHERE id = $1
-    `,
-      [session.user.id]
+      `SELECT email, företagsnamn, organisationsnummer FROM users WHERE id = $1`,
+      [userId]
     );
 
     const företag = företagQuery.rows[0];
@@ -1588,12 +1766,16 @@ export async function exporteraSieData(
     // Kontoplan
     sieContent += `#KPTYP BAS2014\n`;
 
-    // Hämta konton
-    const kontoQuery = await pool.query(`
+    // 🔒 SÄKER DATABASACCESS - Hämta endast användarens egna konton
+    const kontoQuery = await pool.query(
+      `
       SELECT kontonummer, beskrivning 
       FROM konton 
+      WHERE "userId" = $1
       ORDER BY kontonummer::integer
-    `);
+    `,
+      [userId]
+    );
 
     // Lägg till #KONTO-poster
     for (const konto of kontoQuery.rows) {
@@ -1601,10 +1783,9 @@ export async function exporteraSieData(
       sieContent += `#KONTO ${konto.kontonummer} "${beskrivning}"\n`;
     }
 
-    // Hämta transaktioner för alla år (inte bara nuvarande)
+    // 🔒 SÄKER DATABASACCESS - Hämta endast användarens egna transaktioner
     const transaktionQuery = await pool.query(
-      `
-      SELECT 
+      `SELECT 
         t.id as transaktion_id,
         t.transaktionsdatum,
         t.kontobeskrivning,
@@ -1620,7 +1801,7 @@ export async function exporteraSieData(
       WHERE t."userId" = $1 
       ORDER BY t.transaktionsdatum, t.id
     `,
-      [session.user.id]
+      [userId]
     );
 
     // Beräkna kontosaldon per år (från -7 till 0)
@@ -1748,12 +1929,31 @@ export async function exporteraSieData(
       }
     }
 
+    await logSieSecurityEvent(
+      userId,
+      "sie_export_success",
+      `SIE export completed for year ${år}, content length: ${sieContent.length}`
+    );
+
     return {
       success: true,
       data: sieContent,
     };
   } catch (error) {
     console.error("Fel vid export av SIE-data:", error);
+    // Logga fel om vi har session
+    try {
+      const errorSession = await auth();
+      if (errorSession?.user?.id) {
+        await logSieSecurityEvent(
+          errorSession.user.id,
+          "sie_export_error",
+          `Export failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } catch (logError) {
+      console.error("Failed to log error:", logError);
+    }
     return {
       success: false,
       error: `Kunde inte exportera SIE-data: ${error instanceof Error ? error.message : String(error)}`,

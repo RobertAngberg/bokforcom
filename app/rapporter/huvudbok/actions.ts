@@ -3,19 +3,43 @@
 
 import { Pool } from "pg";
 import { auth } from "@/auth";
+import { validateSessionAttempt } from "../../_utils/sessionSecurity";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// SÄKERHETSVALIDERING: Logga huvudbok-åtkomst
+function logLedgerDataEvent(
+  eventType: "access" | "violation" | "error",
+  userId?: number,
+  details?: string
+) {
+  const timestamp = new Date().toISOString();
+  console.log(`📚 LEDGER DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
+  if (userId) console.log(`  userId: ${userId},`);
+  if (details) console.log(`  details: '${details}',`);
+  console.log(`  timestamp: '${timestamp}'`);
+  console.log(`}`);
+}
 //#endregion
 
 export async function fetchHuvudbok() {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
+    logLedgerDataEvent("violation", undefined, "Attempted to access ledger without valid session");
+    throw new Error("Säkerhetsfel: Ingen inloggad användare");
   }
 
-  const userId = session.user.id;
+  const userId = parseInt(session.user.id, 10);
+
+  // SÄKERHETSVALIDERING: Rate limiting för huvudbok
+  if (!validateSessionAttempt(`finance-ledger-${userId}`)) {
+    logLedgerDataEvent("violation", userId, "Rate limit exceeded for ledger access");
+    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
+  }
+
+  logLedgerDataEvent("access", userId, "Accessing general ledger data");
 
   try {
     const client = await pool.connect();
@@ -105,11 +129,41 @@ export async function fetchHuvudbok() {
     return huvudboksdata;
   } catch (error) {
     console.error("❌ fetchHuvudbok error:", error);
+    logLedgerDataEvent(
+      "error",
+      userId,
+      `Error fetching ledger data: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
     return [];
   }
 }
 
 export async function fetchFöretagsprofil(userId: number) {
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
+  const session = await auth();
+  if (!session?.user?.id) {
+    logLedgerDataEvent(
+      "violation",
+      undefined,
+      "Attempted to access company profile without valid session"
+    );
+    throw new Error("Säkerhetsfel: Ingen inloggad användare");
+  }
+
+  const sessionUserId = parseInt(session.user.id, 10);
+
+  // SÄKERHETSVALIDERING: Kontrollera ägarskap
+  if (sessionUserId !== userId) {
+    logLedgerDataEvent(
+      "violation",
+      sessionUserId,
+      `Attempted to access other user's profile: ${userId}`
+    );
+    throw new Error("Säkerhetsfel: Åtkomst nekad");
+  }
+
+  logLedgerDataEvent("access", sessionUserId, "Accessing company profile data");
+
   try {
     const client = await pool.connect();
     const query = `
@@ -128,8 +182,36 @@ export async function fetchFöretagsprofil(userId: number) {
 }
 
 export async function fetchTransactionDetails(transaktionsId: number) {
-  const result = await pool.query(
-    `
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
+  const session = await auth();
+  if (!session?.user?.id) {
+    logLedgerDataEvent(
+      "violation",
+      undefined,
+      "Attempted to access transaction details without valid session"
+    );
+    throw new Error("Säkerhetsfel: Ingen inloggad användare");
+  }
+
+  const userId = parseInt(session.user.id, 10);
+
+  // SÄKERHETSVALIDERING: Rate limiting för transaktionsdetaljer
+  if (!validateSessionAttempt(`finance-transaction-${userId}`)) {
+    logLedgerDataEvent("violation", userId, "Rate limit exceeded for transaction details access");
+    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
+  }
+
+  // SÄKERHETSVALIDERING: Input validering
+  if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
+    logLedgerDataEvent("violation", userId, `Invalid transaction ID: ${transaktionsId}`);
+    throw new Error("Ogiltigt transaktions-ID");
+  }
+
+  logLedgerDataEvent("access", userId, `Accessing transaction details for ID ${transaktionsId}`);
+
+  try {
+    const result = await pool.query(
+      `
     SELECT
       tp.id AS transaktionspost_id,
       tp.debet,
@@ -142,9 +224,19 @@ export async function fetchTransactionDetails(transaktionsId: number) {
     JOIN konton k ON k.id = tp.konto_id
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE tp.transaktions_id = $1
+      AND t."userId" = $2
     ORDER BY tp.id
     `,
-    [transaktionsId]
-  );
-  return result.rows;
+      [transaktionsId, userId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("❌ fetchTransactionDetails error:", error);
+    logLedgerDataEvent(
+      "error",
+      userId,
+      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+    throw new Error("Ett fel uppstod vid hämtning av transaktionsdetaljer");
+  }
 }
