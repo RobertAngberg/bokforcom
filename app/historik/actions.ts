@@ -1,10 +1,30 @@
 "use server";
 
 import { Pool } from "pg";
+import { auth } from "../../auth";
+import { validateSecureSession, logSecurityEvent } from "../_utils/sessionSecurity";
+import { withFormRateLimit } from "../_utils/actionRateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// Säker input-sanitization för historik
+function sanitizeHistorikInput(text: string): string {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
+    .replace(/\s+/g, " ") // Normalisera whitespace
+    .trim()
+    .substring(0, 100); // Begränsa längd
+}
+
+// Validera år-input
+function validateYearInput(year: string): boolean {
+  if (!year || typeof year !== "string") return false;
+  const yearNum = parseInt(year);
+  return !isNaN(yearNum) && yearNum >= 2020 && yearNum <= 2030;
+}
 
 interface TransactionDetail {
   transaktionspost_id: number;
@@ -14,9 +34,33 @@ interface TransactionDetail {
   kredit: number;
 }
 
-export async function fetchTransaktioner(fromYear?: string) {
+// Intern funktion utan rate limiting (för wrappers)
+async function fetchTransaktionerInternal(fromYear?: string) {
+  // SÄKERHETSVALIDERING: Säker session-hantering
+  let userId: number;
+  try {
+    const sessionData = await validateSecureSession(auth);
+    userId = sessionData.userId;
+    logSecurityEvent("login", userId, "Transaction history access");
+  } catch (error) {
+    logSecurityEvent(
+      "invalid_access",
+      undefined,
+      "Attempted transaction history access without valid session"
+    );
+    return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
+  }
+
+  // SÄKERHETSVALIDERING: Validera år-parameter om angiven
+  if (fromYear && !validateYearInput(fromYear)) {
+    logSecurityEvent("invalid_access", userId, `Invalid year parameter: ${fromYear}`);
+    return { success: false, error: "Ogiltigt år-format" };
+  }
+
   try {
     const client = await pool.connect();
+
+    // SÄKERHETSFÖRSTÄRKT QUERY: Endast användarens egna transaktioner
     const result = await client.query(
       `
       SELECT 
@@ -29,21 +73,58 @@ export async function fetchTransaktioner(fromYear?: string) {
         t.blob_url
       FROM transaktioner t
       LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      WHERE t."userId" = $1
+      ${fromYear ? "AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2" : ""}
       GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.kommentar, t.fil, t.blob_url
       ORDER BY t.transaktionsdatum DESC, t.id DESC
-      `
+      `,
+      fromYear ? [userId, parseInt(fromYear)] : [userId]
     );
+
     client.release();
+    console.log(
+      `🔒 Säker historik-åtkomst för user ${userId}, ${result.rows.length} transaktioner`
+    );
     return { success: true, data: result.rows };
   } catch (error: any) {
     console.error("❌ fetchTransaktioner error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: "Kunde inte hämta transaktionshistorik säkert" };
   }
 }
 
 export async function fetchTransactionDetails(transactionId: number): Promise<TransactionDetail[]> {
+  // SÄKERHETSVALIDERING: Säker session-hantering
+  let userId: number;
+  try {
+    const sessionData = await validateSecureSession(auth);
+    userId = sessionData.userId;
+  } catch (error) {
+    console.error("❌ Säkerhetsvarning: Ogiltig session vid hämtning av transaktionsdetaljer");
+    return [];
+  }
+
+  // SÄKERHETSVALIDERING: Validera transaktions-ID
+  if (isNaN(transactionId) || transactionId <= 0) {
+    console.error("❌ Säkerhetsvarning: Ogiltigt transaktions-ID");
+    return [];
+  }
+
   const client = await pool.connect();
   try {
+    // SÄKERHETSVALIDERING: Verifiera att transaktionen tillhör denna användare
+    const verifyRes = await client.query(
+      `SELECT id FROM transaktioner WHERE id = $1 AND "userId" = $2`,
+      [transactionId, userId]
+    );
+
+    if (verifyRes.rows.length === 0) {
+      console.error(
+        `❌ Säkerhetsvarning: User ${userId} försökte komma åt transaktion ${transactionId} som de inte äger`
+      );
+      return [];
+    }
+
+    // SÄKER QUERY: Hämta transaktionsdetaljer för validerad transaktion
     const result = await client.query(
       `
       SELECT 
@@ -59,17 +140,48 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
       `,
       [transactionId]
     );
+
+    console.log(
+      `🔒 Säker transaktionsdetalj-åtkomst för user ${userId}, transaktion ${transactionId}`
+    );
     return result.rows;
+  } catch (error) {
+    console.error("❌ fetchTransactionDetails error:", error);
+    return [];
   } finally {
     client.release();
   }
 }
 
-export async function exporteraTransaktionerMedPoster(year: string) {
+// Intern funktion för export utan rate limiting
+async function exporteraTransaktionerMedPosterInternal(year: string) {
+  // SÄKERHETSVALIDERING: Säker session-hantering
+  let userId: number;
+  try {
+    const sessionData = await validateSecureSession(auth);
+    userId = sessionData.userId;
+    logSecurityEvent("login", userId, `Transaction export for year ${year}`);
+  } catch (error) {
+    logSecurityEvent(
+      "invalid_access",
+      undefined,
+      "Attempted transaction export without valid session"
+    );
+    return [];
+  }
+
+  // SÄKERHETSVALIDERING: Validera år-parameter
+  if (!validateYearInput(year)) {
+    logSecurityEvent("invalid_access", userId, `Invalid year for export: ${year}`);
+    console.error("❌ Säkerhetsvarning: Ogiltigt år för export");
+    return [];
+  }
+
   try {
     const start = `${year}-01-01`;
     const end = `${year}-12-31`;
 
+    // SÄKERHETSFÖRSTÄRKT QUERY: Endast användarens egna transaktioner
     const { rows } = await pool.query(
       `
       SELECT 
@@ -88,10 +200,11 @@ export async function exporteraTransaktionerMedPoster(year: string) {
       FROM transaktioner t
       LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
       LEFT JOIN konton k ON tp.konto_id = k.id
-      WHERE t.transaktionsdatum BETWEEN $1 AND $2
+      WHERE t."userId" = $1 
+        AND t.transaktionsdatum BETWEEN $2 AND $3
       ORDER BY t.transaktionsdatum DESC, t.id DESC, tp.id ASC
     `,
-      [start, end]
+      [userId, start, end]
     );
 
     const map = new Map<number, any>();
@@ -122,10 +235,18 @@ export async function exporteraTransaktionerMedPoster(year: string) {
     }
 
     const resultat = Array.from(map.values());
-    console.log(`📦 Exporterar ${resultat.length} transaktioner med poster`);
+    console.log(
+      `� Säker export för user ${userId}: ${resultat.length} transaktioner från år ${year}`
+    );
     return resultat;
   } catch (err: any) {
     console.error("❌ exporteraTransaktionerMedPoster error:", err);
     return [];
   }
 }
+
+// SÄKRA EXPORTS MED RATE LIMITING
+export const fetchTransaktioner = withFormRateLimit(fetchTransaktionerInternal);
+export const exporteraTransaktionerMedPoster = withFormRateLimit(
+  exporteraTransaktionerMedPosterInternal
+);
