@@ -6,6 +6,53 @@ import Modal from "../../_components/Modal";
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
 
+//#region Business Logic - Migrated from actions.ts
+// Säker text-sanitering för leverantördata
+function sanitizeLeverantörInput(input: string): string {
+  if (!input) return "";
+  return input
+    .trim()
+    .replace(/[<>]/g, "") // Ta bort potentiellt farliga tecken
+    .substring(0, 255); // Begränsa längd
+}
+
+// Email-validering för leverantörer
+function validateLeverantörEmail(email: string): boolean {
+  if (!email) return true; // Email är valfritt
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+// Validera leverantörsdata
+function validateLeverantörData(formData: any): { isValid: boolean; error?: string } {
+  // Validera obligatoriska fält
+  const namn = sanitizeLeverantörInput(formData.namn || "");
+  if (!namn || namn.length < 2) {
+    return { isValid: false, error: "Leverantörsnamn krävs (minst 2 tecken)" };
+  }
+
+  // Validera email om angivet
+  if (formData.epost && !validateLeverantörEmail(formData.epost)) {
+    return { isValid: false, error: "Ogiltig email-adress" };
+  }
+
+  return { isValid: true };
+}
+
+// Sanitera all leverantörsdata innan spara
+function sanitizeLeverantörFormData(formData: any) {
+  return {
+    ...formData,
+    namn: sanitizeLeverantörInput(formData.namn || ""),
+    organisationsnummer: sanitizeLeverantörInput(formData.organisationsnummer || ""),
+    adress: sanitizeLeverantörInput(formData.adress || ""),
+    postnummer: sanitizeLeverantörInput(formData.postnummer || ""),
+    stad: sanitizeLeverantörInput(formData.stad || ""),
+    telefon: sanitizeLeverantörInput(formData.telefon || ""),
+  };
+}
+//#endregion
+
 interface NyLeverantorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,13 +71,11 @@ export default function NyLeverantorModal({
   const [formData, setFormData] = useState({
     namn: "",
     organisationsnummer: "",
-    vatnummer: "",
     adress: "",
     postnummer: "",
     stad: "",
     telefon: "",
     epost: "",
-    kontaktperson: "",
   });
 
   const isEditing = !!editLeverantör;
@@ -38,30 +83,24 @@ export default function NyLeverantorModal({
   useEffect(() => {
     if (!isOpen) {
       setError(null);
-      // Återställ formulär när modal stängs
       setFormData({
         namn: "",
         organisationsnummer: "",
-        vatnummer: "",
         adress: "",
         postnummer: "",
         stad: "",
         telefon: "",
         epost: "",
-        kontaktperson: "",
       });
     } else if (editLeverantör) {
-      // Fyll i data vid redigering
       setFormData({
         namn: editLeverantör.namn || "",
         organisationsnummer: editLeverantör.organisationsnummer || "",
-        vatnummer: "",
         adress: editLeverantör.adress || "",
         postnummer: editLeverantör.postnummer || "",
         stad: editLeverantör.ort || "",
         telefon: editLeverantör.telefon || "",
         epost: editLeverantör.email || "",
-        kontaktperson: "",
       });
     }
   }, [isOpen, editLeverantör]);
@@ -80,44 +119,24 @@ export default function NyLeverantorModal({
     setError(null);
 
     try {
-      // Säkerhetsvalidering av alla fält
-      if (!formData.namn.trim()) {
-        setError("Företagsnamn krävs");
+      // Frontend-validering med migerade funktioner
+      const validation = validateLeverantörData(formData);
+      if (!validation.isValid) {
+        setError(validation.error!);
         return;
       }
 
-      if (
-        formData.organisationsnummer &&
-        !/^\d{6}-?\d{4}$/.test(formData.organisationsnummer.replace(/\s/g, ""))
-      ) {
-        setError("Ogiltigt organisationsnummer (format: XXXXXX-XXXX)");
-        return;
-      }
-
-      if (formData.epost && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.epost)) {
-        setError("Ogiltig email-adress");
-        return;
-      }
-
-      // Skapa FormData med säkra värden
-      const submitData = new FormData();
-      submitData.append("namn", formData.namn.trim());
-      if (formData.organisationsnummer)
-        submitData.append("organisationsnummer", formData.organisationsnummer.trim());
-      if (formData.adress) submitData.append("adress", formData.adress.trim());
-      if (formData.postnummer) submitData.append("postnummer", formData.postnummer.trim());
-      if (formData.stad) submitData.append("ort", formData.stad.trim());
-      if (formData.telefon) submitData.append("telefon", formData.telefon.trim());
-      if (formData.epost) submitData.append("email", formData.epost.trim());
+      // Sanitera data
+      const sanitizedData = sanitizeLeverantörFormData(formData);
 
       if (isEditing && editLeverantör) {
         const data = {
-          namn: formData.namn.trim(),
-          organisationsnummer: formData.organisationsnummer.trim() || undefined,
-          adress: formData.adress.trim() || undefined,
-          postnummer: formData.postnummer.trim() || undefined,
-          ort: formData.stad.trim() || undefined,
-          telefon: formData.telefon.trim() || undefined,
+          namn: sanitizedData.namn,
+          organisationsnummer: sanitizedData.organisationsnummer || undefined,
+          adress: sanitizedData.adress || undefined,
+          postnummer: sanitizedData.postnummer || undefined,
+          ort: sanitizedData.stad || undefined,
+          telefon: sanitizedData.telefon || undefined,
           email: formData.epost.trim() || undefined,
         };
         const result = await updateLeverantör(editLeverantör.id!, data);
@@ -129,6 +148,16 @@ export default function NyLeverantorModal({
           setError(result.error || "Kunde inte uppdatera leverantör");
         }
       } else {
+        const submitData = new FormData();
+        submitData.append("namn", sanitizedData.namn);
+        if (sanitizedData.organisationsnummer)
+          submitData.append("organisationsnummer", sanitizedData.organisationsnummer);
+        if (sanitizedData.adress) submitData.append("adress", sanitizedData.adress);
+        if (sanitizedData.postnummer) submitData.append("postnummer", sanitizedData.postnummer);
+        if (sanitizedData.stad) submitData.append("ort", sanitizedData.stad);
+        if (sanitizedData.telefon) submitData.append("telefon", sanitizedData.telefon);
+        if (formData.epost) submitData.append("email", formData.epost.trim());
+
         const result = await saveLeverantör(submitData);
 
         if (result.success) {
@@ -177,11 +206,11 @@ export default function NyLeverantorModal({
               placeholder="XXXXXX-XXXX"
             />
             <TextFalt
-              label="VAT-nummer"
-              name="vatnummer"
-              value={formData.vatnummer}
+              label="E-post"
+              name="epost"
+              value={formData.epost}
               onChange={handleInputChange}
-              placeholder="SE############01"
+              placeholder="kontakt@företag.se"
             />
           </div>
 
@@ -199,46 +228,31 @@ export default function NyLeverantorModal({
               name="postnummer"
               value={formData.postnummer}
               onChange={handleInputChange}
-              placeholder="123 45"
+              placeholder="12345"
             />
             <TextFalt
               label="Stad"
               name="stad"
               value={formData.stad}
               onChange={handleInputChange}
-              placeholder="Ort"
+              placeholder="Stockholm"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextFalt
-              label="Telefon"
-              name="telefon"
-              type="tel"
-              value={formData.telefon}
-              onChange={handleInputChange}
-              placeholder="070-123 45 67"
-            />
-            <TextFalt
-              label="E-post"
-              name="epost"
-              type="email"
-              value={formData.epost}
-              onChange={handleInputChange}
-              placeholder="info@företag.se"
-            />
-          </div>
+          <TextFalt
+            label="Telefon"
+            name="telefon"
+            value={formData.telefon}
+            onChange={handleInputChange}
+            placeholder="08-123 456 78"
+          />
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex justify-end gap-3 pt-6">
+            <Knapp text="Avbryt" onClick={onClose} disabled={loading} />
             <Knapp
-              text="Avbryt"
-              type="button"
-              onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700"
-            />
-            <Knapp
-              text={loading ? "Sparar..." : isEditing ? "Uppdatera leverantör" : "Spara leverantör"}
+              text={isEditing ? "Uppdatera leverantör" : "Spara leverantör"}
               type="submit"
+              loading={loading}
               disabled={loading}
             />
           </div>

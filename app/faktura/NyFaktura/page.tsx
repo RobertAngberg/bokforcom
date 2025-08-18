@@ -21,6 +21,126 @@ import { hämtaFöretagsprofil, hämtaSparadeKunder, hämtaSparadeArtiklar } fro
 import Link from "next/link";
 //#endregion
 
+//#region Business Logic - Migrated from actions.ts
+// Säker text-sanitering för fakturor
+function sanitizeFakturaInput(input: string): string {
+  if (!input) return "";
+  return input
+    .trim()
+    .replace(/[<>]/g, "") // Ta bort potentiellt farliga tecken
+    .substring(0, 255); // Begränsa längd
+}
+
+// Säker numerisk validering för fakturor
+function validateNumericFakturaInput(value: any): boolean {
+  const num = parseFloat(value);
+  return !isNaN(num) && isFinite(num);
+}
+
+// Säker email-validering för fakturor
+function validateEmailInput(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+// Säker JSON-parsing med validering
+function safeParseFakturaJSON(jsonString: string): any[] {
+  try {
+    const parsed = JSON.parse(jsonString);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+// Datum-formatering för fakturor
+function formatDate(str: string | null): string | null {
+  if (!str) return null;
+  const d = new Date(str);
+  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
+    .getDate()
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+// Beräkna default datum (30 dagar framåt)
+function getDefaultDueDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().split("T")[0];
+}
+
+// Beräkna totalbelopp för faktura med moms
+function calculateTotalBelopp(artiklar: any[]): number {
+  const total = artiklar.reduce((sum, artikel) => {
+    const prisInkMoms = artikel.prisPerEnhet * (1 + artikel.moms / 100);
+    return sum + artikel.antal * prisInkMoms;
+  }, 0);
+  return Math.round(total * 100) / 100; // Avrunda till 2 decimaler
+}
+
+// Validera artikel-data
+function validateArtikel(artikel: any): { isValid: boolean; error?: string } {
+  if (!artikel.beskrivning || sanitizeFakturaInput(artikel.beskrivning).length < 2) {
+    return { isValid: false, error: "Alla artiklar måste ha en giltig beskrivning" };
+  }
+
+  if (!validateNumericFakturaInput(artikel.antal) || artikel.antal <= 0) {
+    return { isValid: false, error: "Ogiltigt antal i artikel" };
+  }
+
+  if (!validateNumericFakturaInput(artikel.prisPerEnhet) || artikel.prisPerEnhet < 0) {
+    return { isValid: false, error: "Ogiltigt pris i artikel" };
+  }
+
+  if (!validateNumericFakturaInput(artikel.moms) || artikel.moms < 0 || artikel.moms > 100) {
+    return { isValid: false, error: "Ogiltig moms i artikel" };
+  }
+
+  return { isValid: true };
+}
+
+// Validera fakturadata
+function validateFakturaData(formData: any): { isValid: boolean; error?: string } {
+  // Validera kund
+  if (!formData.kundId || formData.kundId <= 0) {
+    return { isValid: false, error: "Kund måste väljas" };
+  }
+
+  // Validera fakturanummer
+  const fakturanummer = sanitizeFakturaInput(formData.fakturanummer || "");
+  if (!fakturanummer || fakturanummer.length < 1) {
+    return { isValid: false, error: "Fakturanummer krävs" };
+  }
+
+  // Validera kundnamn
+  const kundnamn = sanitizeFakturaInput(formData.kundnamn || "");
+  if (!kundnamn || kundnamn.length < 2) {
+    return { isValid: false, error: "Giltigt kundnamn krävs" };
+  }
+
+  // Validera email om angivet
+  if (formData.kundemail && !validateEmailInput(formData.kundemail)) {
+    return { isValid: false, error: "Ogiltig email-adress" };
+  }
+
+  // Validera artiklar
+  if (!formData.artiklar || formData.artiklar.length === 0) {
+    return { isValid: false, error: "Fakturan måste ha minst en artikel" };
+  }
+
+  // Validera varje artikel
+  for (const artikel of formData.artiklar) {
+    const validation = validateArtikel(artikel);
+    if (!validation.isValid) {
+      return validation;
+    }
+  }
+
+  return { isValid: true };
+}
+//#endregion
+
 function NyFakturaComponent({ kunder, artiklar }: { kunder: any[]; artiklar: any[] }) {
   //#region Context och state
   const { formData, setFormData } = useFakturaContext();

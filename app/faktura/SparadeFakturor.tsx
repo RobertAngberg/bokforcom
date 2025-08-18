@@ -5,6 +5,57 @@ import { useState } from "react";
 import { deleteFaktura, hämtaFakturaMedRader, registreraKundfakturaBetalning } from "./actions";
 import { useFakturaContext } from "./FakturaProvider";
 
+//#region Business Logic - Migrated from actions.ts
+// Beräkna totalbelopp för faktura (flyttad från actions.ts)
+function calculateInvoiceTotalBelopp(artiklar: any[]): number {
+  const totalBelopp = artiklar.reduce((sum, artikel) => {
+    const prisInkMoms = artikel.pris_per_enhet * (1 + artikel.moms / 100);
+    return sum + artikel.antal * prisInkMoms;
+  }, 0);
+  return Math.round(totalBelopp * 100) / 100; // Avrunda till 2 decimaler
+}
+
+// Identifiera ROT/RUT typ från artiklar (flyttad från actions.ts)
+function determineRotRutType(artiklar: any[]): string | null {
+  const rotRutArtiklar = artiklar.filter((artikel) => artikel.rot_rut_typ);
+  const harROT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "ROT");
+  const harRUT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "RUT");
+
+  if (harROT && harRUT) {
+    return "ROT+RUT";
+  } else if (harROT) {
+    return "ROT";
+  } else if (harRUT) {
+    return "RUT";
+  }
+  return null;
+}
+
+// Beräkna ROT/RUT avdrag (flyttad från actions.ts)
+function calculateRotRutAvdrag(artiklar: any[]): number {
+  return artiklar
+    .filter((a) => a.rot_rut_typ)
+    .reduce((sum, a) => {
+      const arbetskostnad = parseFloat(a.arbetskostnad_ex_moms) || 0;
+      const procent = parseFloat(a.avdrag_procent) || 0;
+      return sum + (arbetskostnad * procent) / 100;
+    }, 0);
+}
+
+// Förbättra fakturadata med beräknade värden
+function enrichFakturaData(faktura: any, artiklar: any[]) {
+  const totalBelopp = calculateInvoiceTotalBelopp(artiklar);
+  const rotRutTyp = determineRotRutType(artiklar);
+
+  return {
+    ...faktura,
+    totalBelopp,
+    antalArtiklar: artiklar.length,
+    rotRutTyp,
+  };
+}
+//#endregion
+
 interface Props {
   fakturor: any[];
   activeInvoiceId?: number;
@@ -179,7 +230,7 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
               const isLoading = loadingInvoiceId === faktura.id;
 
               // Avgör status
-              let statusBadge = null;
+              let statusBadge: string | null = null;
               let statusColor = "text-white";
 
               if (faktura.status_betalning === "Betald") {

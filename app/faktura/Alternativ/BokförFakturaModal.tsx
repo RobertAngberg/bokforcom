@@ -6,6 +6,89 @@ import { bokförFaktura, hämtaBokföringsmetod, hämtaFakturaStatus } from "../
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Modal from "../../_components/Modal";
 
+//#region Business Logic - Migrated from actions.ts
+// Validera bokföringspost (flyttad från actions.ts)
+function validateBokföringsPost(post: BokföringsPost): { isValid: boolean; error?: string } {
+  if (!post.konto || !/^\d{4}$/.test(post.konto.toString())) {
+    return { isValid: false, error: "Ogiltigt kontonummer (måste vara 4 siffror)" };
+  }
+
+  if (isNaN(post.debet) || isNaN(post.kredit) || post.debet < 0 || post.kredit < 0) {
+    return { isValid: false, error: "Ogiltiga belopp i bokföringsposter" };
+  }
+
+  if (post.debet > 0 && post.kredit > 0) {
+    return { isValid: false, error: "En post kan inte ha både debet och kredit" };
+  }
+
+  return { isValid: true };
+}
+
+// Validera bokföringens balans (flyttad från actions.ts)
+function validateBokföringsBalance(poster: BokföringsPost[]): { isValid: boolean; error?: string } {
+  const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
+  const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
+
+  if (Math.abs(totalDebet - totalKredit) > 0.01) {
+    return {
+      isValid: false,
+      error: `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+// Validera all bokföringsdata (flyttad från actions.ts)
+function validateBokföringsData(data: any): { isValid: boolean; error?: string } {
+  if (!data.fakturanummer || data.fakturanummer.trim().length === 0) {
+    return { isValid: false, error: "Fakturanummer krävs" };
+  }
+
+  if (!data.kundnamn || data.kundnamn.trim().length === 0) {
+    return { isValid: false, error: "Kundnamn krävs" };
+  }
+
+  if (!data.poster || !Array.isArray(data.poster) || data.poster.length === 0) {
+    return { isValid: false, error: "Minst en bokföringspost krävs" };
+  }
+
+  if (isNaN(data.totaltBelopp) || data.totaltBelopp <= 0) {
+    return { isValid: false, error: "Ogiltigt totalbelopp" };
+  }
+
+  // Validera varje post
+  for (const post of data.poster) {
+    const validation = validateBokföringsPost(post);
+    if (!validation.isValid) {
+      return validation;
+    }
+  }
+
+  // Validera balans
+  const balanceValidation = validateBokföringsBalance(data.poster);
+  if (!balanceValidation.isValid) {
+    return balanceValidation;
+  }
+
+  return { isValid: true };
+}
+
+// Avgör om det är en betalningsregistrering (flyttad från actions.ts)
+function isPaymentRegistration(poster: BokföringsPost[]): boolean {
+  const harBankKonto = poster.some((p) => p.konto === "1930" || p.konto === "1910");
+  const harKundfordringar = poster.some((p) => p.konto === "1510");
+  return harBankKonto && harKundfordringar && poster.length === 2;
+}
+
+// Avgör om det är kontantmetod (flyttad från actions.ts)
+function isKontantmetod(poster: BokföringsPost[]): boolean {
+  const harBankKontantmetod = poster.some((p) => p.konto === "1930");
+  const harIngenKundfordringar = !poster.some((p) => p.konto === "1510");
+  return harBankKontantmetod && harIngenKundfordringar;
+}
+//#endregion
+
 interface BokförFakturaModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -277,14 +360,24 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
           0
         ) || 0;
 
-      const result = await bokförFaktura({
+      // Frontend-validering med migerade funktioner
+      const bokföringsData = {
         fakturaId: formData.id ? parseInt(formData.id) : undefined,
         fakturanummer: formData.fakturanummer,
         kundnamn: formData.kundnamn,
         totaltBelopp: totalInkMoms,
         poster: poster,
         kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
-      });
+      };
+
+      const validation = validateBokföringsData(bokföringsData);
+      if (!validation.isValid) {
+        alert(`❌ ${validation.error}`);
+        setLoading(false);
+        return;
+      }
+
+      const result = await bokförFaktura(bokföringsData);
 
       console.log("🔥 BOKFÖR DATA:", {
         fakturaId: formData.id ? parseInt(formData.id) : undefined,

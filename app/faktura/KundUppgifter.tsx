@@ -8,6 +8,66 @@ import Knapp from "../_components/Knapp";
 import Dropdown from "../_components/Dropdown";
 import TextFalt from "../_components/TextFalt";
 
+//#region Business Logic - Migrated from actions.ts
+// Säker text-sanitering för kunddata
+function sanitizeKundInput(input: string): string {
+  if (!input) return "";
+  return input
+    .trim()
+    .replace(/[<>]/g, "") // Ta bort potentiellt farliga tecken
+    .substring(0, 255); // Begränsa längd
+}
+
+// Email-validering för kunder
+function validateKundEmail(email: string): boolean {
+  if (!email) return true; // Email är valfritt
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+// Personnummer-validering (grundläggande format)
+function validatePersonnummer(personnummer: string): boolean {
+  if (!personnummer) return true; // Personnummer är valfritt
+  return /^\d{6}-?\d{4}$/.test(personnummer.replace(/\s/g, ""));
+}
+
+// Validera komplett kunddata
+function validateKundData(formData: any): { isValid: boolean; error?: string } {
+  // Validera obligatoriska fält
+  const kundnamn = sanitizeKundInput(formData.kundnamn || "");
+  if (!kundnamn || kundnamn.length < 2) {
+    return { isValid: false, error: "Kundnamn krävs (minst 2 tecken)" };
+  }
+
+  // Validera email om angivet
+  if (formData.kundemail && !validateKundEmail(formData.kundemail)) {
+    return { isValid: false, error: "Ogiltig email-adress" };
+  }
+
+  // Validera personnummer om angivet
+  if (formData.personnummer && !validatePersonnummer(formData.personnummer)) {
+    return { isValid: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
+  }
+
+  return { isValid: true };
+}
+
+// Sanitera all kunddata innan spara
+function sanitizeKundFormData(formData: any) {
+  return {
+    ...formData,
+    kundnamn: sanitizeKundInput(formData.kundnamn || ""),
+    kundorganisationsnummer: sanitizeKundInput(formData.kundorganisationsnummer || ""),
+    kundnummer: sanitizeKundInput(formData.kundnummer || ""),
+    kundmomsnummer: sanitizeKundInput(formData.kundmomsnummer || ""),
+    kundadress: sanitizeKundInput(formData.kundadress || ""),
+    kundpostnummer: sanitizeKundInput(formData.kundpostnummer || ""),
+    kundstad: sanitizeKundInput(formData.kundstad || ""),
+    personnummer: sanitizeKundInput(formData.personnummer || ""),
+  };
+}
+//#endregion
+
 type KundSaveResponse = {
   success: boolean;
   id?: number;
@@ -41,16 +101,26 @@ export default function KundUppgifter() {
   };
 
   const handleSave = async () => {
+    // Validera kunddata innan sparande
+    const validation = validateKundData(formData);
+    if (!validation.isValid) {
+      alert(`❌ ${validation.error}`);
+      return;
+    }
+
+    // Sanitera data
+    const sanitizedData = sanitizeKundFormData(formData);
+
     const fd = new FormData();
-    fd.append("kundnamn", formData.kundnamn);
-    fd.append("kundorgnummer", formData.kundorganisationsnummer);
-    fd.append("kundnummer", formData.kundnummer);
-    fd.append("kundmomsnummer", formData.kundmomsnummer);
-    fd.append("kundadress1", formData.kundadress);
-    fd.append("kundpostnummer", formData.kundpostnummer);
-    fd.append("kundstad", formData.kundstad);
-    fd.append("kundemail", formData.kundemail);
-    fd.append("personnummer", formData.personnummer || "");
+    fd.append("kundnamn", sanitizedData.kundnamn);
+    fd.append("kundorgnummer", sanitizedData.kundorganisationsnummer);
+    fd.append("kundnummer", sanitizedData.kundnummer);
+    fd.append("kundmomsnummer", sanitizedData.kundmomsnummer);
+    fd.append("kundadress1", sanitizedData.kundadress);
+    fd.append("kundpostnummer", sanitizedData.kundpostnummer);
+    fd.append("kundstad", sanitizedData.kundstad);
+    fd.append("kundemail", formData.kundemail); // Email valideras men saniteras inte
+    fd.append("personnummer", sanitizedData.personnummer);
 
     const res: KundSaveResponse = formData.kundId
       ? await uppdateraKund(parseInt(formData.kundId, 10), fd)
