@@ -454,9 +454,22 @@ export async function saveTransaction(formData: FormData) {
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
+  const belopp = Number(formData.get("belopp")?.toString() || 0);
+  const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
 
-  // Säker dataloggning - undvik känsliga belopp
-  console.log("📋 Sparar transaktion");
+  // Hämta färdiga transaktionsposter från frontend
+  const transaktionsposter = JSON.parse(
+    formData.get("transaktionsposter")?.toString() || "[]"
+  ) as Array<{
+    kontonummer: string;
+    debet: number;
+    kredit: number;
+  }>;
+
+  const utlaggMode = formData.get("utlaggMode") === "true";
+  const levfaktMode = formData.get("levfaktMode") === "true";
+
+  console.log(`🎯 Processing transaction: ${valtFörval.namn}`);
 
   // Konvertera transaktionsdatum till korrekt format för PostgreSQL
   let formattedDate = "";
@@ -464,7 +477,6 @@ export async function saveTransaction(formData: FormData) {
     try {
       const date = new Date(transaktionsdatum);
       if (!isNaN(date.getTime())) {
-        // Formatera som YYYY-MM-DD för PostgreSQL
         formattedDate = date.toISOString().split("T")[0];
       } else {
         console.error("Ogiltigt transaktionsdatum");
@@ -477,25 +489,6 @@ export async function saveTransaction(formData: FormData) {
   } else {
     throw new Error("Transaktionsdatum saknas");
   }
-
-  const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
-  if (!valtFörval?.konton) throw new Error("Saknar valda förval");
-
-  const moms = Number(formData.get("moms")?.toString() || 0);
-  const beloppUtanMoms = Number(formData.get("beloppUtanMoms")?.toString() || 0);
-  const belopp = Number(formData.get("belopp")?.toString() || 0);
-
-  const extrafält = JSON.parse(formData.get("extrafält")?.toString() || "{}") as Record<
-    string,
-    { label?: string; debet: number; kredit: number }
-  >;
-
-  // NYTT: Kolla om vi är i utläggs-mode eller leverantörsfaktura-mode
-  const utlaggMode = formData.get("utlaggMode") === "true";
-  const levfaktMode = formData.get("levfaktMode") === "true";
-
-  // Säker loggning utan känsliga belopp
-  console.log(`🎯 Processing transaction: ${valtFörval.namn}`);
 
   let blobUrl = null;
   let filename = "";
@@ -516,7 +509,6 @@ export async function saveTransaction(formData: FormData) {
         addRandomSuffix: false,
       });
 
-      // blobUrl = blob.url;
       console.log(`✅ Fil sparad till Blob Storage`);
     } catch (blobError) {
       console.error("Kunde inte spara fil till Blob Storage");
@@ -533,168 +525,37 @@ export async function saveTransaction(formData: FormData) {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING id
       `,
-      [
-        formattedDate, // Använd det formaterade datumet istället för new Date()
-        valtFörval.namn ?? "",
-        belopp,
-        filename,
-        kommentar,
-        userId,
-        blobUrl,
-      ]
+      [formattedDate, valtFörval.namn ?? "", belopp, filename, kommentar, userId, blobUrl]
     );
     const transaktionsId = rows[0].id;
-    console.log("🆔  Skapad transaktion:", transaktionsId);
+    console.log("🆔 Skapad transaktion:", transaktionsId);
 
+    // Spara alla transaktionsposter som beräknats på frontend
     const insertPost = `
       INSERT INTO transaktionsposter
         (transaktions_id, konto_id, debet, kredit)
       VALUES ($1,$2,$3,$4)
     `;
 
-    const getBelopp = (nr: string, typ: "debet" | "kredit") => {
-      const klass = nr[0];
-      console.log(
-        `🔍 getBelopp called: nr=${nr}, typ=${typ}, klass=${klass}, belopp=${belopp}, beloppUtanMoms=${beloppUtanMoms}`
+    for (const post of transaktionsposter) {
+      const { rows: kontoRows } = await client.query(
+        `SELECT id FROM konton WHERE kontonummer::text = $1`,
+        [post.kontonummer]
       );
 
-      if (typ === "debet") {
-        // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
-        if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
-          console.log(`💰 Processing debet 1930 (försäljning)`);
-          return belopp;
-        }
-        // KUNDFAKTURA FIX: 1510 ska få hela beloppet som debet (kundfordringar)
-        if (nr === "1510") {
-          console.log(`💰 Processing debet 1510 (kundfordringar)`);
-          return belopp;
-        }
-        // Alla andra klass 1-konton får beloppUtanMoms som tidigare
-        if (klass === "1") return beloppUtanMoms;
-        if (klass === "2") return moms; // FIXED: 2640 moms-konton som debet
-        if (klass === "3") return 0;
-        if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8")
-          return beloppUtanMoms; // FIXED: Kostnader
-        return 0;
+      if (!kontoRows.length) {
+        console.warn(`⛔ Konto ${post.kontonummer} hittades inte`);
+        continue;
       }
-      // typ === "kredit"
-      // CHECKPOINT FIX 2025-07-31: Specifikt för 1930 vid försäljning
-      if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
-        console.log(`💰 Returning 0 for kredit 1930 (försäljning) - should not be credit`);
-        return 0;
-      }
-      // KUNDFAKTURA FIX: 1510 ska inte vara kredit
-      if (nr === "1510") {
-        console.log(`💰 Returning 0 for kredit 1510 (kundfordringar) - should not be credit`);
-        return 0;
-      }
-      // UTLÄGG FIX: 2890 ska få hela beloppet som kredit (ersätter 1930)
-      if (nr === "2890") {
-        console.log(`💰 Processing kredit 2890 (utlägg)`);
-        return belopp;
-      }
-      // LEVERANTÖRSFAKTURA FIX: 2440 ska få hela beloppet som kredit (ersätter 1930)
-      if (nr === "2440") {
-        console.log(`💰 Processing kredit 2440 (leverantörsfaktura)`);
-        return belopp;
-      }
-      // Alla andra klass 1-konton får belopp som tidigare
-      if (klass === "1") return belopp;
-      if (klass === "2") {
-        console.log(`💰 Processing moms for kredit klass 2 (konto ${nr})`);
-        return moms; // FIXED: 2610 utgående moms ska vara kredit vid försäljning
-      }
-      if (klass === "3") return beloppUtanMoms;
-      if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8")
-        return 0; // Kostnader ska inte vara kredit
-      return 0;
-    };
-    if (Object.keys(extrafält).length) {
-      for (const [nr, data] of Object.entries(extrafält)) {
-        const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
-          nr,
-        ]);
-        if (!rows.length) {
-          console.warn(`⛔ Konto ${nr} hittades inte`);
-          continue;
-        }
 
-        // CHECKPOINT FIX 2025-07-31: Använd samma logik som getBelopp för 1930 vid försäljning
-        let { debet = 0, kredit = 0 } = data;
-
-        // Om detta är konto 1930 och det är försäljning, använd rätt belopp
-        if (nr === "1930" && valtFörval.namn?.includes("Försäljning")) {
-          if (debet > 0) {
-            debet = belopp; // Hela beloppet som debet, inte beloppUtanMoms
-          }
-          if (kredit > 0) {
-            kredit = 0; // 1930 ska inte vara kredit vid försäljning
-          }
-        }
-
-        // KUNDFAKTURA FIX: 1510 ska få hela beloppet som debet
-        if (nr === "1510") {
-          if (debet > 0) {
-            debet = belopp; // Hela beloppet som debet
-          }
-          if (kredit > 0) {
-            kredit = 0; // 1510 ska inte vara kredit
-          }
-        }
-
-        if (debet === 0 && kredit === 0) continue;
-
-        console.log(`➕ Extrafält ${nr}: processed`);
-        await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);
+      if (post.debet === 0 && post.kredit === 0) {
+        console.log(`⚠️ Skipping konto ${post.kontonummer} because both debet and kredit are 0`);
+        continue;
       }
+
+      console.log(`� Sparar post för konto ${post.kontonummer}: D=${post.debet}, K=${post.kredit}`);
+      await client.query(insertPost, [transaktionsId, kontoRows[0].id, post.debet, post.kredit]);
     }
-
-    if (!valtFörval.specialtyp) {
-      for (const k of valtFörval.konton) {
-        let nr = k.kontonummer?.toString().trim();
-        if (!nr) continue;
-
-        // NYTT: Byt ut 1930 mot 2890 om utläggs-mode, eller mot 2440 om leverantörsfaktura-mode, eller mot 1510 om försäljning
-        if (utlaggMode && nr === "1930") {
-          nr = "2890";
-        } else if (levfaktMode && nr === "1930") {
-          // Kolla om det är försäljning (kundfaktura)
-          if (valtFörval.namn?.includes("Försäljning")) {
-            nr = "1510"; // Kundfordringar för kundfakturor
-          } else {
-            nr = "2440"; // Leverantörsskulder för leverantörsfakturor
-          }
-        }
-        console.log(
-          `🔍 Kontokonvertering: utlaggMode=${utlaggMode}, levfaktMode=${levfaktMode}, nr=${nr}`
-        );
-
-        const { rows } = await client.query(`SELECT id FROM konton WHERE kontonummer::text=$1`, [
-          nr,
-        ]);
-        if (!rows.length) {
-          console.warn(`⛔ Konto ${nr} hittades inte`);
-          continue;
-        }
-
-        const debet = k.debet ? getBelopp(nr, "debet") : 0;
-        const kredit = k.kredit ? getBelopp(nr, "kredit") : 0;
-        console.log(
-          `📘 Förvalskonto ${nr}: k.debet=${k.debet}, k.kredit=${k.kredit}, calculated D=${debet}, K=${kredit}`
-        );
-
-        if (debet === 0 && kredit === 0) {
-          console.log(`⚠️ Skipping konto ${nr} because both debet and kredit are 0`);
-          continue;
-        }
-
-        console.log(`📘 Förvalskonto ${nr}: processed`);
-        await client.query(insertPost, [transaktionsId, rows[0].id, debet, kredit]);
-      }
-    } else {
-      console.log("⏭️  Förvalskonton hoppas över – specialtyp:", valtFörval.specialtyp);
-    }
-
     // Skapa utlägg-rad om utläggs-mode och anstalldId finns
     if (utlaggMode && anstalldId) {
       console.log("🔍 Utlägg formData:", {
@@ -780,6 +641,7 @@ export async function saveTransaction(formData: FormData) {
       );
       console.log("📝 Leverantörsfaktura SQL-result:", res.rows);
     }
+
     client.release();
     await invalidateBokförCache();
     return { success: true, id: transaktionsId, blobUrl };

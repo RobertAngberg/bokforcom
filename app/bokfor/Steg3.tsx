@@ -98,6 +98,122 @@ export default function Steg3({
   const moms = +(belopp * (momsSats / (1 + momsSats))).toFixed(2);
   const beloppUtanMoms = +(belopp - moms).toFixed(2);
 
+  // #region Business Logic - Beräkna transaktionsposter
+  const calculateBelopp = (kontonummer: string, typ: "debet" | "kredit"): number => {
+    const klass = kontonummer[0];
+
+    if (typ === "debet") {
+      // Specifikt för 1930 vid försäljning
+      if (kontonummer === "1930" && ärFörsäljning) {
+        return belopp;
+      }
+      // Kundfordringar (1510) ska få hela beloppet som debet
+      if (kontonummer === "1510") {
+        return belopp;
+      }
+      // Alla andra klass 1-konton får beloppUtanMoms
+      if (klass === "1") return beloppUtanMoms;
+      if (klass === "2") return moms; // Moms-konton som debet
+      if (klass === "3") return 0;
+      if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8") {
+        return beloppUtanMoms; // Kostnader
+      }
+      return 0;
+    }
+
+    // typ === "kredit"
+    // Specifikt för 1930 vid försäljning - ska inte vara kredit
+    if (kontonummer === "1930" && ärFörsäljning) {
+      return 0;
+    }
+    // Kundfordringar (1510) ska inte vara kredit
+    if (kontonummer === "1510") {
+      return 0;
+    }
+    // Utlägg (2890) ska få hela beloppet som kredit
+    if (kontonummer === "2890") {
+      return belopp;
+    }
+    // Leverantörsskulder (2440) ska få hela beloppet som kredit
+    if (kontonummer === "2440") {
+      return belopp;
+    }
+    // Alla andra klass 1-konton får belopp som kredit
+    if (klass === "1") return belopp;
+    if (klass === "2") {
+      return moms; // Utgående moms ska vara kredit vid försäljning
+    }
+    if (klass === "3") return beloppUtanMoms; // Intäktskonton
+    if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8") {
+      return 0; // Kostnader ska inte vara kredit
+    }
+    return 0;
+  };
+
+  const transformKontonummer = (originalKonto: string): string => {
+    // Om utläggs-mode, byt ut 1930 mot 2890
+    if (utlaggMode && originalKonto === "1930") {
+      return "2890";
+    }
+    // Om kundfaktura-mode (bokför som faktura), byt ut 1930 mot 1510
+    if (bokförSomFaktura && originalKonto === "1930") {
+      return "1510";
+    }
+    // Om leverantörsfaktura-mode (inköp), byt ut 1930 mot 2440
+    if (levfaktMode && !ärFörsäljning && originalKonto === "1930") {
+      return "2440";
+    }
+    // Om kundfaktura (försäljning), byt ut 1930 mot 1510
+    if (levfaktMode && ärFörsäljning && originalKonto === "1930") {
+      return "1510";
+    }
+    return originalKonto;
+  };
+
+  // Beräkna alla transaktionsposter som ska skickas till servern
+  const beräknaTransaktionsposter = () => {
+    const poster: Array<{ kontonummer: string; debet: number; kredit: number }> = [];
+
+    // Hantera extrafält först
+    if (Object.keys(extrafält).length > 0) {
+      for (const [nr, data] of Object.entries(extrafält)) {
+        let { debet = 0, kredit = 0 } = data;
+        const transformedKonto = transformKontonummer(nr);
+
+        // Använd calculateBelopp för att få rätt belopp
+        if (debet > 0) {
+          debet = calculateBelopp(transformedKonto, "debet");
+        }
+        if (kredit > 0) {
+          kredit = calculateBelopp(transformedKonto, "kredit");
+        }
+
+        if (debet === 0 && kredit === 0) continue;
+
+        poster.push({ kontonummer: transformedKonto, debet, kredit });
+      }
+    }
+
+    // Hantera förvalskonton om inte specialtyp
+    if (!valtFörval?.specialtyp && valtFörval?.konton) {
+      for (const k of valtFörval.konton) {
+        const originalKonto = k.kontonummer?.toString().trim();
+        if (!originalKonto) continue;
+
+        const transformedKonto = transformKontonummer(originalKonto);
+        const debet = k.debet ? calculateBelopp(transformedKonto, "debet") : 0;
+        const kredit = k.kredit ? calculateBelopp(transformedKonto, "kredit") : 0;
+
+        if (debet === 0 && kredit === 0) continue;
+
+        poster.push({ kontonummer: transformedKonto, debet, kredit });
+      }
+    }
+
+    return poster;
+  };
+  // #endregion
+
   // Kolla om det är försäljning inom leverantörsfaktura-mode
   const ärFörsäljning =
     levfaktMode &&
@@ -128,46 +244,36 @@ export default function Steg3({
 
   // #region Submitta form
   const handleSubmit = async (formData: FormData) => {
-    if (!valtFörval || !setCurrentStep) return;
+    if (!valtFörval) return;
+
+    // Kontrollera att utlägg har vald anställd
+    if (utlaggMode && !anstalldId) {
+      alert("Du måste välja en anställd för utlägget.");
+      return;
+    }
 
     setLoading(true);
     try {
-      if (fil) formData.set("fil", fil);
-      formData.set("valtFörval", JSON.stringify(valtFörval));
-      formData.set("extrafält", JSON.stringify(extrafält));
-      // För leverantörsfakturor använd betaldatum, annars transaktionsdatum
-      const datumAttAnvända = levfaktMode && betaldatum ? betaldatum : transaktionsdatum;
-      console.log(
-        "🔍 Debug datum - levfaktMode:",
-        levfaktMode,
-        "betaldatum:",
-        betaldatum,
-        "transaktionsdatum:",
-        transaktionsdatum,
-        "datumAttAnvända:",
-        datumAttAnvända
-      );
+      // Beräkna alla transaktionsposter på frontend
+      const transaktionsposter = beräknaTransaktionsposter();
 
-      // Säkerställ att vi har ett datum
-      if (!datumAttAnvända) {
-        const idag = new Date().toISOString();
-        console.log("⚠️ Inget datum fanns, använder dagens datum:", idag);
-        formData.set("transaktionsdatum", idag);
-      } else {
-        formData.set("transaktionsdatum", datumAttAnvända);
-      }
+      // Lägg till alla nödvändiga fält till FormData
+      formData.set("transaktionsdatum", transaktionsdatum);
       formData.set("kommentar", kommentar);
-      formData.set("kontonummer", kontonummer);
-      formData.set("kontobeskrivning", kontobeskrivning);
       formData.set("belopp", belopp.toString());
       formData.set("moms", moms.toString());
       formData.set("beloppUtanMoms", beloppUtanMoms.toString());
-      formData.set("utlaggMode", utlaggMode ? "true" : "false");
-      formData.set("levfaktMode", levfaktMode ? "true" : "false");
-      if (utlaggMode && anstalldId) formData.set("anstalldId", anstalldId);
+      formData.set("valtFörval", JSON.stringify(valtFörval));
+      formData.set("transaktionsposter", JSON.stringify(transaktionsposter));
 
-      // Leverantörsfaktura-specifika fält
+      // Lägg till mode-specifika fält
+      if (utlaggMode) {
+        formData.set("utlaggMode", "true");
+        if (anstalldId) formData.set("anstalldId", anstalldId);
+      }
+
       if (levfaktMode) {
+        formData.set("levfaktMode", "true");
         if (leverantör?.id) formData.set("leverantorId", leverantör.id.toString());
         if (fakturanummer) formData.set("fakturanummer", fakturanummer);
         if (fakturadatum) formData.set("fakturadatum", fakturadatum);
@@ -182,7 +288,7 @@ export default function Steg3({
       }
 
       const result = await saveTransaction(formData);
-      if (result.success) setCurrentStep(4);
+      if (result.success) setCurrentStep?.(4);
     } finally {
       setLoading(false);
     }
