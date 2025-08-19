@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR } from "./actions";
-import { compressImageFile } from "../_utils/blobUpload";
+import { uploadReceiptImage, uploadBlob, compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 
 // Säker filvalidering
@@ -126,10 +126,6 @@ export default function LaddaUppFil({
     const finalSizeKB = file.size / 1024;
     const finalSizeMB = finalSizeKB / 1024;
 
-    const fileUrl = URL.createObjectURL(file);
-    setPdfUrl(fileUrl);
-    setFil(file);
-
     setIsLoading(true);
     setTimeoutTriggered(false);
 
@@ -137,6 +133,22 @@ export default function LaddaUppFil({
       setIsLoading(false);
       setTimeoutTriggered(true);
     }, 10000);
+
+    try {
+      const blobResult = await uploadReceiptImage(file);
+      if (blobResult.url) {
+        setPdfUrl(blobResult.url);
+        setFil(file);
+      } else {
+        console.error("Ingen URL returnerades från blob storage");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Fel vid uppladdning av fil:", error);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       let text = "";

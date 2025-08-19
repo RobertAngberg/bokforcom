@@ -2,6 +2,7 @@
 
 import { Pool } from "pg";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 import { getUserId } from "../_utils/authUtils";
 import { validateSessionAttempt } from "../_utils/rateLimit";
 

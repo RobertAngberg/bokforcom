@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCRLevFakt } from "./actions";
-import { compressImageFile } from "../_utils/blobUpload";
+import { uploadReceiptImage, uploadBlob, compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import { type Leverantör } from "../faktura/actions";
 
@@ -91,12 +91,24 @@ export default function LaddaUppFilLevfakt({
       console.log(`📊 Slutlig filstorlek: ${finalSizeKB.toFixed(1)}KB`);
     }
 
-    const fileUrl = URL.createObjectURL(file);
-    setPdfUrl(fileUrl);
-    setFil(file);
-
     setIsLoading(true);
     setTimeoutTriggered(false);
+
+    try {
+      const blobResult = await uploadReceiptImage(file);
+      if (blobResult.url) {
+        setPdfUrl(blobResult.url);
+        setFil(file);
+      } else {
+        console.error("Ingen URL returnerades från blob storage");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Fel vid uppladdning av fil:", error);
+      setIsLoading(false);
+      return;
+    }
 
     const timeout = setTimeout(() => {
       console.log("⏰ Timeout efter 10 sekunder!");

@@ -21,10 +21,10 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           <p className="text-gray-500 text-center">Ditt underlag kommer att visas här</p>
         )}
 
-        {fil?.type.startsWith("image/") && (
+        {(fil?.type.startsWith("image/") || pdfUrl) && (
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
-              src={URL.createObjectURL(fil)}
+              src={pdfUrl || URL.createObjectURL(fil!)}
               alt="Forhandsgranskning"
               width={800}
               height={600}
@@ -69,9 +69,9 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
             </button>
 
             <div className="flex justify-center items-center">
-              {fil?.type.startsWith("image/") && (
+              {(fil?.type.startsWith("image/") || pdfUrl) && (
                 <Image
-                  src={URL.createObjectURL(fil)}
+                  src={pdfUrl || URL.createObjectURL(fil!)}
                   alt="Stor förhandsgranskning"
                   width={1200}
                   height={1000}
