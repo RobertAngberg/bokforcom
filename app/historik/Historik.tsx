@@ -231,11 +231,11 @@ export default function Historik({ initialData }: Props) {
       <div className="text-center mb-8 space-y-4">
         <h1 className="text-3xl">Historik</h1>
         <div className="flex justify-center gap-4 flex-wrap">
-          <div className="max-w-[8rem] w-full">
+          <div className="w-24">
             <Dropdown
               value={year}
-              onChange={setYear}
-              placeholder="Välj år"
+              onChange={handleYearChange}
+              placeholder="År"
               options={[
                 { label: "2025", value: "2025" },
                 { label: "2024", value: "2024" },
@@ -246,42 +246,29 @@ export default function Historik({ initialData }: Props) {
               ]}
             />
           </div>
-          <div className="max-w-[10rem] w-full">
-            <Dropdown
-              value={year}
-              onChange={handleYearChange}
-              placeholder="År"
-              options={[
-                { label: "2024", value: "2024" },
-                { label: "2023", value: "2023" },
-                { label: "2022", value: "2022" },
-                { label: "2021", value: "2021" },
-                { label: "2020", value: "2020" },
-              ]}
-            />
-          </div>
-          <div className="max-w-[10rem] w-full">
+          <div className="w-28">
             <Dropdown
               value={month}
               onChange={handleMonthChange}
               placeholder="Månad"
               options={[
-                { label: "Januari", value: "01" },
-                { label: "Februari", value: "02" },
-                { label: "Mars", value: "03" },
-                { label: "April", value: "04" },
+                { label: "Alla", value: "" },
+                { label: "Jan", value: "01" },
+                { label: "Feb", value: "02" },
+                { label: "Mar", value: "03" },
+                { label: "Apr", value: "04" },
                 { label: "Maj", value: "05" },
-                { label: "Juni", value: "06" },
-                { label: "Juli", value: "07" },
-                { label: "Augusti", value: "08" },
-                { label: "September", value: "09" },
-                { label: "Oktober", value: "10" },
-                { label: "November", value: "11" },
-                { label: "December", value: "12" },
+                { label: "Jun", value: "06" },
+                { label: "Jul", value: "07" },
+                { label: "Aug", value: "08" },
+                { label: "Sep", value: "09" },
+                { label: "Okt", value: "10" },
+                { label: "Nov", value: "11" },
+                { label: "Dec", value: "12" },
               ]}
             />
           </div>
-          <div className="max-w-[12rem] w-full">
+          <div className="w-40">
             <input
               type="text"
               placeholder="🔍 Sök..."

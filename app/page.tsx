@@ -5,67 +5,18 @@ import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
 import Startsida from "./start/Startsida";
 import { fetchRawYearData } from "./start/actions";
-
-// Frontend data processing - samma som i Startsida.tsx
-const processYearData = (rawData: any[]) => {
-  const grouped: Record<string, { inkomst: number; utgift: number }> = {};
-  let totalInkomst = 0;
-  let totalUtgift = 0;
-
-  rawData.forEach((row, i) => {
-    const { transaktionsdatum, debet, kredit, kontonummer } = row;
-
-    if (!transaktionsdatum || !kontonummer) {
-      console.warn(`⚠️ Rad ${i + 1} saknar datum eller kontonummer:`, row);
-      return;
-    }
-
-    const date = new Date(transaktionsdatum);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
-
-    const deb = Number(debet ?? 0);
-    const kre = Number(kredit ?? 0);
-    const prefix = kontonummer?.toString()[0];
-
-    if (!grouped[key]) grouped[key] = { inkomst: 0, utgift: 0 };
-
-    if (prefix === "3") {
-      grouped[key].inkomst += kre;
-      totalInkomst += kre;
-    }
-
-    if (["5", "6", "7", "8"].includes(prefix)) {
-      grouped[key].utgift += deb;
-      totalUtgift += deb;
-    }
-  });
-
-  const yearData = Object.entries(grouped).map(([month, values]) => ({
-    month,
-    inkomst: values.inkomst,
-    utgift: values.utgift,
-  }));
-
-  return {
-    totalInkomst: +totalInkomst.toFixed(2),
-    totalUtgift: +totalUtgift.toFixed(2),
-    totalResultat: +(totalInkomst - totalUtgift).toFixed(2),
-    yearData,
-  };
-};
+import { processYearData, getCurrentYear, YearSummary } from "./_utils/format";
 
 export default function Page() {
   const { data: session, status } = useSession();
   const [showModal, setShowModal] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<YearSummary | null>(null);
 
   // Ladda data när komponenten mountas (bara för inloggade)
   useEffect(() => {
     if (session?.user) {
       const loadData = async () => {
-        const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
-        const dataPromise = fetchRawYearData("2025");
-        const [, rawData] = await Promise.all([delayPromise, dataPromise]);
+        const rawData = await fetchRawYearData(getCurrentYear());
         const processedData = processYearData(rawData);
         setInitialData(processedData);
       };

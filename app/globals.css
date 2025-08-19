@@ -160,3 +160,16 @@
         display: none !important;
     }
 }
+
+/* Animation delay utilities för loading spinner */
+.animation-delay-75 {
+    animation-delay: 75ms;
+}
+
+.animation-delay-100 {
+    animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+    animation-delay: 200ms;
+}

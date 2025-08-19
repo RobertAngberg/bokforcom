@@ -7,7 +7,7 @@ import AnstalldDropdown, { Anstalld } from "./AnstalldDropdown";
 import { saveTransaction } from "./actions";
 import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
-import { formatSEK, round } from "../_utils/format";
+import { formatSEK, formatCurrency, round } from "../_utils/format";
 import { type Leverantör } from "../faktura/actions";
 
 type KontoRad = {
@@ -462,10 +462,10 @@ export default function Steg3({
               <tr key={r.key}>
                 <td className="p-4 border-b border-gray-700">{r.konto}</td>
                 <td className="p-4 text-center border-b border-gray-700">
-                  {r.debet > 0 ? formatSEK(r.debet) : ""}
+                  {r.debet > 0 ? formatCurrency(r.debet) : ""}
                 </td>
                 <td className="p-4 text-center border-b border-gray-700">
-                  {r.kredit > 0 ? formatSEK(r.kredit) : ""}
+                  {r.kredit > 0 ? formatCurrency(r.kredit) : ""}
                 </td>
               </tr>
             ))}
@@ -473,8 +473,8 @@ export default function Steg3({
           <tfoot>
             <tr className="font-bold bg-cyan-900 text-white">
               <td className="p-4 text-left">Totalt</td>
-              <td className="p-4 text-center">{formatSEK(totalDebet)}</td>
-              <td className="p-4 text-center">{formatSEK(totalKredit)}</td>
+              <td className="p-4 text-center">{formatCurrency(totalDebet)}</td>
+              <td className="p-4 text-center">{formatCurrency(totalKredit)}</td>
             </tr>
           </tfoot>
         </table>
