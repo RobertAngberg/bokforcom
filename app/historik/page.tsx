@@ -4,10 +4,9 @@ import { fetchTransaktioner } from "./actions";
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const delayPromise = new Promise((r) => setTimeout(r, 400));
   const dataPromise = fetchTransaktioner();
 
-  const [, result] = await Promise.all([delayPromise, dataPromise]);
+  const result = await dataPromise;
 
   const historyData =
     result.success && Array.isArray(result.data)

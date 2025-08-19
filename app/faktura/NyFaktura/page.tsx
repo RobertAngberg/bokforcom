@@ -275,11 +275,7 @@ function NyFakturaComponent({ kunder, artiklar }: { kunder: any[]; artiklar: any
 
 // Data-loading wrapper för att hålla server-side funktionaliteten
 async function DataLoader() {
-  const [_, kunder, artiklar] = await Promise.all([
-    new Promise((r) => setTimeout(r, 400)),
-    hämtaSparadeKunder(),
-    hämtaSparadeArtiklar(),
-  ]);
+  const [kunder, artiklar] = await Promise.all([hämtaSparadeKunder(), hämtaSparadeArtiklar()]);
 
   return { kunder, artiklar };
 }

@@ -207,13 +207,13 @@ function sanitizeFileName(fileName: string): string {
 }
 
 // 🎯 Convenience-funktioner för specifika användningsfall
-export const uploadInvoiceAttachment = (file: File) =>
+export const uploadInvoiceAttachment = async (file: File) =>
   uploadBlob(file, { folder: "invoices", quality: 0.7 });
 
-export const uploadReceiptImage = (file: File) =>
+export const uploadReceiptImage = async (file: File) =>
   uploadBlob(file, { folder: "receipts", quality: 0.8, maxWidth: 1200 });
 
-export const uploadProfileImage = (file: File) =>
+export const uploadProfileImage = async (file: File) =>
   uploadBlob(file, { folder: "profiles", quality: 0.9, maxWidth: 400, maxHeight: 400 });
 
 // 🗜️ Exporterad komprimerings-funktion för direkt användning (utan upload)

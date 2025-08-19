@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 
 export default async function Page() {
-  // Starta ALLA asynkrona operationer samtidigt
-  const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
+  // Starta asynkrona operationer samtidigt
   const sessionPromise = auth();
   const year = new Date().getFullYear().toString();
   const balansPromise = fetchBalansData(year);
@@ -16,8 +15,8 @@ export default async function Page() {
   const userId = session?.user?.id;
   const profilPromise = userId ? fetchFöretagsprofil(Number(userId)) : Promise.resolve(null);
 
-  // Promise.all väntar på att alla blir klara (delay + data hämtas parallellt)
-  const [, initialData, profil] = await Promise.all([delayPromise, balansPromise, profilPromise]);
+  // Promise.all väntar på att alla blir klara
+  const [initialData, profil] = await Promise.all([balansPromise, profilPromise]);
 
   return (
     <Balansrapport

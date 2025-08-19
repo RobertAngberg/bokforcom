@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 
 export default async function Page() {
-  // Dessa startar samtidigt (parallellt):
-  const delayPromise = new Promise((resolve) => setTimeout(resolve, 400));
+  // Starta asynkrona operationer samtidigt
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -14,7 +13,7 @@ export default async function Page() {
   const dataPromise = hamtaResultatrapport();
 
   // Promise.all väntar på att alla blir klara
-  const [, data, profil] = await Promise.all([delayPromise, dataPromise, profilPromise]);
+  const [data, profil] = await Promise.all([dataPromise, profilPromise]);
 
   return (
     <Resultatrapport

@@ -5,8 +5,6 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 
 export default async function Page() {
-  const wait = new Promise((r) => setTimeout(r, 400));
-
   const sessionPromise = auth();
   const huvudbokPromise = fetchHuvudbok();
 
@@ -14,8 +12,8 @@ export default async function Page() {
   const userId = session?.user?.id;
   const profilPromise = userId ? fetchFöretagsprofil(Number(userId)) : Promise.resolve(null);
 
-  // Vänta på både 400ms och all data parallellt
-  const [result, profil] = await Promise.all([huvudbokPromise, profilPromise, wait]);
+  // Vänta på all data parallellt
+  const [result, profil] = await Promise.all([huvudbokPromise, profilPromise]);
 
   return (
     <Huvudbok

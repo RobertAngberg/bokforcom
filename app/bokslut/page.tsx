@@ -1,11 +1,10 @@
-import { Metadata } from "next";
-import Bokslut from "./Bokslut";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Bokslut",
-  description: "Hantera årsbokslut och periodstängningar",
-};
+import { useState } from "react";
+import BokslutWizard from "./BokslutWizard";
 
 export default function BokslutPage() {
-  return <Bokslut />;
+  const [aktivPeriod, setAktivPeriod] = useState<string>("2025");
+
+  return <BokslutWizard aktivPeriod={aktivPeriod} onCancel={() => window.history.back()} />;
 }

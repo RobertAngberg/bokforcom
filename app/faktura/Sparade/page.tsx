@@ -329,8 +329,7 @@ function FakturorComponent({
 
 // Data-loading wrapper för att hålla server-side funktionaliteten
 async function DataLoader() {
-  const [_, kunder, fakturor, artiklar] = await Promise.all([
-    new Promise((r) => setTimeout(r, 400)),
+  const [kunder, fakturor, artiklar] = await Promise.all([
     hämtaSparadeKunder(),
     hämtaSparadeFakturor(),
     hämtaSparadeArtiklar(),
