@@ -6,6 +6,7 @@ import MainLayout from "../../_components/MainLayout";
 import Knapp from "../../_components/Knapp";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatSEK as utilFormatSEK } from "../../_utils/format";
 
 type HuvudboksKonto = {
   kontonummer: string;
@@ -38,8 +39,7 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
 
     const isNegative = val < 0;
     const absVal = Math.abs(val);
-    const rounded = Math.round(absVal);
-    const formatted = rounded.toLocaleString("sv-SE") + "kr";
+    const formatted = utilFormatSEK(absVal) + "kr";
     return isNegative ? `−${formatted}` : formatted;
   };
 

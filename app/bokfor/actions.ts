@@ -2,7 +2,9 @@
 "use server";
 
 import { Pool } from "pg";
+import { formatSEK } from "../_utils/format";
 import { auth } from "../../auth";
+import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
 import OpenAI from "openai";
 import { invalidateBokförCache } from "./invalidateBokförCache";
 import { put } from "@vercel/blob";
@@ -475,9 +477,9 @@ export async function saveTransaction(formData: FormData) {
   let formattedDate = "";
   if (transaktionsdatum) {
     try {
-      const date = new Date(transaktionsdatum);
-      if (!isNaN(date.getTime())) {
-        formattedDate = date.toISOString().split("T")[0];
+      const date = stringTillDate(transaktionsdatum);
+      if (date) {
+        formattedDate = dateTillÅÅÅÅMMDD(date);
       } else {
         console.error("Ogiltigt transaktionsdatum");
         throw new Error("Ogiltigt transaktionsdatum");
@@ -608,12 +610,8 @@ export async function saveTransaction(formData: FormData) {
       // Formatera datum korrekt för PostgreSQL
       const formatDate = (dateStr: string | null) => {
         if (!dateStr) return null;
-        try {
-          const date = new Date(dateStr);
-          return !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : null;
-        } catch {
-          return null;
-        }
+        const date = stringTillDate(dateStr);
+        return date ? dateTillÅÅÅÅMMDD(date) : null;
       };
 
       const formattedFakturadatum = formatDate(fakturadatum);
