@@ -31,7 +31,7 @@ export default function Page() {
       // Försök hämta företagsprofil om möjligt
       try {
         // Note: Detta behöver anpassas för client-side
-        const profil = null; // await fetchFöretagsprofil();
+        const profil = null as { organisationsnummer?: string; företagsnamn?: string } | null; // await fetchFöretagsprofil();
         if (profil) {
           setOrganisationsnummer(profil.organisationsnummer ?? "");
           setFöretagsnamn(profil.företagsnamn ?? "");
@@ -44,8 +44,11 @@ export default function Page() {
     loadData();
   }, []);
 
-  const årLista = ["2023", "2024", "2025"];
-  const kvartalLista = ["Hela året", "Q1", "Q2", "Q3", "Q4"];
+  const årLista = ["2023", "2024", "2025"].map((år) => ({ label: år, value: år }));
+  const kvartalLista = ["Hela året", "Q1", "Q2", "Q3", "Q4"].map((kv) => ({
+    label: kv,
+    value: kv,
+  }));
 
   const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
   const sum = (...fält: string[]) => fält.reduce((acc, f) => acc + get(f), 0);
@@ -136,13 +139,13 @@ export default function Page() {
     }
   };
 
-  const kolumner: ColumnDefinition[] = [
-    { key: "fält", label: "Fält", render: (value) => String(value) },
+  const kolumner: ColumnDefinition<MomsRad>[] = [
+    { key: "fält", label: "Fält", render: (value: any) => String(value) },
     { key: "beskrivning", label: "Beskrivning" },
     {
       key: "belopp",
       label: "Belopp",
-      render: (value) => {
+      render: (value: any) => {
         const num = Number(value);
         return num.toLocaleString("sv-SE", {
           style: "currency",
@@ -160,14 +163,8 @@ export default function Page() {
         <h1 className="text-3xl font-bold mb-6 text-center">Momsrapport</h1>
 
         <div className="flex flex-wrap gap-4 mb-6 justify-center">
-          <Dropdown label="År" value={år} options={årLista} onChange={setÅr} id="år" />
-          <Dropdown
-            label="Period"
-            value={kvartal}
-            options={kvartalLista}
-            onChange={setKvartal}
-            id="kvartal"
-          />
+          <Dropdown label="År" value={år} options={årLista} onChange={setÅr} />
+          <Dropdown label="Period" value={kvartal} options={kvartalLista} onChange={setKvartal} />
         </div>
 
         <div className="mb-6 text-center">
@@ -181,7 +178,13 @@ export default function Page() {
           {exportMessage && <p className="mt-2 text-sm">{exportMessage}</p>}
         </div>
 
-        <Tabell data={initialData} kolumner={kolumner} onRowClick={() => {}} activeId={activeId} />
+        <Tabell
+          data={initialData}
+          columns={kolumner}
+          getRowId={(rad) => rad.fält}
+          handleRowClick={() => {}}
+          activeId={activeId}
+        />
 
         <div className="mt-6 p-4 bg-gray-800 rounded">
           <h3 className="text-lg font-semibold mb-2">Sammanfattning</h3>
