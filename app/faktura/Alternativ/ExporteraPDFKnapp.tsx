@@ -1,6 +1,6 @@
 "use client";
 import Knapp from "../../_components/Knapp";
-import { generatePDFFromElement } from "../../_utils/pdfGenerator";
+import { generatePDFFromElement } from "./pdfGenerator";
 
 interface ExporteraPDFKnappProps {
   disabled?: boolean;

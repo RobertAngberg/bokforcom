@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import { useFakturaContext } from "../FakturaProvider";
-import { generatePDFAsBase64 } from "../../_utils/pdfGenerator";
+import { generatePDFAsBase64 } from "./pdfGenerator";
 
 interface Props {
   onSuccess?: () => void;

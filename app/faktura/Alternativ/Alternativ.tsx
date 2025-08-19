@@ -17,7 +17,7 @@ import {
   registreraRotRutBetalning,
 } from "../actions";
 import { useFakturaContext } from "../FakturaProvider";
-import { laddaNerHUSFil } from "../../_utils/husFilGenerator";
+import { laddaNerHUSFil } from "./husFilGenerator";
 
 // Lokal typ för bokföringsposter
 interface BokföringsPost {

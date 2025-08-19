@@ -4,7 +4,7 @@
 import { Pool } from "pg";
 import { auth } from "../../auth";
 import OpenAI from "openai";
-import { invalidateBokförCache } from "../_utils/invalidateBokförCache";
+import { invalidateBokförCache } from "./invalidateBokförCache";
 import { put } from "@vercel/blob";
 
 const pool = new Pool({
