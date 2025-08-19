@@ -1,45 +1,18 @@
 "use server";
 
-import { auth } from "../../auth";
 import { Pool } from "pg";
 import crypto from "crypto";
+import { getUserId } from "../_utils/authUtils";
+import { validateSessionAttempt } from "../_utils/actionRateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR SIE-MODUL
-const sessionAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
-
-async function validateSessionAttempt(sessionId: string): Promise<boolean> {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minuter
-  const maxAttempts = 5; // Begränsa SIE-operationer till 5 per 15 min (mycket känsligt)
-
-  const userAttempts = sessionAttempts.get(sessionId) || { attempts: 0, lastAttempt: 0 };
-
-  if (now - userAttempts.lastAttempt > windowMs) {
-    userAttempts.attempts = 0;
-  }
-
-  if (userAttempts.attempts >= maxAttempts) {
-    await logSieSecurityEvent(
-      sessionId,
-      "rate_limit_exceeded",
-      `Rate limit exceeded: ${userAttempts.attempts} attempts`
-    );
-    return false;
-  }
-
-  userAttempts.attempts++;
-  userAttempts.lastAttempt = now;
-  sessionAttempts.set(sessionId, userAttempts);
-
-  return true;
-}
 
 async function logSieSecurityEvent(
-  userId: string,
+  userId: number | string,
   eventType: string,
   details: string
 ): Promise<void> {
@@ -47,7 +20,7 @@ async function logSieSecurityEvent(
     await pool.query(
       `INSERT INTO security_logs (user_id, event_type, details, timestamp, module) 
        VALUES ($1, $2, $3, NOW(), 'SIE')`,
-      [userId, eventType, details]
+      [String(userId), eventType, details]
     );
   } catch (error) {
     console.error("Failed to log SIE security event:", error);
@@ -115,12 +88,10 @@ interface SieUploadResult {
 export async function uploadSieFile(formData: FormData): Promise<SieUploadResult> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
-
-    const userId = session.user.id;
 
     // Rate limiting för SIE-uppladdningar
     if (!(await validateSessionAttempt(userId))) {
@@ -261,10 +232,10 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     console.error("Fel vid parsning av SIE-fil:", error);
     // Logga fel om vi har userId från session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logSieSecurityEvent(
-          errorSession.user.id,
+          userId,
           "sie_upload_error",
           `Parse error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -276,7 +247,11 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
   }
 }
 
-async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[], userId?: string) {
+async function kontrollSaknade(
+  sieKonton: string[],
+  anvandaKonton?: string[],
+  userId?: number | string
+) {
   try {
     const { Pool } = require("pg");
     const tempPool = new Pool({
@@ -957,12 +932,10 @@ export async function skapaKonton(
 ): Promise<{ success: boolean; error?: string; skapade?: number }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
-
-    const userId = session.user.id;
 
     // Rate limiting för kontoskapande
     if (!(await validateSessionAttempt(userId))) {
@@ -1053,10 +1026,10 @@ export async function skapaKonton(
     console.error("Fel vid skapande av konton:", error);
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logSieSecurityEvent(
-          errorSession.user.id,
+          userId,
           "sie_create_accounts_error",
           `Failed to create accounts: ${error}`
         );
@@ -1093,14 +1066,13 @@ export async function importeraSieData(
 ): Promise<{ success: boolean; error?: string; resultat?: any }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       return {
         success: false,
         error: "Ingen giltig session - måste vara inloggad",
       };
     }
-    const userId = session.user.id;
 
     // Rate limiting för SIE-import (mycket känslig operation)
     if (!(await validateSessionAttempt(userId))) {
@@ -1707,12 +1679,10 @@ export async function exporteraSieData(
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
-
-    const userId = session.user.id;
 
     // Rate limiting för SIE-export
     if (!(await validateSessionAttempt(userId))) {
@@ -1943,10 +1913,10 @@ export async function exporteraSieData(
     console.error("Fel vid export av SIE-data:", error);
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logSieSecurityEvent(
-          errorSession.user.id,
+          userId,
           "sie_export_error",
           `Export failed: ${error instanceof Error ? error.message : String(error)}`
         );

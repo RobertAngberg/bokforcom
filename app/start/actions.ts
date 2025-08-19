@@ -1,45 +1,19 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../auth";
 import { put } from "@vercel/blob";
+import { validateId, sanitizeInput } from "../_utils/validationUtils";
+import { getUserId } from "../_utils/authUtils";
+import { validateSessionAttempt } from "../_utils/actionRateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR START-MODUL
-const sessionAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
-
-async function validateSessionAttempt(sessionId: string): Promise<boolean> {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minuter
-  const maxAttempts = 20; // Start-modulen används ofta, högre gräns
-
-  const userAttempts = sessionAttempts.get(sessionId) || { attempts: 0, lastAttempt: 0 };
-
-  if (now - userAttempts.lastAttempt > windowMs) {
-    userAttempts.attempts = 0;
-  }
-
-  if (userAttempts.attempts >= maxAttempts) {
-    await logStartSecurityEvent(
-      sessionId,
-      "rate_limit_exceeded",
-      `Rate limit exceeded: ${userAttempts.attempts} attempts`
-    );
-    return false;
-  }
-
-  userAttempts.attempts++;
-  userAttempts.lastAttempt = now;
-  sessionAttempts.set(sessionId, userAttempts);
-
-  return true;
-}
 
 async function logStartSecurityEvent(
-  userId: string,
+  userId: number | string,
   eventType: string,
   details: string
 ): Promise<void> {
@@ -57,7 +31,7 @@ async function logStartSecurityEvent(
       await pool.query(
         `INSERT INTO security_logs (user_id, event_type, details, timestamp, module) 
          VALUES ($1, $2, $3, NOW(), 'START')`,
-        [userId, eventType, details]
+        [String(userId), eventType, details]
       );
     } else {
       console.log(`Start Security Event [${eventType}] User: ${userId} - ${details}`);
@@ -68,19 +42,13 @@ async function logStartSecurityEvent(
   }
 }
 
-function sanitizeInput(input: string): string {
-  return input.replace(/[<>'"&]/g, "").trim();
-}
-
 export async function hämtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -124,10 +92,10 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_transaction_posts_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -144,12 +112,10 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -211,10 +177,10 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -231,12 +197,10 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 export async function fetchRawYearData(year: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -291,10 +255,10 @@ export async function fetchRawYearData(year: string) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_raw_year_data_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -311,12 +275,10 @@ export async function fetchRawYearData(year: string) {
 export async function hämtaAllaTransaktioner() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -362,10 +324,10 @@ export async function hämtaAllaTransaktioner() {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_all_transactions_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -382,12 +344,10 @@ export async function hämtaAllaTransaktioner() {
 export async function getAllInvoices() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -428,10 +388,10 @@ export async function getAllInvoices() {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_all_invoices_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -448,12 +408,10 @@ export async function getAllInvoices() {
 export async function deleteInvoice(fakturaId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     // Validera och rensa input
     if (!fakturaId || isNaN(fakturaId) || fakturaId <= 0) {
@@ -500,10 +458,10 @@ export async function deleteInvoice(fakturaId: number) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "delete_invoice_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -570,12 +528,10 @@ export async function hämtaFörvalMedSökning(sök: string, offset: number, lim
 export async function räknaFörval(sök?: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -584,7 +540,7 @@ export async function räknaFörval(sök?: string) {
     const client = await pool.connect();
     try {
       let query = `SELECT COUNT(*) FROM förval WHERE "userId" = $1`;
-      let params = [userId];
+      let params: (number | string)[] = [userId];
 
       if (sök) {
         const safeSök = sanitizeInput(sök);
@@ -606,12 +562,10 @@ export async function räknaFörval(sök?: string) {
 export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -633,7 +587,7 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("Ogiltig kolumn");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -684,10 +638,10 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "update_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -704,18 +658,16 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
 export async function taBortFörval(id: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -749,10 +701,10 @@ export async function taBortFörval(id: number) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "delete_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -769,18 +721,16 @@ export async function taBortFörval(id: number) {
 export async function taBortTransaktion(id: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -818,10 +768,10 @@ export async function taBortTransaktion(id: number) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "delete_transaction_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -838,12 +788,10 @@ export async function taBortTransaktion(id: number) {
 export async function fetchForvalMedFel() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -892,10 +840,10 @@ export async function fetchForvalMedFel() {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "fetch_forval_errors_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -912,12 +860,10 @@ export async function fetchForvalMedFel() {
 export async function uploadPDF(formData: FormData) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getUserId();
+    if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    const userId = session.user.id;
 
     if (!(await validateSessionAttempt(userId))) {
       throw new Error("För många försök - vänta 15 minuter");
@@ -960,10 +906,10 @@ export async function uploadPDF(formData: FormData) {
   } catch (error) {
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const userId = await getUserId();
+      if (userId) {
         await logStartSecurityEvent(
-          errorSession.user.id,
+          userId,
           "upload_pdf_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );

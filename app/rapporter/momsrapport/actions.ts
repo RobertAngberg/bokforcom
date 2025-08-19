@@ -1,9 +1,9 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../../auth";
+import { validatePeriod } from "../../_utils/validationUtils";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/sessionSecurity";
+import { validateSessionAttempt } from "../../_utils/actionRateLimit";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -32,7 +32,7 @@ export async function getMomsrapport(year: string, kvartal?: string) {
   }
 
   // SÄKERHETSVALIDERING: Validera input-parametrar
-  if (!year || !/^\d{4}$/.test(year)) {
+  if (!validatePeriod(year)) {
     logVATDataEvent("violation", userId, `Invalid year parameter: ${year}`);
     throw new Error("Ogiltigt år-format");
   }

@@ -95,3 +95,20 @@ export function isAuthenticated(
 ): session is { user: { id: string; email: string; name: string } } {
   return !!session?.user?.id;
 }
+
+// Auditloggning för säkerhetshändelser
+export function logSecurityEvent(
+  event: "login" | "logout" | "session_hijack" | "csrf_attack" | "invalid_access",
+  userId?: number,
+  details?: string
+) {
+  const timestamp = new Date().toISOString();
+  console.warn(`🔒 SECURITY EVENT [${timestamp}]: ${event.toUpperCase()}`, {
+    userId,
+    details,
+    timestamp,
+  });
+
+  // I produktion: skicka till säkerhetsloggning system
+  // Som Sentry, CloudWatch, eller egen audit log
+}

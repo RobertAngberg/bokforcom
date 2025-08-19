@@ -2,6 +2,7 @@
 
 import { Pool } from "pg";
 import { getUserId } from "../_utils/authUtils";
+import { validateYear } from "../_utils/validationUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,12 +11,6 @@ const pool = new Pool({
 // Hämta användarens session - nu via authUtils
 async function requireAuth() {
   return await getUserId();
-}
-
-// Säkerhetsvalidering för årtal
-function validateYear(year: number): boolean {
-  const currentYear = new Date().getFullYear();
-  return year >= 2020 && year <= currentYear + 1 && Number.isInteger(year);
 }
 
 // Hämta kontosaldo för NE-bilaga (endast databasoperationer)

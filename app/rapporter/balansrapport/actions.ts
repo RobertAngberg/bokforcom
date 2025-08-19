@@ -1,9 +1,9 @@
 // balansrapport/actions.ts
 "use server";
 import { Pool } from "pg";
-import { auth } from "../../../auth";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/sessionSecurity";
+import { validateSessionAttempt } from "../../_utils/actionRateLimit";
+import { validatePeriod } from "../../_utils/validationUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -34,7 +34,7 @@ export async function fetchBalansData(year: string) {
   }
 
   // SÄKERHETSVALIDERING: Validera år-parameter
-  if (!year || !/^\d{4}$/.test(year)) {
+  if (!validatePeriod(year)) {
     logFinancialDataEvent("violation", userId, `Invalid year parameter: ${year}`);
     throw new Error("Ogiltigt år-format");
   }

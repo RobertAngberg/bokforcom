@@ -1,4 +1,4 @@
-import LoginForm from "./LoginForm.tsx";
+import LoginForm from "./LoginForm";
 
 // SÄKERHETSVALIDERING: Secure login component
 export default function LoginPage() {

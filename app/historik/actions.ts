@@ -1,30 +1,13 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../auth";
-import { validateSecureSession, logSecurityEvent } from "../_utils/sessionSecurity";
+import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 import { withFormRateLimit } from "../_utils/actionRateLimit";
+import { validateYear, sanitizeInput } from "../_utils/validationUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-
-// Säker input-sanitization för historik
-function sanitizeHistorikInput(text: string): string {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-    .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 100); // Begränsa längd
-}
-
-// Validera år-input
-function validateYearInput(year: string): boolean {
-  if (!year || typeof year !== "string") return false;
-  const yearNum = parseInt(year);
-  return !isNaN(yearNum) && yearNum >= 2020 && yearNum <= 2030;
-}
 
 interface TransactionDetail {
   transaktionspost_id: number;
@@ -36,11 +19,10 @@ interface TransactionDetail {
 
 // Intern funktion utan rate limiting (för wrappers)
 async function fetchTransaktionerInternal(fromYear?: string) {
-  // SÄKERHETSVALIDERING: Säker session-hantering
+  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
   try {
-    const sessionData = await validateSecureSession(auth);
-    userId = sessionData.userId;
+    userId = await getUserId();
     logSecurityEvent("login", userId, "Transaction history access");
   } catch (error) {
     logSecurityEvent(
@@ -52,7 +34,7 @@ async function fetchTransaktionerInternal(fromYear?: string) {
   }
 
   // SÄKERHETSVALIDERING: Validera år-parameter om angiven
-  if (fromYear && !validateYearInput(fromYear)) {
+  if (fromYear && !validateYear(fromYear)) {
     logSecurityEvent("invalid_access", userId, `Invalid year parameter: ${fromYear}`);
     return { success: false, error: "Ogiltigt år-format" };
   }
@@ -93,11 +75,10 @@ async function fetchTransaktionerInternal(fromYear?: string) {
 }
 
 export async function fetchTransactionDetails(transactionId: number): Promise<TransactionDetail[]> {
-  // SÄKERHETSVALIDERING: Säker session-hantering
+  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
   try {
-    const sessionData = await validateSecureSession(auth);
-    userId = sessionData.userId;
+    userId = await getUserId();
   } catch (error) {
     console.error("❌ Säkerhetsvarning: Ogiltig session vid hämtning av transaktionsdetaljer");
     return [];
@@ -155,11 +136,10 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
 
 // Intern funktion för export utan rate limiting
 async function exporteraTransaktionerMedPosterInternal(year: string) {
-  // SÄKERHETSVALIDERING: Säker session-hantering
+  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
   try {
-    const sessionData = await validateSecureSession(auth);
-    userId = sessionData.userId;
+    userId = await getUserId();
     logSecurityEvent("login", userId, `Transaction export for year ${year}`);
   } catch (error) {
     logSecurityEvent(
@@ -171,7 +151,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
   }
 
   // SÄKERHETSVALIDERING: Validera år-parameter
-  if (!validateYearInput(year)) {
+  if (!validateYear(year)) {
     logSecurityEvent("invalid_access", userId, `Invalid year for export: ${year}`);
     console.error("❌ Säkerhetsvarning: Ogiltigt år för export");
     return [];

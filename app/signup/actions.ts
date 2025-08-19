@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "../../auth";
 import { Pool } from "pg";
+import { getSessionAndUserId } from "../_utils/authUtils";
 import crypto from "crypto";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -81,7 +81,7 @@ async function logSignupSecurityEvent(
       await pool.query(
         `INSERT INTO security_logs (user_id, event_type, details, timestamp, module, ip_address) 
          VALUES ($1, $2, $3, NOW(), 'SIGNUP', $4)`,
-        [userId, eventType, details, ip || null]
+        [userId.toString(), eventType, details, ip || null]
       );
     } else {
       console.log(`Signup Security Event [${eventType}] User: ${userId} IP: ${ip} - ${details}`);
@@ -108,17 +108,16 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
 export async function checkUserSignupStatus() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session (optional för signup)
-    const session = await auth();
-    if (!session?.user?.email || !session?.user?.id) {
+    const { session, userId } = await getSessionAndUserId();
+    if (!session?.user?.email || !userId) {
       // Returnera att användaren inte är inloggad - det är OK för signup-sidan
       return { loggedIn: false, hasSignedUp: false };
     }
 
-    const userId = session.user.id;
     const userEmail = session.user.email;
 
     // Rate limiting för status-kontroller
-    if (!(await validateSessionAttempt(userId))) {
+    if (!(await validateSessionAttempt(userId.toString()))) {
       return {
         loggedIn: true,
         hasCompanyInfo: false,
@@ -127,7 +126,7 @@ export async function checkUserSignupStatus() {
     }
 
     await logSignupSecurityEvent(
-      userId,
+      userId.toString(),
       "signup_status_check",
       `Status check for user: ${userEmail}`
     );
@@ -142,7 +141,7 @@ export async function checkUserSignupStatus() {
 
       if (result.rows.length === 0) {
         await logSignupSecurityEvent(
-          userId,
+          userId.toString(),
           "signup_status_user_not_found",
           `User not found in database: ${userEmail}`
         );
@@ -153,7 +152,7 @@ export async function checkUserSignupStatus() {
       const hasCompanyInfo = !!(user.företagsnamn || user.organisationsnummer);
 
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_status_success",
         `Status retrieved successfully: hasCompanyInfo=${hasCompanyInfo}`
       );
@@ -170,10 +169,10 @@ export async function checkUserSignupStatus() {
     console.error("Fel vid kontroll av använderstatus:", error);
     // Försök logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const { session: errorSession, userId: errorUserId } = await getSessionAndUserId();
+      if (errorSession?.user?.email && errorUserId) {
         await logSignupSecurityEvent(
-          errorSession.user.id,
+          errorUserId.toString(),
           "signup_status_error",
           `Error checking status: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -188,22 +187,21 @@ export async function checkUserSignupStatus() {
 export async function saveSignupData(formData: FormData) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
-    const session = await auth();
-    if (!session?.user?.email || !session?.user?.id) {
+    const { session, userId } = await getSessionAndUserId();
+    if (!session?.user?.email || !userId) {
       return { success: false, error: "Ingen användare inloggad" };
     }
 
-    const userId = session.user.id;
     const userEmail = session.user.email;
     const clientIP = getClientIP();
 
     // Dubbel rate limiting för signup-operationer
-    if (!(await validateSessionAttempt(userId, clientIP))) {
+    if (!(await validateSessionAttempt(userId.toString(), clientIP))) {
       return { success: false, error: "För många försök - vänta 15 minuter" };
     }
 
     await logSignupSecurityEvent(
-      userId,
+      userId.toString(),
       "signup_save_attempt",
       `Signup data save started for user: ${userEmail}`,
       clientIP
@@ -221,7 +219,7 @@ export async function saveSignupData(formData: FormData) {
     // Grundläggande säkerhetskontroller (frontend validation redan gjord)
     if (!rawOrganisationsnummer || !rawFöretagsnamn) {
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_validation_failed",
         "Missing required fields",
         clientIP
@@ -244,7 +242,7 @@ export async function saveSignupData(formData: FormData) {
 
     if (momsperiod && !allowedMomsperiods.includes(momsperiod)) {
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_security_violation",
         `Invalid momsperiod: ${momsperiod}`,
         clientIP
@@ -254,7 +252,7 @@ export async function saveSignupData(formData: FormData) {
 
     if (bokföringsmetod && !allowedMethods.includes(bokföringsmetod)) {
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_security_violation",
         `Invalid bokföringsmetod: ${bokföringsmetod}`,
         clientIP
@@ -272,7 +270,7 @@ export async function saveSignupData(formData: FormData) {
 
       if (existingUser.rows.length === 0) {
         await logSignupSecurityEvent(
-          userId,
+          userId.toString(),
           "signup_user_not_found",
           `User not found in database: ${userEmail}`,
           clientIP
@@ -285,7 +283,7 @@ export async function saveSignupData(formData: FormData) {
       // Kontrollera om användaren redan har företagsinformation
       if (user.företagsnamn || user.organisationsnummer) {
         await logSignupSecurityEvent(
-          userId,
+          userId.toString(),
           "signup_duplicate_attempt",
           `User already has company info: ${userEmail}`,
           clientIP
@@ -297,7 +295,7 @@ export async function saveSignupData(formData: FormData) {
       }
 
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_save_processing",
         `Saving signup data for user: ${userEmail}`,
         clientIP
@@ -324,13 +322,13 @@ export async function saveSignupData(formData: FormData) {
           första_bokslut,
           startdatum,
           slutdatum,
-          userId,
+          userId.toString(),
         ]
       );
 
       if (result.rows.length === 0) {
         await logSignupSecurityEvent(
-          userId,
+          userId.toString(),
           "signup_update_failed",
           `Failed to update user: ${userEmail}`,
           clientIP
@@ -339,7 +337,7 @@ export async function saveSignupData(formData: FormData) {
       }
 
       await logSignupSecurityEvent(
-        userId,
+        userId.toString(),
         "signup_save_success",
         `Signup data saved successfully for user: ${userEmail}`,
         clientIP
@@ -357,10 +355,10 @@ export async function saveSignupData(formData: FormData) {
     console.error("❌ Fel vid sparande av signup-data:", error);
     // Logga fel om vi har session
     try {
-      const errorSession = await auth();
-      if (errorSession?.user?.id) {
+      const { session: errorSession, userId: errorUserId } = await getSessionAndUserId();
+      if (errorSession?.user?.email && errorUserId) {
         await logSignupSecurityEvent(
-          errorSession.user.id,
+          errorUserId.toString(),
           "signup_save_error",
           `Error saving signup data: ${error instanceof Error ? error.message : String(error)}`
         );

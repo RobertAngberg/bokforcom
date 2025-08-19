@@ -26,12 +26,12 @@ type Props = {
 export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnummer }: Props) {
   //#region Helper Functions
   // Formatering för SEK med behållet minustecken
-  const formatSEK = (val: number) => {
+  const formatSEK = (val: number): string => {
     if (val === 0) return "0kr";
 
     const isNegative = val < 0;
     const absVal = Math.abs(val);
-    const formatted = formatSEK(absVal) + "kr";
+    const formatted = absVal.toLocaleString("sv-SE") + "kr";
     return isNegative ? `−${formatted}` : formatted;
   };
 

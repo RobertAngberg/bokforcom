@@ -2,6 +2,7 @@
 
 import { Pool } from "pg";
 import { getUserId } from "../_utils/authUtils";
+import { validatePeriod } from "../_utils/validationUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -249,16 +250,4 @@ export async function skapaBokslutsjustering(data: {
   } finally {
     client.release();
   }
-}
-
-// Validera period för säkerhet
-function validatePeriod(period: string): boolean {
-  // Endast år-format accepteras (YYYY)
-  const yearPattern = /^\d{4}$/;
-  if (!yearPattern.test(period)) return false;
-
-  const year = parseInt(period);
-  const currentYear = new Date().getFullYear();
-
-  return year >= 2020 && year <= currentYear + 1;
 }

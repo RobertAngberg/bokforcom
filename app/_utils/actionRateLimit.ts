@@ -1,7 +1,7 @@
 // Server Actions Rate Limiting Wrapper
 // Skyddar server actions från missbruk och spam
 
-import { apiRateLimit, createRateLimitIdentifier } from "./rateLimit";
+import { apiRateLimit } from "./rateLimit";
 
 type ServerActionFunction = (...args: any[]) => Promise<any>;
 
@@ -51,3 +51,30 @@ export const withFormRateLimit = (action: ServerActionFunction) =>
 
 export const withSearchRateLimit = (action: ServerActionFunction) =>
   withRateLimit(action, { windowMs: 60 * 1000, maxRequests: 30 }); // 30 per minut
+
+// 🔒 Session validation med rate limiting för säkra operationer
+const sessionAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
+
+export async function validateSessionAttempt(sessionId: number | string): Promise<boolean> {
+  const sessionKey = String(sessionId);
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minuter
+  const maxAttempts = 5; // Begränsa känsliga operationer till 5 per 15 min
+
+  const userAttempts = sessionAttempts.get(sessionKey) || { attempts: 0, lastAttempt: 0 };
+
+  if (now - userAttempts.lastAttempt > windowMs) {
+    userAttempts.attempts = 0;
+  }
+
+  if (userAttempts.attempts >= maxAttempts) {
+    console.warn(`🚨 Rate limit exceeded för session: ${sessionKey}`);
+    return false;
+  }
+
+  userAttempts.attempts++;
+  userAttempts.lastAttempt = now;
+  sessionAttempts.set(sessionKey, userAttempts);
+
+  return true;
+}

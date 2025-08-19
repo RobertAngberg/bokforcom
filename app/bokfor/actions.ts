@@ -3,7 +3,6 @@
 
 import { Pool } from "pg";
 import { formatSEK } from "../_utils/format";
-import { auth } from "../../auth";
 import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
 import OpenAI from "openai";

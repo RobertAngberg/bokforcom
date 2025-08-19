@@ -2,9 +2,8 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../../auth";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/sessionSecurity";
+import { validateSessionAttempt } from "../../_utils/actionRateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

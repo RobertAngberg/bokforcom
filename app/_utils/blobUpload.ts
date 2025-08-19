@@ -2,7 +2,8 @@
 "use server";
 
 import { put } from "@vercel/blob";
-import { auth } from "../../auth";
+import { createHash } from "crypto";
+import { getUserId } from "./authUtils";
 
 // Tillåtna filtyper och deras MIME-types
 const ALLOWED_FILE_TYPES = {
@@ -30,12 +31,7 @@ export type UploadOptions = {
 export async function uploadBlob(file: File, options: UploadOptions = {}): Promise<UploadResult> {
   try {
     // 🔒 Session-validering
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Ingen giltig session" };
-    }
-
-    const userId = session.user.id;
+    const userId = await getUserId();
 
     // 🔍 Filvalidering
     const validation = validateFile(file);

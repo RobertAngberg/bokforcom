@@ -1,15 +1,10 @@
 //#region
 "use server";
 
-import { auth } from "../../auth";
 import { Pool } from "pg";
-import { withFormRateLimit, withEmailRateLimit } from "../_utils/actionRateLimit";
-import {
-  validateSecureSession,
-  validateUserId,
-  verifyUserOwnership,
-  logSecurityEvent,
-} from "../_utils/sessionSecurity";
+import { withFormRateLimit } from "../_utils/actionRateLimit";
+import { validateKontonummer, validateEmail } from "../_utils/validationUtils";
+import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 // import { Resend } from "resend";
 // TA BORT DENNA RAD:
 // const resend = new Resend(process.env.RESEND_API_KEY);
@@ -30,13 +25,6 @@ function sanitizeFakturaInput(text: string): string {
 // Validera numeriska värden för fakturor
 function validateNumericFakturaInput(value: number): boolean {
   return !isNaN(value) && isFinite(value) && value >= 0 && value < 100000000;
-}
-
-// Säker email-validering för fakturor
-function validateEmailInput(email: string): boolean {
-  if (!email || typeof email !== "string") return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
 }
 
 // Säker JSON-parsing med validering
@@ -86,11 +74,10 @@ export type Artikel = {
 
 // Intern funktion utan rate limiting (för wrappers)
 async function saveInvoiceInternal(formData: FormData) {
-  // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering
+  // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
   try {
-    const sessionData = await validateSecureSession(auth);
-    userId = sessionData.userId;
+    userId = await getUserId();
     logSecurityEvent("login", userId, "Invoice save operation");
   } catch (error) {
     logSecurityEvent("invalid_access", undefined, "Attempted invoice save without valid session");
@@ -149,7 +136,7 @@ async function saveInvoiceInternal(formData: FormData) {
     return { success: false, error: "Giltigt kundnamn krävs" };
   }
 
-  if (kundEmail && !validateEmailInput(kundEmail)) {
+  if (kundEmail && !validateEmail(kundEmail)) {
     return { success: false, error: "Ogiltig email-adress" };
   }
 
@@ -349,12 +336,11 @@ async function saveInvoiceInternal(formData: FormData) {
 export async function deleteFaktura(id: number) {
   try {
     // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const sessionResult = await validateSecureSession(auth);
-    if (!sessionResult.isValid || !sessionResult.userId) {
+    const userId = await getUserId();
+    if (!userId) {
       console.error("❌ Säkerhetsvarning: Ogiltig session vid radering av faktura");
       return { success: false, error: "Säkerhetsvalidering misslyckades" };
     }
-    const userId = sessionResult.userId;
 
     // SÄKERHETSEVENT: Logga raderingsförsök
     console.log(`🔒 Säker fakturaradering initierad för user ${userId}, faktura ${id}`);
@@ -427,12 +413,11 @@ export async function deleteFaktura(id: number) {
 export async function deleteKund(id: number) {
   try {
     // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const sessionResult = await validateSecureSession(auth);
-    if (!sessionResult.isValid || !sessionResult.userId) {
+    const userId = await getUserId();
+    if (!userId) {
       console.error("❌ Säkerhetsvarning: Ogiltig session vid radering av kund");
       return { success: false, error: "Säkerhetsvalidering misslyckades" };
     }
-    const userId = sessionResult.userId;
 
     // SÄKERHETSEVENT: Logga raderingsförsök
     console.log(`🔒 Säker kundradering initierad för user ${userId}, kund ${id}`);
@@ -483,9 +468,9 @@ export async function deleteKund(id: number) {
 }
 
 export async function hämtaSparadeKunder() {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
+  if (!userId) return [];
+  // userId already a number from getUserId()
 
   const client = await pool.connect();
   try {
@@ -502,11 +487,11 @@ export async function hämtaSparadeKunder() {
 }
 
 export async function hämtaSparadeFakturor() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return [];
   }
-  const userId = parseInt(session.user.id, 10);
+  // userId already a number from getUserId()
 
   const client = await pool.connect();
   try {
@@ -571,9 +556,9 @@ export async function hämtaSparadeFakturor() {
 }
 
 export async function deleteFavoritArtikel(id: number) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
 
   const client = await pool.connect();
   try {
@@ -591,9 +576,9 @@ export async function deleteFavoritArtikel(id: number) {
 }
 
 export async function getAllInvoices() {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, invoices: [] };
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
+  if (!userId) return { success: false, invoices: [] };
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -623,8 +608,7 @@ export async function sparaNyKund(formData: FormData) {
   // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering
   let userId: number;
   try {
-    const sessionData = await validateSecureSession(auth);
-    userId = sessionData.userId;
+    userId = await getUserId();
     logSecurityEvent("login", userId, "Customer creation operation");
   } catch (error) {
     logSecurityEvent(
@@ -647,7 +631,7 @@ export async function sparaNyKund(formData: FormData) {
   }
 
   // Validera email om angivet
-  if (kundEmail && !validateEmailInput(kundEmail)) {
+  if (kundEmail && !validateEmail(kundEmail)) {
     return { success: false, error: "Ogiltig email-adress" };
   }
 
@@ -691,12 +675,11 @@ export async function sparaNyKund(formData: FormData) {
 export async function uppdateraKund(id: number, formData: FormData) {
   try {
     // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const sessionResult = await validateSecureSession(auth);
-    if (!sessionResult.isValid || !sessionResult.userId) {
+    const userId = await getUserId();
+    if (!userId) {
       console.error("❌ Säkerhetsvarning: Ogiltig session vid uppdatering av kund");
       return { success: false, error: "Säkerhetsvalidering misslyckades" };
     }
-    const userId = sessionResult.userId;
 
     // SÄKERHETSEVENT: Logga uppdateringsförsök
     console.log(`🔒 Säker kunduppdatering initierad för user ${userId}, kund ${id}`);
@@ -719,7 +702,7 @@ export async function uppdateraKund(id: number, formData: FormData) {
     }
 
     // Validera email om angivet
-    if (kundEmail && !validateEmailInput(kundEmail)) {
+    if (kundEmail && !validateEmail(kundEmail)) {
       return { success: false, error: "Ogiltig email-adress" };
     }
 
@@ -878,9 +861,9 @@ export async function sparaFöretagsprofil(
 }
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
 
   try {
     // Kolla om en liknande favorit redan finns för denna användare
@@ -966,9 +949,9 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
 }
 
 export async function updateFavoritArtikel(id: number, artikel: any) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
 
   try {
     const result = await pool.query(
@@ -1033,9 +1016,9 @@ export async function updateFavoritArtikel(id: number, artikel: any) {
 }
 
 export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return [];
+  // userId already a number from getUserId()
 
   try {
     const res = await pool.query(
@@ -1167,9 +1150,9 @@ export async function hämtaFakturaMedRader(id: number) {
 }
 
 export async function hämtaNästaFakturanummer() {
-  const session = await auth();
-  if (!session?.user?.id) return 1;
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return 1;
+  // userId already a number from getUserId()
 
   const client = await pool.connect();
   try {
@@ -1199,7 +1182,7 @@ export async function hämtaSenasteBetalningsmetod(userId: string) {
       ORDER BY id DESC
       LIMIT 1
     `,
-      [parseInt(userId)]
+      [userId]
     );
 
     if (result.rows.length === 0) {
@@ -1215,13 +1198,11 @@ export async function hämtaSenasteBetalningsmetod(userId: string) {
 }
 
 export async function hämtaBokföringsmetod() {
-  const session = await auth();
-  if (!session?.user?.id) return "kontantmetoden"; // Default
+  const userId = await getUserId();
+  if (!userId) return "kontantmetoden"; // Default
 
   try {
-    const result = await pool.query("SELECT bokföringsmetod FROM users WHERE id = $1", [
-      parseInt(session.user.id),
-    ]);
+    const result = await pool.query("SELECT bokföringsmetod FROM users WHERE id = $1", [userId]);
 
     return result.rows[0]?.bokföringsmetod || "kontantmetoden";
   } catch (error) {
@@ -1236,13 +1217,13 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   status_bokförd?: string;
   betaldatum?: string;
 }> {
-  const session = await auth();
-  if (!session?.user?.id) return {};
+  const userId = await getUserId();
+  if (!userId) return {};
 
   try {
     const result = await pool.query(
       'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "userId" = $2',
-      [fakturaId, parseInt(session.user.id)]
+      [fakturaId, userId]
     );
     return result.rows[0] || {};
   } catch (error) {
@@ -1252,13 +1233,13 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
 }
 
 export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Inte inloggad" };
+  const userId = await getUserId();
+  if (!userId) return { success: false, error: "Inte inloggad" };
 
   try {
     await pool.query("UPDATE users SET bokföringsmetod = $1, uppdaterad = NOW() WHERE id = $2", [
       metod,
-      parseInt(session.user.id),
+      userId,
     ]);
 
     return { success: true };
@@ -1288,12 +1269,11 @@ interface BokförFakturaData {
 export async function bokförFaktura(data: BokförFakturaData) {
   try {
     // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const sessionResult = await validateSecureSession(auth);
-    if (!sessionResult.isValid || !sessionResult.userId) {
+    const userId = await getUserId();
+    if (!userId) {
       console.error("❌ Säkerhetsvarning: Ogiltig session vid bokföring av faktura");
       return { success: false, error: "Säkerhetsvalidering misslyckades" };
     }
-    const userId = sessionResult.userId;
 
     // SÄKERHETSEVENT: Logga bokföringsförsök
     console.log(`🔒 Säker fakturbokföring initierad för user ${userId}, faktura ${data.fakturaId}`);
@@ -1322,7 +1302,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
 
     // SÄKERHETSVALIDERING: Validera bokföringsposter
     for (const post of data.poster) {
-      if (!post.konto || !/^\d{4}$/.test(post.konto.toString())) {
+      if (!validateKontonummer(post.konto.toString())) {
         return { success: false, error: "Ogiltigt kontonummer (måste vara 4 siffror)" };
       }
 
@@ -1490,12 +1470,12 @@ export async function bokförFaktura(data: BokförFakturaData) {
 }
 
 export async function hamtaBokfordaFakturor() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return { success: false, error: "Ej autentiserad" };
   }
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -1554,12 +1534,12 @@ export async function hamtaBokfordaFakturor() {
 }
 
 export async function hamtaTransaktionsposter(transaktionId: number) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return { success: false, error: "Ej autentiserad" };
   }
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -1640,12 +1620,12 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
 }
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return { success: false, error: "Ej autentiserad" };
   }
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -1728,10 +1708,10 @@ export async function registreraBetalningEnkel(
   fakturaId: number,
   belopp: number
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Inte inloggad" };
+  const userId = await getUserId();
+  if (!userId) return { success: false, error: "Inte inloggad" };
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -1782,12 +1762,12 @@ export async function registreraKundfakturaBetalning(
   betalningsbelopp: number,
   kontoklass: string
 ): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return { success: false, error: "Inte inloggad" };
   }
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
   try {
     // Hämta fakturauppgifter och artiklar
@@ -1881,9 +1861,9 @@ export async function registreraKundfakturaBetalning(
 }
 
 export async function saveLeverantör(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
 
   // SÄKERHETSVALIDERING: Sanitera och validera all input
   const namn = sanitizeFakturaInput(formData.get("namn")?.toString() || "");
@@ -1902,7 +1882,7 @@ export async function saveLeverantör(formData: FormData) {
   }
 
   // Validera email om angivet
-  if (email && !validateEmailInput(email)) {
+  if (email && !validateEmail(email)) {
     return { success: false, error: "Ogiltig email-adress" };
   }
 
@@ -1928,9 +1908,9 @@ export async function saveLeverantör(formData: FormData) {
 }
 
 export async function getLeverantörer() {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -1960,9 +1940,9 @@ export async function updateLeverantör(
     email?: string;
   }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -2001,9 +1981,9 @@ export async function uppdateraRotRutStatus(
   fakturaId: number,
   status: "ej_inskickad" | "väntar" | "godkänd"
 ) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -2028,12 +2008,12 @@ export async function uppdateraRotRutStatus(
 export async function registreraRotRutBetalning(
   fakturaId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getUserId();
+  if (!userId) {
     return { success: false, error: "Inte inloggad" };
   }
 
-  const userId = parseInt(session.user.id);
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {
@@ -2135,9 +2115,9 @@ export async function registreraRotRutBetalning(
 }
 
 export async function deleteLeverantör(id: number) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
+  if (!userId) return { success: false };
+  // userId already a number from getUserId()
   const client = await pool.connect();
 
   try {

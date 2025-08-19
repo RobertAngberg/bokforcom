@@ -1,8 +1,8 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../auth";
-import { getUserId } from "../_utils/authUtils";
+import { getSessionAndUserId } from "../_utils/authUtils";
+import { validateId } from "../_utils/validationUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -17,12 +17,10 @@ async function validateAdminSession(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const { session, userId } = await getSessionAndUserId();
+    if (!session?.user?.email) {
       return { valid: false, error: "Ingen session hittad" };
     }
-
-    const userId = session.user.id;
 
     // 🔒 ADMIN-BEHÖRIGHETSKONTROLL
     // TODO: Implementera admin-roll i databasen
@@ -32,14 +30,14 @@ async function validateAdminSession(): Promise<{
 
     if (!userEmail || !adminEmails.includes(userEmail)) {
       await logAdminSecurityEvent(
-        userId,
+        userId.toString(),
         "unauthorized_admin_access",
         `Unauthorized access attempt from: ${userEmail}`
       );
       return { valid: false, error: "Otillräcklig behörighet - endast administratörer" };
     }
 
-    return { valid: true, userId };
+    return { valid: true, userId: userId.toString() };
   } catch (error) {
     console.error("Admin session validation error:", error);
     return { valid: false, error: "Sessionvalidering misslyckades" };
@@ -500,7 +498,7 @@ export async function deleteInvoice(id: number) {
       throw new Error("För många admin-försök - vänta 15 minuter");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt faktura-ID");
     }
 
@@ -566,7 +564,7 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
       throw new Error("För många admin-försök - vänta 15 minuter");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt faktura-ID");
     }
 
@@ -774,7 +772,7 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("Ogiltig kolumn");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -833,7 +831,7 @@ export async function taBortFörval(id: number) {
       throw new Error("För många admin-försök");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -873,7 +871,7 @@ export async function taBortTransaktion(id: number) {
       throw new Error("För många admin-försök");
     }
 
-    if (!id || isNaN(id) || id <= 0) {
+    if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
 
@@ -1041,7 +1039,7 @@ export async function körSQL(sql: string) {
 }
 
 export async function sparaForetagsprofil(formData: FormData) {
-  const userId = await getUserId();
+  const { userId } = await getSessionAndUserId();
 
   const f = (key: string) => formData.get(key)?.toString() ?? "";
 
