@@ -72,4 +72,92 @@ export async function exists(table: string, conditions: Record<string, any>): Pr
   return result.rows.length > 0;
 }
 
+/**
+ * CENTRALISERADE DATABAS OPERATIONS
+ * Minskar kod-duplicering mellan user och admin operationer
+ */
+
+/**
+ * Uppdaterar fakturanummer för en specifik faktura
+ * Core database operation utan auth - ska wrappers med säkerhet
+ */
+export async function updateFakturanummerCore(id: number, nyttNummer: string): Promise<void> {
+  await withDatabase(async (client) => {
+    await client.query(`UPDATE fakturor SET fakturanummer = $1 WHERE id = $2`, [nyttNummer, id]);
+  });
+}
+
+/**
+ * Uppdaterar ett specifikt fält i förval-tabellen
+ * Core database operation utan auth - ska wrappas med säkerhet
+ */
+export async function updateFörvalCore(
+  id: number,
+  kolumn: string,
+  nyttVärde: string,
+  userId?: number // Optional för admin operations
+): Promise<{ rowCount: number }> {
+  // Säkra kolumnnamn mot SQL injection
+  const tillåtnaKolumner = [
+    "namn",
+    "beskrivning",
+    "typ",
+    "kategori",
+    "momssats",
+    "specialtyp",
+    "konton",
+    "sökord",
+  ];
+
+  if (!tillåtnaKolumner.includes(kolumn)) {
+    throw new Error(`Ogiltig kolumn: ${kolumn}`);
+  }
+
+  return await withDatabase(async (client) => {
+    let query = "";
+    let params: any[] = [];
+
+    if (kolumn === "konton" || kolumn === "sökord") {
+      // JSON-hantering
+      try {
+        JSON.parse(nyttVärde);
+      } catch {
+        throw new Error("Ogiltigt JSON-format");
+      }
+
+      if (userId) {
+        query = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2 AND "userId" = $3`;
+        params = [nyttVärde, id, userId];
+      } else {
+        query = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2`;
+        params = [nyttVärde, id];
+      }
+    } else if (kolumn === "momssats") {
+      // Numerisk hantering
+      if (isNaN(parseFloat(nyttVärde))) {
+        throw new Error("Ogiltigt momssats-värde");
+      }
+
+      if (userId) {
+        query = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2 AND "userId" = $3`;
+        params = [nyttVärde, id, userId];
+      } else {
+        query = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2`;
+        params = [nyttVärde, id];
+      }
+    } else {
+      // Vanlig text
+      if (userId) {
+        query = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2 AND "userId" = $3`;
+        params = [nyttVärde, id, userId];
+      } else {
+        query = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2`;
+        params = [nyttVärde, id];
+      }
+    }
+
+    return await client.query(query, params);
+  });
+}
+
 export { pool };

@@ -2,7 +2,7 @@
 "use server";
 
 import { Pool } from "pg";
-import { withFormRateLimit } from "../_utils/actionRateLimit";
+import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateKontonummer, validateEmail } from "../_utils/validationUtils";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 // import { Resend } from "resend";

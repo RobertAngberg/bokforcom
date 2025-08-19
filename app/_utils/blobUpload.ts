@@ -106,7 +106,7 @@ async function processFile(file: File, options: UploadOptions): Promise<File> {
   return file;
 }
 
-// 🖼️ Bildkompression
+// 🖼️ Bildkompression med adaptiv kvalitet (förbättrad från lokala versioner)
 async function compressImage(file: File, options: UploadOptions): Promise<File> {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
@@ -114,35 +114,62 @@ async function compressImage(file: File, options: UploadOptions): Promise<File> 
     const img = new Image();
 
     img.onload = () => {
-      // Beräkna nya dimensioner
-      const { width, height } = calculateDimensions(
-        img.width,
-        img.height,
-        options.maxWidth || 1920,
-        options.maxHeight || 1080
-      );
+      // Beräkna nya dimensioner med mjukare storleksreduktion för läsbarhet
+      let { width, height } = img;
+
+      const maxDim = options.maxWidth || 1200; // Större för läsbarhet
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width *= ratio;
+        height *= ratio;
+      }
+
+      // Minsta storlek för läsbarhet
+      const minDim = 400;
+      if (width < minDim && height < minDim) {
+        const ratio = minDim / Math.max(width, height);
+        width *= ratio;
+        height *= ratio;
+      }
 
       canvas.width = width;
       canvas.height = height;
-
-      // Rita och komprimera
       ctx.drawImage(img, 0, 0, width, height);
 
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const compressedFile = new File([blob], file.name, {
-              type: file.type,
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          } else {
-            resolve(file); // Fallback till original
-          }
-        },
-        file.type,
-        options.quality || 0.8 // 80% kvalitet som standard
-      );
+      // Adaptiv kvalitetskompression - börja med högre kvalitet
+      tryCompress(options.quality || 0.7);
+
+      function tryCompress(quality: number) {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressed = new File(
+                [blob],
+                file.name.replace(/\.[^.]+$/, "_compressed.jpg"),
+                { type: "image/jpeg" }
+              );
+
+              const sizeKB = compressed.size / 1024;
+
+              // Mål: 100-200KB (läsbar men inte för stor)
+              if (sizeKB <= 200 || quality <= 0.3) {
+                resolve(compressed);
+              } else {
+                // Minska kvalitet gradvis
+                tryCompress(quality * 0.8);
+              }
+            } else {
+              resolve(file); // Fallback
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      }
+    };
+
+    img.onerror = () => {
+      resolve(file); // Fallback vid fel
     };
 
     img.src = URL.createObjectURL(file);
@@ -188,3 +215,12 @@ export const uploadReceiptImage = (file: File) =>
 
 export const uploadProfileImage = (file: File) =>
   uploadBlob(file, { folder: "profiles", quality: 0.9, maxWidth: 400, maxHeight: 400 });
+
+// 🗜️ Exporterad komprimerings-funktion för direkt användning (utan upload)
+export async function compressImageFile(file: File, options: UploadOptions = {}): Promise<File> {
+  if (!file.type.startsWith("image/")) {
+    return file; // Returnera oförändrad om inte bild
+  }
+
+  return await compressImage(file, options);
+}

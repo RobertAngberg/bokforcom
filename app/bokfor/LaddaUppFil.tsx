@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR } from "./actions";
+import { compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 
 // Säker filvalidering
@@ -71,77 +72,6 @@ export default function LaddaUppFil({
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
 
-  // Mjukare bildkomprimering - mål 100-200KB (läsbar)
-  async function komprimeraImage(file: File): Promise<File> {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d")!;
-      const img = new Image();
-
-      img.onload = () => {
-        let { width, height } = img;
-
-        // Mjukare storleksreduktion - behåll läsbarhet
-        const maxDim = 1200; // Större dimensioner för läsbarhet
-        if (width > maxDim || height > maxDim) {
-          const ratio = Math.min(maxDim / width, maxDim / height);
-          width *= ratio;
-          height *= ratio;
-        }
-
-        // Minsta storlek för läsbarhet
-        const minDim = 400;
-        if (width < minDim && height < minDim) {
-          const ratio = minDim / Math.max(width, height);
-          width *= ratio;
-          height *= ratio;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Börja med högre kvalitet för läsbarhet
-        tryCompress(0.7);
-
-        function tryCompress(quality: number) {
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressed = new File(
-                  [blob],
-                  file.name.replace(/\.[^.]+$/, "_compressed.jpg"),
-                  { type: "image/jpeg" }
-                );
-
-                const sizeKB = compressed.size / 1024;
-
-                // Mål: 100-200KB (läsbar men inte för stor)
-                if (sizeKB <= 200 || quality <= 0.3) {
-                  const savings = (((file.size - compressed.size) / file.size) * 100).toFixed(1);
-                  resolve(compressed);
-                } else {
-                  // Minska kvalitet gradvis
-                  tryCompress(quality * 0.8);
-                }
-              } else {
-                resolve(file);
-              }
-            },
-            "image/jpeg",
-            quality
-          );
-        }
-      };
-
-      img.onerror = () => {
-        resolve(file);
-      };
-
-      img.src = URL.createObjectURL(file);
-    });
-  }
-
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
@@ -185,7 +115,7 @@ export default function LaddaUppFil({
 
     // Komprimera bilder mjukt - PDF behålls original
     if (originalFile.type.startsWith("image/")) {
-      file = await komprimeraImage(originalFile);
+      file = await compressImageFile(originalFile);
     } else if (originalFile.type === "application/pdf") {
       file = originalFile;
     } else {

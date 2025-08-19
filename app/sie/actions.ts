@@ -3,7 +3,7 @@
 import { Pool } from "pg";
 import crypto from "crypto";
 import { getUserId } from "../_utils/authUtils";
-import { validateSessionAttempt } from "../_utils/actionRateLimit";
+import { validateSessionAttempt } from "../_utils/rateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -35,10 +35,6 @@ function validateFileSize(file: File): { valid: boolean; error?: string } {
     };
   }
   return { valid: true };
-}
-
-function sanitizeInput(input: string): string {
-  return input.replace(/[<>'"&]/g, "").trim();
 }
 
 interface SieData {

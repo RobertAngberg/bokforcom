@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { formatSEK } from "../_utils/format";
 import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
+import { sanitizeFormInput } from "../_utils/validationUtils";
 import OpenAI from "openai";
 import { invalidateBokförCache } from "./invalidateBokförCache";
 import { put } from "@vercel/blob";
@@ -310,17 +311,6 @@ export async function hamtaFavoritforval(): Promise<any[]> {
   }
 }
 
-// Säker sökning med whitelist-validering
-function validateSearchInput(input: string): string {
-  if (!input || typeof input !== "string") return "";
-
-  // Ta bort potentiellt farliga tecken
-  return input
-    .replace(/[<>'"&{}();-]/g, "") // Ta bort SQL-injection tecken
-    .trim()
-    .substring(0, 100); // Begränsa längd
-}
-
 // Whitelist för tillåtna kolumner
 const ALLOWED_CATEGORIES = ["Försäljning", "Inköp", "Moms", "Löner", "Administration", "Övriga"];
 const ALLOWED_TYPES = ["Kundfaktura", "Leverantörsfaktura", "Utlägg", "Allmän"];
@@ -331,7 +321,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
   const conditions: string[] = [];
 
   if (filters?.sök) {
-    const safeSearch = validateSearchInput(filters.sök);
+    const safeSearch = sanitizeFormInput(filters.sök);
     if (safeSearch) {
       conditions.push(
         `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`

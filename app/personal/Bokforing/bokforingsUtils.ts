@@ -1,17 +1,5 @@
 import { type BokföringsRad, type BokföringsSummering } from "./bokforingsLogik";
-
-// FORMATERA BELOPP
-export function formateraBeloppKronor(belopp: number): string {
-  // Hantera NaN och undefined
-  if (isNaN(belopp) || belopp == null) {
-    return "0,00 kr";
-  }
-
-  return `${belopp.toLocaleString("sv-SE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} kr`;
-}
+import { formatCurrency, formatAmount, parseNumberSafe } from "../../_utils/format";
 
 // FORMATERA KONTO
 export function formateraKonto(konto: string): string {
@@ -79,7 +67,7 @@ export function valideraBokföring(summering: BokföringsSummering): string[] {
   // Kontrollera balans
   if (!summering.balanserar) {
     fel.push(
-      `Bokföringen balanserar inte! Debet: ${formateraBeloppKronor(summering.totalDebet)}, Kredit: ${formateraBeloppKronor(summering.totalKredit)}`
+      `Bokföringen balanserar inte! Debet: ${formatCurrency(summering.totalDebet)}, Kredit: ${formatCurrency(summering.totalKredit)}`
     );
   }
 
@@ -146,21 +134,7 @@ export function genereraFilnamn(prefix: string, datum: Date, extension: string):
   return `${prefix}_${datumStr}.${extension}`;
 }
 
-// SÄKRA NUMMER-KONVERTERING
-export function säkertNummer(värde: any): number {
-  if (värde == null || värde === "") return 0;
-  const nummer = parseFloat(värde);
-  return isNaN(nummer) ? 0 : nummer;
-}
-
-// FORMATERA BELOPP UTAN "kr"
-export function formateraBelopp(belopp: number): string {
-  if (isNaN(belopp) || belopp == null) {
-    return "0,00";
-  }
-
-  return belopp.toLocaleString("sv-SE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
+// Legacy aliases för bakåtkompatibilitet
+export const formateraBeloppKronor = formatCurrency;
+export const formateraBelopp = formatAmount;
+export const säkertNummer = parseNumberSafe;

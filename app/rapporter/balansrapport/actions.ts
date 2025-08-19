@@ -2,7 +2,7 @@
 "use server";
 import { Pool } from "pg";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/actionRateLimit";
+import { validateSessionAttempt } from "../../_utils/rateLimit";
 import { validatePeriod } from "../../_utils/validationUtils";
 
 const pool = new Pool({

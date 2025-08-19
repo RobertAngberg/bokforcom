@@ -2,7 +2,7 @@
 
 import { Pool } from "pg";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
-import { withFormRateLimit } from "../_utils/actionRateLimit";
+import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateYear, sanitizeInput } from "../_utils/validationUtils";
 
 const pool = new Pool({

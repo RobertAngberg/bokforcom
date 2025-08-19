@@ -4,7 +4,8 @@ import { Pool } from "pg";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { getUserId } from "../_utils/authUtils";
-import { validateSessionAttempt } from "../_utils/actionRateLimit";
+import { validateSessionAttempt } from "../_utils/rateLimit";
+import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -476,12 +477,27 @@ export async function deleteInvoice(fakturaId: number) {
 }
 
 export async function updateFakturanummer(id: number, nyttNummer: string) {
-  const client = await pool.connect();
-  try {
-    await client.query(`UPDATE fakturor SET fakturanummer = $1 WHERE id = $2`, [nyttNummer, id]);
-  } finally {
-    client.release();
+  // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+  const userId = await getUserId();
+  if (!userId) {
+    throw new Error("Åtkomst nekad - ingen giltig session");
   }
+
+  if (!(await validateSessionAttempt(userId))) {
+    throw new Error("För många försök - vänta 15 minuter");
+  }
+
+  if (!validateId(id)) {
+    throw new Error("Ogiltigt faktura-ID");
+  }
+
+  const safeNummer = sanitizeInput(nyttNummer, 50); // Begränsa till 50 tecken
+  if (!safeNummer) {
+    throw new Error("Ogiltigt fakturanummer");
+  }
+
+  // Använd centraliserad databasoperation
+  await updateFakturanummerCore(id, safeNummer);
 }
 
 export async function saveInvoice(data: any) {
@@ -571,22 +587,6 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("För många försök - vänta 15 minuter");
     }
 
-    // 🔒 INDATAVALIDERING
-    const tillåtnaKolumner = [
-      "namn",
-      "beskrivning",
-      "typ",
-      "kategori",
-      "momssats",
-      "specialtyp",
-      "konton",
-      "sökord",
-    ];
-
-    if (!tillåtnaKolumner.includes(kolumn)) {
-      throw new Error("Ogiltig kolumn");
-    }
-
     if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
     }
@@ -597,44 +597,21 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       `Updating förval ID: ${id}, column: ${kolumn}`
     );
 
-    const client = await pool.connect();
+    const sanitizedValue = sanitizeInput(nyttVärde);
 
-    try {
-      let query = "";
-      let value: any = sanitizeInput(nyttVärde);
+    // Använd centraliserad databasoperation med user ownership
+    const result = await updateFörvalCore(id, kolumn, sanitizedValue, userId);
 
-      if (kolumn === "konton" || kolumn === "sökord") {
-        // 🔒 SÄKER JSON-HANTERING
-        try {
-          JSON.parse(value);
-        } catch {
-          throw new Error("Ogiltigt JSON-format");
-        }
-        query = `UPDATE förval SET ${kolumn} = $1::jsonb WHERE id = $2 AND "userId" = $3`;
-      } else if (kolumn === "momssats") {
-        if (isNaN(parseFloat(value))) {
-          throw new Error("Ogiltigt momssats-värde");
-        }
-        query = `UPDATE förval SET ${kolumn} = $1::real WHERE id = $2 AND "userId" = $3`;
-      } else {
-        query = `UPDATE förval SET ${kolumn} = $1 WHERE id = $2 AND "userId" = $3`;
-      }
-
-      const result = await client.query(query, [value, id, userId]);
-
-      if (result.rowCount === 0) {
-        await logStartSecurityEvent(
-          userId,
-          "update_forval_unauthorized",
-          `Unauthorized attempt to update förval ID: ${id}`
-        );
-        throw new Error("Förval hittades inte eller du saknar behörighet");
-      }
-
-      await logStartSecurityEvent(userId, "update_forval_success", `Updated förval ID: ${id}`);
-    } finally {
-      client.release();
+    if (result.rowCount === 0) {
+      await logStartSecurityEvent(
+        userId,
+        "update_forval_unauthorized",
+        `Unauthorized attempt to update förval ID: ${id}`
+      );
+      throw new Error("Förval hittades inte eller du saknar behörighet");
     }
+
+    await logStartSecurityEvent(userId, "update_forval_success", `Updated förval ID: ${id}`);
   } catch (error) {
     // Logga fel om vi har session
     try {

@@ -40,16 +40,52 @@ export function validateKontonummer(kontonummer: string): boolean {
 }
 
 /**
- * Sanitiserar användarinput för säker databas-användning
+ * UNIFIED INPUT SANITIZATION SYSTEM
+ * Centraliserad och konsistent sanitisering över hela applikationen
  */
-export function sanitizeInput(input: string): string {
+
+/**
+ * Universal sanitisering med konfigurerbar längdgräns
+ * Filtrerar farliga tecken och begränsar längd
+ */
+export function sanitizeInput(input: string, maxLength: number = 1000): string {
   if (!input) return "";
 
   return input
     .trim()
-    .replace(/[<>\"']/g, "") // Ta bort farliga tecken
-    .slice(0, 1000); // Begränsa längd
+    .replace(/[<>\"'&]/g, "") // Ta bort farliga tecken (inkl & från lokala implementationer)
+    .slice(0, maxLength);
 }
+
+/**
+ * Sanitisering för formulärdata (ex. signup, kontaktformulär)
+ * Kortare gräns för formulärfält
+ */
+export function sanitizeFormInput(input: string): string {
+  return sanitizeInput(input, 200);
+}
+
+/**
+ * Sanitisering för export/rapport data (ex. SIE export)
+ * Längre gräns för exportdata
+ */
+export function sanitizeExportInput(input: string): string {
+  return sanitizeInput(input, 1000);
+}
+
+/**
+ * Sanitisering för admin operationer
+ * Flexibel gräns för administrativa funktioner
+ */
+export function sanitizeAdminInput(input: string): string {
+  return sanitizeInput(input, 500); // Mellangräns för admin
+}
+
+/**
+ * Legacy alias för bakåtkompatibilitet
+ * @deprecated Använd sanitizeInput() med explicit längdgräns istället
+ */
+export const sanitizeInputLegacy = sanitizeInput;
 
 /**
  * Validerar belopp (positiva decimaler)

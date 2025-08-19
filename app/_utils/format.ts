@@ -13,6 +13,19 @@ export function formatCurrency(v: number): string {
   );
 }
 
+// formaterar ett tal som valuta med decimaler utan "kr", t.ex. "1 234,56"
+export function formatAmount(v: number): string {
+  // Hantera NaN och undefined
+  if (isNaN(v) || v == null) {
+    return "0,00";
+  }
+
+  return v.toLocaleString("sv-SE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 // rundar ett tal till två decimaler
 export function round(val: number): number {
   return Math.round((val + Number.EPSILON) * 100) / 100;
@@ -21,6 +34,13 @@ export function round(val: number): number {
 // konverterar en sträng med , eller . till ett tal, returnerar 0 om fel
 export function parseNumber(s: string): number {
   return parseFloat(s.replace(",", ".")) || 0;
+}
+
+// säker parsing av nummer med null/undefined hantering
+export function parseNumberSafe(värde: any): number {
+  if (värde == null || värde === "") return 0;
+  const nummer = parseFloat(String(värde).replace(",", "."));
+  return isNaN(nummer) ? 0 : nummer;
 }
 
 // summerar en viss nyckel (debet eller kredit) i en array av objekt

@@ -4,7 +4,7 @@ import { Pool } from "pg";
 import { getUserId } from "../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
-import { validateSessionAttempt } from "../_utils/actionRateLimit";
+import { validateSessionAttempt } from "../_utils/rateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

@@ -2,7 +2,8 @@
 
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../_utils/authUtils";
-import { validateId } from "../_utils/validationUtils";
+import { validateId, sanitizeAdminInput } from "../_utils/validationUtils";
+import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -90,10 +91,6 @@ async function logAdminSecurityEvent(
   } catch (error) {
     console.error("Failed to log admin security event:", error);
   }
-}
-
-function sanitizeInput(input: string): string {
-  return input.replace(/[<>'"&]/g, "").trim();
 }
 
 export async function hämtaTransaktionsposter(transaktionsId: number) {
@@ -186,7 +183,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     const conditions: string[] = [];
 
     if (filters?.sök) {
-      const safeSök = sanitizeInput(filters.sök);
+      const safeSök = sanitizeAdminInput(filters.sök);
       conditions.push(
         `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`
       );
@@ -194,13 +191,13 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     }
 
     if (filters?.kategori) {
-      const safeKategori = sanitizeInput(filters.kategori);
+      const safeKategori = sanitizeAdminInput(filters.kategori);
       conditions.push(`kategori = $${values.length + 1}`);
       values.push(safeKategori);
     }
 
     if (filters?.typ) {
-      const safeTyp = sanitizeInput(filters.typ);
+      const safeTyp = sanitizeAdminInput(filters.typ);
       conditions.push(`LOWER(typ) = $${values.length + 1}`);
       values.push(safeTyp.toLowerCase());
     }
@@ -254,7 +251,7 @@ export async function fetchDataFromYear(year: string) {
       throw new Error("För många admin-försök - vänta 15 minuter");
     }
 
-    const sanitizedYear = sanitizeInput(year);
+    const sanitizedYear = sanitizeAdminInput(year);
     if (!/^\d{4}$/.test(sanitizedYear)) {
       throw new Error("Ogiltigt årformat");
     }
@@ -564,32 +561,20 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
       throw new Error("För många admin-försök - vänta 15 minuter");
     }
 
-    if (!validateId(id)) {
-      throw new Error("Ogiltigt faktura-ID");
-    }
-
-    const safeNummer = sanitizeInput(nyttNummer);
-    if (!safeNummer) {
-      throw new Error("Ogiltigt fakturanummer");
-    }
-
     await logAdminSecurityEvent(
       userId,
       "admin_update_invoice_number_attempt",
-      `Admin updating invoice ${id} number to: ${safeNummer}`
+      `Admin updating invoice ${id} number to: ${nyttNummer}`
     );
 
-    const client = await pool.connect();
-    try {
-      await client.query(`UPDATE fakturor SET fakturanummer = $1 WHERE id = $2`, [safeNummer, id]);
-      await logAdminSecurityEvent(
-        userId,
-        "admin_update_invoice_number_success",
-        `Admin updated invoice ${id} number to: ${safeNummer}`
-      );
-    } finally {
-      client.release();
-    }
+    // Admin kan uppdatera alla fakturor utan userId-kontroll
+    await updateFakturanummerCore(id, nyttNummer);
+
+    await logAdminSecurityEvent(
+      userId,
+      "admin_update_invoice_number_success",
+      `Admin updated invoice ${id} number to: ${nyttNummer}`
+    );
   } catch (error) {
     // Logga fel om vi har admin session
     try {
@@ -625,8 +610,8 @@ export async function saveInvoice(data: any) {
     }
 
     const safeData = {
-      fakturanummer: sanitizeInput(data.fakturanummer || ""),
-      kundnamn: sanitizeInput(data.kundnamn || ""),
+      fakturanummer: sanitizeAdminInput(data.fakturanummer || ""),
+      kundnamn: sanitizeAdminInput(data.kundnamn || ""),
       total: parseFloat(data.total) || 0,
     };
 
@@ -683,7 +668,7 @@ export async function hämtaFörvalMedSökning(sök: string, offset: number, lim
       throw new Error("För många admin-försök");
     }
 
-    const safeSök = sanitizeInput(sök);
+    const safeSök = sanitizeAdminInput(sök);
     const safeOffset = Math.max(0, parseInt(offset.toString()) || 0);
     const safeLimit = Math.min(100, Math.max(1, parseInt(limit.toString()) || 10));
 
@@ -727,7 +712,7 @@ export async function räknaFörval(sök: string) {
       throw new Error("För många admin-försök");
     }
 
-    const safeSök = sanitizeInput(sök);
+    const safeSök = sanitizeAdminInput(sök);
     const client = await pool.connect();
     try {
       const res = await client.query(
@@ -757,61 +742,20 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("För många admin-försök");
     }
 
-    const tillåtnaKolumner = [
-      "namn",
-      "beskrivning",
-      "typ",
-      "kategori",
-      "momssats",
-      "specialtyp",
-      "konton",
-      "sökord",
-    ];
-
-    if (!tillåtnaKolumner.includes(kolumn)) {
-      throw new Error("Ogiltig kolumn");
-    }
-
-    if (!validateId(id)) {
-      throw new Error("Ogiltigt ID");
-    }
-
     await logAdminSecurityEvent(
       userId,
       "admin_update_forval_attempt",
       `Admin updating förval ${id}, column: ${kolumn}`
     );
 
-    const client = await pool.connect();
-    try {
-      let query = "";
-      let value: any = sanitizeInput(nyttVärde);
+    // Admin kan uppdatera alla förval utan userId-kontroll
+    await updateFörvalCore(id, kolumn, nyttVärde);
 
-      if (kolumn === "konton" || kolumn === "sökord") {
-        try {
-          JSON.parse(value);
-        } catch {
-          throw new Error("Ogiltigt JSON-format");
-        }
-        query = `UPDATE förval SET ${kolumn} = $1::jsonb WHERE id = $2`;
-      } else if (kolumn === "momssats") {
-        if (isNaN(parseFloat(value))) {
-          throw new Error("Ogiltigt momssats-värde");
-        }
-        query = `UPDATE förval SET ${kolumn} = $1::real WHERE id = $2`;
-      } else {
-        query = `UPDATE förval SET ${kolumn} = $1 WHERE id = $2`;
-      }
-
-      await client.query(query, [value, id]);
-      await logAdminSecurityEvent(
-        userId,
-        "admin_update_forval_success",
-        `Admin updated förval ${id}`
-      );
-    } finally {
-      client.release();
-    }
+    await logAdminSecurityEvent(
+      userId,
+      "admin_update_forval_success",
+      `Admin updated förval ${id}`
+    );
   } catch (error) {
     console.error("❌ uppdateraFörval error:", error);
     throw error;
@@ -977,7 +921,7 @@ export async function körSQL(sql: string) {
     );
 
     // 🔒 SQL-SÄKERHETSVALIDERING
-    const safeSql = sanitizeInput(sql);
+    const safeSql = sanitizeAdminInput(sql);
 
     // Förhindra farliga kommandon
     const dangerousPatterns = [

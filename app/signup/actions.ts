@@ -2,64 +2,11 @@
 
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../_utils/authUtils";
+import { signupRateLimit } from "../_utils/rateLimit";
+import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR SIGNUP-MODUL
-const sessionAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
-const ipAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
-
-async function validateSessionAttempt(sessionId: string, ip?: string): Promise<boolean> {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minuter
-  const maxAttemptsPerSession = 3; // Max 3 signup-försök per session
-  const maxAttemptsPerIP = 10; // Max 10 signup-försök per IP
-
-  // Kontrollera session-baserad rate limiting
-  const userAttempts = sessionAttempts.get(sessionId) || { attempts: 0, lastAttempt: 0 };
-  if (now - userAttempts.lastAttempt > windowMs) {
-    userAttempts.attempts = 0;
-  }
-
-  if (userAttempts.attempts >= maxAttemptsPerSession) {
-    await logSignupSecurityEvent(
-      sessionId,
-      "rate_limit_session_exceeded",
-      `Session rate limit exceeded: ${userAttempts.attempts} attempts`,
-      ip
-    );
-    return false;
-  }
-
-  // Kontrollera IP-baserad rate limiting
-  if (ip) {
-    const ipUserAttempts = ipAttempts.get(ip) || { attempts: 0, lastAttempt: 0 };
-    if (now - ipUserAttempts.lastAttempt > windowMs) {
-      ipUserAttempts.attempts = 0;
-    }
-
-    if (ipUserAttempts.attempts >= maxAttemptsPerIP) {
-      await logSignupSecurityEvent(
-        sessionId,
-        "rate_limit_ip_exceeded",
-        `IP rate limit exceeded: ${ipUserAttempts.attempts} attempts`,
-        ip
-      );
-      return false;
-    }
-
-    ipUserAttempts.attempts++;
-    ipUserAttempts.lastAttempt = now;
-    ipAttempts.set(ip, ipUserAttempts);
-  }
-
-  userAttempts.attempts++;
-  userAttempts.lastAttempt = now;
-  sessionAttempts.set(sessionId, userAttempts);
-
-  return true;
-}
 
 async function logSignupSecurityEvent(
   userId: string,
@@ -92,14 +39,6 @@ async function logSignupSecurityEvent(
   }
 }
 
-// Säkerhets-sanitering (behåll detta)
-function sanitizeInput(input: string): string {
-  return input
-    .replace(/[<>'"&]/g, "")
-    .trim()
-    .substring(0, 200); // Begränsa längd
-}
-
 function getClientIP(headers?: Record<string, string>): string | undefined {
   // I en riktig miljö skulle detta komma från request headers
   return "unknown-ip";
@@ -116,8 +55,14 @@ export async function checkUserSignupStatus() {
 
     const userEmail = session.user.email;
 
-    // Rate limiting för status-kontroller
-    if (!(await validateSessionAttempt(userId.toString()))) {
+    // Rate limiting för status-kontroller - använd enkel session limiting
+    if (!signupRateLimit(userId.toString())) {
+      await logSignupSecurityEvent(
+        userId.toString(),
+        "rate_limit_exceeded",
+        "Rate limit exceeded for signup status check",
+        undefined
+      );
       return {
         loggedIn: true,
         hasCompanyInfo: false,
@@ -195,8 +140,14 @@ export async function saveSignupData(formData: FormData) {
     const userEmail = session.user.email;
     const clientIP = getClientIP();
 
-    // Dubbel rate limiting för signup-operationer
-    if (!(await validateSessionAttempt(userId.toString(), clientIP))) {
+    // Dubbel rate limiting för signup-operationer (session + IP)
+    if (!signupRateLimit(userId.toString(), clientIP)) {
+      await logSignupSecurityEvent(
+        userId.toString(),
+        "rate_limit_exceeded",
+        "Rate limit exceeded for signup data save",
+        clientIP
+      );
       return { success: false, error: "För många försök - vänta 15 minuter" };
     }
 
@@ -228,13 +179,13 @@ export async function saveSignupData(formData: FormData) {
     }
 
     // Sanitera all input
-    const organisationsnummer = sanitizeInput(rawOrganisationsnummer);
-    const företagsnamn = sanitizeInput(rawFöretagsnamn);
-    const momsperiod = sanitizeInput(rawMomsperiod);
-    const bokföringsmetod = sanitizeInput(rawBokföringsmetod);
-    const första_bokslut = sanitizeInput(rawFörsta_bokslut);
-    const startdatum = rawStartdatum ? sanitizeInput(rawStartdatum) : null;
-    const slutdatum = rawSlutdatum ? sanitizeInput(rawSlutdatum) : null;
+    const organisationsnummer = sanitizeFormInput(rawOrganisationsnummer);
+    const företagsnamn = sanitizeFormInput(rawFöretagsnamn);
+    const momsperiod = sanitizeFormInput(rawMomsperiod);
+    const bokföringsmetod = sanitizeFormInput(rawBokföringsmetod);
+    const första_bokslut = sanitizeFormInput(rawFörsta_bokslut);
+    const startdatum = rawStartdatum ? sanitizeFormInput(rawStartdatum) : null;
+    const slutdatum = rawSlutdatum ? sanitizeFormInput(rawSlutdatum) : null;
 
     // Säkerhetskontroller för tillåtna värden (även om frontend validerat)
     const allowedMomsperiods = ["månadsvis", "kvartalsvis", "årsvis"];
