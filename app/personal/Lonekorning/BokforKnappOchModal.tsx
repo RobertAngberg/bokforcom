@@ -116,7 +116,6 @@ export default function BokförKnappOchModal({
 
     try {
       // TODO: Implementera faktisk bokföring här
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulera API-anrop
 
       alert("✅ Bokföring genomförd!");
       // ✅ RENSA FÄRSKA DATA EFTER BOKFÖRING

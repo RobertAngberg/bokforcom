@@ -623,7 +623,6 @@ function ImportSteg({
         // Steg 2: Förbereder import
         setCurrentTask("Förbereder dataimport...");
         setProgress(40);
-        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Steg 3: Importera data
         setCurrentTask("Importerar SIE-data...");
@@ -647,12 +646,10 @@ function ImportSteg({
         // Steg 4: Validering
         setCurrentTask("Validerar importerad data...");
         setProgress(80);
-        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Steg 5: Slutför
         setCurrentTask("Import slutförd!");
         setProgress(100);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         onComplete(importResult.resultat);
       } catch (err) {
