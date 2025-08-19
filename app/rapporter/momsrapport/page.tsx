@@ -1,7 +1,7 @@
 import { getMomsrapport, fetchFöretagsprofil } from "./actions";
 import Momsrapport from "./Momsrapport";
 import MainLayout from "../../_components/MainLayout";
-import { auth } from "@/auth";
+import { auth } from "../../../auth";
 
 export default async function Page() {
   // Starta ALLA asynkrona operationer samtidigt

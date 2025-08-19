@@ -1,7 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "@/auth";
+import { auth } from "../../auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { validateSessionAttempt } from "../_utils/sessionSecurity";
@@ -564,7 +564,7 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
     console.error("❌ sparaAnställd error:", error);
     logPersonalDataEvent(
       "violation",
-      session?.user?.id || "unknown",
+      session?.user?.id ? parseInt(session.user.id, 10) : undefined,
       `Error in sparaAnställd: ${error instanceof Error ? error.message : "Unknown error"}`
     );
     return {

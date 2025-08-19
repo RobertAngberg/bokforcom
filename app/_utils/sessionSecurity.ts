@@ -1,7 +1,7 @@
 // Enhanced Session Security för Next.js applikation
 // Skyddar mot session hijacking, CSRF och timing-attacker
 
-// import { auth } from "@/auth"; // Importeras där det behövs
+// import { auth } from "../../auth"; // Importeras där det behövs
 import { redirect } from "next/navigation";
 
 // Session säkerhetsvalidering

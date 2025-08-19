@@ -2,7 +2,7 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "@/auth";
+import { auth } from "../../../auth";
 import { validateSessionAttempt } from "../../_utils/sessionSecurity";
 
 const pool = new Pool({

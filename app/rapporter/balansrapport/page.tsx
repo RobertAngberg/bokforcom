@@ -1,6 +1,8 @@
 import Balansrapport from "./Balansrapport";
 import { fetchBalansData, fetchFöretagsprofil } from "./actions";
-import { auth } from "@/auth";
+import MainLayout from "../../_components/MainLayout";
+import { redirect } from "next/navigation";
+import { auth } from "../../../auth";
 
 export default async function Page() {
   // Starta ALLA asynkrona operationer samtidigt

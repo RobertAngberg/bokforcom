@@ -1,6 +1,8 @@
 import Resultatrapport from "./Resultatrapport";
 import { hamtaResultatrapport, fetchFöretagsprofil } from "./actions";
-import { auth } from "@/auth";
+import MainLayout from "../../_components/MainLayout";
+import { redirect } from "next/navigation";
+import { auth } from "../../../auth";
 
 export default async function Page() {
   // Dessa startar samtidigt (parallellt):
