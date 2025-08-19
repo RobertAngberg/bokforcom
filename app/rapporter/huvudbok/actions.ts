@@ -3,6 +3,7 @@
 
 import { Pool } from "pg";
 import { auth } from "../../../auth";
+import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/sessionSecurity";
 
 const pool = new Pool({
@@ -25,13 +26,7 @@ function logLedgerDataEvent(
 //#endregion
 
 export async function fetchHuvudbok() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    logLedgerDataEvent("violation", undefined, "Attempted to access ledger without valid session");
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
 
   // SÄKERHETSVALIDERING: Rate limiting för huvudbok
   if (!validateSessionAttempt(`finance-ledger-${userId}`)) {
@@ -139,28 +134,9 @@ export async function fetchHuvudbok() {
 }
 
 export async function fetchFöretagsprofil(userId: number) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const session = await auth();
-  if (!session?.user?.id) {
-    logLedgerDataEvent(
-      "violation",
-      undefined,
-      "Attempted to access company profile without valid session"
-    );
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
-  }
-
-  const sessionUserId = parseInt(session.user.id, 10);
-
-  // SÄKERHETSVALIDERING: Kontrollera ägarskap
-  if (sessionUserId !== userId) {
-    logLedgerDataEvent(
-      "violation",
-      sessionUserId,
-      `Attempted to access other user's profile: ${userId}`
-    );
-    throw new Error("Säkerhetsfel: Åtkomst nekad");
-  }
+  // SÄKERHETSVALIDERING: Kontrollera autentisering och ägarskap
+  const sessionUserId = await getUserId();
+  await requireOwnership(userId);
 
   logLedgerDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -183,17 +159,7 @@ export async function fetchFöretagsprofil(userId: number) {
 
 export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const session = await auth();
-  if (!session?.user?.id) {
-    logLedgerDataEvent(
-      "violation",
-      undefined,
-      "Attempted to access transaction details without valid session"
-    );
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
 
   // SÄKERHETSVALIDERING: Rate limiting för transaktionsdetaljer
   if (!validateSessionAttempt(`finance-transaction-${userId}`)) {

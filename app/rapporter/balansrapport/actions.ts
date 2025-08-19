@@ -2,6 +2,7 @@
 "use server";
 import { Pool } from "pg";
 import { auth } from "../../../auth";
+import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/sessionSecurity";
 
 const pool = new Pool({
@@ -24,17 +25,7 @@ function logFinancialDataEvent(
 
 export async function fetchBalansData(year: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const session = await auth();
-  if (!session?.user?.id) {
-    logFinancialDataEvent(
-      "violation",
-      undefined,
-      "Attempted to access balance report without valid session"
-    );
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
 
   // SÄKERHETSVALIDERING: Rate limiting för finansiella rapporter
   if (!validateSessionAttempt(`finance-balance-${userId}`)) {
@@ -351,27 +342,9 @@ export async function fetchBalansData(year: string) {
 
 export async function fetchFöretagsprofil(userId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const session = await auth();
-  if (!session?.user?.id) {
-    logFinancialDataEvent(
-      "violation",
-      undefined,
-      "Attempted to access company profile without valid session"
-    );
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
-  }
-
-  const sessionUserId = parseInt(session.user.id, 10);
-
-  // SÄKERHETSVALIDERING: Kontrollera att användaren bara kan se sin egen profil
-  if (sessionUserId !== userId) {
-    logFinancialDataEvent(
-      "violation",
-      sessionUserId,
-      `Attempted to access other user's profile: ${userId}`
-    );
-    throw new Error("Säkerhetsfel: Åtkomst nekad");
-  }
+  // SÄKERHETSVALIDERING: Kontrollera autentisering och ägarskap
+  const sessionUserId = await getUserId();
+  await requireOwnership(userId);
 
   logFinancialDataEvent("access", sessionUserId, "Accessing company profile data");
 

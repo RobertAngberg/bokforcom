@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const method = request.method;
-  const pathname = request.nextUrl.pathname;
 
-  // Exkludera auth-routes från CSRF-validering för att inte störa Google OAuth
-  const isAuthRoute = pathname.startsWith('/api/auth') || 
-                      pathname === '/login' || 
-                      pathname === '/start';
-
-  // CSRF-skydd för state-changing requests (men inte för auth)
-  if (["POST", "PUT", "DELETE", "PATCH"].includes(method) && !isAuthRoute) {
+  // CSRF-skydd för state-changing requests
+  if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
     // Kontrollera Origin header
     const origin = request.headers.get("origin");
     const referer = request.headers.get("referer");

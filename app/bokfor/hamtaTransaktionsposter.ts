@@ -1,13 +1,12 @@
 import { Pool } from "pg";
-import { auth } from "../../auth";
+import { getUserId } from "../_utils/authUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Ingen användare inloggad");
+  const userId = await getUserId();
 
   const client = await pool.connect();
   try {

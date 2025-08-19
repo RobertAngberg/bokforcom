@@ -4,6 +4,7 @@
 import { Pool } from "pg";
 import { formatSEK } from "../_utils/format";
 import { auth } from "../../auth";
+import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
 import OpenAI from "openai";
 import { invalidateBokförCache } from "./invalidateBokförCache";
@@ -226,19 +227,16 @@ export async function extractDataFromOCRKundfaktura(text: string) {
 }
 
 export async function hämtaBokföringsmetod() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen användare inloggad");
-  }
+  const userId = await getUserId();
 
   try {
     const client = await pool.connect();
     const query = "SELECT bokföringsmetod FROM users WHERE id = $1";
-    const res = await client.query(query, [session.user.id]);
+    const res = await client.query(query, [userId]);
     client.release();
 
     if (res.rows.length === 0) {
-      console.warn("⛔ Användare inte funnen:", session.user.id);
+      console.warn("⛔ Användare inte funnen:", userId);
       return "Kontantmetoden"; // Default fallback
     }
 
@@ -250,10 +248,7 @@ export async function hämtaBokföringsmetod() {
 }
 
 export async function taBortTransaktion(id: number) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Inte inloggad");
-  }
+  const userId = await getUserId();
 
   const client = await pool.connect();
   try {
@@ -264,9 +259,7 @@ export async function taBortTransaktion(id: number) {
       throw new Error("Transaktionen hittades inte");
     }
 
-    if (ownerCheck.rows[0].user_id !== parseInt(session.user.id)) {
-      throw new Error("Ej behörig att ta bort denna transaktion");
-    }
+    await requireOwnership(ownerCheck.rows[0].user_id);
 
     // Ta bort transaktionen
     await client.query(`DELETE FROM transaktioner WHERE id = $1`, [id]);
@@ -276,12 +269,7 @@ export async function taBortTransaktion(id: number) {
 }
 
 export async function loggaFavoritförval(forvalId: number) {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    console.warn("⛔ Ingen användare inloggad vid loggaFavoritförval");
-    return;
-  }
+  const userId = await getUserId();
 
   try {
     await pool.query(
@@ -300,12 +288,7 @@ export async function loggaFavoritförval(forvalId: number) {
 }
 
 export async function hamtaFavoritforval(): Promise<any[]> {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    console.warn("⛔ Ingen användare inloggad vid hamtaFavoritforval");
-    return [];
-  }
+  const userId = await getUserId();
 
   try {
     const result = await pool.query(
@@ -379,10 +362,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 }
 
 export async function fetchFavoritforval() {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
 
   const query = `
     SELECT f.*
@@ -403,14 +383,13 @@ export async function fetchFavoritforval() {
 }
 
 export async function fetchTransactionWithBlob(transactionId: number) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Ingen användare inloggad");
+  const userId = await getUserId();
 
   const client = await pool.connect();
   try {
     const result = await client.query(
       `SELECT *, blob_url FROM transaktioner WHERE id = $1 AND "userId" = $2`,
-      [transactionId, Number(session.user.id)]
+      [transactionId, userId]
     );
 
     return result.rows[0] || null;
@@ -420,16 +399,13 @@ export async function fetchTransactionWithBlob(transactionId: number) {
 }
 
 export async function hämtaAnställda() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Inte inloggad");
-  }
+  const userId = await getUserId();
 
   const client = await pool.connect();
   try {
     const result = await client.query(
       "SELECT id, förnamn, efternamn FROM anställda WHERE user_id = $1 ORDER BY förnamn, efternamn",
-      [session.user.id]
+      [userId]
     );
 
     return result.rows;
@@ -449,9 +425,7 @@ function sanitizeFilename(filename: string): string {
 export async function saveTransaction(formData: FormData) {
   const anstalldId = formData.get("anstalldId")?.toString();
   const leverantorId = formData.get("leverantorId")?.toString();
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Ingen användare inloggad");
-  const userId = Number(session.user.id);
+  const userId = await getUserId();
 
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
@@ -652,9 +626,7 @@ export async function saveTransaction(formData: FormData) {
 
 // Bokför ett utlägg och koppla till transaktion
 export async function bokförUtlägg(utläggId: number) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Ingen användare inloggad");
-  const userId = Number(session.user.id);
+  const userId = await getUserId();
 
   const client = await pool.connect();
   try {

@@ -2,6 +2,7 @@
 
 import { Pool } from "pg";
 import { auth } from "../../auth";
+import { getUserId } from "../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { validateSessionAttempt } from "../_utils/sessionSecurity";
@@ -259,12 +260,7 @@ type AnställdData = {
 //#endregion
 
 export async function hämtaAllaAnställda() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
 
   try {
     const client = await pool.connect();
@@ -286,12 +282,7 @@ export async function hämtaAllaAnställda() {
 }
 
 export async function hämtaAnställd(anställdId: number) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  const userId = parseInt(session.user.id, 10);
+  const userId = await getUserId();
 
   try {
     const client = await pool.connect();

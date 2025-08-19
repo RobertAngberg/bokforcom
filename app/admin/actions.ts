@@ -2,6 +2,7 @@
 
 import { Pool } from "pg";
 import { auth } from "../../auth";
+import { getUserId } from "../_utils/authUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -1040,9 +1041,7 @@ export async function körSQL(sql: string) {
 }
 
 export async function sparaForetagsprofil(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false };
-  const userId = parseInt(session.user.id);
+  const userId = await getUserId();
 
   const f = (key: string) => formData.get(key)?.toString() ?? "";
 

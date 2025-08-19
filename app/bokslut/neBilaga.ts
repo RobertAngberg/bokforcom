@@ -1,23 +1,15 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../../auth";
+import { getUserId } from "../_utils/authUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Hämta användarens session
+// Hämta användarens session - nu via authUtils
 async function requireAuth() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Ingen giltig session - måste vara inloggad");
-  }
-  const userId = parseInt(session.user.id);
-  if (isNaN(userId)) {
-    throw new Error("Ogiltigt användar-ID i session");
-  }
-  return userId;
+  return await getUserId();
 }
 
 // Säkerhetsvalidering för årtal
