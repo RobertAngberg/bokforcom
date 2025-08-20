@@ -647,8 +647,8 @@ export async function sparaNyKund(formData: FormData) {
     const res = await client.query(
       `INSERT INTO kunder (
         "userId", kundnamn, kundorgnummer, kundnummer,
-        kundmomsnummer, kundadress1, kundpostnummer, kundstad, kundemail, personnummer
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        kundmomsnummer, kundadress1, kundpostnummer, kundstad, kundemail
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id`,
       [
         userId,
@@ -660,7 +660,6 @@ export async function sparaNyKund(formData: FormData) {
         sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
         sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
         kundEmail,
-        sanitizeFakturaInput(personnummer),
       ]
     );
     return { success: true, id: res.rows[0].id };
@@ -733,9 +732,8 @@ export async function uppdateraKund(id: number, formData: FormData) {
           kundadress1 = $5,
           kundpostnummer = $6,
           kundstad = $7,
-          kundemail = $8,
-          personnummer = $9
-        WHERE id = $10 AND "userId" = $11
+          kundemail = $8
+        WHERE id = $9 AND "userId" = $10
         `,
         [
           kundnamn,
@@ -746,7 +744,6 @@ export async function uppdateraKund(id: number, formData: FormData) {
           sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
           sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
           kundEmail,
-          sanitizeFakturaInput(personnummer),
           id,
           userId,
         ]

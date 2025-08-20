@@ -130,11 +130,11 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
           {(formData.rotRutStartdatum || formData.rotRutSlutdatum) && (
             <div>
               <span className="font-semibold">Period:</span>
-              {formData.rotRutStartdatum && (
+              {formData.rotRutStartdatum && formData.rotRutStartdatum !== "" && (
                 <span> {new Date(formData.rotRutStartdatum).toLocaleDateString("sv-SE")}</span>
               )}
               {formData.rotRutStartdatum && formData.rotRutSlutdatum && " – "}
-              {formData.rotRutSlutdatum && (
+              {formData.rotRutSlutdatum && formData.rotRutSlutdatum !== "" && (
                 <span>{new Date(formData.rotRutSlutdatum).toLocaleDateString("sv-SE")}</span>
               )}
             </div>

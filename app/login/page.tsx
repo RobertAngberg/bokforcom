@@ -1,13 +1,34 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // SÄKERHETSVALIDERING: Secure login component
 export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Redirect om redan inloggad
+  useEffect(() => {
+    if (session?.user) {
+      router.push("/");
+    }
+  }, [session, router]);
+
   const handleGoogleSignIn = () => {
     // Använd samma approach som fungerar på root-sidan
-    signIn("google");
+    signIn("google", { callbackUrl: "/" });
   };
+
+  // Visa loading om vi redirectar
+  if (status === "loading" || session?.user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-white bg-slate-950">
+        <div className="text-xl">Laddar...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-950">
