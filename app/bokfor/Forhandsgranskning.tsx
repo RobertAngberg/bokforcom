@@ -21,7 +21,8 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           <p className="text-gray-500 text-center">Ditt underlag kommer att visas här</p>
         )}
 
-        {(fil?.type.startsWith("image/") || pdfUrl) && (
+        {/* Visa bilder med Image komponenten */}
+        {fil?.type.startsWith("image/") && (
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
               src={pdfUrl || URL.createObjectURL(fil!)}
@@ -33,20 +34,22 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           </div>
         )}
 
-        {pdfUrl && !fil?.type.startsWith("image/") && (
-          <div className="w-full overflow-auto rounded max-h-[600px]">
-            <iframe
-              ref={iframeRef}
-              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-              className="w-full rounded border-none"
-              style={{
-                width: "100%",
-                height: "600px",
-              }}
-              title="PDF Viewer"
-            />
-          </div>
-        )}
+        {/* Visa PDFs med iframe */}
+        {(pdfUrl && !fil?.type.startsWith("image/")) ||
+          (fil?.type === "application/pdf" && (
+            <div className="w-full overflow-auto rounded max-h-[600px]">
+              <iframe
+                ref={iframeRef}
+                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                className="w-full rounded border-none"
+                style={{
+                  width: "100%",
+                  height: "600px",
+                }}
+                title="PDF Viewer"
+              />
+            </div>
+          ))}
 
         {hasFile && (
           <button
@@ -69,13 +72,21 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
             </button>
 
             <div className="flex justify-center items-center">
-              {(fil?.type.startsWith("image/") || pdfUrl) && (
+              {fil?.type.startsWith("image/") && (
                 <Image
                   src={pdfUrl || URL.createObjectURL(fil!)}
                   alt="Stor förhandsgranskning"
                   width={1200}
                   height={1000}
                   className="rounded max-w-full h-auto"
+                />
+              )}
+
+              {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
+                <iframe
+                  src={`${pdfUrl || URL.createObjectURL(fil!)}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-[80vh] rounded"
+                  title="PDF förhandsgranskning stor"
                 />
               )}
 

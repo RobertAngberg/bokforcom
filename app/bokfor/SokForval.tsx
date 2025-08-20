@@ -49,7 +49,7 @@ export default function SokForval({
   levfaktMode = false,
 }: Props) {
   const [searchText, setSearchText] = useState("");
-  const [results, setResults] = useState<Forval[]>(favoritFörvalen ?? []);
+  const [results, setResults] = useState<Forval[]>([]); // Börja med tom lista
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -72,33 +72,9 @@ export default function SokForval({
     const delay = setTimeout(async () => {
       const input = normalize(searchText); // Säker normalisering
 
+      // Visa bara förval när användaren skriver (minst 2 tecken)
       if (input.length < 2) {
-        let baseResults = favoritFörvalen;
-
-        // Filtrera för att bara visa kostnadskonton (4xxx, 5xxx, 6xxx) i leverantörsfaktura-mode
-        if (levfaktMode) {
-          baseResults = baseResults.filter((f) => {
-            // Filtrera bort alla konton som inte är 1930, 2440 eller kostnadskonton (4xxx, 5xxx, 6xxx)
-            const relevantaKonton = f.konton.filter((k: KontoRad) => {
-              const kontonummer = k.kontonummer || "";
-              // Behåll alltid 1930 (Förutbetald moms) och 2440 (Leverantörsskulder)
-              if (kontonummer === "1930" || kontonummer === "2440") return true;
-              // Behåll endast kostnadskonton (4xxx, 5xxx, 6xxx)
-              return /^[456]/.test(kontonummer);
-            });
-
-            // Visa bara förval som har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
-            // eller som är specialförval för leverantörsfakturor
-            const harKostnadskonto = relevantaKonton.some((k: KontoRad) => {
-              const kontonummer = k.kontonummer || "";
-              return /^[456]/.test(kontonummer);
-            });
-
-            return harKostnadskonto;
-          });
-        }
-
-        setResults(baseResults);
+        setResults([]); // Tom lista när ingen sökning
         setHighlightedIndex(0);
         setLoading(false);
         return;
