@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Chart } from "react-chartjs-2";
 import "chart.js/auto";
 import React from "react";
-import Dropdown from "../_components/Dropdown";
 
 type ChartRow = {
   month: string;
@@ -151,20 +150,6 @@ export default function HomeChart({ year, onYearChange, chartData }: Props) {
     <div className="w-full m-0 p-0">
       <div className="relative w-full h-[75vh] p-0 m-0">
         <Chart type="bar" datasetIdKey="id" options={options} data={data} />
-      </div>
-      <div className="flex justify-center -mt-4">
-        <Dropdown
-          value={year}
-          onChange={onYearChange}
-          options={[
-            { label: "2025", value: "2025" },
-            { label: "2024", value: "2024" },
-            { label: "2023", value: "2023" },
-            { label: "2022", value: "2022" },
-            { label: "2021", value: "2021" },
-            { label: "2020", value: "2020" },
-          ]}
-        />
       </div>
     </div>
   );

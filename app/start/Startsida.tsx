@@ -6,7 +6,7 @@ import { fetchRawYearData } from "./actions";
 import Kort from "./Kort";
 import Chart from "./Chart";
 import MainLayout from "../_components/MainLayout";
-import PDFUpload from "./PDFUpload";
+import Dropdown from "../_components/Dropdown";
 
 type YearSummary = {
   totalInkomst: number;
@@ -105,6 +105,21 @@ export default function Startsida({ initialData }: Props) {
         <Kort title="Resultat" data={data?.totalResultat || 0} />
       </div>
 
+      <div className="flex justify-center mb-6">
+        <Dropdown
+          value={year}
+          onChange={setYear}
+          options={[
+            { label: "2025", value: "2025" },
+            { label: "2024", value: "2024" },
+            { label: "2023", value: "2023" },
+            { label: "2022", value: "2022" },
+            { label: "2021", value: "2021" },
+            { label: "2020", value: "2020" },
+          ]}
+        />
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="border-t-4 border-cyan-600 border-solid rounded-full w-16 h-16 animate-spin"></div>
@@ -112,8 +127,6 @@ export default function Startsida({ initialData }: Props) {
       ) : (
         <Chart year={year} onYearChange={setYear} chartData={data?.yearData || []} />
       )}
-
-      <PDFUpload />
     </MainLayout>
   );
 }
