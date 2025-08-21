@@ -81,7 +81,7 @@ async function logAdminSecurityEvent(
     const client = await pool.connect();
     try {
       await client.query(
-        `INSERT INTO security_logs ("userId", event_type, details, module, timestamp) 
+        `INSERT INTO security_logs (user_id, event_type, details, module, timestamp) 
          VALUES ($1, $2, $3, $4, NOW())`,
         [userId, eventType, details, "admin"]
       );
@@ -921,7 +921,7 @@ export async function körSQL(sql: string) {
     );
 
     // 🔒 SQL-SÄKERHETSVALIDERING
-    const safeSql = sanitizeAdminInput(sql);
+    const safeSql = sanitizeAdminInput(sql, true); // true = SQL mode
 
     // Förhindra farliga kommandon
     const dangerousPatterns = [

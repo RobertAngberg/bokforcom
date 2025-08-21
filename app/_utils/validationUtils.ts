@@ -76,9 +76,19 @@ export function sanitizeExportInput(input: string): string {
 /**
  * Sanitisering för admin operationer
  * Flexibel gräns för administrativa funktioner
+ * @param input - Texten som ska saniteras
+ * @param isSQL - Om true, behålls citattecken för SQL-syntax
  */
-export function sanitizeAdminInput(input: string): string {
-  return sanitizeInput(input, 500); // Mellangräns för admin
+export function sanitizeAdminInput(input: string, isSQL: boolean = false): string {
+  if (!input) return "";
+
+  if (isSQL) {
+    // För SQL: behåll citattecken men ta bort farliga tecken
+    return input.trim().replace(/[<>&]/g, "").slice(0, 5000);
+  }
+
+  // Standard admin sanitizing
+  return sanitizeInput(input, 500);
 }
 
 /**

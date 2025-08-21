@@ -62,8 +62,8 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Fullständigt namn"
-          autoComplete="name"
+          placeholder="Företagsnamn"
+          autoComplete="organization"
           className="w-full px-4 py-3 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
