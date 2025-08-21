@@ -391,7 +391,7 @@ export async function hämtaAllaTransaktioner() {
           belopp,
           fil,
           kommentar,
-          "userId"
+          "user_id"
         FROM transaktioner
         ORDER BY id DESC
       `);
@@ -992,12 +992,12 @@ export async function sparaForetagsprofil(formData: FormData) {
     await client.query(
       `
       INSERT INTO företagsprofil (
-        "userId", företagsnamn, adress, postnummer, stad,
+        "user_id", företagsnamn, adress, postnummer, stad,
         organisationsnummer, momsregistreringsnummer,
         telefonnummer, epost, bankinfo, webbplats
       )
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-      ON CONFLICT ("userId") DO UPDATE SET
+      ON CONFLICT ("user_id") DO UPDATE SET
         företagsnamn = EXCLUDED.företagsnamn,
         adress = EXCLUDED.adress,
         postnummer = EXCLUDED.postnummer,
@@ -1039,7 +1039,7 @@ export async function sparaForetagsprofil(formData: FormData) {
 
 //   const client = await pool.connect();
 //   try {
-//     const res = await client.query(`SELECT * FROM företagsprofil WHERE "userId" = $1`, [userId]);
+//     const res = await client.query(`SELECT * FROM företagsprofil WHERE "user_id" = $1`, [userId]);
 //     return res.rows[0] ?? null;
 //   } catch (err) {
 //     console.error("❌ Kunde inte hämta företagsprofil:", err);

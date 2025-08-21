@@ -55,7 +55,7 @@ export async function hamtaResultatrapport() {
     FROM transaktioner t
     JOIN transaktionsposter tp ON tp.transaktions_id = t.id
     JOIN konton k ON k.id = tp.konto_id
-    WHERE t."userId" = $1 
+    WHERE t."user_id" = $1 
       AND EXTRACT(YEAR FROM t.transaktionsdatum) IN ($2, $3)
     GROUP BY k.kontonummer, k.beskrivning, k.kontoklass, k.kategori, år
     ORDER BY år DESC, k.kontonummer::int

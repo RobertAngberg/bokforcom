@@ -1327,7 +1327,7 @@ export async function bokförSemester({
     // Skapa huvudtransaktion
     const huvudBeskrivning = "Semestertransaktion";
     const insertTransaktion = await client.query(
-      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "user_id")
        VALUES ($1, $2, $3, $4) RETURNING id`,
       [transaktionsdatum, huvudBeskrivning, kommentar || null, realUserId]
     );
@@ -1599,7 +1599,7 @@ export async function bokförLöneskatter({
 
     // Skapa huvudtransaktion för sociala avgifter
     const socialTransaktion = await client.query(
-      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "user_id")
        VALUES ($1, $2, $3, $4) RETURNING id`,
       [
         transaktionsdatum,
@@ -1640,7 +1640,7 @@ export async function bokförLöneskatter({
 
     // Skapa huvudtransaktion för personalskatt
     const skattTransaktion = await client.query(
-      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "userId")
+      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "user_id")
        VALUES ($1, $2, $3, $4) RETURNING id`,
       [
         transaktionsdatum,
@@ -1778,7 +1778,7 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
     // Skapa huvudtransaktion
     const transaktionQuery = `
       INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;

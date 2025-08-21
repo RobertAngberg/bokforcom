@@ -192,7 +192,7 @@ async function saveInvoiceInternal(formData: FormData) {
           "kundId" = $7,
           nummer = $8,
           logo_width = $9
-        WHERE id = $10 AND "userId" = $11`,
+        WHERE id = $10 AND "user_id" = $11`,
         [
           formData.get("fakturanummer"),
           fakturaDateString,
@@ -252,7 +252,7 @@ async function saveInvoiceInternal(formData: FormData) {
       let fakturanummer = formData.get("fakturanummer")?.toString();
       if (!fakturanummer) {
         const latest = await client.query(
-          `SELECT MAX(CAST(fakturanummer AS INTEGER)) AS max FROM fakturor WHERE "userId" = $1`,
+          `SELECT MAX(CAST(fakturanummer AS INTEGER)) AS max FROM fakturor WHERE "user_id" = $1`,
           [userId]
         );
         fakturanummer = ((latest.rows[0].max || 0) + 1).toString();
@@ -260,7 +260,7 @@ async function saveInvoiceInternal(formData: FormData) {
 
       const insertF = await client.query(
         `INSERT INTO fakturor (
-          "userId", fakturanummer, fakturadatum, forfallodatum,
+          "user_id", fakturanummer, fakturadatum, forfallodatum,
           betalningsmetod, betalningsvillkor, drojsmalsranta,
           "kundId", nummer, logo_width
         ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8, $9, $10)
@@ -355,7 +355,7 @@ export async function deleteFaktura(id: number) {
     try {
       // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
       const verifyRes = await client.query(
-        `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "userId" = $2`,
+        `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
         [id, userId]
       );
 
@@ -383,7 +383,7 @@ export async function deleteFaktura(id: number) {
       await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
 
       // 4. Radera fakturan själv (med dubbel validering av ägarskap)
-      const deleteRes = await client.query(`DELETE FROM fakturor WHERE id = $1 AND "userId" = $2`, [
+      const deleteRes = await client.query(`DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`, [
         id,
         userId,
       ]);
@@ -432,7 +432,7 @@ export async function deleteKund(id: number) {
     try {
       // SÄKERHETSVALIDERING: Verifiera att kunden tillhör denna användare
       const verifyRes = await client.query(
-        `SELECT id FROM kunder WHERE id = $1 AND "userId" = $2`,
+        `SELECT id FROM kunder WHERE id = $1 AND "user_id" = $2`,
         [id, userId]
       );
 
@@ -444,7 +444,7 @@ export async function deleteKund(id: number) {
       }
 
       // Radera kunden med dubbel validering av ägarskap
-      const deleteRes = await client.query(`DELETE FROM kunder WHERE id = $1 AND "userId" = $2`, [
+      const deleteRes = await client.query(`DELETE FROM kunder WHERE id = $1 AND "user_id" = $2`, [
         id,
         userId,
       ]);
@@ -474,7 +474,7 @@ export async function hämtaSparadeKunder() {
 
   const client = await pool.connect();
   try {
-    const res = await client.query(`SELECT * FROM kunder WHERE "userId" = $1 ORDER BY id DESC`, [
+    const res = await client.query(`SELECT * FROM kunder WHERE "user_id" = $1 ORDER BY id DESC`, [
       userId,
     ]);
     return res.rows;
@@ -504,7 +504,7 @@ export async function hämtaSparadeFakturor() {
         k.kundnamn
       FROM fakturor f
       LEFT JOIN kunder k ON f."kundId" = k.id
-      WHERE f."userId" = $1
+      WHERE f."user_id" = $1
       ORDER BY f.id DESC
       `,
       [userId]
@@ -582,7 +582,7 @@ export async function getAllInvoices() {
   const client = await pool.connect();
 
   try {
-    const res = await client.query(`SELECT * FROM fakturor WHERE "userId" = $1 ORDER BY id DESC`, [
+    const res = await client.query(`SELECT * FROM fakturor WHERE "user_id" = $1 ORDER BY id DESC`, [
       userId,
     ]);
     const fakturor = res.rows;
@@ -646,7 +646,7 @@ export async function sparaNyKund(formData: FormData) {
     // Säker parametriserad query med saniterade värden
     const res = await client.query(
       `INSERT INTO kunder (
-        "userId", kundnamn, kundorgnummer, kundnummer,
+        "user_id", kundnamn, kundorgnummer, kundnummer,
         kundmomsnummer, kundadress1, kundpostnummer, kundstad, kundemail
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id`,
@@ -714,7 +714,7 @@ export async function uppdateraKund(id: number, formData: FormData) {
     try {
       // SÄKERHETSVALIDERING: Verifiera att kunden tillhör denna användare
       const verifyRes = await client.query(
-        `SELECT id FROM kunder WHERE id = $1 AND "userId" = $2`,
+        `SELECT id FROM kunder WHERE id = $1 AND "user_id" = $2`,
         [id, userId]
       );
 
@@ -733,7 +733,7 @@ export async function uppdateraKund(id: number, formData: FormData) {
           kundpostnummer = $6,
           kundstad = $7,
           kundemail = $8
-        WHERE id = $9 AND "userId" = $10
+        WHERE id = $9 AND "user_id" = $10
         `,
         [
           kundnamn,
@@ -1154,7 +1154,7 @@ export async function hämtaNästaFakturanummer() {
   const client = await pool.connect();
   try {
     const latest = await client.query(
-      `SELECT MAX(CAST(fakturanummer AS INTEGER)) AS max FROM fakturor WHERE "userId" = $1`,
+      `SELECT MAX(CAST(fakturanummer AS INTEGER)) AS max FROM fakturor WHERE "user_id" = $1`,
       [userId]
     );
     return (latest.rows[0].max || 0) + 1;
@@ -1171,7 +1171,7 @@ export async function hämtaSenasteBetalningsmetod(userId: string) {
         betalningsmetod, 
         nummer
       FROM fakturor 
-      WHERE "userId" = $1 
+      WHERE "user_id" = $1 
         AND betalningsmetod IS NOT NULL 
         AND betalningsmetod != ''
         AND nummer IS NOT NULL
@@ -1219,7 +1219,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
 
   try {
     const result = await pool.query(
-      'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "userId" = $2',
+      'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "user_id" = $2',
       [fakturaId, userId]
     );
     return result.rows[0] || {};
@@ -1319,7 +1319,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
       // SÄKERHETSVALIDERING: Om fakturaId anges, verifiera ägarskap
       if (data.fakturaId) {
         const fakturaCheck = await client.query(
-          `SELECT id FROM fakturor WHERE id = $1 AND "userId" = $2`,
+          `SELECT id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
           [data.fakturaId, userId]
         );
 
@@ -1341,7 +1341,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
       // Skapa huvudtransaktion
       const transaktionQuery = `
         INSERT INTO transaktioner (
-          transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+          transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
         ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `;
@@ -1405,7 +1405,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
           }
 
           await client.query(
-            'UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "userId" = $5',
+            'UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
             [status, new Date().toISOString().split("T")[0], transaktionsId, data.fakturaId, userId]
           );
           console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till ${status}`);
@@ -1418,7 +1418,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
           if (ärKontantmetod) {
             // Kontantmetod: sätt både bokförd OCH betald
             await client.query(
-              'UPDATE fakturor SET status_bokförd = $1, status_betalning = $2, betaldatum = $3, transaktions_id = $4 WHERE id = $5 AND "userId" = $6',
+              'UPDATE fakturor SET status_bokförd = $1, status_betalning = $2, betaldatum = $3, transaktions_id = $4 WHERE id = $5 AND "user_id" = $6',
               [
                 "Bokförd",
                 "Betald",
@@ -1434,7 +1434,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
           } else {
             // Normal fakturametods-bokföring
             await client.query(
-              'UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3 AND "userId" = $4',
+              'UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3 AND "user_id" = $4',
               ["Bokförd", transaktionsId, data.fakturaId, userId]
             );
             console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd`);
@@ -1494,7 +1494,7 @@ export async function hamtaBokfordaFakturor() {
         lf.status_bokförd
       FROM transaktioner t
       INNER JOIN leverantörsfakturor lf ON lf.transaktions_id = t.id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
       ORDER BY t.transaktionsdatum DESC, t.id DESC
       LIMIT 100
     `,
@@ -1544,7 +1544,7 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
 
     // Först, kolla om transaktionen finns
     const { rows: transCheck } = await client.query(
-      `SELECT id, "userId" FROM transaktioner WHERE id = $1`,
+      `SELECT id, "user_id" FROM transaktioner WHERE id = $1`,
       [transaktionId]
     );
     console.log("🔍 Transaktion existerar:", transCheck);
@@ -1571,7 +1571,7 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
       FROM transaktionsposter tp
       JOIN konton k ON tp.konto_id = k.id
       JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE tp.transaktions_id = $1 AND t."userId" = $2
+      WHERE tp.transaktions_id = $1 AND t."user_id" = $2
       ORDER BY tp.id
     `,
       [transaktionId, userId]
@@ -1582,7 +1582,7 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
     // Om inga poster hittades, kolla vad som finns i transaktioner
     if (rows.length === 0) {
       const { rows: transaktionCheck } = await client.query(
-        `SELECT id, transaktionsdatum, kommentar, "userId" FROM transaktioner WHERE id = $1`,
+        `SELECT id, transaktionsdatum, kommentar, "user_id" FROM transaktioner WHERE id = $1`,
         [transaktionId]
       );
       console.log("🔍 Transaktion check:", transaktionCheck);
@@ -1629,7 +1629,7 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     // Skapa ny transaktion för betalningen
     const { rows: transRows } = await client.query(
       `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id`,
       [
@@ -1670,7 +1670,7 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     const updateResult = await client.query(
       `UPDATE leverantörsfakturor 
        SET betaldatum = $1, status_betalning = 'Betald' 
-       WHERE id = $2 AND "userId" = $3`,
+       WHERE id = $2 AND "user_id" = $3`,
       [new Date().toISOString().split("T")[0], leverantörsfakturaId, userId]
     );
     console.log("📝 Update result rowCount:", updateResult.rowCount);
@@ -1716,7 +1716,7 @@ export async function registreraBetalningEnkel(
 
     // Skapa transaktion
     const transResult = await client.query(
-      'INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, "userId") VALUES ($1, $2, $3, $4) RETURNING id',
+      'INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, "user_id") VALUES ($1, $2, $3, $4) RETURNING id',
       [new Date(), `Betalning faktura ${fakturaId}`, belopp, userId]
     );
     const transId = transResult.rows[0].id;
@@ -1769,7 +1769,7 @@ export async function registreraKundfakturaBetalning(
   try {
     // Hämta fakturauppgifter och artiklar
     const fakturaResult = await client.query(
-      'SELECT * FROM fakturor WHERE id = $1 AND "userId" = $2',
+      'SELECT * FROM fakturor WHERE id = $1 AND "user_id" = $2',
       [fakturaId, userId]
     );
 
@@ -1888,7 +1888,7 @@ export async function saveLeverantör(formData: FormData) {
   try {
     const result = await client.query(
       `INSERT INTO "leverantörer" (
-        "userId", "namn", "organisationsnummer", "adress", "postnummer", "ort", 
+        "user_id", "namn", "organisationsnummer", "adress", "postnummer", "ort", 
         "telefon", "email"
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *`,
@@ -1912,7 +1912,7 @@ export async function getLeverantörer() {
 
   try {
     const result = await client.query(
-      `SELECT * FROM "leverantörer" WHERE "userId" = $1 ORDER BY "namn" ASC`,
+      `SELECT * FROM "leverantörer" WHERE "user_id" = $1 ORDER BY "namn" ASC`,
       [userId]
     );
 
@@ -1947,7 +1947,7 @@ export async function updateLeverantör(
       `UPDATE "leverantörer" 
        SET "namn" = $1, "organisationsnummer" = $2, "adress" = $3, 
            "postnummer" = $4, "ort" = $5, "telefon" = $6, "email" = $7, "uppdaterad" = NOW()
-       WHERE "id" = $8 AND "userId" = $9`,
+       WHERE "id" = $8 AND "user_id" = $9`,
       [
         data.namn,
         data.organisationsnummer,
@@ -1985,7 +1985,7 @@ export async function uppdateraRotRutStatus(
 
   try {
     const result = await client.query(
-      `UPDATE fakturor SET rot_rut_status = $1 WHERE id = $2 AND "userId" = $3`,
+      `UPDATE fakturor SET rot_rut_status = $1 WHERE id = $2 AND "user_id" = $3`,
       [status, fakturaId, userId]
     );
 
@@ -2016,7 +2016,7 @@ export async function registreraRotRutBetalning(
   try {
     // Hämta faktura för att kolla ROT/RUT-belopp
     const fakturaResult = await client.query(
-      'SELECT * FROM fakturor WHERE id = $1 AND "userId" = $2',
+      'SELECT * FROM fakturor WHERE id = $1 AND "user_id" = $2',
       [fakturaId, userId]
     );
 
@@ -2050,7 +2050,7 @@ export async function registreraRotRutBetalning(
     // Skapa transaktion för ROT/RUT-betalning
     const transaktionResult = await client.query(
       `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
       [
         new Date(),
@@ -2119,7 +2119,7 @@ export async function deleteLeverantör(id: number) {
 
   try {
     const result = await client.query(
-      `DELETE FROM "leverantörer" WHERE "id" = $1 AND "userId" = $2`,
+      `DELETE FROM "leverantörer" WHERE "id" = $1 AND "user_id" = $2`,
       [id, userId]
     );
 

@@ -47,7 +47,7 @@ export async function fetchHuvudbok() {
       FROM transaktioner t
       JOIN transaktionsposter tp ON tp.transaktions_id = t.id
       JOIN konton k ON k.id = tp.konto_id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
         AND t.kontobeskrivning = 'Ingående balanser'
         AND t.kommentar = 'SIE Import - Ingående balanser'
       GROUP BY k.kontonummer, k.beskrivning
@@ -62,7 +62,7 @@ export async function fetchHuvudbok() {
       FROM transaktioner t
       JOIN transaktionsposter tp ON tp.transaktions_id = t.id
       JOIN konton k ON k.id = tp.konto_id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
         AND NOT (t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser')
       GROUP BY k.kontonummer, k.beskrivning
     `;
@@ -76,7 +76,7 @@ export async function fetchHuvudbok() {
       FROM konton k
       JOIN transaktionsposter tp ON k.id = tp.konto_id
       JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
       GROUP BY k.kontonummer, k.beskrivning
       ORDER BY k.kontonummer::int
     `;
@@ -189,7 +189,7 @@ export async function fetchTransactionDetails(transaktionsId: number) {
     JOIN konton k ON k.id = tp.konto_id
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE tp.transaktions_id = $1
-      AND t."userId" = $2
+      AND t."user_id" = $2
     ORDER BY tp.id
     `,
       [transaktionsId, userId]

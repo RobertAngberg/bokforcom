@@ -36,7 +36,7 @@ export async function bokförSemesteruttag(data: SemesterBokföring) {
     // Skapa huvudtransaktion
     const transaktionQuery = `
       INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
@@ -110,7 +110,7 @@ export async function bokförSemesteravsättning(data: SemesterBokföring) {
     // Skapa huvudtransaktion
     const transaktionQuery = `
       INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
@@ -185,7 +185,7 @@ export async function bokförSemesteruppsägning(data: SemesterBokföring) {
     // Skapa huvudtransaktion
     const transaktionQuery = `
       INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;

@@ -58,7 +58,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE k.kontonummer LIKE '1%'
       AND t.kontobeskrivning = 'Ingående balanser'
-      AND t."userId" = $1
+      AND t."user_id" = $1
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -88,7 +88,7 @@ export async function fetchBalansData(year: string) {
     WHERE t.transaktionsdatum BETWEEN $1 AND $2
       AND k.kontonummer LIKE '1%'
       AND t.kontobeskrivning != 'Ingående balanser'
-      AND t."userId" = $3
+      AND t."user_id" = $3
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -107,7 +107,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum <= $1
       AND k.kontonummer LIKE '1%'
-      AND t."userId" = $2
+      AND t."user_id" = $2
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -126,7 +126,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE k.kontonummer LIKE '2%'
       AND t.kontobeskrivning = 'Ingående balanser'
-      AND t."userId" = $1
+      AND t."user_id" = $1
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -156,7 +156,7 @@ export async function fetchBalansData(year: string) {
     WHERE t.transaktionsdatum BETWEEN $1 AND $2
       AND k.kontonummer LIKE '2%'
       AND t.kontobeskrivning != 'Ingående balanser'
-      AND t."userId" = $3
+      AND t."user_id" = $3
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -175,7 +175,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum <= $1
       AND k.kontonummer LIKE '2%'
-      AND t."userId" = $2
+      AND t."user_id" = $2
     GROUP BY k.kontonummer, k.beskrivning
     ORDER BY k.kontonummer
     `,
@@ -191,7 +191,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum <= $1
       AND k.kontonummer ~ '^[3-8]'
-      AND t."userId" = $2
+      AND t."user_id" = $2
     `,
       [previousYearEnd, userId]
     );
@@ -205,7 +205,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum BETWEEN $1 AND $2
       AND k.kontonummer ~ '^[3-8]'
-      AND t."userId" = $3
+      AND t."user_id" = $3
     `,
       [start, end, userId]
     );
@@ -219,7 +219,7 @@ export async function fetchBalansData(year: string) {
     JOIN transaktioner t ON t.id = tp.transaktions_id
     WHERE t.transaktionsdatum <= $1
       AND k.kontonummer ~ '^[3-8]'
-      AND t."userId" = $2
+      AND t."user_id" = $2
     `,
       [end, userId]
     );

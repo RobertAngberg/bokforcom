@@ -55,7 +55,7 @@ async function fetchTransaktionerInternal(fromYear?: string) {
         t.blob_url
       FROM transaktioner t
       LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
       ${fromYear ? "AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2" : ""}
       GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.kommentar, t.fil, t.blob_url
       ORDER BY t.transaktionsdatum DESC, t.id DESC
@@ -94,7 +94,7 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
   try {
     // SÄKERHETSVALIDERING: Verifiera att transaktionen tillhör denna användare
     const verifyRes = await client.query(
-      `SELECT id FROM transaktioner WHERE id = $1 AND "userId" = $2`,
+      `SELECT id FROM transaktioner WHERE id = $1 AND "user_id" = $2`,
       [transactionId, userId]
     );
 
@@ -180,7 +180,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
       FROM transaktioner t
       LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
       LEFT JOIN konton k ON tp.konto_id = k.id
-      WHERE t."userId" = $1 
+      WHERE t."user_id" = $1 
         AND t.transaktionsdatum BETWEEN $2 AND $3
       ORDER BY t.transaktionsdatum DESC, t.id DESC, tp.id ASC
     `,

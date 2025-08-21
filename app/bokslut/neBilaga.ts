@@ -36,7 +36,7 @@ export async function hamtaKontosaldoForNE(ar: number = 2025) {
       FROM konton k
       LEFT JOIN transaktionsposter tp ON k.id = tp.konto_id
       LEFT JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE t."userId" = $1
+      WHERE t."user_id" = $1
         AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2
       GROUP BY k.kontonummer, k.beskrivning, k.kontoklass
       HAVING COALESCE(SUM(tp.debet - tp.kredit), 0) != 0

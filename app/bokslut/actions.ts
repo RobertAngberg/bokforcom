@@ -28,17 +28,17 @@ export async function testDatabaseConnection() {
     console.log("[DEBUG] Authenticated userId:", userId);
 
     // Andra: kolla hur många transaktioner som finns för den inloggade användaren
-    const userCount = await client.query('SELECT COUNT(*) FROM transaktioner WHERE "userId" = $1', [
+    const userCount = await client.query('SELECT COUNT(*) FROM transaktioner WHERE "user_id" = $1', [
       userId,
     ]);
     console.log(`[DEBUG] Transactions for userId ${userId}:`, userCount.rows[0]);
 
     // Kolla vilka userId som faktiskt finns
     const allUsers = await client.query(`
-      SELECT DISTINCT "userId", COUNT(*) as transaction_count 
+      SELECT DISTINCT "user_id", COUNT(*) as transaction_count 
       FROM transaktioner 
-      GROUP BY "userId" 
-      ORDER BY "userId"
+      GROUP BY "user_id" 
+      ORDER BY "user_id"
     `);
     console.log("[DEBUG] All userIds in database:", allUsers.rows);
 
@@ -47,7 +47,7 @@ export async function testDatabaseConnection() {
       `
       SELECT DISTINCT EXTRACT(YEAR FROM transaktionsdatum) as year, COUNT(*) as count
       FROM transaktioner 
-      WHERE "userId" = $1 
+      WHERE "user_id" = $1 
       GROUP BY EXTRACT(YEAR FROM transaktionsdatum)
       ORDER BY year DESC
     `,
@@ -91,7 +91,7 @@ export async function hamtaKontosaldo(ar: number = 2025) {
       FROM konton k
       LEFT JOIN transaktionsposter tp ON k.id = tp.konto_id
       LEFT JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE t."userId" = $1 
+      WHERE t."user_id" = $1 
         AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2
         AND k.kontonummer IN (
           '1100', '1200', '1220', '1300', '1380', '1930',
@@ -148,7 +148,7 @@ export async function hamtaSenasteTransaktioner(ar: number = 2025, limit: number
       FROM transaktioner t
       LEFT JOIN transaktionsposter tp ON t.id = tp.transaktions_id
       LEFT JOIN konton k ON tp.konto_id = k.id
-      WHERE t."userId" = $1 
+      WHERE t."user_id" = $1 
         AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2
       GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.belopp, t.kommentar, t.fil
       ORDER BY t.transaktionsdatum DESC, t.id DESC
@@ -200,7 +200,7 @@ export async function skapaBokslutsjustering(data: {
         kontobeskrivning, 
         belopp, 
         kommentar, 
-        "userId"
+        "user_id"
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `,

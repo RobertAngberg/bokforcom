@@ -377,7 +377,7 @@ export async function fetchTransactionWithBlob(transactionId: number) {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      `SELECT *, blob_url FROM transaktioner WHERE id = $1 AND "userId" = $2`,
+      `SELECT *, blob_url FROM transaktioner WHERE id = $1 AND "user_id" = $2`,
       [transactionId, userId]
     );
 
@@ -486,7 +486,7 @@ export async function saveTransaction(formData: FormData) {
     const { rows } = await client.query(
       `
       INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "userId", blob_url
+        transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id", blob_url
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING id
       `,
@@ -542,7 +542,7 @@ export async function saveTransaction(formData: FormData) {
     if (leverantorId) {
       // Hämta leverantörsnamn från databasen
       const leverantörResult = await client.query(
-        `SELECT "namn" FROM "leverantörer" WHERE "id" = $1 AND "userId" = $2`,
+        `SELECT "namn" FROM "leverantörer" WHERE "id" = $1 AND "user_id" = $2`,
         [parseInt(leverantorId), userId]
       );
 
@@ -583,7 +583,7 @@ export async function saveTransaction(formData: FormData) {
 
       const res = await client.query(
         `INSERT INTO leverantörsfakturor (
-          "userId", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
+          "user_id", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
           fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [
@@ -630,7 +630,7 @@ export async function bokförUtlägg(utläggId: number) {
     // Skapa transaktion
     const { rows: transRows } = await client.query(
       `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "userId"
+        transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id"
       ) VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id`,
       [

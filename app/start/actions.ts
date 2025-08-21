@@ -78,7 +78,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
       FROM transaktionsposter tp
       LEFT JOIN konton k ON k.id = tp.konto_id
       LEFT JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE tp.transaktions_id = $1 AND t."userId" = $2
+      WHERE tp.transaktions_id = $1 AND t."user_id" = $2
     `,
       [transaktionsId, userId]
     );
@@ -129,7 +129,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     );
 
     // 🔒 SÄKER DATABASACCESS - Endast användarens egna förval
-    let query = 'SELECT * FROM förval WHERE "userId" = $1';
+    let query = 'SELECT * FROM förval WHERE "user_id" = $1';
     const values: any[] = [userId];
     const conditions: string[] = [];
 
@@ -237,7 +237,7 @@ export async function fetchRawYearData(year: string) {
         FROM transaktioner t
         JOIN transaktionsposter tp ON t.id = tp.transaktions_id
         JOIN konton k ON tp.konto_id = k.id
-        WHERE t.transaktionsdatum >= $1 AND t.transaktionsdatum < $2 AND t."userId" = $3
+        WHERE t.transaktionsdatum >= $1 AND t.transaktionsdatum < $2 AND t."user_id" = $3
         ORDER BY t.transaktionsdatum ASC
       `;
 
@@ -304,9 +304,9 @@ export async function hämtaAllaTransaktioner() {
           belopp,
           fil,
           kommentar,
-          "userId"
+          "user_id"
         FROM transaktioner
-        WHERE "userId" = $1
+        WHERE "user_id" = $1
         ORDER BY id DESC
       `,
         [userId]
@@ -368,9 +368,9 @@ export async function getAllInvoices() {
           totalbelopp,
           status,
           utfardandedatum,
-          "userId"
+          "user_id"
         FROM fakturor
-        WHERE "userId" = $1
+        WHERE "user_id" = $1
         ORDER BY id DESC
       `,
         [userId]
@@ -433,7 +433,7 @@ export async function deleteInvoice(fakturaId: number) {
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna fakturor
       const deleteRes = await client.query(
-        'DELETE FROM fakturor WHERE id = $1 AND "userId" = $2 RETURNING id',
+        'DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2 RETURNING id',
         [fakturaId, userId]
       );
 
@@ -555,7 +555,7 @@ export async function räknaFörval(sök?: string) {
 
     const client = await pool.connect();
     try {
-      let query = `SELECT COUNT(*) FROM förval WHERE "userId" = $1`;
+      let query = `SELECT COUNT(*) FROM förval WHERE "user_id" = $1`;
       let params: (number | string)[] = [userId];
 
       if (sök) {
@@ -658,7 +658,7 @@ export async function taBortFörval(id: number) {
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna förval
       const result = await client.query(
-        `DELETE FROM förval WHERE id = $1 AND "userId" = $2 RETURNING id`,
+        `DELETE FROM förval WHERE id = $1 AND "user_id" = $2 RETURNING id`,
         [id, userId]
       );
 
@@ -721,7 +721,7 @@ export async function taBortTransaktion(id: number) {
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna transaktioner
       const result = await client.query(
-        `DELETE FROM transaktioner WHERE id = $1 AND "userId" = $2 RETURNING id`,
+        `DELETE FROM transaktioner WHERE id = $1 AND "user_id" = $2 RETURNING id`,
         [id, userId]
       );
 
@@ -785,12 +785,14 @@ export async function fetchForvalMedFel() {
     try {
       // 🔒 SÄKER DATABASACCESS - Användarens data
       const kontonResult = await client.query(
-        'SELECT kontonummer FROM konton WHERE "userId" = $1',
+        'SELECT kontonummer FROM konton WHERE "user_id" = $1',
         [userId]
       );
       const giltigaKonton = kontonResult.rows.map((row) => row.kontonummer);
 
-      const forvalResult = await client.query('SELECT * FROM förval WHERE "userId" = $1', [userId]);
+      const forvalResult = await client.query('SELECT * FROM förval WHERE "user_id" = $1', [
+        userId,
+      ]);
 
       const felaktiga = forvalResult.rows.filter((f) => {
         try {

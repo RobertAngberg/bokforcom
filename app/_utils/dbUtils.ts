@@ -126,7 +126,7 @@ export async function updateFörvalCore(
       }
 
       if (userId) {
-        query = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2 AND "userId" = $3`;
+        query = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2 AND "user_id" = $3`;
         params = [nyttVärde, id, userId];
       } else {
         query = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2`;
@@ -139,7 +139,7 @@ export async function updateFörvalCore(
       }
 
       if (userId) {
-        query = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2 AND "userId" = $3`;
+        query = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2 AND "user_id" = $3`;
         params = [nyttVärde, id, userId];
       } else {
         query = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2`;
@@ -148,7 +148,7 @@ export async function updateFörvalCore(
     } else {
       // Vanlig text
       if (userId) {
-        query = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2 AND "userId" = $3`;
+        query = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2 AND "user_id" = $3`;
         params = [nyttVärde, id, userId];
       } else {
         query = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2`;

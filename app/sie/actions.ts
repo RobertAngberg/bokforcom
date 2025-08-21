@@ -262,7 +262,7 @@ async function kontrollSaknade(
     let params: any[] = [];
 
     if (userId) {
-      query += ' WHERE "userId" = $1';
+      query += ' WHERE "user_id" = $1';
       params = [userId];
     }
 
@@ -989,9 +989,9 @@ export async function skapaKonton(
 
         // 🔒 SÄKER DATABASSKAPNING - Konto kopplas till userId
         await client.query(
-          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord, "userId") 
+          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord, "user_id") 
            VALUES ($1, $2, $3, $4, $5, $6) 
-           ON CONFLICT (kontonummer, "userId") DO NOTHING`,
+           ON CONFLICT (kontonummer, "user_id") DO NOTHING`,
           [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()], userId]
         );
 
@@ -1128,7 +1128,7 @@ export async function importeraSieData(
         const importResult = await client.query(
           `
           INSERT INTO sie_importer (
-            "userId", filnamn, filstorlek, sie_program, sie_organisationsnummer, 
+            "user_id", filnamn, filstorlek, sie_program, sie_organisationsnummer, 
             sie_företagsnamn, sie_datumintervall_från, sie_datumintervall_till,
             antal_verifikationer, antal_transaktionsposter, antal_balansposter, 
             antal_resultatposter, status
@@ -1164,7 +1164,7 @@ export async function importeraSieData(
           `SELECT kontobeskrivning, transaktionsdatum 
            FROM transaktioner 
            WHERE kontobeskrivning = ANY($1) 
-           AND "userId" = $2 
+           AND "user_id" = $2 
            AND kommentar LIKE 'SIE Import%'`,
           [verifikationsNamn, userId]
         );
@@ -1352,7 +1352,7 @@ ${duplicatesList}
               transaktionsdatum, 
               kontobeskrivning, 
               kommentar, 
-              "userId"
+              "user_id"
             ) VALUES ($1, $2, $3, $4)
             RETURNING id`,
             [
@@ -1415,7 +1415,7 @@ ${duplicatesList}
                 transaktionsdatum, 
                 kontobeskrivning, 
                 kommentar, 
-                "userId"
+                "user_id"
               ) VALUES ($1, $2, $3, $4)
               RETURNING id`,
               [
@@ -1482,7 +1482,7 @@ ${duplicatesList}
                 transaktionsdatum, 
                 kontobeskrivning, 
                 kommentar, 
-                "userId"
+                "user_id"
               ) VALUES ($1, $2, $3, $4)
               RETURNING id`,
               [
@@ -1549,7 +1549,7 @@ ${duplicatesList}
                 transaktionsdatum, 
                 kontobeskrivning, 
                 kommentar, 
-                "userId"
+                "user_id"
               ) VALUES ($1, $2, $3, $4)
               RETURNING id`,
               [
@@ -1738,7 +1738,7 @@ export async function exporteraSieData(
       `
       SELECT kontonummer, beskrivning 
       FROM konton 
-      WHERE "userId" = $1
+      WHERE "user_id" = $1
       ORDER BY kontonummer::integer
     `,
       [userId]
@@ -1765,7 +1765,7 @@ export async function exporteraSieData(
       FROM transaktioner t
       JOIN transaktionsposter tp ON t.id = tp.transaktions_id
       JOIN konton k ON tp.konto_id = k.id
-      WHERE t."userId" = $1 
+      WHERE t."user_id" = $1 
       ORDER BY t.transaktionsdatum, t.id
     `,
       [userId]

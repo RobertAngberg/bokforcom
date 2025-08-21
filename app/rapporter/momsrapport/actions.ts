@@ -80,7 +80,7 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     JOIN    transaktionsposter tp ON tp.transaktions_id = t.id
     JOIN    konton             k  ON k.id = tp.konto_id
     WHERE   t.transaktionsdatum BETWEEN $1 AND $2
-      AND   t."userId" = $3;
+      AND   t."user_id" = $3;
     `,
       [from, to, userId]
     );
