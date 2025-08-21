@@ -95,8 +95,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-950 py-8">
-      <div className="w-full max-w-md p-8 bg-slate-900 rounded-lg shadow-xl transform -translate-y-20">
+    <div
+      className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg.png')" }}
+    >
+      <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-lg shadow-2xl drop-shadow-2xl backdrop-blur-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-white">Välkommen tillbaka</h1>
         </div>

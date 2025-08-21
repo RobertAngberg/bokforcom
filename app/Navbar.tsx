@@ -24,10 +24,15 @@ export default function Navbar() {
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
+  // Dölj navbar på login-sidan
+  if (pathname === "/login") {
+    return null;
+  }
+
   // Länkar för icke-inloggade användare
   const guestLinks = [
     { href: "/", label: "Hem" },
-    { href: "/login", label: "Logga in med Google" },
+    { href: "/login", label: "Logga in" },
   ];
 
   const currentLinks = session?.user ? navLinks : guestLinks;
