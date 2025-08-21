@@ -20,7 +20,6 @@ export default function Navbar() {
     { href: "/faktura", label: "Fakturor" },
     { href: "/rapporter", label: "Rapporter" },
     { href: "/bokslut", label: "Bokslut" },
-    { href: "/sie", label: "SIE" },
     { href: "/personal", label: "Personal" },
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
   ];

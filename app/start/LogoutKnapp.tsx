@@ -10,7 +10,6 @@ function LogoutButton() {
 
   return (
     <div className="flex items-center justify-end text-white md:fixed md:right-0 md:top-1 md:m-4">
-      <span className="hidden mr-6 md:inline md:-mt-1">{session.user?.name}</span>
       <button
         onClick={async () => {
           // FÖRST döda NextAuth sessionen
