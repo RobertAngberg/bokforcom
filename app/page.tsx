@@ -33,21 +33,12 @@ export default function Page() {
     );
   }
 
-  // Icke-inloggad användare - visa bara Google login
+  // Icke-inloggad användare - redirecta till login-sida
   if (!session?.user) {
+    window.location.href = "/login";
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-950">
-        <h1 className="mb-8 text-4xl font-bold text-center">Bokföringssystem</h1>
-        <p className="mb-8 text-lg text-gray-300 text-center max-w-md">
-          Välkommen till vårt professionella bokföringssystem. Logga in med ditt Google-konto för
-          att komma igång.
-        </p>
-        <button
-          onClick={() => signIn("google")}
-          className="px-8 py-4 text-lg font-semibold text-black bg-white rounded-md hover:bg-gray-200 transition-colors"
-        >
-          Logga in med Google
-        </button>
+      <div className="flex items-center justify-center min-h-screen text-white bg-slate-950">
+        <div className="text-xl">Redirectar till login...</div>
       </div>
     );
   }
