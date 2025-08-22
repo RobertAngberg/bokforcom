@@ -1,6 +1,6 @@
 "use client";
 
-import Modal from "./Modal";
+import Modal from "../_components/Modal";
 import { useState } from "react";
 
 interface AnvändaravtalModalProps {

@@ -7,7 +7,7 @@ import Kort from "./Kort";
 import Chart from "./Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
-import { useAnvändaravtalModal } from "../_components/AnvändaravtalModal";
+import { useAnvändaravtalModal } from "./AnvändaravtalModal";
 
 type YearSummary = {
   totalInkomst: number;

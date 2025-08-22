@@ -4,7 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SignupForm from "./SignupForm";
-import { useAnvändaravtalModal } from "../_components/AnvändaravtalModal";
+import { useAnvändaravtalModal } from "../start/AnvändaravtalModal";
 
 function EmailLoginForm() {
   const [email, setEmail] = useState("");
