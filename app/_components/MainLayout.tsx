@@ -1,3 +1,5 @@
+import FeedbackWidget from "../feedback/FeedbackWidget";
+
 type Props = {
   children: React.ReactNode;
 };
@@ -10,6 +12,7 @@ export default function MainLayout({ children }: Props) {
           {children}
         </div>
       </div>
+      <FeedbackWidget />
     </main>
   );
 }
