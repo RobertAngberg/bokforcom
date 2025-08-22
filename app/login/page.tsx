@@ -203,16 +203,6 @@ export default function LoginPage() {
             <SignupForm onSuccess={() => setActiveTab("login")} />
           </div>
         </div>
-
-        {/* Länk till användaravtal */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={openModal}
-            className="text-sm text-slate-300 hover:text-white transition-colors underline"
-          >
-            📋 Användaravtal
-          </button>
-        </div>
       </div>
 
       <AnvändaravtalModal />

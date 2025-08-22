@@ -173,16 +173,6 @@ export default function Startsida({ initialData }: Props) {
         <Chart year={year} onYearChange={setYear} chartData={data?.yearData || []} />
       )}
 
-      {/* Länk till användaravtal */}
-      <div className="mt-8 text-center">
-        <button
-          onClick={openModal}
-          className="text-sm text-gray-400 hover:text-white transition-colors underline"
-        >
-          📋 Användaravtal
-        </button>
-      </div>
-
       <AnvändaravtalModal />
     </MainLayout>
   );

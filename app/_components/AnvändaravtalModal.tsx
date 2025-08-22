@@ -1,6 +1,6 @@
 "use client";
 
-import Modal from "../_components/Modal";
+import Modal from "./Modal";
 import { useState } from "react";
 
 interface AnvändaravtalModalProps {
@@ -10,13 +10,7 @@ interface AnvändaravtalModalProps {
 
 export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="📋 Användaravtal"
-      maxWidth="full"
-      containerClassName="mx-auto max-w-[95vw] sm:max-w-[92vw] lg:max-w-[1200px]"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="📋 Användaravtal" maxWidth="4xl">
       <div className="space-y-8 text-gray-300 leading-relaxed text-sm max-h-[70vh] overflow-y-auto">
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">

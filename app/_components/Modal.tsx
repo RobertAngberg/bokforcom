@@ -8,9 +8,11 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "full";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "6xl" | "full";
   showCloseButton?: boolean;
   isLoading?: boolean;
+  // Optional extra classes for the inner modal container (width/layout tweaks per usage)
+  containerClassName?: string;
 }
 
 export default function Modal({
@@ -21,6 +23,7 @@ export default function Modal({
   maxWidth = "4xl",
   showCloseButton = true,
   isLoading = false,
+  containerClassName,
 }: ModalProps) {
   // Hantera ESC-tangent
   useEffect(() => {
@@ -61,24 +64,33 @@ export default function Modal({
     xl: "max-w-xl",
     "2xl": "max-w-2xl",
     "4xl": "max-w-4xl",
+    "6xl": "max-w-6xl",
     full: "max-w-full",
   }[maxWidth];
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${
+        maxWidth === "full" ? "p-1 sm:p-2" : "p-4"
+      }`}
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} w-full mx-4 max-h-[90vh] overflow-y-auto`}
+        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} w-full max-h-[90vh] overflow-y-auto ${
+          containerClassName || ""
+        }`}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-2xl text-white text-center flex-1 mt-2">{title}</h2>
           {showCloseButton && (
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className="text-gray-400 hover:text-white text-2xl transition-colors cursor-pointer"
               aria-label="Stäng modal"
             >
               ×
