@@ -1032,6 +1032,213 @@ export async function sparaForetagsprofil(formData: FormData) {
   }
 }
 
+// Hämta användarinformation för adminpanelen
+export async function hämtaAnvändarInfo() {
+  const { session, userId } = await getSessionAndUserId();
+
+  try {
+    const client = await pool.connect();
+
+    // Hämta användarinfo från databas (utan lösenord)
+    const userResult = await client.query(
+      `SELECT id, email, name, skapad, uppdaterad 
+       FROM users 
+       WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      client.release();
+      return null;
+    }
+
+    const user = userResult.rows[0];
+
+    // Hämta account info för att se inloggningsmetod
+    const accountResult = await client.query(
+      `SELECT provider 
+       FROM accounts 
+       WHERE user_id = $1 
+       LIMIT 1`,
+      [userId]
+    );
+
+    const provider = accountResult.rows.length > 0 ? accountResult.rows[0].provider : "credentials";
+
+    client.release();
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      skapad: user.skapad,
+      uppdaterad: user.uppdaterad,
+      provider: provider,
+    };
+  } catch (error) {
+    console.error("Error fetching user info:", error);
+    return null;
+  }
+}
+
+// Uppdatera användarinformation
+export async function uppdateraAnvändarInfo(formData: FormData) {
+  const { session, userId } = await getSessionAndUserId();
+
+  const name = formData.get("name")?.toString()?.trim();
+  const email = formData.get("email")?.toString()?.trim();
+
+  // Validering
+  if (!name || !email) {
+    return { success: false, error: "Namn och email får inte vara tomma" };
+  }
+
+  // Email validering
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { success: false, error: "Ogiltig email-adress" };
+  }
+
+  try {
+    const client = await pool.connect();
+
+    // Kolla om email redan används av annan användare
+    const existingUser = await client.query(`SELECT id FROM users WHERE email = $1 AND id != $2`, [
+      email,
+      userId,
+    ]);
+
+    if (existingUser.rows.length > 0) {
+      client.release();
+      return { success: false, error: "Denna email-adress används redan av en annan användare" };
+    }
+
+    // Uppdatera användaren
+    const result = await client.query(
+      `UPDATE users 
+       SET name = $1, email = $2, uppdaterad = NOW() 
+       WHERE id = $3 
+       RETURNING id, email, name, skapad, uppdaterad`,
+      [name, email, userId]
+    );
+
+    client.release();
+
+    if (result.rows.length === 0) {
+      return { success: false, error: "Användare inte funnen" };
+    }
+
+    return { success: true, user: result.rows[0] };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return { success: false, error: "Kunde inte uppdatera användarinformation" };
+  }
+}
+
+// Hämta företagsprofil för adminpanelen
+export async function hämtaFöretagsprofilAdmin() {
+  const { session, userId } = await getSessionAndUserId();
+
+  try {
+    const client = await pool.connect();
+
+    const result = await client.query(
+      `SELECT 
+        företagsnamn,
+        adress,
+        postnummer,
+        stad,
+        organisationsnummer,
+        momsregistreringsnummer,
+        telefonnummer,
+        epost,
+        webbplats
+       FROM företagsprofil 
+       WHERE id = $1`,
+      [userId]
+    );
+
+    client.release();
+
+    if (result.rows.length === 0) {
+      // Returnera tom profil om ingen finns
+      return {
+        företagsnamn: "",
+        adress: "",
+        postnummer: "",
+        stad: "",
+        organisationsnummer: "",
+        momsregistreringsnummer: "",
+        telefonnummer: "",
+        epost: "",
+        webbplats: "",
+      };
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error fetching company profile:", error);
+    return null;
+  }
+}
+
+// Uppdatera företagsprofil för adminpanelen
+export async function uppdateraFöretagsprofilAdmin(formData: FormData) {
+  const { session, userId } = await getSessionAndUserId();
+
+  const f = (key: string) => formData.get(key)?.toString() ?? "";
+
+  try {
+    const client = await pool.connect();
+
+    const result = await client.query(
+      `INSERT INTO företagsprofil (
+        id,
+        företagsnamn,
+        adress,
+        postnummer,
+        stad,
+        organisationsnummer,
+        momsregistreringsnummer,
+        telefonnummer,
+        epost,
+        webbplats
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ON CONFLICT (id)
+      DO UPDATE SET
+        företagsnamn = EXCLUDED.företagsnamn,
+        adress = EXCLUDED.adress,
+        postnummer = EXCLUDED.postnummer,
+        stad = EXCLUDED.stad,
+        organisationsnummer = EXCLUDED.organisationsnummer,
+        momsregistreringsnummer = EXCLUDED.momsregistreringsnummer,
+        telefonnummer = EXCLUDED.telefonnummer,
+        epost = EXCLUDED.epost,
+        webbplats = EXCLUDED.webbplats
+      RETURNING *`,
+      [
+        userId,
+        f("företagsnamn"),
+        f("adress"),
+        f("postnummer"),
+        f("stad"),
+        f("organisationsnummer"),
+        f("momsregistreringsnummer"),
+        f("telefonnummer"),
+        f("epost"),
+        f("webbplats"),
+      ]
+    );
+
+    client.release();
+    return { success: true, data: result.rows[0] };
+  } catch (error) {
+    console.error("Error updating company profile:", error);
+    return { success: false, error: "Kunde inte uppdatera företagsprofil" };
+  }
+}
+
 // export async function hamtaFöretagsprofil() {
 //   const session = await auth();
 //   if (!session?.user?.id) return null;
