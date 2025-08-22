@@ -40,6 +40,8 @@ type Forval = {
   konton: KontoRad[];
   sökord: string[];
   extrafält?: Extrafält[];
+  användningar?: number; // För popularitets-boost
+  senast_använd?: string; // När det senast användes
 };
 
 type Props = {

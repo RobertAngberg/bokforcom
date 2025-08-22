@@ -29,6 +29,8 @@ type Forval = {
   konton: KontoRad[];
   sökord: string[];
   extrafält?: Extrafält[];
+  användningar?: number; // För popularitets-boost
+  senast_använd?: string; // När det senast användes
 };
 
 type Props = {
@@ -87,17 +89,38 @@ export default function SokForval({
       function score(f: Forval): number {
         let poäng = 0;
 
-        const namn = normalize(f.namn);
-        if (namn === q) poäng += 200;
-        else if (namn.startsWith(q)) poäng += 100;
-        else if (namn.includes(q)) poäng += 40;
+        // 4. BASE POINTS: Prioritera vanliga förval från början
+        const basePointsMapping: Record<string, number> = {
+          "Försäljning varor 25% moms": 150,
+          "Försäljning tjänster 25% moms": 140,
+          "Inköp varor 25% moms": 130,
+          "Inköp tjänster 25% moms": 120,
+        };
 
+        poäng += basePointsMapping[f.namn] || 0;
+
+        const namn = normalize(f.namn);
+
+        // 1. LOGISK HIERARKI-FIX: Namn ska ha högre prioritet än sökord
+        if (namn === q) poäng += 500;
+        else if (namn.startsWith(q)) poäng += 300;
+        else if (namn.includes(q)) poäng += 100;
+
+        // Sökord med lägre prioritet än namn
         for (const ord of f.sökord || []) {
           const s = normalize(ord);
-          if (s === q) poäng += 300;
-          else if (s.startsWith(q)) poäng += 150;
-          else if (s.includes(q)) poäng += 60;
+          if (s === q) poäng += 400;
+          else if (s.startsWith(q)) poäng += 200;
+          else if (s.includes(q)) poäng += 80;
         }
+
+        // 2. KORTHET-BONUS: Kortare namn = mer relevant
+        const längdBonus = Math.max(0, 50 - namn.length);
+        poäng += längdBonus;
+
+        // 3. POPULARITETS-BOOST: Baserat på hur ofta förvalet används
+        const popularitetsBonus = (f.användningar || 0) * 3;
+        poäng += popularitetsBonus;
 
         const desc = normalize(f.beskrivning);
         if (desc.includes(q)) poäng += 30;

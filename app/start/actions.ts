@@ -128,8 +128,15 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
       `Fetching förval with filters: ${JSON.stringify(filters)}`
     );
 
-    // 🔒 SÄKER DATABASACCESS - Endast användarens egna förval
-    let query = 'SELECT * FROM förval WHERE "user_id" = $1';
+    // 🔒 SÄKER DATABASACCESS - Endast användarens egna förval med popularitetsdata
+    let query = `
+      SELECT f.*, 
+             COALESCE(ff.antal, 0) as användningar,
+             ff.senaste as senast_använd
+      FROM förval f
+      LEFT JOIN favoritförval ff ON f.id = ff.forval_id AND ff.user_id = $1
+      WHERE f."user_id" = $1
+    `;
     const values: any[] = [userId];
     const conditions: string[] = [];
 
