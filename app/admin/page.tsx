@@ -8,7 +8,9 @@ import {
   uppdateraAnvändarInfo,
   hämtaFöretagsprofilAdmin,
   uppdateraFöretagsprofilAdmin,
+  raderaFöretag,
 } from "./actions";
+import { signOut } from "next-auth/react";
 
 interface UserInfo {
   id: string;
@@ -54,6 +56,8 @@ export default function Page() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [companyMessage, setCompanyMessage] = useState<{
     type: "success" | "error";
@@ -186,6 +190,33 @@ export default function Page() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleDeleteCompany = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await raderaFöretag();
+
+      if (result.success) {
+        // Radering lyckades - logga ut användaren
+        await signOut({ callbackUrl: "/" });
+      } else {
+        setCompanyMessage({
+          type: "error",
+          text: result.error || "Kunde inte radera företag",
+        });
+        setShowDeleteConfirm(false);
+      }
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      setCompanyMessage({
+        type: "error",
+        text: "Ett fel uppstod vid radering",
+      });
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (status === "loading" || loading) {
@@ -516,6 +547,60 @@ export default function Page() {
             )}
           </div>
         </div>
+
+        {/* Radera företag sektion */}
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-red-400 mb-4">⚠️ Radera företag</h3>
+          <p className="text-gray-300 mb-4">
+            Radera hela företagsprofilen och all tillhörande data.
+            <br />
+            <strong className="text-red-400"> Detta kan inte ångras!</strong>
+          </p>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Raderar..." : "Radera företag"}
+          </button>
+        </div>
+
+        {/* Bekräftelsedialog för radering */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-red-400 mb-4">⚠️ Bekräfta radering</h3>
+              <p className="text-gray-300 mb-4">
+                Är du säker på att du vill radera hela företagsprofilen? Detta kommer att:
+              </p>
+              <ul className="list-disc pl-5 text-gray-300 mb-4 space-y-1">
+                <li>Radera alla fakturor och transaktioner</li>
+                <li>Radera alla anställda och lönespecifikationer</li>
+                <li>Radera alla utlägg och förval</li>
+                <li>Radera företagsprofilen</li>
+                <li>Radera ditt användarkonto</li>
+                <li>Logga ut dig automatiskt</li>
+              </ul>
+              <p className="text-red-400 font-semibold mb-6">Detta kan inte ångras!</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 bg-gray-600 text-gray-200 px-4 py-2 rounded hover:bg-gray-500 transition-colors"
+                  disabled={isDeleting}
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleDeleteCompany}
+                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Raderar..." : "Ja, radera allt"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 text-center">
           <a

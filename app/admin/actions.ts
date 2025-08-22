@@ -1255,3 +1255,121 @@ export async function uppdateraFöretagsprofilAdmin(formData: FormData) {
 //     client.release();
 //   }
 // }
+
+// Radera hela företaget och alla associerade data
+export async function raderaFöretag() {
+  const { session, userId } = await getSessionAndUserId();
+
+  try {
+    const client = await pool.connect();
+
+    // Starta transaktion för att säkerställa att allt raderas eller inget
+    await client.query("BEGIN");
+
+    console.log(`🗑️ Börjar radera företag för användare ${userId}...`);
+
+    // Radera i rätt ordning (barn innan föräldrar) för att undvika foreign key constraints
+
+    // 1. Radera lönespecifikationer (via anställda)
+    await client.query(
+      `
+      DELETE FROM lönespecifikationer 
+      WHERE anställd_id IN (
+        SELECT id FROM anställda WHERE user_id = $1
+      )
+    `,
+      [userId]
+    );
+    console.log("✅ Lönespecifikationer raderade");
+
+    // 2. Radera utlägg
+    await client.query(
+      `
+      DELETE FROM utlägg 
+      WHERE anställd_id IN (
+        SELECT id FROM anställda WHERE user_id = $1
+      )
+    `,
+      [userId]
+    );
+    console.log("✅ Utlägg raderade");
+
+    // 3. Radera anställda
+    await client.query("DELETE FROM anställda WHERE user_id = $1", [userId]);
+    console.log("✅ Anställda raderade");
+
+    // 4. Radera leverantörsfakturor (via transaktioner)
+    await client.query(
+      `
+      DELETE FROM leverantörsfakturor 
+      WHERE transaktions_id IN (
+        SELECT id FROM transaktioner WHERE user_id = $1
+      )
+    `,
+      [userId]
+    );
+    console.log("✅ Leverantörsfakturor raderade");
+
+    // 5. Radera fakturor och tillhörande rader
+    await client.query(
+      `
+      DELETE FROM fakturarader 
+      WHERE faktura_id IN (
+        SELECT id FROM fakturor WHERE user_id = $1
+      )
+    `,
+      [userId]
+    );
+    console.log("✅ Fakturarader raderade");
+
+    await client.query("DELETE FROM fakturor WHERE user_id = $1", [userId]);
+    console.log("✅ Fakturor raderade");
+
+    // 6. Radera transaktioner
+    await client.query("DELETE FROM transaktioner WHERE user_id = $1", [userId]);
+    console.log("✅ Transaktioner raderade");
+
+    // 7. Radera favoritförval
+    await client.query("DELETE FROM favoritförval WHERE user_id = $1", [userId]);
+    console.log("✅ Favoritförval raderade");
+
+    // 8. Radera säkerhetsloggar
+    await client.query("DELETE FROM security_logs WHERE user_id = $1", [userId]);
+    console.log("✅ Säkerhetsloggar raderade");
+
+    // 9. Radera företagsprofil
+    await client.query("DELETE FROM företagsprofil WHERE id = $1", [userId]);
+    console.log("✅ Företagsprofil raderad");
+
+    // 10. Radera accounts (OAuth kopplingar)
+    await client.query("DELETE FROM accounts WHERE user_id = $1", [userId]);
+    console.log("✅ OAuth accounts raderade");
+
+    // 11. Slutligen - radera användaren (detta kommer att trigga CASCADE för resterande)
+    await client.query("DELETE FROM users WHERE id = $1", [userId]);
+    console.log("✅ Användare raderad");
+
+    // Bekräfta transaktionen
+    await client.query("COMMIT");
+    client.release();
+
+    console.log(`🎯 Företag för användare ${userId} helt raderat!`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Fel vid radering av företag:", error);
+
+    try {
+      const client = await pool.connect();
+      await client.query("ROLLBACK");
+      client.release();
+    } catch (rollbackError) {
+      console.error("❌ Kunde inte rollback:", rollbackError);
+    }
+
+    return {
+      success: false,
+      error: "Kunde inte radera företag. Alla data bevarade säkert.",
+    };
+  }
+}

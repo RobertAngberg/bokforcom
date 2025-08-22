@@ -84,7 +84,7 @@ export default function FeedbackWidget() {
           >
             {isOpen ? "✕" : "💬"}
           </span>
-          <span className="hidden sm:inline">Feedback</span>
+          <span className="hidden sm:inline">Hjälp/Feedback</span>
         </button>
       </div>
 
@@ -99,7 +99,7 @@ export default function FeedbackWidget() {
           }}
         >
           <div className="p-4">
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Feedback & Support</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">Hjälp & Support</h3>
             {!isSubmitted && (
               <p className="text-sm text-slate-300 mb-4">
                 Du är väldigt välkommen med frågor eller feedback! Vi svarar snabbt. Tack så mycket!
