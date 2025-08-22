@@ -4,14 +4,20 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 // Import användaravtal modal hook
 import { useAnvändaravtalModal } from "./start/AnvändaravtalModal";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
+  const router = useRouter();
 
   const handleGetStarted = () => {
     setIsLoading(true);
     signIn("google", { callbackUrl: "/signup" });
+  };
+
+  const handleLogin = () => {
+    router.push("/login");
   };
 
   return (
@@ -27,7 +33,7 @@ export default function LandingPage() {
           </div>
           <div className="space-x-4">
             <button
-              onClick={() => signIn()}
+              onClick={handleLogin}
               className="text-slate-300 hover:text-white transition-colors"
             >
               Logga in
@@ -74,7 +80,7 @@ export default function LandingPage() {
                 {isLoading ? "Startar..." : "🚀 Starta gratis"}
               </button>
               <button
-                onClick={() => signIn()}
+                onClick={handleLogin}
                 className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
               >
                 Se trailer

@@ -101,30 +101,30 @@ export default function LoginPage() {
       className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg.png')" }}
     >
-      <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-lg shadow-2xl drop-shadow-2xl backdrop-blur-sm">
+      <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl drop-shadow-2xl backdrop-blur-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-white">Välkommen tillbaka</h1>
+          <h1 className="text-3xl font-bold text-white">Välkommen!</h1>
         </div>
 
-        <div className="relative flex mb-8 bg-slate-800 rounded-lg p-1">
+        <div className="relative flex mb-8 bg-slate-700 rounded-xl p-1.5">
           <div
-            className={`absolute top-1 bottom-1 w-1/2 bg-blue-500 rounded-md transition-all duration-500 ease-in-out ${
-              activeTab === "signup" ? "translate-x-full" : ""
+            className={`absolute top-1.5 bottom-1.5 w-1/2 bg-blue-500 rounded-lg transition-all duration-500 ease-in-out ${
+              activeTab === "signup" ? "translate-x-[calc(100%-0.75rem)]" : ""
             }`}
           />
 
           <button
             onClick={() => setActiveTab("login")}
-            className={`relative z-10 flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
-              activeTab === "login" ? "text-white font-bold" : "text-gray-400 hover:text-white"
+            className={`relative z-10 flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
+              activeTab === "login" ? "text-white font-bold" : "text-slate-300 hover:text-white"
             }`}
           >
             Logga in
           </button>
           <button
             onClick={() => setActiveTab("signup")}
-            className={`relative z-10 flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
-              activeTab === "signup" ? "text-white font-bold" : "text-gray-400 hover:text-white"
+            className={`relative z-10 flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
+              activeTab === "signup" ? "text-white font-bold" : "text-slate-300 hover:text-white"
             }`}
           >
             Registrera
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
             }`}
           >
-            <h2 className="mb-6 text-xl font-bold text-center text-white">Välkommen tillbaka</h2>
+            <h2 className="mb-6 text-xl font-bold text-center text-white">Välkommen!</h2>
 
             <div className="mb-6">
               <EmailLoginForm />
@@ -147,17 +147,17 @@ export default function LoginPage() {
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700"></div>
+                <div className="w-full border-t border-slate-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-slate-900 text-gray-400">eller fortsätt med</span>
+                <span className="px-4 bg-slate-900 text-slate-300">eller fortsätt med</span>
               </div>
             </div>
 
             <div className="space-y-3">
               <button
                 onClick={handleGoogleSignIn}
-                className="w-full px-6 py-3 font-semibold text-gray-800 bg-white rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 font-semibold text-gray-800 bg-white rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -182,7 +182,7 @@ export default function LoginPage() {
 
               <button
                 onClick={() => signIn("facebook", { callbackUrl: "/" })}
-                className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -208,7 +208,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center">
           <button
             onClick={openModal}
-            className="text-sm text-gray-400 hover:text-white transition-colors underline"
+            className="text-sm text-slate-300 hover:text-white transition-colors underline"
           >
             📋 Användaravtal
           </button>
