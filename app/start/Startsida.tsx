@@ -7,6 +7,7 @@ import Kort from "./Kort";
 import Chart from "./Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
+import { useAnvändaravtalModal } from "../_components/AnvändaravtalModal";
 
 type YearSummary = {
   totalInkomst: number;
@@ -77,6 +78,7 @@ const processYearData = (rawData: any[]): YearSummary => {
 export default function Startsida({ initialData }: Props) {
   const [year, setYear] = useState("2025");
   const { data, isLoading } = useFetchYearSummary(year, initialData);
+  const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
 
   function useFetchYearSummary(year: string, initialData: YearSummary | null) {
     const [data, setData] = useState<YearSummary | null>(initialData);
@@ -127,6 +129,18 @@ export default function Startsida({ initialData }: Props) {
       ) : (
         <Chart year={year} onYearChange={setYear} chartData={data?.yearData || []} />
       )}
+
+      {/* Länk till användaravtal */}
+      <div className="mt-8 text-center">
+        <button
+          onClick={openModal}
+          className="text-sm text-gray-400 hover:text-white transition-colors underline"
+        >
+          📋 Användaravtal
+        </button>
+      </div>
+
+      <AnvändaravtalModal />
     </MainLayout>
   );
 }

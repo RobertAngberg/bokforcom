@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SignupForm from "./SignupForm";
+import { useAnvändaravtalModal } from "../_components/AnvändaravtalModal";
 
 function EmailLoginForm() {
   const [email, setEmail] = useState("");
@@ -75,6 +76,7 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
 
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/" });
@@ -201,7 +203,19 @@ export default function LoginPage() {
             <SignupForm onSuccess={() => setActiveTab("login")} />
           </div>
         </div>
+
+        {/* Länk till användaravtal */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={openModal}
+            className="text-sm text-gray-400 hover:text-white transition-colors underline"
+          >
+            📋 Användaravtal
+          </button>
+        </div>
       </div>
+
+      <AnvändaravtalModal />
     </div>
   );
 }
