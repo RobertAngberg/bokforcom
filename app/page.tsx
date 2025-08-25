@@ -16,8 +16,11 @@ export default function Page() {
   useEffect(() => {
     if (session?.user) {
       const loadData = async () => {
+        console.log("🔄 Loading initial data for current year:", getCurrentYear());
         const rawData = await fetchRawYearData(getCurrentYear());
+        console.log("📊 Raw data received:", rawData?.length, "records");
         const processedData = processYearData(rawData);
+        console.log("✅ Processed data:", processedData);
         setInitialData(processedData);
       };
       loadData();
@@ -39,5 +42,16 @@ export default function Page() {
   }
 
   // Inloggad användare - visa dashboard
-  return <>{initialData && <Startsida initialData={initialData} />}</>;
+  if (status === "authenticated" && session) {
+    // Fallback data om initialData är null
+    const fallbackData = initialData || {
+      totalInkomst: 0,
+      totalUtgift: 0,
+      totalResultat: 0,
+      yearData: [],
+    };
+    return <Startsida initialData={fallbackData} />;
+  }
+
+  return null;
 }

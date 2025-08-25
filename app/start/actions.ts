@@ -4,7 +4,7 @@ import { Pool } from "pg";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { getUserId } from "../_utils/authUtils";
-import { validateSessionAttempt } from "../_utils/rateLimit";
+import { readSessionRateLimit, validateSessionAttempt } from "../_utils/rateLimit";
 import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 const pool = new Pool({
@@ -239,15 +239,16 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 
 export async function fetchRawYearData(year: string) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
-    }
+    // TODO: Rate limiting borttaget tillfälligt
+    // if (!(await readSessionRateLimit(userId))) {
+    //   throw new Error("För många läsförsök - vänta 15 minuter");
+    // }
 
     // Validera och sanitera år
     const sanitizedYear = sanitizeInput(year);

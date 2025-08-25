@@ -228,9 +228,15 @@ export function createHybridRateLimit(config: {
 
 // 🎯 FÖRKONFIGURERADE RATE LIMITERS
 
-// Session-based för vanliga server actions (migrerat från actionRateLimit.ts)
+// Session-based för write/mutation operationer
 export const sessionRateLimit = createSessionRateLimit({
   maxAttempts: 5,
+  windowMs: 15 * 60 * 1000, // 15 minuter
+});
+
+// Session-based för read operationer (mer generöst)
+export const readSessionRateLimit = createSessionRateLimit({
+  maxAttempts: 50, // Många fler requests för läsoperationer
   windowMs: 15 * 60 * 1000, // 15 minuter
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Chart } from "react-chartjs-2";
 import "chart.js/auto";
 import React from "react";
@@ -18,12 +18,8 @@ type Props = {
 };
 
 export default function HomeChart({ year, onYearChange, chartData }: Props) {
-  const [labels, setLabels] = useState<string[]>([]);
-  const [inkomstData, setInkomstData] = useState<number[]>([]);
-  const [utgiftData, setUtgiftData] = useState<number[]>([]);
-  const [resultData, setResultData] = useState<number[]>([]);
-
-  useEffect(() => {
+  // Memoize the processed chart data to prevent unnecessary re-renders
+  const processedData = useMemo(() => {
     const monthNames = [
       "Jan",
       "Feb",
@@ -38,6 +34,16 @@ export default function HomeChart({ year, onYearChange, chartData }: Props) {
       "Nov",
       "Dec",
     ];
+
+    if (!chartData || chartData.length === 0) {
+      return {
+        labels: [],
+        inkomstData: [],
+        utgiftData: [],
+        resultData: [],
+      };
+    }
+
     const monthDataMap: { [key: string]: { inkomst: number; utgift: number } } = {};
 
     chartData.forEach((row) => {
@@ -62,89 +68,110 @@ export default function HomeChart({ year, onYearChange, chartData }: Props) {
       (label) => monthDataMap[label].inkomst - monthDataMap[label].utgift
     );
 
-    setLabels(finalLabels);
-    setInkomstData(inkomstValues);
-    setUtgiftData(utgiftValues);
-    setResultData(resultValues);
+    return {
+      labels: finalLabels,
+      inkomstData: inkomstValues,
+      utgiftData: utgiftValues,
+      resultData: resultValues,
+    };
   }, [chartData]);
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: "Resultat",
-        data: resultData,
-        type: "line" as const,
-        borderColor: "rgb(255, 215, 0)",
-        backgroundColor: "rgb(255, 215, 0)",
-        fill: false,
-        borderWidth: 2,
-        tension: 0.3,
-        pointRadius: 4,
-        stack: undefined,
-      },
-      {
-        label: "Intäkter", // ← ändrat här
-        data: inkomstData,
-        backgroundColor: "rgb(0, 128, 128)",
-        stack: "stack1",
-      },
-      {
-        label: "Kostnader", // ← redan ändrat innan
-        data: utgiftData,
-        backgroundColor: "rgb(255, 99, 132)",
-        stack: "stack1",
-      },
-    ],
-  };
+  // Memoize chart data object to prevent Chart.js re-renders
+  const data = useMemo(
+    () => ({
+      labels: processedData.labels,
+      datasets: [
+        {
+          label: "Resultat",
+          data: processedData.resultData,
+          type: "line" as const,
+          borderColor: "rgb(255, 215, 0)",
+          backgroundColor: "rgb(255, 215, 0)",
+          fill: false,
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 4,
+          stack: undefined,
+        },
+        {
+          label: "Intäkter",
+          data: processedData.inkomstData,
+          backgroundColor: "rgb(0, 128, 128)",
+          stack: "stack1",
+        },
+        {
+          label: "Kostnader",
+          data: processedData.utgiftData,
+          backgroundColor: "rgb(255, 99, 132)",
+          stack: "stack1",
+        },
+      ],
+    }),
+    [processedData]
+  );
 
-  const options = {
-    maintainAspectRatio: false,
-    indexAxis: "x" as const,
-    responsive: true,
-    layout: {
-      padding: {
-        top: 20, // luft överst
-        bottom: 30, // extra luft under legenden
-      },
-    },
-    scales: {
-      x: {
-        stacked: true,
-        ticks: {
-          color: "white",
-          font: { size: 14 },
-          padding: 20,
-        },
-        grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+  // Memoize options to prevent unnecessary re-renders
+  const options = useMemo(
+    () => ({
+      maintainAspectRatio: false,
+      indexAxis: "x" as const,
+      responsive: true,
+      layout: {
+        padding: {
+          top: 20,
+          bottom: 30,
         },
       },
-      y: {
-        stacked: true,
-        ticks: {
-          color: "white",
-          font: { size: 14 },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: {
+            color: "white",
+            font: { size: 14 },
+            padding: 20,
+          },
+          grid: {
+            color: "rgba(255, 255, 255, 0.05)",
+          },
         },
-        grid: {
-          color: "rgba(255, 255, 255, 0.1)",
+        y: {
+          stacked: true,
+          ticks: {
+            color: "white",
+            font: { size: 14 },
+          },
+          grid: {
+            color: "rgba(255, 255, 255, 0.1)",
+          },
         },
       },
-    },
-    plugins: {
-      legend: {
-        labels: {
-          color: "white",
-          font: { size: 14 },
-          padding: 20, // mer space under varje legendrad
+      plugins: {
+        legend: {
+          labels: {
+            color: "white",
+            font: { size: 14 },
+            padding: 20,
+          },
+        },
+        tooltip: {
+          mode: "index" as const,
+          intersect: false,
         },
       },
-      tooltip: {
-        mode: "index" as const,
-        intersect: false,
-      },
-    },
-  };
+    }),
+    []
+  );
+
+  // Don't render chart if no data
+  if (!processedData.labels.length) {
+    return (
+      <div className="w-full m-0 p-0">
+        <div className="relative w-full h-[75vh] p-0 m-0 flex items-center justify-center">
+          <p className="text-white text-lg">Ingen data att visa för {year}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full m-0 p-0">
