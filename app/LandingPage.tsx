@@ -2,22 +2,15 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-// Import användaravtal modal hook
-import { useAnvändaravtalModal } from "./start/AnvändaravtalModal";
-import { useRouter } from "next/navigation";
+import { useAnvändaravtalModal } from "./_components/AnvändaravtalModal";
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
-  const router = useRouter();
 
   const handleGetStarted = () => {
     setIsLoading(true);
     signIn("google", { callbackUrl: "/signup" });
-  };
-
-  const handleLogin = () => {
-    router.push("/login");
   };
 
   return (
@@ -33,7 +26,7 @@ export default function LandingPage() {
           </div>
           <div className="space-x-4">
             <button
-              onClick={handleLogin}
+              onClick={() => signIn()}
               className="text-slate-300 hover:text-white transition-colors"
             >
               Logga in
@@ -55,22 +48,13 @@ export default function LandingPage() {
           {/* Hero */}
           <section className="text-center py-20">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              Sveriges enklaste
-              <span className="text-blue-400 block">bokföring</span>
+              Enkel bokföring för
+              <span className="text-blue-400 block">svenska företag</span>
             </h1>
             <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              AI gör din bokföring snabbare och enklare. Molnbaserad plattform som automatiskt
-              föreslår rätt konton och hanterar fakturor på några klick.
+              Bokför.com gör bokföring enkelt och effektivt. Hantera transaktioner, skapa fakturor,
+              kör löner och få full kontroll över din ekonomi - allt i en plattform.
             </p>
-
-            {/* Pricing */}
-            <div className="mb-8">
-              <div className="inline-flex items-center bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-full text-lg font-semibold mb-4">
-                🎉 1 år gratis, sedan 129 kr/månad
-              </div>
-              <p className="text-slate-400 text-sm">Ingen bindningstid • Avsluta när du vill</p>
-            </div>
-
             <div className="space-x-4">
               <button
                 onClick={handleGetStarted}
@@ -80,10 +64,10 @@ export default function LandingPage() {
                 {isLoading ? "Startar..." : "🚀 Starta gratis"}
               </button>
               <button
-                onClick={handleLogin}
+                onClick={() => signIn()}
                 className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
               >
-                Se trailer
+                Har redan konto
               </button>
             </div>
           </section>
