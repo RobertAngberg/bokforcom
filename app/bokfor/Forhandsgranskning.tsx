@@ -84,7 +84,11 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
               {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
                 <iframe
-                  src={pdfUrl ? `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}` : URL.createObjectURL(fil!)}
+                  src={
+                    pdfUrl
+                      ? `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`
+                      : URL.createObjectURL(fil!)
+                  }
                   className="w-full h-[80vh] rounded"
                   title="PDF förhandsgranskning stor"
                 />
