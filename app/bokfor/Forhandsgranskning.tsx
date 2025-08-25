@@ -36,11 +36,11 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
         {/* Visa PDFs med iframe */}
         {(pdfUrl && !fil?.type.startsWith("image/")) ||
-          (fil?.type === "application/pdf" && (
+          (fil?.type === "application/pdf" && pdfUrl && (
             <div className="w-full overflow-auto rounded max-h-[600px]">
               <iframe
                 ref={iframeRef}
-                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                src={`/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`}
                 className="w-full rounded border-none"
                 style={{
                   width: "100%",
@@ -84,7 +84,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
               {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
                 <iframe
-                  src={`${pdfUrl || URL.createObjectURL(fil!)}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={pdfUrl ? `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}` : URL.createObjectURL(fil!)}
                   className="w-full h-[80vh] rounded"
                   title="PDF förhandsgranskning stor"
                 />
@@ -92,7 +92,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
               {pdfUrl && !fil?.type.startsWith("image/") && (
                 <iframe
-                  src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`}
                   className="w-full h-[80vh] border-none rounded"
                   title="PDF Viewer Modal"
                 />
