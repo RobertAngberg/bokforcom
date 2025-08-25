@@ -52,12 +52,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is missing");
+    if (!process.env.AUTH_RESEND_KEY) {
+      console.error("AUTH_RESEND_KEY is missing");
       return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
     const body = await request.json();
     const { faktura, pdfAttachment, filename: rawFilename, customMessage: rawCustomMessage } = body;

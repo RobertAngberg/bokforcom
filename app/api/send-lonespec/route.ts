@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { emailRateLimit, createRateLimitIdentifier } from "../../_utils/rateLimit";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
 // Säker email-validering
 function isValidEmail(email: string): boolean {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Kontrollera API-nyckel först
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.AUTH_RESEND_KEY) {
       console.error("No Resend API key configured");
       return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
     }
