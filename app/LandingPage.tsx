@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useAnvändaravtalModal } from "./_components/AnvändaravtalModal";
+import { useAnvändaravtalModal } from "./start/AnvändaravtalModal";
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
