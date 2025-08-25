@@ -25,6 +25,8 @@ export type UploadOptions = {
   quality?: number; // 0.1-1.0 för bildkompression
   maxWidth?: number; // Max bredd för bilder
   maxHeight?: number; // Max höjd för bilder
+  beskrivning?: string; // Beskrivning som läggs till i filnamnet
+  datum?: string; // Datum i format YYYY-MM-DD
 };
 
 // Huvudfunktion för blob-upload
@@ -43,13 +45,13 @@ export async function uploadBlob(file: File, options: UploadOptions = {}): Promi
     const processedFile = await processFile(file, options);
 
     // 📁 Skapa säker sökväg med userId som rotmapp
-    const safeFileName = sanitizeFileName(file.name);
-    const path = `${userId}/${safeFileName}`;
+    const smartFileName = createSmartFileName(file.name, options);
+    const path = `${userId}/${smartFileName}`;
 
-    // ⬆️ Ladda upp till Vercel Blob
+    // ⬆️ Ladda upp till Vercel Blob (utan addRandomSuffix eftersom vi har egen logik)
     const blob = await put(path, processedFile, {
       access: "public",
-      addRandomSuffix: true,
+      addRandomSuffix: false, // Vi hanterar naming själva
     });
 
     return {
@@ -197,7 +199,29 @@ function calculateDimensions(
   return { width: Math.round(width), height: Math.round(height) };
 }
 
-// 🧹 Rensa filnamn
+// Skapa smart filnamn med datum och beskrivning
+function createSmartFileName(originalName: string, options: UploadOptions): string {
+  const fileExt = originalName.split(".").pop()?.toLowerCase() || "";
+  const datum = options.datum || new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+  let filename = datum; // Börja med datum
+
+  if (options.beskrivning) {
+    const safeBeskrivning = options.beskrivning
+      .replace(/[^a-zA-Z0-9åäöÅÄÖ\s]/g, "") // Ta bort specialtecken
+      .replace(/\s+/g, "-") // Ersätt mellanslag med bindestreck
+      .toLowerCase();
+    filename += `_${safeBeskrivning}`;
+  }
+
+  // Lägg till kort random suffix för att undvika kollisioner
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  filename += `_${randomSuffix}`;
+
+  return `${filename}.${fileExt}`;
+}
+
+// 🧹 Rensa filnamn (behålls för bakåtkompatibilitet)
 function sanitizeFileName(fileName: string): string {
   return fileName
     .replace(/[^a-zA-Z0-9._-]/g, "_")
@@ -208,8 +232,8 @@ function sanitizeFileName(fileName: string): string {
 // 🎯 Convenience-funktioner för specifika användningsfall
 export const uploadInvoiceAttachment = async (file: File) => uploadBlob(file, { quality: 0.7 });
 
-export const uploadReceiptImage = async (file: File) =>
-  uploadBlob(file, { quality: 0.8, maxWidth: 1200 });
+export const uploadReceiptImage = async (file: File, options: UploadOptions = {}) =>
+  uploadBlob(file, { quality: 0.8, maxWidth: 1200, ...options });
 
 export const uploadProfileImage = async (file: File) =>
   uploadBlob(file, { quality: 0.9, maxWidth: 400, maxHeight: 400 });

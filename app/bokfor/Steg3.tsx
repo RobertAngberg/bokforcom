@@ -291,7 +291,29 @@ export default function Steg3({
       // Ladda upp fil till blob storage först (om det finns en fil)
       if (fil) {
         console.log("Laddar upp fil till blob storage:", fil.name);
-        const blobResult = await uploadReceiptImage(fil);
+
+        // Skapa beskrivning baserat på kontext
+        let beskrivning = "";
+        if (leverantör?.namn) {
+          beskrivning = leverantör.namn;
+        } else if (levfaktMode && fakturanummer) {
+          beskrivning = `faktura-${fakturanummer}`;
+        } else if (utlaggMode) {
+          beskrivning = "utlagg";
+        } else if (bokförSomFaktura) {
+          beskrivning = "kundfaktura";
+        } else {
+          beskrivning = "kvitto";
+        }
+
+        // Använd fakturadatum om tillgängligt, annars dagens datum
+        const datum = fakturadatum || new Date().toISOString().split("T")[0];
+
+        const blobResult = await uploadReceiptImage(fil, {
+          beskrivning,
+          datum,
+        });
+
         if (blobResult.success && blobResult.url) {
           formData.set("bilageUrl", blobResult.url);
           console.log("Fil uppladdad:", blobResult.url);
