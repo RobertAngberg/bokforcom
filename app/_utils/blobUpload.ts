@@ -42,10 +42,9 @@ export async function uploadBlob(file: File, options: UploadOptions = {}): Promi
     // 🗜️ Komprimera fil om nödvändigt
     const processedFile = await processFile(file, options);
 
-    // 📁 Skapa säker sökväg
-    const folder = options.folder || "uploads";
+    // 📁 Skapa säker sökväg med userId som rotmapp
     const safeFileName = sanitizeFileName(file.name);
-    const path = `${folder}/${userId}/${safeFileName}`;
+    const path = `${userId}/${safeFileName}`;
 
     // ⬆️ Ladda upp till Vercel Blob
     const blob = await put(path, processedFile, {
@@ -207,14 +206,13 @@ function sanitizeFileName(fileName: string): string {
 }
 
 // 🎯 Convenience-funktioner för specifika användningsfall
-export const uploadInvoiceAttachment = async (file: File) =>
-  uploadBlob(file, { folder: "invoices", quality: 0.7 });
+export const uploadInvoiceAttachment = async (file: File) => uploadBlob(file, { quality: 0.7 });
 
 export const uploadReceiptImage = async (file: File) =>
-  uploadBlob(file, { folder: "receipts", quality: 0.8, maxWidth: 1200 });
+  uploadBlob(file, { quality: 0.8, maxWidth: 1200 });
 
 export const uploadProfileImage = async (file: File) =>
-  uploadBlob(file, { folder: "profiles", quality: 0.9, maxWidth: 400, maxHeight: 400 });
+  uploadBlob(file, { quality: 0.9, maxWidth: 400, maxHeight: 400 });
 
 // 🗜️ Exporterad komprimerings-funktion för direkt användning (utan upload)
 export async function compressImageFile(file: File, options: UploadOptions = {}): Promise<File> {

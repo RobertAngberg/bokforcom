@@ -26,6 +26,18 @@ export async function getValidSession() {
   return session;
 }
 
+// Hämtar användarens email för filorganisation
+export async function getUserEmail(): Promise<string> {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
+  // Sanitera email för filsystem - ersätt @ med _at_ och ta bort specialtecken
+  return session.user.email.replace("@", "_at_").replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
 // Kombinerar session + userId för vanliga use cases
 export async function getSessionAndUserId(): Promise<{ session: any; userId: number }> {
   const session = await getValidSession();

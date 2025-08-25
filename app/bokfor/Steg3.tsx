@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../personal/actions";
 import AnstalldDropdown, { Anstalld } from "./AnstalldDropdown";
 import { saveTransaction } from "./actions";
+import { uploadReceiptImage } from "../_utils/blobUpload";
 import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
 import { formatSEK, formatCurrency, round } from "../_utils/format";
@@ -285,6 +286,19 @@ export default function Steg3({
       if (bokförSomFaktura) {
         formData.set("bokförSomFaktura", "true");
         if (kundfakturadatum) formData.set("kundfakturadatum", kundfakturadatum);
+      }
+
+      // Ladda upp fil till blob storage först (om det finns en fil)
+      if (fil) {
+        console.log("Laddar upp fil till blob storage:", fil.name);
+        const blobResult = await uploadReceiptImage(fil);
+        if (blobResult.success && blobResult.url) {
+          formData.set("bilageUrl", blobResult.url);
+          console.log("Fil uppladdad:", blobResult.url);
+        } else {
+          console.error("Misslyckades med att ladda upp fil:", blobResult.error);
+          // Fortsätt ändå med bokföringen även om fil-upload misslyckades
+        }
       }
 
       const result = await saveTransaction(formData);

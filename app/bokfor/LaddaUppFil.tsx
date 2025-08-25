@@ -135,17 +135,14 @@ export default function LaddaUppFil({
     }, 10000);
 
     try {
-      const blobResult = await uploadReceiptImage(file);
-      if (blobResult.url) {
-        setPdfUrl(blobResult.url);
-        setFil(file);
-      } else {
-        console.error("Ingen URL returnerades från blob storage");
-        setIsLoading(false);
-        return;
-      }
+      // Spara filen lokalt utan att ladda upp till blob storage än
+      setFil(file);
+      // Skapa temporär URL för förhandsvisning
+      const tempUrl = URL.createObjectURL(file);
+      setPdfUrl(tempUrl);
+      console.log("Fil sparad lokalt för förhandsvisning:", file.name);
     } catch (error) {
-      console.error("Fel vid uppladdning av fil:", error);
+      console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);
       return;
     }

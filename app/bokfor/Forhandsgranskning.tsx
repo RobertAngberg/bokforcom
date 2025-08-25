@@ -34,29 +34,62 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           </div>
         )}
 
-        {/* Visa PDFs med iframe */}
-        {(pdfUrl && !fil?.type.startsWith("image/")) ||
-          (fil?.type === "application/pdf" && (
-            <div className="w-full overflow-auto rounded max-h-[600px]">
-              <iframe
-                ref={iframeRef}
-                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                className="w-full rounded border-none"
-                style={{
-                  width: "100%",
-                  height: "600px",
-                }}
-                title="PDF Viewer"
-              />
-            </div>
-          ))}
+        {/* Visa PDFs direkt inline */}
+        {fil?.type === "application/pdf" && (
+          <div className="w-full">
+            <object
+              data={URL.createObjectURL(fil) + "#toolbar=0&navpanes=0&scrollbar=0"}
+              type="application/pdf"
+              width="100%"
+              height="600px"
+              className="w-full rounded"
+            >
+              <div className="p-4 text-center bg-gray-50 rounded border">
+                <p className="mb-2">PDF kan inte visas inline i denna webbläsare</p>
+                <button
+                  onClick={() => {
+                    const url = URL.createObjectURL(fil);
+                    window.open(url, "_blank");
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Öppna PDF i ny flik
+                </button>
+              </div>
+            </object>
+          </div>
+        )}
+
+        {/* Visa länk för andra filtyper */}
+        {pdfUrl && !fil?.type.startsWith("image/") && fil?.type !== "application/pdf" && (
+          <div className="p-4 border border-gray-300 rounded bg-gray-50">
+            <p className="mb-2">Fil uppladdad!</p>
+            <a href={pdfUrl} target="_blank" className="text-blue-600 underline">
+              Öppna fil
+            </a>
+          </div>
+        )}
 
         {hasFile && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              if (fil?.type === "application/pdf") {
+                // För PDFs, öppna i ny flik
+                const url = URL.createObjectURL(fil);
+                window.open(url, "_blank");
+              } else if (fil?.type.startsWith("image/")) {
+                // För bilder, visa modal som vanligt
+                setShowModal(true);
+              } else if (pdfUrl) {
+                // För andra filer, öppna uploaded URL
+                window.open(pdfUrl, "_blank");
+              }
+            }}
             className="absolute top-2 right-2 px-4 py-2 text-sm font-medium text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition"
           >
-            Visa större
+            {fil?.type === "application/pdf" || (!fil?.type.startsWith("image/") && pdfUrl)
+              ? "Öppna i ny flik"
+              : "Visa större"}
           </button>
         )}
       </div>
