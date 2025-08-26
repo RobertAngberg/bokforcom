@@ -296,7 +296,11 @@ export default function Steg2Levfakt({
             </div>
 
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <KnappFullWidth text="Bokför leverantörsfaktura" onClick={() => setCurrentStep(3)} />
+            <KnappFullWidth
+              text="Bokför leverantörsfaktura"
+              onClick={() => setCurrentStep(3)}
+              disabled={!belopp || !leverantör || !fakturanummer || !fakturadatum}
+            />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
         </div>

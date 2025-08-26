@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 
 interface ForhandsgranskningProps {
   fil?: File | null;
@@ -11,6 +11,20 @@ interface ForhandsgranskningProps {
 export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
   const [showModal, setShowModal] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Memoize blob URL för att förhindra nya URLs varje render
+  const blobUrl = useMemo(() => {
+    return fil ? URL.createObjectURL(fil) : null;
+  }, [fil]);
+
+  // Cleanup blob URL när komponenten unmountar eller fil ändras
+  useEffect(() => {
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [blobUrl]);
 
   const hasFile = fil || pdfUrl;
 
@@ -25,7 +39,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
         {fil?.type.startsWith("image/") && (
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
-              src={pdfUrl || URL.createObjectURL(fil!)}
+              src={pdfUrl || blobUrl!}
               alt="Forhandsgranskning"
               width={800}
               height={600}
@@ -38,7 +52,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
         {fil?.type === "application/pdf" && (
           <div className="w-full">
             <object
-              data={URL.createObjectURL(fil) + "#toolbar=0&navpanes=0&scrollbar=0"}
+              data={blobUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
               type="application/pdf"
               width="100%"
               height="600px"
@@ -48,8 +62,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
                 <p className="mb-2">PDF kan inte visas inline i denna webbläsare</p>
                 <button
                   onClick={() => {
-                    const url = URL.createObjectURL(fil);
-                    window.open(url, "_blank");
+                    if (blobUrl) window.open(blobUrl, "_blank");
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
@@ -75,8 +88,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
             onClick={() => {
               if (fil?.type === "application/pdf") {
                 // För PDFs, öppna i ny flik
-                const url = URL.createObjectURL(fil);
-                window.open(url, "_blank");
+                if (blobUrl) window.open(blobUrl, "_blank");
               } else if (fil?.type.startsWith("image/")) {
                 // För bilder, visa modal som vanligt
                 setShowModal(true);
@@ -107,7 +119,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
             <div className="flex justify-center items-center">
               {fil?.type.startsWith("image/") && (
                 <Image
-                  src={pdfUrl || URL.createObjectURL(fil!)}
+                  src={pdfUrl || blobUrl!}
                   alt="Stor förhandsgranskning"
                   width={1200}
                   height={1000}
@@ -117,7 +129,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
               {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
                 <iframe
-                  src={`${pdfUrl || URL.createObjectURL(fil!)}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`${pdfUrl || blobUrl!}#toolbar=0&navpanes=0&scrollbar=0`}
                   className="w-full h-[80vh] rounded"
                   title="PDF förhandsgranskning stor"
                 />

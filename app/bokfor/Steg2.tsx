@@ -242,7 +242,11 @@ export default function Steg2({
               setFakturadatum={setFakturadatum}
             />
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <KnappFullWidth text="Bokför" onClick={() => setCurrentStep(3)} />
+            <KnappFullWidth
+              text="Bokför"
+              onClick={() => setCurrentStep(3)}
+              disabled={!belopp || !transaktionsdatum}
+            />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
         </div>
