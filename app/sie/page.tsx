@@ -1982,6 +1982,7 @@ export default function SiePage() {
   const [analys, setAnalys] = useState<Analys | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [harDimensioner, setHarDimensioner] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "översikt" | "konton" | "verifikationer" | "balanser" | "resultat"
   >("översikt");

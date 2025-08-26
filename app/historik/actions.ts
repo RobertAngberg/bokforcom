@@ -17,6 +17,81 @@ interface TransactionDetail {
   kredit: number;
 }
 
+interface UnbalancedVerification {
+  transaktions_id: number;
+  transaktionsdatum: string;
+  kontobeskrivning: string;
+  kommentar?: string;
+  totalDebet: number;
+  totalKredit: number;
+  skillnad: number;
+}
+
+// 🚀 OPTIMERAD FUNKTION: Hitta obalanserade direkt i databasen
+export async function findUnbalancedVerifications(): Promise<{
+  success: boolean;
+  unbalanced?: UnbalancedVerification[];
+  error?: string;
+}> {
+  let userId: number;
+  try {
+    userId = await getUserId();
+  } catch (error) {
+    return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
+  }
+
+  try {
+    const client = await pool.connect();
+
+    const result = await client.query(
+      `
+      WITH verification_totals AS (
+        SELECT 
+          t.id as transaktions_id,
+          t.transaktionsdatum::text as transaktionsdatum,
+          t.kontobeskrivning,
+          t.kommentar,
+          COALESCE(SUM(tp.debet), 0) as total_debet,
+          COALESCE(SUM(tp.kredit), 0) as total_kredit
+        FROM transaktioner t
+        LEFT JOIN transaktionsposter tp ON t.id = tp.transaktions_id
+        WHERE t.user_id = $1
+        GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.kommentar
+      )
+      SELECT 
+        transaktions_id,
+        transaktionsdatum,
+        kontobeskrivning,
+        kommentar,
+        total_debet,
+        total_kredit,
+        ABS(total_debet - total_kredit) as skillnad
+      FROM verification_totals
+      WHERE ABS(total_debet - total_kredit) > 0.01
+      ORDER BY transaktionsdatum DESC, transaktions_id DESC
+    `,
+      [userId]
+    );
+
+    client.release();
+
+    const unbalanced: UnbalancedVerification[] = result.rows.map((row) => ({
+      transaktions_id: row.transaktions_id,
+      transaktionsdatum: row.transaktionsdatum,
+      kontobeskrivning: row.kontobeskrivning,
+      kommentar: row.kommentar,
+      totalDebet: parseFloat(row.total_debet),
+      totalKredit: parseFloat(row.total_kredit),
+      skillnad: parseFloat(row.skillnad),
+    }));
+
+    return { success: true, unbalanced };
+  } catch (error) {
+    console.error("Fel vid hämtning av obalanserade verifikationer:", error);
+    return { success: false, error: "Databasfel" };
+  }
+}
+
 // Intern funktion utan rate limiting (för wrappers)
 async function fetchTransaktionerInternal(fromYear?: string) {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils

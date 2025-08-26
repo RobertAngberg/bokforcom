@@ -5,9 +5,14 @@ import React, { useState } from "react";
 import Tabell from "../_components/Tabell";
 import { ColumnDefinition } from "../_components/TabellRad";
 import MainLayout from "../_components/MainLayout";
-import { fetchTransactionDetails, exporteraTransaktionerMedPoster } from "./actions";
+import {
+  fetchTransactionDetails,
+  exporteraTransaktionerMedPoster,
+  findUnbalancedVerifications,
+} from "./actions";
 import Dropdown from "../_components/Dropdown";
 import Knapp from "../_components/Knapp";
+import Modal from "../_components/Modal";
 
 //#region Business Logic - Migrated from actions.ts
 // Säker input-sanitering för historik (flyttad från actions.ts)
@@ -112,6 +117,17 @@ export default function Historik({ initialData }: Props) {
   );
   const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [showOnlyUnbalanced, setShowOnlyUnbalanced] = useState(false);
+  const [showUnbalancedModal, setShowUnbalancedModal] = useState(false);
+  const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
+  const [unbalancedResults, setUnbalancedResults] = useState<
+    Array<{
+      item: HistoryItem;
+      totalDebet: number;
+      totalKredit: number;
+      skillnad: number;
+    }>
+  >([]);
 
   // Validera inputs och visa fel i realtid
   const validateInputs = (yearValue: string, monthValue: string): string | null => {
@@ -132,7 +148,7 @@ export default function Historik({ initialData }: Props) {
   // Förbättrad filtrering med migerade funktioner
   const getFilteredData = (): HistoryItem[] => {
     // Först filtrera på datum
-    const dateFiltered = historyData.filter((item) => {
+    let dateFiltered = historyData.filter((item) => {
       const itemYear = item.transaktionsdatum.slice(0, 4);
       const itemMonth = item.transaktionsdatum.slice(5, 7);
 
@@ -142,7 +158,23 @@ export default function Historik({ initialData }: Props) {
     });
 
     // Sedan filtrera på sökning med sanitering
-    return filterTransactionsBySearch(dateFiltered, searchTerm);
+    let searchFiltered = filterTransactionsBySearch(dateFiltered, searchTerm);
+
+    // Om vi bara ska visa obalanserade, filtrera på det
+    if (showOnlyUnbalanced) {
+      searchFiltered = searchFiltered.filter((item) => {
+        const details = detailsMap[item.transaktions_id];
+        if (!details) return false;
+
+        const totalDebet = details.reduce((sum, d) => sum + (d.debet || 0), 0);
+        const totalKredit = details.reduce((sum, d) => sum + (d.kredit || 0), 0);
+        const skillnad = Math.abs(totalDebet - totalKredit);
+
+        return skillnad > 0.01;
+      });
+    }
+
+    return searchFiltered;
   };
 
   const filteredData = getFilteredData();
@@ -184,6 +216,55 @@ export default function Historik({ initialData }: Props) {
         }
       }
     })();
+  };
+
+  const handleUnbalancedCheck = async () => {
+    console.log("🔍 Startar kontroll av obalanserade verifikationer...");
+
+    if (showOnlyUnbalanced) {
+      console.log("🔙 Visar alla verifikationer igen");
+      setShowOnlyUnbalanced(false);
+      return;
+    }
+
+    setIsCheckingUnbalanced(true);
+
+    try {
+      // 🚀 EN ENDA DATABASFÖRFRÅGAN istället för hundratals!
+      const result = await findUnbalancedVerifications();
+
+      if (!result.success) {
+        alert("Fel vid kontroll: " + result.error);
+        return;
+      }
+
+      if (!result.unbalanced || result.unbalanced.length === 0) {
+        alert("Alla verifikationer är balanserade! ✅");
+        return;
+      }
+
+      // Konvertera till vårt format
+      const unbalancedItems = result.unbalanced.map((item) => ({
+        item: {
+          transaktions_id: item.transaktions_id,
+          transaktionsdatum: item.transaktionsdatum,
+          kontobeskrivning: item.kontobeskrivning,
+          kommentar: item.kommentar,
+          belopp: item.totalDebet, // Placeholder
+        } as HistoryItem,
+        totalDebet: item.totalDebet,
+        totalKredit: item.totalKredit,
+        skillnad: item.skillnad,
+      }));
+
+      setUnbalancedResults(unbalancedItems);
+      setShowUnbalancedModal(true);
+    } catch (error) {
+      console.error("Fel vid kontroll:", error);
+      alert("Ett fel uppstod vid kontrollen");
+    } finally {
+      setIsCheckingUnbalanced(false);
+    }
   };
 
   const handleExport = async () => {
@@ -289,6 +370,15 @@ export default function Historik({ initialData }: Props) {
           <div className="text-red-500 text-sm text-center mb-4">{validationError}</div>
         )}
 
+        <div className="flex justify-center mb-4">
+          <Knapp
+            text={showOnlyUnbalanced ? "🔙 Visa alla" : "⚖️ Kolla obalanserade"}
+            onClick={handleUnbalancedCheck}
+            loading={isCheckingUnbalanced}
+            loadingText="🔄 Kollar verifikationer..."
+          />
+        </div>
+
         <div className="pt-2"></div>
       </div>
 
@@ -367,6 +457,87 @@ export default function Historik({ initialData }: Props) {
           );
         }}
       />
+
+      {/* Modal för obalanserade verifikationer */}
+      <Modal
+        isOpen={showUnbalancedModal}
+        onClose={() => setShowUnbalancedModal(false)}
+        title="⚖️ Obalanserade Verifikationer"
+        maxWidth="4xl"
+      >
+        <div className="space-y-4">
+          <div className="text-center text-lg font-semibold text-red-400 mb-6">
+            🚨 Hittade {unbalancedResults.length} obalanserade verifikationer
+          </div>
+
+          <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-4">
+            <div className="text-yellow-200 text-sm">
+              <span className="font-semibold">💡 Tips:</span> Obalanserade verifikationer beror ofta
+              på SIE-import med dimensioner. Kontrollera ursprungsfilen eller justera manuellt.
+            </div>
+          </div>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {unbalancedResults.map(({ item, totalDebet, totalKredit, skillnad }) => (
+              <div
+                key={item.transaktions_id}
+                className="bg-gray-800/50 p-5 rounded-lg border border-gray-600/50 hover:border-gray-500/70 transition-all"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="text-lg font-semibold text-white mb-1">
+                      #{item.transaktions_id} - {item.kontobeskrivning.replace("Verifikation ", "")}
+                    </div>
+                    <div className="text-sm text-gray-400 mb-1">
+                      {new Date(item.transaktionsdatum).toLocaleDateString("sv-SE")}
+                    </div>
+                    {item.kommentar && (
+                      <div className="text-sm text-gray-300">{item.kommentar}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-gray-700/30 rounded border border-gray-600/40">
+                    <div className="text-gray-300 font-medium mb-1 text-sm">Debet</div>
+                    <div className="text-base font-semibold text-white">
+                      {totalDebet.toLocaleString("sv-SE", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      kr
+                    </div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-700/30 rounded border border-gray-600/40">
+                    <div className="text-gray-300 font-medium mb-1 text-sm">Kredit</div>
+                    <div className="text-base font-semibold text-white">
+                      {totalKredit.toLocaleString("sv-SE", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      kr
+                    </div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-700/40 rounded border border-gray-500/50">
+                    <div className="text-gray-300 font-medium mb-1 text-sm">Skillnad</div>
+                    <div className="text-base font-bold text-red-300">
+                      {skillnad.toLocaleString("sv-SE", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      kr
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <Knapp text="Stäng" onClick={() => setShowUnbalancedModal(false)} />
+          </div>
+        </div>
+      </Modal>
     </MainLayout>
   );
 }
