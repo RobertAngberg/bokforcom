@@ -1774,7 +1774,11 @@ function ImportSteg({
 
   // Utför riktig import
   useEffect(() => {
+    let isCancelled = false; // Förhindra race conditions
+
     const utförImport = async () => {
+      if (isCancelled) return;
+
       try {
         // Steg 1: Skapa saknade konton
         setCurrentTask("Skapar saknade konton...");
@@ -1828,12 +1832,19 @@ function ImportSteg({
 
         onComplete(importResult.resultat);
       } catch (err) {
-        console.error("Import fel:", err);
-        setError(err instanceof Error ? err.message : "Okänt fel");
+        if (!isCancelled) {
+          // Logga bara fel om inte avbrutet av React Strict Mode
+          console.error("Import fel:", err);
+          setError(err instanceof Error ? err.message : "Okänt fel");
+        }
       }
     };
 
     utförImport();
+
+    return () => {
+      isCancelled = true; // Cleanup function
+    };
   }, []); // Kör bara en gång när komponenten mountas
 
   if (error) {

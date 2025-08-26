@@ -260,8 +260,8 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     sieData.balanser.utgående.forEach((b) => anvandaKonton.add(b.konto));
     sieData.resultat.forEach((r) => anvandaKonton.add(r.konto));
 
-    // 🔒 SÄKER KONTOKONTROLL med userId
-    const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton), userId);
+    // Kontrollera vilka konton som saknas i databasen (globalt)
+    const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton));
 
     await logSieSecurityEvent(
       userId,
@@ -294,11 +294,7 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
   }
 }
 
-async function kontrollSaknade(
-  sieKonton: string[],
-  anvandaKonton?: string[],
-  userId?: number | string
-) {
+async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[]) {
   try {
     const { Pool } = require("pg");
     const tempPool = new Pool({
@@ -307,16 +303,9 @@ async function kontrollSaknade(
 
     const client = await tempPool.connect();
 
-    // 🔒 SÄKER DATABASKÖRNING - Hämta endast användarens egna konton
-    let query = "SELECT kontonummer FROM konton";
-    let params: any[] = [];
-
-    if (userId) {
-      query += ' WHERE "user_id" = $1';
-      params = [userId];
-    }
-
-    const { rows } = await client.query(query, params);
+    // Hämta ALLA konton (konton är globala, inte användarspecifika)
+    const query = "SELECT kontonummer FROM konton";
+    const { rows } = await client.query(query);
     const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
 
     client.release();
@@ -784,10 +773,18 @@ async function kontrollSaknade(
       totaltAnvanda: anvandaKonton ? anvandaKonton.length : 0,
     };
 
-    // Returnera endast använda specialkonton som "saknade" om vi har den informationen
+    // Returnera endast konton som VERKLIGEN saknas i databasen och som används
     const saknadeAttVisa = anvandaKonton
-      ? specialKonton.filter((konto) => anvandaKonton.includes(konto))
-      : specialKonton;
+      ? allaSaknade.filter((konto) => anvandaKonton.includes(konto))
+      : allaSaknade;
+
+    console.log(
+      `🎯 Resultat - Saknade konton att visa: ${saknadeAttVisa.length}`,
+      saknadeAttVisa.slice(0, 5)
+    );
+    console.log(
+      `📊 Analys - Specialkonton: ${specialKonton.length}, Använda saknade: ${anvandaSaknade.length}`
+    );
 
     return {
       saknade: saknadeAttVisa,
@@ -974,9 +971,23 @@ function parseSieContent(content: string): SieData {
     else if (line.startsWith("#TRANS") && currentVerification) {
       const values = extractValues(line, "TRANS");
       if (values.length >= 3) {
+        const belopp = parseFloat(values[2]);
+
+        // Debug-logg för G:12 specifikt
+        if (currentVerification.serie === "G" && currentVerification.nummer === "12") {
+          console.log(`🔍 G:12 #TRANS parse:`, {
+            line: line,
+            values: values,
+            konto: values[0],
+            beloppString: values[2],
+            beloppParsed: belopp,
+            isNaN: isNaN(belopp),
+          });
+        }
+
         currentTransactions.push({
           konto: values[0],
-          belopp: parseFloat(values[2]),
+          belopp: belopp,
         });
       }
     }
@@ -1021,12 +1032,12 @@ export async function skapaKonton(
 
     const client = await pool.connect();
 
-    // Först, kontrollera vilka konton som redan finns
-    const befintligaQuery = 'SELECT kontonummer FROM konton WHERE "user_id" = $1';
-    const { rows: befintliga } = await client.query(befintligaQuery, [userId]);
+    // Först, kontrollera vilka konton som redan finns (konton är globala)
+    const befintligaQuery = "SELECT kontonummer FROM konton";
+    const { rows: befintliga } = await client.query(befintligaQuery);
     const befintligaKonton = new Set(befintliga.map((r: any) => r.kontonummer.toString()));
 
-    console.log(`🔍 Befintliga konton för användare ${userId}:`, befintligaKonton.size);
+    console.log(`🔍 Befintliga konton i systemet:`, befintligaKonton.size);
 
     let skapadeAntal = 0;
     let hoppadeOver = 0;
@@ -1073,13 +1084,13 @@ export async function skapaKonton(
           kategori = "Finansiella intäkter och kostnader";
         }
 
-        // 🔒 SÄKER DATABASSKAPNING - Konto kopplas till userId
+        // Skapa konto globalt (inga användarspecifika konton)
         const insertResult = await client.query(
-          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord, "user_id") 
-           VALUES ($1, $2, $3, $4, $5, $6) 
-           ON CONFLICT (kontonummer, "user_id") DO NOTHING
+          `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord) 
+           VALUES ($1, $2, $3, $4, $5) 
+           ON CONFLICT (kontonummer) DO NOTHING
            RETURNING kontonummer`,
-          [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()], userId]
+          [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()]]
         );
 
         if (insertResult.rows.length > 0) {
@@ -1479,6 +1490,17 @@ ${duplicatesList}
             // Bestäm debet/kredit baserat på beloppets tecken
             const debet = transaktion.belopp > 0 ? transaktion.belopp : 0;
             const kredit = transaktion.belopp < 0 ? Math.abs(transaktion.belopp) : 0;
+
+            // Debug-logg för G:12 specifikt
+            if (verifikation.serie === "G" && verifikation.nummer === "12") {
+              console.log(`🔍 G:12 transaktion insert:`, {
+                konto: transaktion.konto,
+                beloppOriginal: transaktion.belopp,
+                debet: debet,
+                kredit: kredit,
+                kontoId: kontoId,
+              });
+            }
 
             await client.query(
               `INSERT INTO transaktionsposter (
