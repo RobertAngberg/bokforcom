@@ -6,6 +6,7 @@ import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import VerifikatModal from "../../_components/VerifikatModal";
+import Modal from "../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -45,6 +46,13 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   //#region State & Variables
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
+
+  // State för verifikatmodal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedKonto, setSelectedKonto] = useState("");
+  const [verifikationer, setVerifikationer] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [exportMessage, setExportMessage] = useState<{
@@ -131,6 +139,50 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
   const { year, tillgangar, skulderOchEgetKapital, sumTillgangar, sumSkulderEK, beraknatResultat } =
     skapaBalansSammanställning(processedData);
   //#endregion
+
+  // Funktion för att visa verifikationer för ett konto
+  const handleShowVerifikationer = async (kontonummer: string) => {
+    setSelectedKonto(kontonummer);
+    setShowModal(true);
+    setLoading(true);
+
+    try {
+      // Mock-data för verifikationer (precis som i huvudboken)
+      const mockVerifikationer = [
+        {
+          id: 1,
+          datum: "2025-01-15",
+          beskrivning: "Inköp kontorsmaterial",
+          debet: 1500,
+          kredit: 0,
+          saldo: 1500,
+        },
+        {
+          id: 2,
+          datum: "2025-02-10",
+          beskrivning: "Betalning leverantör",
+          debet: 0,
+          kredit: 800,
+          saldo: 700,
+        },
+        {
+          id: 3,
+          datum: "2025-03-05",
+          beskrivning: "Försäljning",
+          debet: 2500,
+          kredit: 0,
+          saldo: 3200,
+        },
+      ];
+
+      setVerifikationer(mockVerifikationer);
+    } catch (error) {
+      console.error("Fel vid hämtning av verifikationer:", error);
+      setVerifikationer([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   //#region Export Functions
   const handleExportPDF = async () => {
@@ -313,6 +365,77 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     }
   };
   //#region Render Functions - Snygg AnimeradFlik layout
+
+  // Gemensam funktion för att rendera transaktioner som Bokio
+  const renderTransaktioner = (konto: Konto) => {
+    if (!konto.transaktioner || konto.transaktioner.length === 0) {
+      return (
+        <tr>
+          <td colSpan={5} className="px-6 py-2 text-gray-400 text-sm italic">
+            Konto {konto.kontonummer} saknar transaktioner i den valda perioden
+          </td>
+        </tr>
+      );
+    }
+
+    return (
+      <>
+        {konto.transaktioner.map((transaktion, index) => {
+          // Formatera datum korrekt
+          const formatDaterat = (datum: string | Date) => {
+            if (typeof datum === "string") {
+              // Ta bort T00:00:00 delen
+              return datum.split("T")[0];
+            }
+            return new Date(datum).toLocaleDateString("sv-SE");
+          };
+
+          // Extrahera korrekt V-nummer - använd beskrivning först
+          const extractVNumber = () => {
+            // 1. Först kolla efter V:nummer i beskrivning: "Verifikation V:1" -> "V1"
+            if (transaktion.beskrivning && transaktion.beskrivning.includes("V:")) {
+              const match = transaktion.beskrivning.match(/V:(\d+)/);
+              if (match) {
+                return `V${match[1]}`;
+              }
+            }
+
+            // 2. Leta efter bara V-nummer i beskrivning: "V123"
+            if (transaktion.beskrivning) {
+              const match = transaktion.beskrivning.match(/V(\d+)/);
+              if (match) {
+                return `V${match[1]}`;
+              }
+            }
+
+            // 3. Fallback till verifikatNummer om inget annat fungerar
+            return transaktion.verifikatNummer || "V-";
+          };
+
+          const vNumber = extractVNumber();
+
+          return (
+            <tr
+              key={index}
+              className="bg-gray-800 hover:bg-gray-700 cursor-pointer"
+              onClick={() =>
+                transaktion.transaktion_id && setVerifikatId(transaktion.transaktion_id)
+              }
+            >
+              <td className="px-6 py-2 text-blue-400 text-sm">{vNumber}</td>
+              <td className="px-6 py-2 text-gray-300 text-sm" colSpan={3}>
+                {formatDaterat(transaktion.datum)} {transaktion.beskrivning || "Transaktion"}
+              </td>
+              <td className="px-6 py-2 text-gray-300 text-sm text-right">
+                {formatSEK(transaktion.belopp)}
+              </td>
+            </tr>
+          );
+        })}
+      </>
+    );
+  };
+
   // ENKEL render funktion med din Tabell komponent + Bokio-stil summering + transaktioner!
   const renderaKategoriMedKolumner = (titel: string, icon: string, konton: Konto[]) => {
     const summa = konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
@@ -338,77 +461,23 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
         label: `Utg. balans ${year}-12-31`,
         render: (_, konto) => formatSEK(konto.utgaendeSaldo),
       },
+      {
+        key: "verifikationer",
+        label: "Verifikationer",
+        render: (value: any, konto: Konto) =>
+          konto.kontonummer ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShowVerifikationer(konto.kontonummer);
+              }}
+              className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
+            >
+              Visa
+            </button>
+          ) : null,
+      },
     ];
-
-    // Funktion för att rendera transaktioner som Bokio - FIXAD!
-    const renderTransaktioner = (konto: Konto) => {
-      if (!konto.transaktioner || konto.transaktioner.length === 0) {
-        return (
-          <tr>
-            <td colSpan={4} className="px-6 py-2 text-gray-400 text-sm italic">
-              Konto {konto.kontonummer} saknar transaktioner i den valda perioden
-            </td>
-          </tr>
-        );
-      }
-
-      return (
-        <>
-          {konto.transaktioner.map((transaktion, index) => {
-            // Formatera datum korrekt
-            const formatDaterat = (datum: string | Date) => {
-              if (typeof datum === "string") {
-                // Ta bort T00:00:00 delen
-                return datum.split("T")[0];
-              }
-              return new Date(datum).toLocaleDateString("sv-SE");
-            };
-
-            // Extrahera korrekt V-nummer - använd beskrivning först
-            const extractVNumber = () => {
-              // 1. Först kolla efter V:nummer i beskrivning: "Verifikation V:1" -> "V1"
-              if (transaktion.beskrivning && transaktion.beskrivning.includes("V:")) {
-                const match = transaktion.beskrivning.match(/V:(\d+)/);
-                if (match) {
-                  return `V${match[1]}`;
-                }
-              }
-
-              // 2. Leta efter bara V-nummer i beskrivning: "V123"
-              if (transaktion.beskrivning) {
-                const match = transaktion.beskrivning.match(/V(\d+)/);
-                if (match) {
-                  return `V${match[1]}`;
-                }
-              }
-
-              // 3. Fallback till verifikatNummer om inget annat fungerar
-              return transaktion.verifikatNummer || "V-";
-            };
-
-            const vNumber = extractVNumber();
-
-            return (
-              <tr
-                key={index}
-                className="bg-gray-800 hover:bg-gray-700 cursor-pointer"
-                onClick={() =>
-                  transaktion.transaktion_id && setVerifikatId(transaktion.transaktion_id)
-                }
-              >
-                <td className="px-6 py-2 text-blue-400 text-sm">{vNumber}</td>
-                <td className="px-6 py-2 text-gray-300 text-sm" colSpan={2}>
-                  {formatDaterat(transaktion.datum)} {transaktion.beskrivning || "Transaktion"}
-                </td>
-                <td className="px-6 py-2 text-gray-300 text-sm text-right">
-                  {formatSEK(transaktion.belopp)}
-                </td>
-              </tr>
-            );
-          })}
-        </>
-      );
-    };
 
     // Lägg till summeringsrad som Bokio - EXAKT som de har det!
     const kontonMedSummering = [...konton];
@@ -427,10 +496,6 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
           data={kontonMedSummering}
           columns={kolumner}
           getRowId={(konto) => konto.kontonummer || "SUMMA"}
-          activeId={expandedKonto}
-          handleRowClick={(id) => setExpandedKonto(expandedKonto === id ? null : String(id))}
-          renderExpandedRow={renderTransaktioner}
-          isRowClickable={(konto) => konto.kontonummer !== ""}
         />
       </AnimeradFlik>
     );
@@ -468,9 +533,23 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
         label: `Utg. balans ${year}-12-31`,
         render: (_, konto) => formatSEK(konto.utgaendeSaldo),
       },
-    ];
-
-    // Lägg till summeringsrad som inkluderar beräknat resultat!
+      {
+        key: "verifikationer",
+        label: "Verifikationer",
+        render: (value: any, konto: Konto) =>
+          konto.kontonummer ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShowVerifikationer(konto.kontonummer);
+              }}
+              className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
+            >
+              Visa
+            </button>
+          ) : null,
+      },
+    ]; // Lägg till summeringsrad som inkluderar beräknat resultat!
     const kontonMedSummering = [...konton];
     kontonMedSummering.push({
       kontonummer: "",
@@ -593,6 +672,37 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
       {verifikatId && (
         <VerifikatModal transaktionsId={verifikatId} onClose={() => setVerifikatId(null)} />
       )}
+
+      {/* Verifikatmodal för kontoverifikationer */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={`Verifikationer för konto ${selectedKonto}`}
+      >
+        {loading ? (
+          <div className="text-center p-4">Laddar verifikationer...</div>
+        ) : (
+          <Tabell
+            data={verifikationer}
+            columns={[
+              { key: "datum", label: "Datum", render: (value: any) => value },
+              { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
+              {
+                key: "debet",
+                label: "Debet",
+                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
+              },
+              {
+                key: "kredit",
+                label: "Kredit",
+                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
+              },
+              { key: "saldo", label: "Saldo", render: (value: any) => `${value}kr` },
+            ]}
+            getRowId={(row) => row.id}
+          />
+        )}
+      </Modal>
 
       {exportMessage && (
         <div
