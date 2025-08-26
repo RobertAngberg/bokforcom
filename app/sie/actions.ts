@@ -125,68 +125,118 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     const arrayBuffer = await file.arrayBuffer();
     let content: string = "";
 
-    // Prova olika encodings för svenska tecken
+    // Förbättrad encoding-hantering för SIE-filer
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // Försök med vanligaste encodings för SIE-filer
-    const encodings = ["iso-8859-1", "windows-1252", "utf-8"];
-    let bestContent = "";
+    // 🎯 Kolla FORMAT-tag först för att tvinga rätt encoding
+    const quickTest = new TextDecoder("utf-8", { fatal: false }).decode(uint8Array.slice(0, 500));
+    console.log("🔍 Första 500 bytes:", quickTest);
 
-    for (const encoding of encodings) {
-      try {
-        const decoder = new TextDecoder(encoding);
-        const testContent = decoder.decode(uint8Array);
+    const formatMatch = quickTest.match(/#FORMAT\s+(\w+)/);
+    console.log("🔎 FORMAT regex match:", formatMatch);
 
-        // Kolla om denna encoding gav rimligt resultat
-        if (testContent.includes("#KONTO") || testContent.includes("#FNAMN")) {
-          content = testContent;
-          console.log(`✅ Använder encoding: ${encoding}`);
-          break;
-        } else {
-          bestContent = testContent; // Spara som backup
+    if (formatMatch) {
+      const format = formatMatch[1].toUpperCase();
+      console.log(`🏷️ SIE FORMAT detekterat: ${format}`);
+
+      // För PC8, TVINGA CP850 (rätt encoding för PC8)
+      if (format === "PC8") {
+        console.log("🎯 PC8 = CP850 encoding - tvingar CP850");
+        try {
+          console.log("🧪 Testar om CP850 stöds...");
+          const decoder = new TextDecoder("cp850");
+          content = decoder.decode(uint8Array);
+          console.log("✅ Använder encoding: cp850 (tvingad för PC8)");
+        } catch (error) {
+          console.log("❌ CP850 misslyckades:", error);
         }
-      } catch (error) {
-        console.log(`❌ Encoding ${encoding} misslyckades:`, error);
+      } else {
+        console.log(`⚠️ FORMAT ${format} är inte PC8, hoppar över CP850`);
       }
+    } else {
+      console.log("❌ Ingen FORMAT-tag hittades");
     }
 
-    // Om inget funkade, använd bästa försöket
+    // Om vi inte fick content från FORMAT-specifik encoding, använd auto-detektering
     if (!content) {
-      content = bestContent || new TextDecoder("utf-8").decode(uint8Array);
-      console.log("🔄 Använder fallback encoding");
+      console.log(
+        "🔄 Inget FORMAT eller format-specifik encoding misslyckades - kör auto-detektering"
+      );
+
+      // Försök med olika encodings i prioritetsordning
+      const encodings = ["utf-8", "iso-8859-1", "windows-1252", "cp850"];
+      let bestContent = "";
+      let bestScore = 0;
+
+      for (const encoding of encodings) {
+        try {
+          const decoder = new TextDecoder(encoding);
+          const testContent = decoder.decode(uint8Array);
+
+          // Beräkna poäng baserat på SIE-struktur och svenska tecken
+          let score = 0;
+
+          // Kontrollera att det är en SIE-fil
+          if (testContent.includes("#KONTO") || testContent.includes("#FNAMN")) {
+            score += 100;
+          }
+
+          // Penalisera replacement characters (indikerar fel encoding)
+          const replacementCharCount = (testContent.match(/�/g) || []).length;
+          score -= replacementCharCount * 10;
+
+          // Penalisera konstiga tecken som tyder på fel encoding
+          const weirdCharCount = (testContent.match(/[™„†"']/g) || []).length;
+          score -= weirdCharCount * 5;
+
+          // Belöna normala svenska tecken
+          const swedishCharCount = (testContent.match(/[äåöÄÅÖ]/g) || []).length;
+          score += swedishCharCount * 2;
+
+          console.log(
+            `📊 Encoding ${encoding}: score ${score}, replacement chars: ${replacementCharCount}, weird chars: ${weirdCharCount}`
+          );
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestContent = testContent;
+            content = testContent;
+            console.log(`✅ Ny bästa encoding: ${encoding} (score: ${score})`);
+          }
+        } catch (error) {
+          console.log(`❌ Encoding ${encoding} misslyckades:`, error);
+        }
+      }
+    } // Stäng if (!content) blocket
+
+    // Om inget funkade, använd UTF-8 som fallback
+    if (!content) {
+      content = new TextDecoder("utf-8").decode(uint8Array);
+      console.log("🔄 Använder UTF-8 fallback");
     }
 
-    // Förbättrad encoding-hantering för svenska tecken
-    // Hantera olika encoding-varianter som kan förekomma
+    // Fixa vanliga encoding-problem som fortfarande kan uppstå
     content = content
-      // Standard replacement characters
-      .replace(/�/g, "ä")
-      .replace(/�/g, "å")
-      .replace(/�/g, "ö")
-      .replace(/�/g, "Ä")
-      .replace(/�/g, "Å")
-      .replace(/�/g, "Ö")
-      // CP850 mappings
-      .replace(/\x84/g, "ä") // CP850 ä
-      .replace(/\x86/g, "å") // CP850 å
-      .replace(/\x94/g, "ö") // CP850 ö
-      .replace(/\x8E/g, "Ä") // CP850 Ä
-      .replace(/\x8F/g, "Å") // CP850 Å
-      .replace(/\x99/g, "Ö") // CP850 Ö
-      // ISO-8859-1 mappings
-      .replace(/\xE4/g, "ä") // ISO-8859-1 ä
-      .replace(/\xE5/g, "å") // ISO-8859-1 å
-      .replace(/\xF6/g, "ö") // ISO-8859-1 ö
-      .replace(/\xC4/g, "Ä") // ISO-8859-1 Ä
-      .replace(/\xC5/g, "Å") // ISO-8859-1 Å
-      .replace(/\xD6/g, "Ö") // ISO-8859-1 Ö
-      // Windows-1252 mappings (liknande ISO-8859-1)
-      .replace(/\u00E4/g, "ä")
-      .replace(/\u00E5/g, "å")
-      .replace(/\u00F6/g, "ö")
-      .replace(/\u00C4/g, "Ä")
-      .replace(/\u00C5/g, "Å")
-      .replace(/\u00D6/g, "Ö");
+      // Fixa Windows-1252 -> UTF-8 fel-tolkningar
+      .replace(/â€™/g, "'") // Apostrof
+      .replace(/â€œ/g, '"') // Vänster citattecken
+      .replace(/â€\u009d/g, '"') // Höger citattecken
+      .replace(/â€"/g, "–") // En-dash
+      .replace(/â€"/g, "—") // Em-dash
+      .replace(/Ã¤/g, "ä") // ä fel-tolkad
+      .replace(/Ã¥/g, "å") // å fel-tolkad
+      .replace(/Ã¶/g, "ö") // ö fel-tolkad
+      .replace(/Ã„/g, "Ä") // Ä fel-tolkad
+      .replace(/Ã…/g, "Å") // Å fel-tolkad
+      .replace(/Ã–/g, "Ö") // Ö fel-tolkad
+      // Fixa specifika fel-tolkningar som ger konstiga tecken
+      .replace(/™/g, "ö") // Vanlig fel-tolkning av ö
+      .replace(/„/g, "ä") // Vanlig fel-tolkning av ä
+      .replace(/†/g, "å") // Vanlig fel-tolkning av å
+      .replace(/"/g, "ä") // Alternativ fel-tolkning av ä
+      .replace(/'/g, "å") // Alternativ fel-tolkning av å
+      // Rensa bort replacement characters
+      .replace(/�/g, "");
 
     // Debug: logga de första raderna för att se encoding-status
     console.log("🔍 SIE-fil encoding test:", content.substring(0, 200));
@@ -270,8 +320,28 @@ async function kontrollSaknade(
     const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
 
     client.release();
-    await tempPool.end(); // Hitta konton som finns i SIE men inte i databasen
-    const allaSaknade = sieKonton.filter((kontonr) => !befintligaKonton.has(kontonr));
+    await tempPool.end();
+
+    console.log(
+      `📊 Kontokontroll - Befintliga konton: ${befintligaKonton.size}, SIE-konton: ${sieKonton.length}`
+    );
+    console.log(`📋 Några befintliga konton:`, Array.from(befintligaKonton).slice(0, 10));
+    console.log(`📋 Några SIE-konton:`, sieKonton.slice(0, 10));
+
+    // Hitta konton som finns i SIE men inte i databasen (med exakt string-matchning)
+    const allaSaknade = sieKonton.filter((kontonr) => {
+      const kontoStr = kontonr.toString().trim();
+      const finns = befintligaKonton.has(kontoStr);
+      if (!finns) {
+        // Bara logga saknade konton som faktiskt ANVÄNDS
+        if (anvandaKonton && anvandaKonton.includes(kontoStr)) {
+          console.log(`❌ ANVÄNT Konto ${kontoStr} saknas i databasen`);
+        }
+      }
+      return !finns;
+    });
+
+    console.log(`🔍 Totalt saknade konton: ${allaSaknade.length}`, allaSaknade.slice(0, 10));
 
     // BAS 2025 standardkonton (grundläggande kontoplan)
     const basStandardKonton = new Set([
@@ -923,7 +993,6 @@ function parseSieContent(content: string): SieData {
   return result;
 }
 
-// Ny funktion för att skapa saknade konton
 export async function skapaKonton(
   kontoData: Array<{ nummer: string; namn: string }>
 ): Promise<{ success: boolean; error?: string; skapade?: number }> {
@@ -952,10 +1021,27 @@ export async function skapaKonton(
 
     const client = await pool.connect();
 
+    // Först, kontrollera vilka konton som redan finns
+    const befintligaQuery = 'SELECT kontonummer FROM konton WHERE "user_id" = $1';
+    const { rows: befintliga } = await client.query(befintligaQuery, [userId]);
+    const befintligaKonton = new Set(befintliga.map((r: any) => r.kontonummer.toString()));
+
+    console.log(`🔍 Befintliga konton för användare ${userId}:`, befintligaKonton.size);
+
     let skapadeAntal = 0;
+    let hoppadeOver = 0;
 
     for (const konto of kontoData) {
       try {
+        const kontoStr = konto.nummer.toString().trim();
+
+        // Kontrollera om kontot redan finns
+        if (befintligaKonton.has(kontoStr)) {
+          console.log(`⚠️ Konto ${kontoStr} finns redan, hoppar över`);
+          hoppadeOver++;
+          continue;
+        }
+
         // Bestäm kontoklass baserat på kontonummer
         const kontonummer = parseInt(konto.nummer);
         let kontoklass = "Ospecificerad";
@@ -988,14 +1074,22 @@ export async function skapaKonton(
         }
 
         // 🔒 SÄKER DATABASSKAPNING - Konto kopplas till userId
-        await client.query(
+        const insertResult = await client.query(
           `INSERT INTO konton (kontonummer, beskrivning, kontoklass, kategori, sökord, "user_id") 
            VALUES ($1, $2, $3, $4, $5, $6) 
-           ON CONFLICT (kontonummer, "user_id") DO NOTHING`,
+           ON CONFLICT (kontonummer, "user_id") DO NOTHING
+           RETURNING kontonummer`,
           [konto.nummer, konto.namn, kontoklass, kategori, [konto.namn.toLowerCase()], userId]
         );
 
-        skapadeAntal++;
+        if (insertResult.rows.length > 0) {
+          console.log(`✅ Skapade konto ${kontoStr}: ${konto.namn}`);
+          skapadeAntal++;
+          befintligaKonton.add(kontoStr); // Lägg till i cache
+        } else {
+          console.log(`⚠️ Konto ${kontoStr} kunde inte skapas (redan finns?))`);
+          hoppadeOver++;
+        }
       } catch (error) {
         console.error(`Fel vid skapande av konto ${konto.nummer}:`, error);
         await logSieSecurityEvent(
@@ -1009,10 +1103,12 @@ export async function skapaKonton(
     client.release();
     await pool.end();
 
+    console.log(`📊 Kontoskapande klart - Skapade: ${skapadeAntal}, Hoppade över: ${hoppadeOver}`);
+
     await logSieSecurityEvent(
       userId,
       "sie_create_accounts_success",
-      `Created ${skapadeAntal} accounts`
+      `Created ${skapadeAntal} accounts, skipped ${hoppadeOver} existing`
     );
 
     return {
@@ -1924,6 +2020,81 @@ export async function exporteraSieData(
     return {
       success: false,
       error: `Kunde inte exportera SIE-data: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+// Funktion för att rensa bort dubblettkonton
+export async function rensaDubblettkonton(): Promise<{
+  success: boolean;
+  error?: string;
+  rensade?: number;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
+    }
+
+    const { Pool } = require("pg");
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+
+    const client = await pool.connect();
+
+    // Hitta dubbletter för användaren
+    const dublettQuery = `
+      SELECT kontonummer, COUNT(*) as antal, 
+             array_agg(id ORDER BY id) as ids
+      FROM konton 
+      WHERE "user_id" = $1 
+      GROUP BY kontonummer 
+      HAVING COUNT(*) > 1
+    `;
+
+    const { rows: dubletter } = await client.query(dublettQuery, [userId]);
+
+    console.log(`🔍 Hittade ${dubletter.length} kontonummer med dubbletter`);
+
+    let rensadeAntal = 0;
+
+    for (const dublett of dubletter) {
+      const { kontonummer, antal, ids } = dublett;
+      console.log(`⚠️ Konto ${kontonummer} finns ${antal} gånger med IDs: ${ids}`);
+
+      // Behåll första posten (lägsta ID), ta bort resten
+      const attRensa = ids.slice(1); // Alla utom första
+
+      for (const id of attRensa) {
+        try {
+          await client.query('DELETE FROM konton WHERE id = $1 AND "user_id" = $2', [id, userId]);
+          console.log(`🗑️ Tog bort dublett av konto ${kontonummer} (ID: ${id})`);
+          rensadeAntal++;
+        } catch (error) {
+          console.error(`❌ Kunde inte ta bort dublett ${id}:`, error);
+        }
+      }
+    }
+
+    client.release();
+    await pool.end();
+
+    await logSieSecurityEvent(
+      userId,
+      "sie_cleanup_duplicates",
+      `Removed ${rensadeAntal} duplicate accounts`
+    );
+
+    return {
+      success: true,
+      rensade: rensadeAntal,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid rensning av dubbletter:", error);
+    return {
+      success: false,
+      error: "Kunde inte rensa dubbletter",
     };
   }
 }
