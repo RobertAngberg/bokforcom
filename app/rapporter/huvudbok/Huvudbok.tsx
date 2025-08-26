@@ -1,11 +1,14 @@
 // #region Imports och types
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
+import Dropdown from "../../_components/Dropdown";
+import Modal from "../../_components/Modal";
+import { fetchTransactionDetails } from "../../historik/actions";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatSEK } from "../../_utils/format";
@@ -25,6 +28,58 @@ type Props = {
 // #endregion
 
 export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnummer }: Props) {
+  // State för årval
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
+
+  // State för verifikatmodal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedKonto, setSelectedKonto] = useState("");
+  const [verifikationer, setVerifikationer] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Åralternativ från 2020 till nu
+  const yearOptions = Array.from({ length: currentYear - 2019 }, (_, i) => {
+    const year = 2020 + i;
+    return { value: year.toString(), label: year.toString() };
+  });
+
+  // Funktion för att visa verifikationer för ett konto
+  const handleShowVerifikationer = async (kontonummer: string) => {
+    setSelectedKonto(kontonummer);
+    setShowModal(true);
+    setLoading(true);
+
+    try {
+      // Mock-data för verifikationer (ersätt med riktig data senare)
+      const mockVerifikationer = [
+        {
+          id: 1,
+          datum: "2025-01-15",
+          beskrivning: "Inköp kontorsmaterial",
+          debet: 1500,
+          kredit: 0,
+          saldo: 1500,
+        },
+        {
+          id: 2,
+          datum: "2025-02-10",
+          beskrivning: "Betalning leverantör",
+          debet: 0,
+          kredit: 800,
+          saldo: 700,
+        },
+      ];
+
+      setVerifikationer(mockVerifikationer);
+    } catch (error) {
+      console.error("Fel vid hämtning av verifikationer:", error);
+      setVerifikationer([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //#region Helper Functions
   // Formatering för SEK med behållet minustecken
   const formatSEK = (val: number): string => {
@@ -158,6 +213,13 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
 
+        {/* Årval dropdown */}
+        <div className="flex justify-center mb-6">
+          <div className="w-32">
+            <Dropdown value={selectedYear} onChange={setSelectedYear} options={yearOptions} />
+          </div>
+        </div>
+
         <div className="space-y-6">
           {kategoriseradeKonton.map((kategori) => {
             // Beräkna totalsumma för kategorin
@@ -187,6 +249,18 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
                     { key: "kontonummer", label: "Konto", render: (value: any) => value },
                     { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
                     {
+                      key: "verifikationer",
+                      label: "Verifikationer",
+                      render: (value: any, row: any) => (
+                        <button
+                          onClick={() => handleShowVerifikationer(row.kontonummer)}
+                          className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
+                        >
+                          Visa
+                        </button>
+                      ),
+                    },
+                    {
                       key: "ingaendeBalans",
                       label: "Ingående balans",
                       render: (value: any) => formatSEK(value),
@@ -211,6 +285,44 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
           <Knapp text="Ladda ner CSV" onClick={handleExportCSV} />
         </div>
       </div>
+
+      {/* Verifikatmodal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={`Verifikationer för konto ${selectedKonto}`}
+      >
+        {loading ? (
+          <div className="text-center py-4">Laddar verifikationer...</div>
+        ) : (
+          <Tabell
+            data={verifikationer}
+            columns={[
+              { key: "datum", label: "Datum", render: (value: any) => value },
+              { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
+              {
+                key: "debet",
+                label: "Debet",
+                render: (value: any) => value || "-",
+                className: "text-right",
+              },
+              {
+                key: "kredit",
+                label: "Kredit",
+                render: (value: any) => value || "-",
+                className: "text-right",
+              },
+              {
+                key: "saldo",
+                label: "Saldo",
+                render: (value: any) => value,
+                className: "text-right font-semibold",
+              },
+            ]}
+            getRowId={(row: any) => row.id}
+          />
+        )}
+      </Modal>
     </MainLayout>
   );
 }
