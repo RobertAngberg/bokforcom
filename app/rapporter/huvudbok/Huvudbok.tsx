@@ -5,6 +5,7 @@ import React from "react";
 import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
+import Tabell from "../../_components/Tabell";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatSEK } from "../../_utils/format";
@@ -180,35 +181,26 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
                 }
                 visaSummaDirekt={formatSEK(totalSumma)}
               >
-                <div className="bg-gray-800 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-700">
-                        <th className="text-left p-3 font-semibold">Konto</th>
-                        <th className="text-left p-3 font-semibold">Beskrivning</th>
-                        <th className="text-right p-3 font-semibold">Ingående balans</th>
-                        <th className="text-right p-3 font-semibold">Utgående balans</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {kategori.konton.map((konto, index) => (
-                        <tr
-                          key={konto.kontonummer}
-                          className={`border-b border-gray-600 hover:bg-gray-750 ${
-                            index % 2 === 0 ? "bg-gray-800" : "bg-gray-750"
-                          }`}
-                        >
-                          <td className="p-3">{konto.kontonummer}</td>
-                          <td className="p-3">{konto.beskrivning}</td>
-                          <td className="p-3 text-right">{formatSEK(konto.ingaendeBalans)}</td>
-                          <td className="p-3 text-right font-semibold">
-                            {formatSEK(konto.utgaendeBalans)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Tabell
+                  data={kategori.konton}
+                  columns={[
+                    { key: "kontonummer", label: "Konto", render: (value: any) => value },
+                    { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
+                    {
+                      key: "ingaendeBalans",
+                      label: "Ingående balans",
+                      render: (value: any) => formatSEK(value),
+                      className: "text-right",
+                    },
+                    {
+                      key: "utgaendeBalans",
+                      label: "Utgående balans",
+                      render: (value: any) => formatSEK(value),
+                      className: "text-right font-semibold",
+                    },
+                  ]}
+                  getRowId={(konto: any) => konto.kontonummer}
+                />
               </AnimeradFlik>
             );
           })}
