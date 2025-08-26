@@ -364,20 +364,19 @@ export default function Historik({ initialData }: Props) {
               <span>{filteredData.length} transaktioner</span>
             </div>
           </div>
+          <div>
+            <Knapp
+              text={showOnlyUnbalanced ? "🔙 Visa alla" : "⚖️ Kolla obalanserade"}
+              onClick={handleUnbalancedCheck}
+              loading={isCheckingUnbalanced}
+              loadingText="🔄 Kollar verifikationer..."
+            />
+          </div>
         </div>
 
         {validationError && (
           <div className="text-red-500 text-sm text-center mb-4">{validationError}</div>
         )}
-
-        <div className="flex justify-center mb-4">
-          <Knapp
-            text={showOnlyUnbalanced ? "🔙 Visa alla" : "⚖️ Kolla obalanserade"}
-            onClick={handleUnbalancedCheck}
-            loading={isCheckingUnbalanced}
-            loadingText="🔄 Kollar verifikationer..."
-          />
-        </div>
 
         <div className="pt-2"></div>
       </div>
