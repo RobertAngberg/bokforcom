@@ -284,26 +284,44 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
               {
                 key: "datum",
                 label: "Datum",
-                render: (value: any) =>
-                  value instanceof Date ? value.toLocaleDateString("sv-SE") : value,
+                render: (value: any) => {
+                  if (value instanceof Date) {
+                    return value.toLocaleDateString("sv-SE");
+                  }
+                  // Om det är en sträng, försök att formatera den
+                  if (typeof value === "string") {
+                    const date = new Date(value);
+                    return date.toLocaleDateString("sv-SE");
+                  }
+                  return value;
+                },
               },
-              { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
+              {
+                key: "verifikatNummer",
+                label: "Verifikat",
+                render: (value: any) => value,
+              },
+              {
+                key: "beskrivning",
+                label: "Beskrivning",
+                render: (value: any) => value,
+              },
               {
                 key: "debet",
                 label: "Debet",
-                render: (value: any) => value || "-",
+                render: (value: any) => (value ? formatSEK(parseFloat(value)) : "-"),
                 className: "text-right",
               },
               {
                 key: "kredit",
                 label: "Kredit",
-                render: (value: any) => value || "-",
+                render: (value: any) => (value ? formatSEK(parseFloat(value)) : "-"),
                 className: "text-right",
               },
               {
-                key: "saldo",
-                label: "Saldo",
-                render: (value: any) => value,
+                key: "belopp",
+                label: "Belopp",
+                render: (value: any) => formatSEK(parseFloat(value)),
                 className: "text-right font-semibold",
               },
             ]}
