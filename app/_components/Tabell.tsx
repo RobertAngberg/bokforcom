@@ -10,6 +10,7 @@ export interface TableProps<T> {
   columns: ColumnDefinition<T>[];
   getRowId: (item: T) => string | number;
   activeId?: string | number | null;
+  activeIds?: (string | number)[];
   handleRowClick?: (id: string | number) => void;
   renderExpandedRow?: (item: T) => React.ReactNode;
   isRowClickable?: (item: T) => boolean; // 🆕 Valfritt per rad
@@ -21,6 +22,7 @@ export default function Tabell<T>({
   columns,
   getRowId,
   activeId,
+  activeIds,
   handleRowClick,
   renderExpandedRow,
   isRowClickable,
@@ -46,7 +48,8 @@ export default function Tabell<T>({
         <tbody>
           {data.map((item, index) => {
             const id = getRowId(item);
-            const isExpanded = activeId === id;
+            // Stöd både activeId (single) och activeIds (multiple)
+            const isExpanded = activeIds ? activeIds.includes(id) : activeId === id;
 
             // 💡 Är raden klickbar? Endast om både prop och funktion finns
             const isClickable = handleRowClick && (isRowClickable?.(item) ?? true);

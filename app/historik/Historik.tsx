@@ -116,7 +116,7 @@ export default function Historik({ initialData }: Props) {
     })
   );
   const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeIds, setActiveIds] = useState<number[]>([]);
   const [showOnlyUnbalanced, setShowOnlyUnbalanced] = useState(false);
   const [showUnbalancedModal, setShowUnbalancedModal] = useState(false);
   const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
@@ -206,10 +206,12 @@ export default function Historik({ initialData }: Props) {
     const numericId = typeof id === "string" ? parseInt(id) : id;
 
     void (async () => {
-      if (numericId === activeId) {
-        setActiveId(null);
+      if (activeIds.includes(numericId)) {
+        // Stäng denna rad (ta bort från array)
+        setActiveIds((prev) => prev.filter((id) => id !== numericId));
       } else {
-        setActiveId(numericId);
+        // Öppna denna rad (lägg till i array)
+        setActiveIds((prev) => [...prev, numericId]);
         if (!detailsMap[numericId]) {
           const detailResult = await fetchTransactionDetails(numericId);
           setDetailsMap((prev) => ({ ...prev, [numericId]: detailResult }));
@@ -385,7 +387,7 @@ export default function Historik({ initialData }: Props) {
         data={filteredData}
         columns={columns}
         getRowId={(item: HistoryItem) => item.transaktions_id}
-        activeId={activeId}
+        activeIds={activeIds}
         handleRowClick={handleRowClick}
         renderExpandedRow={(item: HistoryItem) => {
           const rows = detailsMap[item.transaktions_id] ?? [];
