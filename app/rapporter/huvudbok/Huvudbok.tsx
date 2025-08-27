@@ -47,16 +47,19 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
 
   // Funktion för att visa verifikationer för ett konto
   const handleShowVerifikationer = async (kontonummer: string) => {
+    console.log("🔍 Klick på Visa för konto:", kontonummer);
     setSelectedKonto(kontonummer);
     setShowModal(true);
     setLoading(true);
 
     try {
+      console.log("📞 Anropar fetchKontoTransaktioner för konto:", kontonummer);
       // Hämta riktiga verifikationer för kontot från databasen
       const data = await fetchKontoTransaktioner(kontonummer);
+      console.log("📊 Fick data:", data);
       setVerifikationer(data || []);
     } catch (error) {
-      console.error("Fel vid hämtning av verifikationer:", error);
+      console.error("❌ Fel vid hämtning av verifikationer:", error);
       setVerifikationer([]);
     } finally {
       setLoading(false);
@@ -319,8 +322,8 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
                 className: "text-right",
               },
               {
-                key: "belopp",
-                label: "Belopp",
+                key: "lopande_saldo",
+                label: "Saldo",
                 render: (value: any) => formatSEK(parseFloat(value)),
                 className: "text-right font-semibold",
               },

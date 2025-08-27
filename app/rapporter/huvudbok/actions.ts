@@ -220,20 +220,27 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
   try {
     const result = await pool.query(
       `
-      SELECT
-        t.id as transaktion_id,
-        t.transaktionsdatum as datum,
-        t.kontobeskrivning as beskrivning,
-        tp.debet,
-        tp.kredit,
-        CONCAT('V', t.id) as verifikatNummer,
-        (tp.debet - tp.kredit) as belopp
-      FROM transaktioner t
-      JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      JOIN konton k ON k.id = tp.konto_id
-      WHERE k.kontonummer = $1 
-        AND t."user_id" = $2
-      ORDER BY t.transaktionsdatum, t.id
+      WITH konto_transaktioner AS (
+        SELECT
+          t.id as transaktion_id,
+          t.transaktionsdatum as datum,
+          t.kontobeskrivning as beskrivning,
+          tp.debet,
+          tp.kredit,
+          CONCAT('V', t.id) as verifikatNummer,
+          (tp.debet - tp.kredit) as belopp,
+          ROW_NUMBER() OVER (ORDER BY t.transaktionsdatum, t.id) as rad_nr
+        FROM transaktioner t
+        JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+        JOIN konton k ON k.id = tp.konto_id
+        WHERE k.kontonummer = $1 
+          AND t."user_id" = $2
+      )
+      SELECT 
+        *,
+        SUM(belopp) OVER (ORDER BY datum, transaktion_id) as lopande_saldo
+      FROM konto_transaktioner
+      ORDER BY datum, transaktion_id
       `,
       [kontonummer, userId]
     );
