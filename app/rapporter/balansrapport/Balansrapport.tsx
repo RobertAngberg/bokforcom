@@ -147,35 +147,14 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     setLoading(true);
 
     try {
-      // Mock-data för verifikationer (precis som i huvudboken)
-      const mockVerifikationer = [
-        {
-          id: 1,
-          datum: "2025-01-15",
-          beskrivning: "Inköp kontorsmaterial",
-          debet: 1500,
-          kredit: 0,
-          saldo: 1500,
-        },
-        {
-          id: 2,
-          datum: "2025-02-10",
-          beskrivning: "Betalning leverantör",
-          debet: 0,
-          kredit: 800,
-          saldo: 700,
-        },
-        {
-          id: 3,
-          datum: "2025-03-05",
-          beskrivning: "Försäljning",
-          debet: 2500,
-          kredit: 0,
-          saldo: 3200,
-        },
-      ];
-
-      setVerifikationer(mockVerifikationer);
+      // Hämta riktiga verifikationer från databasen
+      const response = await fetch(`/api/verifikationer?konto=${kontonummer}`);
+      if (response.ok) {
+        const data = await response.json();
+        setVerifikationer(data);
+      } else {
+        setVerifikationer([]);
+      }
     } catch (error) {
       console.error("Fel vid hämtning av verifikationer:", error);
       setVerifikationer([]);

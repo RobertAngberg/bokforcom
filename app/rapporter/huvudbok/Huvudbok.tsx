@@ -9,6 +9,7 @@ import Tabell from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
 import Modal from "../../_components/Modal";
 import { fetchTransactionDetails } from "../../historik/actions";
+import { fetchHuvudbok, fetchKontoTransaktioner } from "./actions";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatSEK } from "../../_utils/format";
@@ -51,27 +52,9 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
     setLoading(true);
 
     try {
-      // Mock-data för verifikationer (ersätt med riktig data senare)
-      const mockVerifikationer = [
-        {
-          id: 1,
-          datum: "2025-01-15",
-          beskrivning: "Inköp kontorsmaterial",
-          debet: 1500,
-          kredit: 0,
-          saldo: 1500,
-        },
-        {
-          id: 2,
-          datum: "2025-02-10",
-          beskrivning: "Betalning leverantör",
-          debet: 0,
-          kredit: 800,
-          saldo: 700,
-        },
-      ];
-
-      setVerifikationer(mockVerifikationer);
+      // Hämta riktiga verifikationer för kontot från databasen
+      const data = await fetchKontoTransaktioner(kontonummer);
+      setVerifikationer(data || []);
     } catch (error) {
       console.error("Fel vid hämtning av verifikationer:", error);
       setVerifikationer([]);
@@ -298,7 +281,12 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
           <Tabell
             data={verifikationer}
             columns={[
-              { key: "datum", label: "Datum", render: (value: any) => value },
+              {
+                key: "datum",
+                label: "Datum",
+                render: (value: any) =>
+                  value instanceof Date ? value.toLocaleDateString("sv-SE") : value,
+              },
               { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
               {
                 key: "debet",
@@ -319,7 +307,7 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
                 className: "text-right font-semibold",
               },
             ]}
-            getRowId={(row: any) => row.id}
+            getRowId={(row: any) => row.transaktion_id || row.id}
           />
         )}
       </Modal>

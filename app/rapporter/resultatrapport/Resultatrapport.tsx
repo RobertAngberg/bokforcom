@@ -8,6 +8,7 @@ import Totalrad from "../../_components/Totalrad";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import VerifikatModal from "../../_components/VerifikatModal";
+import Modal from "../../_components/Modal";
 import { formatSEK } from "../../_utils/format";
 import jsPDF from "jspdf";
 
@@ -48,14 +49,49 @@ type Props = {
 
 export default function Resultatrapport({ initialData }: Props) {
   //#region State & Variables
-  const data = initialData;
-  // Vi tar de år som faktiskt har data, begränsat till max 2 år
-  const years = data.ar.slice(0, 2);
+  const data = initialData || {
+    ar: [],
+    intakter: [],
+    rorelsensKostnader: [],
+    finansiellaIntakter: [],
+    finansiellaKostnader: [],
+  };
+  const years = [...data.ar].sort((a, b) => parseInt(b) - parseInt(a));
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
+
+  // State för verifikatmodal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedKonto, setSelectedKonto] = useState("");
+  const [verifikationer, setVerifikationer] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [exportMessage, setExportMessage] = useState<string>("");
+
+  // Funktion för att visa verifikationer för ett konto
+  const handleShowVerifikationer = async (kontonummer: string) => {
+    setSelectedKonto(kontonummer);
+    setShowModal(true);
+    setLoading(true);
+
+    try {
+      // Hämta riktiga verifikationer från databasen
+      const response = await fetch(`/api/verifikationer?konto=${kontonummer}`);
+      if (response.ok) {
+        const data = await response.json();
+        setVerifikationer(data);
+      } else {
+        setVerifikationer([]);
+      }
+    } catch (error) {
+      console.error("Fel vid hämtning av verifikationer:", error);
+      setVerifikationer([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   //#endregion
 
   //#region Helper Functions
@@ -83,7 +119,7 @@ export default function Resultatrapport({ initialData }: Props) {
   const intaktsSumRaw = summering(data.intakter);
   const intaktsSum: Record<string, number> = {};
   for (const year of data.ar) {
-    intaktsSum[year] = -intaktsSumRaw[year] || 0;
+    intaktsSum[year] = intaktsSumRaw[year] || 0; // Intäkter ska vara positiva
   }
 
   const rorelsensSum = summering(data.rorelsensKostnader);
@@ -185,7 +221,8 @@ export default function Resultatrapport({ initialData }: Props) {
     );
   };
 
-  const handleKontoClick = (kontonummer: string) => {
+  const handleKontoClick = (id: string | number) => {
+    const kontonummer = String(id);
     setExpandedKonto(expandedKonto === kontonummer ? null : kontonummer);
   };
   //#endregion
@@ -198,53 +235,104 @@ export default function Resultatrapport({ initialData }: Props) {
         title={grupp.namn}
         icon={icon || (isIntakt ? "💰" : "💸")}
         visaSummaDirekt={formatSEK(
-          isIntakt ? -grupp.summering[years[0]] : grupp.summering[years[0]]
+          isIntakt ? grupp.summering[years[0]] : grupp.summering[years[0]]
         )}
+        forcedOpen={true}
       >
         <Tabell
           data={[
             ...grupp.konton.map((konto) => ({
               kontonummer: konto.kontonummer,
-              Konto: `${konto.kontonummer} ${konto.beskrivning}`,
-              Datum: "",
-              Belopp: isIntakt ? -(konto[years[0]] as number) : (konto[years[0]] as number),
+              beskrivning: konto.beskrivning,
+              ...years.reduce(
+                (acc, year) => {
+                  acc[year] = isIntakt ? (konto[year] as number) : (konto[year] as number);
+                  return acc;
+                },
+                {} as Record<string, number>
+              ),
+              transaktioner: konto.transaktioner || [],
             })),
-            // Summeringsrad
-            {
-              kontonummer: "",
-              Konto: `Summa ${grupp.namn.toLowerCase()}`,
-              Datum: "",
-              Belopp: isIntakt ? -grupp.summering[years[0]] : grupp.summering[years[0]],
-            },
           ]}
           columns={[
             {
-              key: "Konto",
+              key: "beskrivning",
               label: "Konto",
-              render: (_, item: any) => item.Konto,
+              render: (_, item: any) =>
+                item.kontonummer ? (
+                  <button
+                    onClick={() => handleKontoClick(item.kontonummer)}
+                    className="text-left hover:text-cyan-400 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    {item.kontonummer} – {item.beskrivning}
+                  </button>
+                ) : (
+                  item.beskrivning
+                ),
             },
-            {
-              key: "Datum",
-              label: "Datum",
-              className: "text-center",
-              render: (_, item: any) => item.Datum || "",
-            },
-            {
-              key: "Belopp",
-              label: "Belopp",
+            ...years.map((year) => ({
+              key: year,
+              label: year,
               className: "text-right",
-              render: (_, item: any) => formatSEK(item.Belopp),
+              render: (_, item: any) => formatSEK(item[year] || 0),
+            })),
+            {
+              key: "verifikationer",
+              label: "",
+              render: (value: any, item: any) => null, // Ta bort "Visa"-knappen
             },
           ]}
           getRowId={(item: any) => item.kontonummer || "summa"}
           activeId={expandedKonto}
-          renderExpandedRow={(item: any) =>
-            item.kontonummer
-              ? renderTransaktioner(grupp.konton.find((k) => k.kontonummer === item.kontonummer)!)
-              : null
-          }
-          handleRowClick={(id) => handleKontoClick(String(id))}
+          handleRowClick={handleKontoClick}
+          renderExpandedRow={(item: any) => {
+            if (!item.transaktioner || item.transaktioner.length === 0) {
+              return (
+                <tr>
+                  <td colSpan={years.length + 2} className="px-6 py-4 text-gray-500 text-center">
+                    Konto {item.kontonummer} saknar transaktioner i den valda perioden
+                  </td>
+                </tr>
+              );
+            }
+
+            return (
+              <>
+                {item.transaktioner.map((transaktion: any, index: number) => (
+                  <tr key={`${item.kontonummer}-${index}`} className="bg-slate-800">
+                    <td
+                      className="px-6 py-2 text-sm text-blue-400 cursor-pointer hover:text-cyan-400"
+                      onClick={() => setVerifikatId(transaktion.transaktion_id)}
+                    >
+                      {transaktion.verifikatNummer}
+                    </td>
+                    <td className="px-6 py-2 text-sm text-gray-300">{transaktion.beskrivning}</td>
+                    <td className="px-6 py-2 text-sm text-gray-300 text-right">
+                      {formatSEK(Math.abs(transaktion.belopp))}
+                    </td>
+                    <td className="px-6 py-2"></td>
+                    <td className="px-6 py-2"></td>
+                    <td className="px-6 py-2"></td>
+                  </tr>
+                ))}
+              </>
+            );
+          }}
         />
+
+        {/* Summeringsrad efter tabellen */}
+        <div className="mt-2 p-4 bg-slate-800 border-t">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Summa {grupp.namn.toLowerCase()}</span>
+            <div className="flex gap-8">
+              {years.map((year) => (
+                <span key={year} className="font-semibold min-w-[100px] text-right">
+                  {formatSEK(isIntakt ? grupp.summering[year] : grupp.summering[year])} kr
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </AnimeradFlik>
     ));
   //#endregion
@@ -605,6 +693,37 @@ export default function Resultatrapport({ initialData }: Props) {
       {verifikatId && (
         <VerifikatModal transaktionsId={verifikatId} onClose={() => setVerifikatId(null)} />
       )}
+
+      {/* Verifikatmodal för kontoverifikationer */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={`Verifikationer för konto ${selectedKonto}`}
+      >
+        {loading ? (
+          <div className="text-center p-4">Laddar verifikationer...</div>
+        ) : (
+          <Tabell
+            data={verifikationer}
+            columns={[
+              { key: "datum", label: "Datum", render: (value: any) => value },
+              { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
+              {
+                key: "debet",
+                label: "Debet",
+                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
+              },
+              {
+                key: "kredit",
+                label: "Kredit",
+                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
+              },
+              { key: "saldo", label: "Saldo", render: (value: any) => `${value}kr` },
+            ]}
+            getRowId={(row) => row.id}
+          />
+        )}
+      </Modal>
 
       {exportMessage && (
         <div

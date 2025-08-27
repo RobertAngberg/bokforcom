@@ -205,3 +205,46 @@ export async function fetchTransactionDetails(transaktionsId: number) {
     throw new Error("Ett fel uppstod vid hämtning av transaktionsdetaljer");
   }
 }
+
+export async function fetchKontoTransaktioner(kontonummer: string) {
+  const userId = await getUserId();
+
+  // SÄKERHETSVALIDERING: Rate limiting
+  if (!validateSessionAttempt(`konto-transactions-${userId}`)) {
+    logLedgerDataEvent("violation", userId, "Rate limit exceeded for account transactions");
+    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
+  }
+
+  logLedgerDataEvent("access", userId, `Accessing transactions for account ${kontonummer}`);
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        t.id as transaktion_id,
+        t.transaktionsdatum as datum,
+        t.kontobeskrivning as beskrivning,
+        tp.debet,
+        tp.kredit,
+        CONCAT('V', t.id) as verifikatNummer,
+        (tp.debet - tp.kredit) as belopp
+      FROM transaktioner t
+      JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      JOIN konton k ON k.id = tp.konto_id
+      WHERE k.kontonummer = $1 
+        AND t."user_id" = $2
+      ORDER BY t.transaktionsdatum, t.id
+      `,
+      [kontonummer, userId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("❌ fetchKontoTransaktioner error:", error);
+    logLedgerDataEvent(
+      "error",
+      userId,
+      `Error fetching account transactions: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+    throw new Error("Ett fel uppstod vid hämtning av kontotransaktioner");
+  }
+}
