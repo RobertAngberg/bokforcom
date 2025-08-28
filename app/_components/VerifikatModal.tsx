@@ -43,23 +43,24 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
         <div className="flex items-center justify-between p-6 border-b border-slate-600 bg-slate-900">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              {details.length > 0 && details[0].verifikatNummer ? details[0].verifikatNummer : "Verifikat"}
+              {details.length > 0 && details[0].verifikatNummer
+                ? details[0].verifikatNummer
+                : "Verifikat"}
             </h2>
             {details.length > 0 && (
               <div className="text-slate-300 text-sm mt-1 space-y-1">
                 {details[0].transaktionsdatum && (
                   <div>
-                    📅 {new Date(details[0].transaktionsdatum).toLocaleDateString("sv-SE", {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
+                    📅{" "}
+                    {new Date(details[0].transaktionsdatum).toLocaleDateString("sv-SE", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </div>
                 )}
                 {details[0].verifikat_beskrivning && (
-                  <div className="text-slate-400">
-                    {details[0].verifikat_beskrivning}
-                  </div>
+                  <div className="text-slate-400">{details[0].verifikat_beskrivning}</div>
                 )}
               </div>
             )}
