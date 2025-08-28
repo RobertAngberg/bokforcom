@@ -42,8 +42,27 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-600 bg-slate-900">
           <div>
-            <h2 className="text-2xl font-bold text-white">Verifikat</h2>
-            <p className="text-slate-300 text-sm mt-1">Transaktion #{transaktionsId}</p>
+            <h2 className="text-2xl font-bold text-white">
+              {details.length > 0 && details[0].verifikatNummer ? details[0].verifikatNummer : "Verifikat"}
+            </h2>
+            {details.length > 0 && (
+              <div className="text-slate-300 text-sm mt-1 space-y-1">
+                {details[0].transaktionsdatum && (
+                  <div>
+                    📅 {new Date(details[0].transaktionsdatum).toLocaleDateString("sv-SE", {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                )}
+                {details[0].verifikat_beskrivning && (
+                  <div className="text-slate-400">
+                    {details[0].verifikat_beskrivning}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
             className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700 rounded-lg"

@@ -184,7 +184,10 @@ export async function fetchTransactionDetails(transaktionsId: number) {
       k.kontonummer,
       k.beskrivning,
       t.kommentar,
-      t.fil
+      t.fil,
+      t.transaktionsdatum,
+      t.kontobeskrivning as verifikat_beskrivning,
+      CONCAT('V', t.id) as verifikatNummer
     FROM transaktionsposter tp
     JOIN konton k ON k.id = tp.konto_id
     JOIN transaktioner t ON t.id = tp.transaktions_id
