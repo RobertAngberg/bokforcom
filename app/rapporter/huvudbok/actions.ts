@@ -255,3 +255,111 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
     throw new Error("Ett fel uppstod vid hämtning av kontotransaktioner");
   }
 }
+
+export async function fetchHuvudbokMedAllaTransaktioner() {
+  const userId = await getUserId();
+
+  // SÄKERHETSVALIDERING: Rate limiting för huvudbok med alla transaktioner
+  if (!validateSessionAttempt(`finance-full-ledger-${userId}`)) {
+    logLedgerDataEvent("violation", userId, "Rate limit exceeded for full ledger access");
+    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
+  }
+
+  logLedgerDataEvent("access", userId, "Accessing full ledger with all transactions");
+
+  try {
+    const client = await pool.connect();
+
+    // Hämta alla transaktioner grupperade per konto, inklusive ingående balans
+    const fullQuery = `
+      WITH konto_transaktioner AS (
+        SELECT 
+          k.kontonummer,
+          k.beskrivning as konto_beskrivning,
+          t.id as transaktion_id,
+          t.transaktionsdatum as datum,
+          t.kontobeskrivning as beskrivning,
+          tp.debet,
+          tp.kredit,
+          CASE 
+            WHEN t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser' 
+            THEN 'Ingående balans'
+            ELSE CONCAT('V', t.id)
+          END as verifikatNummer,
+          (tp.debet - tp.kredit) as belopp,
+          CASE 
+            WHEN t.kontobeskrivning = 'Ingående balanser' AND t.kommentar = 'SIE Import - Ingående balanser' 
+            THEN 1
+            ELSE 2
+          END as sort_priority
+        FROM transaktioner t
+        JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+        JOIN konton k ON k.id = tp.konto_id
+        WHERE t."user_id" = $1
+        ORDER BY k.kontonummer::int, sort_priority, t.transaktionsdatum, t.id
+      ),
+      konto_summary AS (
+        SELECT 
+          kontonummer,
+          konto_beskrivning,
+          SUM(CASE WHEN sort_priority = 1 THEN belopp ELSE 0 END) as ingaende_balans,
+          SUM(belopp) as utgaende_balans,
+          json_agg(
+            json_build_object(
+              'transaktion_id', transaktion_id,
+              'datum', datum,
+              'beskrivning', beskrivning,
+              'debet', debet,
+              'kredit', kredit,
+              'verifikatNummer', verifikatNummer,
+              'belopp', belopp,
+              'sort_priority', sort_priority
+            ) ORDER BY sort_priority, datum, transaktion_id
+          ) as transaktioner
+        FROM konto_transaktioner
+        GROUP BY kontonummer, konto_beskrivning
+      )
+      SELECT 
+        kontonummer,
+        konto_beskrivning as beskrivning,
+        ingaende_balans as "ingaendeBalans",
+        utgaende_balans as "utgaendeBalans",
+        transaktioner
+      FROM konto_summary
+      ORDER BY kontonummer::int
+    `;
+
+    const result = await client.query(fullQuery, [userId]);
+    client.release();
+
+    // Bearbeta resultatet för att beräkna löpande saldon
+    const huvudboksdata = result.rows.map((row) => {
+      let lopandeSaldo = 0;
+      const transaktionerMedSaldo = row.transaktioner.map((trans: any) => {
+        lopandeSaldo += trans.belopp;
+        return {
+          ...trans,
+          lopande_saldo: lopandeSaldo,
+        };
+      });
+
+      return {
+        kontonummer: row.kontonummer,
+        beskrivning: row.beskrivning,
+        ingaendeBalans: parseFloat(row.ingaendeBalans),
+        utgaendeBalans: parseFloat(row.utgaendeBalans),
+        transaktioner: transaktionerMedSaldo,
+      };
+    });
+
+    return huvudboksdata;
+  } catch (error) {
+    console.error("❌ fetchHuvudbokMedAllaTransaktioner error:", error);
+    logLedgerDataEvent(
+      "error",
+      userId,
+      `Error fetching full ledger: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+    throw new Error("Ett fel uppstod vid hämtning av huvudbok med transaktioner");
+  }
+}

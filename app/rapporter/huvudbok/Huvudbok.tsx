@@ -8,6 +8,7 @@ import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
 import Modal from "../../_components/Modal";
+import VerifikatModal from "../../_components/VerifikatModal";
 import { fetchTransactionDetails } from "../../historik/actions";
 import { fetchHuvudbok, fetchKontoTransaktioner } from "./actions";
 import jsPDF from "jspdf";
@@ -39,6 +40,10 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
   const [verifikationer, setVerifikationer] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // State för VerifikatModal
+  const [showVerifikatModal, setShowVerifikatModal] = useState(false);
+  const [selectedTransaktionsId, setSelectedTransaktionsId] = useState<number | null>(null);
+
   // Åralternativ från 2020 till nu
   const yearOptions = Array.from({ length: currentYear - 2019 }, (_, i) => {
     const year = 2020 + i;
@@ -64,6 +69,13 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
     } finally {
       setLoading(false);
     }
+  };
+
+  // Funktion för att visa enskilt verifikat
+  const handleShowVerifikat = (transaktionsId: number) => {
+    console.log("🔍 Visar verifikat för transaktion:", transaktionsId);
+    setSelectedTransaktionsId(transaktionsId);
+    setShowVerifikatModal(true);
   };
 
   //#region Helper Functions
@@ -302,7 +314,14 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
               {
                 key: "verifikatNummer",
                 label: "Verifikat",
-                render: (value: any) => value,
+                render: (value: any, row: any) => (
+                  <button
+                    onClick={() => handleShowVerifikat(row.transaktion_id)}
+                    className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
+                  >
+                    {value}
+                  </button>
+                ),
               },
               {
                 key: "beskrivning",
@@ -332,6 +351,17 @@ export default function Huvudbok({ huvudboksdata, företagsnamn, organisationsnu
           />
         )}
       </Modal>
+
+      {/* VerifikatModal för enskilda verifikat */}
+      {showVerifikatModal && selectedTransaktionsId && (
+        <VerifikatModal
+          transaktionsId={selectedTransaktionsId}
+          onClose={() => {
+            setShowVerifikatModal(false);
+            setSelectedTransaktionsId(null);
+          }}
+        />
+      )}
     </MainLayout>
   );
 }

@@ -1,12 +1,12 @@
-import Huvudbok from "./Huvudbok";
-import { fetchHuvudbok, fetchFöretagsprofil } from "./actions";
+import HuvudbokFull from "./HuvudbokFull";
+import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "./actions";
 import MainLayout from "../../_components/MainLayout";
 import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 
 export default async function Page() {
   const sessionPromise = auth();
-  const huvudbokPromise = fetchHuvudbok();
+  const huvudbokPromise = fetchHuvudbokMedAllaTransaktioner();
 
   const session = await sessionPromise;
   const userId = session?.user?.id;
@@ -16,7 +16,7 @@ export default async function Page() {
   const [result, profil] = await Promise.all([huvudbokPromise, profilPromise]);
 
   return (
-    <Huvudbok
+    <HuvudbokFull
       huvudboksdata={result}
       företagsnamn={profil?.företagsnamn ?? ""}
       organisationsnummer={profil?.organisationsnummer ?? ""}

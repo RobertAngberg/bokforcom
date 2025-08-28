@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 // OBS...
-import { fetchTransactionDetails } from "../rapporter/resultatrapport/actions";
+import { fetchTransactionDetails } from "../rapporter/huvudbok/actions";
 
 interface VerifikatModalProps {
   transaktionsId: number;
