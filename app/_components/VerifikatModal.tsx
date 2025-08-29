@@ -228,7 +228,7 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                               src={details[0].blob_url}
                               alt="Verifikatbilaga"
                               className="w-full h-auto max-h-96 object-contain cursor-pointer"
-                              onClick={() => window.open(details[0].blob_url, '_blank')}
+                              onClick={() => window.open(details[0].blob_url, "_blank")}
                               title="Klicka för att öppna i full storlek"
                             />
                             <div className="absolute top-2 right-2">
