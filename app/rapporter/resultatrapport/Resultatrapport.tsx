@@ -58,7 +58,6 @@ export default function Resultatrapport({ initialData }: Props) {
   };
   const years = [...data.ar].sort((a, b) => parseInt(b) - parseInt(a));
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
-  const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
 
   // State för verifikatmodal
   const [showModal, setShowModal] = useState(false);
@@ -220,121 +219,134 @@ export default function Resultatrapport({ initialData }: Props) {
       </>
     );
   };
-
-  const handleKontoClick = (id: string | number) => {
-    const kontonummer = String(id);
-    setExpandedKonto(expandedKonto === kontonummer ? null : kontonummer);
-  };
   //#endregion
 
   //#region Render Functions
+  // BOKIO-STIL render funktion med AnimeradFlik och Tabell - visar alla transaktioner som separata rader!
   const renderGrupper = (rader: KontoRad[] = [], isIntakt = false, icon?: string) =>
-    rader.map((grupp) => (
-      <AnimeradFlik
-        key={grupp.namn}
-        title={grupp.namn}
-        icon={icon || (isIntakt ? "💰" : "💸")}
-        visaSummaDirekt={formatSEK(
-          isIntakt ? grupp.summering[years[0]] : grupp.summering[years[0]]
-        )}
-        forcedOpen={true}
-      >
-        <Tabell
-          data={[
-            ...grupp.konton.map((konto) => ({
-              kontonummer: konto.kontonummer,
-              beskrivning: konto.beskrivning,
-              ...years.reduce(
-                (acc, year) => {
-                  acc[year] = isIntakt ? (konto[year] as number) : (konto[year] as number);
-                  return acc;
-                },
-                {} as Record<string, number>
-              ),
-              transaktioner: konto.transaktioner || [],
-            })),
-          ]}
-          columns={[
-            {
-              key: "beskrivning",
-              label: "Konto",
-              render: (_, item: any) =>
-                item.kontonummer ? (
-                  <button
-                    onClick={() => handleKontoClick(item.kontonummer)}
-                    className="text-left hover:text-cyan-400 cursor-pointer bg-transparent border-none p-0"
-                  >
-                    {item.kontonummer} – {item.beskrivning}
-                  </button>
-                ) : (
-                  item.beskrivning
-                ),
-            },
-            ...years.map((year) => ({
-              key: year,
-              label: year,
-              className: "text-right",
-              render: (_, item: any) => formatSEK(item[year] || 0),
-            })),
-            {
-              key: "verifikationer",
-              label: "",
-              render: (value: any, item: any) => null, // Ta bort "Visa"-knappen
-            },
-          ]}
-          getRowId={(item: any) => item.kontonummer || "summa"}
-          activeId={expandedKonto}
-          handleRowClick={handleKontoClick}
-          renderExpandedRow={(item: any) => {
-            if (!item.transaktioner || item.transaktioner.length === 0) {
+    rader.map((grupp) => {
+      const kolumner: ColumnDefinition<any>[] = [
+        {
+          key: "beskrivning",
+          label: "Konto",
+          render: (_, row) => {
+            if (row.isTransaction) {
+              // Transaktionsrad - visa bara verifikatnumret, inget annat
               return (
-                <tr>
-                  <td colSpan={years.length + 2} className="px-6 py-4 text-gray-500 text-center">
-                    Konto {item.kontonummer} saknar transaktioner i den valda perioden
-                  </td>
-                </tr>
+                <div
+                  className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
+                  onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+                >
+                  {row.verifikatNummer}
+                </div>
+              );
+            } else if (row.isSummary) {
+              // Summeringsrad
+              return <div className="font-bold">{row.beskrivning}</div>;
+            } else {
+              // Kontorad
+              return (
+                <div className="font-medium">
+                  {row.kontonummer} – {row.beskrivning}
+                </div>
               );
             }
+          },
+        },
+        ...years.map((year) => ({
+          key: year,
+          label: year,
+          render: (_, row: any) => {
+            if (row.isTransaction) {
+              // Visa transaktionsbelopp bara i första årskolumnen
+              if (year === years[0]) {
+                return <div className="text-right">{formatSEK(row.belopp)}</div>;
+              } else {
+                return "";
+              }
+            }
+            return formatSEK(row[year] || 0);
+          },
+        })),
+      ];
 
-            return (
-              <>
-                {item.transaktioner.map((transaktion: any, index: number) => (
-                  <tr key={`${item.kontonummer}-${index}`} className="bg-slate-800">
-                    <td
-                      className="px-6 py-2 text-sm text-blue-400 cursor-pointer hover:text-cyan-400"
-                      onClick={() => setVerifikatId(transaktion.transaktion_id)}
-                    >
-                      {transaktion.verifikatNummer}
-                    </td>
-                    <td className="px-6 py-2 text-sm text-gray-300">{transaktion.beskrivning}</td>
-                    <td className="px-6 py-2 text-sm text-gray-300 text-right">
-                      {formatSEK(Math.abs(transaktion.belopp))}
-                    </td>
-                    <td className="px-6 py-2"></td>
-                    <td className="px-6 py-2"></td>
-                    <td className="px-6 py-2"></td>
-                  </tr>
-                ))}
-              </>
-            );
-          }}
-        />
+      // Expandera konton till tabellrader med alla transaktioner
+      const tabellData: any[] = [];
 
-        {/* Summeringsrad efter tabellen */}
-        <div className="mt-2 p-4 bg-slate-800 border-t">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Summa {grupp.namn.toLowerCase()}</span>
-            <div className="flex gap-8">
-              {years.map((year) => (
-                <span key={year} className="font-semibold min-w-[100px] text-right">
-                  {formatSEK(isIntakt ? grupp.summering[year] : grupp.summering[year])} kr
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </AnimeradFlik>
-    ));
+      grupp.konton.forEach((konto) => {
+        // Lägg till kontorad
+        tabellData.push({
+          id: konto.kontonummer,
+          kontonummer: konto.kontonummer,
+          beskrivning: konto.beskrivning,
+          ...years.reduce(
+            (acc, year) => {
+              acc[year] = konto[year] as number;
+              return acc;
+            },
+            {} as Record<string, number>
+          ),
+          isTransaction: false,
+          isSummary: false,
+        });
+
+        // Lägg till alla transaktioner som separata rader
+        if (konto.transaktioner && konto.transaktioner.length > 0) {
+          konto.transaktioner.forEach((transaktion) => {
+            tabellData.push({
+              id: transaktion.id,
+              beskrivning: transaktion.beskrivning,
+              belopp: transaktion.belopp,
+              verifikatNummer: transaktion.verifikatNummer,
+              transaktion_id: transaktion.transaktion_id,
+              kontonummer: konto.kontonummer,
+              isTransaction: true,
+              isSummary: false,
+            });
+          });
+        } else {
+          // Lägg till rad som visar att kontot saknar transaktioner
+          tabellData.push({
+            id: `${konto.kontonummer}-empty`,
+            beskrivning: `Konto ${konto.kontonummer} saknar transaktioner i den valda perioden`,
+            kontonummer: konto.kontonummer,
+            isTransaction: false,
+            isSummary: false,
+            isEmpty: true,
+          });
+        }
+      });
+
+      // Lägg till summeringsrad
+      tabellData.push({
+        id: "SUMMA",
+        beskrivning: `Summa ${grupp.namn.toLowerCase()}`,
+        ...years.reduce(
+          (acc, year) => {
+            acc[year] = grupp.summering[year];
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
+        isTransaction: false,
+        isSummary: true,
+      });
+
+      return (
+        <AnimeradFlik
+          key={grupp.namn}
+          title={grupp.namn}
+          icon={icon || (isIntakt ? "💰" : "💸")}
+          visaSummaDirekt={formatSEK(grupp.summering[years[0]])}
+        >
+          <Tabell
+            data={tabellData}
+            columns={kolumner}
+            getRowId={(row) => (row.isTransaction ? `${row.kontonummer}-trans-${row.id}` : row.id)}
+          />
+        </AnimeradFlik>
+      );
+    });
   //#endregion
 
   //#region Exportfunktioner

@@ -114,6 +114,15 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     return rundatVarde < 0 && !formatted.startsWith("-") ? `-${formatted}` : formatted;
   };
 
+  // Formatera datum för transaktioner
+  const formatDaterat = (datum: string | Date) => {
+    if (typeof datum === "string") {
+      // Ta bort T00:00:00 delen
+      return datum.split("T")[0];
+    }
+    return new Date(datum).toLocaleDateString("sv-SE");
+  };
+
   function skapaBalansSammanställning(data: BalansData) {
     const { year, tillgangar, skulderOchEgetKapital } = data;
 
@@ -415,66 +424,130 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     );
   };
 
-  // ENKEL render funktion med din Tabell komponent + Bokio-stil summering + transaktioner!
+  // BOKIO-STIL render funktion med AnimeradFlik och Tabell - visar alla transaktioner som separata rader!
   const renderaKategoriMedKolumner = (titel: string, icon: string, konton: Konto[]) => {
     const summa = konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
 
-    const kolumner: ColumnDefinition<Konto>[] = [
+    const kolumner: ColumnDefinition<any>[] = [
       {
         key: "beskrivning",
         label: "Konto",
-        render: (_, konto) => `${konto.kontonummer} – ${konto.beskrivning}`,
+        render: (_, row) => {
+          if (row.isTransaction) {
+            // Transaktionsrad - visa bara ID-numret, inget annat
+            return (
+              <div
+                className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
+                onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+              >
+                {row.id}
+              </div>
+            );
+          } else if (row.isSummary) {
+            // Summeringsrad
+            return <div className="font-bold">{row.beskrivning}</div>;
+          } else {
+            // Kontorad
+            return (
+              <div className="font-medium">
+                {row.kontonummer} – {row.beskrivning}
+              </div>
+            );
+          }
+        },
       },
       {
         key: "ingaendeSaldo",
         label: `Ing. balans ${year}-01-01`,
-        render: (_, konto) => formatSEK(konto.ingaendeSaldo),
+        render: (_, row) => {
+          if (row.isTransaction) return "";
+          return formatSEK(row.ingaendeSaldo || 0);
+        },
       },
       {
         key: "aretsResultat",
         label: "Resultat",
-        render: (_, konto) => formatSEK(konto.aretsResultat),
+        render: (_, row) => {
+          if (row.isTransaction) {
+            // Transaktionsbelopp ska vara under Resultat, inte Utg. balans
+            // För vissa konton (moms konton) ska tecknet reverseras för att matcha Bokio
+            let belopp = row.belopp;
+            if (
+              row.kontonummer &&
+              (row.kontonummer.startsWith("26") || row.kontonummer.startsWith("264"))
+            ) {
+              // Moms konton ska visa negativa belopp för utgående moms
+              belopp = -Math.abs(belopp);
+            }
+            return <div className="text-right">{formatSEK(belopp)}</div>;
+          }
+          return formatSEK(row.aretsResultat || 0);
+        },
       },
       {
         key: "utgaendeSaldo",
         label: `Utg. balans ${year}-12-31`,
-        render: (_, konto) => formatSEK(konto.utgaendeSaldo),
-      },
-      {
-        key: "verifikationer",
-        label: "Verifikationer",
-        render: (value: any, konto: Konto) =>
-          konto.kontonummer ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShowVerifikationer(konto.kontonummer);
-              }}
-              className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
-            >
-              Visa
-            </button>
-          ) : null,
+        render: (_, row) => {
+          if (row.isTransaction) return "";
+          const className = row.isSummary ? "font-bold" : "";
+          return (
+            <div className={`text-right ${className}`}>{formatSEK(row.utgaendeSaldo || 0)}</div>
+          );
+        },
       },
     ];
 
-    // Lägg till summeringsrad som Bokio - EXAKT som de har det!
-    const kontonMedSummering = [...konton];
-    kontonMedSummering.push({
-      kontonummer: "",
+    // Expandera konton till tabellrader med alla transaktioner
+    const tabellData: any[] = [];
+
+    konton.forEach((konto) => {
+      // Lägg till kontorad
+      tabellData.push({
+        id: konto.kontonummer,
+        kontonummer: konto.kontonummer,
+        beskrivning: konto.beskrivning,
+        ingaendeSaldo: konto.ingaendeSaldo,
+        aretsResultat: konto.aretsResultat,
+        utgaendeSaldo: konto.utgaendeSaldo,
+        isTransaction: false,
+        isSummary: false,
+      });
+
+      // Lägg till alla transaktioner som separata rader
+      if (konto.transaktioner && konto.transaktioner.length > 0) {
+        konto.transaktioner.forEach((transaktion, index) => {
+          tabellData.push({
+            id: transaktion.id, // Använd transaktionens riktiga ID
+            datum: transaktion.datum,
+            beskrivning: transaktion.beskrivning,
+            belopp: transaktion.belopp,
+            verifikatNummer: transaktion.verifikatNummer,
+            transaktion_id: transaktion.transaktion_id,
+            kontonummer: konto.kontonummer, // Lägg till kontonummer för unika keys
+            isTransaction: true,
+            isSummary: false,
+          });
+        });
+      }
+    });
+
+    // Lägg till summeringsrad
+    tabellData.push({
+      id: "SUMMA",
       beskrivning: `Summa ${titel.toLowerCase()}`,
       ingaendeSaldo: konton.reduce((sum, k) => sum + k.ingaendeSaldo, 0),
       aretsResultat: konton.reduce((sum, k) => sum + k.aretsResultat, 0),
       utgaendeSaldo: summa,
-      transaktioner: [],
-    } as Konto);
+      isTransaction: false,
+      isSummary: true,
+    });
 
     return (
-      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(summa)} forcedOpen={true}>
+      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(summa)}>
         <Tabell
-          data={kontonMedSummering}
+          data={tabellData}
           columns={kolumner}
-          getRowId={(konto) => konto.kontonummer || "SUMMA"}
+          getRowId={(row) => (row.isTransaction ? `${row.kontonummer}-trans-${row.id}` : row.id)}
         />
       </AnimeradFlik>
     );
@@ -491,67 +564,128 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     const kontonSumma = konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
     const totalSumma = kontonSumma + beraknatResultatVarde;
 
-    const kolumner: ColumnDefinition<Konto>[] = [
+    const kolumner: ColumnDefinition<any>[] = [
       {
         key: "beskrivning",
         label: "Konto",
-        render: (_, konto) => `${konto.kontonummer} – ${konto.beskrivning}`,
+        render: (_, row) => {
+          if (row.isTransaction) {
+            // Transaktionsrad - visa bara ID-numret, inget annat
+            return (
+              <div
+                className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
+                onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+              >
+                {row.id}
+              </div>
+            );
+          } else if (row.isSummary) {
+            // Summeringsrad
+            return <div className="font-bold">{row.beskrivning}</div>;
+          } else {
+            // Kontorad
+            return (
+              <div className="font-medium">
+                {row.kontonummer} – {row.beskrivning}
+              </div>
+            );
+          }
+        },
       },
       {
         key: "ingaendeSaldo",
         label: `Ing. balans ${year}-01-01`,
-        render: (_, konto) => formatSEK(konto.ingaendeSaldo),
+        render: (_, row) => {
+          if (row.isTransaction) return "";
+          return formatSEK(row.ingaendeSaldo || 0);
+        },
       },
       {
         key: "aretsResultat",
         label: "Resultat",
-        render: (_, konto) => formatSEK(konto.aretsResultat),
+        render: (_, row) => {
+          if (row.isTransaction) {
+            // Transaktionsbelopp ska vara under Resultat, inte Utg. balans
+            // För vissa konton (moms konton) ska tecknet reverseras för att matcha Bokio
+            let belopp = row.belopp;
+            if (
+              row.kontonummer &&
+              (row.kontonummer.startsWith("26") || row.kontonummer.startsWith("264"))
+            ) {
+              // Moms konton ska visa negativa belopp för utgående moms
+              belopp = -Math.abs(belopp);
+            }
+            return <div className="text-right">{formatSEK(belopp)}</div>;
+          }
+          return formatSEK(row.aretsResultat || 0);
+        },
       },
       {
         key: "utgaendeSaldo",
         label: `Utg. balans ${year}-12-31`,
-        render: (_, konto) => formatSEK(konto.utgaendeSaldo),
+        render: (_, row) => {
+          if (row.isTransaction) return "";
+          const className = row.isSummary ? "font-bold" : "";
+          return (
+            <div className={`text-right ${className}`}>{formatSEK(row.utgaendeSaldo || 0)}</div>
+          );
+        },
       },
-      {
-        key: "verifikationer",
-        label: "Verifikationer",
-        render: (value: any, konto: Konto) =>
-          konto.kontonummer ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShowVerifikationer(konto.kontonummer);
-              }}
-              className="text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none cursor-pointer"
-            >
-              Visa
-            </button>
-          ) : null,
-      },
-    ]; // Lägg till summeringsrad som inkluderar beräknat resultat!
-    const kontonMedSummering = [...konton];
-    kontonMedSummering.push({
-      kontonummer: "",
+    ];
+
+    // Expandera konton till tabellrader med alla transaktioner
+    const tabellData: any[] = [];
+
+    konton.forEach((konto) => {
+      // Lägg till kontorad
+      tabellData.push({
+        id: konto.kontonummer,
+        kontonummer: konto.kontonummer,
+        beskrivning: konto.beskrivning,
+        ingaendeSaldo: konto.ingaendeSaldo,
+        aretsResultat: konto.aretsResultat,
+        utgaendeSaldo: konto.utgaendeSaldo,
+        isTransaction: false,
+        isSummary: false,
+      });
+
+      // Lägg till alla transaktioner som separata rader
+      if (konto.transaktioner && konto.transaktioner.length > 0) {
+        konto.transaktioner.forEach((transaktion, index) => {
+          tabellData.push({
+            id: transaktion.id, // Använd transaktionens riktiga ID
+            datum: transaktion.datum,
+            beskrivning: transaktion.beskrivning,
+            belopp: transaktion.belopp,
+            verifikatNummer: transaktion.verifikatNummer,
+            transaktion_id: transaktion.transaktion_id,
+            kontonummer: konto.kontonummer, // Lägg till kontonummer för unika keys
+            isTransaction: true,
+            isSummary: false,
+          });
+        });
+      }
+    });
+
+    // Lägg till summeringsrad som inkluderar beräknat resultat
+    tabellData.push({
+      id: "SUMMA",
       beskrivning: `Summa ${titel.toLowerCase()}`,
       ingaendeSaldo:
         konton.reduce((sum, k) => sum + k.ingaendeSaldo, 0) + beraknatResultatData.ingaende,
       aretsResultat:
         konton.reduce((sum, k) => sum + k.aretsResultat, 0) + beraknatResultatData.arets,
       utgaendeSaldo: totalSumma,
-      transaktioner: [],
-    } as Konto);
+      isTransaction: false,
+      isSummary: true,
+    });
 
     return (
-      <AnimeradFlik
-        title={titel}
-        icon={icon}
-        visaSummaDirekt={formatSEK(totalSumma)}
-        forcedOpen={true}
-      >
+      <AnimeradFlik title={titel} icon={icon} visaSummaDirekt={formatSEK(totalSumma)}>
         <Tabell
-          data={kontonMedSummering}
+          data={tabellData}
           columns={kolumner}
-          getRowId={(konto) => konto.kontonummer || "SUMMA"}
+          getRowId={(row) => (row.isTransaction ? `${row.kontonummer}-trans-${row.id}` : row.id)}
         />
       </AnimeradFlik>
     );
@@ -563,64 +697,68 @@ export default function Balansrapport({ initialData, företagsnamn, organisation
     arets: number;
     utgaende: number;
   }) => {
-    const kolumner: ColumnDefinition<Konto>[] = [
+    const kolumner: ColumnDefinition<any>[] = [
       {
         key: "beskrivning",
         label: "Konto",
-        render: (_, konto) => `${konto.kontonummer} – ${konto.beskrivning}`,
+        render: (_, row) => <div className="font-medium">– {row.beskrivning}</div>,
       },
       {
         key: "ingaendeSaldo",
         label: `Ing. balans ${year}-01-01`,
-        render: (_, konto) => formatSEK(konto.ingaendeSaldo),
+        render: (_, row) => formatSEK(row.ingaendeSaldo || 0),
       },
       {
         key: "aretsResultat",
         label: "Resultat",
-        render: (_, konto) => formatSEK(konto.aretsResultat),
+        render: (_, row) => formatSEK(row.aretsResultat || 0),
       },
       {
         key: "utgaendeSaldo",
         label: `Utg. balans ${year}-12-31`,
-        render: (_, konto) => formatSEK(konto.utgaendeSaldo),
+        render: (_, row) => formatSEK(row.utgaendeSaldo || 0),
       },
     ];
 
-    // Skapa fake konto för beräknat resultat
-    const beraknatResultatKonto: Konto = {
-      kontonummer: "",
-      beskrivning: "Beräknat resultat",
-      ingaendeSaldo: beraknatResultatData.ingaende,
-      aretsResultat: beraknatResultatData.arets,
-      utgaendeSaldo: beraknatResultatData.utgaende,
-      transaktioner: [],
-    };
+    // Skapa tabelldata för beräknat resultat
+    const tabellData = [
+      {
+        id: "beraknat-resultat",
+        beskrivning: "Beräknat resultat",
+        ingaendeSaldo: beraknatResultatData.ingaende,
+        aretsResultat: beraknatResultatData.arets,
+        utgaendeSaldo: beraknatResultatData.utgaende,
+      },
+    ];
 
     return (
       <AnimeradFlik
         title="Beräknat resultat"
         icon="📊"
         visaSummaDirekt={formatSEK(beraknatResultatData.utgaende)}
-        forcedOpen={true}
       >
-        <Tabell
-          data={[beraknatResultatKonto]}
-          columns={kolumner}
-          getRowId={(konto) => "BERAKNAT"}
-        />
+        <Tabell data={tabellData} columns={kolumner} getRowId={(row) => row.id} />
       </AnimeradFlik>
     );
   };
   //#endregion
 
   //#region Data Filtering - Dynamisk kategorisering baserat på svensk kontoplan
-  const anläggningstillgångar = tillgangar.filter((k) => /^1[0-5]/.test(k.kontonummer));
-  const omsättningstillgångar = tillgangar.filter((k) => /^1[6-9]/.test(k.kontonummer));
+  const anläggningstillgångar = processedData.tillgangar.filter((k) =>
+    /^1[0-5]/.test(k.kontonummer)
+  );
+  const omsättningstillgångar = processedData.tillgangar.filter((k) =>
+    /^1[6-9]/.test(k.kontonummer)
+  );
 
-  const egetKapital = skulderOchEgetKapital.filter((k) => /^20/.test(k.kontonummer));
-  const avsättningar = skulderOchEgetKapital.filter((k) => /^21/.test(k.kontonummer));
-  const långfristigaSkulder = skulderOchEgetKapital.filter((k) => /^2[2-3]/.test(k.kontonummer));
-  const kortfristigaSkulder = skulderOchEgetKapital.filter((k) => /^2[4-9]/.test(k.kontonummer));
+  const egetKapital = processedData.skulderOchEgetKapital.filter((k) => /^20/.test(k.kontonummer));
+  const avsättningar = processedData.skulderOchEgetKapital.filter((k) => /^21/.test(k.kontonummer));
+  const långfristigaSkulder = processedData.skulderOchEgetKapital.filter((k) =>
+    /^2[2-3]/.test(k.kontonummer)
+  );
+  const kortfristigaSkulder = processedData.skulderOchEgetKapital.filter((k) =>
+    /^2[4-9]/.test(k.kontonummer)
+  );
   //#endregion
 
   return (
