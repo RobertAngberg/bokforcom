@@ -55,6 +55,8 @@ export default function Page() {
     finansiellaKostnader: [],
   };
   const years = [...data.ar].sort((a, b) => parseInt(b) - parseInt(a));
+  const currentYear = years[0] || new Date().getFullYear().toString();
+  const previousYear = years[1] || (parseInt(currentYear) - 1).toString();
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
 
   // State för verifikatmodal
@@ -149,7 +151,7 @@ export default function Page() {
   const intaktsSumRaw = summering(data.intakter);
   const intaktsSum: Record<string, number> = {};
   for (const year of data.ar) {
-    intaktsSum[year] = intaktsSumRaw[year] || 0; // Intäkter ska vara positiva
+    intaktsSum[year] = -(intaktsSumRaw[year] || 0); // Invertera intäkter för att göra dem positiva i rapporten
   }
 
   const rorelsensSum = summering(data.rorelsensKostnader);
@@ -284,21 +286,50 @@ export default function Page() {
             }
           },
         },
-        ...years.map((year) => ({
-          key: year,
-          label: year,
+        {
+          key: "IngBalans",
+          label: `Ing. balans\n${previousYear}-01-01`,
+          className: "text-right whitespace-pre-line",
           render: (_, row: any) => {
             if (row.isTransaction) {
-              // Visa transaktionsbelopp bara i första årskolumnen
-              if (year === years[0]) {
-                return <div className="text-right">{formatSEK(row.belopp)}</div>;
-              } else {
-                return "";
-              }
+              return "";
             }
-            return formatSEK(row[year] || 0);
+            // Invertera intäkter för att visa dem som positiva
+            const value = row[previousYear] || 0;
+            const displayValue = isIntakt ? -value : value;
+            return formatSEK(displayValue);
           },
-        })),
+        },
+        {
+          key: "Resultat",
+          label: "Resultat",
+          className: "text-right",
+          render: (_, row: any) => {
+            if (row.isTransaction) {
+              return <div className="text-right">{formatSEK(row.belopp)}</div>;
+            }
+            // Invertera intäkter för att visa dem som positiva
+            const value = row[currentYear] || 0;
+            const displayValue = isIntakt ? -value : value;
+            return formatSEK(displayValue);
+          },
+        },
+        {
+          key: "UtgBalans",
+          label: `Utg. balans\n${currentYear}-12-31`,
+          className: "text-right whitespace-pre-line",
+          render: (_, row: any) => {
+            if (row.isTransaction) {
+              return "";
+            }
+            // Invertera intäkter för att visa dem som positiva
+            const currentYearValue = row[currentYear] || 0;
+            const previousYearValue = row[previousYear] || 0;
+            const currentDisplay = isIntakt ? -currentYearValue : currentYearValue;
+            const previousDisplay = isIntakt ? -previousYearValue : previousYearValue;
+            return formatSEK(previousDisplay + currentDisplay);
+          },
+        },
       ];
 
       // Expandera konton till tabellrader med alla transaktioner
@@ -368,7 +399,9 @@ export default function Page() {
           key={grupp.namn}
           title={grupp.namn}
           icon={icon || (isIntakt ? "💰" : "💸")}
-          visaSummaDirekt={formatSEK(grupp.summering[years[0]])}
+          visaSummaDirekt={formatSEK(
+            isIntakt ? -grupp.summering[years[0]] : grupp.summering[years[0]]
+          )}
         >
           <Tabell
             data={tabellData}
@@ -663,7 +696,12 @@ export default function Page() {
         {renderGrupper(data.intakter, true, "💰")}
         <Totalrad
           label="Summa rörelsens intäkter"
-          values={years.reduce((acc, year) => ({ ...acc, [year]: intaktsSum[year] ?? 0 }), {})}
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: intaktsSum[previousYear] ?? 0,
+            Resultat: intaktsSum[currentYear] ?? 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (intaktsSum[previousYear] ?? 0) + (intaktsSum[currentYear] ?? 0),
+          }}
         />
 
         {/* Rörelsens kostnader */}
@@ -671,17 +709,24 @@ export default function Page() {
         {renderGrupper(data.rorelsensKostnader, false, "💸")}
         <Totalrad
           label="Summa rörelsens kostnader"
-          values={years.reduce((acc, year) => ({ ...acc, [year]: -rorelsensSum[year] || 0 }), {})}
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: -rorelsensSum[previousYear] || 0,
+            Resultat: -rorelsensSum[currentYear] || 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (-rorelsensSum[previousYear] || 0) + (-rorelsensSum[currentYear] || 0),
+          }}
         />
 
         {/* Rörelsens resultat */}
         <h2 className="text-xl font-semibold mt-10 mb-4">Rörelsens resultat</h2>
         <Totalrad
           label="Summa rörelsens resultat"
-          values={years.reduce(
-            (acc, year) => ({ ...acc, [year]: rorelsensResultat[year] ?? 0 }),
-            {}
-          )}
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: rorelsensResultat[previousYear] ?? 0,
+            Resultat: rorelsensResultat[currentYear] ?? 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (rorelsensResultat[previousYear] ?? 0) + (rorelsensResultat[currentYear] ?? 0),
+          }}
         />
 
         {/* Finansiella intäkter */}
@@ -691,10 +736,13 @@ export default function Page() {
             {renderGrupper(data.finansiellaIntakter, false, "💰")}
             <Totalrad
               label="Summa finansiella intäkter"
-              values={years.reduce(
-                (acc, year) => ({ ...acc, [year]: finansiellaIntakterSum[year] ?? 0 }),
-                {}
-              )}
+              values={{
+                [`Ing. balans\n${previousYear}-01-01`]: finansiellaIntakterSum[previousYear] ?? 0,
+                Resultat: finansiellaIntakterSum[currentYear] ?? 0,
+                [`Utg. balans\n${currentYear}-12-31`]:
+                  (finansiellaIntakterSum[previousYear] ?? 0) +
+                  (finansiellaIntakterSum[currentYear] ?? 0),
+              }}
             />
           </>
         )}
@@ -706,10 +754,13 @@ export default function Page() {
             {renderGrupper(data.finansiellaKostnader, false, "💸")}
             <Totalrad
               label="Summa finansiella kostnader"
-              values={years.reduce(
-                (acc, year) => ({ ...acc, [year]: finansiellaKostnaderSum[year] ?? 0 }),
-                {}
-              )}
+              values={{
+                [`Ing. balans\n${previousYear}-01-01`]: finansiellaKostnaderSum[previousYear] ?? 0,
+                Resultat: finansiellaKostnaderSum[currentYear] ?? 0,
+                [`Utg. balans\n${currentYear}-12-31`]:
+                  (finansiellaKostnaderSum[previousYear] ?? 0) +
+                  (finansiellaKostnaderSum[currentYear] ?? 0),
+              }}
             />
           </>
         )}
@@ -718,17 +769,25 @@ export default function Page() {
         <h2 className="text-xl font-semibold mt-10 mb-4">Resultat efter finansiella poster</h2>
         <Totalrad
           label="Resultat efter finansiella poster"
-          values={years.reduce(
-            (acc, year) => ({ ...acc, [year]: resultatEfterFinansiella[year] ?? 0 }),
-            {}
-          )}
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: resultatEfterFinansiella[previousYear] ?? 0,
+            Resultat: resultatEfterFinansiella[currentYear] ?? 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (resultatEfterFinansiella[previousYear] ?? 0) +
+              (resultatEfterFinansiella[currentYear] ?? 0),
+          }}
         />
 
         {/* Beräknat resultat */}
         <h2 className="text-xl font-semibold mt-10 mb-4">Beräknat resultat</h2>
         <Totalrad
           label="Beräknat resultat"
-          values={years.reduce((acc, year) => ({ ...acc, [year]: resultat[year] ?? 0 }), {})}
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: resultat[previousYear] ?? 0,
+            Resultat: resultat[currentYear] ?? 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
+          }}
         />
       </div>
 
