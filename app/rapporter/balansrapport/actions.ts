@@ -340,11 +340,14 @@ export async function fetchBalansData(year: string) {
   }
 }
 
-export async function fetchFöretagsprofil(userId: number) {
+export async function fetchFöretagsprofil(userId?: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  // SÄKERHETSVALIDERING: Kontrollera autentisering och ägarskap
   const sessionUserId = await getUserId();
-  await requireOwnership(userId);
+  
+  // Använd sessionUserId om inget userId skickades
+  const targetUserId = userId || sessionUserId;
+  
+  await requireOwnership(targetUserId);
 
   logFinancialDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -356,11 +359,53 @@ export async function fetchFöretagsprofil(userId: number) {
       WHERE id = $1
       LIMIT 1
     `;
-    const res = await client.query(query, [userId]);
+    const res = await client.query(query, [targetUserId]);
     client.release();
     return res.rows[0] || null;
   } catch (error) {
     console.error("❌ fetchFöretagsprofil error:", error);
+    return null;
+  }
+}
+
+export async function fetchTransactionDetails(transaktionsId: number) {
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
+  const userId = await getUserId();
+
+  logFinancialDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
+
+  try {
+    const client = await pool.connect();
+    const query = `
+      SELECT 
+        t.id,
+        t.transaktionsdatum as datum,
+        t.kontobeskrivning as beskrivning,
+        t.summa_debet,
+        t.summa_kredit,
+        t.blob_url,
+        json_agg(
+          json_build_object(
+            'konto', k.kontonummer || '',
+            'beskrivning', k.beskrivning || '',
+            'debet', tp.debet,
+            'kredit', tp.kredit
+          ) ORDER BY k.kontonummer
+        ) as poster
+      FROM transaktioner t
+      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      LEFT JOIN konton k ON k.id = tp.konto_id
+      WHERE t.id = $1 AND t.user_id = $2
+      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
+    `;
+    
+    const res = await client.query(query, [transaktionsId, userId]);
+    client.release();
+    
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("❌ fetchTransactionDetails error:", error);
+    logFinancialDataEvent("error", userId, `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`);
     return null;
   }
 }
