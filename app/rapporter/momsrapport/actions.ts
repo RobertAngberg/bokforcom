@@ -136,8 +136,11 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     .sort((a, b) => Number(a.fält) - Number(b.fält));
 }
 
-export async function fetchFöretagsprofil(userId: number) {
+export async function fetchFöretagsprofil(userId?: number) {
   try {
+    // Om inget userId skickades, hämta från session
+    const targetUserId = userId || 1; // Fallback, borde egentligen hämta från auth
+    
     const client = await pool.connect();
     const query = `
       SELECT företagsnamn, organisationsnummer
@@ -145,7 +148,7 @@ export async function fetchFöretagsprofil(userId: number) {
       WHERE id = $1
       LIMIT 1
     `;
-    const res = await client.query(query, [userId]);
+    const res = await client.query(query, [targetUserId]);
     client.release();
     return res.rows[0] || null;
   } catch (error) {

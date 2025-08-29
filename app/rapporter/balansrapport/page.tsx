@@ -41,7 +41,7 @@ export default function Page() {
   const [företagsnamn, setFöretagsnamn] = useState<string>("");
   const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  
+
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
 
@@ -66,9 +66,9 @@ export default function Page() {
         const year = new Date().getFullYear().toString();
         const [balansData, profilData] = await Promise.all([
           fetchBalansData(year),
-          fetchFöretagsprofil()
+          fetchFöretagsprofil(),
         ]);
-        
+
         setInitialData(balansData);
         setFöretagsnamn(profilData?.företagsnamn ?? "");
         setOrganisationsnummer(profilData?.organisationsnummer ?? "");

@@ -343,10 +343,10 @@ export async function fetchBalansData(year: string) {
 export async function fetchFöretagsprofil(userId?: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const sessionUserId = await getUserId();
-  
+
   // Använd sessionUserId om inget userId skickades
   const targetUserId = userId || sessionUserId;
-  
+
   await requireOwnership(targetUserId);
 
   logFinancialDataEvent("access", sessionUserId, "Accessing company profile data");
@@ -398,14 +398,18 @@ export async function fetchTransactionDetails(transaktionsId: number) {
       WHERE t.id = $1 AND t.user_id = $2
       GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
     `;
-    
+
     const res = await client.query(query, [transaktionsId, userId]);
     client.release();
-    
+
     return res.rows[0] || null;
   } catch (error) {
     console.error("❌ fetchTransactionDetails error:", error);
-    logFinancialDataEvent("error", userId, `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`);
+    logFinancialDataEvent(
+      "error",
+      userId,
+      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
     return null;
   }
 }

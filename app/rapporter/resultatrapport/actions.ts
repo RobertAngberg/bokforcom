@@ -141,10 +141,14 @@ export async function hamtaResultatrapport() {
   }
 }
 
-export async function fetchFöretagsprofil(userId: number) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering och ägarskap
+export async function fetchFöretagsprofil(userId?: number) {
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
   const sessionUserId = await getUserId();
-  await requireOwnership(userId);
+
+  // Använd sessionUserId om inget userId skickades
+  const targetUserId = userId || sessionUserId;
+
+  await requireOwnership(targetUserId);
 
   logResultDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -156,7 +160,7 @@ export async function fetchFöretagsprofil(userId: number) {
       WHERE id = $1
       LIMIT 1
     `;
-    const res = await client.query(query, [userId]);
+    const res = await client.query(query, [targetUserId]);
     client.release();
     return res.rows[0] || null;
   } catch (error) {
@@ -166,23 +170,47 @@ export async function fetchFöretagsprofil(userId: number) {
 }
 
 export async function fetchTransactionDetails(transaktionsId: number) {
-  const result = await pool.query(
-    `
-    SELECT
-      tp.id AS transaktionspost_id,
-      tp.debet,
-      tp.kredit,
-      k.kontonummer,
-      k.beskrivning,
-      t.kommentar,
-      t.fil
-    FROM transaktionsposter tp
-    JOIN konton k ON k.id = tp.konto_id
-    JOIN transaktioner t ON t.id = tp.transaktions_id
-    WHERE tp.transaktions_id = $1
-    ORDER BY tp.id
-    `,
-    [transaktionsId]
-  );
-  return result.rows;
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
+  const userId = await getUserId();
+
+  logResultDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
+
+  try {
+    const client = await pool.connect();
+    const query = `
+      SELECT 
+        t.id,
+        t.transaktionsdatum as datum,
+        t.kontobeskrivning as beskrivning,
+        t.summa_debet,
+        t.summa_kredit,
+        t.blob_url,
+        json_agg(
+          json_build_object(
+            'konto', k.kontonummer || '',
+            'beskrivning', k.beskrivning || '',
+            'debet', tp.debet,
+            'kredit', tp.kredit
+          ) ORDER BY k.kontonummer
+        ) as poster
+      FROM transaktioner t
+      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      LEFT JOIN konton k ON k.id = tp.konto_id
+      WHERE t.id = $1 AND t.user_id = $2
+      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
+    `;
+
+    const res = await client.query(query, [transaktionsId, userId]);
+    client.release();
+
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error("❌ fetchTransactionDetails error:", error);
+    logResultDataEvent(
+      "error",
+      userId,
+      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+    return null;
+  }
 }
