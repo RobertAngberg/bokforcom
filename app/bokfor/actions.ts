@@ -419,10 +419,13 @@ export async function saveTransaction(formData: FormData) {
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
   const fil = formData.get("fil") as File | null;
+  const bilageUrl = formData.get("bilageUrl")?.toString(); // Den uppladdade blob URL:en
   const belopp = Number(formData.get("belopp")?.toString() || 0);
   const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
 
-  // Hämta färdiga transaktionsposter från frontend
+  console.log("🔍 DEBUG saveTransaction: fil finns?", !!fil);
+  console.log("🔍 DEBUG saveTransaction: bilageUrl finns?", !!bilageUrl);
+  console.log("🔍 DEBUG saveTransaction: bilageUrl värde:", bilageUrl);
   const transaktionsposter = JSON.parse(
     formData.get("transaktionsposter")?.toString() || "[]"
   ) as Array<{
@@ -455,10 +458,20 @@ export async function saveTransaction(formData: FormData) {
     throw new Error("Transaktionsdatum saknas");
   }
 
-  let blobUrl = null;
+  let blobUrl: string | null = null;
   let filename = "";
 
-  if (fil) {
+  // Om bilageUrl finns (filen är redan uppladdad i Steg3), använd den
+  if (bilageUrl) {
+    blobUrl = bilageUrl;
+    filename = bilageUrl.split("/").pop() || "unknown";
+    console.log("🔍 DEBUG: Använder befintlig bilageUrl:", blobUrl);
+  } else if (fil) {
+    // Fallback för gammal kod som skickar fil direkt
+    console.log("🔍 DEBUG: Fil namn:", fil.name);
+    console.log("🔍 DEBUG: Fil storlek:", fil.size);
+    console.log("🔍 DEBUG: Fil typ:", fil.type);
+
     try {
       const datum = new Date(transaktionsdatum).toISOString().slice(0, 10);
       const fileExtension = fil.name.split(".").pop() || "";
@@ -468,18 +481,27 @@ export async function saveTransaction(formData: FormData) {
 
       const blobPath = `bokforing/${userId}/${datum}/${filename}`;
 
+      console.log("🔍 DEBUG: Blob path:", blobPath);
+      console.log("🔍 DEBUG: Försöker ladda upp fil...");
+
       const blob = await put(blobPath, fil, {
         access: "public",
         contentType: fil.type,
         addRandomSuffix: false,
       });
 
-      console.log(`✅ Fil sparad till Blob Storage`);
+      blobUrl = blob.url; // Spara blob URL:en!
+      console.log(`✅ Fil sparad till Blob Storage: ${blob.url}`);
+      console.log("🔍 DEBUG: blobUrl satt till:", blobUrl);
     } catch (blobError) {
-      console.error("Kunde inte spara fil till Blob Storage");
+      console.error("❌ Kunde inte spara fil till Blob Storage:", blobError);
+      console.log("🔍 DEBUG: Blob error detaljer:", blobError);
       filename = sanitizeFilename(fil.name);
     }
   }
+
+  console.log("🔍 DEBUG: Före INSERT - blobUrl:", blobUrl);
+  console.log("🔍 DEBUG: Före INSERT - filename:", filename);
 
   const client = await pool.connect();
   try {
@@ -488,12 +510,14 @@ export async function saveTransaction(formData: FormData) {
       INSERT INTO transaktioner (
         transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id", blob_url
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-      RETURNING id
+      RETURNING id, blob_url
       `,
       [formattedDate, valtFörval.namn ?? "", belopp, filename, kommentar, userId, blobUrl]
     );
     const transaktionsId = rows[0].id;
+    const sparadBlobUrl = rows[0].blob_url;
     console.log("🆔 Skapad transaktion:", transaktionsId);
+    console.log("🔍 DEBUG: Sparad blob_url i DB:", sparadBlobUrl);
 
     // Spara alla transaktionsposter som beräknats på frontend
     const insertPost = `

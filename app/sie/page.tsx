@@ -1697,6 +1697,17 @@ function FörhandsvisningSteg({
     <div>
       <h2 className="text-xl font-semibold text-white mb-4">Steg 3: Förhandsvisning</h2>
 
+      {/* Info om bilagor */}
+      <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded mb-4">
+        <div className="flex items-start space-x-2">
+          <span className="text-lg">📎</span>
+          <div>
+            <strong>OBS:</strong> SIE-filer innehåller endast transaktionsdata. Verifikatbilagor
+            (PDFer, bilder, kvitton) måste laddas upp separat efter importen.
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded">
           <strong>📋 Sammanfattning:</strong> Följande kommer att importeras till din databas:

@@ -141,8 +141,8 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                 </div>
               </div>
 
-              {/* Kommentar och fil */}
-              {(details[0]?.kommentar || details[0]?.fil) && (
+              {/* Kommentar och bilagor */}
+              {(details[0]?.kommentar || details[0]?.fil || details[0]?.blob_url) && (
                 <div className="space-y-6">
                   {details[0]?.kommentar && (
                     <div className="bg-slate-900 rounded-xl p-4">
@@ -166,7 +166,79 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                     </div>
                   )}
 
-                  {details[0]?.fil && isValidUrl(details[0].fil) && (
+                  {/* Visa bilaga från Vercel Blob */}
+                  {details[0]?.blob_url && (
+                    <div className="bg-slate-900 rounded-xl p-4">
+                      <h4 className="text-white font-medium mb-3 flex items-center">
+                        <svg
+                          className="w-5 h-5 mr-2 text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                          />
+                        </svg>
+                        Verifikatbilaga
+                        {details[0]?.fil && (
+                          <span className="ml-2 text-sm text-slate-400">({details[0].fil})</span>
+                        )}
+                      </h4>
+
+                      {/* Visa bilagan baserat på filtyp */}
+                      {details[0].blob_url.toLowerCase().includes(".pdf") ? (
+                        // PDF-viewer
+                        <div className="border border-slate-600 rounded-lg overflow-hidden mb-3">
+                          <iframe
+                            src={details[0].blob_url}
+                            className="w-full h-96"
+                            title="PDF Verifikat"
+                          />
+                        </div>
+                      ) : (
+                        // Bildvisning
+                        <div className="border border-slate-600 rounded-lg overflow-hidden bg-slate-800 mb-3">
+                          <img
+                            src={details[0].blob_url}
+                            alt="Verifikatbilaga"
+                            className="w-full h-auto max-h-96 object-contain"
+                          />
+                        </div>
+                      )}
+
+                      {/* Länk för att öppna i ny flik */}
+                      <div className="flex justify-center">
+                        <a
+                          href={details[0].blob_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                          Öppna i ny flik
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fallback för gamla filer som bara har fil-URL */}
+                  {!details[0]?.blob_url && details[0]?.fil && isValidUrl(details[0].fil) && (
                     <div className="flex justify-center">
                       <a
                         href={details[0].fil}

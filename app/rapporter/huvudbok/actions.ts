@@ -185,6 +185,7 @@ export async function fetchTransactionDetails(transaktionsId: number) {
       k.beskrivning,
       t.kommentar,
       t.fil,
+      t.blob_url,
       t.transaktionsdatum,
       t.kontobeskrivning as verifikat_beskrivning,
       CONCAT('V', t.id) as verifikatNummer
