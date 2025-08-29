@@ -140,7 +140,7 @@ export async function fetchFöretagsprofil(userId?: number) {
   try {
     // Om inget userId skickades, hämta från session
     const targetUserId = userId || 1; // Fallback, borde egentligen hämta från auth
-    
+
     const client = await pool.connect();
     const query = `
       SELECT företagsnamn, organisationsnummer

@@ -74,9 +74,9 @@ export default function Page() {
       try {
         const [resultData, profilData] = await Promise.all([
           hamtaResultatrapport(),
-          fetchFöretagsprofil()
+          fetchFöretagsprofil(),
         ]);
-        
+
         setInitialData(resultData);
         setFöretagsnamn(profilData?.företagsnamn ?? "");
         setOrganisationsnummer(profilData?.organisationsnummer ?? "");

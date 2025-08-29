@@ -35,9 +35,9 @@ export default function Page() {
       try {
         const [momsData, profilData] = await Promise.all([
           getMomsrapport("2025"),
-          fetchFöretagsprofil()
+          fetchFöretagsprofil(),
         ]);
-        
+
         setInitialData(momsData || []);
         setOrganisationsnummer(profilData?.organisationsnummer ?? "");
         setFöretagsnamn(profilData?.företagsnamn ?? "");
@@ -293,7 +293,12 @@ export default function Page() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 mb-10">
-          {spawnaBlock("A. Momspliktig försäljning eller uttag exkl. moms", ["05", "06", "07", "08"])}
+          {spawnaBlock("A. Momspliktig försäljning eller uttag exkl. moms", [
+            "05",
+            "06",
+            "07",
+            "08",
+          ])}
           {spawnaBlock("B. Utgående moms på försäljning", ["10", "11", "12"])}
         </div>
         <div className="flex flex-col md:flex-row gap-6 mb-10">
