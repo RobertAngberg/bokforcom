@@ -293,6 +293,12 @@ function KontoSteg({
           företagsspecifika konton.
         </div>
 
+        {/* Viktig info om bilagor */}
+        <div className="bg-orange-500/20 border border-orange-500 text-orange-400 px-4 py-3 rounded">
+          <strong>📎 OBS:</strong> SIE-import inkluderar endast transaktionsdata. Verifikatbilagor
+          (PDFer, bilder) måste laddas upp separat efter importen.
+        </div>
+
         {saknadeKonton.length > 0 ? (
           <div className="space-y-4">
             <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
@@ -646,6 +652,12 @@ function FörhandsvisningSteg({
         <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded">
           <strong>⚠️ Varning:</strong> Detta är en permanent åtgärd. Se till att du har en backup av
           din databas innan du fortsätter.
+        </div>
+
+        <div className="bg-orange-500/20 border border-orange-500 text-orange-400 px-4 py-3 rounded">
+          <strong>📎 Viktigt att veta:</strong> SIE-filer innehåller bara transaktionsdata.
+          Verifikatbilagor (PDFer, bilder, kvitton) inkluderas INTE i importen och måste laddas upp
+          manuellt efter att importen är klar.
         </div>
       </div>
 
