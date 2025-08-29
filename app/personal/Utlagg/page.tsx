@@ -6,7 +6,7 @@ import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import { hämtaAllaAnställda, hämtaUtlägg, taBortUtlägg } from "../actions";
 import { fetchFavoritforval } from "../../bokfor/actions";
-import Bokför from "../../bokfor/Bokfor";
+import BokforPage from "../../bokfor/page";
 
 interface Utlägg {
   id: number;
@@ -187,7 +187,7 @@ export default function UtlaggPage() {
   ];
 
   if (showNyttUtlägg && favoritFörvalen) {
-    return <Bokför favoritFörvalen={favoritFörvalen} utlaggMode={true} />;
+    return <BokforPage searchParams={Promise.resolve({})} />;
   }
 
   return (

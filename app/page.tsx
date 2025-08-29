@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Startsida from "./start/Startsida";
+import StartPage from "./start/page";
 import LandingPage from "./LandingPage";
 import { fetchRawYearData } from "./start/actions";
 import { processYearData, getCurrentYear, YearSummary } from "./_utils/format";
@@ -50,7 +50,7 @@ export default function Page() {
       totalResultat: 0,
       yearData: [],
     };
-    return <Startsida initialData={fallbackData} />;
+    return <StartPage initialData={fallbackData} />;
   }
 
   return null;
