@@ -224,110 +224,18 @@ export async function fetchBalansData(year: string) {
       [end, userId]
     );
 
-    // Skapa datastrukturer för alla konton
-    const createKontoMap = (rows: any[]) => {
-      const map = new Map();
-      rows.forEach((row: any) => {
-        map.set(row.kontonummer, {
-          kontonummer: row.kontonummer,
-          beskrivning: row.beskrivning,
-          saldo: parseFloat(row.saldo || 0),
-          transaktioner: row.transaktioner || [],
-        });
-      });
-      return map;
-    };
-
-    const ingaendeTillgangarMap = createKontoMap(ingaendeTillgangarRes.rows);
-    const aretsTillgangarMap = createKontoMap(aretsTillgangarRes.rows);
-    const utgaendeTillgangarMap = createKontoMap(utgaendeTillgangarRes.rows);
-
-    const ingaendeSkulderMap = createKontoMap(ingaendeSkulderRes.rows);
-    const aretsSkulderMap = createKontoMap(aretsSkulderRes.rows);
-    const utgaendeSkulderMap = createKontoMap(utgaendeSkulderRes.rows);
-
-    // Resultatdata
-    const ingaendeResultat = parseFloat(ingaendeResultatRes.rows[0]?.saldo ?? 0);
-    const aretsResultat = parseFloat(aretsResultatRes.rows[0]?.saldo ?? 0);
-    const utgaendeResultat = parseFloat(utgaendeResultatRes.rows[0]?.saldo ?? 0);
-
-    // Samla alla unika kontonummer
-    const allaTillgangarKonton = new Set([
-      ...ingaendeTillgangarMap.keys(),
-      ...aretsTillgangarMap.keys(),
-      ...utgaendeTillgangarMap.keys(),
-    ]);
-
-    const allaSkulderKonton = new Set([
-      ...ingaendeSkulderMap.keys(),
-      ...aretsSkulderMap.keys(),
-      ...utgaendeSkulderMap.keys(),
-    ]);
-
-    // Returnera rå data utan business logic
-    const tillgangar = Array.from(allaTillgangarKonton)
-      .map((kontonummer) => {
-        const ing = ingaendeTillgangarMap.get(kontonummer);
-        const aret = aretsTillgangarMap.get(kontonummer);
-        const utg = utgaendeTillgangarMap.get(kontonummer);
-
-        return {
-          kontonummer,
-          beskrivning: utg?.beskrivning || aret?.beskrivning || ing?.beskrivning || "",
-          ingaendeSaldo: ing?.saldo || 0,
-          aretsResultat: aret?.saldo || 0,
-          utgaendeSaldo: utg?.saldo || 0,
-          transaktioner: aret?.transaktioner || [],
-        };
-      })
-      .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
-
-    // Returnera rå data utan business logic
-    const skulderOchEgetKapital = Array.from(allaSkulderKonton)
-      .map((kontonummer) => {
-        const ing = ingaendeSkulderMap.get(kontonummer);
-        const aret = aretsSkulderMap.get(kontonummer);
-        const utg = utgaendeSkulderMap.get(kontonummer);
-
-        return {
-          kontonummer,
-          beskrivning: utg?.beskrivning || aret?.beskrivning || ing?.beskrivning || "",
-          ingaendeSaldo: ing?.saldo || 0,
-          aretsResultat: aret?.saldo || 0,
-          utgaendeSaldo: utg?.saldo || 0,
-          transaktioner: aret?.transaktioner || [],
-        };
-      })
-      .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
-
-    // Beräkna obalans istället för komplicerad resultat-logik
-    const sumTillgangar = tillgangar.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
-    const sumSkulderEK = skulderOchEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
-    const obalans = sumTillgangar - sumSkulderEK;
-
-    // Lägg till beräknat resultat baserat på obalans (Bokio-stil)
-    if (obalans !== 0) {
-      // Beräknat resultat i Bokio = tidigare års resultat + årets förändring
-      // Hitta årets resultat från konto 2099 för att få rätt fördelning
-      const aretsResultatKonto = skulderOchEgetKapital.find((k) => k.kontonummer === "2099");
-      const aretsResultatVarde = aretsResultat; // Från query
-
-      skulderOchEgetKapital.push({
-        kontonummer: "9999",
-        beskrivning: "Beräknat resultat",
-        ingaendeSaldo: obalans - aretsResultatVarde, // Tidigare års resultat
-        aretsResultat: aretsResultatVarde, // Årets förändring
-        utgaendeSaldo: obalans, // Total balansering
-        transaktioner: [],
-      });
-    }
-
-    // Returnera rå data utan beräkningar
+    // Returnera rå databasresultat utan business logic
     return {
       year,
-      tillgangar,
-      skulderOchEgetKapital,
-      // Ta bort differens-beräkning, det ska göras i frontend
+      ingaendeTillgangar: ingaendeTillgangarRes.rows,
+      aretsTillgangar: aretsTillgangarRes.rows,
+      utgaendeTillgangar: utgaendeTillgangarRes.rows,
+      ingaendeSkulder: ingaendeSkulderRes.rows,
+      aretsSkulder: aretsSkulderRes.rows,
+      utgaendeSkulder: utgaendeSkulderRes.rows,
+      ingaendeResultat: parseFloat(ingaendeResultatRes.rows[0]?.saldo ?? 0),
+      aretsResultat: parseFloat(aretsResultatRes.rows[0]?.saldo ?? 0),
+      utgaendeResultat: parseFloat(utgaendeResultatRes.rows[0]?.saldo ?? 0),
     };
   } catch (error) {
     console.error("❌ fetchBalansData error:", error);
