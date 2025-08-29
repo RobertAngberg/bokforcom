@@ -7,12 +7,41 @@ import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/auth
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import OpenAI from "openai";
-import { invalidateBokförCache } from "./invalidateBokförCache";
 import { put } from "@vercel/blob";
+import { revalidatePath } from "next/cache";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// Invalidera cache för bokföring
+export async function invalidateBokförCache() {
+  revalidatePath("/historik");
+  revalidatePath("/rapporter/huvudbok");
+  revalidatePath("/rapporter/balansrapport");
+  revalidatePath("/rapporter/resultatrapport");
+  revalidatePath("/rapporter/momsrapport");
+}
+
+// Hämta transaktionsposter för en viss transaktion
+export async function hamtaTransaktionsposter(transaktionsId: number) {
+  const userId = await getUserId();
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `SELECT tp.*, k.kontonummer, k.beskrivning
+       FROM transaktionsposter tp
+       JOIN konton k ON tp.konto_id = k.id
+       WHERE tp.transaktions_id = $1
+       ORDER BY tp.id`,
+      [transaktionsId]
+    );
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}
 //#endregion
 
 // Säker text-sanitization för OpenAI input
