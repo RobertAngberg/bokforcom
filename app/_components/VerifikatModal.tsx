@@ -189,51 +189,74 @@ export default function VerifikatModal({ transaktionsId, onClose }: VerifikatMod
                         )}
                       </h4>
 
-                      {/* Visa bilagan baserat på filtyp */}
+                      {/* Förhandsvisning och länk baserat på filtyp */}
                       {details[0].blob_url.toLowerCase().includes(".pdf") ? (
-                        // PDF-viewer
-                        <div className="border border-slate-600 rounded-lg overflow-hidden mb-3">
-                          <iframe
-                            src={details[0].blob_url}
-                            className="w-full h-96"
-                            title="PDF Verifikat"
-                          />
+                        // PDF - visa länk istället för iframe (Vercel Blob iframe-problem)
+                        <div className="border border-slate-600 rounded-lg p-6 mb-3 bg-slate-800 text-center">
+                          <div className="text-6xl mb-4">📄</div>
+                          <div className="text-white mb-2">PDF-dokument</div>
+                          <div className="text-slate-400 text-sm mb-4">
+                            {details[0]?.fil || "PDF-bilaga"}
+                          </div>
+                          <a
+                            href={details[0].blob_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                            Öppna PDF
+                          </a>
                         </div>
                       ) : (
-                        // Bildvisning
+                        // Bildvisning - visa förhandsvisning och länk
                         <div className="border border-slate-600 rounded-lg overflow-hidden bg-slate-800 mb-3">
-                          <img
-                            src={details[0].blob_url}
-                            alt="Verifikatbilaga"
-                            className="w-full h-auto max-h-96 object-contain"
-                          />
+                          <div className="relative">
+                            <img
+                              src={details[0].blob_url}
+                              alt="Verifikatbilaga"
+                              className="w-full h-auto max-h-96 object-contain cursor-pointer"
+                              onClick={() => window.open(details[0].blob_url, '_blank')}
+                              title="Klicka för att öppna i full storlek"
+                            />
+                            <div className="absolute top-2 right-2">
+                              <a
+                                href={details[0].blob_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-2 py-1 bg-black/70 hover:bg-black/90 text-white rounded text-xs transition-colors"
+                              >
+                                <svg
+                                  className="w-3 h-3 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                  />
+                                </svg>
+                                Öppna
+                              </a>
+                            </div>
+                          </div>
                         </div>
                       )}
-
-                      {/* Länk för att öppna i ny flik */}
-                      <div className="flex justify-center">
-                        <a
-                          href={details[0].blob_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          <svg
-                            className="w-4 h-4 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                          Öppna i ny flik
-                        </a>
-                      </div>
                     </div>
                   )}
 
