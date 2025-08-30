@@ -878,7 +878,7 @@ export default function Page() {
               <Dropdown
                 value={selectedMonth}
                 onChange={setSelectedMonth}
-                className="max-w-[280px] w-full"
+                className="min-w-[160px] max-w-[400px] w-auto"
                 options={[
                   { label: "Alla månader", value: "all" },
                   { label: "Januari", value: "01" },
