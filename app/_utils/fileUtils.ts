@@ -336,6 +336,8 @@ export async function exportHuvudbokPDF(
 type BalansKonto = {
   kontonummer: string;
   beskrivning: string;
+  ingaendeSaldo: number;
+  aretsResultat: number;
   utgaendeSaldo: number;
 };
 
@@ -383,17 +385,25 @@ export function exportBalansrapportCSV(
     }
     csv += `Utskriven: ${new Date().toLocaleDateString("sv-SE")}\n\n`;
 
-    csv += "Tillgångar\nKonto;Beskrivning;Saldo\n";
+    csv += `Tillgångar\nKonto;Beskrivning;Ing. balans ${selectedYear}-01-01;Resultat;Utg. balans ${selectedYear}-12-31\n`;
+    let ingaendeTillgangar = 0;
+    let aretsTillgangar = 0;
     tillgangar.forEach((konto) => {
-      csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.utgaendeSaldo)}\n`;
+      csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.ingaendeSaldo)};${formatSEKForExport(konto.aretsResultat)};${formatSEKForExport(konto.utgaendeSaldo)}\n`;
+      ingaendeTillgangar += konto.ingaendeSaldo;
+      aretsTillgangar += konto.aretsResultat;
     });
-    csv += `;Summa tillgångar;${formatSEKForExport(sumTillgangar)}\n\n`;
+    csv += `;;${formatSEKForExport(ingaendeTillgangar)};${formatSEKForExport(aretsTillgangar)};${formatSEKForExport(sumTillgangar)}\n\n`;
 
-    csv += "Eget kapital och skulder\nKonto;Beskrivning;Saldo\n";
+    csv += `Eget kapital och skulder\nKonto;Beskrivning;Ing. balans ${selectedYear}-01-01;Resultat;Utg. balans ${selectedYear}-12-31\n`;
+    let ingaendeSkulder = 0;
+    let aretsSkulder = 0;
     skulderOchEgetKapital.forEach((konto) => {
-      csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.utgaendeSaldo)}\n`;
+      csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.ingaendeSaldo)};${formatSEKForExport(konto.aretsResultat)};${formatSEKForExport(konto.utgaendeSaldo)}\n`;
+      ingaendeSkulder += konto.ingaendeSaldo;
+      aretsSkulder += konto.aretsResultat;
     });
-    csv += `;Summa eget kapital och skulder;${formatSEKForExport(sumSkulderEK)}\n\n`;
+    csv += `;;${formatSEKForExport(ingaendeSkulder)};${formatSEKForExport(aretsSkulder)};${formatSEKForExport(sumSkulderEK)}\n\n`;
 
     csv += "Balanskontroll\n";
     if (beraknatResultat !== 0) {
@@ -503,22 +513,39 @@ export async function exportBalansrapportPDF(
       doc.text(titel, 14, y);
       y += 8;
 
-      // Tabellrader
+      // Tabellrader med tre kolumner som webbgränssnittet
       const rows: any[][] = konton.map((konto) => [
         konto.kontonummer,
         konto.beskrivning,
-        formatSEKForExport(konto.utgaendeSaldo),
+        formatSEKForExport(konto.ingaendeSaldo || 0),
+        formatSEKForExport(konto.aretsResultat || 0),
+        formatSEKForExport(konto.utgaendeSaldo || 0),
       ]);
 
-      // Summeringsrad med colSpan
+      // Summeringsrad med colSpan för första två kolumner
+      const ingaendeSum = konton.reduce((sum, k) => sum + (k.ingaendeSaldo || 0), 0);
+      const aretsSum = konton.reduce((sum, k) => sum + (k.aretsResultat || 0), 0);
       rows.push([
         { content: `Summa ${titel.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
-        { content: formatSEKForExport(summa), styles: { fontStyle: "bold", halign: "left" } },
+        {
+          content: formatSEKForExport(ingaendeSum),
+          styles: { fontStyle: "bold", halign: "right" },
+        },
+        { content: formatSEKForExport(aretsSum), styles: { fontStyle: "bold", halign: "right" } },
+        { content: formatSEKForExport(summa), styles: { fontStyle: "bold", halign: "right" } },
       ]);
 
       autoTable(doc, {
         startY: y,
-        head: [["Konto", "Beskrivning", "Saldo"]],
+        head: [
+          [
+            "Konto",
+            "Beskrivning",
+            `Ing. balans ${selectedYear}-01-01`,
+            "Resultat",
+            `Utg. balans ${selectedYear}-12-31`,
+          ],
+        ],
         body: rows,
         theme: "striped",
         headStyles: {
@@ -535,9 +562,11 @@ export async function exportBalansrapportPDF(
           fillColor: [248, 249, 250],
         },
         columnStyles: {
-          0: { cellWidth: 32 },
-          1: { cellWidth: 110 },
-          2: { cellWidth: 34, halign: "right" },
+          0: { cellWidth: 25 }, // Konto
+          1: { cellWidth: 80 }, // Beskrivning
+          2: { cellWidth: 30, halign: "right" }, // Ing. balans
+          3: { cellWidth: 30, halign: "right" }, // Resultat
+          4: { cellWidth: 30, halign: "right" }, // Utg. balans
         },
         margin: { left: 14, right: 14 },
         didDrawPage: (data) => {
