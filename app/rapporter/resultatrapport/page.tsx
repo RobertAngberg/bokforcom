@@ -445,6 +445,17 @@ export default function Page() {
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+
+      // Funktion för att hantera sidbrytningar
+      const checkPageBreak = (currentY: number, neededSpace: number = 15) => {
+        if (currentY + neededSpace > pageHeight - margin) {
+          doc.addPage();
+          return margin; // Ny sida, börja från toppen
+        }
+        return currentY;
+      };
 
       // Header - förenklat utan session för nu
       doc.setFontSize(16);
@@ -470,6 +481,7 @@ export default function Page() {
       let y = 70;
 
       // Rörelsens intäkter - sektion
+      y = checkPageBreak(y, 20);
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text("Rörelsens intäkter", 14, y);
@@ -487,6 +499,7 @@ export default function Page() {
       let nettoomsattningTotal = 0;
       data.intakter.forEach((grupp) => {
         grupp.konton.forEach((konto) => {
+          y = checkPageBreak(y, 8);
           const belopp = (konto[years[0]] as number) || 0;
           nettoomsattningTotal += belopp;
           doc.text(`${konto.kontonummer} ${konto.beskrivning}`, 26, y);
@@ -508,6 +521,7 @@ export default function Page() {
       y += 15;
 
       // Rörelsens kostnader - sektion
+      y = checkPageBreak(y, 20);
       doc.setFontSize(12);
       doc.text("Rörelsens kostnader", 14, y);
       y += 10;
@@ -517,6 +531,7 @@ export default function Page() {
       // Gruppera kostnader enligt Bokio's struktur
       data.rorelsensKostnader.forEach((grupp) => {
         // Kategorinamn som underrubrik
+        y = checkPageBreak(y, 15);
         doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
         doc.text(grupp.namn, 20, y);
@@ -528,6 +543,7 @@ export default function Page() {
         let kategoriTotal = 0;
 
         grupp.konton.forEach((konto) => {
+          y = checkPageBreak(y, 8);
           const belopp = (konto[years[0]] as number) || 0;
           kategoriTotal += belopp;
           totalKostnader += belopp;
@@ -571,6 +587,7 @@ export default function Page() {
       y += 15;
 
       // Beräknat resultat
+      y = checkPageBreak(y, 20);
       doc.setFontSize(12);
       doc.text("Beräknat resultat", 14, y);
       y += 8;
