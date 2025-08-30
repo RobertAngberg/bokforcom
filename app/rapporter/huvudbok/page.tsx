@@ -8,6 +8,7 @@ import Dropdown from "../../_components/Dropdown";
 import VerifikatModal from "../../_components/VerifikatModal";
 import { formatSEK } from "../../_utils/format";
 import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "./actions";
+import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
 
 type TransaktionData = {
   transaktion_id: number;
@@ -39,6 +40,9 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
 
+  // State för månadsval
+  const [selectedMonth, setSelectedMonth] = useState("alla");
+
   // State för VerifikatModal
   const [showVerifikatModal, setShowVerifikatModal] = useState(false);
   const [selectedTransaktionsId, setSelectedTransaktionsId] = useState<number | null>(null);
@@ -50,10 +54,17 @@ export default function Page() {
         const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner();
         setHuvudboksdata(huvudbokResult);
 
-        // Försök ladda företagsprofil (behöver userId från session)
-        // För nu skippar vi detta tills vi har session management
-        setFöretagsnamn("");
-        setOrganisationsnummer("");
+        // Försök ladda företagsprofil
+        try {
+          const profileResult = await fetchFöretagsprofil(1); // Temporär userId - bör komma från session
+          if (profileResult) {
+            setFöretagsnamn(profileResult.företagsnamn || "");
+            setOrganisationsnummer(profileResult.organisationsnummer || "");
+          }
+        } catch (profileError) {
+          console.log("Kunde inte ladda företagsprofil:", profileError);
+          // Inte kritiskt fel, fortsätt utan företagsinfo
+        }
       } catch (error) {
         console.error("Fel vid laddning av huvudboksdata:", error);
       } finally {
@@ -70,11 +81,47 @@ export default function Page() {
     return { value: year.toString(), label: year.toString() };
   });
 
+  // Månadsalternativ
+  const monthOptions = [
+    { value: "alla", label: "Alla månader" },
+    { value: "01", label: "Januari" },
+    { value: "02", label: "Februari" },
+    { value: "03", label: "Mars" },
+    { value: "04", label: "April" },
+    { value: "05", label: "Maj" },
+    { value: "06", label: "Juni" },
+    { value: "07", label: "Juli" },
+    { value: "08", label: "Augusti" },
+    { value: "09", label: "September" },
+    { value: "10", label: "Oktober" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+  ];
+
   // Funktion för att visa enskilt verifikat
   const handleShowVerifikat = (transaktionsId: number) => {
     console.log("🔍 Visar verifikat för transaktion:", transaktionsId);
     setSelectedTransaktionsId(transaktionsId);
     setShowVerifikatModal(true);
+  };
+
+  // Export-funktioner
+  const handleExportCSV = () => {
+    try {
+      exportHuvudbokCSV(filtradeKonton, företagsnamn, selectedMonth, selectedYear);
+    } catch (error) {
+      console.error("Fel vid CSV-export:", error);
+      alert("Ett fel uppstod vid CSV-export. Försök igen.");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      await exportHuvudbokPDF(filtradeKonton, företagsnamn, selectedMonth, selectedYear);
+    } catch (error) {
+      console.error("Fel vid PDF-export:", error);
+      alert("Ett fel uppstod vid PDF-export. Försök igen.");
+    }
   };
 
   // Formatering för SEK med behållet minustecken
@@ -120,18 +167,54 @@ export default function Page() {
     );
   }
 
-  const kategoriseradeKonton = kategoriseraKonton(huvudboksdata);
+  // Filtrera huvudboksdata baserat på vald månad
+  const filtreraKontonEfterMånad = (konton: HuvudboksKontoMedTransaktioner[]) => {
+    if (selectedMonth === "alla") {
+      return konton;
+    }
+
+    return konton
+      .map((konto) => ({
+        ...konto,
+        transaktioner: konto.transaktioner.filter((transaktion) => {
+          const transaktionsDatum = new Date(transaktion.datum);
+          const transaktionsMånad = (transaktionsDatum.getMonth() + 1).toString().padStart(2, "0");
+          return transaktionsMånad === selectedMonth;
+        }),
+      }))
+      .filter((konto) => konto.transaktioner.length > 0); // Ta bara med konton som har transaktioner i vald månad
+  };
+
+  const filtradeKonton = filtreraKontonEfterMånad(huvudboksdata);
+  const kategoriseradeKonton = kategoriseraKonton(filtradeKonton);
 
   return (
     <MainLayout>
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
 
-        {/* Årval dropdown */}
-        <div className="flex justify-center mb-6">
+        {/* Årval och månadsval dropdown */}
+        <div className="flex justify-center mb-6 gap-4">
           <div className="w-32">
             <Dropdown value={selectedYear} onChange={setSelectedYear} options={yearOptions} />
           </div>
+          <div className="w-40">
+            <Dropdown value={selectedMonth} onChange={setSelectedMonth} options={monthOptions} />
+          </div>
+        </div>
+
+        {/* Export-knappar */}
+        <div className="flex justify-center mb-8 gap-4">
+          <Knapp
+            text="📊 Exportera CSV"
+            onClick={handleExportCSV}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          />
+          <Knapp
+            text="📄 Exportera PDF"
+            onClick={handleExportPDF}
+            className="bg-rose-600 hover:bg-rose-700"
+          />
         </div>
 
         <div className="space-y-6">
