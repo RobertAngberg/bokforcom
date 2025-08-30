@@ -927,22 +927,20 @@ export async function exportMomsrapportPDF(
     y += 15;
 
     // Företagsnamn (bold) - samma som andra rapporter
-    const displayFöretagsnamn =
-      företagsnamn && företagsnamn.trim() !== "" ? företagsnamn : "Ditt Företag AB";
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(displayFöretagsnamn, 14, y);
-    y += 7;
+    if (företagsnamn && företagsnamn.trim() !== "") {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(företagsnamn, 14, y);
+      y += 7;
+    }
 
     // Organisationsnummer (normal) - samma som andra rapporter
-    const displayOrgnr =
-      organisationsnummer && organisationsnummer.trim() !== ""
-        ? organisationsnummer
-        : "555555-5555";
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(displayOrgnr, 14, y);
-    y += 8;
+    if (organisationsnummer && organisationsnummer.trim() !== "") {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(organisationsnummer, 14, y);
+      y += 8;
+    }
 
     // Utskriven datum - samma som andra rapporter
     doc.setFontSize(12);

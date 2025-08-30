@@ -465,9 +465,13 @@ export default function Page() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
 
-      // Placeholder företagsinformation
-      doc.text(företagsnamn || "ANGBERG, ROBERT", 14, 30);
-      doc.text(organisationsnummer || "8306186910", 14, 36);
+      // Företagsinformation (endast om den finns)
+      if (företagsnamn) {
+        doc.text(företagsnamn, 14, 30);
+      }
+      if (organisationsnummer) {
+        doc.text(organisationsnummer, 14, 36);
+      }
 
       // Datum och period information
       const currentDate = new Date().toLocaleDateString("sv-SE");
@@ -476,7 +480,7 @@ export default function Page() {
       doc.text(`Räkenskapsår: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 46);
       doc.text(`Utskriven: ${currentDate}`, pageWidth - 60, 46);
       doc.text(`Period: ${currentYear}-01-01 till ${currentYear}-12-31`, 14, 52);
-      doc.text(`Senaste ver. nr.: V116`, pageWidth - 60, 52);
+      // doc.text(`Senaste ver. nr.: V116`, pageWidth - 60, 52); // Removed hardcoded verifikat
 
       let y = 70;
 
