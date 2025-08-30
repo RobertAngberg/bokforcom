@@ -1537,7 +1537,7 @@ ${duplicatesList}
               ) VALUES ($1, $2, $3, $4)
               RETURNING id`,
               [
-                settings.startDatum || "2025-01-01",
+                settings.startDatum || `${new Date().getFullYear()}-01-01`,
                 "Ingående balanser",
                 "SIE Import - Ingående balanser",
                 userId,
