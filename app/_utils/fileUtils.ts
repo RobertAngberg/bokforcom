@@ -598,3 +598,292 @@ export async function exportBalansrapportPDF(
     throw new Error("Ett fel uppstod vid PDF-exporten");
   }
 }
+
+// Typer för resultatrapport
+type ResultatKonto = {
+  kontonummer: string;
+  beskrivning: string;
+  belopp: number;
+};
+
+type ResultatGrupp = {
+  namn: string;
+  konton: ResultatKonto[];
+  summa: number;
+};
+
+/**
+ * Exportera resultatrapport till PDF
+ */
+export async function exportResultatrapportPDF(
+  intakter: ResultatGrupp[],
+  rorelsensKostnader: ResultatGrupp[],
+  finansiellaIntakter: ResultatGrupp[],
+  finansiellaKostnader: ResultatGrupp[],
+  nettoResultat: number,
+  företagsnamn: string,
+  organisationsnummer: string,
+  selectedMonth: string,
+  selectedYear: string
+): Promise<void> {
+  try {
+    // Dynamisk import av jsPDF för att undvika SSR-problem
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
+    const monthNames = {
+      "01": "Januari",
+      "02": "Februari",
+      "03": "Mars",
+      "04": "April",
+      "05": "Maj",
+      "06": "Juni",
+      "07": "Juli",
+      "08": "Augusti",
+      "09": "September",
+      "10": "Oktober",
+      "11": "November",
+      "12": "December",
+    };
+
+    const period =
+      selectedMonth === "all"
+        ? `Helår ${selectedYear}`
+        : `${monthNames[selectedMonth as keyof typeof monthNames]} ${selectedYear}`;
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    let y = 30;
+
+    // Header
+    doc.setFontSize(32);
+    doc.text("Resultatrapport", 105, y, { align: "center" });
+    y += 10;
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "normal");
+    doc.text(period, 105, y, { align: "center" });
+    y += 15;
+
+    // Företagsnamn (bold)
+    if (företagsnamn) {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(företagsnamn, 14, y);
+      y += 7;
+    }
+
+    // Organisationsnummer (normal)
+    if (organisationsnummer) {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(organisationsnummer, 14, y);
+      y += 8;
+    }
+
+    // Utskriven datum
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
+    y += 18;
+
+    // Dynamiska grupper
+    const grupper = [
+      { titel: "Rörelsens intäkter", data: intakter },
+      { titel: "Rörelsens kostnader", data: rorelsensKostnader },
+      { titel: "Finansiella intäkter", data: finansiellaIntakter },
+      { titel: "Finansiella kostnader", data: finansiellaKostnader },
+    ];
+
+    grupper.forEach(({ titel, data }) => {
+      if (!data || data.length === 0) return;
+
+      doc.setFontSize(15);
+      doc.setFont("helvetica", "bold");
+      doc.text(titel, 14, y);
+      y += 8;
+
+      data.forEach((grupp) => {
+        if (grupp.konton.length === 0) return;
+
+        // Tabellrader
+        const rows: any[][] = grupp.konton.map((konto) => [
+          konto.kontonummer,
+          konto.beskrivning,
+          formatSEKForExport(konto.belopp),
+        ]);
+
+        // Summeringsrad
+        if (rows.length > 1) {
+          rows.push([
+            { content: `Summa ${grupp.namn.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
+            { content: formatSEKForExport(grupp.summa), styles: { fontStyle: "bold", halign: "right" } },
+          ]);
+        }
+
+        autoTable(doc, {
+          startY: y,
+          head: [["Konto", "Beskrivning", "Belopp"]],
+          body: rows,
+          theme: "striped",
+          headStyles: {
+            fillColor: [64, 64, 64],
+            textColor: 255,
+            fontSize: 10,
+            fontStyle: "bold",
+          },
+          bodyStyles: {
+            fontSize: 9,
+            textColor: [33, 37, 41],
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250],
+          },
+          columnStyles: {
+            0: { cellWidth: 25 }, // Konto
+            1: { cellWidth: 110 }, // Beskrivning
+            2: { cellWidth: 30, halign: "right" }, // Belopp
+          },
+          margin: { left: 10, right: 10 },
+          didDrawPage: (data) => {
+            if (data.cursor) y = data.cursor.y + 8;
+          },
+        });
+
+        y += 4;
+      });
+    });
+
+    // Nettoresultat
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("Nettoresultat", 14, y);
+    y += 8;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["", "", "Resultat"]],
+      body: [
+        [
+          { content: "Årets resultat", colSpan: 2, styles: { fontStyle: "bold" } },
+          { content: formatSEKForExport(nettoResultat), styles: { fontStyle: "bold", halign: "right" } },
+        ],
+      ],
+      theme: "striped",
+      headStyles: {
+        fillColor: [64, 64, 64],
+        textColor: 255,
+        fontSize: 10,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [33, 37, 41],
+      },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 110 },
+        2: { cellWidth: 30, halign: "right" },
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    const filename = generateFilename(
+      `resultatrapport_${selectedYear}${selectedMonth !== "all" ? `_${selectedMonth}` : ""}`,
+      new Date(),
+      "pdf"
+    );
+
+    const pdfBlob = doc.output("blob");
+    downloadPDF(pdfBlob, filename);
+  } catch (error) {
+    console.error("PDF Export error:", error);
+    throw new Error("Ett fel uppstod vid PDF-exporten");
+  }
+}
+
+/**
+ * Exportera resultatrapport till CSV
+ */
+export function exportResultatrapportCSV(
+  intakter: ResultatGrupp[],
+  rorelsensKostnader: ResultatGrupp[],
+  finansiellaIntakter: ResultatGrupp[],
+  finansiellaKostnader: ResultatGrupp[],
+  nettoResultat: number,
+  företagsnamn: string,
+  organisationsnummer: string,
+  selectedMonth: string,
+  selectedYear: string
+): void {
+  try {
+    const monthNames = {
+      "01": "Januari",
+      "02": "Februari",
+      "03": "Mars",
+      "04": "April",
+      "05": "Maj",
+      "06": "Juni",
+      "07": "Juli",
+      "08": "Augusti",
+      "09": "September",
+      "10": "Oktober",
+      "11": "November",
+      "12": "December",
+    };
+
+    const period =
+      selectedMonth === "all"
+        ? `Helår ${selectedYear}`
+        : `${monthNames[selectedMonth as keyof typeof monthNames]} ${selectedYear}`;
+
+    let csv = `Resultatrapport - ${period}\n`;
+    if (företagsnamn) {
+      csv += `${företagsnamn}\n`;
+    }
+    if (organisationsnummer) {
+      csv += `${organisationsnummer}\n`;
+    }
+    csv += `Utskriven: ${new Date().toLocaleDateString("sv-SE")}\n\n`;
+
+    const grupper = [
+      { titel: "Rörelsens intäkter", data: intakter },
+      { titel: "Rörelsens kostnader", data: rorelsensKostnader },
+      { titel: "Finansiella intäkter", data: finansiellaIntakter },
+      { titel: "Finansiella kostnader", data: finansiellaKostnader },
+    ];
+
+    grupper.forEach(({ titel, data }) => {
+      if (!data || data.length === 0) return;
+
+      csv += `${titel}\nKonto;Beskrivning;Belopp\n`;
+      
+      data.forEach((grupp) => {
+        grupp.konton.forEach((konto) => {
+          csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.belopp)}\n`;
+        });
+        if (grupp.konton.length > 1) {
+          csv += `;Summa ${grupp.namn.toLowerCase()};${formatSEKForExport(grupp.summa)}\n`;
+        }
+      });
+      csv += `\n`;
+    });
+
+    csv += `Nettoresultat\n;Årets resultat;${formatSEKForExport(nettoResultat)}\n`;
+
+    const filename = generateFilename(
+      `resultatrapport_${selectedYear}${selectedMonth !== "all" ? `_${selectedMonth}` : ""}`,
+      new Date(),
+      "csv"
+    );
+
+    downloadFile(csv, filename, "text/csv;charset=utf-8");
+  } catch (error) {
+    console.error("CSV Export error:", error);
+    throw new Error("Ett fel uppstod vid CSV-exporten");
+  }
+}

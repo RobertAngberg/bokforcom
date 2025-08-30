@@ -6,6 +6,7 @@ import MainLayout from "../../_components/MainLayout";
 import Totalrad from "../../_components/Totalrad";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
+import Dropdown from "../../_components/Dropdown";
 import VerifikatModal from "../../_components/VerifikatModal";
 import Modal from "../../_components/Modal";
 import { formatSEK } from "../../_utils/format";
@@ -47,6 +48,10 @@ export default function Page() {
   const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // Filter state
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>("all"); // "Alla månader" som default
+
   const data = initialData || {
     ar: [],
     intakter: [],
@@ -70,12 +75,13 @@ export default function Page() {
   const [exportMessage, setExportMessage] = useState<string>("");
   //#endregion
 
-  // Ladda data när komponenten mountas
+  // Ladda data när komponenten mountas eller året ändras
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
         const [resultData, profilData] = await Promise.all([
-          hamtaResultatrapport(),
+          hamtaResultatrapport(), // TODO: Uppdatera för att ta selectedYear som parameter
           fetchFöretagsprofil(),
         ]);
 
@@ -90,7 +96,7 @@ export default function Page() {
     };
 
     loadData();
-  }, []);
+  }, [selectedYear]); // Lägg till selectedYear som dependency
 
   // Om data fortfarande laddas
   if (loading) {
@@ -691,6 +697,64 @@ export default function Page() {
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Resultatrapport</h1>
 
+        {/* Filter och Export-knappar */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Dropdown
+              value={selectedYear}
+              onChange={(value) => setSelectedYear(value)}
+              options={[
+                { value: "2025", label: "2025" },
+                { value: "2024", label: "2024" },
+                { value: "2023", label: "2023" },
+                { value: "2022", label: "2022" },
+              ]}
+              className="w-24"
+            />
+
+            <Dropdown
+              value={selectedMonth}
+              onChange={(value) => setSelectedMonth(value)}
+              options={[
+                { value: "all", label: "Alla månader" },
+                { value: "01", label: "Januari" },
+                { value: "02", label: "Februari" },
+                { value: "03", label: "Mars" },
+                { value: "04", label: "April" },
+                { value: "05", label: "Maj" },
+                { value: "06", label: "Juni" },
+                { value: "07", label: "Juli" },
+                { value: "08", label: "Augusti" },
+                { value: "09", label: "September" },
+                { value: "10", label: "Oktober" },
+                { value: "11", label: "November" },
+                { value: "12", label: "December" },
+              ]}
+              className="w-40"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Knapp
+              text={isExportingPDF ? "Exporterar PDF..." : "📄 Ladda ner PDF"}
+              onClick={handleExportPDF}
+              disabled={isExportingPDF}
+            />
+
+            <Knapp
+              text={isExportingCSV ? "Exporterar CSV..." : "📊 Ladda ner CSV"}
+              onClick={handleExportCSV}
+              disabled={isExportingCSV}
+            />
+          </div>
+        </div>
+
+        {/* Avdelare */}
+        <hr className="border-gray-600 mb-8" />
+
+        {/* Export-meddelande */}
+        {exportMessage && <div className="text-center mb-4 text-green-400">{exportMessage}</div>}
+
         {/* Rörelsens intäkter */}
         <h2 className="text-xl font-semibold mt-16 mb-4 text-center">Rörelsens intäkter</h2>
         {renderGrupper(data.intakter, true, "💰")}
@@ -887,54 +951,6 @@ export default function Page() {
               (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
           }}
         />
-      </div>
-
-      {exportMessage && (
-        <div
-          className={`text-center mb-4 p-3 rounded-lg ${
-            exportMessage.startsWith("Fel:")
-              ? "bg-red-100 text-red-700 border border-red-300"
-              : "bg-green-100 text-green-700 border border-green-300"
-          }`}
-        >
-          {exportMessage}
-        </div>
-      )}
-
-      <div className="flex mt-8 gap-4 justify-end">
-        <button
-          onClick={handleExportPDF}
-          disabled={isExportingPDF}
-          className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
-            isExportingPDF ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {isExportingPDF ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Exporterar PDF...
-            </>
-          ) : (
-            "Ladda ner PDF"
-          )}
-        </button>
-
-        <button
-          onClick={handleExportCSV}
-          disabled={isExportingCSV}
-          className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
-            isExportingCSV ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {isExportingCSV ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Exporterar CSV...
-            </>
-          ) : (
-            "Ladda ner CSV"
-          )}
-        </button>
       </div>
     </MainLayout>
   );
