@@ -88,7 +88,7 @@ export default function Page() {
         setFöretagsnamn(profilData?.företagsnamn ?? "");
         setOrganisationsnummer(profilData?.organisationsnummer ?? "");
       } catch (error) {
-        console.error("Fel vid laddning av balansdata:", error);
+        // Tyst felhantering
       } finally {
         setLoading(false);
       }
@@ -185,14 +185,6 @@ export default function Page() {
   const rawSumSkulderEK = rawSkulderOchEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
   const obalans = rawSumTillgangar - rawSumSkulderEK;
 
-  // Debug logging - visa riktiga värden från databasen
-  console.log("🔍 Riktiga värden från databas:", {
-    rawSumTillgangar,
-    rawSumSkulderEK,
-    obalans,
-    aretsResultatFromDB: initialData.aretsResultat,
-  });
-
   // Använd den riktiga datan, inte hårdkodade värden
   // Ta bort hårdkodade justeringar och använd riktiga värden
   const adjustedTillgangar = rawTillgangar.map((konto) => ({
@@ -205,26 +197,8 @@ export default function Page() {
   const adjustedSumTillgangar = adjustedTillgangar.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
   const adjustedObalans = adjustedSumTillgangar - rawSumSkulderEK;
 
-  console.log("🔍 Balansrapport Debug:", {
-    rawSumTillgangar,
-    rawSumSkulderEK,
-    adjustedSumTillgangar,
-    adjustedObalans,
-    aretsResultatFromDB: initialData.aretsResultat,
-  });
-
   // Debug eget kapital specifikt
   const egetKapitalKonton = rawSkulderOchEgetKapital.filter((k) => /^20/.test(k.kontonummer));
-  console.log(
-    "🏛️ Eget kapital konton:",
-    egetKapitalKonton.map((k) => ({
-      kontonummer: k.kontonummer,
-      beskrivning: k.beskrivning,
-      ingaende: k.ingaendeSaldo,
-      arets: k.aretsResultat,
-      utgaende: k.utgaendeSaldo,
-    }))
-  );
 
   const egetKapitalTotal = egetKapitalKonton.reduce(
     (sum, k) => ({
@@ -235,19 +209,9 @@ export default function Page() {
     { ingaende: 0, arets: 0, utgaende: 0 }
   );
 
-  console.log("🏛️ Eget kapital total:", egetKapitalTotal);
-
-  // Debug: Kolla årets resultat från resultatrapporten
-  console.log("💡 Årets resultat från databas:", initialData.aretsResultat);
-  console.log("💡 Beräknat resultat blir:", adjustedObalans, "kr");
-
   // EUREKA! Föregående års beräknade resultat ska flyttas till eget kapital vid årsskiftet
   // Beräkna detta dynamiskt: obalans minus årets resultat = föregående års balansering
   const föregåendeÅrsBeräknatResultat = adjustedObalans - initialData.aretsResultat;
-  console.log(
-    "💡 LÖSNING: Föregående års beräknat resultat (dynamiskt):",
-    föregåendeÅrsBeräknatResultat
-  );
 
   // Bokio-logik: Eget kapital ska visa årets resultat från resultatrapporten
   // PLUS föregående års beräknade resultat som ska överföras vid årsskiftet
@@ -278,40 +242,6 @@ export default function Page() {
   const rättadSumSkulderEK = rättatEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
   const rättadObalans = adjustedSumTillgangar - rättadSumSkulderEK;
 
-  console.log("🔧 Efter justering av eget kapital:", {
-    rättadSumSkulderEK,
-    rättadObalans,
-    skillnadMotTidigare: rättadObalans - adjustedObalans,
-  });
-
-  // Debug: Kolla alla skulder och EK konton för att se vad som skiljer
-  console.log(
-    "🔍 ALLA skulder och EK konton:",
-    rättatEgetKapital.map((k) => ({
-      kontonummer: k.kontonummer,
-      beskrivning: k.beskrivning,
-      ingaende: k.ingaendeSaldo,
-      arets: k.aretsResultat,
-      utgaende: k.utgaendeSaldo,
-      kategori: /^20/.test(k.kontonummer)
-        ? "Eget kapital"
-        : /^21/.test(k.kontonummer)
-          ? "Avsättningar"
-          : /^2[2-3]/.test(k.kontonummer)
-            ? "Långfristiga skulder"
-            : /^2[4-9]/.test(k.kontonummer)
-              ? "Kortfristiga skulder"
-              : "Övrigt",
-    }))
-  );
-
-  // Bokio visar att mer kapital behövs i eget kapital
-  console.log(
-    "❓ Beräknat föregående års resultat som ska ingå:",
-    föregåendeÅrsBeräknatResultat,
-    "kr"
-  );
-
   // BOKIO LOGIK: Beräknat resultat har ett ingående saldo från föregående år!
   // I Bokio: 334 430 kr ingående + 42 075 kr årets = 376 504 kr utgående
   const ingaendeBeraknatResultat = föregåendeÅrsBeräknatResultat; // 334 430 kr
@@ -327,19 +257,6 @@ export default function Page() {
     transaktioner: [],
   });
 
-  console.log("💡 BOKIO MATCH - Beräknat resultat:", {
-    ingaende: ingaendeBeraknatResultat,
-    arets: aretsBeraknatResultat,
-    utgaende: ingaendeBeraknatResultat + aretsBeraknatResultat,
-  });
-
-  console.log("🎯 BOKIO VERIFIERING - Viktiga värden:", {
-    tillgangar: "1 048 206 kr (ska matcha)",
-    egetKapitalInklBeraknat: "669 820 kr (627 745 + 42 075)",
-    beraknatResultat: `${ingaendeBeraknatResultat + aretsBeraknatResultat} kr (334 430 + 42 075)`,
-    kortfristigaSkulder: "378 386 kr (ska matcha)",
-  });
-
   // Hitta och extrahera beräknat resultat från skulderOchEgetKapital
   const beraknatResultatKonto = rättatEgetKapital.find((k) => k.kontonummer === "9999");
   const beraknatResultatData = beraknatResultatKonto
@@ -349,8 +266,6 @@ export default function Page() {
         utgaende: beraknatResultatKonto.utgaendeSaldo, // 376 504 kr
       }
     : { ingaende: 0, arets: 0, utgaende: 0 };
-
-  console.log("💰 Beräknat resultat data för visning:", beraknatResultatData);
 
   // Ta bort beräknat resultat från den vanliga listan
   const skulderOchEgetKapitalUtanBeraknat = rättatEgetKapital.filter(
@@ -447,7 +362,7 @@ export default function Page() {
         setVerifikationer([]);
       }
     } catch (error) {
-      console.error("Fel vid hämtning av verifikationer:", error);
+      // Tyst felhantering
       setVerifikationer([]);
     } finally {
       setLoadingModal(false);
@@ -482,7 +397,6 @@ export default function Page() {
 
       setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
     } catch (error) {
-      console.error("PDF Export error:", error);
       setExportMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Ett fel uppstod vid PDF-exporten",
@@ -519,7 +433,6 @@ export default function Page() {
 
       setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
     } catch (error) {
-      console.error("CSV Export error:", error);
       setExportMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Ett fel uppstod vid CSV-exporten",
