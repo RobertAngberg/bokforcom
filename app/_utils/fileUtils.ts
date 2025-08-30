@@ -909,26 +909,46 @@ export async function exportMomsrapportPDF(
   år: string
 ): Promise<void> {
   try {
+    console.log("🔍 PDF Export - Företagsnamn:", företagsnamn);
+    console.log("🔍 PDF Export - Organisationsnummer:", organisationsnummer);
+
     const doc = new jsPDF();
 
-    // Header med samma stil som andra rapporter
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(företagsnamn, 14, 20);
+    let y = 30;
 
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(organisationsnummer, 14, 28);
+    // Header - Rapportnamn centrerat
+    doc.setFontSize(32);
+    doc.text("Momsrapport", 105, y, { align: "center" });
+    y += 10;
 
     doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Momsrapport för ${år}`, 14, 40);
-
-    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, 48);
+    doc.text(`År ${år}`, 105, y, { align: "center" });
+    y += 15;
 
-    let y = 60;
+    // Företagsnamn (bold) - samma som andra rapporter
+    const displayFöretagsnamn =
+      företagsnamn && företagsnamn.trim() !== "" ? företagsnamn : "Ditt Företag AB";
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(displayFöretagsnamn, 14, y);
+    y += 7;
+
+    // Organisationsnummer (normal) - samma som andra rapporter
+    const displayOrgnr =
+      organisationsnummer && organisationsnummer.trim() !== ""
+        ? organisationsnummer
+        : "555555-5555";
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(displayOrgnr, 14, y);
+    y += 8;
+
+    // Utskriven datum - samma som andra rapporter
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
+    y += 15;
 
     // Gruppera data per sektion
     const sektioner = [
