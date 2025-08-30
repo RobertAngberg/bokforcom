@@ -193,29 +193,25 @@ export default function Page() {
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
 
-        {/* Årval och månadsval dropdown */}
-        <div className="flex justify-center mb-6 gap-4">
-          <div className="w-32">
-            <Dropdown value={selectedYear} onChange={setSelectedYear} options={yearOptions} />
+        {/* Årval och månadsval dropdown + Export-knappar */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex gap-4">
+            <div className="w-32">
+              <Dropdown value={selectedYear} onChange={setSelectedYear} options={yearOptions} />
+            </div>
+            <div className="w-40">
+              <Dropdown value={selectedMonth} onChange={setSelectedMonth} options={monthOptions} />
+            </div>
           </div>
-          <div className="w-40">
-            <Dropdown value={selectedMonth} onChange={setSelectedMonth} options={monthOptions} />
+
+          <div className="flex gap-4">
+            <Knapp text="📊 Exportera CSV" onClick={handleExportCSV} />
+            <Knapp text="📄 Exportera PDF" onClick={handleExportPDF} />
           </div>
         </div>
 
-        {/* Export-knappar */}
-        <div className="flex justify-center mb-8 gap-4">
-          <Knapp
-            text="📊 Exportera CSV"
-            onClick={handleExportCSV}
-            className="bg-emerald-600 hover:bg-emerald-700"
-          />
-          <Knapp
-            text="📄 Exportera PDF"
-            onClick={handleExportPDF}
-            className="bg-rose-600 hover:bg-rose-700"
-          />
-        </div>
+        {/* Avskiljande linje */}
+        <hr className="border-gray-600 mb-8" />
 
         <div className="space-y-6">
           {kategoriseradeKonton.map((kategori) => {
