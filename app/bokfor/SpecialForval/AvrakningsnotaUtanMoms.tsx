@@ -8,7 +8,7 @@ import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../_utils/datum";
+import { datePickerValue, datePickerOnChange } from "../../_utils/trueDatum";
 
 interface Props {
   mode: "steg2" | "steg3";

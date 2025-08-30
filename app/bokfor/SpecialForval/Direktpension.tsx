@@ -7,7 +7,7 @@ import TextFalt from "../../_components/TextFalt";
 import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/trueDatum";
 import TillbakaPil from "../../_components/TillbakaPil";
 
 interface Props {

@@ -11,6 +11,7 @@ import {
   importeraSieData,
   rensaDubblettkonton,
 } from "./actions";
+import { dateTillÅÅÅÅMMDD } from "../_utils/trueDatum";
 
 // CP850 (Code Page 850) till Unicode mapping för svenska tecken
 const CP850_TO_UNICODE: { [key: number]: string } = {
@@ -2204,7 +2205,7 @@ export default function SiePage() {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `export_${new Date().toISOString().slice(0, 10)}.se4`;
+        link.download = `export_${dateTillÅÅÅÅMMDD(new Date())}.se4`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

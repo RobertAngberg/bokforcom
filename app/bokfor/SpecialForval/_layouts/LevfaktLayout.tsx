@@ -5,6 +5,7 @@ import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
+import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
 
 import LaddaUppFilLevfakt from "../../LaddaUppFilLevfakt";
 import Kommentar from "../../Kommentar";
@@ -106,12 +107,12 @@ export default function LevfaktLayout({
 
     // Sätt default datum
     if (!fakturadatum && setFakturadatum) {
-      setFakturadatum(new Date().toISOString());
+      setFakturadatum(datePickerOnChange(new Date()));
     }
     if (!förfallodatum && setFörfallodatum) {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      setFörfallodatum(thirtyDaysFromNow.toISOString());
+      setFörfallodatum(datePickerOnChange(thirtyDaysFromNow));
     }
   }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
 
@@ -177,8 +178,8 @@ export default function LevfaktLayout({
             <label className="block text-sm font-medium text-white mb-2">Fakturadatum</label>
             <DatePicker
               className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-              selected={fakturadatum ? new Date(fakturadatum) : null}
-              onChange={(date) => setFakturadatum?.(date?.toISOString() || "")}
+              selected={datePickerValue(fakturadatum)}
+              onChange={(date) => setFakturadatum?.(datePickerOnChange(date))}
               dateFormat="yyyy-MM-dd"
               locale="sv"
               required
@@ -188,8 +189,8 @@ export default function LevfaktLayout({
             <label className="block text-sm font-medium text-white mb-2">Förfallodatum</label>
             <DatePicker
               className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-              selected={förfallodatum ? new Date(förfallodatum) : null}
-              onChange={(date) => setFörfallodatum?.(date?.toISOString() || "")}
+              selected={datePickerValue(förfallodatum)}
+              onChange={(date) => setFörfallodatum?.(datePickerOnChange(date))}
               dateFormat="yyyy-MM-dd"
               locale="sv"
               required
@@ -208,8 +209,8 @@ export default function LevfaktLayout({
             <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
             <DatePicker
               className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-              selected={transaktionsdatum ? new Date(transaktionsdatum) : null}
-              onChange={(date) => setTransaktionsdatum(date?.toISOString().split("T")[0] || "")}
+              selected={datePickerValue(transaktionsdatum)}
+              onChange={(date) => setTransaktionsdatum(datePickerOnChange(date))}
               dateFormat="yyyy-MM-dd"
               locale="sv"
               required

@@ -8,6 +8,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
+import { datePickerValue, datePickerOnChange } from "../_utils/trueDatum";
 
 import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
 import Kommentar from "./Kommentar";
@@ -113,17 +114,17 @@ export default function Steg2Levfakt({
 
     // Sätt default datum
     if (!fakturadatum) {
-      setFakturadatum(new Date().toISOString());
+      setFakturadatum(datePickerOnChange(new Date()));
     }
     if (!förfallodatum) {
       // Default 30 dagar från idag
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      setFörfallodatum(thirtyDaysFromNow.toISOString());
+      setFörfallodatum(datePickerOnChange(thirtyDaysFromNow));
     }
     if (!betaldatum) {
       // Default betaldatum till idag
-      setBetaldatum(new Date().toISOString());
+      setBetaldatum(datePickerOnChange(new Date()));
     }
   }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
 
@@ -224,9 +225,9 @@ export default function Steg2Levfakt({
               <label className="block mb-2 text-white">Fakturadatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={fakturadatum ? new Date(fakturadatum) : new Date()}
+                selected={datePickerValue(fakturadatum) || new Date()}
                 onChange={(date) => {
-                  setFakturadatum(date ? date.toISOString() : "");
+                  setFakturadatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -239,9 +240,9 @@ export default function Steg2Levfakt({
               <label className="block mb-2 text-white">Förfallodatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={förfallodatum ? new Date(förfallodatum) : new Date()}
+                selected={datePickerValue(förfallodatum) || new Date()}
                 onChange={(date) => {
-                  setFörfallodatum(date ? date.toISOString() : "");
+                  setFörfallodatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -285,9 +286,9 @@ export default function Steg2Levfakt({
               <label className="block mb-2 text-white">Betaldatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={betaldatum ? new Date(betaldatum) : new Date()}
+                selected={datePickerValue(betaldatum) || new Date()}
                 onChange={(date) => {
-                  setBetaldatum(date ? date.toISOString() : "");
+                  setBetaldatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"

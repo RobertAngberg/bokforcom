@@ -8,6 +8,7 @@ import KnappFullWidth from "../../_components/KnappFullWidth";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../_utils/trueDatum";
 
 interface Props {
   mode: "steg2" | "steg3";
@@ -102,8 +103,8 @@ export default function Pensionsforsakring({
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={transaktionsdatum ? new Date(transaktionsdatum) : null}
-                onChange={(d) => setTransaktionsdatum(d ? d.toISOString().split("T")[0] : "")}
+                selected={datePickerValue(transaktionsdatum)}
+                onChange={(d) => setTransaktionsdatum(datePickerOnChange(d))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required

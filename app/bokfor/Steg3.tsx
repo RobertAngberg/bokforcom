@@ -10,6 +10,7 @@ import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
 import { formatSEK, formatCurrency, round } from "../_utils/format";
 import { type Leverantör } from "../faktura/actions";
+import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
 
 type KontoRad = {
   kontonummer?: string;
@@ -307,7 +308,7 @@ export default function Steg3({
         }
 
         // Använd fakturadatum om tillgängligt, annars dagens datum
-        const datum = fakturadatum || new Date().toISOString().split("T")[0];
+        const datum = fakturadatum || dateTillÅÅÅÅMMDD(new Date());
 
         const blobResult = await uploadReceiptImage(fil, {
           beskrivning,
@@ -423,7 +424,7 @@ export default function Steg3({
       </h1>
       <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
       <p className="text-center text-gray-300 mb-2">
-        {transaktionsdatum ? new Date(transaktionsdatum).toLocaleDateString("sv-SE") : ""}
+        {transaktionsdatum ? dateTillÅÅÅÅMMDD(ÅÅÅÅMMDDTillDate(transaktionsdatum)) : ""}
       </p>
       {levfaktMode && leverantör && (
         <div className="text-center mb-6">

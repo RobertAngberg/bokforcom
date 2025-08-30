@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
 import KnappFullWidth from "../_components/KnappFullWidth";
 import { skapaKonton, importeraSieData } from "./actions";
+import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
 
 interface SieData {
   header: {
@@ -128,8 +129,8 @@ export default function ImportWizard({
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("sv-SE");
+    const date = ÅÅÅÅMMDDTillDate(dateStr);
+    return date ? dateTillÅÅÅÅMMDD(date) : dateStr;
   };
 
   return (

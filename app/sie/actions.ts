@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { put } from "@vercel/blob";
 import { getUserId } from "../_utils/authUtils";
 import { validateSessionAttempt } from "../_utils/rateLimit";
+import { dateTillÅÅÅÅMMDD } from "../_utils/trueDatum";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -1279,8 +1280,7 @@ export async function importeraSieData(
         if (duplicateRows.length > 0) {
           const duplicatesList = duplicateRows
             .map(
-              (row: any) =>
-                `• ${row.kontobeskrivning} (${row.transaktionsdatum.toISOString().split("T")[0]})`
+              (row: any) => `• ${row.kontobeskrivning} (${dateTillÅÅÅÅMMDD(row.transaktionsdatum)})`
             )
             .join("\n");
 
@@ -1814,7 +1814,7 @@ export async function exporteraSieData(
 
     const företag = företagQuery.rows[0];
     const idag = new Date();
-    const datumSträng = `${idag.getFullYear()}${String(idag.getMonth() + 1).padStart(2, "0")}${String(idag.getDate()).padStart(2, "0")}`;
+    const datumSträng = dateTillÅÅÅÅMMDD(idag).replace(/-/g, "");
 
     // Bygg SIE 4 fil enligt den fungerande standarden
     let sieContent = "";
@@ -1976,7 +1976,7 @@ export async function exporteraSieData(
 
         if (!verifikationer.has(transId)) {
           const datum = new Date(row.transaktionsdatum);
-          const datumStr = `${datum.getFullYear()}${String(datum.getMonth() + 1).padStart(2, "0")}${String(datum.getDate()).padStart(2, "0")}`;
+          const datumStr = dateTillÅÅÅÅMMDD(datum).replace(/-/g, "");
           const beskrivning = sieEscape(row.kommentar || row.kontobeskrivning || "Transaktion");
 
           verifikationer.set(transId, {

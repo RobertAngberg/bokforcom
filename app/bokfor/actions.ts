@@ -4,7 +4,7 @@
 import { Pool } from "pg";
 import { formatSEK } from "../_utils/format";
 import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
-import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
+import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/trueDatum";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import OpenAI from "openai";
 import { put } from "@vercel/blob";
@@ -502,7 +502,7 @@ export async function saveTransaction(formData: FormData) {
     console.log("🔍 DEBUG: Fil typ:", fil.type);
 
     try {
-      const datum = new Date(transaktionsdatum).toISOString().slice(0, 10);
+      const datum = dateTillÅÅÅÅMMDD(new Date(transaktionsdatum));
       const fileExtension = fil.name.split(".").pop() || "";
       const timestamp = Date.now();
       const originalName = sanitizeFilename(fil.name.split(".")[0]);
