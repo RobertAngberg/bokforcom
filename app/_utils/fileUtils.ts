@@ -562,13 +562,13 @@ export async function exportBalansrapportPDF(
           fillColor: [248, 249, 250],
         },
         columnStyles: {
-          0: { cellWidth: 25 }, // Konto
-          1: { cellWidth: 80 }, // Beskrivning
-          2: { cellWidth: 30, halign: "right" }, // Ing. balans
-          3: { cellWidth: 30, halign: "right" }, // Resultat
-          4: { cellWidth: 30, halign: "right" }, // Utg. balans
+          0: { cellWidth: 24 }, // Konto
+          1: { cellWidth: 75 }, // Beskrivning
+          2: { cellWidth: 28, halign: "right" }, // Ing. balans
+          3: { cellWidth: 28, halign: "right" }, // Resultat
+          4: { cellWidth: 28, halign: "right" }, // Utg. balans
         },
-        margin: { left: 14, right: 14 },
+        margin: { left: 10, right: 10 },
         didDrawPage: (data) => {
           if (data.cursor) y = data.cursor.y + 8;
         },
@@ -576,25 +576,6 @@ export async function exportBalansrapportPDF(
 
       y += 4;
     });
-
-    // Balanskontroll
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 128, 0);
-    doc.text("Balanskontroll", 14, y);
-    if (beraknatResultat !== 0) {
-      y += 7;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(150, 150, 0);
-      doc.text(
-        `Beräknat resultat: ${formatSEKForExport(beraknatResultat)} ingår i eget kapital`,
-        14,
-        y
-      );
-    }
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
 
     const filename = generateFilename(
       `balansrapport_${selectedYear}${selectedMonth !== "alla" ? `_${selectedMonth}` : ""}`,
