@@ -692,7 +692,7 @@ export default function Page() {
         <h1 className="text-3xl text-center mb-8">Resultatrapport</h1>
 
         {/* Rörelsens intäkter */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Rörelsens intäkter</h2>
+        <h2 className="text-xl font-semibold mt-16 mb-4 text-center">Rörelsens intäkter</h2>
         {renderGrupper(data.intakter, true, "💰")}
         <Totalrad
           label="Summa rörelsens intäkter"
@@ -705,29 +705,19 @@ export default function Page() {
         />
 
         {/* Rörelsens kostnader */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Rörelsens kostnader</h2>
+        <h2 className="text-xl font-semibold mt-10 mb-4 text-center">Rörelsens kostnader</h2>
         {renderGrupper(data.rorelsensKostnader, false, "💸")}
-        <Totalrad
-          label="Summa rörelsens kostnader"
-          values={{
-            [`Ing. balans\n${previousYear}-01-01`]: -rorelsensSum[previousYear] || 0,
-            Resultat: -rorelsensSum[currentYear] || 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (-rorelsensSum[previousYear] || 0) + (-rorelsensSum[currentYear] || 0),
-          }}
-        />
-
-        {/* Rörelsens resultat */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Rörelsens resultat</h2>
-        <Totalrad
-          label="Summa rörelsens resultat"
-          values={{
-            [`Ing. balans\n${previousYear}-01-01`]: rorelsensResultat[previousYear] ?? 0,
-            Resultat: rorelsensResultat[currentYear] ?? 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (rorelsensResultat[previousYear] ?? 0) + (rorelsensResultat[currentYear] ?? 0),
-          }}
-        />
+        <div className="mb-10">
+          <Totalrad
+            label="Summa rörelsens kostnader"
+            values={{
+              [`Ing. balans\n${previousYear}-01-01`]: -rorelsensSum[previousYear] || 0,
+              Resultat: -rorelsensSum[currentYear] || 0,
+              [`Utg. balans\n${currentYear}-12-31`]:
+                (-rorelsensSum[previousYear] || 0) + (-rorelsensSum[currentYear] || 0),
+            }}
+          />
+        </div>
 
         {/* Finansiella intäkter */}
         {data.finansiellaIntakter && data.finansiellaIntakter.length > 0 && (
@@ -764,31 +754,6 @@ export default function Page() {
             />
           </>
         )}
-
-        {/* Resultat efter finansiella poster */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Resultat efter finansiella poster</h2>
-        <Totalrad
-          label="Resultat efter finansiella poster"
-          values={{
-            [`Ing. balans\n${previousYear}-01-01`]: resultatEfterFinansiella[previousYear] ?? 0,
-            Resultat: resultatEfterFinansiella[currentYear] ?? 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (resultatEfterFinansiella[previousYear] ?? 0) +
-              (resultatEfterFinansiella[currentYear] ?? 0),
-          }}
-        />
-
-        {/* Beräknat resultat */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Beräknat resultat</h2>
-        <Totalrad
-          label="Beräknat resultat"
-          values={{
-            [`Ing. balans\n${previousYear}-01-01`]: resultat[previousYear] ?? 0,
-            Resultat: resultat[currentYear] ?? 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
-          }}
-        />
       </div>
 
       {/* Modal för verifikat */}
@@ -826,6 +791,103 @@ export default function Page() {
           />
         )}
       </Modal>
+
+      {/* Slutsummor */}
+      <div className="mx-auto px-4 text-white">
+        <h2 className="text-xl font-semibold mt-12 mb-4 text-center">Resultat</h2>
+        <AnimeradFlik title="Resultat" icon="📊">
+          <Tabell
+            columns={[
+              {
+                key: "beskrivning",
+                label: "Konto",
+                render: (_, row) => <div className="font-medium">{row.beskrivning}</div>,
+              },
+              {
+                key: "ingBalans",
+                label: `Ing. balans\n${previousYear}-01-01`,
+                className: "text-right whitespace-pre-line",
+                render: (_, row) => formatSEK(row.ingBalans),
+              },
+              {
+                key: "resultat",
+                label: "Resultat",
+                className: "text-right",
+                render: (_, row) => formatSEK(row.resultat),
+              },
+              {
+                key: "utgBalans",
+                label: `Utg. balans\n${currentYear}-12-31`,
+                className: "text-right whitespace-pre-line",
+                render: (_, row) => formatSEK(row.utgBalans),
+              },
+            ]}
+            data={[
+              {
+                id: "rorelsens-resultat",
+                beskrivning: "Rörelsens resultat",
+                ingBalans: rorelsensResultat[previousYear] ?? 0,
+                resultat: rorelsensResultat[currentYear] ?? 0,
+                utgBalans:
+                  (rorelsensResultat[previousYear] ?? 0) + (rorelsensResultat[currentYear] ?? 0),
+              },
+              ...(data.finansiellaIntakter && data.finansiellaIntakter.length > 0
+                ? [
+                    {
+                      id: "finansiella-intakter",
+                      beskrivning: "Finansiella intäkter",
+                      ingBalans: finansiellaIntakterSum[previousYear] ?? 0,
+                      resultat: finansiellaIntakterSum[currentYear] ?? 0,
+                      utgBalans:
+                        (finansiellaIntakterSum[previousYear] ?? 0) +
+                        (finansiellaIntakterSum[currentYear] ?? 0),
+                    },
+                  ]
+                : []),
+              ...(data.finansiellaKostnader && data.finansiellaKostnader.length > 0
+                ? [
+                    {
+                      id: "finansiella-kostnader",
+                      beskrivning: "Finansiella kostnader",
+                      ingBalans: finansiellaKostnaderSum[previousYear] ?? 0,
+                      resultat: finansiellaKostnaderSum[currentYear] ?? 0,
+                      utgBalans:
+                        (finansiellaKostnaderSum[previousYear] ?? 0) +
+                        (finansiellaKostnaderSum[currentYear] ?? 0),
+                    },
+                  ]
+                : []),
+              {
+                id: "resultat-efter-finansiella",
+                beskrivning: "Resultat efter finansiella poster",
+                ingBalans: resultatEfterFinansiella[previousYear] ?? 0,
+                resultat: resultatEfterFinansiella[currentYear] ?? 0,
+                utgBalans:
+                  (resultatEfterFinansiella[previousYear] ?? 0) +
+                  (resultatEfterFinansiella[currentYear] ?? 0),
+              },
+              {
+                id: "beraknat-resultat",
+                beskrivning: "Beräknat resultat",
+                ingBalans: resultat[previousYear] ?? 0,
+                resultat: resultat[currentYear] ?? 0,
+                utgBalans: (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
+              },
+            ]}
+            getRowId={(row) => row.id}
+          />
+        </AnimeradFlik>
+
+        <Totalrad
+          label="Beräknat resultat"
+          values={{
+            [`Ing. balans\n${previousYear}-01-01`]: resultat[previousYear] ?? 0,
+            Resultat: resultat[currentYear] ?? 0,
+            [`Utg. balans\n${currentYear}-12-31`]:
+              (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
+          }}
+        />
+      </div>
 
       {exportMessage && (
         <div
