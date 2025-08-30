@@ -955,7 +955,7 @@ export default function Page() {
         <h1 className="text-3xl text-center mb-8">Balansrapport</h1>
 
         {/* TILLGÅNGAR - Bokio-stil */}
-        <h2 className="text-xl font-semibold mt-8 mb-4">Tillgångar</h2>
+        <h2 className="text-xl font-semibold mt-16 mb-4 text-center">Tillgångar</h2>
 
         {/* Anläggningstillgångar */}
         {anläggningstillgångar.length > 0 && (
@@ -998,7 +998,7 @@ export default function Page() {
         />
 
         {/* EGET KAPITAL OCH SKULDER - Bokio-stil */}
-        <h2 className="text-xl font-semibold mt-10 mb-4">Eget kapital och skulder</h2>
+        <h2 className="text-xl font-semibold mt-10 mb-4 text-center">Eget kapital och skulder</h2>
 
         {/* Eget kapital */}
         {egetKapital.length > 0 && (
@@ -1010,16 +1010,18 @@ export default function Page() {
               // BOKIO KORREKT: Eget kapital inkluderar beräknat resultat i sammanfattningen
               egetKapitalSum.utgaende + beraknatResultatData.utgaende
             )}
-            <Totalrad
-              label="Eget kapital"
-              values={{
-                [`Ing. balans\n${processedData.year}-01-01`]:
-                  egetKapitalSum.ingaende + beraknatResultatData.ingaende,
-                Resultat: egetKapitalSum.arets + beraknatResultatData.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]:
-                  egetKapitalSum.utgaende + beraknatResultatData.utgaende,
-              }}
-            />
+            <div className="mb-10">
+              <Totalrad
+                label="Eget kapital"
+                values={{
+                  [`Ing. balans\n${processedData.year}-01-01`]:
+                    egetKapitalSum.ingaende + beraknatResultatData.ingaende,
+                  Resultat: egetKapitalSum.arets + beraknatResultatData.arets,
+                  [`Utg. balans\n${processedData.year}-12-31`]:
+                    egetKapitalSum.utgaende + beraknatResultatData.utgaende,
+                }}
+              />
+            </div>
           </>
         )}
 

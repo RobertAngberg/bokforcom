@@ -156,7 +156,6 @@ export default function Page() {
                         : "💸"
                 }
                 visaSummaDirekt={formatSEKLocal(totalSumma)}
-                forcedOpen={true}
               >
                 <div className="space-y-8">
                   {kategori.konton.map((konto) => (
