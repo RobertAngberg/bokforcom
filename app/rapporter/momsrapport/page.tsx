@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
+import Knapp from "../../_components/Knapp";
 import { getMomsrapport, fetchFöretagsprofil } from "./actions";
 
 type MomsRad = {
@@ -20,13 +21,11 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
 
   const [år, setÅr] = useState("2025");
-  const [kvartal, setKvartal] = useState("Hela året");
   const [activeId, setActiveId] = useState<string | number | null>(null);
   //#endregion
 
   //#region Constants
   const årLista = ["2023", "2024", "2025"];
-  const kvartalLista = ["Hela året", "Q1", "Q2", "Q3", "Q4"];
   //#endregion
 
   // Ladda data när komponenten mountas
@@ -100,19 +99,8 @@ export default function Page() {
       "62": "MomsImportUtgLag",
     };
 
-    // Formatera period baserat på år och kvartal
-    let period = "";
-    if (kvartal === "Hela året") {
-      period = `${år}12`; // Hela året = sista månaden
-    } else if (kvartal === "Q1") {
-      period = `${år}03`;
-    } else if (kvartal === "Q2") {
-      period = `${år}06`;
-    } else if (kvartal === "Q3") {
-      period = `${år}09`;
-    } else if (kvartal === "Q4") {
-      period = `${år}12`;
-    }
+    // Formatera period för hela året
+    const period = `${år}12`; // Hela året = sista månaden
 
     // Bygg XML-struktur med Bokio's format
     let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
@@ -145,7 +133,7 @@ export default function Page() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `momsdeklaration_${år}_${kvartal}.xml`;
+    a.download = `momsdeklaration_${år}.xml`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -256,40 +244,18 @@ export default function Page() {
           </div>
         )}
 
-        <h1 className="text-3xl text-center mb-4 text-white">
-          Momsrapport för {år}
-          {kvartal !== "Hela året" ? ` – ${kvartal}` : ""}
-        </h1>
+        <h1 className="text-2xl font-bold text-center mb-8">Momsrapport för {år}</h1>
 
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex justify-between items-center mb-8">
           <Dropdown
             value={år}
             onChange={setÅr}
             placeholder="Välj år"
             options={årLista.map((y) => ({ label: y, value: y }))}
+            className="w-32"
           />
 
-          <Dropdown
-            value={kvartal}
-            onChange={setKvartal}
-            placeholder="Kvartal"
-            options={kvartalLista.map((k) => ({ label: k, value: k }))}
-          />
-
-          <button
-            onClick={exportXML}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Exportera XML
-          </button>
+          <Knapp text="Exportera XML" onClick={exportXML} className="flex items-center gap-2" />
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 mb-10">
