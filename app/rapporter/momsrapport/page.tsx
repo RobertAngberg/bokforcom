@@ -5,7 +5,7 @@ import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
-import jsPDF from "jspdf";
+import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
 import { getMomsrapport, fetchFöretagsprofil } from "./actions";
 
 type MomsRad = {
@@ -141,66 +141,20 @@ export default function Page() {
     URL.revokeObjectURL(url);
   };
 
-  const exportPDF = () => {
-    const doc = new jsPDF();
+  const exportPDF = async () => {
+    try {
+      await exportMomsrapportPDF(initialData, företagsnamn, organisationsnummer, år);
+    } catch (error) {
+      console.error("PDF export failed:", error);
+    }
+  };
 
-    // Header
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(företagsnamn || "Företag", 14, 20);
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(organisationsnummer || "", 14, 28);
-
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Momsrapport för ${år}`, 14, 40);
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, 48);
-
-    let y = 60;
-
-    // Gruppera data per sektion
-    const sektioner = [
-      {
-        titel: "A. Momspliktig försäljning eller uttag exkl. moms",
-        fält: ["05", "06", "07", "08"],
-      },
-      { titel: "B. Utgående moms på försäljning", fält: ["10", "11", "12"] },
-      { titel: "C. Inköp varor från annat EU-land", fält: ["20", "21", "22", "23"] },
-      { titel: "D. Utgående moms", fält: ["30", "31", "32"] },
-      { titel: "E. Erhållen förskottsbetalning", fält: ["35", "36", "37", "38", "39"] },
-      { titel: "F. Övriga", fält: ["40", "41", "42", "50", "60", "61", "62"] },
-      { titel: "G. Summeringar", fält: ["48", "49"] },
-    ];
-
-    sektioner.forEach((sektion) => {
-      // Sektion header
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text(sektion.titel, 14, y);
-      y += 8;
-
-      // Sektions data
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-
-      sektion.fält.forEach((fältKod) => {
-        const rad = initialData.find((r) => r.fält === fältKod);
-        if (rad && rad.belopp !== 0) {
-          doc.text(`${rad.fält}: ${rad.beskrivning}`, 20, y);
-          doc.text(`${rad.belopp.toLocaleString("sv-SE")} kr`, 160, y);
-          y += 6;
-        }
-      });
-
-      y += 4; // Extra space mellan sektioner
-    });
-
-    doc.save(`momsrapport_${år}.pdf`);
+  const exportCSV = async () => {
+    try {
+      await exportMomsrapportCSV(initialData, företagsnamn, organisationsnummer, år);
+    } catch (error) {
+      console.error("CSV export failed:", error);
+    }
   };
   //#endregion
 
@@ -320,6 +274,7 @@ export default function Page() {
 
           <div className="flex gap-3">
             <Knapp text="📄 Exportera PDF" onClick={exportPDF} />
+            <Knapp text="📊 Exportera CSV" onClick={exportCSV} />
             <Knapp text="Exportera XML" onClick={exportXML} />
           </div>
         </div>

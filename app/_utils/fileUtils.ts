@@ -3,6 +3,9 @@
  * Eliminerar upprepning av fil-hanteringslogik
  */
 
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
 /**
  * Ladda ner fil från innehåll
  * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
@@ -720,8 +723,15 @@ export async function exportResultatrapportPDF(
         // Summeringsrad
         if (rows.length > 1) {
           rows.push([
-            { content: `Summa ${grupp.namn.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
-            { content: formatSEKForExport(grupp.summa), styles: { fontStyle: "bold", halign: "right" } },
+            {
+              content: `Summa ${grupp.namn.toLowerCase()}`,
+              colSpan: 2,
+              styles: { fontStyle: "bold" },
+            },
+            {
+              content: formatSEKForExport(grupp.summa),
+              styles: { fontStyle: "bold", halign: "right" },
+            },
           ]);
         }
 
@@ -770,7 +780,10 @@ export async function exportResultatrapportPDF(
       body: [
         [
           { content: "Årets resultat", colSpan: 2, styles: { fontStyle: "bold" } },
-          { content: formatSEKForExport(nettoResultat), styles: { fontStyle: "bold", halign: "right" } },
+          {
+            content: formatSEKForExport(nettoResultat),
+            styles: { fontStyle: "bold", halign: "right" },
+          },
         ],
       ],
       theme: "striped",
@@ -861,7 +874,7 @@ export function exportResultatrapportCSV(
       if (!data || data.length === 0) return;
 
       csv += `${titel}\nKonto;Beskrivning;Belopp\n`;
-      
+
       data.forEach((grupp) => {
         grupp.konton.forEach((konto) => {
           csv += `${konto.kontonummer};"${konto.beskrivning}";${formatSEKForExport(konto.belopp)}\n`;
@@ -881,6 +894,110 @@ export function exportResultatrapportCSV(
       "csv"
     );
 
+    downloadFile(csv, filename, "text/csv;charset=utf-8");
+  } catch (error) {
+    console.error("CSV Export error:", error);
+    throw new Error("Ett fel uppstod vid CSV-exporten");
+  }
+}
+
+// Momsrapport export functions
+export async function exportMomsrapportPDF(
+  data: Array<{ fält: string; beskrivning: string; belopp: number }>,
+  företagsnamn: string,
+  organisationsnummer: string,
+  år: string
+): Promise<void> {
+  try {
+    const doc = new jsPDF();
+
+    // Header med samma stil som andra rapporter
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(företagsnamn, 14, 20);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(organisationsnummer, 14, 28);
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Momsrapport för ${år}`, 14, 40);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, 48);
+
+    let y = 60;
+
+    // Gruppera data per sektion
+    const sektioner = [
+      {
+        titel: "A. Momspliktig försäljning eller uttag exkl. moms",
+        fält: ["05", "06", "07", "08"],
+      },
+      { titel: "B. Utgående moms på försäljning", fält: ["10", "11", "12"] },
+      { titel: "C. Inköp varor från annat EU-land", fält: ["20", "21", "22", "23"] },
+      { titel: "D. Utgående moms", fält: ["30", "31", "32"] },
+      { titel: "E. Erhållen förskottsbetalning", fält: ["35", "36", "37", "38", "39"] },
+      { titel: "F. Övriga", fält: ["40", "41", "42", "50", "60", "61", "62"] },
+      { titel: "G. Summeringar", fält: ["48", "49"] },
+    ];
+
+    sektioner.forEach((sektion) => {
+      // Sektion header
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(sektion.titel, 14, y);
+      y += 8;
+
+      // Sektions data
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      sektion.fält.forEach((fältKod) => {
+        const rad = data.find((r) => r.fält === fältKod);
+        if (rad && rad.belopp !== 0) {
+          doc.text(`${rad.fält}: ${rad.beskrivning}`, 20, y);
+          doc.text(`${formatSEKForExport(rad.belopp)} kr`, 160, y);
+          y += 6;
+        }
+      });
+
+      y += 4; // Extra space mellan sektioner
+    });
+
+    const filename = generateFilename(`momsrapport_${år}`, new Date(), "pdf");
+    doc.save(filename);
+  } catch (error) {
+    console.error("PDF Export error:", error);
+    throw new Error("Ett fel uppstod vid PDF-exporten");
+  }
+}
+
+export async function exportMomsrapportCSV(
+  data: Array<{ fält: string; beskrivning: string; belopp: number }>,
+  företagsnamn: string,
+  organisationsnummer: string,
+  år: string
+): Promise<void> {
+  try {
+    let csv = "\uFEFF"; // BOM för korrekt UTF-8 i Excel
+    csv += `Momsrapport\n`;
+    csv += `Företag: ${företagsnamn}\n`;
+    csv += `Organisationsnummer: ${organisationsnummer}\n`;
+    csv += `År: ${år}\n`;
+    csv += `Utskriven: ${new Date().toLocaleDateString("sv-SE")}\n\n`;
+
+    csv += "Fält;Beskrivning;Belopp\n";
+
+    data.forEach((rad) => {
+      if (rad.belopp !== 0) {
+        csv += `${rad.fält};"${rad.beskrivning}";${formatSEKForExport(rad.belopp)}\n`;
+      }
+    });
+
+    const filename = generateFilename(`momsrapport_${år}`, new Date(), "csv");
     downloadFile(csv, filename, "text/csv;charset=utf-8");
   } catch (error) {
     console.error("CSV Export error:", error);
