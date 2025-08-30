@@ -5,12 +5,14 @@ import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Totalrad from "../../_components/Totalrad";
 import Knapp from "../../_components/Knapp";
+import Dropdown from "../../_components/Dropdown";
 import VerifikatModal from "../../_components/VerifikatModal";
 import Modal from "../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { fetchBalansData, fetchFöretagsprofil } from "./actions";
+import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
 
 type Transaktion = {
   id: string;
@@ -50,6 +52,10 @@ export default function Page() {
   const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // Filter state
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>("all"); // "Alla månader" som default
+
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
 
@@ -67,13 +73,14 @@ export default function Page() {
   } | null>(null);
   //#endregion
 
-  // Ladda data när komponenten mountas
+  // Ladda data när komponenten mountas eller året ändras
   useEffect(() => {
     const loadData = async () => {
       try {
-        const year = new Date().getFullYear().toString();
+        setLoading(true);
+        setExportMessage(null); // Rensa export-meddelanden vid ny laddning
         const [balansData, profilData] = await Promise.all([
-          fetchBalansData(year),
+          fetchBalansData(selectedYear),
           fetchFöretagsprofil(),
         ]);
 
@@ -88,7 +95,7 @@ export default function Page() {
     };
 
     loadData();
-  }, []);
+  }, [selectedYear]); // Lägg till selectedYear som dependency
 
   // Om data fortfarande laddas
   if (loading || !initialData) {
@@ -460,106 +467,19 @@ export default function Page() {
         throw new Error("Ingen data att exportera");
       }
 
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      // Använd modular export function från fileUtils
+      await exportBalansrapportPDF(
+        tillgangar,
+        skulderOchEgetKapital,
+        sumTillgangar,
+        sumSkulderEK,
+        beraknatResultat,
+        företagsnamn || "Företag",
+        organisationsnummer || "",
+        selectedMonth === "all" ? "12" : selectedMonth, // Använd december för "alla månader"
+        selectedYear
+      );
 
-      // Header
-      let y = 30;
-      doc.setFontSize(32);
-      doc.text("Balansrapport", 105, y, { align: "center" });
-
-      // Margin bottom under rubrik
-      y += 22;
-
-      // Företagsnamn (bold)
-      if (företagsnamn) {
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text(företagsnamn, 14, y);
-        y += 7;
-      }
-
-      // Organisationsnummer (normal)
-      if (organisationsnummer) {
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-        doc.text(organisationsnummer, 14, y);
-        y += 8;
-      }
-
-      // Utskriven datum
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Utskriven: ${new Date().toISOString().slice(0, 10)}`, 14, y);
-
-      y += 18;
-
-      // Dynamiska grupper
-      const grupper = [
-        { titel: "Tillgångar", konton: tillgangar },
-        { titel: "Eget kapital och skulder", konton: skulderOchEgetKapital },
-      ];
-
-      grupper.forEach(({ titel, konton }) => {
-        doc.setFontSize(15);
-        doc.setFont("helvetica", "bold");
-        doc.text(titel, 14, y);
-        y += 8;
-
-        // Tabellrader
-        const rows: any[][] = konton.map((konto) => [
-          konto.kontonummer,
-          konto.beskrivning,
-          formatSEK(konto.utgaendeSaldo),
-        ]);
-
-        // Summeringsrad med colSpan
-        const summa = konton.reduce((sum, k) => sum + (k.utgaendeSaldo ?? 0), 0);
-        rows.push([
-          { content: `Summa ${titel.toLowerCase()}`, colSpan: 2, styles: { fontStyle: "bold" } },
-          { content: formatSEK(summa), styles: { fontStyle: "bold", halign: "left" } },
-        ]);
-
-        autoTable(doc, {
-          startY: y,
-          head: [["Konto", "Beskrivning", "Saldo"]],
-          body: rows,
-          theme: "plain",
-          styles: { fontSize: 12, textColor: "#111", halign: "left" },
-          headStyles: { fontStyle: "bold", textColor: "#111" },
-          margin: { left: 14, right: 14 },
-          columnStyles: {
-            0: { cellWidth: 32 },
-            1: { cellWidth: 110 },
-            2: { cellWidth: 34 },
-          },
-          didDrawPage: (data) => {
-            if (data.cursor) y = data.cursor.y + 8;
-          },
-        });
-
-        y += 4;
-      });
-
-      // Balanskontroll
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 128, 0);
-      doc.text("Balanskontroll", 14, y);
-      if (beraknatResultat !== 0) {
-        y += 7;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(150, 150, 0);
-        doc.text(`Beräknat resultat: ${formatSEK(beraknatResultat)} ingår i eget kapital`, 14, y);
-      }
-      doc.setTextColor(0, 0, 0);
-      doc.setFont("helvetica", "normal");
-
-      doc.save("balansrapport.pdf");
       setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
     } catch (error) {
       console.error("PDF Export error:", error);
@@ -584,37 +504,18 @@ export default function Page() {
         throw new Error("Ingen data att exportera");
       }
 
-      let csv = `Balansrapport ${year}\n\n`;
-      csv += "Tillgångar\nKonto;Beskrivning;Saldo\n";
-      tillgangar.forEach((konto) => {
-        csv +=
-          [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
-          "\n";
-      });
-      csv += `;Summa tillgångar;${formatSEK(sumTillgangar)}\n\n`;
-
-      csv += "Eget kapital och skulder\nKonto;Beskrivning;Saldo\n";
-      skulderOchEgetKapital.forEach((konto) => {
-        csv +=
-          [konto.kontonummer, `"${konto.beskrivning}"`, formatSEK(konto.utgaendeSaldo)].join(";") +
-          "\n";
-      });
-      csv += `;Summa eget kapital och skulder;${formatSEK(sumSkulderEK)}\n\n`;
-
-      csv += "Balanskontroll\n";
-      if (beraknatResultat !== 0) {
-        csv += `Beräknat resultat;${formatSEK(beraknatResultat)}\n`;
-      }
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "balansrapport.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Använd modular export function från fileUtils
+      exportBalansrapportCSV(
+        tillgangar,
+        skulderOchEgetKapital,
+        sumTillgangar,
+        sumSkulderEK,
+        beraknatResultat,
+        företagsnamn || "Företag",
+        organisationsnummer || "",
+        selectedMonth === "all" ? "12" : selectedMonth, // Använd december för "alla månader"
+        selectedYear
+      );
 
       setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
     } catch (error) {
@@ -954,6 +855,78 @@ export default function Page() {
       <div className="mx-auto px-4 text-white">
         <h1 className="text-3xl text-center mb-8">Balansrapport</h1>
 
+        {/* Filter- och knappsektion överst */}
+        <div className="mb-8 space-y-4">
+          {/* Filter och knappar - dropdowns till vänster, export-knappar till höger */}
+          <div className="flex justify-between items-center">
+            {/* Vänster sida - År och månad dropdowns */}
+            <div className="flex items-center gap-4">
+              {/* År dropdown utan label */}
+              <Dropdown
+                value={selectedYear}
+                onChange={setSelectedYear}
+                options={Array.from({ length: 10 }, (_, i) => {
+                  const year = new Date().getFullYear() - i;
+                  return {
+                    label: year.toString(),
+                    value: year.toString(),
+                  };
+                })}
+              />
+
+              {/* Månad dropdown utan label med "Alla månader" som default */}
+              <Dropdown
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                className="max-w-[280px] w-full"
+                options={[
+                  { label: "Alla månader", value: "all" },
+                  { label: "Januari", value: "01" },
+                  { label: "Februari", value: "02" },
+                  { label: "Mars", value: "03" },
+                  { label: "April", value: "04" },
+                  { label: "Maj", value: "05" },
+                  { label: "Juni", value: "06" },
+                  { label: "Juli", value: "07" },
+                  { label: "Augusti", value: "08" },
+                  { label: "September", value: "09" },
+                  { label: "Oktober", value: "10" },
+                  { label: "November", value: "11" },
+                  { label: "December", value: "12" },
+                ]}
+              />
+            </div>
+
+            {/* Höger sida - Export-knappar med emojis */}
+            <div className="flex items-center gap-4">
+              <Knapp
+                text="📄 Exportera PDF"
+                onClick={handleExportPDF}
+                disabled={isExportingPDF}
+                className={isExportingPDF ? "opacity-50" : ""}
+              />
+              <Knapp
+                text="📊 Exportera CSV"
+                onClick={handleExportCSV}
+                disabled={isExportingCSV}
+                className={isExportingCSV ? "opacity-50" : ""}
+              />
+            </div>
+          </div>{" "}
+          {/* HR under knapparna */}
+          <hr className="border-gray-600 my-6" />
+          {/* Export-status meddelanden */}
+          {isExportingPDF && <div className="text-center text-blue-400">Genererar PDF...</div>}
+          {isExportingCSV && <div className="text-center text-blue-400">Genererar CSV...</div>}
+          {exportMessage && (
+            <div
+              className={`text-center ${exportMessage.type === "success" ? "text-green-400" : "text-red-400"}`}
+            >
+              {exportMessage.text}
+            </div>
+          )}
+        </div>
+
         {/* TILLGÅNGAR - Bokio-stil */}
         <h2 className="text-xl font-semibold mt-16 mb-4 text-center">Tillgångar</h2>
 
@@ -1082,22 +1055,6 @@ export default function Page() {
             [`Utg. balans\n${processedData.year}-12-31`]: totalEgetKapitalOchSkulder.utgaende,
           }}
         />
-
-        {/* Export-knappar */}
-        <div className="flex gap-4 mt-8 justify-center">
-          <Knapp
-            text="Exportera till PDF"
-            onClick={handleExportPDF}
-            disabled={isExportingPDF}
-            className={isExportingPDF ? "opacity-50" : ""}
-          />
-          <Knapp text="Exportera till CSV" onClick={handleExportCSV} />
-        </div>
-
-        {isExportingPDF && <div className="text-center mt-4 text-blue-400">Genererar PDF...</div>}
-        {exportMessage && (
-          <div className="text-center mt-4 text-green-400">{exportMessage.text}</div>
-        )}
       </div>
 
       {/* Modal för verifikat */}

@@ -7,12 +7,20 @@ type DropdownProps = {
   options: { label: string; value: string }[];
   onChange: (value: string) => void;
   placeholder?: string;
+  className?: string;
 };
 //#endregion
 
-export default function Dropdown({ label, value, options, onChange, placeholder }: DropdownProps) {
+export default function Dropdown({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  className,
+}: DropdownProps) {
   return (
-    <div className="max-w-[220px] w-full">
+    <div className={className || "max-w-[220px] w-full"}>
       {label && <label className="block text-sm font-medium text-white mb-2">{label}</label>}
       <select
         value={value}
