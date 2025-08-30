@@ -92,14 +92,19 @@ type HuvudbokKonto = {
 };
 
 /**
- * Formatera SEK med svensk lokalformatering
+ * Formatera SEK med svensk lokalformatering för PDF och CSV export
+ *
+ * VIKTIGT: Använder vanligt ASCII minus (-) istället för Unicode minus (−)
+ * Anledning: Unicode minus (U+2212) visas som konstiga tecken i PDF:er
+ * Exempel av problem: "-3 815,79kr" blev "3 815,79kr" i PDF
+ * Lösning: Använd ASCII minus (-) som fungerar korrekt i alla format
  */
 function formatSEKForExport(val: number): string {
   if (val === 0) return "0kr";
   const isNegative = val < 0;
   const absVal = Math.abs(val);
   const formatted = absVal.toLocaleString("sv-SE") + "kr";
-  return isNegative ? `−${formatted}` : formatted;
+  return isNegative ? `-${formatted}` : formatted; // ASCII minus (-) INTE Unicode minus (−)
 }
 
 /**
