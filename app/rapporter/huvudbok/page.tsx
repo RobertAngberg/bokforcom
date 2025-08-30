@@ -56,7 +56,7 @@ export default function Page() {
 
         // Försök ladda företagsprofil
         try {
-          const profileResult = await fetchFöretagsprofil(1); // Temporär userId - bör komma från session
+          const profileResult = await fetchFöretagsprofil(); // Samma som balansrapporten utan userId
           if (profileResult) {
             setFöretagsnamn(profileResult.företagsnamn || "");
             setOrganisationsnummer(profileResult.organisationsnummer || "");
@@ -117,7 +117,13 @@ export default function Page() {
 
   const handleExportPDF = async () => {
     try {
-      await exportHuvudbokPDF(filtradeKonton, företagsnamn, selectedMonth, selectedYear);
+      await exportHuvudbokPDF(
+        filtradeKonton,
+        företagsnamn,
+        organisationsnummer,
+        selectedMonth,
+        selectedYear
+      );
     } catch (error) {
       console.error("Fel vid PDF-export:", error);
       alert("Ett fel uppstod vid PDF-export. Försök igen.");

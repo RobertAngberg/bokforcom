@@ -178,6 +178,7 @@ export function exportHuvudbokCSV(
 export async function exportHuvudbokPDF(
   konton: HuvudbokKonto[],
   företagsnamn: string,
+  organisationsnummer: string,
   selectedMonth: string,
   selectedYear: string
 ): Promise<void> {
@@ -215,29 +216,36 @@ export async function exportHuvudbokPDF(
     let y = 30;
 
     // Header
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
+    doc.setFontSize(32);
     doc.text("Huvudbok", 105, y, { align: "center" });
-    y += 8;
+    y += 10;
 
     doc.setFontSize(16);
     doc.setFont("helvetica", "normal");
     doc.text(period, 105, y, { align: "center" });
     y += 15;
 
-    // Företagsnamn
+    // Företagsnamn (bold)
     if (företagsnamn) {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text(företagsnamn, 14, y);
-      y += 10;
+      y += 7;
     }
 
-    // Utskrivet datum
-    doc.setFontSize(10);
+    // Organisationsnummer (normal)
+    if (organisationsnummer) {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(organisationsnummer, 14, y);
+      y += 8;
+    }
+
+    // Utskriven datum
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
-    y += 15;
+    y += 18;
 
     // Loopa genom alla konton
     for (const konto of konton) {

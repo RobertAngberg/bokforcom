@@ -132,10 +132,14 @@ export async function fetchHuvudbok() {
   }
 }
 
-export async function fetchFöretagsprofil(userId: number) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering och ägarskap
+export async function fetchFöretagsprofil(userId?: number) {
+  // SÄKERHETSVALIDERING: Kontrollera autentisering
   const sessionUserId = await getUserId();
-  await requireOwnership(userId);
+
+  // Använd sessionUserId om inget userId skickades
+  const targetUserId = userId || sessionUserId;
+
+  await requireOwnership(targetUserId);
 
   logLedgerDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -147,7 +151,7 @@ export async function fetchFöretagsprofil(userId: number) {
       WHERE id = $1
       LIMIT 1
     `;
-    const res = await client.query(query, [userId]);
+    const res = await client.query(query, [targetUserId]);
     client.release();
     return res.rows[0] || null;
   } catch (error) {
