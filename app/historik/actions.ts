@@ -87,7 +87,6 @@ export async function findUnbalancedVerifications(): Promise<{
 
     return { success: true, unbalanced };
   } catch (error) {
-    console.error("Fel vid hämtning av obalanserade verifikationer:", error);
     return { success: false, error: "Databasfel" };
   }
 }
@@ -139,12 +138,8 @@ async function fetchTransaktionerInternal(fromYear?: string) {
     );
 
     client.release();
-    console.log(
-      `🔒 Säker historik-åtkomst för user ${userId}, ${result.rows.length} transaktioner`
-    );
     return { success: true, data: result.rows };
   } catch (error: any) {
-    console.error("❌ fetchTransaktioner error:", error);
     return { success: false, error: "Kunde inte hämta transaktionshistorik säkert" };
   }
 }
@@ -161,7 +156,6 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
 
   // SÄKERHETSVALIDERING: Validera transaktions-ID
   if (isNaN(transactionId) || transactionId <= 0) {
-    console.error("❌ Säkerhetsvarning: Ogiltigt transaktions-ID");
     return [];
   }
 
@@ -174,9 +168,6 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
     );
 
     if (verifyRes.rows.length === 0) {
-      console.error(
-        `❌ Säkerhetsvarning: User ${userId} försökte komma åt transaktion ${transactionId} som de inte äger`
-      );
       return [];
     }
 
@@ -197,12 +188,8 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
       [transactionId]
     );
 
-    console.log(
-      `🔒 Säker transaktionsdetalj-åtkomst för user ${userId}, transaktion ${transactionId}`
-    );
     return result.rows;
   } catch (error) {
-    console.error("❌ fetchTransactionDetails error:", error);
     return [];
   } finally {
     client.release();
@@ -228,7 +215,6 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
   // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validateYear(year)) {
     logSecurityEvent("invalid_access", userId, `Invalid year for export: ${year}`);
-    console.error("❌ Säkerhetsvarning: Ogiltigt år för export");
     return [];
   }
 
@@ -290,13 +276,76 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
     }
 
     const resultat = Array.from(map.values());
-    console.log(
-      `� Säker export för user ${userId}: ${resultat.length} transaktioner från år ${year}`
-    );
     return resultat;
   } catch (err: any) {
-    console.error("❌ exporteraTransaktionerMedPoster error:", err);
     return [];
+  }
+}
+
+// DELETE TRANSACTION FUNCTION
+async function deleteTransactionInternal(transactionId: number): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  let userId: number;
+  try {
+    userId = await getUserId();
+  } catch (error) {
+    return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
+  }
+
+  if (!transactionId || transactionId <= 0) {
+    return { success: false, error: "Ogiltigt transaktions-ID" };
+  }
+
+  try {
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // Kolla att transaktionen tillhör användaren
+      const ownerCheck = await client.query(
+        "SELECT id FROM transaktioner WHERE id = $1 AND user_id = $2",
+        [transactionId, userId]
+      );
+
+      if (ownerCheck.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return { success: false, error: "Transaktion hittades inte eller tillhör inte dig" };
+      }
+
+      // Ta bort transaktionsposter först (på grund av foreign key)
+      await client.query("DELETE FROM transaktionsposter WHERE transaktions_id = $1", [
+        transactionId,
+      ]);
+
+      // Ta bort transaktionen
+      const deleteResult = await client.query(
+        "DELETE FROM transaktioner WHERE id = $1 AND user_id = $2",
+        [transactionId, userId]
+      );
+
+      await client.query("COMMIT");
+
+      logSecurityEvent("invalid_access", userId, `Transaction ${transactionId} deleted`);
+
+      return {
+        success: true,
+        message: `Transaktion ${transactionId} har tagits bort`,
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      error: "Kunde inte ta bort transaktion. Försök igen.",
+    };
   }
 }
 
@@ -305,3 +354,4 @@ export const fetchTransaktioner = withFormRateLimit(fetchTransaktionerInternal);
 export const exporteraTransaktionerMedPoster = withFormRateLimit(
   exporteraTransaktionerMedPosterInternal
 );
+export const deleteTransaction = withFormRateLimit(deleteTransactionInternal);

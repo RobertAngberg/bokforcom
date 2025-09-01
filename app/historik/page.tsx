@@ -9,6 +9,7 @@ import {
   fetchTransactionDetails,
   exporteraTransaktionerMedPoster,
   findUnbalancedVerifications,
+  deleteTransaction,
 } from "./actions";
 import Dropdown from "../_components/Dropdown";
 import Knapp from "../_components/Knapp";
@@ -110,6 +111,7 @@ export default function Page() {
       skillnad: number;
     }>
   >([]);
+  const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -139,7 +141,7 @@ export default function Page() {
 
         setHistoryData(sortedData);
       } catch (error) {
-        console.error("Fel vid laddning av data:", error);
+        // Fel vid laddning av data
       } finally {
         setLoading(false);
       }
@@ -240,10 +242,7 @@ export default function Page() {
   };
 
   const handleUnbalancedCheck = async () => {
-    console.log("🔍 Startar kontroll av obalanserade verifikationer...");
-
     if (showOnlyUnbalanced) {
-      console.log("🔙 Visar alla verifikationer igen");
       setShowOnlyUnbalanced(false);
       return;
     }
@@ -281,7 +280,6 @@ export default function Page() {
       setUnbalancedResults(unbalancedItems);
       setShowUnbalancedModal(true);
     } catch (error) {
-      console.error("Fel vid kontroll:", error);
       alert("Ett fel uppstod vid kontrollen");
     } finally {
       setIsCheckingUnbalanced(false);
@@ -303,6 +301,37 @@ export default function Page() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleDelete = async (transactionId: number) => {
+    if (!confirm("Är du säker på att du vill ta bort denna transaktion? Detta kan inte ångras.")) {
+      return;
+    }
+
+    setDeletingIds((prev) => [...prev, transactionId]);
+
+    try {
+      const result = await deleteTransaction(transactionId);
+
+      if (result.success) {
+        // Ta bort från lokal state
+        setHistoryData((prev) => prev.filter((item) => item.transaktions_id !== transactionId));
+        setDetailsMap((prev) => {
+          const newMap = { ...prev };
+          delete newMap[transactionId];
+          return newMap;
+        });
+        setActiveIds((prev) => prev.filter((id) => id !== transactionId));
+
+        alert(result.message || "Transaktion borttagen");
+      } else {
+        alert(result.error || "Kunde inte ta bort transaktion");
+      }
+    } catch (error) {
+      alert("Ett fel uppstod när transaktionen skulle tas bort");
+    } finally {
+      setDeletingIds((prev) => prev.filter((id) => id !== transactionId));
+    }
   };
 
   if (loading) {
@@ -474,14 +503,21 @@ export default function Page() {
                     getRowId={(detail) => detail.transaktionspost_id}
                   />
 
-                  {item.blob_url && (
-                    <div className="pt-4 text-center">
+                  <div className="pt-4 flex gap-2">
+                    {item.blob_url && (
                       <Knapp
                         text="👁️ Se verifikat"
                         onClick={() => window.open(item.blob_url, "_blank")}
                       />
-                    </div>
-                  )}
+                    )}
+                    <Knapp
+                      text={
+                        deletingIds.includes(item.transaktions_id) ? "Tar bort..." : "🗑️ Ta bort"
+                      }
+                      onClick={() => handleDelete(item.transaktions_id)}
+                      disabled={deletingIds.includes(item.transaktions_id)}
+                    />
+                  </div>
                 </div>
               </td>
             </tr>
