@@ -88,6 +88,30 @@ export default function Page({ searchParams }: PageProps) {
     loadData();
   }, [searchParams]);
 
+  // Hämta leverantör när leverantorId ändras
+  useEffect(() => {
+    const fetchLeverantör = async () => {
+      if (leverantorId) {
+        try {
+          const result = await getLeverantörer();
+          if (result.success && result.leverantörer) {
+            const valdLeverantör = result.leverantörer.find((l) => l.id === leverantorId);
+            setLeverantör(valdLeverantör || null);
+          } else {
+            setLeverantör(null);
+          }
+        } catch (error) {
+          console.error("Fel vid hämtning av leverantör:", error);
+          setLeverantör(null);
+        }
+      } else {
+        setLeverantör(null);
+      }
+    };
+
+    fetchLeverantör();
+  }, [leverantorId]);
+
   return (
     <MainLayout>
       {currentStep === 1 && (

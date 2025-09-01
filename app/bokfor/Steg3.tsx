@@ -260,7 +260,9 @@ export default function Steg3({
       const transaktionsposter = beräknaTransaktionsposter();
 
       // Lägg till alla nödvändiga fält till FormData
-      formData.set("transaktionsdatum", transaktionsdatum);
+      // För leverantörsfaktura: använd betaldatum som transaktionsdatum
+      const effektivtTransaktionsdatum = levfaktMode ? betaldatum || "" : transaktionsdatum || "";
+      formData.set("transaktionsdatum", effektivtTransaktionsdatum);
       formData.set("kommentar", kommentar);
       formData.set("belopp", belopp.toString());
       formData.set("moms", moms.toString());
@@ -450,8 +452,8 @@ export default function Steg3({
         </div>
       )}
       {levfaktMode && !ärFörsäljning && (
-        <div className="mb-6 flex items-center px-4 py-3 bg-purple-900 text-purple-100 rounded-lg text-base">
-          <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-purple-700 text-white text-lg font-bold">
+        <div className="mb-6 flex items-center px-4 py-3 bg-slate-800 text-slate-100 rounded-lg text-base">
+          <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-slate-600 text-white text-lg font-bold">
             📋
           </span>
           <div className="flex-1 text-center">

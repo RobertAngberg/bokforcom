@@ -128,13 +128,6 @@ export default function Steg2Levfakt({
     }
   }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
 
-  // Fyll i leverantörens namn i kommentaren när leverantör väljs/ändras
-  useEffect(() => {
-    if (leverantör && leverantör.namn && (!kommentar || kommentar.trim() === "")) {
-      setKommentar(leverantör.namn);
-    }
-  }, [leverantör, kommentar, setKommentar]);
-
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
@@ -197,28 +190,6 @@ export default function Steg2Levfakt({
               setFörfallodatum={setFörfallodatum}
               setFakturanummer={setFakturanummer}
             />
-
-            {/* Vald leverantör - visas som fast information */}
-            <div className="mb-4">
-              <label className="block mb-2 text-white">Leverantör:</label>
-              {leverantör ? (
-                <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
-                  <div className="text-white font-medium text-lg">{leverantör.namn}</div>
-                  {leverantör.organisationsnummer && (
-                    <div className="text-sm text-gray-400 mt-1">
-                      Org-nr: {leverantör.organisationsnummer}
-                    </div>
-                  )}
-                  {leverantör.email && (
-                    <div className="text-sm text-gray-400">E-post: {leverantör.email}</div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 text-gray-400">
-                  Ingen leverantör vald
-                </div>
-              )}
-            </div>
 
             {/* Fakturadatum */}
             <div className="mb-4">
@@ -300,7 +271,7 @@ export default function Steg2Levfakt({
             <KnappFullWidth
               text="Bokför leverantörsfaktura"
               onClick={() => setCurrentStep(3)}
-              disabled={!belopp || !leverantör || !fakturanummer || !fakturadatum}
+              disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum || !betaldatum}
             />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
