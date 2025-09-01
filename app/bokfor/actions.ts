@@ -452,9 +452,6 @@ export async function saveTransaction(formData: FormData) {
   const belopp = Number(formData.get("belopp")?.toString() || 0);
   const valtFörval = JSON.parse(formData.get("valtFörval")?.toString() || "{}");
 
-  console.log("🔍 DEBUG saveTransaction: fil finns?", !!fil);
-  console.log("🔍 DEBUG saveTransaction: bilageUrl finns?", !!bilageUrl);
-  console.log("🔍 DEBUG saveTransaction: bilageUrl värde:", bilageUrl);
   const transaktionsposter = JSON.parse(
     formData.get("transaktionsposter")?.toString() || "[]"
   ) as Array<{
@@ -471,11 +468,8 @@ export async function saveTransaction(formData: FormData) {
   // Formatera transaktionsdatum för PostgreSQL
   let formattedDate = "";
   if (transaktionsdatum) {
-    // Debug: Logga vad vi fick från frontend
-    console.log("🔍 DEBUG transaktionsdatum från frontend:", transaktionsdatum);
     // Använd timezone-säker funktion från trueDatum.ts
     formattedDate = datumTillPostgreSQL(transaktionsdatum) || "";
-    console.log("🔍 DEBUG formattedDate för DB:", formattedDate);
   } else {
     throw new Error("Transaktionsdatum saknas");
   }
@@ -522,28 +516,20 @@ export async function saveTransaction(formData: FormData) {
     }
   }
 
-  console.log("🔍 DEBUG: Före INSERT - blobUrl:", blobUrl);
-  console.log("🔍 DEBUG: Före INSERT - filename:", filename);
-
   const client = await pool.connect();
   try {
-    console.log("🔍 DEBUG: Skickar till PostgreSQL - formattedDate:", formattedDate);
     const { rows } = await client.query(
       `
       INSERT INTO transaktioner (
         transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id", blob_url
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-      RETURNING id, blob_url, transaktionsdatum
+      RETURNING id, blob_url
       `,
       [formattedDate, valtFörval.namn ?? "", belopp, filename, kommentar, userId, blobUrl]
     );
     const transaktionsId = rows[0].id;
     const sparadBlobUrl = rows[0].blob_url;
-    const sparatDatum = rows[0].transaktionsdatum;
     console.log("🆔 Skapad transaktion:", transaktionsId);
-    console.log("🔍 DEBUG: Skickat datum:", formattedDate);
-    console.log("🔍 DEBUG: Sparat datum i DB:", sparatDatum);
-    console.log("🔍 DEBUG: Sparad blob_url i DB:", sparadBlobUrl);
 
     // Spara alla transaktionsposter som beräknats på frontend
     const insertPost = `

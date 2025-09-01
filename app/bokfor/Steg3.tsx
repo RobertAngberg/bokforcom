@@ -262,10 +262,6 @@ export default function Steg3({
       // Lägg till alla nödvändiga fält till FormData
       // För leverantörsfaktura: använd fakturadatum som transaktionsdatum
       const effektivtTransaktionsdatum = levfaktMode ? fakturadatum || "" : transaktionsdatum || "";
-      console.log("🔍 DEBUG Steg3 - levfaktMode:", levfaktMode);
-      console.log("🔍 DEBUG Steg3 - fakturadatum:", fakturadatum);
-      console.log("🔍 DEBUG Steg3 - transaktionsdatum:", transaktionsdatum);
-      console.log("🔍 DEBUG Steg3 - effektivtTransaktionsdatum:", effektivtTransaktionsdatum);
       formData.set("transaktionsdatum", effektivtTransaktionsdatum);
       formData.set("kommentar", kommentar);
       formData.set("belopp", belopp.toString());
@@ -297,8 +293,6 @@ export default function Steg3({
 
       // Ladda upp fil till blob storage först (om det finns en fil)
       if (fil) {
-        console.log("Laddar upp fil till blob storage:", fil.name);
-
         // Skapa beskrivning baserat på kontext
         let beskrivning = "";
         if (leverantör?.namn) {
@@ -323,7 +317,6 @@ export default function Steg3({
 
         if (blobResult.success && blobResult.url) {
           formData.set("bilageUrl", blobResult.url);
-          console.log("Fil uppladdad:", blobResult.url);
         } else {
           console.error("Misslyckades med att ladda upp fil:", blobResult.error);
           // Fortsätt ändå med bokföringen även om fil-upload misslyckades

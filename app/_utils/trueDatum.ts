@@ -44,6 +44,10 @@ export function datePickerOnChange(date: Date | null): string {
 // Timezone-säker formattering för PostgreSQL TIMESTAMP WITH TIME ZONE
 export function datumTillPostgreSQL(dateString: string | null): string | null {
   if (!dateString) return null;
+
+  // Rensa bort eventuella befintliga timezone-markeringar
+  let cleanDate = dateString.split("T")[0]; // Ta bara YYYY-MM-DD delen
+
   // Lägg till svensk timezone för att undvika UTC-konvertering
-  return dateString + "T12:00:00+02:00";
+  return cleanDate + "T12:00:00+02:00";
 }
