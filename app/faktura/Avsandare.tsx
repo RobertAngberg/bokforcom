@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import TextFalt from "../_components/TextFalt";
 import { hämtaFöretagsprofil, sparaFöretagsprofil } from "./actions";
+import { uploadCompanyLogo } from "../_utils/blobUpload";
 import Knapp from "../_components/Knapp";
 //#endregion
 
@@ -36,7 +37,22 @@ export default function Avsandare() {
     const ladda = async () => {
       if (session?.user?.id) {
         const data = await hämtaFöretagsprofil(session.user.id);
-        if (data) setForm(data); // Inkluderar logoWidth från databas
+        if (data) {
+          // Säkerställ att alla fält är strängar (inte null/undefined)
+          setForm({
+            företagsnamn: data.företagsnamn || "",
+            adress: data.adress || "",
+            postnummer: data.postnummer || "",
+            stad: data.stad || "",
+            organisationsnummer: data.organisationsnummer || "",
+            momsregistreringsnummer: data.momsregistreringsnummer || "",
+            telefonnummer: data.telefonnummer || "",
+            epost: data.epost || "",
+            webbplats: data.webbplats || "",
+            logo: "", // Laddas separat från localStorage
+            logoWidth: 200,
+          });
+        }
 
         // Endast logo från localStorage (inte logoWidth)
         const logo = localStorage.getItem("company_logo");
@@ -45,6 +61,14 @@ export default function Avsandare() {
     };
     ladda();
   }, [session]);
+
+  // Ladda sparad logotyp från localStorage
+  useEffect(() => {
+    const savedLogo = localStorage.getItem("company_logo");
+    if (savedLogo) {
+      setForm((prev) => ({ ...prev, logo: savedLogo }));
+    }
+  }, []);
   //#endregion
 
   //#region Hanterare
@@ -54,79 +78,38 @@ export default function Avsandare() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const hanteraLoggaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const hanteraLoggaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // SÄKERHETSVALIDERING: Kontrollera filtyp
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      alert("❌ Endast bildformat tillåtna (JPEG, PNG, GIF, WebP)");
+    // SÄKERHETSVALIDERING: Filtyp
+    if (!file.type.startsWith("image/")) {
+      alert("❌ Bara bildfiler tillåtna (PNG, JPG, GIF, WebP).");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    // SÄKERHETSVALIDERING: Kontrollera filstorlek (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      alert("❌ Filen är för stor. Max 5MB tillåtet.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
+    try {
+      // Ladda upp till Vercel Blob
+      const result = await uploadCompanyLogo(file);
 
-    // SÄKERHETSVALIDERING: Kontrollera filnamn
-    const filename = file.name;
-    if (!/^[a-zA-Z0-9._-]+\.(jpg|jpeg|png|gif|webp)$/i.test(filename)) {
-      alert("❌ Ogiltigt filnamn. Använd bara bokstäver, siffror och punkt.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
+      if (result.success && result.url) {
+        // Uppdatera form med URL:en från Vercel Blob
+        setForm((prev) => ({ ...prev, logo: result.url || "" }));
 
-    // Skapa canvas för säker bildbehandling
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
+        // Spara även i localStorage som backup/cache
+        localStorage.setItem("company_logo", result.url);
 
-    img.onload = () => {
-      // Sätt säkra max-gränser
-      const maxWidth = 400;
-      const maxHeight = 400;
-      let { width, height } = img;
-
-      // Validera bildstorlek
-      if (width > 5000 || height > 5000) {
-        alert("❌ Bilden är för stor. Max 5000x5000 pixlar.");
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        return;
-      }
-
-      // Beräkna säker ny storlek
-      if (width > height) {
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
+        alert("✅ Logotyp uppladdad!");
       } else {
-        if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height);
-          height = maxHeight;
-        }
+        alert(`❌ Upload misslyckades: ${result.error}`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
-
-      // Rita säkert komprimerad bild
-      canvas.width = width;
-      canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-
-      // Konvertera till base64 med komprimering
-      const compressedData = canvas.toDataURL("image/jpeg", 0.8); // 80% kvalitet
-
-      setForm((prev) => ({ ...prev, logo: compressedData }));
-      localStorage.setItem("company_logo", compressedData);
-    };
-
-    // Ladda bilden
-    img.src = URL.createObjectURL(file);
+    } catch (error) {
+      console.error("Logo upload error:", error);
+      alert("❌ Ett fel uppstod vid uppladdning");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const hanteraTaBortLogga = () => {

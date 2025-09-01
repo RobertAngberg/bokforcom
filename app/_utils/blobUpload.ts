@@ -238,6 +238,14 @@ export const uploadReceiptImage = async (file: File, options: UploadOptions = {}
 export const uploadProfileImage = async (file: File) =>
   uploadBlob(file, { quality: 0.9, maxWidth: 400, maxHeight: 400 });
 
+export const uploadCompanyLogo = async (file: File) =>
+  uploadBlob(file, {
+    quality: 0.9,
+    maxWidth: 800,
+    maxHeight: 400,
+    beskrivning: "foretags-logotyp",
+  });
+
 // 🗜️ Exporterad komprimerings-funktion för direkt användning (utan upload)
 export async function compressImageFile(file: File, options: UploadOptions = {}): Promise<File> {
   if (!file.type.startsWith("image/")) {

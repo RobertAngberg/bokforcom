@@ -152,7 +152,7 @@ export function FakturaProvider({ children }: { children: React.ReactNode }) {
   });
   //#endregion
 
-  //#region Nästa fakturanummer
+  //#region Nästa fakturanummer och logotyp
   // Hämta nästa fakturanummer när det är en ny faktura (dvs ingen id och inget fakturanummer)
   useEffect(() => {
     if (!formData.id && !formData.fakturanummer) {
@@ -164,6 +164,20 @@ export function FakturaProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, [formData.id, formData.fakturanummer]);
+
+  // Ladda logotyp från localStorage
+  useEffect(() => {
+    const savedLogo = localStorage.getItem("company_logo");
+    const savedLogoWidth = localStorage.getItem("company_logoWidth");
+
+    if (savedLogo || savedLogoWidth) {
+      setFormData((prev) => ({
+        ...prev,
+        ...(savedLogo && { logo: savedLogo }),
+        ...(savedLogoWidth && { logoWidth: parseInt(savedLogoWidth) }),
+      }));
+    }
+  }, []); // Kör bara en gång vid mount
   //#endregion
 
   function resetKund() {
