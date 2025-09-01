@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import UtloggadNav from "./UtloggadNav";
+import Navbar from "./Navbar";
 import { ClientProviders } from "./ClientProviders";
 import "./globals.css";
 import React from "react";
@@ -17,7 +17,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="sv">
       <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>
         <ClientProviders>
-          <UtloggadNav />
+          <Navbar />
           {children}
         </ClientProviders>
       </body>

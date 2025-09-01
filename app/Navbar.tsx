@@ -2,10 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LogoutButton } from "./LogoutKnapp";
 //#endregion
 
 export default function Navbar() {
@@ -24,11 +23,6 @@ export default function Navbar() {
     ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
-  // Dölj navbar på login-sidan
-  if (pathname === "/login") {
-    return null;
-  }
-
   // Länkar för icke-inloggade användare
   const guestLinks = [
     { href: "/", label: "Hem" },
@@ -37,12 +31,22 @@ export default function Navbar() {
 
   const currentLinks = session?.user ? navLinks : guestLinks;
 
-  // Hanterar aktiv path + marker
+  // Hanterar aktiv path + marker (måste köras innan return null)
   const { markerStyle, linksRef, handleClick } = useActivePathMarker(
     currentLinks,
     pathname,
     router
   );
+
+  // Dölj navbar på login-sidan (efter alla hooks)
+  if (pathname === "/login") {
+    return null;
+  }
+
+  // Dölj navbar på framsidan för icke-inloggade användare (efter alla hooks)
+  if (pathname === "/" && !session?.user) {
+    return null;
+  }
 
   return (
     <div className="sticky top-0 z-50 flex items-center justify-center w-full h-20 px-4 bg-cyan-950">
@@ -73,7 +77,19 @@ export default function Navbar() {
 
         {session?.user && (
           <div className="ml-4 hidden md:block">
-            <LogoutButton />
+            <div className="flex items-center justify-end text-white">
+              <button
+                onClick={async () => {
+                  // FÖRST döda NextAuth sessionen
+                  await signOut({ redirect: false });
+                  // SEN tvinga redirect med cache-clearing
+                  window.location.replace("/login");
+                }}
+                className="px-4 py-2 font-bold text-white transition duration-300 bg-transparent border border-white rounded hover:bg-white hover:bg-opacity-20"
+              >
+                Logga ut
+              </button>
+            </div>
           </div>
         )}
       </nav>
