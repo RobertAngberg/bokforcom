@@ -20,7 +20,7 @@ export default function Modal({
   onClose,
   title,
   children,
-  maxWidth = "4xl",
+  maxWidth = "6xl",
   showCloseButton = true,
   isLoading = false,
   containerClassName,
@@ -64,25 +64,34 @@ export default function Modal({
     xl: "max-w-xl",
     "2xl": "max-w-2xl",
     "4xl": "max-w-4xl",
-    "6xl": "max-w-6xl",
+    "6xl": "w-[90vw]", // FAST bredd istället för max-width
     full: "max-w-full",
   }[maxWidth];
 
+  console.log("🔍 MODAL DEBUG:", { maxWidth, maxWidthClass });
+
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${
-        maxWidth === "full" ? "p-1 sm:p-2" : "p-4"
-      }`}
+      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4`}
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} w-full max-h-[90vh] overflow-y-auto ${
+        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} shadow-2xl flex flex-col mt-8 ${
           containerClassName || ""
         }`}
+        style={
+          maxWidth === "6xl"
+            ? {
+                width: "95vw",
+                minWidth: "95vw",
+                maxHeight: "80vh",
+              }
+            : { maxHeight: "80vh" }
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-2 flex-shrink-0">
           <h2 className="text-2xl text-white text-center flex-1 mt-2">{title}</h2>
           {showCloseButton && (
             <button
@@ -99,7 +108,7 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div>{isLoading ? <LoadingSpinner /> : children}</div>
+        <div className="overflow-y-auto flex-1">{isLoading ? <LoadingSpinner /> : children}</div>
       </div>
     </div>
   );

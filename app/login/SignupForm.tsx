@@ -268,8 +268,8 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             Logga in för att slutföra registreringen
           </h3>
           <p className="text-blue-200 text-sm mb-4">
-            Du kan fylla i formuläret nedan, men du behöver logga in med Google för att
-            spara dina uppgifter.
+            Du kan fylla i formuläret nedan, men du behöver logga in med Google för att spara dina
+            uppgifter.
           </p>
           <button
             type="button"
@@ -314,9 +314,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             className={validationErrors.organisationsnummer ? "border-red-500" : ""}
           />
           {validationErrors.organisationsnummer && (
-            <p className="text-red-400 text-sm mt-1">
-              {validationErrors.organisationsnummer}
-            </p>
+            <p className="text-red-400 text-sm mt-1">{validationErrors.organisationsnummer}</p>
           )}
         </div>
 
@@ -335,9 +333,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           {validationErrors.företagsnamn && (
             <p className="text-red-400 text-sm mt-1">{validationErrors.företagsnamn}</p>
           )}
-          <p className="text-gray-400 text-sm mt-1">
-            {formData.företagsnamn.length}/100 tecken
-          </p>
+          <p className="text-gray-400 text-sm mt-1">{formData.företagsnamn.length}/100 tecken</p>
         </div>
 
         {/* Momsredovisningsperiod */}
@@ -366,9 +362,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
         {/* Bokföringsmetod */}
         <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Bokföringsmetod *
-          </label>
+          <label className="block text-sm font-medium text-white mb-2">Bokföringsmetod *</label>
           <select
             name="redovisningsmetod"
             value={formData.redovisningsmetod}
@@ -383,9 +377,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             <option value="kassaredovisning">Kassaredovisning</option>
           </select>
           {validationErrors.redovisningsmetod && (
-            <p className="text-red-400 text-sm mt-1">
-              {validationErrors.redovisningsmetod}
-            </p>
+            <p className="text-red-400 text-sm mt-1">{validationErrors.redovisningsmetod}</p>
           )}
         </div>
 
@@ -508,10 +500,8 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
         isOpen={isAnvändaravtalOpen}
         onClose={() => setIsAnvändaravtalOpen(false)}
         title="📋 Användaravtal"
-        maxWidth="6xl"
-        containerClassName="!max-w-[95vw] !w-[95vw] sm:!max-w-[90vw] sm:!w-[90vw] lg:!max-w-[85vw] lg:!w-[85vw] xl:!max-w-[80vw] xl:!w-[80vw]"
       >
-        <div className="space-y-8 text-gray-300 leading-relaxed text-sm max-h-[70vh] overflow-y-auto">
+        <div className="space-y-8 text-gray-300 leading-relaxed text-sm">
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">
               1. Definitioner och tillämpningsområde
@@ -643,9 +633,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              6. Immateriella rättigheter
-            </h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">6. Immateriella rättigheter</h2>
             <p className="mb-3">
               Alla immateriella rättigheter till Tjänsten, inklusive men inte begränsat till
               källkod, design, logotyper, varumärken och dokumentation, tillhör Bokför.com eller
