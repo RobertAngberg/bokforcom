@@ -8,7 +8,7 @@ import Kort from "./Kort";
 import Chart from "./Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
-import VälkomstMedd from "../_components/VälkomstMedd";
+import VälkomstMedd from "./VälkomstMedd";
 
 type YearSummary = {
   totalInkomst: number;
