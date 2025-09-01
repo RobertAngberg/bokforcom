@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LogoutButton } from "./start/LogoutKnapp";
+import { LogoutButton } from "./LogoutKnapp";
 //#endregion
 
 export default function Navbar() {
