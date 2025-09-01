@@ -4,7 +4,6 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SignupForm from "./SignupForm";
-import { useAnvändaravtalModal } from "../start/AnvändaravtalModal";
 
 function EmailLoginForm() {
   const [email, setEmail] = useState("");
@@ -76,7 +75,6 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
 
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/" });
@@ -204,8 +202,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
-      <AnvändaravtalModal />
     </div>
   );
 }

@@ -8,7 +8,6 @@ import Kort from "./Kort";
 import Chart from "./Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
-import { useAnvändaravtalModal } from "./AnvändaravtalModal";
 
 type YearSummary = {
   totalInkomst: number;
@@ -30,7 +29,6 @@ type Props = {
 export default function Startsida({ initialData }: Props) {
   const [year, setYear] = useState("2025");
   const { data, isLoading } = useFetchYearSummary(year, initialData);
-  const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
   const [showWelcome, setShowWelcome] = useState(false);
 
   // Kolla välkomstmeddelande-status när komponenten laddar
@@ -130,8 +128,6 @@ export default function Startsida({ initialData }: Props) {
           <p className="text-white text-lg">Ingen data tillgänglig för {year}</p>
         </div>
       )}
-
-      <AnvändaravtalModal />
     </MainLayout>
   );
 }

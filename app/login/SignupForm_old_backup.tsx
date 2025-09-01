@@ -1,512 +1,151 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import DatePicker from "react-datepicker";
-import { registerLocale } from "react-datepicker";
-import { sv } from "date-fns/locale/sv";
-import "react-datepicker/dist/react-datepicker.css";
-import Knapp from "../_components/Knapp";
-import TextFalt from "../_components/TextFalt";
+import { useState } from "react";
 import Modal from "../_components/Modal";
-import { saveSignupData, checkUserSignupStatus } from "./actions";
-
-registerLocale("sv", sv);
-
-// Frontend validation functions
-const validateOrganisationsnummer = (orgnr: string): { valid: boolean; error?: string } => {
-  if (!orgnr) return { valid: false, error: "Organisationsnummer krävs" };
-
-  const cleanOrgNr = orgnr.replace(/\D/g, "");
-
-  if (cleanOrgNr.length !== 10 && cleanOrgNr.length !== 12) {
-    return { valid: false, error: "Organisationsnummer måste vara 10 siffror (YYYYMMDDXX)" };
-  }
-
-  const orgNrToValidate = cleanOrgNr.length === 12 ? cleanOrgNr.slice(2) : cleanOrgNr;
-
-  if (!/^\d{10}$/.test(orgNrToValidate)) {
-    return { valid: false, error: "Organisationsnummer har ogiltigt format" };
-  }
-
-  return { valid: true };
-};
-
-const validateCompanyName = (name: string): { valid: boolean; error?: string } => {
-  if (!name || name.trim().length === 0) {
-    return { valid: false, error: "Företagsnamn krävs" };
-  }
-
-  if (name.trim().length < 2) {
-    return { valid: false, error: "Företagsnamn måste vara minst 2 tecken" };
-  }
-
-  if (name.trim().length > 100) {
-    return { valid: false, error: "Företagsnamn får vara max 100 tecken" };
-  }
-
-  const suspiciousPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /onload=/i,
-    /onerror=/i,
-    /DROP\s+TABLE/i,
-    /DELETE\s+FROM/i,
-    /INSERT\s+INTO/i,
-  ];
-
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(name)) {
-      return { valid: false, error: "Företagsnamn innehåller otillåtna tecken" };
-    }
-  }
-
-  return { valid: true };
-};
-
-const formatOrganisationsnummer = (value: string): string => {
-  const clean = value.replace(/\D/g, "");
-
-  if (clean.length >= 6) {
-    return clean.slice(0, 6) + "-" + clean.slice(6, 10);
-  }
-
-  return clean;
-};
 
 interface SignupFormProps {
   onSuccess: () => void;
 }
 
 export default function SignupForm({ onSuccess }: SignupFormProps) {
-  const [userStatus, setUserStatus] = useState<{
-    loggedIn?: boolean;
-    hasCompanyInfo?: boolean;
-    companyName?: string;
-    loading: boolean;
-  }>({ loading: true });
-
-  const [formData, setFormData] = useState({
-    organisationsnummer: "",
-    företagsnamn: "",
-    momsperiod: "",
-    redovisningsmetod: "",
-    första_bokslut: "",
-    startdatum: null as Date | null,
-    slutdatum: null as Date | null,
-  });
-
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [isFormValid, setIsFormValid] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isAnvändaravtalOpen, setIsAnvändaravtalOpen] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    checkUserSignupStatus().then((status: any) => {
-      setUserStatus({ ...status, loading: false });
-    });
-  }, []);
-
-  // Validation effect
-  useEffect(() => {
-    const errors: Record<string, string> = {};
-
-    if (formData.organisationsnummer) {
-      const orgValidation = validateOrganisationsnummer(formData.organisationsnummer);
-      if (!orgValidation.valid) {
-        errors.organisationsnummer = orgValidation.error || "Ogiltigt organisationsnummer";
-      }
-    }
-
-    if (formData.företagsnamn) {
-      const nameValidation = validateCompanyName(formData.företagsnamn);
-      if (!nameValidation.valid) {
-        errors.företagsnamn = nameValidation.error || "Ogiltigt företagsnamn";
-      }
-    }
-
-    const requiredFields = [
-      "organisationsnummer",
-      "företagsnamn",
-      "momsperiod",
-      "redovisningsmetod",
-      "första_bokslut",
-    ];
-    requiredFields.forEach((field) => {
-      if (!formData[field as keyof typeof formData]) {
-        errors[field] = "Detta fält krävs";
-      }
-    });
-
-    if (formData.första_bokslut === "nej") {
-      if (!formData.startdatum) {
-        errors.startdatum = "Startdatum krävs";
-      }
-      if (!formData.slutdatum) {
-        errors.slutdatum = "Slutdatum krävs";
-      }
-      if (formData.startdatum && formData.slutdatum && formData.startdatum >= formData.slutdatum) {
-        errors.slutdatum = "Slutdatum måste vara efter startdatum";
-      }
-    }
-
-    setValidationErrors(errors);
-    setIsFormValid(
-      Object.keys(errors).length === 0 &&
-        requiredFields.every((field) => formData[field as keyof typeof formData])
-    );
-  }, [formData]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    let processedValue = value;
-
-    if (name === "organisationsnummer") {
-      processedValue = formatOrganisationsnummer(value);
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: processedValue,
-    }));
-  };
-
-  const handleDateChange = (name: string, date: Date | null) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: date,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError("");
 
-    if (!userStatus.loggedIn) {
+    if (password !== confirmPassword) {
+      setError("Lösenorden matchar inte");
       setLoading(false);
-      window.location.href = "/api/auth/signin?callbackUrl=/login";
       return;
     }
 
-    if (!isFormValid || Object.keys(validationErrors).length > 0) {
-      setError("Vänligen rätta till alla fel i formuläret");
+    if (password.length < 6) {
+      setError("Lösenordet måste vara minst 6 tecken");
+      setLoading(false);
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("Du måste godkänna användaravtalet för att fortsätta");
       setLoading(false);
       return;
     }
 
     try {
-      const submitData = new FormData();
-      submitData.set("organisationsnummer", formData.organisationsnummer);
-      submitData.set("företagsnamn", formData.företagsnamn);
-      submitData.set("momsperiod", formData.momsperiod);
-      submitData.set("redovisningsmetod", formData.redovisningsmetod);
-      submitData.set("första_bokslut", formData.första_bokslut);
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
 
-      if (formData.startdatum) {
-        submitData.set("startdatum", formData.startdatum.toISOString().split("T")[0]);
-      }
-      if (formData.slutdatum) {
-        submitData.set("slutdatum", formData.slutdatum.toISOString().split("T")[0]);
-      }
+      const data = await response.json();
 
-      const result = await saveSignupData(submitData);
-
-      if (result.success) {
-        alert(`${result.message} Välkommen ${result.user?.företagsnamn}!`);
+      if (response.ok) {
+        alert("Konto skapat! Du kan nu logga in.");
         onSuccess();
       } else {
-        setError(result.error || "Ett fel uppstod vid registreringen");
+        setError(data.error || "Något gick fel");
       }
-    } catch (err) {
-      setError("Ett oväntat fel uppstod vid registreringen");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setError("Något gick fel. Prova igen.");
     }
+    setLoading(false);
   };
 
-  if (userStatus.loading) {
-    return (
-      <div className="text-center">
-        <div className="text-white">Laddar...</div>
-      </div>
-    );
-  }
-
-  if (userStatus.loggedIn && userStatus.hasCompanyInfo) {
-    return (
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-white mb-4">Företag redan registrerat</h2>
-        <p className="text-gray-300 mb-4">
-          Ditt företag <strong>{userStatus.companyName}</strong> är redan registrerat.
-        </p>
-        <p className="text-gray-300">
-          Gå till{" "}
-          <a href="/" className="text-blue-400 hover:underline">
-            startsidan
-          </a>{" "}
-          för att börja bokföra.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <>
-      {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
-      )}
+    <form onSubmit={handleSignup} className="space-y-4">
+      <div>
+        <input
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Företagsnamn"
+          autoComplete="organization"
+          className="w-full px-4 py-3 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-postadress"
+          autoComplete="email"
+          className="w-full px-4 py-3 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <input
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Lösenord (minst 6 tecken)"
+          autoComplete="new-password"
+          className="w-full px-4 py-3 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <input
+          type="password"
+          required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Bekräfta lösenord"
+          autoComplete="new-password"
+          className="w-full px-4 py-3 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-      {!userStatus.loggedIn && (
-        <div className="mb-6 p-4 bg-blue-500/20 border border-blue-500 rounded-lg">
-          <h3 className="text-blue-300 font-semibold mb-2">
-            Logga in för att slutföra registreringen
-          </h3>
-          <p className="text-blue-200 text-sm mb-4">
-            Du kan fylla i formuläret nedan, men du behöver logga in med Google för att
-            spara dina uppgifter.
-          </p>
+      {/* Användaravtal checkbox */}
+      <div className="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          id="acceptTerms"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          required
+          className="mt-1 w-4 h-4 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+        />
+        <label htmlFor="acceptTerms" className="text-sm text-slate-300">
+          Jag godkänner{" "}
           <button
             type="button"
-            onClick={() => (window.location.href = "/api/auth/signin?callbackUrl=/login")}
-            className="bg-white text-gray-900 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
+            onClick={() => setShowTermsModal(true)}
+            className="text-blue-400 hover:text-blue-300 underline"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Logga in med Google
-          </button>
-        </div>
-      )}
+            användaravtalet
+          </button>{" "}
+          och bekräftar att jag har läst och förstått villkoren
+        </label>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Organisationsnummer */}
-        <div>
-          <TextFalt
-            label="Organisationsnummer *"
-            name="organisationsnummer"
-            value={formData.organisationsnummer}
-            onChange={handleInputChange}
-            placeholder="XXXXXX-XXXX"
-            maxLength={11}
-            pattern="[0-9]{6}-[0-9]{4}"
-            required
-            className={validationErrors.organisationsnummer ? "border-red-500" : ""}
-          />
-          {validationErrors.organisationsnummer && (
-            <p className="text-red-400 text-sm mt-1">
-              {validationErrors.organisationsnummer}
-            </p>
-          )}
-        </div>
-
-        {/* Företagsnamn */}
-        <div>
-          <TextFalt
-            label="Företagsnamn *"
-            name="företagsnamn"
-            value={formData.företagsnamn}
-            onChange={handleInputChange}
-            placeholder="Ditt företagsnamn"
-            maxLength={100}
-            required
-            className={validationErrors.företagsnamn ? "border-red-500" : ""}
-          />
-          {validationErrors.företagsnamn && (
-            <p className="text-red-400 text-sm mt-1">{validationErrors.företagsnamn}</p>
-          )}
-          <p className="text-gray-400 text-sm mt-1">
-            {formData.företagsnamn.length}/100 tecken
-          </p>
-        </div>
-
-        {/* Momsredovisningsperiod */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Momsredovisningsperiod *
-          </label>
-          <select
-            name="momsperiod"
-            value={formData.momsperiod}
-            onChange={handleInputChange}
-            required
-            className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
-              validationErrors.momsperiod ? "border-red-500" : "border-slate-600"
-            }`}
-          >
-            <option value="">Välj period...</option>
-            <option value="årsvis">Helt år</option>
-            <option value="kvartalsvis">Varje kvartal</option>
-            <option value="månadsvis">Varje månad</option>
-          </select>
-          {validationErrors.momsperiod && (
-            <p className="text-red-400 text-sm mt-1">{validationErrors.momsperiod}</p>
-          )}
-        </div>
-
-        {/* Bokföringsmetod */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Bokföringsmetod *
-          </label>
-          <select
-            name="redovisningsmetod"
-            value={formData.redovisningsmetod}
-            onChange={handleInputChange}
-            required
-            className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
-              validationErrors.redovisningsmetod ? "border-red-500" : "border-slate-600"
-            }`}
-          >
-            <option value="">Välj metod...</option>
-            <option value="fakturaredovisning">Fakturaredovisning (normalt)</option>
-            <option value="kassaredovisning">Kassaredovisning</option>
-          </select>
-          {validationErrors.redovisningsmetod && (
-            <p className="text-red-400 text-sm mt-1">
-              {validationErrors.redovisningsmetod}
-            </p>
-          )}
-        </div>
-
-        {/* Första bokslut */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Har ditt företag gjort sitt första bokslut? *
-          </label>
-          <select
-            name="första_bokslut"
-            value={formData.första_bokslut}
-            onChange={handleInputChange}
-            required
-            className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
-              validationErrors.första_bokslut ? "border-red-500" : "border-slate-600"
-            }`}
-          >
-            <option value="">Välj...</option>
-            <option value="nej">Nej</option>
-            <option value="ja">Ja</option>
-          </select>
-          {validationErrors.första_bokslut && (
-            <p className="text-red-400 text-sm mt-1">{validationErrors.första_bokslut}</p>
-          )}
-        </div>
-
-        {/* Datum för första bokslut */}
-        {formData.första_bokslut === "nej" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-700 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Startdatum för verksamheten *
-              </label>
-              <DatePicker
-                selected={formData.startdatum}
-                onChange={(date) => handleDateChange("startdatum", date)}
-                dateFormat="yyyy-MM-dd"
-                locale="sv"
-                placeholderText="Välj startdatum"
-                className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
-                  validationErrors.startdatum ? "border-red-500" : "border-slate-600"
-                }`}
-                required={formData.första_bokslut === "nej"}
-              />
-              {validationErrors.startdatum && (
-                <p className="text-red-400 text-sm mt-1">{validationErrors.startdatum}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Slutdatum för första räkenskapsår *
-              </label>
-              <DatePicker
-                selected={formData.slutdatum}
-                onChange={(date) => handleDateChange("slutdatum", date)}
-                dateFormat="yyyy-MM-dd"
-                locale="sv"
-                placeholderText="Välj slutdatum"
-                className={`bg-slate-900 text-white px-4 py-3 rounded-lg w-full border focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 ${
-                  validationErrors.slutdatum ? "border-red-500" : "border-slate-600"
-                }`}
-                required={formData.första_bokslut === "nej"}
-              />
-              {validationErrors.slutdatum && (
-                <p className="text-red-400 text-sm mt-1">{validationErrors.slutdatum}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Checkbox för användaravtal */}
-        <div className="pt-4 pb-2">
-          <div className="flex items-start space-x-3 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              required
-              className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
-            />
-            <span>
-              Jag godkänner{" "}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsAnvändaravtalOpen(true);
-                }}
-                className="text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-              >
-                användaravtalet
-              </button>{" "}
-              och bekräftar att jag har läst och förstått villkoren
-            </span>
-          </div>
-        </div>
-
-        <div className="pt-4">
-          <Knapp
-            text={
-              loading
-                ? "Skapar konto..."
-                : !isFormValid
-                  ? "Fyll i alla fält korrekt"
-                  : "Skapa företagskonto"
-            }
-            type="submit"
-            disabled={loading || !isFormValid}
-            className={`w-full ${!isFormValid ? "opacity-50" : ""}`}
-          />
-          {!isFormValid && Object.keys(validationErrors).length > 0 && (
-            <p className="text-yellow-400 text-sm mt-2 text-center">
-              Kontrollera formuläret - {Object.keys(validationErrors).length} fel kvar
-            </p>
-          )}
-        </div>
-      </form>
+      {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
+      <button
+        type="submit"
+        disabled={loading || !acceptedTerms}
+        className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? "Skapar konto..." : "Skapa konto"}
+      </button>
 
       {/* Användaravtal Modal */}
       <Modal
-        isOpen={isAnvändaravtalOpen}
-        onClose={() => setIsAnvändaravtalOpen(false)}
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
         title="📋 Användaravtal"
         maxWidth="6xl"
         containerClassName="!max-w-[95vw] !w-[95vw] sm:!max-w-[90vw] sm:!w-[90vw] lg:!max-w-[85vw] lg:!w-[85vw] xl:!max-w-[80vw] xl:!w-[80vw]"
@@ -643,9 +282,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              6. Immateriella rättigheter
-            </h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">6. Immateriella rättigheter</h2>
             <p className="mb-3">
               Alla immateriella rättigheter till Tjänsten, inklusive men inte begränsat till
               källkod, design, logotyper, varumärken och dokumentation, tillhör Bokför.com eller
@@ -894,6 +531,6 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </section>
         </div>
       </Modal>
-    </>
+    </form>
   );
 }

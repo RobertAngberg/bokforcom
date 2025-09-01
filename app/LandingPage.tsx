@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useAnvändaravtalModal } from "./start/AnvändaravtalModal";
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { openModal, AnvändaravtalModal } = useAnvändaravtalModal();
 
   const handleGetStarted = () => {
     setIsLoading(true);
@@ -204,9 +202,9 @@ export default function LandingPage() {
               <span className="text-white font-semibold">Bokför.com</span>
             </div>
             <div className="flex space-x-6 text-slate-400">
-              <button onClick={openModal} className="hover:text-white transition-colors">
+              <a href="/signup" className="hover:text-white transition-colors">
                 Användaravtal
-              </button>
+              </a>
               <a href="#" className="hover:text-white transition-colors">
                 Integritet
               </a>
@@ -220,9 +218,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
-      {/* Användaravtal Modal */}
-      <AnvändaravtalModal />
     </div>
   );
 }
