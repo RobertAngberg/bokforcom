@@ -252,26 +252,11 @@ export default function Steg2Levfakt({
               />
             </div>
 
-            {/* Betaldatum */}
-            <div className="mb-4">
-              <label className="block mb-2 text-white">Betaldatum:</label>
-              <DatePicker
-                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(betaldatum) || new Date()}
-                onChange={(date) => {
-                  setBetaldatum(datePickerOnChange(date));
-                }}
-                dateFormat="yyyy-MM-dd"
-                locale="sv"
-                required
-              />
-            </div>
-
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
             <KnappFullWidth
               text="Bokför leverantörsfaktura"
               onClick={() => setCurrentStep(3)}
-              disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum || !betaldatum}
+              disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum}
             />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

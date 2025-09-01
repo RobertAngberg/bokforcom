@@ -28,7 +28,7 @@ export default function LeverantorsfakturorPage() {
   }, []);
 
   const harLeverantörer = leverantörer.length > 0;
-  const registreraKnappText = loading ? "⏳ Laddar..." : "📋 Registrera leverantörsfaktura";
+  const registreraKnappText = loading ? "⏳ Laddar..." : "+ Registrera leverantörsfaktura";
 
   return (
     <MainLayout>

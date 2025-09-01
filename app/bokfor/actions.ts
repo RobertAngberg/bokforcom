@@ -4,7 +4,7 @@
 import { Pool } from "pg";
 import { formatSEK } from "../_utils/format";
 import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
-import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD, stringTillDate, datumTillPostgreSQL } from "../_utils/trueDatum";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import OpenAI from "openai";
 import { put } from "@vercel/blob";
@@ -468,21 +468,14 @@ export async function saveTransaction(formData: FormData) {
 
   console.log(`🎯 Processing transaction: ${valtFörval.namn}`);
 
-  // Konvertera transaktionsdatum till korrekt format för PostgreSQL
+  // Formatera transaktionsdatum för PostgreSQL
   let formattedDate = "";
   if (transaktionsdatum) {
-    try {
-      const date = stringTillDate(transaktionsdatum);
-      if (date) {
-        formattedDate = dateTillÅÅÅÅMMDD(date);
-      } else {
-        console.error("Ogiltigt transaktionsdatum");
-        throw new Error("Ogiltigt transaktionsdatum");
-      }
-    } catch (error) {
-      console.error("Fel vid datumkonvertering");
-      throw new Error("Kunde inte konvertera transaktionsdatum");
-    }
+    // Debug: Logga vad vi fick från frontend
+    console.log("🔍 DEBUG transaktionsdatum från frontend:", transaktionsdatum);
+    // Använd timezone-säker funktion från trueDatum.ts
+    formattedDate = datumTillPostgreSQL(transaktionsdatum) || "";
+    console.log("🔍 DEBUG formattedDate för DB:", formattedDate);
   } else {
     throw new Error("Transaktionsdatum saknas");
   }
@@ -534,18 +527,22 @@ export async function saveTransaction(formData: FormData) {
 
   const client = await pool.connect();
   try {
+    console.log("🔍 DEBUG: Skickar till PostgreSQL - formattedDate:", formattedDate);
     const { rows } = await client.query(
       `
       INSERT INTO transaktioner (
         transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id", blob_url
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-      RETURNING id, blob_url
+      RETURNING id, blob_url, transaktionsdatum
       `,
       [formattedDate, valtFörval.namn ?? "", belopp, filename, kommentar, userId, blobUrl]
     );
     const transaktionsId = rows[0].id;
     const sparadBlobUrl = rows[0].blob_url;
+    const sparatDatum = rows[0].transaktionsdatum;
     console.log("🆔 Skapad transaktion:", transaktionsId);
+    console.log("🔍 DEBUG: Skickat datum:", formattedDate);
+    console.log("🔍 DEBUG: Sparat datum i DB:", sparatDatum);
     console.log("🔍 DEBUG: Sparad blob_url i DB:", sparadBlobUrl);
 
     // Spara alla transaktionsposter som beräknats på frontend
@@ -626,8 +623,8 @@ export async function saveTransaction(formData: FormData) {
       // Formatera datum korrekt för PostgreSQL
       const formatDate = (dateStr: string | null) => {
         if (!dateStr) return null;
-        const date = stringTillDate(dateStr);
-        return date ? dateTillÅÅÅÅMMDD(date) : null;
+        // Returnera direkt som string i YYYY-MM-DD format - ingen konvertering via Date-objekt
+        return dateStr;
       };
 
       const formattedFakturadatum = formatDate(fakturadatum);

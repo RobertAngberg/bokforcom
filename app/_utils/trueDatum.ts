@@ -40,3 +40,10 @@ export function datePickerValue(dateString: string | null | undefined): Date | n
 export function datePickerOnChange(date: Date | null): string {
   return dateTillÅÅÅÅMMDD(date);
 }
+
+// Timezone-säker formattering för PostgreSQL TIMESTAMP WITH TIME ZONE
+export function datumTillPostgreSQL(dateString: string | null): string | null {
+  if (!dateString) return null;
+  // Lägg till svensk timezone för att undvika UTC-konvertering
+  return dateString + "T12:00:00+02:00";
+}

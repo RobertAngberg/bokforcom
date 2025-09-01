@@ -260,8 +260,12 @@ export default function Steg3({
       const transaktionsposter = beräknaTransaktionsposter();
 
       // Lägg till alla nödvändiga fält till FormData
-      // För leverantörsfaktura: använd betaldatum som transaktionsdatum
-      const effektivtTransaktionsdatum = levfaktMode ? betaldatum || "" : transaktionsdatum || "";
+      // För leverantörsfaktura: använd fakturadatum som transaktionsdatum
+      const effektivtTransaktionsdatum = levfaktMode ? fakturadatum || "" : transaktionsdatum || "";
+      console.log("🔍 DEBUG Steg3 - levfaktMode:", levfaktMode);
+      console.log("🔍 DEBUG Steg3 - fakturadatum:", fakturadatum);
+      console.log("🔍 DEBUG Steg3 - transaktionsdatum:", transaktionsdatum);
+      console.log("🔍 DEBUG Steg3 - effektivtTransaktionsdatum:", effektivtTransaktionsdatum);
       formData.set("transaktionsdatum", effektivtTransaktionsdatum);
       formData.set("kommentar", kommentar);
       formData.set("belopp", belopp.toString());
