@@ -3,41 +3,22 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import MainLayout from "../_components/MainLayout";
+import Knapp from "../_components/Knapp";
 import {
-  hämtaAnvändarInfo,
-  uppdateraAnvändarInfo,
-  hämtaFöretagsprofilAdmin,
-  uppdateraFöretagsprofilAdmin,
-  raderaFöretag,
-} from "./actions";
+  hamtaAnvandarInfo,
+  uppdateraAnvandarInfo,
+  hamtaForetagsprofilAdmin,
+  uppdateraForetagsprofilAdmin,
+  raderaForetag,
+} from "./_actions";
+import type { UserInfo, ForetagsProfil } from "./_types/types";
 import { signOut } from "next-auth/react";
-
-interface UserInfo {
-  id: string;
-  email: string;
-  name: string;
-  skapad?: string;
-  uppdaterad?: string;
-  provider?: string;
-}
-
-interface FöretagsProfil {
-  företagsnamn: string;
-  adress: string;
-  postnummer: string;
-  stad: string;
-  organisationsnummer: string;
-  momsregistreringsnummer: string;
-  telefonnummer: string;
-  epost: string;
-  webbplats: string;
-}
 
 export default function Page() {
   const { data: session, status } = useSession();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [företagsProfil, setFöretagsProfil] = useState<FöretagsProfil>({
-    företagsnamn: "",
+  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>({
+    foretagsnamn: "",
     adress: "",
     postnummer: "",
     stad: "",
@@ -73,12 +54,12 @@ export default function Page() {
 
   const fetchUserInfo = async () => {
     try {
-      const data = await hämtaAnvändarInfo();
+      const data = await hamtaAnvandarInfo();
       if (data) {
         setUserInfo(data);
         setEditForm({
-          name: data.name || "",
-          email: data.email || "",
+          name: data.name || session?.user?.name || "",
+          email: data.email || session?.user?.email || "",
         });
       }
     } catch (error) {
@@ -90,9 +71,9 @@ export default function Page() {
 
   const fetchCompanyProfile = async () => {
     try {
-      const data = await hämtaFöretagsprofilAdmin();
+      const data = await hamtaForetagsprofilAdmin();
       if (data) {
-        setFöretagsProfil(data);
+        setForetagsProfil(data);
       }
     } catch (error) {
       console.error("Error fetching company profile:", error);
@@ -101,14 +82,18 @@ export default function Page() {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setEditForm({
+      name: userInfo?.name || session?.user?.name || "",
+      email: userInfo?.email || session?.user?.email || "",
+    });
     setMessage(null);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditForm({
-      name: userInfo?.name || "",
-      email: userInfo?.email || "",
+      name: userInfo?.name || session?.user?.name || "",
+      email: userInfo?.email || session?.user?.email || "",
     });
     setMessage(null);
   };
@@ -125,10 +110,10 @@ export default function Page() {
       formData.append("name", editForm.name.trim());
       formData.append("email", editForm.email.trim());
 
-      const result = await uppdateraAnvändarInfo(formData);
+      const result = await uppdateraAnvandarInfo(formData);
 
       if (result.success) {
-        setUserInfo(result.user);
+        setUserInfo(result.user || null);
         setIsEditing(false);
         setMessage({ type: "success", text: "Användarinformation uppdaterad!" });
 
@@ -161,11 +146,11 @@ export default function Page() {
     setIsSavingCompany(true);
     try {
       const formData = new FormData();
-      Object.entries(företagsProfil).forEach(([key, value]) => {
-        formData.append(key, value);
+      Object.entries(foretagsProfil).forEach(([key, value]) => {
+        formData.append(key, value as string);
       });
 
-      const result = await uppdateraFöretagsprofilAdmin(formData);
+      const result = await uppdateraForetagsprofilAdmin(formData);
 
       if (result.success) {
         setIsEditingCompany(false);
@@ -185,8 +170,8 @@ export default function Page() {
     }
   };
 
-  const handleCompanyInputChange = (field: keyof FöretagsProfil, value: string) => {
-    setFöretagsProfil((prev) => ({
+  const handleCompanyInputChange = (field: keyof ForetagsProfil, value: string) => {
+    setForetagsProfil((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -195,7 +180,7 @@ export default function Page() {
   const handleDeleteCompany = async () => {
     setIsDeleting(true);
     try {
-      const result = await raderaFöretag();
+      const result = await raderaForetag();
 
       if (result.success) {
         // Radering lyckades - logga ut användaren
@@ -238,12 +223,11 @@ export default function Page() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl text-white flex items-center gap-2">👤 Användarinformation</h2>
               {!isEditing && (
-                <button
+                <Knapp
+                  text="✏️ Redigera"
                   onClick={handleEdit}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm transition-colors"
-                >
-                  ✏️ Redigera
-                </button>
+                  className="bg-blue-600 hover:bg-blue-700"
+                />
               )}
             </div>
 
@@ -284,20 +268,19 @@ export default function Page() {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <button
+                    <Knapp
+                      text="💾 Spara"
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-md text-sm transition-colors"
-                    >
-                      {isSaving ? "Sparar..." : "💾 Spara"}
-                    </button>
-                    <button
+                      loading={isSaving}
+                      loadingText="Sparar..."
+                    />
+                    <Knapp
+                      text="❌ Avbryt"
                       onClick={handleCancel}
                       disabled={isSaving}
-                      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-colors"
-                    >
-                      ❌ Avbryt
-                    </button>
+                      className="bg-gray-600 hover:bg-gray-700"
+                    />
                   </div>
                 </div>
               ) : (
@@ -310,12 +293,6 @@ export default function Page() {
                     <span className="text-gray-400">Email:</span>
                     <span className="text-white ml-2">{userInfo?.email || session.user.email}</span>
                   </div>
-                  {userInfo?.provider && userInfo.provider !== "credentials" && (
-                    <div>
-                      <span className="text-gray-400">Inloggningsmetod:</span>
-                      <span className="text-white ml-2 capitalize">{userInfo.provider}</span>
-                    </div>
-                  )}
                   {session.user.image && (
                     <div>
                       <span className="text-gray-400">Profilbild:</span>
@@ -337,12 +314,11 @@ export default function Page() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl text-white flex items-center gap-2">🏢 Företagsprofil</h2>
             {!isEditingCompany && (
-              <button
+              <Knapp
+                text="✏️ Redigera"
                 onClick={handleEditCompany}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm transition-colors"
-              >
-                ✏️ Redigera
-              </button>
+                className="bg-blue-600 hover:bg-blue-700"
+              />
             )}
           </div>
 
@@ -366,8 +342,8 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Företagsnamn:</label>
                     <input
                       type="text"
-                      value={företagsProfil.företagsnamn}
-                      onChange={(e) => handleCompanyInputChange("företagsnamn", e.target.value)}
+                      value={foretagsProfil.foretagsnamn}
+                      onChange={(e) => handleCompanyInputChange("foretagsnamn", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="Företagsnamn AB"
                     />
@@ -376,7 +352,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Organisationsnummer:</label>
                     <input
                       type="text"
-                      value={företagsProfil.organisationsnummer}
+                      value={foretagsProfil.organisationsnummer}
                       onChange={(e) =>
                         handleCompanyInputChange("organisationsnummer", e.target.value)
                       }
@@ -390,7 +366,7 @@ export default function Page() {
                   <label className="block text-gray-400 mb-2">Adress:</label>
                   <input
                     type="text"
-                    value={företagsProfil.adress}
+                    value={foretagsProfil.adress}
                     onChange={(e) => handleCompanyInputChange("adress", e.target.value)}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="Exempel gatan 123"
@@ -402,7 +378,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Postnummer:</label>
                     <input
                       type="text"
-                      value={företagsProfil.postnummer}
+                      value={foretagsProfil.postnummer}
                       onChange={(e) => handleCompanyInputChange("postnummer", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="123 45"
@@ -412,7 +388,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Stad:</label>
                     <input
                       type="text"
-                      value={företagsProfil.stad}
+                      value={foretagsProfil.stad}
                       onChange={(e) => handleCompanyInputChange("stad", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="Stockholm"
@@ -425,7 +401,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Telefonnummer:</label>
                     <input
                       type="text"
-                      value={företagsProfil.telefonnummer}
+                      value={foretagsProfil.telefonnummer}
                       onChange={(e) => handleCompanyInputChange("telefonnummer", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="08-123 456 78"
@@ -435,7 +411,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">E-post:</label>
                     <input
                       type="email"
-                      value={företagsProfil.epost}
+                      value={foretagsProfil.epost}
                       onChange={(e) => handleCompanyInputChange("epost", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="info@företag.se"
@@ -448,7 +424,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Momsregistreringsnummer:</label>
                     <input
                       type="text"
-                      value={företagsProfil.momsregistreringsnummer}
+                      value={foretagsProfil.momsregistreringsnummer}
                       onChange={(e) =>
                         handleCompanyInputChange("momsregistreringsnummer", e.target.value)
                       }
@@ -460,7 +436,7 @@ export default function Page() {
                     <label className="block text-gray-400 mb-2">Webbplats:</label>
                     <input
                       type="url"
-                      value={företagsProfil.webbplats}
+                      value={foretagsProfil.webbplats}
                       onChange={(e) => handleCompanyInputChange("webbplats", e.target.value)}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="https://www.företag.se"
@@ -469,20 +445,19 @@ export default function Page() {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button
+                  <Knapp
+                    text="💾 Spara"
                     onClick={handleSaveCompany}
                     disabled={isSavingCompany}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-md text-sm transition-colors"
-                  >
-                    {isSavingCompany ? "Sparar..." : "💾 Spara"}
-                  </button>
-                  <button
+                    loading={isSavingCompany}
+                    loadingText="Sparar..."
+                  />
+                  <Knapp
+                    text="❌ Avbryt"
                     onClick={handleCancelCompany}
                     disabled={isSavingCompany}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-colors"
-                  >
-                    ❌ Avbryt
-                  </button>
+                    className="bg-gray-600 hover:bg-gray-700"
+                  />
                 </div>
               </div>
             ) : (
@@ -491,55 +466,55 @@ export default function Page() {
                   <div>
                     <span className="text-gray-400">Företagsnamn:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.företagsnamn || "Ej angett"}
+                      {foretagsProfil.foretagsnamn || "Ej angett"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Organisationsnummer:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.organisationsnummer || "Ej angett"}
+                      {foretagsProfil.organisationsnummer || "Ej angett"}
                     </span>
                   </div>
                 </div>
                 <div>
                   <span className="text-gray-400">Adress:</span>
-                  <span className="text-white ml-2">{företagsProfil.adress || "Ej angett"}</span>
+                  <span className="text-white ml-2">{foretagsProfil.adress || "Ej angett"}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400">Postnummer:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.postnummer || "Ej angett"}
+                      {foretagsProfil.postnummer || "Ej angett"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Stad:</span>
-                    <span className="text-white ml-2">{företagsProfil.stad || "Ej angett"}</span>
+                    <span className="text-white ml-2">{foretagsProfil.stad || "Ej angett"}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400">Telefonnummer:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.telefonnummer || "Ej angett"}
+                      {foretagsProfil.telefonnummer || "Ej angett"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">E-post:</span>
-                    <span className="text-white ml-2">{företagsProfil.epost || "Ej angett"}</span>
+                    <span className="text-white ml-2">{foretagsProfil.epost || "Ej angett"}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400">Momsregistreringsnummer:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.momsregistreringsnummer || "Ej angett"}
+                      {foretagsProfil.momsregistreringsnummer || "Ej angett"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Webbplats:</span>
                     <span className="text-white ml-2">
-                      {företagsProfil.webbplats || "Ej angett"}
+                      {foretagsProfil.webbplats || "Ej angett"}
                     </span>
                   </div>
                 </div>
@@ -556,13 +531,14 @@ export default function Page() {
             <br />
             <strong className="text-red-400"> Detta kan inte ångras!</strong>
           </p>
-          <button
+          <Knapp
+            text={isDeleting ? "Raderar..." : "Radera företag"}
             onClick={() => setShowDeleteConfirm(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
             disabled={isDeleting}
-          >
-            {isDeleting ? "Raderar..." : "Radera företag"}
-          </button>
+            loading={isDeleting}
+            loadingText="Raderar..."
+            className="bg-red-600 hover:bg-red-700"
+          />
         </div>
 
         {/* Bekräftelsedialog för radering */}
@@ -583,20 +559,20 @@ export default function Page() {
               </ul>
               <p className="text-red-400 font-semibold mb-6">Detta kan inte ångras!</p>
               <div className="flex gap-3">
-                <button
+                <Knapp
+                  text="Avbryt"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 bg-gray-600 text-gray-200 px-4 py-2 rounded hover:bg-gray-500 transition-colors"
                   disabled={isDeleting}
-                >
-                  Avbryt
-                </button>
-                <button
+                  className="flex-1 bg-gray-600 hover:bg-gray-500 text-gray-200"
+                />
+                <Knapp
+                  text={isDeleting ? "Raderar..." : "Ja, radera allt"}
                   onClick={handleDeleteCompany}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
                   disabled={isDeleting}
-                >
-                  {isDeleting ? "Raderar..." : "Ja, radera allt"}
-                </button>
+                  loading={isDeleting}
+                  loadingText="Raderar..."
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                />
               </div>
             </div>
           </div>
