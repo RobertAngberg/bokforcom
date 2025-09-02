@@ -52,13 +52,6 @@ function FakturorComponent({
     }
     const { faktura, artiklar, rotRut } = data;
 
-    console.log(
-      "� Laddar faktura ID:",
-      fakturaId,
-      "- Har ROT/RUT:",
-      Object.keys(rotRut).length > 0
-    );
-
     setFormData((prev: any) => ({
       ...prev,
       id: faktura.id,

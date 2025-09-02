@@ -238,23 +238,6 @@ export default function Avsandare() {
           )}
         </div>
 
-        {form.logo && (
-          <div className="flex flex-col gap-2">
-            <label className="text-sm">Logo-storlek: {form.logoWidth}px</label>
-            <input
-              type="range"
-              min="50"
-              max="400"
-              value={form.logoWidth}
-              onChange={(e) => {
-                const newWidth = Number(e.target.value);
-                setForm((prev) => ({ ...prev, logoWidth: newWidth }));
-              }}
-              className="w-64"
-            />
-          </div>
-        )}
-
         {form.logo && <Knapp onClick={hanteraTaBortLogga} text="❌ Ta bort logotyp" />}
       </div>
 
