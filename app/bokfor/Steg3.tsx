@@ -8,6 +8,7 @@ import { saveTransaction } from "./actions";
 import { uploadReceiptImage } from "../_utils/blobUpload";
 import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
+import Toast from "../_components/Toast";
 import { formatSEK, formatCurrency, round } from "../_utils/format";
 import { type Leverantör } from "../faktura/actions";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
@@ -86,6 +87,11 @@ export default function Steg3({
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
   const [anstalldId, setAnstalldId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   useEffect(() => {
     if (utlaggMode) {
@@ -250,7 +256,11 @@ export default function Steg3({
 
     // Kontrollera att utlägg har vald anställd
     if (utlaggMode && !anstalldId) {
-      alert("Du måste välja en anställd för utlägget.");
+      setToast({
+        message: "Du måste välja en anställd för utlägget.",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
@@ -412,6 +422,13 @@ export default function Steg3({
 
   return (
     <div className="relative">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <TillbakaPil onClick={() => setCurrentStep?.(2)} />
 
       <h1 className="text-3xl mb-4 text-center">

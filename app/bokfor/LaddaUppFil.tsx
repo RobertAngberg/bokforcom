@@ -5,6 +5,7 @@ import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR } from "./actions";
 import { uploadReceiptImage, uploadBlob, compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
+import Toast from "../_components/Toast";
 
 // Säker filvalidering
 const ALLOWED_FILE_TYPES = {
@@ -71,6 +72,11 @@ export default function LaddaUppFil({
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = event.target.files?.[0];
@@ -79,7 +85,11 @@ export default function LaddaUppFil({
     // Säker filvalidering
     const validation = validateFile(originalFile);
     if (!validation.valid) {
-      alert(validation.error);
+      setToast({
+        message: validation.error || "Felaktig fil",
+        type: "error",
+        isVisible: true,
+      });
       event.target.value = ""; // Rensa input
       return;
     }
@@ -91,9 +101,11 @@ export default function LaddaUppFil({
       const maxPdfMB = 2; // 2MB gräns för PDF
       if (sizeMB > maxPdfMB) {
         console.error(`❌ PDF för stor: ${sizeMB.toFixed(1)}MB (max ${maxPdfMB}MB)`);
-        alert(
-          `PDF-filen är för stor (${sizeMB.toFixed(1)}MB).\nMaximal tillåten storlek är ${maxPdfMB}MB.`
-        );
+        setToast({
+          message: `PDF-filen är för stor (${sizeMB.toFixed(1)}MB).\nMaximal tillåten storlek är ${maxPdfMB}MB.`,
+          type: "error",
+          isVisible: true,
+        });
         // Rensa input
         event.target.value = "";
         return;
@@ -102,9 +114,11 @@ export default function LaddaUppFil({
       const maxImageMB = 10; // 10MB gräns för bilder
       if (sizeMB > maxImageMB) {
         console.error(`❌ Bild för stor: ${sizeMB.toFixed(1)}MB (max ${maxImageMB}MB)`);
-        alert(
-          `Bilden är för stor (${sizeMB.toFixed(1)}MB).\nMaximal tillåten storlek är ${maxImageMB}MB.`
-        );
+        setToast({
+          message: `Bilden är för stor (${sizeMB.toFixed(1)}MB).\nMaximal tillåten storlek är ${maxImageMB}MB.`,
+          type: "error",
+          isVisible: true,
+        });
         // Rensa input
         event.target.value = "";
         return;
@@ -208,6 +222,13 @@ export default function LaddaUppFil({
 
   return (
     <>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <input
         type="file"
         id="fileUpload"
