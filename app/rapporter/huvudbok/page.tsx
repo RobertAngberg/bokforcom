@@ -6,6 +6,7 @@ import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import Dropdown from "../../_components/Dropdown";
 import VerifikatModal from "../../_components/VerifikatModal";
+import Toast from "../../_components/Toast";
 import { formatSEK } from "../../_utils/format";
 import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "./actions";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
@@ -46,6 +47,10 @@ export default function Page() {
   // State för VerifikatModal
   const [showVerifikatModal, setShowVerifikatModal] = useState(false);
   const [selectedTransaktionsId, setSelectedTransaktionsId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   // Ladda data
   useEffect(() => {
@@ -111,7 +116,7 @@ export default function Page() {
       exportHuvudbokCSV(filtradeKonton, företagsnamn, selectedMonth, selectedYear);
     } catch (error) {
       console.error("Fel vid CSV-export:", error);
-      alert("Ett fel uppstod vid CSV-export. Försök igen.");
+      setToast({ type: "error", message: "Ett fel uppstod vid CSV-export. Försök igen." });
     }
   };
 
@@ -126,7 +131,7 @@ export default function Page() {
       );
     } catch (error) {
       console.error("Fel vid PDF-export:", error);
-      alert("Ett fel uppstod vid PDF-export. Försök igen.");
+      setToast({ type: "error", message: "Ett fel uppstod vid PDF-export. Försök igen." });
     }
   };
 
@@ -363,6 +368,14 @@ export default function Page() {
             setShowVerifikatModal(false);
             setSelectedTransaktionsId(null);
           }}
+        />
+      )}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
         />
       )}
     </MainLayout>
