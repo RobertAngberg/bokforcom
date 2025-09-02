@@ -23,7 +23,7 @@ function logFinancialDataEvent(
   console.log(`}`);
 }
 
-export async function fetchBalansData(year: string) {
+export async function fetchBalansData(year: string, month?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const userId = await getUserId();
 
@@ -39,10 +39,18 @@ export async function fetchBalansData(year: string) {
     throw new Error("Ogiltigt år-format");
   }
 
-  logFinancialDataEvent("access", userId, `Accessing balance report for year ${year}`);
+  logFinancialDataEvent(
+    "access",
+    userId,
+    `Accessing balance report for year ${year}${month && month !== "all" ? `, month ${month}` : ""}`
+  );
 
   const start = `${year}-01-01`;
-  const end = `${year}-12-31`;
+  // Om månad är specificerad och inte "all", använd den månaden, annars hela året
+  const end =
+    month && month !== "all"
+      ? `${year}-${month.padStart(2, "0")}-${new Date(parseInt(year), parseInt(month), 0).getDate()}`
+      : `${year}-12-31`;
   const previousYearEnd = `${parseInt(year) - 1}-12-31`;
 
   try {

@@ -73,14 +73,14 @@ export default function Page() {
   } | null>(null);
   //#endregion
 
-  // Ladda data när komponenten mountas eller året ändras
+  // Ladda data när komponenten mountas eller året/månaden ändras
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setExportMessage(null); // Rensa export-meddelanden vid ny laddning
         const [balansData, profilData] = await Promise.all([
-          fetchBalansData(selectedYear),
+          fetchBalansData(selectedYear, selectedMonth),
           fetchFöretagsprofil(),
         ]);
 
@@ -95,7 +95,7 @@ export default function Page() {
     };
 
     loadData();
-  }, [selectedYear]); // Lägg till selectedYear som dependency
+  }, [selectedYear, selectedMonth]); // Lägg till selectedMonth som dependency
 
   // Om data fortfarande laddas
   if (loading || !initialData) {
