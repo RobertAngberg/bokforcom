@@ -9,6 +9,7 @@ import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from ".
 import { getProxyImageUrl } from "./_utils/imageProxy";
 import { useFakturaContext } from "./FakturaProvider";
 import Knapp from "../_components/Knapp";
+import Toast from "../_components/Toast";
 //#endregion
 
 export default function Avsandare() {
@@ -32,6 +33,11 @@ export default function Avsandare() {
 
   const [sparat, setSparat] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
   //#endregion
 
   //#region Ladda företagsprofil
@@ -88,7 +94,11 @@ export default function Avsandare() {
 
     // SÄKERHETSVALIDERING: Filtyp
     if (!file.type.startsWith("image/")) {
-      alert("❌ Bara bildfiler tillåtna (PNG, JPG, GIF, WebP).");
+      setToast({
+        message: "Bara bildfiler tillåtna (PNG, JPG, GIF, WebP).",
+        type: "error",
+        isVisible: true,
+      });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -111,14 +121,26 @@ export default function Avsandare() {
         // Spara även i localStorage som backup/cache
         localStorage.setItem("company_logo", result.url);
 
-        alert("✅ Logotyp uppladdad!");
+        setToast({
+          message: "Logotyp uppladdad!",
+          type: "success",
+          isVisible: true,
+        });
       } else {
-        alert(`❌ Upload misslyckades: ${result.error}`);
+        setToast({
+          message: `Upload misslyckades: ${result.error}`,
+          type: "error",
+          isVisible: true,
+        });
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     } catch (error) {
       console.error("Logo upload error:", error);
-      alert("❌ Ett fel uppstod vid uppladdning");
+      setToast({
+        message: "Ett fel uppstod vid uppladdning",
+        type: "error",
+        isVisible: true,
+      });
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -157,13 +179,24 @@ export default function Avsandare() {
       setSparat(true);
       setTimeout(() => setSparat(false), 3000);
     } else {
-      alert("Kunde inte spara uppgifter.");
+      setToast({
+        message: "Kunde inte spara uppgifter.",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
   //#endregion
 
   return (
     <div className="max-w-4xl mx-auto bg-slate-900 text-white rounded-lg">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <TextFalt
           label="Företagsnamn"

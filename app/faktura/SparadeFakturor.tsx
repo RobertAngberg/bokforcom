@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { deleteFaktura, hämtaFakturaMedRader, registreraKundfakturaBetalning } from "./actions";
 import { useFakturaContext } from "./FakturaProvider";
+import Toast from "../_components/Toast";
 
 //#region Business Logic - Migrated from actions.ts
 // Beräkna totalbelopp för faktura (flyttad från actions.ts)
@@ -70,6 +71,11 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
     fakturaId: number;
     belopp: number;
   } | null>(null);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   const hanteraRegistreraBetalning = async (
     fakturaId: number,
@@ -79,15 +85,27 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
     try {
       const result = await registreraKundfakturaBetalning(fakturaId, belopp, kontoklass);
       if (result.success) {
-        alert("✅ Betalning registrerad!");
+        setToast({
+          message: "Betalning registrerad!",
+          type: "success",
+          isVisible: true,
+        });
         window.dispatchEvent(new Event("reloadFakturor"));
         setBetalningsModal(null);
       } else {
-        alert(`❌ ${result.error || "Kunde inte registrera betalning"}`);
+        setToast({
+          message: result.error || "Kunde inte registrera betalning",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Fel vid betalningsregistrering:", error);
-      alert("❌ Fel vid registrering av betalning");
+      setToast({
+        message: "Fel vid registrering av betalning",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -99,7 +117,11 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
         await onSelectInvoice(id);
         setKundStatus("loaded");
       } catch (error) {
-        alert("❌ Fel vid laddning av faktura");
+        setToast({
+          message: "Fel vid laddning av faktura",
+          type: "error",
+          isVisible: true,
+        });
         console.error(error);
       } finally {
         setLoadingInvoiceId(null);
@@ -111,7 +133,11 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
       setLoadingInvoiceId(id);
       const data = await hämtaFakturaMedRader(id);
       if (!data || !data.faktura) {
-        alert("❌ Kunde inte hämta faktura");
+        setToast({
+          message: "Kunde inte hämta faktura",
+          type: "error",
+          isVisible: true,
+        });
         return;
       }
       const { faktura, artiklar, rotRut } = data;
@@ -191,7 +217,11 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
       }));
       setKundStatus("loaded");
     } catch (error) {
-      alert("❌ Fel vid laddning av faktura");
+      setToast({
+        message: "Fel vid laddning av faktura",
+        type: "error",
+        isVisible: true,
+      });
       console.error(error);
     } finally {
       setLoadingInvoiceId(null);
@@ -206,12 +236,23 @@ export default function SparadeFakturor({ fakturor, activeInvoiceId, onSelectInv
       // Trigga reload event så Fakturor.tsx uppdaterar sin lista
       window.dispatchEvent(new Event("reloadFakturor"));
     } catch {
-      alert("❌ Kunde inte ta bort faktura");
+      setToast({
+        message: "Kunde inte ta bort faktura",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
   return (
     <>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <div className="text-white">
         {fakturor.length === 0 ? (
           <p className="text-gray-400 italic">Inga fakturor hittades.</p>
