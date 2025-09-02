@@ -14,6 +14,7 @@ import {
 import Dropdown from "../_components/Dropdown";
 import Knapp from "../_components/Knapp";
 import Modal from "../_components/Modal";
+import Toast from "../_components/Toast";
 
 // Business Logic - Migrated from actions.ts
 function sanitizeHistorikInput(text: string): string {
@@ -112,6 +113,11 @@ export default function Page() {
     }>
   >([]);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -254,12 +260,20 @@ export default function Page() {
       const result = await findUnbalancedVerifications();
 
       if (!result.success) {
-        alert("Fel vid kontroll: " + result.error);
+        setToast({
+          message: "Fel vid kontroll: " + result.error,
+          type: "error",
+          isVisible: true,
+        });
         return;
       }
 
       if (!result.unbalanced || result.unbalanced.length === 0) {
-        alert("Alla verifikationer är balanserade! ✅");
+        setToast({
+          message: "Alla verifikationer är balanserade! ✅",
+          type: "success",
+          isVisible: true,
+        });
         return;
       }
 
@@ -280,7 +294,11 @@ export default function Page() {
       setUnbalancedResults(unbalancedItems);
       setShowUnbalancedModal(true);
     } catch (error) {
-      alert("Ett fel uppstod vid kontrollen");
+      setToast({
+        message: "Ett fel uppstod vid kontrollen",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setIsCheckingUnbalanced(false);
     }
@@ -323,12 +341,24 @@ export default function Page() {
         });
         setActiveIds((prev) => prev.filter((id) => id !== transactionId));
 
-        alert(result.message || "Transaktion borttagen");
+        setToast({
+          message: result.message || "Transaktion borttagen",
+          type: "success",
+          isVisible: true,
+        });
       } else {
-        alert(result.error || "Kunde inte ta bort transaktion");
+        setToast({
+          message: result.error || "Kunde inte ta bort transaktion",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
-      alert("Ett fel uppstod när transaktionen skulle tas bort");
+      setToast({
+        message: "Ett fel uppstod när transaktionen skulle tas bort",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setDeletingIds((prev) => prev.filter((id) => id !== transactionId));
     }
@@ -605,6 +635,15 @@ export default function Page() {
           </div>
         </div>
       </Modal>
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </MainLayout>
   );
 }

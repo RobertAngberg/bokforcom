@@ -307,13 +307,24 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
 
       // Kolla att transaktionen tillhör användaren
       const ownerCheck = await client.query(
-        "SELECT id FROM transaktioner WHERE id = $1 AND user_id = $2",
+        "SELECT id, kommentar FROM transaktioner WHERE id = $1 AND user_id = $2",
         [transactionId, userId]
       );
 
       if (ownerCheck.rows.length === 0) {
         await client.query("ROLLBACK");
         return { success: false, error: "Transaktion hittades inte eller tillhör inte dig" };
+      }
+
+      // Kolla om det är en faktura-transaktion
+      const kommentar = ownerCheck.rows[0].kommentar || "";
+      if (kommentar.includes("Bokföring av faktura")) {
+        await client.query("ROLLBACK");
+        return {
+          success: false,
+          error:
+            "Fakturatransaktioner kan inte tas bort härifrån. Gå till Faktura-sektionen för att hantera fakturor.",
+        };
       }
 
       // Ta bort transaktionsposter först (på grund av foreign key)
