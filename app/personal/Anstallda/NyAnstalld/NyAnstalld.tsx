@@ -6,6 +6,7 @@ import Kompensation from "./Kompensation";
 import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../_components/Knapp";
+import Toast from "../../../_components/Toast";
 import { sparaAnställd } from "../../actions";
 
 export default function NyAnställd({
@@ -52,8 +53,15 @@ export default function NyAnställd({
   const [växaStöd, setVäxaStöd] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+    isVisible: boolean;
+  }>({
+    message: "",
+    type: "success",
+    isVisible: false,
+  });
 
   // Hantera ändring i personalData
   const handleChange = (e: any) => {
@@ -63,12 +71,9 @@ export default function NyAnställd({
       [name]: value,
     }));
 
-    // Rensa fel- och success-meddelanden när användaren börjar redigera
-    if (errorMessage) {
-      setErrorMessage(null);
-    }
-    if (successMessage) {
-      setSuccessMessage(null);
+    // Rensa toast när användaren börjar redigera
+    if (toast.isVisible) {
+      setToast((prev) => ({ ...prev, isVisible: false }));
     }
   };
 
@@ -95,18 +100,25 @@ export default function NyAnställd({
     try {
       const result = await sparaAnställd(data);
       if (result.success) {
-        setErrorMessage(null);
-        setSuccessMessage("Anställd sparad framgångsrikt! ✅");
-        // Töm success meddelande efter 3 sekunder
-        setTimeout(() => setSuccessMessage(null), 3000);
+        setToast({
+          message: "Anställd sparad framgångsrikt! 🎉",
+          type: "success",
+          isVisible: true,
+        });
         if (onSparad) onSparad();
       } else {
-        setSuccessMessage(null);
-        setErrorMessage(result.error || "Ett fel uppstod vid sparande");
+        setToast({
+          message: result.error || "Ett fel uppstod vid sparande",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
-      setSuccessMessage(null);
-      setErrorMessage("Ett fel uppstod vid sparande");
+      setToast({
+        message: "Ett fel uppstod vid sparande",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -153,19 +165,13 @@ export default function NyAnställd({
         setSkattekolumn={setSkattekolumn}
       />
 
-      {successMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          <strong className="font-bold">Klart! </strong>
-          <span className="block sm:inline">{successMessage}</span>
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <strong className="font-bold">Fel: </strong>
-          <span className="block sm:inline">{errorMessage}</span>
-        </div>
-      )}
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
 
       <div className="flex gap-4 pt-4">
         <Knapp text={loading ? "Sparar..." : "Spara"} onClick={handleSpara} disabled={loading} />
