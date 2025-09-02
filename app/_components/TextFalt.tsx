@@ -43,7 +43,6 @@ export default function TextFalt({
 
   // Säker onChange-hantering med live-validering
   const handleSafeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    console.log("🐛 TextFalt handleSafeChange:", e.target.value);
     let newValue = e.target.value;
 
     // ENDAST ta bort script-farliga tecken, inte vanliga tecken
@@ -64,10 +63,6 @@ export default function TextFalt({
       },
     } as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
 
-    console.log("🐛 Säkert event skapat:", {
-      name: safeEvent.target.name,
-      value: safeEvent.target.value,
-    });
     onChange(safeEvent);
   };
 

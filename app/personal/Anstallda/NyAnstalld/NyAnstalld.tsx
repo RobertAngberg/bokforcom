@@ -53,6 +53,7 @@ export default function NyAnställd({
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Hantera ändring i personalData
   const handleChange = (e: any) => {
@@ -62,9 +63,12 @@ export default function NyAnställd({
       [name]: value,
     }));
 
-    // Rensa felmeddelanden när användaren börjar redigera
+    // Rensa fel- och success-meddelanden när användaren börjar redigera
     if (errorMessage) {
       setErrorMessage(null);
+    }
+    if (successMessage) {
+      setSuccessMessage(null);
     }
   };
 
@@ -92,11 +96,16 @@ export default function NyAnställd({
       const result = await sparaAnställd(data);
       if (result.success) {
         setErrorMessage(null);
+        setSuccessMessage("Anställd sparad framgångsrikt! ✅");
+        // Töm success meddelande efter 3 sekunder
+        setTimeout(() => setSuccessMessage(null), 3000);
         if (onSparad) onSparad();
       } else {
+        setSuccessMessage(null);
         setErrorMessage(result.error || "Ett fel uppstod vid sparande");
       }
     } catch (error) {
+      setSuccessMessage(null);
       setErrorMessage("Ett fel uppstod vid sparande");
     } finally {
       setLoading(false);
@@ -143,6 +152,13 @@ export default function NyAnställd({
         skattekolumn={skattekolumn}
         setSkattekolumn={setSkattekolumn}
       />
+
+      {successMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <strong className="font-bold">Klart! </strong>
+          <span className="block sm:inline">{successMessage}</span>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

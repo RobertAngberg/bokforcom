@@ -3,65 +3,11 @@
 import { Pool } from "pg";
 import { getUserId } from "../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import crypto from "crypto";
 import { validateSessionAttempt } from "../_utils/rateLimit";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-
-// SÄKERHETSVALIDERING: Krypteringsnyckel för känslig persondata
-const getEncryptionKey = (): string => {
-  const key = process.env.PERSONAL_DATA_ENCRYPTION_KEY;
-  if (!key) {
-    console.warn("⚠️ VARNING: Ingen krypteringsnyckel satt för personaldata");
-    return crypto.randomBytes(32).toString("hex").substring(0, 32);
-  }
-  return key.substring(0, 32).padEnd(32, "0");
-};
-
-const ALGORITHM = "aes-256-cbc";
-
-// SÄKERHETSVALIDERING: Kryptera känslig persondata
-function encryptSensitiveData(text: string): string {
-  if (!text) return text;
-
-  try {
-    const key = getEncryptionKey();
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher(ALGORITHM, key);
-
-    let encrypted = cipher.update(text, "utf8", "hex");
-    encrypted += cipher.final("hex");
-
-    // Lagra IV + encrypted data
-    return iv.toString("hex") + ":" + encrypted;
-  } catch (error) {
-    console.error("🚨 Krypteringsfel:", error);
-    logPersonalDataEvent("violation", undefined, `Encryption failed for sensitive data`);
-    return text; // Fallback - returnera original (bör loggas som säkerhetsincident)
-  }
-}
-
-// SÄKERHETSVALIDERING: Dekryptera känslig persondata
-function decryptSensitiveData(encryptedText: string): string {
-  if (!encryptedText || !encryptedText.includes(":")) return encryptedText;
-
-  try {
-    const key = getEncryptionKey();
-    const [ivHex, encrypted] = encryptedText.split(":");
-    const decipher = crypto.createDecipher(ALGORITHM, key);
-
-    let decrypted = decipher.update(encrypted, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-
-    return decrypted;
-  } catch (error) {
-    console.error("🚨 Dekrypteringsfel:", error);
-    logPersonalDataEvent("violation", undefined, `Decryption failed for sensitive data`);
-    return encryptedText; // Fallback
-  }
-}
 
 // SÄKERHETSVALIDERING: Validera och sanera personnummer (GDPR-kritiskt)
 function validateAndSanitizePersonnummer(personnummer: string): {
@@ -305,101 +251,10 @@ export async function hämtaAnställd(anställdId: number) {
 }
 
 export async function sparaAnställd(data: AnställdData, anställdId?: number | null) {
-  // SÄKERHETSVALIDERING: Kontrollera session
   const userId = await getUserId();
   if (!userId) {
-    logPersonalDataEvent(
-      "violation",
-      undefined,
-      "Attempted to save employee without valid session"
-    );
-    throw new Error("Säkerhetsfel: Ingen inloggad användare");
+    throw new Error("Ingen inloggad användare");
   }
-
-  // userId already a number from getUserId()
-
-  // SÄKERHETSVALIDERING: Rate limiting för HR-operationer
-  if (!validateSessionAttempt(`hr-save-${userId}`)) {
-    logPersonalDataEvent("violation", userId, "Rate limit exceeded for employee save operation");
-    return {
-      success: false,
-      error: "För många förfrågningar. Försök igen om 15 minuter.",
-    };
-  }
-
-  logPersonalDataEvent(
-    "access",
-    userId,
-    anställdId ? `Updating employee ${anställdId}` : "Creating new employee"
-  );
-
-  // SÄKERHETSVALIDERING: Validera personnummer
-  if (data.personnummer) {
-    const personnummerValidation = validateAndSanitizePersonnummer(data.personnummer);
-    if (!personnummerValidation.isValid) {
-      logPersonalDataEvent(
-        "violation",
-        userId,
-        `Invalid personnummer: ${personnummerValidation.error}`
-      );
-      return {
-        success: false,
-        error: `Personnummer-fel: ${personnummerValidation.error}`,
-      };
-    }
-    data.personnummer = personnummerValidation.sanitized;
-  }
-
-  // SÄKERHETSVALIDERING: Validera bankuppgifter
-  if (data.clearingnummer || data.bankkonto) {
-    const bankValidation = validateBankDetails(data.clearingnummer, data.bankkonto);
-    if (!bankValidation.isValid) {
-      logPersonalDataEvent("violation", userId, `Invalid bank details: ${bankValidation.error}`);
-      return {
-        success: false,
-        error: `Bankuppgifter-fel: ${bankValidation.error}`,
-      };
-    }
-  }
-
-  // SÄKERHETSVALIDERING: Validera lönedata
-  const salaryValidation = validateSalaryData(data.kompensation, data.arbetsvecka);
-  if (!salaryValidation.isValid) {
-    logPersonalDataEvent("violation", userId, `Invalid salary data: ${salaryValidation.error}`);
-    return {
-      success: false,
-      error: `Lönedata-fel: ${salaryValidation.error}`,
-    };
-  }
-
-  // SÄKERHETSVALIDERING: Kryptera känslig data
-  const encryptedPersonnummer = data.personnummer ? encryptSensitiveData(data.personnummer) : null;
-  const encryptedBankkonto = data.bankkonto ? encryptSensitiveData(data.bankkonto) : null;
-
-  if (data.personnummer && encryptedPersonnummer) {
-    logPersonalDataEvent("encrypt", userId, "Personnummer encrypted");
-  }
-  if (data.bankkonto && encryptedBankkonto) {
-    logPersonalDataEvent("encrypt", userId, "Bank account encrypted");
-  }
-
-  // SÄKERHETSVALIDERING: Sanera all input
-  const sanitizedData = {
-    förnamn: sanitizeHRInput(data.förnamn || ""),
-    efternamn: sanitizeHRInput(data.efternamn || ""),
-    jobbtitel: sanitizeHRInput(data.jobbtitel || ""),
-    mail: sanitizeHRInput(data.mail || ""),
-    clearingnummer: sanitizeHRInput(data.clearingnummer || ""),
-    adress: sanitizeHRInput(data.adress || ""),
-    postnummer: sanitizeHRInput(data.postnummer || ""),
-    ort: sanitizeHRInput(data.ort || ""),
-    anställningstyp: sanitizeHRInput(data.anställningstyp || ""),
-    löneperiod: sanitizeHRInput(data.löneperiod || ""),
-    ersättningPer: sanitizeHRInput(data.ersättningPer || ""),
-    arbetsbelastning: sanitizeHRInput(data.arbetsbelastning || ""),
-    tjänsteställeAdress: sanitizeHRInput(data.tjänsteställeAdress || ""),
-    tjänsteställeOrt: sanitizeHRInput(data.tjänsteställeOrt || ""),
-  };
 
   try {
     const client = await pool.connect();
@@ -440,50 +295,44 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
       `;
 
       const values = [
-        sanitizedData.förnamn || null,
-        sanitizedData.efternamn || null,
-        encryptedPersonnummer, // KRYPTERAD
-        sanitizedData.jobbtitel || null,
-        sanitizedData.mail || null,
-        sanitizedData.clearingnummer || null,
-        encryptedBankkonto, // KRYPTERAD
-        sanitizedData.adress || null,
-        sanitizedData.postnummer || null,
-        sanitizedData.ort || null,
+        data.förnamn || null,
+        data.efternamn || null,
+        data.personnummer,
+        data.jobbtitel || null,
+        data.mail || null,
+        data.clearingnummer || null,
+        data.bankkonto || null,
+        data.adress || null,
+        data.postnummer || null,
+        data.ort || null,
         data.startdatum || null,
         data.slutdatum || null,
-        sanitizedData.anställningstyp || null,
-        sanitizedData.löneperiod || null,
-        sanitizedData.ersättningPer || null,
+        data.anställningstyp || null,
+        data.löneperiod || null,
+        data.ersättningPer || null,
         data.kompensation ? parseFloat(data.kompensation) : null,
         data.arbetsvecka ? parseInt(data.arbetsvecka, 10) : null,
-        sanitizedData.arbetsbelastning || null,
+        data.arbetsbelastning || null,
         data.deltidProcent ? parseInt(data.deltidProcent, 10) : null,
-        sanitizedData.tjänsteställeAdress || null,
-        sanitizedData.tjänsteställeOrt || null,
+        data.tjänsteställeAdress || null,
+        data.tjänsteställeOrt || null,
         data.skattetabell ? parseInt(data.skattetabell, 10) : null,
         data.skattekolumn ? parseInt(data.skattekolumn, 10) : null,
         anställdId,
         userId,
       ];
 
-      const result = await client.query(updateQuery, values);
+      await client.query(updateQuery, values);
       client.release();
       revalidatePath("/personal");
-
-      logPersonalDataEvent(
-        "modify",
-        userId,
-        `Successfully updated employee ${anställdId} with encrypted sensitive data`
-      );
 
       return {
         success: true,
         id: anställdId,
-        message: "Anställd uppdaterad säkert med krypterad känslig data!",
+        message: "Anställd uppdaterad!",
       };
     } else {
-      // SKAPA NY anställd med krypterad känslig data
+      // SKAPA NY anställd
       const insertQuery = `
         INSERT INTO anställda (
           förnamn, efternamn, personnummer, jobbtitel, mail,
@@ -504,62 +353,49 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
       `;
 
       const values = [
-        sanitizedData.förnamn || null,
-        sanitizedData.efternamn || null,
-        encryptedPersonnummer, // KRYPTERAD
-        sanitizedData.jobbtitel || null,
-        sanitizedData.mail || null,
-        sanitizedData.clearingnummer || null,
-        encryptedBankkonto, // KRYPTERAD
-        sanitizedData.adress || null,
-        sanitizedData.postnummer || null,
-        sanitizedData.ort || null,
+        data.förnamn || null,
+        data.efternamn || null,
+        data.personnummer,
+        data.jobbtitel || null,
+        data.mail || null,
+        data.clearingnummer || null,
+        data.bankkonto || null,
+        data.adress || null,
+        data.postnummer || null,
+        data.ort || null,
         data.startdatum || null,
         data.slutdatum || null,
-        sanitizedData.anställningstyp || null,
-        sanitizedData.löneperiod || null,
-        sanitizedData.ersättningPer || null,
+        data.anställningstyp || null,
+        data.löneperiod || null,
+        data.ersättningPer || null,
         data.kompensation ? parseFloat(data.kompensation) : null,
         data.arbetsvecka ? parseInt(data.arbetsvecka, 10) : null,
-        sanitizedData.arbetsbelastning || null,
+        data.arbetsbelastning || null,
         data.deltidProcent ? parseInt(data.deltidProcent, 10) : null,
-        sanitizedData.tjänsteställeAdress || null,
-        sanitizedData.tjänsteställeOrt || null,
+        data.tjänsteställeAdress || null,
+        data.tjänsteställeOrt || null,
         data.skattetabell ? parseInt(data.skattetabell, 10) : null,
         data.skattekolumn ? parseInt(data.skattekolumn, 10) : null,
         userId,
       ];
 
-      console.log("➕ Skapar ny anställd med krypterad känslig data");
       const result = await client.query(insertQuery, values);
-
       const nyAnställdId = result.rows[0].id;
 
       client.release();
       revalidatePath("/personal");
 
-      logPersonalDataEvent(
-        "modify",
-        userId,
-        `Successfully created new employee ${nyAnställdId} with encrypted sensitive data`
-      );
-
       return {
         success: true,
         id: nyAnställdId,
-        message: "Anställd sparad säkert med krypterad känslig data!",
+        message: "Anställd sparad!",
       };
     }
   } catch (error) {
     console.error("❌ sparaAnställd error:", error);
-    logPersonalDataEvent(
-      "violation",
-      userId ? userId : undefined,
-      `Error in sparaAnställd: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Ett fel uppstod vid sparande",
+      error: "Kunde inte spara anställd: " + (error instanceof Error ? error.message : "Okänt fel"),
     };
   }
 }
