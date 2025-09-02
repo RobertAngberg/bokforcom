@@ -383,10 +383,10 @@ export async function deleteFaktura(id: number) {
       await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
 
       // 4. Radera fakturan själv (med dubbel validering av ägarskap)
-      const deleteRes = await client.query(`DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`, [
-        id,
-        userId,
-      ]);
+      const deleteRes = await client.query(
+        `DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+        [id, userId]
+      );
 
       if (deleteRes.rowCount === 0) {
         throw new Error("Fakturan kunde inte raderas - ägarskapsvalidering misslyckades");
@@ -2146,3 +2146,14 @@ export const deleteCustomerSecure = withFormRateLimit(deleteKund);
 
 // Rate-limited bokföringsfunktion - särskilt kritisk
 export const bookInvoiceSecure = withFormRateLimit(bokförFaktura);
+
+// Server Action wrapper för blob upload
+export async function uploadLogoAction(formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "Ingen fil vald" };
+  }
+
+  const { uploadCompanyLogo } = await import("../_utils/blobUpload");
+  return await uploadCompanyLogo(file);
+}

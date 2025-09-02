@@ -3,15 +3,18 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import TextFalt from "../_components/TextFalt";
-import { hämtaFöretagsprofil, sparaFöretagsprofil } from "./actions";
-import { uploadCompanyLogo } from "../_utils/blobUpload";
+import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from "./actions";
+import { getProxyImageUrl } from "./_utils/imageProxy";
+import { useFakturaContext } from "./FakturaProvider";
 import Knapp from "../_components/Knapp";
 //#endregion
 
 export default function Avsandare() {
   //#region Session, state och vars
   const { data: session } = useSession();
+  const { formData, setFormData } = useFakturaContext();
 
   const [form, setForm] = useState({
     företagsnamn: "",
@@ -67,8 +70,9 @@ export default function Avsandare() {
     const savedLogo = localStorage.getItem("company_logo");
     if (savedLogo) {
       setForm((prev) => ({ ...prev, logo: savedLogo }));
+      setFormData((prev) => ({ ...prev, logo: savedLogo }));
     }
-  }, []);
+  }, [setFormData]);
   //#endregion
 
   //#region Hanterare
@@ -90,12 +94,19 @@ export default function Avsandare() {
     }
 
     try {
-      // Ladda upp till Vercel Blob
-      const result = await uploadCompanyLogo(file);
+      // Skapa FormData för Server Action
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Anropa Server Action
+      const result = await uploadLogoAction(formData);
 
       if (result.success && result.url) {
         // Uppdatera form med URL:en från Vercel Blob
         setForm((prev) => ({ ...prev, logo: result.url || "" }));
+
+        // Uppdatera även FakturaProvider för förhandsgranskning
+        setFormData((prev) => ({ ...prev, logo: result.url || "" }));
 
         // Spara även i localStorage som backup/cache
         localStorage.setItem("company_logo", result.url);
@@ -114,6 +125,7 @@ export default function Avsandare() {
 
   const hanteraTaBortLogga = () => {
     setForm((prev) => ({ ...prev, logo: "" }));
+    setFormData((prev) => ({ ...prev, logo: "" }));
     localStorage.removeItem("company_logo");
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Nollställ inputen!
@@ -208,10 +220,11 @@ export default function Avsandare() {
           />
 
           {form.logo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={form.logo}
+            <Image
+              src={getProxyImageUrl(form.logo)}
               alt="Logotyp"
+              width={form.logoWidth}
+              height={120}
               style={{
                 maxWidth: `${form.logoWidth}px`,
                 maxHeight: "120px",
@@ -220,6 +233,7 @@ export default function Avsandare() {
                 borderRadius: 4,
                 padding: 2,
               }}
+              unoptimized // Viktigt för proxy URLs
             />
           )}
         </div>

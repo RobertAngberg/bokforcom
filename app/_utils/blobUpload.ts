@@ -99,8 +99,15 @@ async function processFile(file: File, options: UploadOptions): Promise<File> {
     return file;
   }
 
-  // För bilder, komprimera
+  // För bilder, komprimera endast om vi är på client-side
   if (file.type.startsWith("image/")) {
+    // Kontrollera om vi är på server (document är undefined)
+    if (typeof document === "undefined") {
+      // På servern - returnera filen som den är utan kompression
+      console.log("Server-side upload: Skipping image compression");
+      return file;
+    }
+    // På client-side - komprimera bilden
     return await compressImage(file, options);
   }
 

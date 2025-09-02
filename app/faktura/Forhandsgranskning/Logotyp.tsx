@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getProxyImageUrl } from "../_utils/imageProxy";
 
 interface LogotypProps {
   logo?: string;
@@ -26,7 +27,7 @@ export default function Logotyp({
         }}
       >
         <Image
-          src={logo}
+          src={getProxyImageUrl(logo)}
           alt="Logotyp"
           width={logoSize}
           height={200}
