@@ -6,6 +6,7 @@ import { hamtaBokfordaFakturor, hamtaTransaktionsposter, registreraBetalning } f
 import VerifikatModal from "./VerifikatModal";
 import BetalningsbekräftelseModal from "./BetalningsbekraftelseModal";
 import Knapp from "../_components/Knapp";
+import Toast from "../_components/Toast";
 
 type BokfordFaktura = {
   id: number; // leverantörsfaktura.id
@@ -40,6 +41,11 @@ export default function BokfordaFakturor() {
   }>({
     isOpen: false,
     faktura: null,
+  });
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
   });
 
   useEffect(() => {
@@ -92,7 +98,11 @@ export default function BokfordaFakturor() {
       );
 
       if (result.success) {
-        alert("Betalning registrerad!");
+        setToast({
+          message: "Betalning registrerad!",
+          type: "success",
+          isVisible: true,
+        });
         // Stäng modalen
         setBetalningsModal({ isOpen: false, faktura: null });
         // Ladda om data för att visa uppdaterad status
@@ -101,11 +111,19 @@ export default function BokfordaFakturor() {
           setFakturor(updatedData.fakturor || []);
         }
       } else {
-        alert(`Fel vid registrering av betalning: ${result.error}`);
+        setToast({
+          message: `Fel vid registrering av betalning: ${result.error}`,
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Fel vid betalning:", error);
-      alert("Ett fel uppstod vid registrering av betalning");
+      setToast({
+        message: "Ett fel uppstod vid registrering av betalning",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -133,6 +151,13 @@ export default function BokfordaFakturor() {
 
   return (
     <div className="bg-gray-900 rounded-lg p-6">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <h2 className="text-xl font-semibold text-white mb-4">
         Bokförda fakturor ({fakturor.length})
       </h2>

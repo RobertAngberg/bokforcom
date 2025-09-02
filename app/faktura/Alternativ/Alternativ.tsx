@@ -102,10 +102,18 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         // Trigga reload event så Fakturor.tsx uppdaterar sin lista
         window.dispatchEvent(new Event("reloadFakturor"));
       } else {
-        alert("❌ Kunde inte spara fakturan.");
+        setToast({
+          message: "Kunde inte spara fakturan.",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch {
-      alert("❌ Kunde inte konvertera artiklar");
+      setToast({
+        message: "Kunde inte konvertera artiklar",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setSparaLoading(false);
     }
@@ -139,11 +147,19 @@ export default function Alternativ({ onReload, onPreview }: Props) {
             // NU BOKFÖR AUTOMATISKT
             await genomförBokföring(res.id.toString());
           } else {
-            alert("❌ Kunde inte spara fakturan innan bokföring.");
+            setToast({
+              message: "Kunde inte spara fakturan innan bokföring.",
+              type: "error",
+              isVisible: true,
+            });
             return;
           }
         } catch {
-          alert("❌ Kunde inte spara fakturan innan bokföring.");
+          setToast({
+            message: "Kunde inte spara fakturan innan bokföring.",
+            type: "error",
+            isVisible: true,
+          });
           return;
         }
       } else {
@@ -250,16 +266,28 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       });
 
       if (result.success) {
-        alert(`✅ Fakturan har sparats och bokförts!\n\n${result.message}`);
+        setToast({
+          message: `Fakturan har sparats och bokförts!\n\n${result.message}`,
+          type: "success",
+          isVisible: true,
+        });
         // Uppdatera fakturasstatus
         const status = await hämtaFakturaStatus(parseInt(fakturaId));
         setFakturaStatus(status);
       } else {
-        alert(`❌ Bokföringsfel: ${result.error}`);
+        setToast({
+          message: `Bokföringsfel: ${result.error}`,
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Fel vid automatisk bokföring:", error);
-      alert("❌ Fel vid automatisk bokföring");
+      setToast({
+        message: "Fel vid automatisk bokföring",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -305,7 +333,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         rotRutTyp: rotRutTyp,
         harROTRUTArtiklar: harROTRUTArtiklar,
       });
-      alert("❌ Fakturanummer och personnummer krävs för HUS-fil");
+      setToast({
+        message: "Fakturanummer och personnummer krävs för HUS-fil",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
@@ -385,7 +417,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
     if (result.success) {
       setFakturaStatus((prev) => ({ ...prev, rot_rut_status: nyStatus }));
     } else {
-      alert("❌ Kunde inte uppdatera status");
+      setToast({
+        message: "Kunde inte uppdatera status",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -589,6 +625,15 @@ export default function Alternativ({ onReload, onPreview }: Props) {
         bokföringsmetod={bokföringsmetod}
         onSuccess={hanteraRotRutSuccess}
       />
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </div>
   );
 }

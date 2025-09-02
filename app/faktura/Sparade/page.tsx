@@ -28,6 +28,7 @@ import {
   hämtaSparadeKunder,
   hämtaSparadeArtiklar,
 } from "../actions";
+import Toast from "../../_components/Toast";
 //#endregion
 
 function FakturorComponent({
@@ -41,13 +42,22 @@ function FakturorComponent({
 }) {
   // State för att styra flikarnas synlighet
   const [showAllFlikar, setShowAllFlikar] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
   //#region Context och state
   const { formData, setFormData, setKundStatus } = useFakturaContext();
   // Funktion för att hantera när en faktura väljs
   const hanteraValdFaktura = async (fakturaId: number) => {
     const data = await hämtaFakturaMedRader(fakturaId);
     if (!data || !data.faktura) {
-      alert("❌ Kunde inte hämta faktura");
+      setToast({
+        message: "Kunde inte hämta faktura",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
     const { faktura, artiklar, rotRut } = data;
@@ -315,6 +325,15 @@ function FakturorComponent({
             </div>
           </div>
         </div>
+      )}
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
       )}
     </>
   );

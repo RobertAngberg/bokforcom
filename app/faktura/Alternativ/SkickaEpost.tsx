@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 import { useFakturaContext } from "../FakturaProvider";
 import { generatePDFAsBase64 } from "./pdfGenerator";
 
@@ -17,6 +18,11 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
   const { formData, setFormData } = useFakturaContext();
   const [mottagareEmail, setMottagareEmail] = useState("");
   const [egetMeddelande, setEgetMeddelande] = useState("");
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
   //#endregion
 
   // Uppdatera mottagarens e-post när kundens e-post ändras
@@ -29,12 +35,20 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
   const skickaTestmail = async () => {
     // Validering
     if (!mottagareEmail.trim()) {
-      alert("❌ Ange mottagarens e-postadress");
+      setToast({
+        message: "Ange mottagarens e-postadress",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
     if (!mottagareEmail.includes("@")) {
-      alert("❌ Ange en giltig e-postadress");
+      setToast({
+        message: "Ange en giltig e-postadress",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
@@ -72,12 +86,20 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
         throw new Error(data.error || "Kunde inte skicka e-post");
       }
 
-      alert("✅ Faktura skickad till kunden!");
+      setToast({
+        message: "Faktura skickad till kunden!",
+        type: "success",
+        isVisible: true,
+      });
       onSuccess?.();
     } catch (error) {
       console.error("❌ E-postfel:", error);
       const errorMessage = error instanceof Error ? error.message : "Okänt fel";
-      alert(`❌ Kunde inte skicka faktura: ${errorMessage}`);
+      setToast({
+        message: `Kunde inte skicka faktura: ${errorMessage}`,
+        type: "error",
+        isVisible: true,
+      });
       onError?.(errorMessage);
     } finally {
       setIsSending(false);
@@ -166,6 +188,15 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
             }
           />
         </div>
+
+        {toast.isVisible && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            isVisible={toast.isVisible}
+            onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+          />
+        )}
       </div>
     </div>
   );

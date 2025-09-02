@@ -5,6 +5,7 @@ import { useFakturaContext } from "../FakturaProvider";
 import { bokförFaktura, hämtaBokföringsmetod, hämtaFakturaStatus } from "../actions";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Modal from "../../_components/Modal";
+import Toast from "../../_components/Toast";
 
 //#region Business Logic - Migrated from actions.ts
 // Validera bokföringspost (flyttad från actions.ts)
@@ -111,6 +112,11 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     status_bokförd?: string;
   }>({});
   const [statusLoaded, setStatusLoaded] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   // Hämta användarens bokföringsmetod och fakturaSTATUS från databasen
   useEffect(() => {
@@ -349,7 +355,11 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     try {
       // KOLLA OM FAKTURAN ÄR SPARAD FÖRST
       if (!formData.id) {
-        alert("❌ Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.");
+        setToast({
+          message: "Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.",
+          type: "error",
+          isVisible: true,
+        });
         setLoading(false);
         return;
       }
@@ -372,7 +382,11 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
 
       const validation = validateBokföringsData(bokföringsData);
       if (!validation.isValid) {
-        alert(`❌ ${validation.error}`);
+        setToast({
+          message: validation.error || "Valideringsfel",
+          type: "error",
+          isVisible: true,
+        });
         setLoading(false);
         return;
       }
@@ -386,16 +400,28 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
       });
 
       if (result.success) {
-        alert(`✅ ${result.message}`);
+        setToast({
+          message: result.message || "Bokföring genomförd",
+          type: "success",
+          isVisible: true,
+        });
         // Skicka event för att uppdatera fakturaslistan
         window.dispatchEvent(new Event("reloadFakturor"));
         onClose();
       } else {
-        alert(`❌ Bokföringsfel: ${result.error}`);
+        setToast({
+          message: `Bokföringsfel: ${result.error}`,
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Bokföringsfel:", error);
-      alert("❌ Fel vid bokföring");
+      setToast({
+        message: "Fel vid bokföring",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -522,6 +548,15 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
                 "💡 Intäkten registreras nu, betalning bokförs senare."}
         </div>
       </div>
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </Modal>
   );
 }

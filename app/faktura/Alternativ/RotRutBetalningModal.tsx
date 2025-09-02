@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "../../_components/Modal";
 import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../actions";
+import Toast from "../../_components/Toast";
 
 interface RotRutBetalningModalProps {
   isOpen: boolean;
@@ -26,6 +27,11 @@ export default function RotRutBetalningModal({
   onSuccess,
 }: RotRutBetalningModalProps) {
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   if (!isOpen) return null;
 
@@ -49,15 +55,27 @@ export default function RotRutBetalningModal({
               ? `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nKunden betalade sin del vid fakturering.`
               : `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nFakturan är nu avslutad och klar.`;
 
-            alert(meddelande);
+            setToast({
+              message: meddelande,
+              type: "success",
+              isVisible: true,
+            });
           }, 100);
         }
       } else {
-        alert(`❌ ${result.error || "Kunde inte registrera betalning"}`);
+        setToast({
+          message: result.error || "Kunde inte registrera betalning",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Fel vid ROT/RUT-betalning:", error);
-      alert("❌ Ett oväntat fel uppstod");
+      setToast({
+        message: "Ett oväntat fel uppstod",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -178,6 +196,15 @@ export default function RotRutBetalningModal({
           </button>
         </div>
       </div>
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </Modal>
   );
 }
