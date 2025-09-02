@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 import { hämtaAllaAnställda, hämtaUtlägg, taBortUtlägg } from "../actions";
 import { fetchFavoritforval } from "../../bokfor/actions";
 import BokforPage from "../../bokfor/page";
@@ -23,6 +24,10 @@ export default function UtlaggPage() {
   const [utlägg, setUtlägg] = useState<Utlägg[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNyttUtlägg, setShowNyttUtlägg] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
   const [favoritFörvalen, setFavoritFörvalen] = useState<any[] | null>(null);
 
   useEffect(() => {
@@ -101,10 +106,10 @@ export default function UtlaggPage() {
 
       // Uppdatera listan
       await hämtaAllaUtlägg();
-      alert("Utlägg borttaget!");
+      setToast({ type: "success", message: "Utlägg borttaget!" });
     } catch (error) {
       console.error("Fel vid borttagning av utlägg:", error);
-      alert("❌ Kunde inte ta bort utlägg");
+      setToast({ type: "error", message: "Kunde inte ta bort utlägg" });
     } finally {
       setLoading(false);
     }
@@ -236,6 +241,14 @@ export default function UtlaggPage() {
           </div>
         </div>
       </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </MainLayout>
   );
 }

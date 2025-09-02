@@ -8,6 +8,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Knapp from "../_components/Knapp";
 import TextFalt from "../_components/TextFalt";
 import Modal from "../_components/Modal";
+import Toast from "../_components/Toast";
 import { saveSignupData, checkUserSignupStatus } from "./actions";
 
 registerLocale("sv", sv);
@@ -99,6 +100,10 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
   const [isFormValid, setIsFormValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
   const [isAnvändaravtalOpen, setIsAnvändaravtalOpen] = useState(false);
 
   useEffect(() => {
@@ -216,7 +221,10 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       const result = await saveSignupData(submitData);
 
       if (result.success) {
-        alert(`${result.message} Välkommen ${result.user?.företagsnamn}!`);
+        setToast({
+          type: "success",
+          message: `${result.message} Välkommen ${result.user?.företagsnamn}!`,
+        });
         onSuccess();
       } else {
         setError(result.error || "Ett fel uppstod vid registreringen");
@@ -882,6 +890,14 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </section>
         </div>
       </Modal>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 }

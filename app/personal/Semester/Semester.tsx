@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import InfoTooltip from "../../_components/InfoTooltip";
 import Knapp from "../../_components/Knapp";
 import Tabell from "../../_components/Tabell";
+import Toast from "../../_components/Toast";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import {
   hämtaSemesterTransaktioner,
@@ -49,6 +50,10 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   const [loading, setLoading] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [bokforRows, setBokforRows] = useState<any[]>([]);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   // Hämta data vid laddning
   useEffect(() => {
@@ -84,7 +89,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
       setShowBokforKnapp(t.bokförd === false);
     } catch (error) {
       console.error("Fel vid hämtning av semesterdata:", error);
-      alert("❌ Kunde inte hämta semesterdata");
+      setToast({ type: "error", message: "Kunde inte hämta semesterdata" });
     } finally {
       setLoading(false);
     }
@@ -100,7 +105,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     if (!editingField || !editValue || !summary) return;
     const newValue = parseFloat(editValue);
     if (isNaN(newValue)) {
-      alert("Ogiltigt nummer");
+      setToast({ type: "error", message: "Ogiltigt nummer" });
       return;
     }
     setLoading(true);
@@ -118,7 +123,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
       await hämtaData(); // Hämta om data från servern
     } catch (error) {
       console.error("Fel vid sparande:", error);
-      alert("❌ Kunde inte spara ändringen");
+      setToast({ type: "error", message: "Kunde inte spara ändringen" });
     } finally {
       setLoading(false);
     }
@@ -210,13 +215,16 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
       });
       setBokforModalOpen(false);
       if (res?.success) {
-        alert("Bokföring sparad!");
+        setToast({ type: "success", message: "Bokföring sparad!" });
         await hämtaData();
       } else {
-        alert("Fel vid bokföring: " + (res?.error || "Okänt fel"));
+        setToast({ type: "error", message: `Fel vid bokföring: ${res?.error || "Okänt fel"}` });
       }
     } catch (error) {
-      alert("Fel vid bokföring: " + (error instanceof Error ? error.message : error));
+      setToast({
+        type: "error",
+        message: `Fel vid bokföring: ${error instanceof Error ? error.message : error}`,
+      });
     } finally {
       setLoading(false);
     }
@@ -491,6 +499,14 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
           onConfirm={handleConfirmBokfor}
         />
       </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
