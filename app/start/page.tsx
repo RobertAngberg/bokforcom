@@ -23,13 +23,9 @@ type YearDataPoint = {
   utgift: number;
 };
 
-type Props = {
-  initialData: YearSummary | null;
-};
-
-export default function StartPage({ initialData }: Props) {
+export default function StartPage() {
   const [year, setYear] = useState("2025");
-  const { data, isLoading } = useFetchYearSummary(year, initialData);
+  const { data, isLoading } = useFetchYearSummary(year);
   const [showWelcome, setShowWelcome] = useState(false);
 
   // Kolla välkomstmeddelande-status när komponenten laddar
@@ -43,9 +39,9 @@ export default function StartPage({ initialData }: Props) {
     await markWelcomeAsShown();
   };
 
-  function useFetchYearSummary(year: string, initialData: YearSummary | null) {
-    const [data, setData] = useState<YearSummary | null>(initialData);
-    const [isLoading, setIsLoading] = useState(false);
+  function useFetchYearSummary(year: string) {
+    const [data, setData] = useState<YearSummary | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
       setIsLoading(true);
@@ -59,7 +55,7 @@ export default function StartPage({ initialData }: Props) {
           setData(null);
         })
         .finally(() => setIsLoading(false));
-    }, [year]); // Tog bort initialData från dependencies för att förhindra re-renders
+    }, [year]);
 
     return { data, isLoading };
   }
