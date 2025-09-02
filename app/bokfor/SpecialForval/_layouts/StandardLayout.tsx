@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import LaddaUppFil from "../../LaddaUppFil";
 import Forhandsgranskning from "../../Forhandsgranskning";
 import TextFalt from "../../../_components/TextFalt";
-import KnappFullWidth from "../../../_components/KnappFullWidth";
+import Knapp from "../../../_components/Knapp";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../_utils/trueDatum";
 
@@ -88,7 +88,7 @@ export default function StandardLayout({
               required={false}
             />
 
-            <KnappFullWidth text="Gå vidare" onClick={onSubmit} disabled={!isValid} />
+            <Knapp fullWidth text="Gå vidare" onClick={onSubmit} disabled={!isValid} />
           </div>
 
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

@@ -5,7 +5,7 @@ import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
 import TextFalt from "../../_components/TextFalt";
-import KnappFullWidth from "../../_components/KnappFullWidth";
+import Knapp from "../../_components/Knapp";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../_components/TillbakaPil";
@@ -116,7 +116,7 @@ export default function Rantekostnader({
                 required={false}
               />
 
-              <KnappFullWidth
+              <Knapp fullWidth
                 text="Bokför"
                 type="button"
                 onClick={gåTillSteg3}

@@ -7,7 +7,7 @@ import Information from "./Information";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
-import KnappFullWidth from "../_components/KnappFullWidth";
+import Knapp from "../_components/Knapp";
 import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "./actions";
 
 type KontoRad = {
@@ -242,10 +242,11 @@ export default function Steg2({
               setFakturadatum={setFakturadatum}
             />
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <KnappFullWidth
+            <Knapp
               text="Bokför"
               onClick={() => setCurrentStep(3)}
               disabled={!belopp || !transaktionsdatum}
+              fullWidth
             />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

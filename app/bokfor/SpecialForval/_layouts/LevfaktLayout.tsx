@@ -12,7 +12,7 @@ import Kommentar from "../../Kommentar";
 import { type Leverantör } from "../../../faktura/actions";
 import Forhandsgranskning from "../../Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import KnappFullWidth from "../../../_components/KnappFullWidth";
+import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import TextFalt from "../../../_components/TextFalt";
 
@@ -226,7 +226,7 @@ export default function LevfaktLayout({
             />
 
             {/* Submit knapp */}
-            <KnappFullWidth text="Bokför" onClick={onSubmit} disabled={!fullIsValid} />
+            <Knapp fullWidth text="Bokför" onClick={onSubmit} disabled={!fullIsValid} />
           </div>
 
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
-import KnappFullWidth from "../_components/KnappFullWidth";
+import Knapp from "../_components/Knapp";
 import LoadingSpinner from "../_components/LoadingSpinner";
 import TextFalt from "../_components/TextFalt";
 import { hamtaKontosaldo, hamtaSenasteTransaktioner } from "./actions";
@@ -500,7 +500,7 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
       </div>
 
       <div className="flex justify-end mt-8">
-        <KnappFullWidth
+        <Knapp fullWidth
           text="Fortsätt till bokslutsbokningar"
           onClick={onNext}
           disabled={!företagskonto}
@@ -635,7 +635,7 @@ function BokningarSteg({
 
       <div className="flex justify-between mt-8">
         <Knapp text="Tillbaka" onClick={onBack} />
-        <KnappFullWidth text="Bekräfta och fortsätt" onClick={onNext} />
+        <Knapp fullWidth text="Bekräfta och fortsätt" onClick={onNext} />
       </div>
     </div>
   );
@@ -698,7 +698,7 @@ function ResultatSteg({ kontosaldo, onNext, onBack }: any) {
 
       <div className="flex justify-between mt-8">
         <Knapp text="Tillbaka" onClick={onBack} />
-        <KnappFullWidth text="Bokför årets resultat" onClick={onNext} />
+        <Knapp fullWidth text="Bokför årets resultat" onClick={onNext} />
       </div>
     </div>
   );
@@ -728,7 +728,7 @@ function FärdigställSteg({ aktivPeriod, neBilaga, loading, onGenerateNE, onBac
               <p className="text-gray-400 mt-4">Genererar NE-bilaga...</p>
             </>
           ) : (
-            <KnappFullWidth text="🧾 Generera NE-bilaga" onClick={onGenerateNE} />
+            <Knapp fullWidth text="🧾 Generera NE-bilaga" onClick={onGenerateNE} />
           )}
         </div>
       ) : (
@@ -757,7 +757,7 @@ function FärdigställSteg({ aktivPeriod, neBilaga, loading, onGenerateNE, onBac
               lägga till vissa personliga uppgifter som inte ingår i bokföringen.
             </p>
 
-            <KnappFullWidth text="📥 Ladda ner NE-bilaga" />
+            <Knapp fullWidth text="📥 Ladda ner NE-bilaga" />
           </div>
         </div>
       )}
@@ -765,7 +765,7 @@ function FärdigställSteg({ aktivPeriod, neBilaga, loading, onGenerateNE, onBac
       <div className="flex justify-between mt-8">
         {!neBilaga && <Knapp text="Tillbaka" onClick={onBack} />}
         {neBilaga && (
-          <KnappFullWidth text="🎉 Bokslut slutfört" onClick={() => window.location.reload()} />
+          <Knapp fullWidth text="🎉 Bokslut slutfört" onClick={() => window.location.reload()} />
         )}
       </div>
     </div>

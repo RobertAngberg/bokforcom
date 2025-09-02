@@ -14,7 +14,7 @@ import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
-import KnappFullWidth from "../_components/KnappFullWidth";
+import Knapp from "../_components/Knapp";
 import TextFalt from "../_components/TextFalt";
 import { type Leverantör } from "../faktura/actions";
 
@@ -253,7 +253,7 @@ export default function Steg2Levfakt({
             </div>
 
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <KnappFullWidth
+            <Knapp fullWidth
               text="Bokför leverantörsfaktura"
               onClick={() => setCurrentStep(3)}
               disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum}

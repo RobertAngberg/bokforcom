@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
-import KnappFullWidth from "../_components/KnappFullWidth";
+import Knapp from "../_components/Knapp";
 import {
   uploadSieFile,
   exporteraSieData,
@@ -1978,7 +1978,7 @@ function ResultatSteg({ resultat, onFinish }: { resultat: any; onFinish: () => v
           <div>• Import säkert genomförd</div>
         </div>
 
-        <KnappFullWidth text="Tillbaka till SIE-import" onClick={onFinish} />
+        <Knapp fullWidth text="Tillbaka till SIE-import" onClick={onFinish} />
       </div>
     </div>
   );

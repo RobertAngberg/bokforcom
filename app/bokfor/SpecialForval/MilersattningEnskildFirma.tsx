@@ -5,7 +5,7 @@ import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
 import TextFalt from "../../_components/TextFalt";
-import KnappFullWidth from "../../_components/KnappFullWidth";
+import Knapp from "../../_components/Knapp";
 import { formatSEK, parseNumber } from "../../_utils/format";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
@@ -157,7 +157,7 @@ export default function MilersattningEnskildFirma({
                 onChange={(e) => setKommentar?.(e.target.value)}
               />
 
-              <KnappFullWidth text="Bokför" onClick={gåTillSteg3} disabled={!giltigt} />
+              <Knapp fullWidth text="Bokför" onClick={gåTillSteg3} disabled={!giltigt} />
             </div>
 
             <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
