@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../actions";
+import Toast from "../../_components/Toast";
 
 interface BokföringsPost {
   konto: string;
@@ -121,6 +122,11 @@ export default function BokforLoner({
 }: BokforLonerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   // Validera mappningen vid första rendering (endast i development)
   if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -149,7 +155,11 @@ export default function BokforLoner({
         utbetalningsdatum: new Date().toISOString().split("T")[0],
       });
 
-      alert(`✅ ${result.message}`);
+      setToast({
+        message: result.message || "Bokföring genomförd",
+        type: "success",
+        isVisible: true,
+      });
       onBokfört?.();
       onClose();
     } catch (error: any) {
@@ -507,6 +517,15 @@ export default function BokforLoner({
           </div>
         </div>
       </div>
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </div>
   );
 }

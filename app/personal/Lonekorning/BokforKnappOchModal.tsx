@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
+import Toast from "../../_components/Toast";
 import { genereraBokföringsrader } from "../Bokforing/bokforingsLogik";
 import { valideraBokföring, formateraBeloppKronor } from "../Bokforing/bokforingsUtils";
 import { hämtaExtrarader } from "../actions";
@@ -21,6 +22,10 @@ export default function BokförKnappOchModal({
 }: BokförProps & { onClose?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
   // ✅ STATE FÖR FÄRSKA LÖNESPECAR MED EXTRARADER
   const [färskaLonespecar, setFärskaLonespecar] = useState<Record<string, any>>({});
 
@@ -117,12 +122,12 @@ export default function BokförKnappOchModal({
     try {
       // TODO: Implementera faktisk bokföring här
 
-      alert("✅ Bokföring genomförd!");
+      setToast({ type: "success", message: "Bokföring genomförd!" });
       // ✅ RENSA FÄRSKA DATA EFTER BOKFÖRING
       setFärskaLonespecar({});
     } catch (error) {
       console.error("Fel vid bokföring:", error);
-      alert("❌ Fel vid bokföring!");
+      setToast({ type: "error", message: "Fel vid bokföring!" });
     } finally {
       setBokförLoading(false);
     }
@@ -274,6 +279,14 @@ export default function BokförKnappOchModal({
           disabled={!bokföringsData?.kanBokföra}
         />
       </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </Modal>
   );
 }

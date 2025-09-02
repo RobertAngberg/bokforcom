@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface LonespecManagerProps {
   valdaSpecar: any[];
   setValdaSpecar: (value: any[] | ((prev: any[]) => any[])) => void;
@@ -21,12 +23,17 @@ export default function LonespecManager({
   utbetalningsdatum,
   setUtbetalningsdatum,
 }: LonespecManagerProps) {
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
   const hanteraTaBortSpec = async (specId: number) => {
     // Importera taBortLönespec från actions om det behövs
     const { taBortLönespec } = await import("../actions");
     const resultat = await taBortLönespec(specId);
     if (resultat.success) {
-      alert("✅ Lönespecifikation borttagen!");
+      setToast({ type: "success", message: "Lönespecifikation borttagen!" });
       // Ta bort från state
       setValdaSpecar((prev) => prev.filter((s: any) => s.id !== specId));
       setSpecarPerDatum((prev: any) => {
@@ -56,11 +63,13 @@ export default function LonespecManager({
         return filtered;
       });
     } else {
-      alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
+      setToast({ type: "error", message: `Kunde inte ta bort lönespec: ${resultat.message}` });
     }
   };
 
   return {
     hanteraTaBortSpec,
+    toast,
+    setToast,
   };
 }

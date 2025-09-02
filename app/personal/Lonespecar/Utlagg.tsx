@@ -2,6 +2,7 @@
 import { läggTillUtläggSomExtrarad, uppdateraUtläggStatus } from "../actions";
 import { useEffect, useState } from "react";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 
 interface UtläggProps {
   lönespecUtlägg: any[];
@@ -22,6 +23,11 @@ export default function Utlägg({
 
   const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<any[]>(lönespecUtlägg);
   const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   // Synkronisera utläggstatus med faktiska extrarader
   useEffect(() => {
@@ -60,27 +66,39 @@ export default function Utlägg({
 
   const handleLäggTillUtlägg = async () => {
     if (!lönespecId) {
-      alert("❌ Fel: Ingen lönespec ID hittades");
+      setToast({
+        message: "Fel: Ingen lönespec ID hittades",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
     const väntandeUtlägg = synkroniseradeUtlägg.filter((u) => u.status === "Väntande");
 
     if (väntandeUtlägg.length === 0) {
-      alert("Inga väntande utlägg att lägga till");
+      setToast({
+        message: "Inga väntande utlägg att lägga till",
+        type: "info",
+        isVisible: true,
+      });
       return;
     }
 
     setLäggerTillUtlägg(true);
     try {
-      const extraradResults = [];
+      const extraradResults: any[] = [];
       for (const utlägg of väntandeUtlägg) {
         // Enkel, tydlig funktion - spara resultatet
         const result = await läggTillUtläggSomExtrarad(lönespecId, utlägg);
         extraradResults.push(result);
         await uppdateraUtläggStatus(utlägg.id, "Inkluderat i lönespec");
       }
-      alert(`${väntandeUtlägg.length} utlägg tillagda!`);
+      setToast({
+        message: `${väntandeUtlägg.length} utlägg tillagda!`,
+        type: "success",
+        isVisible: true,
+      });
 
       // Uppdatera UI genom callback - skicka både utlägg och resultat
       if (onUtläggAdded) {
@@ -88,7 +106,11 @@ export default function Utlägg({
       }
     } catch (error) {
       console.error("Fel:", error);
-      alert("Något gick fel!");
+      setToast({
+        message: "Något gick fel!",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setLäggerTillUtlägg(false);
     }
@@ -149,6 +171,15 @@ export default function Utlägg({
           </div>
         ))}
       </div>
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
+      )}
     </div>
   );
 }

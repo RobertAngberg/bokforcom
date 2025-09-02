@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import { skapaNyLönespec, taBortLönespec, hämtaLönespecifikationer } from "../actions";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
@@ -23,6 +24,10 @@ export default function AnställdaLista({
   const { setLonespecar } = useLonespecContext();
   const [sparar, setSparar] = useState<Record<string, boolean>>({});
   const [taBort, setTaBort] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
   const [befintligaLönespecar, setBefintligaLönespecar] = useState<Record<string, any>>({});
   const [nyaLönespecar, setNyaLönespecar] = useState<Record<string, any>>({});
   const [laddaLönespecar, setLaddaLönespecar] = useState(false);
@@ -103,13 +108,16 @@ export default function AnställdaLista({
 
       // 🏖️ Visa semesterinformation om det lades till
       if (nyLönespec.semesterInfo?.success && nyLönespec.semesterInfo?.dagar > 0) {
-        alert(`✅ Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`);
+        setToast({
+          type: "success",
+          message: `Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`,
+        });
       } else {
-        alert("✅ Lönespec skapad!");
+        setToast({ type: "success", message: "Lönespec skapad!" });
       }
     } catch (error) {
       console.error("Fel vid skapande av lönespec:", error);
-      alert("❌ Kunde inte skapa lönespec");
+      setToast({ type: "error", message: "Kunde inte skapa lönespec" });
     } finally {
       setSparar((prev) => ({ ...prev, [anställd.id]: false }));
     }
@@ -141,7 +149,7 @@ export default function AnställdaLista({
       });
     } catch (error) {
       console.error("Fel vid borttagning av lönespec:", error);
-      alert("❌ Kunde inte ta bort lönespec");
+      setToast({ type: "error", message: "Kunde inte ta bort lönespec" });
     } finally {
       setTaBort((prev) => ({ ...prev, [anställd.id]: false }));
     }
@@ -274,6 +282,14 @@ export default function AnställdaLista({
         </div>
       )}
       {/* Batch-knappar under listan borttagna! */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 }

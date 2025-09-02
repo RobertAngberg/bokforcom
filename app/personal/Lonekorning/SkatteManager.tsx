@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import Toast from "../../_components/Toast";
+
 interface SkatteManagerProps {
   valdaSpecar: any[];
   beräknadeVärden: any;
@@ -17,6 +20,11 @@ export default function SkatteManager({
   setSkatteModalOpen,
   bokförLöneskatter,
 }: SkatteManagerProps) {
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
   const beräknaSkatteData = () => {
     if (!valdaSpecar || valdaSpecar.length === 0) {
       return {
@@ -50,7 +58,7 @@ export default function SkatteManager({
     const skatteData = beräknaSkatteData();
 
     if (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0) {
-      alert("Inga skatter att bokföra!");
+      setToast({ type: "info", message: "Inga skatter att bokföra!" });
       return;
     }
 
@@ -65,14 +73,14 @@ export default function SkatteManager({
       });
 
       if (result.success) {
-        alert("✅ Löneskatter bokförda!");
+        setToast({ type: "success", message: "Löneskatter bokförda!" });
         setSkatteModalOpen(false);
       } else {
-        alert("❌ Fel vid bokföring: " + (result.error || "Okänt fel"));
+        setToast({ type: "error", message: `Fel vid bokföring: ${result.error || "Okänt fel"}` });
       }
     } catch (error: any) {
       console.error("❌ Fel vid bokföring av skatter:", error);
-      alert("❌ Fel vid bokföring: " + (error?.message || error));
+      setToast({ type: "error", message: `Fel vid bokföring: ${error?.message || error}` });
     } finally {
       setSkatteBokförPågår(false);
     }
@@ -81,5 +89,7 @@ export default function SkatteManager({
   return {
     beräknaSkatteData,
     hanteraBokförSkatter,
+    toast,
+    setToast,
   };
 }

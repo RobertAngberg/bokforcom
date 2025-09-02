@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { hämtaFöretagsprofil } from "../../../actions";
+import Toast from "../../../../_components/Toast";
 import Huvudinfo from "./Huvudinfo";
 import Lonetabell from "./Lonetabell";
 import Sammanfattning from "./Sammanfattning";
@@ -31,6 +32,10 @@ export default function Forhandsgranskning({
 }: ForhandsgranskningProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [företag, setFöretag] = useState<any>(företagsprofil);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   // Formatter utan decimaler
   const formatNoDecimals = (num: number) =>
@@ -198,9 +203,9 @@ export default function Forhandsgranskning({
     } catch (error) {
       console.error("❌ Error exporting PDF:", error);
       if (error instanceof Error) {
-        alert(`❌ Kunde inte exportera PDF: ${error.message}`);
+        setToast({ type: "error", message: `Kunde inte exportera PDF: ${error.message}` });
       } else {
-        alert("❌ Kunde inte exportera PDF: Okänt fel");
+        setToast({ type: "error", message: "Kunde inte exportera PDF: Okänt fel" });
       }
     } finally {
       setIsExporting(false);
@@ -276,6 +281,14 @@ export default function Forhandsgranskning({
           <Fotinfo företag={företag} />
         </div>
       </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

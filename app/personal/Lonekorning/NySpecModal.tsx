@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../_components/Modal";
+import Toast from "../../_components/Toast";
 
 interface NySpecModalProps {
   isOpen: boolean;
@@ -21,21 +23,26 @@ export default function NySpecModal({
   anstallda,
   onSpecCreated,
 }: NySpecModalProps) {
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
   const handleCreateSpec = async () => {
     if (!nySpecDatum) {
-      alert("Välj ett datum först!");
+      setToast({ type: "error", message: "Välj ett datum först!" });
       return;
     }
     if (anstallda.length === 0) {
-      alert("Ingen anställd hittades.");
+      setToast({ type: "error", message: "Ingen anställd hittades." });
       return;
     }
-    let utbetalningsdatum = null;
+    let utbetalningsdatum: string | null = null;
     if (nySpecDatum instanceof Date && !isNaN(nySpecDatum.getTime())) {
       utbetalningsdatum = nySpecDatum.toISOString().slice(0, 10);
     }
     if (!utbetalningsdatum) {
-      alert("Fel: utbetalningsdatum saknas eller är ogiltigt!");
+      setToast({ type: "error", message: "Fel: utbetalningsdatum saknas eller är ogiltigt!" });
       return;
     }
     const res = await import("../actions").then((mod) =>
@@ -45,9 +52,12 @@ export default function NySpecModal({
       })
     );
     if (res?.success === false) {
-      alert("Fel: " + (res.error || "Misslyckades att skapa lönespecifikation."));
+      setToast({
+        type: "error",
+        message: `Fel: ${res.error || "Misslyckades att skapa lönespecifikation."}`,
+      });
     } else {
-      alert("Ny lönespecifikation skapad!");
+      setToast({ type: "success", message: "Ny lönespecifikation skapad!" });
       onClose();
       onSpecCreated();
     }
@@ -80,6 +90,14 @@ export default function NySpecModal({
           Skapa
         </button>
       </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </Modal>
   );
 }

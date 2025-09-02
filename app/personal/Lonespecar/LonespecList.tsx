@@ -5,6 +5,7 @@ import LönespecView from "./LonespecView";
 import { taBortLönespec } from "../actions";
 import { useState } from "react";
 import { useLonespecContext } from "./LonespecContext";
+import Toast from "../../_components/Toast";
 
 interface LonespecListProps {
   anställd: any;
@@ -27,6 +28,11 @@ export default function LonespecList({
 }: LonespecListProps) {
   const { lönespecar } = useLonespecContext();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   const handleTaBortLönespec = async (lönespecId: string) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
@@ -37,14 +43,26 @@ export default function LonespecList({
     try {
       const resultat = await taBortLönespec(parseInt(lönespecId));
       if (resultat.success) {
-        alert("✅ Lönespecifikation borttagen!");
+        setToast({
+          message: "Lönespecifikation borttagen!",
+          type: "success",
+          isVisible: true,
+        });
         onLönespecUppdaterad?.(); // Uppdatera listan
       } else {
-        alert(`❌ Kunde inte ta bort lönespec: ${resultat.message}`);
+        setToast({
+          message: `Kunde inte ta bort lönespec: ${resultat.message}`,
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönespec:", error);
-      alert("❌ Kunde inte ta bort lönespec");
+      setToast({
+        message: "Kunde inte ta bort lönespec",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: false }));
     }
@@ -75,6 +93,15 @@ export default function LonespecList({
             visaExtraRader={visaExtraRader}
           />
         ))
+      )}
+
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
       )}
     </div>
   );

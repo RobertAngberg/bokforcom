@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { klassificeraExtrarader } from "../Lonespecar/loneberakningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
 
@@ -26,6 +27,11 @@ export default function AGIGenerator({
   setVisaDebug,
   hämtaFöretagsprofil,
 }: AGIGeneratorProps) {
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
   const formatOrganisationsnummer = (orgnr: string): string => {
     const endast_siffror = orgnr.replace(/[^0-9]/g, "");
 
@@ -45,7 +51,7 @@ export default function AGIGenerator({
   const hanteraAGI = async () => {
     try {
       // Hämta företagsdata först
-      let företagsdata = null;
+      let företagsdata: any = null;
       if (session?.user?.id) {
         företagsdata = await hämtaFöretagsprofil(session.user.id);
       }
@@ -223,7 +229,7 @@ export default function AGIGenerator({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error("Fel vid AGI-generering:", error);
-      alert("❌ Fel vid AGI-generering: " + (error?.message || error));
+      setToast({ type: "error", message: `Fel vid AGI-generering: ${error?.message || error}` });
     }
   };
 
@@ -307,5 +313,9 @@ export default function AGIGenerator({
 </agd:ArbetsgivareDeklaration>`;
   };
 
-  return { hanteraAGI };
+  return {
+    hanteraAGI,
+    toast,
+    setToast,
+  };
 }

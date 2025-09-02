@@ -3,6 +3,7 @@
 import { useState } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 
 interface LonespecListaProps {
   valdaSpecar: any[];
@@ -28,6 +29,10 @@ export default function LonespecLista({
   onBokförSkatter,
 }: LonespecListaProps) {
   const [taBortLaddning, setTaBortLaddning] = useState<Record<number, boolean>>({});
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   if (valdaSpecar.length === 0) return null;
 
@@ -38,7 +43,7 @@ export default function LonespecLista({
       await onTaBortSpec(spec.id);
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönespec:", error);
-      alert("❌ Kunde inte ta bort lönespec");
+      setToast({ type: "error", message: "Kunde inte ta bort lönespec" });
     } finally {
       setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
     }
@@ -75,6 +80,14 @@ export default function LonespecLista({
           <Knapp text="💰 Bokför skatter" onClick={onBokförSkatter} />
         </div>
       </>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
