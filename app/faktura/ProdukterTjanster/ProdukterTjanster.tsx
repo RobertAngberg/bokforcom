@@ -11,6 +11,7 @@ import {
 } from "../actions";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
+import Toast from "../../_components/Toast";
 import RotRutForm from "./RotRutForm";
 import FavoritArtiklarList from "./FavoritArtiklarList";
 import ArtiklarList from "./ArtiklarList";
@@ -77,6 +78,11 @@ export default function ProdukterTjanster() {
   const [favoritArtikelVald, setFavoritArtikelVald] = useState(false); // Nytt: håll reda på om en favoritartikel är vald
   const [visaArtikelForm, setVisaArtikelForm] = useState(false); // Nytt: visa/dölj artikelformuläret
   const [visaArtikelModal, setVisaArtikelModal] = useState(false); // Modal för att visa artikeldetaljer
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
   const [valtArtikel, setValtArtikel] = useState<FavoritArtikel | null>(null); // Den valda artikeln för modalen
   const [artikelSparadSomFavorit, setArtikelSparadSomFavorit] = useState(false); // Håll reda på om artikeln precis sparats som favorit
   //#endregion
@@ -127,7 +133,11 @@ export default function ProdukterTjanster() {
     });
 
     if (!beskrivning.trim()) {
-      alert("❌ Beskrivning krävs");
+      setToast({
+        message: "Beskrivning krävs",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
@@ -141,9 +151,11 @@ export default function ProdukterTjanster() {
       if (befintligaROTRUTArtiklar.length > 0) {
         const förstaBefintligTyp = (befintligaROTRUTArtiklar[0] as any).rotRutTyp;
         if (befintligTyp !== förstaBefintligTyp) {
-          alert(
-            `❌ Du kan inte blanda ${förstaBefintligTyp} och ${befintligTyp} på samma faktura.\n\nVälj samma typ för alla artiklar eller skapa separata fakturor.`
-          );
+          setToast({
+            message: `Du kan inte blanda ${förstaBefintligTyp} och ${befintligTyp} på samma faktura.\n\nVälj samma typ för alla artiklar eller skapa separata fakturor.`,
+            type: "error",
+            isVisible: true,
+          });
           return;
         }
       }
@@ -280,13 +292,21 @@ export default function ProdukterTjanster() {
 
   const handleSaveAsFavorite = async () => {
     if (!beskrivning.trim()) {
-      alert("❌ Beskrivning krävs för att spara som favorit");
+      setToast({
+        message: "Beskrivning krävs för att spara som favorit",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
     // Kontrollera om denna artikel redan kommer från en favorit
     if (ursprungligFavoritId) {
-      alert("ℹ️ Denna artikel kommer redan från en favoritartikel och behöver inte sparas igen");
+      setToast({
+        message: "Denna artikel kommer redan från en favoritartikel och behöver inte sparas igen",
+        type: "info",
+        isVisible: true,
+      });
       return;
     }
 
@@ -328,22 +348,37 @@ export default function ProdukterTjanster() {
 
       if (result.success) {
         if (result.alreadyExists) {
-          alert("ℹ️ Artikeln finns redan som favorit");
+          setToast({
+            message: "Artikeln finns redan som favorit",
+            type: "info",
+            isVisible: true,
+          });
         } else {
           // Uppdatera favoritlistan efter att ha sparat
           const uppdateradeFavoriter = await hämtaSparadeArtiklar();
           setFavoritArtiklar((uppdateradeFavoriter as FavoritArtikel[]) || []);
           setArtikelSparadSomFavorit(true); // Markera att artikeln har sparats
-          alert(
-            "✅ Sparad som favoritartikel!\n\nOBS: Du måste fortfarande lägga till den på fakturan om du inte redan gjort det."
-          );
+          setToast({
+            message:
+              "Sparad som favoritartikel!\n\nOBS: Du måste fortfarande lägga till den på fakturan om du inte redan gjort det.",
+            type: "success",
+            isVisible: true,
+          });
         }
       } else {
-        alert("❌ Fel vid sparande av favoritartikel");
+        setToast({
+          message: "Fel vid sparande av favoritartikel",
+          type: "error",
+          isVisible: true,
+        });
       }
     } catch (error) {
       console.error("Fel vid sparande av favoritartikel:", error);
-      alert("❌ Fel vid sparande av favoritartikel");
+      setToast({
+        message: "Fel vid sparande av favoritartikel",
+        type: "error",
+        isVisible: true,
+      });
     } finally {
       setLoading(false); // Sluta ladda
     }
@@ -574,7 +609,11 @@ export default function ProdukterTjanster() {
     if (res.success) {
       setFavoritArtiklar((prev) => prev.filter((a) => a.id !== id));
     } else {
-      alert("❌ Kunde inte ta bort favoritartikel");
+      setToast({
+        message: "Kunde inte ta bort favoritartikel",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -622,6 +661,13 @@ export default function ProdukterTjanster() {
 
   return (
     <div className="space-y-4">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <FavoritArtiklarList
         favoritArtiklar={favoritArtiklar}
         showFavoritArtiklar={showFavoritArtiklar}
@@ -713,9 +759,12 @@ export default function ProdukterTjanster() {
               <Knapp
                 onClick={() => {
                   if (typ === "vara") {
-                    alert(
-                      "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
-                    );
+                    setToast({
+                      message:
+                        "ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först.",
+                      type: "error",
+                      isVisible: true,
+                    });
                     return;
                   }
 
@@ -832,9 +881,12 @@ export default function ProdukterTjanster() {
                 onClick={() => {
                   // Blockera ROT/RUT för varor
                   if (typ === "vara") {
-                    alert(
-                      "❌ ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först."
-                    );
+                    setToast({
+                      message:
+                        "ROT/RUT-avdrag kan endast användas för tjänster.\n\nÄndra typ till 'Tjänst' först.",
+                      type: "error",
+                      isVisible: true,
+                    });
                     return;
                   }
 

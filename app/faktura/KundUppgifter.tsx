@@ -7,6 +7,7 @@ import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "./a
 import Knapp from "../_components/Knapp";
 import Dropdown from "../_components/Dropdown";
 import TextFalt from "../_components/TextFalt";
+import Toast from "../_components/Toast";
 
 //#region Business Logic - Migrated from actions.ts
 // Säker text-sanitering för kunddata
@@ -80,6 +81,11 @@ export default function KundUppgifter() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const [kunder, setKunder] = useState<any[]>([]);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   //#endregion
 
@@ -102,7 +108,11 @@ export default function KundUppgifter() {
     // Validera kunddata innan sparande
     const validation = validateKundData(formData);
     if (!validation.isValid) {
-      alert(`❌ ${validation.error}`);
+      setToast({
+        message: validation.error || "Valideringsfel",
+        type: "error",
+        isVisible: true,
+      });
       return;
     }
 
@@ -134,7 +144,11 @@ export default function KundUppgifter() {
       setTimeout(() => setFadeOut(true), 1500);
       setTimeout(() => setShowSuccess(false), 3000);
     } else {
-      alert("❌ Kunde inte spara kund");
+      setToast({
+        message: "Kunde inte spara kund",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
 
@@ -173,16 +187,31 @@ export default function KundUppgifter() {
       setKundStatus("none");
       const sparade = await hämtaSparadeKunder();
       setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
-      alert("✅ Kund raderad");
+      setToast({
+        message: "Kund raderad",
+        type: "success",
+        isVisible: true,
+      });
     } catch (error) {
       console.error("Fel vid radering av kund:", error);
-      alert("❌ Kunde inte radera kunden");
+      setToast({
+        message: "Kunde inte radera kunden",
+        type: "error",
+        isVisible: true,
+      });
     }
   };
   //#endregion
 
   return (
     <div className="space-y-6 text-white">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <Dropdown
           value={formData.kundId ?? ""}

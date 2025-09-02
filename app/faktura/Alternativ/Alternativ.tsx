@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 import ExporteraPDFKnapp from "./ExporteraPDFKnapp";
 import SkickaEpost from "./SkickaEpost";
 import BokförFakturaModal from "./BokförFakturaModal";
@@ -49,6 +50,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
     status_bokförd?: string;
     rot_rut_status?: string;
   }>({});
+  const [toast, setToast] = useState({
+    message: "",
+    type: "error" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
   // Hämta bokföringsmetod när komponenten laddas
   useEffect(() => {
@@ -79,7 +85,11 @@ export default function Alternativ({ onReload, onPreview }: Props) {
       const res = await saveInvoice(fd);
 
       if (res.success) {
-        alert("✅ Faktura sparad!");
+        setToast({
+          message: "Faktura sparad!",
+          type: "success",
+          isVisible: true,
+        });
 
         // UPPDATERA FORMDATA MED NYTT ID!
         if (res.id) {
@@ -457,6 +467,13 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
   return (
     <div className="space-y-6">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
+
       <div className="flex flex-wrap gap-4">
         <Knapp
           onClick={hanteraSpara}
