@@ -9,46 +9,7 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
 import Knapp from "../_components/Knapp";
 import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "./actions";
-
-type KontoRad = {
-  beskrivning: string;
-  kontonummer?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
-
-type Förval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  sökord: string[];
-  specialtyp?: string | null;
-};
-
-type Step2Props = {
-  setCurrentStep: (step: number) => void;
-  fil: File | null;
-  setFil: (file: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (url: string | null) => void;
-  belopp: number | null;
-  setBelopp: (amount: number | null) => void;
-  transaktionsdatum: string | null;
-  setTransaktionsdatum: (date: string | null) => void;
-  kommentar: string | null;
-  setKommentar: (comment: string | null) => void;
-  valtFörval: Förval | null;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  utlaggMode?: boolean;
-  bokförSomFaktura?: boolean;
-  setBokförSomFaktura?: (value: boolean) => void;
-  kundfakturadatum?: string | null;
-  setKundfakturadatum?: (value: string | null) => void;
-};
+import { Steg2KontoRad, Steg2Förval, Step2Props } from "./types";
 // #endregion
 
 export default function Steg2({
