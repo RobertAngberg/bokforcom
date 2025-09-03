@@ -9,23 +9,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../_utils/trueDatum";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  belopp?: number | null;
-  setBelopp: (v: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (v: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (v: string | null) => void;
-  setCurrentStep?: (v: number) => void;
-  fil: File | null;
-  setFil: (f: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (u: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
-}
+import { AvrakningsnotaUtanMomsProps } from "../types";
 // #endregion
 
 export default function AvrakningsnotaUtanMoms({
@@ -43,7 +27,7 @@ export default function AvrakningsnotaUtanMoms({
   setPdfUrl,
   extrafält,
   setExtrafält,
-}: Props) {
+}: AvrakningsnotaUtanMomsProps) {
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
