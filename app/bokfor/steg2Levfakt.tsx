@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import React from "react";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
@@ -16,7 +15,6 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
 import Knapp from "../_components/Knapp";
 import TextFalt from "../_components/TextFalt";
-import { type Leverantör } from "../faktura/actions";
 import { Step2LevfaktProps } from "./types";
 
 // #endregion

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../personal/actions";
-import AnstalldDropdown, { Anstalld } from "./AnstalldDropdown";
+import AnstalldDropdown from "./AnstalldDropdown";
 import { saveTransaction } from "./actions";
 import { uploadReceiptImage } from "../_utils/blobUpload";
 import Knapp from "../_components/Knapp";
@@ -12,53 +12,7 @@ import Toast from "../_components/Toast";
 import { formatSEK, formatCurrency, round } from "../_utils/format";
 import { type Leverantör } from "../faktura/actions";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
-
-type KontoRad = {
-  kontonummer?: string;
-  beskrivning?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
-
-type ExtrafältRad = {
-  label?: string;
-  debet: number;
-  kredit: number;
-};
-
-type Förval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  momssats?: number;
-  specialtyp?: string | null;
-};
-
-interface Step3Props {
-  kontonummer?: string;
-  kontobeskrivning?: string;
-  fil?: File | null;
-  belopp?: number;
-  transaktionsdatum: string;
-  kommentar?: string;
-  valtFörval?: Förval | null;
-  setCurrentStep?: (step: number) => void;
-  extrafält?: Record<string, ExtrafältRad>;
-  utlaggMode?: boolean;
-  levfaktMode?: boolean;
-  // Leverantörsfaktura-specifika props
-  leverantör?: Leverantör | null;
-  fakturanummer?: string | null;
-  fakturadatum?: string | null;
-  förfallodatum?: string | null;
-  betaldatum?: string | null;
-  // Kundfaktura-specifika props
-  bokförSomFaktura?: boolean;
-  kundfakturadatum?: string | null;
-}
+import { Step3Props, Anstalld } from "./types";
 // #endregion
 
 export default function Steg3({
