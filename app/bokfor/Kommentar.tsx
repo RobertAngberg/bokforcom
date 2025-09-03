@@ -1,10 +1,6 @@
 import React from "react";
 import TextFalt from "../_components/TextFalt";
-
-interface CommentProps {
-  kommentar: string;
-  setKommentar: (value: string) => void;
-}
+import { CommentProps } from "./types";
 
 export default function Kommentar({ kommentar, setKommentar }: CommentProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

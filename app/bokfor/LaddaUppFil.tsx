@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR } from "./actions";
-import { uploadReceiptImage, uploadBlob, compressImageFile } from "../_utils/blobUpload";
+import { compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import Toast from "../_components/Toast";
+import { FileUploadProps } from "./types";
 
 // Säker filvalidering
 const ALLOWED_FILE_TYPES = {
@@ -46,17 +47,6 @@ function sanitizeFilename(filename: string): string {
     .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken med underscore
     .substring(0, 100) // Begränsa längd
     .toLowerCase();
-}
-
-interface FileUploadProps {
-  setFil: (file: File | null) => void;
-  setPdfUrl: (url: string) => void;
-  setTransaktionsdatum: (datum: string) => void;
-  setBelopp: (belopp: number) => void;
-  fil: File | null;
-  onOcrTextChange?: (text: string) => void;
-  skipBasicAI?: boolean;
-  onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
 }
 
 export default function LaddaUppFil({
