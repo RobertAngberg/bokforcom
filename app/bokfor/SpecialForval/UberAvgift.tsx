@@ -10,23 +10,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../_utils/trueDatum";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
-}
+import { UberAvgiftProps } from "../types";
 // #endregion
 
 export default function UberAvgift({
@@ -44,7 +28,7 @@ export default function UberAvgift({
   setKommentar,
   extrafält,
   setExtrafält,
-}: Props) {
+}: UberAvgiftProps) {
   const [moms, setMoms] = useState(0);
 
   const giltigt = !!belopp && !!transaktionsdatum;
@@ -121,7 +105,8 @@ export default function UberAvgift({
                 required={false}
               />
 
-              <Knapp fullWidth
+              <Knapp
+                fullWidth
                 text="Bokför"
                 type="button"
                 onClick={gåTillSteg3}

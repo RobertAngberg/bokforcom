@@ -11,23 +11,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/trueDatum";
 import TillbakaPil from "../../_components/TillbakaPil";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-}
+import { MilersattningEnskildFirmaProps } from "../types";
 // #endregion
 
 export default function MilersattningEnskildFirma({
@@ -45,7 +29,7 @@ export default function MilersattningEnskildFirma({
   setPdfUrl,
   extrafält,
   setExtrafält,
-}: Props) {
+}: MilersattningEnskildFirmaProps) {
   const [mil, setMil] = useState("1");
   const [ersPerMil, setErsPerMil] = useState("25");
   const [biltyp, setBiltyp] = useState("Egen bil");

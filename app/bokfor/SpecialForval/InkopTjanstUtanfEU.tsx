@@ -6,34 +6,7 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { type Leverantör } from "../../faktura/actions";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-  belopp?: number | null;
-  setBelopp: (amount: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (date: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (comment: string | null) => void;
-  setCurrentStep?: (step: number) => void;
-  fil: File | null;
-  setFil: (file: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (url: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Levfakt-specifika props (optional)
-  leverantör?: string;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
-}
+import { InkopTjanstUtanfEUProps } from "../types";
 // #endregion
 
 export default function InkopTjanstUtanfEU({
@@ -60,7 +33,7 @@ export default function InkopTjanstUtanfEU({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: Props) {
+}: InkopTjanstUtanfEUProps) {
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
@@ -169,7 +142,7 @@ export default function InkopTjanstUtanfEU({
             konton: [],
             momssats: 0.25,
             specialtyp: "InkopTjanstUtanfEU",
-              sökord: [],
+            sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

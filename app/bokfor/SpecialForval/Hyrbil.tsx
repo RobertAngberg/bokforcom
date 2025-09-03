@@ -7,34 +7,7 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { type Leverantör } from "../../faktura/actions";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt"; // NY!
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (val: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Levfakt-specifika props (optional)
-  leverantör?: string;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
-}
+import { HyrbilProps } from "../types";
 // #endregion
 
 export default function Hyrbil({
@@ -61,7 +34,7 @@ export default function Hyrbil({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: Props) {
+}: HyrbilProps) {
   // #region Beräkningar
   // Beräkna korrekt för hyrbil: 50% av momsen är avdragsgill
   const totalBelopp = Number(belopp ?? 0);

@@ -6,13 +6,13 @@ import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
-import { type Leverantör } from "../../faktura/actions";
 import TextFalt from "../../_components/TextFalt";
+import { RepresentationProps } from "../types";
 
-type RepresentationsTyp = "maltid_alkohol" | "enklare_fortaring";
+type RepresentationsTypLocal = "maltid_alkohol" | "enklare_fortaring";
 
 // Schablon beräkning enligt Skatteverket
-function beräknaSchablon(antalPersoner: number, typ: RepresentationsTyp, totalBelopp: number) {
+function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, totalBelopp: number) {
   let schablon: number;
 
   // Bokio verkar använda samma beräkning för båda typerna
@@ -28,34 +28,6 @@ function beräknaSchablon(antalPersoner: number, typ: RepresentationsTyp, totalB
     ejAvdragsgillDel,
     procent: totalBelopp > 0 ? (avdragsgillDel / totalBelopp) * 100 : 0,
   };
-}
-
-interface Props {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Levfakt-specifika props (optional)
-  leverantör?: string;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
 }
 // #endregion
 
@@ -83,10 +55,10 @@ export default function Representation({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: Props) {
+}: RepresentationProps) {
   const [antalPersoner, setAntalPersoner] = useState("");
   const [representationstyp, setRepresentationstyp] =
-    useState<RepresentationsTyp>("maltid_alkohol");
+    useState<RepresentationsTypLocal>("maltid_alkohol");
 
   // Använd totalt belopp för beräkningar
   const totalBelopp = belopp ?? 0;
@@ -173,7 +145,7 @@ export default function Representation({
                   name="representationstyp"
                   value="maltid_alkohol"
                   checked={representationstyp === "maltid_alkohol"}
-                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTyp)}
+                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
                   className="text-blue-500"
                 />
                 <span className="text-white">Måltid</span>
@@ -185,7 +157,7 @@ export default function Representation({
                   name="representationstyp"
                   value="enklare_fortaring"
                   checked={representationstyp === "enklare_fortaring"}
-                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTyp)}
+                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
                   className="text-blue-500"
                 />
                 <span className="text-white">Enklare förtäring</span>
@@ -256,7 +228,7 @@ export default function Representation({
             konton: [],
             momssats: 0.25,
             specialtyp: "Representation",
-              sökord: [],
+            sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

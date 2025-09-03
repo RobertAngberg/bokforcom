@@ -276,8 +276,6 @@ export interface LevfaktLayoutProps {
 }
 
 // ===== UTILITY TYPES =====
-export type RepresentationsTyp = "maltid_alkohol" | "enklare_fortaring";
-
 export interface TransaktionspostResult {
   success: boolean;
   data?: any[];

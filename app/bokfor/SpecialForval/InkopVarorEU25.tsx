@@ -6,36 +6,7 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { type Leverantör } from "../../faktura/actions";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  formRef?: React.RefObject<HTMLFormElement>;
-  handleSubmit?: (formData: FormData) => void;
-
-  // Levfakt-specifika props (optional)
-  leverantör?: string;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
-}
+import { InkopVarorEU25Props } from "../types";
 // #endregion
 
 export default function InkopVarorEU25({
@@ -62,7 +33,7 @@ export default function InkopVarorEU25({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: Props) {
+}: InkopVarorEU25Props) {
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
@@ -167,7 +138,7 @@ export default function InkopVarorEU25({
             konton: [],
             momssats: 0.25,
             specialtyp: "InkopVarorEU25",
-              sökord: [],
+            sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

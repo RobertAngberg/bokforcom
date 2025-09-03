@@ -8,34 +8,7 @@ import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { type Leverantör } from "../../faktura/actions";
 import TextFalt from "../../_components/TextFalt";
-
-interface Props {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Levfakt-specifika props (optional)
-  leverantör?: string;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
-}
+import { ImportmomsProps } from "../types";
 // #endregion
 
 export default function Importmoms({
@@ -62,7 +35,7 @@ export default function Importmoms({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: Props) {
+}: ImportmomsProps) {
   const [tull, setTull] = useState("");
   const [fiktiv, setFiktiv] = useState("");
   const [ovrigt, setOvrigt] = useState("");
@@ -272,7 +245,7 @@ export default function Importmoms({
             konton: [],
             momssats: 0.25,
             specialtyp: "Importmoms",
-              sökord: [],
+            sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}
