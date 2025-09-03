@@ -12,42 +12,13 @@ import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
 import { fetchFavoritforval } from "./actions";
+import { PageKontoRad, PageExtrafält, PageForval, PageProps } from "./types";
 
 // För React DatePicker
 registerLocale("sv", sv);
 
-type KontoRad = {
-  beskrivning: string;
-  kontonummer?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
-
-type Extrafält = {
-  namn: string;
-  label: string;
-  konto: string;
-  debet: boolean;
-  kredit: boolean;
-};
-
-type Forval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  sökord: string[];
-  extrafält?: Extrafält[];
-};
-
-type PageProps = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
 export default function Page({ searchParams }: PageProps) {
-  const [favoritFörvalen, setFavoritFörvalen] = useState<Forval[]>([]);
+  const [favoritFörvalen, setFavoritFörvalen] = useState<PageForval[]>([]);
   const [isLevfaktMode, setIsLevfaktMode] = useState(false);
   const [leverantorId, setLeverantorId] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -58,7 +29,7 @@ export default function Page({ searchParams }: PageProps) {
   const [belopp, setBelopp] = useState<number | null>(null);
   const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
   const [kommentar, setKommentar] = useState<string | null>(null);
-  const [valtFörval, setValtFörval] = useState<Forval | null>(null);
+  const [valtFörval, setValtFörval] = useState<PageForval | null>(null);
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});

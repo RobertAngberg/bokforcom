@@ -3,23 +3,10 @@
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCRLevFakt } from "./actions";
-import { uploadReceiptImage, uploadBlob, compressImageFile } from "../_utils/blobUpload";
+import { compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import Toast from "../_components/Toast";
-import { type Leverantör } from "../faktura/actions";
-
-interface FileUploadLevfaktProps {
-  setFil: (file: File | null) => void;
-  setPdfUrl: (url: string) => void;
-  setTransaktionsdatum: (datum: string) => void;
-  setBelopp: (belopp: number) => void;
-  fil: File | null;
-  // Leverantörsfaktura-specifika setters
-  setLeverantör: (leverantör: Leverantör | null) => void;
-  setFakturadatum: (datum: string | null) => void;
-  setFörfallodatum: (datum: string | null) => void;
-  setFakturanummer: (nummer: string) => void;
-}
+import { FileUploadLevfaktProps } from "./types";
 
 export default function LaddaUppFilLevfakt({
   setFil,
