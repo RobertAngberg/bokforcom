@@ -5,12 +5,7 @@
     "**/.hg": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
-    "**/CVS": true,
-    ".vscode": true,
-    "tsconfig.tsbuildinfo": true,
-    "tsconfig.json": true,
-    ".env.local": true,
-    "globals.css": true
+    "**/CVS": true
   },
   "hide-files.files": [
     ".vscode",
