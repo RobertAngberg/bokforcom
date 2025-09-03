@@ -7,16 +7,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
-
-interface InformationProps {
-  belopp: number;
-  setBelopp: (value: number) => void;
-  transaktionsdatum: string | null;
-  setTransaktionsdatum: (value: string) => void;
-  visaFakturadatum?: boolean;
-  fakturadatum?: string | null;
-  setFakturadatum?: (value: string) => void;
-}
+import { InformationProps } from "./types";
 
 export default function Information({
   belopp,
