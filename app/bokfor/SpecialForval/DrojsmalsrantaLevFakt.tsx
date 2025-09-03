@@ -132,6 +132,7 @@ export default function DrojsmalsrantaLevFakt({
               konton: [],
               momssats: 0,
               specialtyp: "drojsmalsranta",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { fetchAllaForval, loggaFavoritförval } from "./actions";
 import FörvalKort from "./ForvalKort";
 import TextFalt from "../_components/TextFalt";
-import { SokForvalKontoRad, SokForvalForval, SokForvalProps } from "./types";
+import { KontoRad, Förval, SokForvalProps } from "./types";
 
 export default function SokForval({
   favoritFörvalen,
@@ -15,7 +15,7 @@ export default function SokForval({
   levfaktMode = false,
 }: SokForvalProps) {
   const [searchText, setSearchText] = useState("");
-  const [results, setResults] = useState<SokForvalForval[]>([]); // Börja med tom lista
+  const [results, setResults] = useState<Förval[]>([]); // Börja med tom lista
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +50,7 @@ export default function SokForval({
       const alla = await fetchAllaForval();
       const q = input; // Redan normaliserad
 
-      function score(f: SokForvalForval): number {
+      function score(f: Förval): number {
         let poäng = 0;
 
         // 4. BASE POINTS: Prioritera vanliga förval från början
@@ -105,7 +105,7 @@ export default function SokForval({
       if (levfaktMode) {
         träffar = träffar.filter((f) => {
           // Kontrollera att förvalet har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
-          const harKostnadskonto = f.konton.some((k: SokForvalKontoRad) => {
+          const harKostnadskonto = f.konton.some((k: KontoRad) => {
             const kontonummer = k.kontonummer || "";
             return /^[456]/.test(kontonummer);
           });
@@ -122,7 +122,7 @@ export default function SokForval({
     return () => clearTimeout(delay);
   }, [searchText, favoritFörvalen, levfaktMode]);
 
-  const väljFörval = (f: SokForvalForval) => {
+  const väljFörval = (f: Förval) => {
     loggaFavoritförval(f.id);
     setvaltFörval(f);
 

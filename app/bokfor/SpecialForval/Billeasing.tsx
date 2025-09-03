@@ -249,6 +249,7 @@ export default function Billeasing({
             konton: [],
             momssats: 0.25,
             specialtyp: "Billeasing",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

@@ -137,6 +137,7 @@ export default function Direktpension({
               konton: [],
               momssats: 0,
               specialtyp: "direktpension",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

@@ -153,6 +153,7 @@ export default function Pensionsforsakring({
               konton: [],
               momssats: 0,
               specialtyp: "pensionsforsakring",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

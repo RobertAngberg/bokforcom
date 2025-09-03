@@ -167,6 +167,7 @@ export default function InkopVarorEU25({
             konton: [],
             momssats: 0.25,
             specialtyp: "InkopVarorEU25",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

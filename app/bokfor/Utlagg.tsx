@@ -1,25 +1,15 @@
 //#region Huvud
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { hämtaAnställda } from "./actions";
-
-interface Anställd {
-  id: number;
-  förnamn: string;
-  efternamn: string;
-}
-
-interface UtläggProps {
-  onUtläggChange?: (isUtlägg: boolean, valdaAnställda?: number[]) => void;
-  initialValue?: boolean;
-}
+import { UtlaggAnställd, UtläggProps } from "./types";
 //#endregion
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
   //#region State
   const [isUtlägg, setIsUtlägg] = useState(initialValue);
-  const [anställda, setAnställda] = useState<Anställd[]>([]);
+  const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
   const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   //#endregion

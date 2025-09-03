@@ -143,6 +143,7 @@ export default function InkopVarorUtanfEU({
             konton: [],
             momssats: 0,
             specialtyp: "InkopVarorUtanfEU",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

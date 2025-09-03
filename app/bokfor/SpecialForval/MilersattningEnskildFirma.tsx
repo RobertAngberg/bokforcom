@@ -187,6 +187,7 @@ export default function MilersattningEnskildFirma({
               konton: [],
               momssats: 0,
               specialtyp: "milersattningenskildfirma",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

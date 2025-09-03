@@ -12,7 +12,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
-import { BokforKontoRad, BokforExtrafält, BokforForval, BokforProps } from "./types";
+import { KontoRad, Extrafält, Förval, BokforProps } from "./types";
 
 // För React DatePicker
 registerLocale("sv", sv);
@@ -33,7 +33,7 @@ export default function Bokför({
   const [belopp, setBelopp] = useState<number | null>(null);
   const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
   const [kommentar, setKommentar] = useState<string | null>(null);
-  const [valtFörval, setValtFörval] = useState<BokforForval | null>(null);
+  const [valtFörval, setValtFörval] = useState<Förval | null>(null);
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});

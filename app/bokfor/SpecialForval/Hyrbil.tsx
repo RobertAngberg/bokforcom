@@ -146,6 +146,7 @@ export default function Hyrbil({
               konton: [],
               momssats: 0.25,
               specialtyp: "hyrbil",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

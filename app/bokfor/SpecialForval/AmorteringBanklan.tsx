@@ -157,6 +157,7 @@ export default function AmorteringBanklan({
               konton: [],
               momssats: 0,
               specialtyp: "amorteringbanklan",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

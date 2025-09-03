@@ -195,6 +195,7 @@ export default function ITtjansterEU({
             konton: [],
             momssats: 0.25,
             specialtyp: "ITtjansterEU",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

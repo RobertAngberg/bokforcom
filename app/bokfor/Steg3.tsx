@@ -9,8 +9,7 @@ import { uploadReceiptImage } from "../_utils/blobUpload";
 import Knapp from "../_components/Knapp";
 import TillbakaPil from "../_components/TillbakaPil";
 import Toast from "../_components/Toast";
-import { formatSEK, formatCurrency, round } from "../_utils/format";
-import { type Leverantör } from "../faktura/actions";
+import { formatCurrency, round } from "../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
 import { Step3Props, Anstalld } from "./types";
 // #endregion

@@ -150,6 +150,7 @@ export default function Rantekostnader({
               konton: [],
               momssats: 0,
               specialtyp: "rantekostnader",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

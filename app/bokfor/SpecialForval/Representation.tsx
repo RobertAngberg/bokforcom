@@ -256,6 +256,7 @@ export default function Representation({
             konton: [],
             momssats: 0.25,
             specialtyp: "Representation",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

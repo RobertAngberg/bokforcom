@@ -169,6 +169,7 @@ export default function InkopTjanstEU({
             konton: [],
             momssats: 0.25,
             specialtyp: "InkopTjanstEU",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

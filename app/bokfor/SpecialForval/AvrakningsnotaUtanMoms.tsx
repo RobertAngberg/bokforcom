@@ -138,6 +138,7 @@ export default function AvrakningsnotaUtanMoms({
               konton: [],
               momssats: 0,
               specialtyp: "avrakningsnotautanmoms",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

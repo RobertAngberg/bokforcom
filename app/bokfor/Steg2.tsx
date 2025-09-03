@@ -9,7 +9,7 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../_components/TillbakaPil";
 import Knapp from "../_components/Knapp";
 import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "./actions";
-import { Steg2KontoRad, Steg2Förval, Step2Props } from "./types";
+import { Step2Props } from "./types";
 // #endregion
 
 export default function Steg2({

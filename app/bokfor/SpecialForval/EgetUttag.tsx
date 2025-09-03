@@ -138,6 +138,7 @@ export default function EgetUttag({
               konton: [],
               momssats: 0,
               specialtyp: "egetuttag",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

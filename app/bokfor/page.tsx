@@ -12,13 +12,13 @@ import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
 import { fetchFavoritforval } from "./actions";
-import { PageKontoRad, PageExtrafält, PageForval, PageProps } from "./types";
+import { Förval, PageProps } from "./types";
 
 // För React DatePicker
 registerLocale("sv", sv);
 
 export default function Page({ searchParams }: PageProps) {
-  const [favoritFörvalen, setFavoritFörvalen] = useState<PageForval[]>([]);
+  const [favoritFörvalen, setFavoritFörvalen] = useState<Förval[]>([]);
   const [isLevfaktMode, setIsLevfaktMode] = useState(false);
   const [leverantorId, setLeverantorId] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -29,7 +29,7 @@ export default function Page({ searchParams }: PageProps) {
   const [belopp, setBelopp] = useState<number | null>(null);
   const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
   const [kommentar, setKommentar] = useState<string | null>(null);
-  const [valtFörval, setValtFörval] = useState<PageForval | null>(null);
+  const [valtFörval, setValtFörval] = useState<Förval | null>(null);
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});

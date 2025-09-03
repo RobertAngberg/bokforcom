@@ -272,6 +272,7 @@ export default function Importmoms({
             konton: [],
             momssats: 0.25,
             specialtyp: "Importmoms",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

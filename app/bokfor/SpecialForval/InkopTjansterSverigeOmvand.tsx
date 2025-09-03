@@ -189,6 +189,7 @@ export default function InkopTjansterSverigeOmvand({
             konton: [],
             momssats: 0.25,
             specialtyp: "InkopTjansterSverigeOmvand",
+              sökord: [],
           }}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}

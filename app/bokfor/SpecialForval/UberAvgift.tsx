@@ -156,6 +156,7 @@ export default function UberAvgift({
               konton: [],
               momssats: 0.25,
               specialtyp: "uberavgift",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}

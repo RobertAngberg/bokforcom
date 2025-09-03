@@ -148,6 +148,7 @@ export default function Banklan({
               konton: [],
               momssats: 0,
               specialtyp: "banklan",
+              sökord: [],
             }}
             setCurrentStep={setCurrentStep}
             extrafält={extrafält}
