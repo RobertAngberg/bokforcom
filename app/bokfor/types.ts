@@ -266,11 +266,25 @@ export interface Step2LevfaktProps {
     extrafält: Record<string, { label: string; debet: number; kredit: number }>
   ) => void;
   utlaggMode?: boolean;
+  // Aktuella states behövs för visning
   fil?: File | null;
   pdfUrl?: string | null;
   belopp?: number | null;
   transaktionsdatum?: string | null;
   kommentar?: string | null;
+  valtFörval?: Steg2LevfaktFörval | null;
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
+  // Leverantörsfaktura-specifika props
+  leverantör: any | null; // TODO: Use proper Leverantör type from faktura/actions
+  setLeverantör: (leverantör: any | null) => void;
+  fakturanummer: string | null;
+  setFakturanummer: (nummer: string | null) => void;
+  fakturadatum: string | null;
+  setFakturadatum: (datum: string | null) => void;
+  förfallodatum: string | null;
+  setFörfallodatum: (datum: string | null) => void;
+  betaldatum: string | null;
+  setBetaldatum: (datum: string | null) => void;
 }
 
 // ===== Steg3.tsx =====

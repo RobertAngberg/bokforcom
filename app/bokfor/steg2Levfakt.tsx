@@ -17,60 +17,8 @@ import TillbakaPil from "../_components/TillbakaPil";
 import Knapp from "../_components/Knapp";
 import TextFalt from "../_components/TextFalt";
 import { type Leverantör } from "../faktura/actions";
+import { Step2LevfaktProps } from "./types";
 
-type KontoRad = {
-  beskrivning: string;
-  kontonummer?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
-
-type Förval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  sökord: string[];
-  specialtyp?: string | null;
-};
-
-interface Step2LevfaktProps {
-  favoritFörvalen: Förval[];
-  setCurrentStep: (step: number) => void;
-  setKontonummer: (konto: string) => void;
-  setKontobeskrivning: (beskrivning: string) => void;
-  setFil: (fil: File | null) => void;
-  setPdfUrl: (url: string | null) => void;
-  setBelopp: (belopp: number | null) => void;
-  setTransaktionsdatum: (datum: string | null) => void;
-  setKommentar: (kommentar: string | null) => void;
-  setValtFörval: (förval: Förval | null) => void;
-  setExtrafält: (
-    extrafält: Record<string, { label: string; debet: number; kredit: number }>
-  ) => void;
-  utlaggMode?: boolean;
-  // Aktuella states behövs för visning
-  fil?: File | null;
-  pdfUrl?: string | null;
-  belopp?: number | null;
-  transaktionsdatum?: string | null;
-  kommentar?: string | null;
-  valtFörval?: Förval | null;
-  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
-  // Leverantörsfaktura-specifika props
-  leverantör: Leverantör | null;
-  setLeverantör: (leverantör: Leverantör | null) => void;
-  fakturanummer: string | null;
-  setFakturanummer: (nummer: string | null) => void;
-  fakturadatum: string | null;
-  setFakturadatum: (datum: string | null) => void;
-  förfallodatum: string | null;
-  setFörfallodatum: (datum: string | null) => void;
-  betaldatum: string | null;
-  setBetaldatum: (datum: string | null) => void;
-}
 // #endregion
 
 export default function Steg2Levfakt({
@@ -253,7 +201,8 @@ export default function Steg2Levfakt({
             </div>
 
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
-            <Knapp fullWidth
+            <Knapp
+              fullWidth
               text="Bokför leverantörsfaktura"
               onClick={() => setCurrentStep(3)}
               disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum}
