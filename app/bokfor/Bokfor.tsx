@@ -12,44 +12,11 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
+import { BokforKontoRad, BokforExtrafält, BokforForval, BokforProps } from "./types";
 
 // För React DatePicker
 registerLocale("sv", sv);
 
-type KontoRad = {
-  beskrivning: string;
-  kontonummer?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
-
-type Extrafält = {
-  namn: string;
-  label: string;
-  konto: string;
-  debet: boolean;
-  kredit: boolean;
-};
-
-type Forval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  sökord: string[];
-  extrafält?: Extrafält[];
-  användningar?: number; // För popularitets-boost
-  senast_använd?: string; // När det senast användes
-};
-
-type Props = {
-  favoritFörvalen: Forval[];
-  utlaggMode?: boolean;
-  levfaktMode?: boolean;
-  leverantorId?: number | null;
-};
 //#endregion
 
 export default function Bokför({
@@ -57,7 +24,7 @@ export default function Bokför({
   utlaggMode = false,
   levfaktMode = false,
   leverantorId = null,
-}: Props) {
+}: BokforProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [kontonummer, setKontonummer] = useState<string>("");
   const [kontobeskrivning, setKontobeskrivning] = useState<string>();
@@ -66,7 +33,7 @@ export default function Bokför({
   const [belopp, setBelopp] = useState<number | null>(null);
   const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
   const [kommentar, setKommentar] = useState<string | null>(null);
-  const [valtFörval, setValtFörval] = useState<Forval | null>(null);
+  const [valtFörval, setValtFörval] = useState<BokforForval | null>(null);
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});

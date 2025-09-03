@@ -2,11 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef, useMemo, useEffect } from "react";
-
-interface ForhandsgranskningProps {
-  fil?: File | null;
-  pdfUrl?: string | null;
-}
+import { ForhandsgranskningProps } from "./types";
 
 export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
   const [showModal, setShowModal] = useState(false);

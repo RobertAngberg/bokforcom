@@ -1,29 +1,8 @@
 "use client";
 
-type KontoRad = {
-  beskrivning: string;
-  kontonummer?: string;
-  debet?: boolean;
-  kredit?: boolean;
-};
+import { ForvalKortProps } from "./types";
 
-type Forval = {
-  id: number;
-  namn: string;
-  beskrivning: string;
-  typ: string;
-  kategori: string;
-  konton: KontoRad[];
-  sökord: string[];
-};
-
-type Props = {
-  förval: Forval;
-  isHighlighted: boolean;
-  onClick: () => void;
-};
-
-export default function FörvalKort({ förval, isHighlighted, onClick }: Props) {
+export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
   return (
     <div
       className={`relative rounded-xl p-4 transition-all duration-200 shadow-md cursor-pointer ${
