@@ -94,7 +94,8 @@ export default function Banklan({
                 required={false}
               />
 
-              <Knapp fullWidth
+              <Knapp
+                fullWidth
                 text="Bokför"
                 type="button"
                 onClick={gåTillSteg3}

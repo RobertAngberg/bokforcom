@@ -104,7 +104,8 @@ export default function AmorteringBanklan({
                 required={false}
               />
 
-              <Knapp fullWidth
+              <Knapp
+                fullWidth
                 text="Bokför"
                 type="button"
                 onClick={gåTillSteg3}

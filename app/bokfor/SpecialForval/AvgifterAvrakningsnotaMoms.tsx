@@ -91,7 +91,8 @@ export default function AvgifterAvrakningsnotaMoms({
                 required={false}
               />
 
-              <Knapp fullWidth
+              <Knapp
+                fullWidth
                 text="Bokför"
                 type="button"
                 onClick={gåTillSteg3}
