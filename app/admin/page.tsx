@@ -1,9 +1,7 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useEffect } from "react";
 import MainLayout from "../_components/MainLayout";
-import { useUserProfile, useCompanyProfile, useDeleteConfirmation } from "./_hooks";
+import { useAdminPageState } from "./_hooks";
 import {
   AdminHeader,
   UserProfileSection,
@@ -12,19 +10,9 @@ import {
 } from "./_components";
 
 export default function AdminPage() {
-  const { data: session, status } = useSession();
-  const userProfile = useUserProfile();
-  const companyProfile = useCompanyProfile();
-  const deleteConfirmation = useDeleteConfirmation();
+  const { auth, userProfile, companyProfile, deleteConfirmation, isLoading } = useAdminPageState();
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      userProfile.fetchUserInfo();
-      companyProfile.fetchCompanyProfile();
-    }
-  }, [session]);
-
-  if (status === "loading" || userProfile.loading) {
+  if (isLoading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -34,7 +22,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!session) {
+  if (!auth.isAuthenticated) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
