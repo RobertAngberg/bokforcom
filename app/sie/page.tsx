@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
-import Knapp from "../_components/Knapp";
 import {
   uploadSieFile,
   exporteraSieData,

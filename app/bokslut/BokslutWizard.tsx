@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
-import Knapp from "../_components/Knapp";
 import LoadingSpinner from "../_components/LoadingSpinner";
 import TextFalt from "../_components/TextFalt";
 import { hamtaKontosaldo, hamtaSenasteTransaktioner } from "./actions";
@@ -500,7 +499,8 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
       </div>
 
       <div className="flex justify-end mt-8">
-        <Knapp fullWidth
+        <Knapp
+          fullWidth
           text="Fortsätt till bokslutsbokningar"
           onClick={onNext}
           disabled={!företagskonto}
