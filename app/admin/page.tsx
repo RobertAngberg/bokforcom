@@ -2,12 +2,7 @@
 
 import MainLayout from "../_components/MainLayout";
 import { useAdminPageState } from "./_hooks";
-import {
-  AdminHeader,
-  UserProfileSection,
-  CompanyProfileSection,
-  DeleteSection,
-} from "./_components";
+import { UserProfileSection, CompanyProfileSection, DeleteSection } from "./_components";
 
 export default function AdminPage() {
   const { auth, userProfile, companyProfile, deleteConfirmation, isLoading } = useAdminPageState();
@@ -34,8 +29,8 @@ export default function AdminPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto p-6">
-        <AdminHeader />
+      <div className="max-w-4xl mx-auto px-6 pt-2">
+        <h1 className="text-3xl mb-8 text-center">Administration</h1>
         <UserProfileSection {...userProfile} />
         <CompanyProfileSection {...companyProfile} />
         <DeleteSection {...deleteConfirmation} />

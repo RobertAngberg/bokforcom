@@ -1,14 +1,7 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-
-interface DeleteSectionProps {
-  showDeleteConfirm: boolean;
-  isDeleting: boolean;
-  handleDeleteCompany: () => void;
-  confirmDelete: () => void;
-  cancelDelete: () => void;
-}
+import type { DeleteSectionProps } from "../_types/types";
 
 export default function DeleteSection({
   showDeleteConfirm,

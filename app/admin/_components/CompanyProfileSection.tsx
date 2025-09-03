@@ -1,12 +1,7 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { ForetagsProfil } from "../_types/types";
-
-interface MessageState {
-  type: "success" | "error";
-  text: string;
-}
+import type { ForetagsProfil, MessageState } from "../_types/types";
 
 interface CompanyProfileSectionProps {
   foretagsProfil: ForetagsProfil;

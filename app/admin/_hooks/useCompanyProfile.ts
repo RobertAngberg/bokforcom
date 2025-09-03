@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { hamtaForetagsprofilAdmin, uppdateraForetagsprofilAdmin } from "../_actions";
-import type { ForetagsProfil } from "../_types/types";
-
-interface MessageState {
-  type: "success" | "error";
-  text: string;
-}
+import type { ForetagsProfil, MessageState } from "../_types/types";
 
 export const useCompanyProfile = () => {
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>({

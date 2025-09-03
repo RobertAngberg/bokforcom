@@ -91,6 +91,15 @@ export interface UseAdminSakerhetReturn {
   fetchAdminStats: () => Promise<void>;
 }
 
+// Component Props
+export interface DeleteSectionProps {
+  showDeleteConfirm: boolean;
+  isDeleting: boolean;
+  handleDeleteCompany: () => void;
+  confirmDelete: () => void;
+  cancelDelete: () => void;
+}
+
 // Action result types
 export interface ActionResult<T = any> {
   success: boolean;

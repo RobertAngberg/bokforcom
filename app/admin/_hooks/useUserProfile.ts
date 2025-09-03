@@ -3,17 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions";
-import type { UserInfo } from "../_types/types";
-
-interface UserEditForm {
-  name: string;
-  email: string;
-}
-
-interface MessageState {
-  type: "success" | "error";
-  text: string;
-}
+import type { UserInfo, UserEditForm, MessageState } from "../_types/types";
 
 export const useUserProfile = () => {
   const { data: session } = useSession();

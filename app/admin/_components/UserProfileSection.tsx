@@ -1,17 +1,7 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { UserInfo } from "../_types/types";
-
-interface UserEditForm {
-  name: string;
-  email: string;
-}
-
-interface MessageState {
-  type: "success" | "error";
-  text: string;
-}
+import type { UserInfo, UserEditForm, MessageState } from "../_types/types";
 
 interface UserProfileSectionProps {
   userInfo: UserInfo | null;
