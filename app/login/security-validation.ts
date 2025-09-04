@@ -20,13 +20,7 @@ export function validateAuthSecurity(): AuthSecurityConfig {
   };
 
   // Kontrollera miljövariabler
-  const requiredEnvVars = [
-    "AUTH_SECRET",
-    "AUTH_GOOGLE_ID",
-    "AUTH_GOOGLE_SECRET",
-    "DATABASE_URL",
-    "RESEND_FROM_EMAIL",
-  ];
+  const requiredEnvVars = ["AUTH_SECRET", "DATABASE_URL", "RESEND_FROM_EMAIL"];
 
   const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
@@ -80,8 +74,6 @@ export function validateProductionSecurity(): boolean {
   const productionChecks = [
     (process.env.AUTH_SECRET?.length ?? 0) >= 32,
     process.env.DATABASE_URL?.startsWith("postgresql://") ?? false,
-    (process.env.AUTH_GOOGLE_ID?.length ?? 0) > 0,
-    (process.env.AUTH_GOOGLE_SECRET?.length ?? 0) > 0,
   ];
 
   const isSecure = productionChecks.every((check) => check);

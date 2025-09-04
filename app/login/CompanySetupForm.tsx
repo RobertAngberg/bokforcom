@@ -78,7 +78,7 @@ interface SignupFormProps {
   onSuccess: () => void;
 }
 
-export default function SignupForm({ onSuccess }: SignupFormProps) {
+export default function CompanySetupForm({ onSuccess }: SignupFormProps) {
   const [userStatus, setUserStatus] = useState<{
     loggedIn?: boolean;
     hasCompanyInfo?: boolean;

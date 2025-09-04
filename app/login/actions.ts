@@ -1,6 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
+import { auth } from "../auth";
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { signupRateLimit } from "../_utils/rateLimit";
 import { sanitizeFormInput } from "../_utils/validationUtils";
@@ -46,13 +47,14 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
 
 export async function checkUserSignupStatus() {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session (optional för signup)
-    const { session, userId } = await getSessionAndUserId();
-    if (!session?.user?.email || !userId) {
+    // 🔒 SÄKERHETSVALIDERING - Session (optional för signup) - använd auth() direkt utan redirect
+    const session = await auth();
+    if (!session?.user?.email || !session?.user?.id) {
       // Returnera att användaren inte är inloggad - det är OK för signup-sidan
       return { loggedIn: false, hasSignedUp: false };
     }
 
+    const userId = parseInt(session.user.id, 10);
     const userEmail = session.user.email;
 
     // Rate limiting för status-kontroller - använd enkel session limiting
