@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { clearRememberMePreference } from "./login/_utils/rememberMe";
 //#endregion
 
 export default function Navbar() {
@@ -80,9 +81,11 @@ export default function Navbar() {
             <div className="flex items-center justify-end text-white">
               <button
                 onClick={async () => {
-                  // FÖRST döda NextAuth sessionen
+                  // FÖRST rensa remember me-preferensen
+                  clearRememberMePreference();
+                  // SEN döda NextAuth sessionen
                   await signOut({ redirect: false });
-                  // SEN tvinga redirect med cache-clearing
+                  // SIST tvinga redirect med cache-clearing
                   window.location.replace("/login");
                 }}
                 className="px-4 py-2 font-bold text-white transition duration-300 bg-transparent border border-white rounded hover:bg-white hover:bg-opacity-20"

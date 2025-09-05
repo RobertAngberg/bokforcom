@@ -1,7 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
-import { auth } from "../auth";
+import { auth, signOut } from "../auth";
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { signupRateLimit } from "../_utils/rateLimit";
 import { sanitizeFormInput } from "../_utils/validationUtils";
@@ -659,6 +659,27 @@ export async function saveSignupData(formData: FormData) {
     return {
       success: false,
       error: "Kunde inte spara företagsinformation",
+    };
+  }
+}
+
+/**
+ * Loggar ut användaren och rensar remember me-preferensen
+ */
+export async function logoutWithRememberMeCleanup() {
+  try {
+    // Använd NextAuth's signOut funktion
+    await signOut({ redirect: false });
+
+    return {
+      success: true,
+      message: "Utloggad framgångsrikt",
+    };
+  } catch (error) {
+    console.error("Logout error:", error);
+    return {
+      success: false,
+      error: "Kunde inte logga ut",
     };
   }
 }

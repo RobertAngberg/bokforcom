@@ -11,6 +11,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
         credentials: {
           email: { label: "Email", type: "email" },
           password: { label: "Lösenord", type: "password" },
+          rememberMe: { label: "Remember Me", type: "text" },
         },
         async authorize(credentials) {
           if (!credentials?.email || !credentials?.password) {
@@ -51,6 +52,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
               id: user.id.toString(),
               email: user.email,
               name: user.name,
+              rememberMe: credentials.rememberMe === "true",
             };
           } catch (error) {
             console.error("Auth error:", error);
@@ -61,10 +63,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
     ],
     session: {
       strategy: "jwt",
-      maxAge: 24 * 60 * 60, // 24 timmar
+      maxAge: 30 * 24 * 60 * 60, // 30 dagar som standard - användaren kan välja med remember me
     },
     jwt: {
-      maxAge: 24 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60, // 30 dagar som standard
     },
     cookies: {
       sessionToken: {
@@ -74,7 +76,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
           sameSite: "lax",
           path: "/",
           secure: process.env.NODE_ENV === "production",
-          maxAge: 24 * 60 * 60,
+          maxAge: 30 * 24 * 60 * 60, // 30 dagar som standard
         },
       },
     },
@@ -87,6 +89,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
           token.id = user.id;
           token.email = user.email;
           token.name = user.name;
+          // Sätt session-längd baserat på remember me
+          const rememberMe = (user as any).rememberMe;
+          if (rememberMe) {
+            // 30 dagar för remember me
+            token.maxAge = 30 * 24 * 60 * 60;
+          } else {
+            // 24 timmar för vanlig session
+            token.maxAge = 24 * 60 * 60;
+          }
         }
         return token;
       },
@@ -95,6 +106,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
           session.user.id = token.id as string;
           session.user.email = token.email as string;
           session.user.name = token.name as string;
+          // NextAuth hanterar expires automatiskt baserat på maxAge
         }
         return session;
       },

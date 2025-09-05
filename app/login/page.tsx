@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import EpostRegistrering from "./SignUp";
 import ForgotPassword from "./reset-password/ForgotPassword";
+import { useRememberMe } from "./_utils/rememberMe";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { rememberMe, setRememberMe } = useRememberMe();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showResendVerification, setShowResendVerification] = useState(false);
@@ -53,6 +55,8 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
         password,
         callbackUrl: "/",
         redirect: false,
+        // Skicka remember me som del av credentials för att NextAuth kan använda det
+        rememberMe: rememberMe.toString(),
       });
 
       if (result?.error) {
@@ -113,6 +117,21 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
           className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
+
+      {/* Remember Me Checkbox */}
+      <div className="flex items-center -mb-3 pb-8">
+        <input
+          type="checkbox"
+          id="rememberMe"
+          checked={rememberMe}
+          onChange={(e) => setRememberMe(e.target.checked)}
+          className="h-4 w-4 text-green-600 bg-slate-800 border-slate-600 rounded focus:ring-green-500 focus:ring-2"
+        />
+        <label htmlFor="rememberMe" className="ml-2 text-sm text-slate-300 cursor-pointer">
+          Kom ihåg mig (30 dagar)
+        </label>
+      </div>
+
       {error && (
         <div className="text-center text-sm text-red-400 mt-2">
           {error}
