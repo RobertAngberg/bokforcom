@@ -4,8 +4,9 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import EpostRegistrering from "./SignUp";
+import ForgotPassword from "./reset-password/ForgotPassword";
 
-function EmailLoginForm() {
+function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -136,6 +137,16 @@ function EmailLoginForm() {
       >
         {loading ? "Loggar in..." : "Logga in"}
       </button>
+
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onShowForgotPassword}
+          className="text-blue-400 hover:text-blue-300 underline text-sm"
+        >
+          Glömt lösenord?
+        </button>
+      </div>
     </form>
   );
 }
@@ -143,7 +154,7 @@ function EmailLoginForm() {
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "signup" | "forgot-password">("login");
   const [verificationMessage, setVerificationMessage] = useState("");
 
   useEffect(() => {
@@ -155,6 +166,16 @@ export default function LoginPage() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("verified") === "true") {
       setVerificationMessage("✅ Din email har verifierats! Du kan nu logga in.");
+      // Ta bort query parameter från URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    // Kolla för reset success parameter
+    if (urlParams.get("reset") === "success") {
+      setVerificationMessage(
+        "✅ Ditt lösenord har uppdaterats! Du kan nu logga in med ditt nya lösenord."
+      );
       // Ta bort query parameter från URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
@@ -221,7 +242,7 @@ export default function LoginPage() {
             <h2 className="mb-6 text-xl font-bold text-center text-white">Välkommen!</h2>
 
             <div className="mb-6">
-              <EmailLoginForm />
+              <EmailLoginForm onShowForgotPassword={() => setActiveTab("forgot-password")} />
             </div>
           </div>
 
@@ -237,6 +258,17 @@ export default function LoginPage() {
               onSuccess={undefined}
               onSwitchToLogin={() => setActiveTab("login")}
             />
+          </div>
+
+          <div
+            className={`transition-all duration-400 ease-in-out ${
+              activeTab === "forgot-password"
+                ? "opacity-100 translate-y-0 delay-200"
+                : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
+            }`}
+          >
+            <h2 className="mb-6 text-xl font-bold text-center text-white">Återställ lösenord</h2>
+            <ForgotPassword onBackToLogin={() => setActiveTab("login")} />
           </div>
         </div>
       </div>
