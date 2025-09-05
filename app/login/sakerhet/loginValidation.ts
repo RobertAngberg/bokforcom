@@ -1,6 +1,7 @@
 /**
  * Login och signup validation funktioner
  * Används av SignupForm, actions.ts och andra login-relaterade komponenter
+ * Sökväg: app/login/sakerhet/loginValidation.ts
  */
 
 export interface ValidationResult {
@@ -163,9 +164,19 @@ export const validateProductionSecurity = (): boolean => {
 };
 
 /**
- * Validerar email-format
+ * Validerar email-format (returnerar boolean för bakåtkompatibilitet)
  */
-export const validateEmail = (email: string): ValidationResult => {
+export const validateEmail = (email: string): boolean => {
+  if (!email) return false;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+/**
+ * Validerar email-format (returnerar ValidationResult)
+ */
+export const validateEmailDetailed = (email: string): ValidationResult => {
   if (!email) return { valid: false, error: "E-post krävs" };
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -174,13 +185,66 @@ export const validateEmail = (email: string): ValidationResult => {
     return { valid: false, error: "Ogiltig e-postadress" };
   }
 
+  if (email.length > 255) {
+    return { valid: false, error: "E-postadress är för lång" };
+  }
+
   return { valid: true };
+}; /**
+ * Validerar lösenord med avancerade regler
+ */
+export const validatePassword = (password: string): { valid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (!password) {
+    errors.push("Lösenord krävs");
+    return { valid: false, errors };
+  }
+
+  if (password.length < 8) {
+    errors.push("Lösenordet måste vara minst 8 tecken");
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Lösenordet måste innehålla minst en stor bokstav");
+  }
+
+  if (!/[a-z]/.test(password)) {
+    errors.push("Lösenordet måste innehålla minst en liten bokstav");
+  }
+
+  if (!/\d/.test(password)) {
+    errors.push("Lösenordet måste innehålla minst en siffra");
+  }
+
+  // Kontrollera vanliga svaga lösenord
+  const commonPasswords = [
+    "password",
+    "123456",
+    "password123",
+    "admin",
+    "qwerty",
+    "letmein",
+    "welcome",
+    "monkey",
+    "dragon",
+    "password1",
+  ];
+
+  if (commonPasswords.includes(password.toLowerCase())) {
+    errors.push("Lösenordet är för vanligt och osäkert");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
 };
 
 /**
- * Validerar lösenord
+ * Enkel lösenordsvalidering (bakåtkompatibilitet)
  */
-export const validatePassword = (password: string): ValidationResult => {
+export const validatePasswordSimple = (password: string): ValidationResult => {
   if (!password) return { valid: false, error: "Lösenord krävs" };
 
   if (password.length < 8) {

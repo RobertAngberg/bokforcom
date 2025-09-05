@@ -117,14 +117,6 @@ export function validateDate(date: string): boolean {
 }
 
 /**
- * Validerar e-postadress
- */
-export function validateEmail(email: string): boolean {
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return pattern.test(email);
-}
-
-/**
  * Kombinerad validator som kastar specifika fel
  */
 export function requireValid<T>(value: T, validator: (val: T) => boolean, errorMessage: string): T {

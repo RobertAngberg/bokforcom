@@ -1,4 +1,4 @@
-// app/login/security-validation.ts
+// app/login/sakerhet/security-validation.ts
 // SÄKERHETSVALIDERING för NextAuth konfiguration
 
 interface AuthSecurityConfig {

@@ -1,4 +1,4 @@
-// app/login/edge.ts
+// app/login/sakerhet/edge.ts
 import { getToken } from "@auth/core/jwt";
 import type { NextRequest } from "next/server";
 

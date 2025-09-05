@@ -8,6 +8,7 @@ import { FakturaProvider } from "../FakturaProvider";
 import { useFakturaContext } from "../FakturaProvider";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "../KundUppgifter";
+import { validateEmail } from "../../login/sakerhet/loginValidation";
 import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
 import AnimeradFlik from "../../_components/AnimeradFlik";
@@ -35,12 +36,6 @@ function sanitizeFakturaInput(input: string): string {
 function validateNumericFakturaInput(value: any): boolean {
   const num = parseFloat(value);
   return !isNaN(num) && isFinite(num);
-}
-
-// Säker email-validering för fakturor
-function validateEmailInput(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
 }
 
 // Säker JSON-parsing med validering
@@ -120,7 +115,7 @@ function validateFakturaData(formData: any): { isValid: boolean; error?: string 
   }
 
   // Validera email om angivet
-  if (formData.kundemail && !validateEmailInput(formData.kundemail)) {
+  if (formData.kundemail && !validateEmail(formData.kundemail)) {
     return { isValid: false, error: "Ogiltig email-adress" };
   }
 

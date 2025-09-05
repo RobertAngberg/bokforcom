@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "../_components/Modal";
+import { createAccount } from "./actions";
 
 interface EmailSignupFormProps {
   onSuccess?: () => void;
@@ -29,20 +30,19 @@ export default function EpostRegistrering({ onSuccess }: EmailSignupFormProps) {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("name", name);
 
-      const data = await response.json();
+      const result = await createAccount(formData);
 
-      if (response.ok) {
+      if (result.success) {
         setSuccess(true);
         setError("");
         if (onSuccess) onSuccess();
       } else {
-        setError(data.error || "Registrering misslyckades");
+        setError(result.error || "Registrering misslyckades");
       }
     } catch (error) {
       setError("Något gick fel. Prova igen.");

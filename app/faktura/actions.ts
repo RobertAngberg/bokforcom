@@ -3,7 +3,8 @@
 
 import { Pool } from "pg";
 import { withFormRateLimit } from "../_utils/rateLimit";
-import { validateKontonummer, validateEmail } from "../_utils/validationUtils";
+import { validateKontonummer } from "../_utils/validationUtils";
+import { validateEmail } from "../login/sakerhet/loginValidation";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 // import { Resend } from "resend";
 // TA BORT DENNA RAD:

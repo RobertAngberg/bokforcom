@@ -6,6 +6,8 @@ import { getSessionAndUserId } from "../_utils/authUtils";
 import { signupRateLimit } from "../_utils/rateLimit";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { validateEmail, validatePassword } from "./sakerhet/loginValidation";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -43,6 +45,77 @@ async function logSignupSecurityEvent(
 function getClientIP(headers?: Record<string, string>): string | undefined {
   // I en riktig miljö skulle detta komma från request headers
   return "unknown-ip";
+}
+
+// Server action för initial signup (email/password/name)
+export async function createAccount(formData: FormData) {
+  try {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const name = formData.get("name") as string;
+
+    // Validera input
+    if (!email || !password || !name) {
+      return { success: false, error: "Alla fält krävs" };
+    }
+
+    // Validera email
+    if (!validateEmail(email)) {
+      return { success: false, error: "Ogiltig e-postadress" };
+    }
+
+    // Validera lösenord
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return {
+        success: false,
+        error: passwordValidation.errors.join(", "),
+      };
+    }
+
+    // Validera namn
+    if (name.trim().length < 2 || name.trim().length > 100) {
+      return { success: false, error: "Namnet måste vara mellan 2-100 tecken" };
+    }
+
+    // Kolla om email redan finns
+    const existingUser = await pool.query("SELECT email FROM users WHERE email = $1", [email]);
+
+    if (existingUser.rows.length > 0) {
+      return {
+        success: false,
+        error: "En användare med denna e-postadress finns redan",
+      };
+    }
+
+    // Hasha lösenord
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Skapa verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    // Lägg till användare i databasen
+    const result = await pool.query(
+      `INSERT INTO users (email, password, name, email_verified, verification_token, created_at) 
+       VALUES ($1, $2, $3, false, $4, NOW()) 
+       RETURNING id, email, name`,
+      [email, hashedPassword, name.trim(), verificationToken]
+    );
+
+    // TODO: Skicka verifieringsmail här (importera Resend om behövs)
+
+    return {
+      success: true,
+      message: "Konto skapat! Kontrollera din e-post för verifiering.",
+      user: result.rows[0],
+    };
+  } catch (error) {
+    console.error("Signup error:", error);
+    return {
+      success: false,
+      error: "Något gick fel vid registrering. Försök igen.",
+    };
+  }
 }
 
 export async function checkUserSignupStatus() {
