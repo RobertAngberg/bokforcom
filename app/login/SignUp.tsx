@@ -82,7 +82,7 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
 
   return (
     <div>
-      <form onSubmit={handleEmailSignup} className="space-y-3">
+      <form onSubmit={handleEmailSignup} className="space-y-4">
         <div>
           <input
             type="text"
@@ -118,7 +118,7 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
         </div>
         {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
 
-        <div className="flex items-start space-x-2">
+        <div className="flex items-start space-x-2 mb-6">
           <input
             type="checkbox"
             id="acceptTerms"

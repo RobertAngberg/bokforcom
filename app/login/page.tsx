@@ -239,7 +239,9 @@ export default function LoginPage() {
                 : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
             }`}
           >
-            <h2 className="mb-6 text-xl font-bold text-center text-white">Välkommen!</h2>
+            <h2 className="mb-6 text-xl font-bold text-center text-white">
+              Ange dina inloggningsuppgifter
+            </h2>
 
             <div className="mb-6">
               <EmailLoginForm onShowForgotPassword={() => setActiveTab("forgot-password")} />
