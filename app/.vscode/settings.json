@@ -5,7 +5,8 @@
     "**/.hg": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
-    "**/CVS": true
+    "**/CVS": true,
+    "globals.css": true
   },
-  "hide-files.files": []
+  "hide-files.files": ["globals.css"]
 }

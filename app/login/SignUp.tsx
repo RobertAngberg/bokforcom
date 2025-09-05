@@ -6,9 +6,10 @@ import { createAccount } from "./actions";
 
 interface EmailSignupFormProps {
   onSuccess?: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-export default function EpostRegistrering({ onSuccess }: EmailSignupFormProps) {
+export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailSignupFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -40,6 +41,7 @@ export default function EpostRegistrering({ onSuccess }: EmailSignupFormProps) {
       if (result.success) {
         setSuccess(true);
         setError("");
+        // Anropa bara onSuccess om den finns (t.ex. vid modal-användning)
         if (onSuccess) onSuccess();
       } else {
         setError(result.error || "Registrering misslyckades");
@@ -65,6 +67,14 @@ export default function EpostRegistrering({ onSuccess }: EmailSignupFormProps) {
           <p className="text-slate-400 text-sm">
             Efter verifiering kan du logga in med dina uppgifter.
           </p>
+          {onSwitchToLogin && (
+            <button
+              onClick={onSwitchToLogin}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
+            >
+              Gå till login
+            </button>
+          )}
         </div>
       </div>
     );

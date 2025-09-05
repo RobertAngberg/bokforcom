@@ -41,7 +41,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
               user.password
             );
             if (!validPassword) {
-              console.warn(`❌ Invalid password for user: ${credentials.email}`);
+              console.warn(`❌ Fel lösenord för användare: ${credentials.email}`);
               return null;
             }
 

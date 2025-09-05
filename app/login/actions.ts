@@ -8,8 +8,10 @@ import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { validateEmail, validatePassword } from "./sakerhet/loginValidation";
+import { Resend } from "resend";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function logSignupSecurityEvent(
   userId: string,
@@ -43,8 +45,68 @@ async function logSignupSecurityEvent(
 }
 
 function getClientIP(headers?: Record<string, string>): string | undefined {
-  // I en riktig miljö skulle detta komma från request headers
-  return "unknown-ip";
+  if (!headers) return undefined;
+
+  // Kolla vanliga IP-headers i ordning
+  return (
+    headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    headers["x-real-ip"] ||
+    headers["cf-connecting-ip"] ||
+    headers["x-client-ip"] ||
+    headers["x-forwarded"] ||
+    headers["forwarded"] ||
+    undefined
+  );
+}
+
+// Skicka verification email
+async function sendVerificationEmail(email: string, token: string, name: string): Promise<boolean> {
+  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}`;
+
+  try {
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "noreply@localhost",
+      to: email,
+      subject: "Verifiera din email-adress",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Hej ${name}!</h2>
+          <p>Tack för att du registrerat dig på vår plattform.</p>
+          <p>Klicka på länken nedan för att verifiera din email-adress:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" 
+               style="background: #0070f3; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block;
+                      font-weight: bold;">
+              Verifiera Email
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">
+            Om du inte kan klicka på knappen, kopiera denna länk:
+            <br>
+            <code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${verificationUrl}</code>
+          </p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Denna länk är giltig i 24 timmar.
+          </p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #999; font-size: 12px;">
+            Om du inte registrerat dig kan du ignorera detta mail.
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`✅ Verification email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Failed to send verification email:", error);
+    return false;
+  }
 }
 
 // Server action för initial signup (email/password/name)
@@ -93,21 +155,34 @@ export async function createAccount(formData: FormData) {
 
     // Skapa verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 timmar
 
     // Lägg till användare i databasen
     const result = await pool.query(
-      `INSERT INTO users (email, password, name, email_verified, verification_token, created_at) 
-       VALUES ($1, $2, $3, false, $4, NOW()) 
+      `INSERT INTO users (email, password, name, email_verified, verification_token, verification_expires, created_at) 
+       VALUES ($1, $2, $3, false, $4, $5, NOW()) 
        RETURNING id, email, name`,
-      [email, hashedPassword, name.trim(), verificationToken]
+      [email, hashedPassword, name.trim(), verificationToken, verificationExpires]
     );
 
-    // TODO: Skicka verifieringsmail här (importera Resend om behövs)
+    const newUser = result.rows[0];
+
+    // Skicka verifieringsmail
+    const emailSent = await sendVerificationEmail(email, verificationToken, name.trim());
+
+    if (!emailSent) {
+      // Om mejlet inte kunde skickas, ta bort användaren från databasen
+      await pool.query("DELETE FROM users WHERE id = $1", [newUser.id]);
+      return {
+        success: false,
+        error: "Kunde inte skicka verifieringsmail. Försök igen senare.",
+      };
+    }
 
     return {
       success: true,
       message: "Konto skapat! Kontrollera din e-post för verifiering.",
-      user: result.rows[0],
+      user: newUser,
     };
   } catch (error) {
     console.error("Signup error:", error);

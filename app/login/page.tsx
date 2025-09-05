@@ -233,7 +233,10 @@ export default function LoginPage() {
             }`}
           >
             <h2 className="mb-6 text-xl font-bold text-center text-white">Skapa konto</h2>
-            <EpostRegistrering onSuccess={() => setActiveTab("login")} />
+            <EpostRegistrering
+              onSuccess={undefined}
+              onSwitchToLogin={() => setActiveTab("login")}
+            />
           </div>
         </div>
       </div>
