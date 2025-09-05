@@ -3,8 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import CompanySetupForm from "./CompanySetupForm";
-import EmailSignupForm from "./EmailSignupForm";
+import EpostRegistrering from "./SignUp";
 
 function EmailLoginForm() {
   const [email, setEmail] = useState("");
@@ -195,7 +194,7 @@ export default function LoginPage() {
 
           <button
             onClick={() => setActiveTab("login")}
-            className={`relative z-10 flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
               activeTab === "login" ? "text-white font-bold" : "text-slate-300 hover:text-white"
             }`}
           >
@@ -203,7 +202,7 @@ export default function LoginPage() {
           </button>
           <button
             onClick={() => setActiveTab("signup")}
-            className={`relative z-10 flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
               activeTab === "signup" ? "text-white font-bold" : "text-slate-300 hover:text-white"
             }`}
           >
@@ -234,7 +233,7 @@ export default function LoginPage() {
             }`}
           >
             <h2 className="mb-6 text-xl font-bold text-center text-white">Skapa konto</h2>
-            <EmailSignupForm onSuccess={() => setActiveTab("login")} />
+            <EpostRegistrering onSuccess={() => setActiveTab("login")} />
           </div>
         </div>
       </div>

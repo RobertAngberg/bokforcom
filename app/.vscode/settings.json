@@ -7,12 +7,5 @@
     "**/Thumbs.db": true,
     "**/CVS": true
   },
-  "hide-files.files": [
-    ".vscode",
-    "tsconfig.tsbuildinfo",
-    "tsconfig.json",
-    ".env.local",
-    "globals.css"
-  ],
-  "copilot-chat.sendOnEnter": false
+  "hide-files.files": []
 }
