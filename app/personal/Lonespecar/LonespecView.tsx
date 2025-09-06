@@ -256,9 +256,7 @@ export default function LönespecView({
       {/* Lönekörningsåtgärder sektion */}
       {(onHämtaBankgiro || onMailaSpecar || onBokför || onGenereraAGI || onBokförSkatter) && (
         <div className="bg-slate-700 text-white p-4 rounded-lg mb-4">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            Lönekörningsåtgärder
-          </h3>
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Lönekörningsåtgärder</h3>
           <div className="flex gap-4 justify-center flex-wrap">
             {onHämtaBankgiro && (
               <Knapp
