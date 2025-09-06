@@ -465,18 +465,6 @@ export function beräknaKomplett(
     totalDagavdrag -
     kontantlönAvdrag;
 
-  // DEBUG: Logga beräkningsdetaljer
-  console.log("🔍 KONTANTLÖN DEBUG:", {
-    månadslön: kontrakt.månadslön,
-    övertidsersättning,
-    övrigaTillägg,
-    bruttolönTillägg,
-    totalDagavdrag,
-    kontantlönAvdrag,
-    skattepliktigaFörmåner,
-    beräknadKontantlön: kontantlön,
-  });
-
   // Bruttolön för skattunderlag = kontantlön + förmåner (Bokios modell)
   const bruttolön = kontantlön + skattepliktigaFörmåner;
 

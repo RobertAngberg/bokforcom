@@ -290,7 +290,6 @@ export default function Lonekorning() {
         isOpen={nyLonekorningModalOpen}
         onClose={() => setNyLonekorningModalOpen(false)}
         onLonekorningCreated={async (nyLonekorning) => {
-          console.log("Lönekörning skapad!", nyLonekorning);
           setRefreshTrigger((prev) => prev + 1); // Trigga refresh
           setValdLonekorning(nyLonekorning); // Välj den nya lönekörningen automatiskt
           setNyLonekorningModalOpen(false);
