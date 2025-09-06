@@ -26,6 +26,8 @@ import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
 import NySpecModal from "./NySpecModal";
+import NyLonekorningModal from "./NyLonekorningModal";
+import LonekorningLista from "./LonekorningLista";
 import UtbetalningsdatumValjare from "./UtbetalningsdatumValjare";
 import LonespecLista from "./LonespecLista";
 import AGIGenerator from "./AGIGenerator";
@@ -36,7 +38,9 @@ import LonespecManager from "./LonespecManager";
 //#region Component
 export default function Lonekorning() {
   const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
+  const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
+  const [valdLonekorning, setValdLonekorning] = useState<any>(null);
   const { extrarader, beräknadeVärden } = useLonespecContext();
   //#endregion
 
@@ -224,219 +228,278 @@ export default function Lonekorning() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end mb-4">
-        <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
+      {/* Header med knappar */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-white">Lönekörningar</h2>
+        <div className="flex gap-3">
+          <Knapp text="🏗️ Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+          {valdLonekorning && (
+            <Knapp text="👤 Lägg till anställd" onClick={() => setNySpecModalOpen(true)} />
+          )}
+        </div>
       </div>
 
-      <NySpecModal
-        isOpen={nySpecModalOpen}
-        onClose={() => setNySpecModalOpen(false)}
-        nySpecDatum={nySpecDatum}
-        setNySpecDatum={setNySpecDatum}
-        anstallda={anstallda}
-        onSpecCreated={async () => {
-          // Refresh lönespecar
-          const [specar, anstallda] = await Promise.all([
-            hämtaAllaLönespecarFörUser(),
-            hämtaAllaAnställda(),
-          ]);
-          setAnstallda(anstallda);
-          const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
-          const utlaggResults = await Promise.all(utlaggPromises);
-          const utlaggMap: Record<number, any[]> = {};
-          anstallda.forEach((a, idx) => {
-            utlaggMap[a.id] = utlaggResults[idx];
-          });
-          setUlaggMap(utlaggMap);
-          const grupperat: Record<string, any[]> = {};
-          specar.forEach((spec) => {
-            if (spec.utbetalningsdatum) {
-              if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-              grupperat[spec.utbetalningsdatum].push(spec);
-            }
-          });
-          const grupperatUtanTomma = Object.fromEntries(
-            Object.entries(grupperat).filter(([_, list]) => list.length > 0)
-          );
-          const datumSort = Object.keys(grupperatUtanTomma).sort(
-            (a, b) => new Date(b).getTime() - new Date(a).getTime()
-          );
-          setDatumLista(datumSort);
-          setSpecarPerDatum(grupperatUtanTomma);
-          if (datumSort.length > 0) {
-            setUtbetalningsdatum(datumSort[0]);
-            setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-          } else {
-            setUtbetalningsdatum(null);
-            setValdaSpecar([]);
-          }
+      {/* Lönekörnings-lista */}
+      <LonekorningLista onValjLonekorning={setValdLonekorning} valdLonekorning={valdLonekorning} />
+
+      {/* Nya modaler */}
+      <NyLonekorningModal
+        isOpen={nyLonekorningModalOpen}
+        onClose={() => setNyLonekorningModalOpen(false)}
+        onLonekorningCreated={() => {
+          console.log("Lönekörning skapad!");
+          // TODO: Refresha lönekörningar
         }}
       />
 
-      <UtbetalningsdatumValjare
-        datumLista={datumLista}
-        utbetalningsdatum={utbetalningsdatum}
-        setUtbetalningsdatum={setUtbetalningsdatum}
-        specarPerDatum={specarPerDatum}
-      />
-
-      {utbetalningsdatum && (
-        <LonespecLista
-          valdaSpecar={valdaSpecar}
-          anstallda={anstallda}
-          utlaggMap={utlaggMap}
-          onTaBortSpec={lonespecManager.hanteraTaBortSpec}
-          onHämtaBankgiro={() => setBankgiroModalOpen(true)}
-          onMailaSpecar={() => setBatchMailModalOpen(true)}
-          onBokför={() => setBokforModalOpen(true)}
-          onGenereraAGI={agiGenerator.hanteraAGI}
-          onBokförSkatter={() => setSkatteModalOpen(true)}
-          onRefreshData={refreshData}
-        />
+      {/* Info när ingen lönekörning är vald */}
+      {!valdLonekorning && (
+        <div className="bg-slate-800 rounded-lg p-8 text-center">
+          <div className="text-gray-400">
+            <span className="text-4xl mb-4 block">🏗️</span>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Välj eller skapa en lönekörning
+            </h3>
+            <p className="text-sm">
+              Skapa en ny lönekörning för att börja hantera löner för en period.
+            </p>
+          </div>
+        </div>
       )}
 
-      {bankgiroModalOpen && (
-        <BankgiroExport
-          anställda={anstallda}
-          utbetalningsdatum={utbetalningsdatum ? new Date(utbetalningsdatum) : null}
-          lönespecar={Object.fromEntries(valdaSpecar.map((spec) => [spec.anställd_id, spec]))}
-          open={true}
-          showButton={false}
-          onClose={() => setBankgiroModalOpen(false)}
-          onExportComplete={async () => {
-            // Markera alla lönespecar som bankgiro-exporterade
-            for (const spec of valdaSpecar) {
-              if (!spec.bankgiro_exporterad) {
-                await markeraBankgiroExporterad(spec.id);
-              }
-            }
-            // Refresha data för att visa uppdaterade knappar
-            await refreshData();
-            setBankgiroModalOpen(false);
-          }}
-        />
-      )}
+      {/* Gamla UI som visas när lönekörning är vald */}
+      {valdLonekorning && (
+        <>
+          <div className="bg-slate-700 rounded-lg p-4">
+            <h3 className="text-white font-semibold mb-2">Lönekörning: {valdLonekorning.period}</h3>
+            <p className="text-gray-300 text-sm">
+              Status: {valdLonekorning.status} • Startad:{" "}
+              {valdLonekorning.startad_datum?.toLocaleDateString?.("sv-SE") || "Okänt datum"}
+            </p>
+          </div>
 
-      {batchMailModalOpen && (
-        <MailaLonespec
-          batch={valdaSpecar.map((spec) => ({
-            lönespec: spec,
-            anställd: anstallda.find((a) => a.id === spec.anställd_id),
-            företagsprofil: undefined,
-            extrarader: [],
-            beräknadeVärden: {},
-          }))}
-          batchMode={true}
-          open={true}
-          onClose={() => setBatchMailModalOpen(false)}
-          onMailComplete={async () => {
-            // Markera alla lönespecar som mailade
-            for (const spec of valdaSpecar) {
-              if (!spec.mailad) {
-                await markeraMailad(spec.id);
-              }
-            }
-            // Refresha data för att visa uppdaterade knappar
-            await refreshData();
-            setBatchMailModalOpen(false);
-          }}
-        />
-      )}
+          <div className="flex justify-end mb-4">
+            <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
+          </div>
 
-      {bokforModalOpen && valdaSpecar.length > 0 && (
-        <BokforLoner
-          lönespec={{
-            ...valdaSpecar[0], // Använd första som bas
-            // Summera alla värden från alla lönespecar
-            bruttolön: valdaSpecar.reduce(
-              (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
-              0
-            ),
-            sociala_avgifter: valdaSpecar.reduce(
-              (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
-              0
-            ),
-            skatt: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.skatt) || 0), 0),
-            nettolön: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.nettolön) || 0), 0),
-            lönekostnad: valdaSpecar.reduce(
-              (sum, spec) => sum + (parseFloat(spec.lönekostnad) || 0),
-              0
-            ),
-          }}
-          extrarader={valdaSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
-          beräknadeVärden={{
-            bruttolön: valdaSpecar.reduce(
-              (sum, spec) =>
-                sum + (beräknadeVärden[spec.id]?.bruttolön || parseFloat(spec.bruttolön) || 0),
-              0
-            ),
-            socialaAvgifter: valdaSpecar.reduce(
-              (sum, spec) =>
-                sum +
-                (beräknadeVärden[spec.id]?.socialaAvgifter ||
-                  parseFloat(spec.sociala_avgifter) ||
-                  0),
-              0
-            ),
-            skatt: valdaSpecar.reduce(
-              (sum, spec) => sum + (beräknadeVärden[spec.id]?.skatt || parseFloat(spec.skatt) || 0),
-              0
-            ),
-            nettolön: valdaSpecar.reduce(
-              (sum, spec) =>
-                sum + (beräknadeVärden[spec.id]?.nettolön || parseFloat(spec.nettolön) || 0),
-              0
-            ),
-            lönekostnad: valdaSpecar.reduce(
-              (sum, spec) =>
-                sum + (beräknadeVärden[spec.id]?.lönekostnad || parseFloat(spec.lönekostnad) || 0),
-              0
-            ),
-          }}
-          anställdNamn={`Batch-bokföring (${valdaSpecar.length} anställda)`}
-          isOpen={true}
-          onClose={() => setBokforModalOpen(false)}
-          onBokfört={async () => {
-            // Bokför alla lönespecar
-            for (const spec of valdaSpecar) {
-              if (!spec.bokförd) {
-                const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-                const anställdNamn =
-                  `${anstalld?.förnamn || ""} ${anstalld?.efternamn || ""}`.trim();
-
-                try {
-                  await bokförLöneutbetalning({
-                    lönespecId: spec.id,
-                    utbetalningsdatum: utbetalningsdatum || new Date().toISOString().split("T")[0],
-                    period:
-                      utbetalningsdatum || new Date().toISOString().split("T")[0].substring(0, 7),
-                    anställdNamn: anställdNamn,
-                    extrarader: extrarader[spec.id] || [],
-                    beräknadeVärden: beräknadeVärden[spec.id] || {},
-                    kommentar: `Löneutbetalning ${anställdNamn}, period ${utbetalningsdatum}`,
-                  });
-                } catch (error) {
-                  console.error(`Fel vid bokföring av ${anställdNamn}:`, error);
+          <NySpecModal
+            isOpen={nySpecModalOpen}
+            onClose={() => setNySpecModalOpen(false)}
+            nySpecDatum={nySpecDatum}
+            setNySpecDatum={setNySpecDatum}
+            anstallda={anstallda}
+            onSpecCreated={async () => {
+              // Refresh lönespecar
+              const [specar, anstallda] = await Promise.all([
+                hämtaAllaLönespecarFörUser(),
+                hämtaAllaAnställda(),
+              ]);
+              setAnstallda(anstallda);
+              const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+              const utlaggResults = await Promise.all(utlaggPromises);
+              const utlaggMap: Record<number, any[]> = {};
+              anstallda.forEach((a, idx) => {
+                utlaggMap[a.id] = utlaggResults[idx];
+              });
+              setUlaggMap(utlaggMap);
+              const grupperat: Record<string, any[]> = {};
+              specar.forEach((spec) => {
+                if (spec.utbetalningsdatum) {
+                  if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+                  grupperat[spec.utbetalningsdatum].push(spec);
                 }
+              });
+              const grupperatUtanTomma = Object.fromEntries(
+                Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+              );
+              const datumSort = Object.keys(grupperatUtanTomma).sort(
+                (a, b) => new Date(b).getTime() - new Date(a).getTime()
+              );
+              setDatumLista(datumSort);
+              setSpecarPerDatum(grupperatUtanTomma);
+              if (datumSort.length > 0) {
+                setUtbetalningsdatum(datumSort[0]);
+                setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+              } else {
+                setUtbetalningsdatum(null);
+                setValdaSpecar([]);
               }
-            }
-            await refreshData();
-            setBokforModalOpen(false);
-          }}
-        />
-      )}
+            }}
+          />
 
-      <SkatteBokforingModal
-        skatteModalOpen={skatteModalOpen}
-        setSkatteModalOpen={setSkatteModalOpen}
-        valdaSpecar={valdaSpecar}
-        skatteData={skatteData}
-        utbetalningsdatum={utbetalningsdatum}
-        skatteDatum={skatteDatum}
-        setSkatteDatum={setSkatteDatum}
-        hanteraBokförSkatter={skatteManager.hanteraBokförSkatter}
-        skatteBokförPågår={skatteBokförPågår}
-      />
+          <UtbetalningsdatumValjare
+            datumLista={datumLista}
+            utbetalningsdatum={utbetalningsdatum}
+            setUtbetalningsdatum={setUtbetalningsdatum}
+            specarPerDatum={specarPerDatum}
+          />
+
+          {utbetalningsdatum && (
+            <LonespecLista
+              valdaSpecar={valdaSpecar}
+              anstallda={anstallda}
+              utlaggMap={utlaggMap}
+              onTaBortSpec={lonespecManager.hanteraTaBortSpec}
+              onHämtaBankgiro={() => setBankgiroModalOpen(true)}
+              onMailaSpecar={() => setBatchMailModalOpen(true)}
+              onBokför={() => setBokforModalOpen(true)}
+              onGenereraAGI={agiGenerator.hanteraAGI}
+              onBokförSkatter={() => setSkatteModalOpen(true)}
+              onRefreshData={refreshData}
+            />
+          )}
+
+          {bankgiroModalOpen && (
+            <BankgiroExport
+              anställda={anstallda}
+              utbetalningsdatum={utbetalningsdatum ? new Date(utbetalningsdatum) : null}
+              lönespecar={Object.fromEntries(valdaSpecar.map((spec) => [spec.anställd_id, spec]))}
+              open={true}
+              showButton={false}
+              onClose={() => setBankgiroModalOpen(false)}
+              onExportComplete={async () => {
+                // Markera alla lönespecar som bankgiro-exporterade
+                for (const spec of valdaSpecar) {
+                  if (!spec.bankgiro_exporterad) {
+                    await markeraBankgiroExporterad(spec.id);
+                  }
+                }
+                // Refresha data för att visa uppdaterade knappar
+                await refreshData();
+                setBankgiroModalOpen(false);
+              }}
+            />
+          )}
+
+          {batchMailModalOpen && (
+            <MailaLonespec
+              batch={valdaSpecar.map((spec) => ({
+                lönespec: spec,
+                anställd: anstallda.find((a) => a.id === spec.anställd_id),
+                företagsprofil: undefined,
+                extrarader: [],
+                beräknadeVärden: {},
+              }))}
+              batchMode={true}
+              open={true}
+              onClose={() => setBatchMailModalOpen(false)}
+              onMailComplete={async () => {
+                // Markera alla lönespecar som mailade
+                for (const spec of valdaSpecar) {
+                  if (!spec.mailad) {
+                    await markeraMailad(spec.id);
+                  }
+                }
+                // Refresha data för att visa uppdaterade knappar
+                await refreshData();
+                setBatchMailModalOpen(false);
+              }}
+            />
+          )}
+
+          {bokforModalOpen && valdaSpecar.length > 0 && (
+            <BokforLoner
+              lönespec={{
+                ...valdaSpecar[0], // Använd första som bas
+                // Summera alla värden från alla lönespecar
+                bruttolön: valdaSpecar.reduce(
+                  (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
+                  0
+                ),
+                sociala_avgifter: valdaSpecar.reduce(
+                  (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
+                  0
+                ),
+                skatt: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.skatt) || 0), 0),
+                nettolön: valdaSpecar.reduce(
+                  (sum, spec) => sum + (parseFloat(spec.nettolön) || 0),
+                  0
+                ),
+                lönekostnad: valdaSpecar.reduce(
+                  (sum, spec) => sum + (parseFloat(spec.lönekostnad) || 0),
+                  0
+                ),
+              }}
+              extrarader={valdaSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
+              beräknadeVärden={{
+                bruttolön: valdaSpecar.reduce(
+                  (sum, spec) =>
+                    sum + (beräknadeVärden[spec.id]?.bruttolön || parseFloat(spec.bruttolön) || 0),
+                  0
+                ),
+                socialaAvgifter: valdaSpecar.reduce(
+                  (sum, spec) =>
+                    sum +
+                    (beräknadeVärden[spec.id]?.socialaAvgifter ||
+                      parseFloat(spec.sociala_avgifter) ||
+                      0),
+                  0
+                ),
+                skatt: valdaSpecar.reduce(
+                  (sum, spec) =>
+                    sum + (beräknadeVärden[spec.id]?.skatt || parseFloat(spec.skatt) || 0),
+                  0
+                ),
+                nettolön: valdaSpecar.reduce(
+                  (sum, spec) =>
+                    sum + (beräknadeVärden[spec.id]?.nettolön || parseFloat(spec.nettolön) || 0),
+                  0
+                ),
+                lönekostnad: valdaSpecar.reduce(
+                  (sum, spec) =>
+                    sum +
+                    (beräknadeVärden[spec.id]?.lönekostnad || parseFloat(spec.lönekostnad) || 0),
+                  0
+                ),
+              }}
+              anställdNamn={`Batch-bokföring (${valdaSpecar.length} anställda)`}
+              isOpen={true}
+              onClose={() => setBokforModalOpen(false)}
+              onBokfört={async () => {
+                // Bokför alla lönespecar
+                for (const spec of valdaSpecar) {
+                  if (!spec.bokförd) {
+                    const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+                    const anställdNamn =
+                      `${anstalld?.förnamn || ""} ${anstalld?.efternamn || ""}`.trim();
+
+                    try {
+                      await bokförLöneutbetalning({
+                        lönespecId: spec.id,
+                        utbetalningsdatum:
+                          utbetalningsdatum || new Date().toISOString().split("T")[0],
+                        period:
+                          utbetalningsdatum ||
+                          new Date().toISOString().split("T")[0].substring(0, 7),
+                        anställdNamn: anställdNamn,
+                        extrarader: extrarader[spec.id] || [],
+                        beräknadeVärden: beräknadeVärden[spec.id] || {},
+                        kommentar: `Löneutbetalning ${anställdNamn}, period ${utbetalningsdatum}`,
+                      });
+                    } catch (error) {
+                      console.error(`Fel vid bokföring av ${anställdNamn}:`, error);
+                    }
+                  }
+                }
+                await refreshData();
+                setBokforModalOpen(false);
+              }}
+            />
+          )}
+
+          <SkatteBokforingModal
+            skatteModalOpen={skatteModalOpen}
+            setSkatteModalOpen={setSkatteModalOpen}
+            valdaSpecar={valdaSpecar}
+            skatteData={skatteData}
+            utbetalningsdatum={utbetalningsdatum}
+            skatteDatum={skatteDatum}
+            setSkatteDatum={setSkatteDatum}
+            hanteraBokförSkatter={skatteManager.hanteraBokförSkatter}
+            skatteBokförPågår={skatteBokförPågår}
+          />
+        </>
+      )}
     </div>
   );
 }
