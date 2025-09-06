@@ -11,6 +11,7 @@ import {
   hämtaUtlägg,
   hämtaFöretagsprofil,
   bokförLöneskatter,
+  bokförLöneutbetalning,
   markeraBankgiroExporterad,
   markeraMailad,
   markeraBokförd,
@@ -347,28 +348,83 @@ export default function Lonekorning() {
         />
       )}
 
-      {bokforModalOpen && (
+      {bokforModalOpen && valdaSpecar.length > 0 && (
         <BokforLoner
-          lönespec={valdaSpecar[0]}
-          extrarader={valdaSpecar[0] ? extrarader[valdaSpecar[0].id] || [] : []}
-          beräknadeVärden={valdaSpecar[0] ? beräknadeVärden[valdaSpecar[0].id] || {} : {}}
-          anställdNamn={
-            valdaSpecar[0]
-              ? (anstallda.find((a) => a.id === valdaSpecar[0].anställd_id)?.förnamn || "") +
-                " " +
-                (anstallda.find((a) => a.id === valdaSpecar[0].anställd_id)?.efternamn || "")
-              : ""
-          }
+          lönespec={{
+            ...valdaSpecar[0], // Använd första som bas
+            // Summera alla värden från alla lönespecar
+            bruttolön: valdaSpecar.reduce(
+              (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
+              0
+            ),
+            sociala_avgifter: valdaSpecar.reduce(
+              (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
+              0
+            ),
+            skatt: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.skatt) || 0), 0),
+            nettolön: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.nettolön) || 0), 0),
+            lönekostnad: valdaSpecar.reduce(
+              (sum, spec) => sum + (parseFloat(spec.lönekostnad) || 0),
+              0
+            ),
+          }}
+          extrarader={valdaSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
+          beräknadeVärden={{
+            bruttolön: valdaSpecar.reduce(
+              (sum, spec) =>
+                sum + (beräknadeVärden[spec.id]?.bruttolön || parseFloat(spec.bruttolön) || 0),
+              0
+            ),
+            socialaAvgifter: valdaSpecar.reduce(
+              (sum, spec) =>
+                sum +
+                (beräknadeVärden[spec.id]?.socialaAvgifter ||
+                  parseFloat(spec.sociala_avgifter) ||
+                  0),
+              0
+            ),
+            skatt: valdaSpecar.reduce(
+              (sum, spec) => sum + (beräknadeVärden[spec.id]?.skatt || parseFloat(spec.skatt) || 0),
+              0
+            ),
+            nettolön: valdaSpecar.reduce(
+              (sum, spec) =>
+                sum + (beräknadeVärden[spec.id]?.nettolön || parseFloat(spec.nettolön) || 0),
+              0
+            ),
+            lönekostnad: valdaSpecar.reduce(
+              (sum, spec) =>
+                sum + (beräknadeVärden[spec.id]?.lönekostnad || parseFloat(spec.lönekostnad) || 0),
+              0
+            ),
+          }}
+          anställdNamn={`Batch-bokföring (${valdaSpecar.length} anställda)`}
           isOpen={true}
           onClose={() => setBokforModalOpen(false)}
           onBokfört={async () => {
-            // Markera alla lönespecar som bokförda
+            // Bokför alla lönespecar
             for (const spec of valdaSpecar) {
               if (!spec.bokförd) {
-                await markeraBokförd(spec.id);
+                const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+                const anställdNamn =
+                  `${anstalld?.förnamn || ""} ${anstalld?.efternamn || ""}`.trim();
+
+                try {
+                  await bokförLöneutbetalning({
+                    lönespecId: spec.id,
+                    utbetalningsdatum: utbetalningsdatum || new Date().toISOString().split("T")[0],
+                    period:
+                      utbetalningsdatum || new Date().toISOString().split("T")[0].substring(0, 7),
+                    anställdNamn: anställdNamn,
+                    extrarader: extrarader[spec.id] || [],
+                    beräknadeVärden: beräknadeVärden[spec.id] || {},
+                    kommentar: `Löneutbetalning ${anställdNamn}, period ${utbetalningsdatum}`,
+                  });
+                } catch (error) {
+                  console.error(`Fel vid bokföring av ${anställdNamn}:`, error);
+                }
               }
             }
-            // Refresha data för att visa uppdaterade knappar
             await refreshData();
             setBokforModalOpen(false);
           }}
