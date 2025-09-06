@@ -4,6 +4,7 @@ import { useState } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
+import AnimeradFlik from "../../_components/AnimeradFlik";
 import {
   markeraBankgiroExporterad,
   markeraMailad,
@@ -109,21 +110,44 @@ export default function LonespecLista({
               taBortLoading={taBortLaddning[spec.id] || false}
               visaExtraRader={true}
               onTaBortLönespec={() => handleTaBortLönespec(spec)}
-              // Åtgärder props
-              onHämtaBankgiro={handleHämtaBankgiro}
-              onMailaSpecar={handleMailaSpecar}
-              onBokför={handleBokför}
-              onGenereraAGI={handleGenereraAGI}
-              onBokförSkatter={handleBokförSkatter}
-              allaHarBankgiro={allaHarBankgiro}
-              allaHarMailats={allaHarMailats}
-              allaHarBokförts={allaHarBokförts}
-              allaHarAGI={allaHarAGI}
-              allaHarSkatter={allaHarSkatter}
             />
           );
         })}
       </>
+
+      {/* Lönekörningsåtgärder sektion - FLYTTAD HIT */}
+      <AnimeradFlik title="Lönekörningsåtgärder" icon="⚙️" forcedOpen={true}>
+        <div className="bg-slate-700 p-4 rounded-lg">
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Knapp
+              text={allaHarBankgiro ? "✅ Bankgirofil exporterad" : "🏦 Hämta bankgirofil"}
+              onClick={handleHämtaBankgiro}
+              className={allaHarBankgiro ? "bg-green-600 hover:bg-green-700" : ""}
+            />
+            <Knapp
+              text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
+              onClick={handleMailaSpecar}
+              className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
+            />
+            <Knapp
+              text={allaHarBokförts ? "✅ Löner bokförda" : "📖 Bokför"}
+              onClick={handleBokför}
+              className={allaHarBokförts ? "bg-green-600 hover:bg-green-700" : ""}
+            />
+            <Knapp
+              text={allaHarAGI ? "✅ AGI genererad" : "📊 Generera AGI"}
+              onClick={handleGenereraAGI}
+              className={allaHarAGI ? "bg-green-600 hover:bg-green-700" : ""}
+            />
+            <Knapp
+              text={allaHarSkatter ? "✅ Skatter bokförda" : "💰 Bokför skatter"}
+              onClick={handleBokförSkatter}
+              className={allaHarSkatter ? "bg-green-600 hover:bg-green-700" : ""}
+            />
+          </div>
+        </div>
+      </AnimeradFlik>
+
       {toast && (
         <Toast
           type={toast.type}

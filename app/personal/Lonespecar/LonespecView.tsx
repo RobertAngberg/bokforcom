@@ -22,17 +22,6 @@ interface LönespecViewProps {
   taBortLoading?: boolean;
   företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLonespec
   visaExtraRader?: boolean; // NY PROP
-  // Åtgärder props
-  onHämtaBankgiro?: () => void;
-  onMailaSpecar?: () => void;
-  onBokför?: () => void;
-  onGenereraAGI?: () => void;
-  onBokförSkatter?: () => void;
-  allaHarBankgiro?: boolean;
-  allaHarMailats?: boolean;
-  allaHarBokförts?: boolean;
-  allaHarAGI?: boolean;
-  allaHarSkatter?: boolean;
 }
 
 export default function LönespecView({
@@ -44,17 +33,6 @@ export default function LönespecView({
   taBortLoading = false,
   företagsprofil,
   visaExtraRader = false,
-  // Åtgärder props
-  onHämtaBankgiro,
-  onMailaSpecar,
-  onBokför,
-  onGenereraAGI,
-  onBokförSkatter,
-  allaHarBankgiro = false,
-  allaHarMailats = false,
-  allaHarBokförts = false,
-  allaHarAGI = false,
-  allaHarSkatter = false,
 }: LönespecViewProps) {
   const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
 
@@ -252,50 +230,6 @@ export default function LönespecView({
           </div>
         </div>
       </div>
-
-      {/* Lönekörningsåtgärder sektion */}
-      {(onHämtaBankgiro || onMailaSpecar || onBokför || onGenereraAGI || onBokförSkatter) && (
-        <div className="bg-slate-700 text-white p-4 rounded-lg mb-4">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Lönekörningsåtgärder</h3>
-          <div className="flex gap-4 justify-center flex-wrap">
-            {onHämtaBankgiro && (
-              <Knapp
-                text={allaHarBankgiro ? "✅ Bankgirofil exporterad" : "🏦 Hämta bankgirofil"}
-                onClick={onHämtaBankgiro}
-                className={allaHarBankgiro ? "bg-green-600 hover:bg-green-700" : ""}
-              />
-            )}
-            {onMailaSpecar && (
-              <Knapp
-                text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
-                onClick={onMailaSpecar}
-                className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
-              />
-            )}
-            {onBokför && (
-              <Knapp
-                text={allaHarBokförts ? "✅ Löner bokförda" : "📖 Bokför"}
-                onClick={onBokför}
-                className={allaHarBokförts ? "bg-green-600 hover:bg-green-700" : ""}
-              />
-            )}
-            {onGenereraAGI && (
-              <Knapp
-                text={allaHarAGI ? "✅ AGI genererad" : "📊 Generera AGI"}
-                onClick={onGenereraAGI}
-                className={allaHarAGI ? "bg-green-600 hover:bg-green-700" : ""}
-              />
-            )}
-            {onBokförSkatter && (
-              <Knapp
-                text={allaHarSkatter ? "✅ Skatter bokförda" : "💰 Bokför skatter"}
-                onClick={onBokförSkatter}
-                className={allaHarSkatter ? "bg-green-600 hover:bg-green-700" : ""}
-              />
-            )}
-          </div>
-        </div>
-      )}
 
       {visaForhandsgranskning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
