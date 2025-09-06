@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
@@ -10,6 +10,9 @@ import {
   markeraBokförd,
   markeraAGIGenererad,
   markeraSkatternaBokförda,
+  markeraLönekörningSteg,
+  hämtaAktivLönekörning,
+  Lönekörning,
 } from "../actions";
 
 interface LonespecListaProps {
@@ -23,6 +26,7 @@ interface LonespecListaProps {
   onGenereraAGI: () => void;
   onBokförSkatter: () => void;
   onRefreshData?: () => Promise<void>; // Ny callback för att refresha data
+  period?: string; // Lägg till period för lönekörning
 }
 
 export default function LonespecLista({
@@ -36,12 +40,25 @@ export default function LonespecLista({
   onGenereraAGI,
   onBokförSkatter,
   onRefreshData,
+  period,
 }: LonespecListaProps) {
   const [taBortLaddning, setTaBortLaddning] = useState<Record<number, boolean>>({});
+  const [lönekörning, setLönekörning] = useState<Lönekörning | null>(null);
   const [toast, setToast] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
+
+  // Hämta lönekörning när komponenten laddas eller period ändras
+  useEffect(() => {
+    if (period) {
+      hämtaAktivLönekörning(period).then((result) => {
+        if (result.success && result.data) {
+          setLönekörning(result.data);
+        }
+      });
+    }
+  }, [period]);
 
   if (valdaSpecar.length === 0) return null;
 
@@ -67,27 +84,67 @@ export default function LonespecLista({
 
   // Wrapper-funktioner som markerar åtgärder som klara
   const handleHämtaBankgiro = async () => {
-    // Bara öppna modalen - markering sker i BankgiroExport när filen laddas ner
+    if (period) {
+      const result = await markeraLönekörningSteg(period, "bankgiro_exporterad");
+      if (result.success) {
+        setToast({ type: "success", message: "Bankgiro markerat som exporterat!" });
+        if (onRefreshData) await onRefreshData();
+      } else {
+        setToast({ type: "error", message: result.error || "Fel vid markering" });
+      }
+    }
     onHämtaBankgiro();
   };
 
   const handleMailaSpecar = async () => {
-    // Bara öppna modalen - markering sker när mail faktiskt skickas
+    if (period) {
+      const result = await markeraLönekörningSteg(period, "mailade");
+      if (result.success) {
+        setToast({ type: "success", message: "Lönespecar markerade som mailade!" });
+        if (onRefreshData) await onRefreshData();
+      } else {
+        setToast({ type: "error", message: result.error || "Fel vid markering" });
+      }
+    }
     onMailaSpecar();
   };
 
   const handleBokför = async () => {
-    // Bara öppna modalen - markering sker när bokföringen faktiskt genomförs
+    if (period) {
+      const result = await markeraLönekörningSteg(period, "bokford");
+      if (result.success) {
+        setToast({ type: "success", message: "Löner markerade som bokförda!" });
+        if (onRefreshData) await onRefreshData();
+      } else {
+        setToast({ type: "error", message: result.error || "Fel vid markering" });
+      }
+    }
     onBokför();
   };
 
   const handleGenereraAGI = async () => {
-    // Bara öppna modalen - markering sker när AGI faktiskt genereras
+    if (period) {
+      const result = await markeraLönekörningSteg(period, "agi_genererad");
+      if (result.success) {
+        setToast({ type: "success", message: "AGI markerat som genererat!" });
+        if (onRefreshData) await onRefreshData();
+      } else {
+        setToast({ type: "error", message: result.error || "Fel vid markering" });
+      }
+    }
     onGenereraAGI();
   };
 
   const handleBokförSkatter = async () => {
-    // Bara öppna modalen - markering sker när skatterna faktiskt bokförs
+    if (period) {
+      const result = await markeraLönekörningSteg(period, "skatter_bokforda");
+      if (result.success) {
+        setToast({ type: "success", message: "Skatter markerade som bokförda!" });
+        if (onRefreshData) await onRefreshData();
+      } else {
+        setToast({ type: "error", message: result.error || "Fel vid markering" });
+      }
+    }
     onBokförSkatter();
   };
 
@@ -102,7 +159,30 @@ export default function LonespecLista({
 
       {/* Lönekörnings-workflow - SIE Wizard Style */}
       <div className="bg-slate-700 rounded-lg p-6">
-        <h5 className="text-white font-semibold mb-4">Lönekörnings-workflow</h5>
+        <div className="flex justify-between items-center mb-4">
+          <h5 className="text-white font-semibold">Lönekörnings-workflow</h5>
+          {lönekörning && (
+            <div className="text-right">
+              <div className="text-white text-sm font-medium">Period: {lönekörning.period}</div>
+              <div
+                className={`text-xs px-2 py-1 rounded ${
+                  lönekörning.status === "avslutad"
+                    ? "bg-green-600 text-white"
+                    : lönekörning.status === "pågående"
+                      ? "bg-cyan-600 text-white"
+                      : "bg-gray-600 text-white"
+                }`}
+              >
+                {lönekörning.status.toUpperCase()}
+              </div>
+              {lönekörning.total_bruttolön && (
+                <div className="text-gray-300 text-xs mt-1">
+                  Totalt: {lönekörning.total_bruttolön.toLocaleString("sv-SE")} kr
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Progress Steps - SIE Style */}
         <div className="flex items-center space-x-4 mb-6">

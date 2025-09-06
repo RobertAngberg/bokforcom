@@ -47,6 +47,56 @@ interface UtläggData {
   datum: string;
 }
 
+// Nya typer för lönekörningar
+export interface Lönekörning {
+  id: number;
+  period: string; // "2024-08"
+  status: "pågående" | "avslutad" | "pausad" | "avbruten";
+  startad_av: number;
+  startad_datum: Date;
+  avslutad_datum?: Date;
+  bankgiro_exporterad_datum?: Date;
+  mailade_datum?: Date;
+  bokford_datum?: Date;
+  agi_genererad_datum?: Date;
+  skatter_bokforda_datum?: Date;
+  antal_anstallda?: number;
+  total_bruttolön?: number;
+  total_skatt?: number;
+  total_sociala_avgifter?: number;
+  total_nettolön?: number;
+  kommentar?: string;
+  skapad: Date;
+  uppdaterad: Date;
+}
+
+// Uppdaterad lönespec-typ med lönekörning
+export interface LönespecifikationMedLönekörning {
+  id: number;
+  anställd_id: number;
+  grundlön: number;
+  bruttolön: number;
+  skatt: number;
+  sociala_avgifter: number;
+  nettolön: number;
+  skapad: Date;
+  uppdaterad: Date;
+  skapad_av: number;
+  utbetalningsdatum: Date;
+  status: string;
+  bankgiro_exporterad: boolean;
+  bankgiro_exporterad_datum?: Date;
+  mailad: boolean;
+  mailad_datum?: Date;
+  bokförd: boolean;
+  bokförd_datum?: Date;
+  agi_genererad: boolean;
+  agi_genererad_datum?: Date;
+  skatter_bokförda: boolean;
+  skatter_bokförda_datum?: Date;
+  lönekorning_id?: number; // Ny koppling till lönekörning
+}
+
 // Dedicated funktion för att lägga till utlägg som extrarad
 export async function läggTillUtläggSomExtrarad(
   lönespecId: number,
@@ -1092,9 +1142,9 @@ export async function markeraBankgiroExporterad(lönespecId: number) {
   try {
     const client = await pool.connect();
 
-    // Kontrollera att lönespec tillhör användaren
+    // Kontrollera att lönespec tillhör användaren och hämta lönekörning
     const checkQuery = `
-      SELECT l.id FROM lönespecifikationer l
+      SELECT l.id, l.lönekorning_id FROM lönespecifikationer l
       JOIN anställda a ON l.anställd_id = a.id
       WHERE l.id = $1 AND a.user_id = $2
     `;
@@ -1105,6 +1155,8 @@ export async function markeraBankgiroExporterad(lönespecId: number) {
       throw new Error("Lönespec inte hittad");
     }
 
+    const { lönekorning_id } = checkResult.rows[0];
+
     const updateQuery = `
       UPDATE lönespecifikationer 
       SET bankgiro_exporterad = true, bankgiro_exporterad_datum = NOW()
@@ -1114,8 +1166,25 @@ export async function markeraBankgiroExporterad(lönespecId: number) {
 
     const result = await client.query(updateQuery, [lönespecId]);
     client.release();
-    revalidatePath("/personal");
 
+    // Uppdatera lönekörning om den finns
+    if (lönekorning_id) {
+      // Kolla om alla lönespecar i lönekörningen är exporterade
+      const allaBankgiroQuery = `
+        SELECT COUNT(*) as total, 
+               COUNT(*) FILTER (WHERE bankgiro_exporterad = true) as exporterade
+        FROM lönespecifikationer 
+        WHERE lönekorning_id = $1
+      `;
+      const allaResult = await pool.query(allaBankgiroQuery, [lönekorning_id]);
+      const { total, exporterade } = allaResult.rows[0];
+
+      if (parseInt(total) === parseInt(exporterade)) {
+        await uppdateraLönekörningStatus(lönekorning_id, "bankgiro_exporterad");
+      }
+    }
+
+    revalidatePath("/personal");
     return { success: true, lönespec: result.rows[0] };
   } catch (error) {
     console.error("❌ markeraBankgiroExporterad error:", error);
@@ -1923,4 +1992,381 @@ function genereraBokföringsPoster(
   }
 
   return poster;
+}
+
+// =============================================================================
+// LÖNEKÖRNINGAR - Databas-funktioner
+// =============================================================================
+
+/**
+ * Skapar en ny lönekörning för en period
+ */
+export async function skapaLönekörning(period: string): Promise<{
+  success: boolean;
+  data?: Lönekörning;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    // Kolla om det redan finns en aktiv lönekörning för perioden
+    const befintligQuery = `
+      SELECT id FROM lönekörningar 
+      WHERE period = $1 AND status IN ('pågående', 'pausad')
+      ORDER BY id DESC LIMIT 1
+    `;
+    const befintligResult = await pool.query(befintligQuery, [period]);
+
+    if (befintligResult.rows.length > 0) {
+      return {
+        success: false,
+        error: `Det finns redan en aktiv lönekörning för period ${period}`,
+      };
+    }
+
+    // Skapa ny lönekörning
+    const query = `
+      INSERT INTO lönekörningar (
+        period, 
+        status, 
+        startad_av,
+        startad_datum,
+        skapad,
+        uppdaterad
+      ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [period, "pågående", userId]);
+    const lönekörning = result.rows[0];
+
+    logPersonalDataEvent("modify", userId, `Skapade lönekörning för period ${period}`);
+
+    return {
+      success: true,
+      data: {
+        ...lönekörning,
+        startad_datum: new Date(lönekörning.startad_datum),
+        skapad: new Date(lönekörning.skapad),
+        uppdaterad: new Date(lönekörning.uppdaterad),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Fel vid skapande av lönekörning:", error);
+    return { success: false, error: "Kunde inte skapa lönekörning" };
+  }
+}
+
+/**
+ * Hämtar aktiv lönekörning för en period
+ */
+export async function hämtaAktivLönekörning(period: string): Promise<{
+  success: boolean;
+  data?: Lönekörning;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    const query = `
+      SELECT * FROM lönekörningar 
+      WHERE period = $1 AND status IN ('pågående', 'pausad')
+      ORDER BY id DESC LIMIT 1
+    `;
+
+    const result = await pool.query(query, [period]);
+
+    if (result.rows.length === 0) {
+      return { success: false, error: "Ingen aktiv lönekörning hittad" };
+    }
+
+    const lönekörning = result.rows[0];
+
+    return {
+      success: true,
+      data: {
+        ...lönekörning,
+        startad_datum: new Date(lönekörning.startad_datum),
+        avslutad_datum: lönekörning.avslutad_datum
+          ? new Date(lönekörning.avslutad_datum)
+          : undefined,
+        bankgiro_exporterad_datum: lönekörning.bankgiro_exporterad_datum
+          ? new Date(lönekörning.bankgiro_exporterad_datum)
+          : undefined,
+        mailade_datum: lönekörning.mailade_datum ? new Date(lönekörning.mailade_datum) : undefined,
+        bokford_datum: lönekörning.bokford_datum ? new Date(lönekörning.bokford_datum) : undefined,
+        agi_genererad_datum: lönekörning.agi_genererad_datum
+          ? new Date(lönekörning.agi_genererad_datum)
+          : undefined,
+        skatter_bokforda_datum: lönekörning.skatter_bokforda_datum
+          ? new Date(lönekörning.skatter_bokforda_datum)
+          : undefined,
+        skapad: new Date(lönekörning.skapad),
+        uppdaterad: new Date(lönekörning.uppdaterad),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Fel vid hämtning av lönekörning:", error);
+    return { success: false, error: "Kunde inte hämta lönekörning" };
+  }
+}
+
+/**
+ * Uppdaterar lönekörnings-status och datum
+ */
+export async function uppdateraLönekörningStatus(
+  lönekörningId: number,
+  statusTyp: "bankgiro_exporterad" | "mailade" | "bokford" | "agi_genererad" | "skatter_bokforda",
+  avslutad: boolean = false
+): Promise<{
+  success: boolean;
+  data?: Lönekörning;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    let query = `
+      UPDATE lönekörningar 
+      SET ${statusTyp}_datum = CURRENT_TIMESTAMP,
+          uppdaterad = CURRENT_TIMESTAMP
+    `;
+
+    if (avslutad) {
+      query += `, status = 'avslutad', avslutad_datum = CURRENT_TIMESTAMP`;
+    }
+
+    query += ` WHERE id = $1 RETURNING *`;
+
+    const result = await pool.query(query, [lönekörningId]);
+
+    if (result.rows.length === 0) {
+      return { success: false, error: "Lönekörning hittades inte" };
+    }
+
+    const lönekörning = result.rows[0];
+
+    logPersonalDataEvent(
+      "modify",
+      userId,
+      `Uppdaterade lönekörning ${lönekörningId} - ${statusTyp}`
+    );
+
+    return {
+      success: true,
+      data: {
+        ...lönekörning,
+        startad_datum: new Date(lönekörning.startad_datum),
+        avslutad_datum: lönekörning.avslutad_datum
+          ? new Date(lönekörning.avslutad_datum)
+          : undefined,
+        bankgiro_exporterad_datum: lönekörning.bankgiro_exporterad_datum
+          ? new Date(lönekörning.bankgiro_exporterad_datum)
+          : undefined,
+        mailade_datum: lönekörning.mailade_datum ? new Date(lönekörning.mailade_datum) : undefined,
+        bokford_datum: lönekörning.bokford_datum ? new Date(lönekörning.bokford_datum) : undefined,
+        agi_genererad_datum: lönekörning.agi_genererad_datum
+          ? new Date(lönekörning.agi_genererad_datum)
+          : undefined,
+        skatter_bokforda_datum: lönekörning.skatter_bokforda_datum
+          ? new Date(lönekörning.skatter_bokforda_datum)
+          : undefined,
+        skapad: new Date(lönekörning.skapad),
+        uppdaterad: new Date(lönekörning.uppdaterad),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Fel vid uppdatering av lönekörning:", error);
+    return { success: false, error: "Kunde inte uppdatera lönekörning" };
+  }
+}
+
+/**
+ * Beräknar och uppdaterar totaler för en lönekörning
+ */
+export async function uppdateraLönekörningTotaler(lönekörningId: number): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    // Beräkna totaler från alla lönespecar för denna lönekörning
+    const totalerQuery = `
+      SELECT 
+        COUNT(*) as antal_anstallda,
+        COALESCE(SUM(bruttolön), 0) as total_bruttolön,
+        COALESCE(SUM(skatt), 0) as total_skatt,
+        COALESCE(SUM(sociala_avgifter), 0) as total_sociala_avgifter,
+        COALESCE(SUM(nettolön), 0) as total_nettolön
+      FROM lönespecifikationer 
+      WHERE lönekorning_id = $1
+    `;
+
+    const totalerResult = await pool.query(totalerQuery, [lönekörningId]);
+    const totaler = totalerResult.rows[0];
+
+    // Uppdatera lönekörningen med de beräknade totalerna
+    const uppdateraQuery = `
+      UPDATE lönekörningar 
+      SET 
+        antal_anstallda = $2,
+        total_bruttolön = $3,
+        total_skatt = $4,
+        total_sociala_avgifter = $5,
+        total_nettolön = $6,
+        uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+
+    await pool.query(uppdateraQuery, [
+      lönekörningId,
+      totaler.antal_anstallda,
+      parseFloat(totaler.total_bruttolön),
+      parseFloat(totaler.total_skatt),
+      parseFloat(totaler.total_sociala_avgifter),
+      parseFloat(totaler.total_nettolön),
+    ]);
+
+    logPersonalDataEvent("modify", userId, `Uppdaterade totaler för lönekörning ${lönekörningId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Fel vid uppdatering av lönekörning-totaler:", error);
+    return { success: false, error: "Kunde inte uppdatera totaler" };
+  }
+}
+
+/**
+ * Kopplar en lönespec till en lönekörning
+ */
+export async function koppLaLönespecTillLönekörning(
+  lönespecId: number,
+  lönekörningId: number
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    const query = `
+      UPDATE lönespecifikationer 
+      SET lönekorning_id = $2, uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+
+    await pool.query(query, [lönespecId, lönekörningId]);
+
+    // Uppdatera totaler för lönekörningen
+    await uppdateraLönekörningTotaler(lönekörningId);
+
+    logPersonalDataEvent(
+      "modify",
+      userId,
+      `Kopplade lönespec ${lönespecId} till lönekörning ${lönekörningId}`
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Fel vid koppling av lönespec till lönekörning:", error);
+    return { success: false, error: "Kunde inte koppla lönespec till lönekörning" };
+  }
+}
+
+/**
+ * Generisk funktion för att markera ett steg som genomfört för alla lönespecar i en lönekörning
+ */
+export async function markeraLönekörningSteg(
+  period: string,
+  statusTyp: "bankgiro_exporterad" | "mailade" | "bokford" | "agi_genererad" | "skatter_bokforda"
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    // Hitta eller skapa lönekörning för perioden
+    let lönekörningResult = await hämtaAktivLönekörning(period);
+    if (!lönekörningResult.success) {
+      // Skapa ny lönekörning om ingen finns
+      lönekörningResult = await skapaLönekörning(period);
+      if (!lönekörningResult.success) {
+        return lönekörningResult;
+      }
+    }
+
+    const lönekörning = lönekörningResult.data!;
+
+    // Markera alla lönespecar för denna lönekörning
+    const kolumnNamn = statusTyp;
+    const datumKolumn = `${statusTyp}_datum`;
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET ${kolumnNamn} = true, 
+          ${datumKolumn} = CURRENT_TIMESTAMP,
+          uppdaterad = CURRENT_TIMESTAMP
+      WHERE lönekorning_id = $1
+    `;
+
+    await pool.query(updateQuery, [lönekörning.id]);
+
+    // Kolla om alla steg är genomförda för att avsluta lönekörningen
+    const statusQuery = `
+      SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE bankgiro_exporterad = true) as bankgiro_klara,
+        COUNT(*) FILTER (WHERE mailad = true) as maila_klara,
+        COUNT(*) FILTER (WHERE bokförd = true) as bokfor_klara,
+        COUNT(*) FILTER (WHERE agi_genererad = true) as agi_klara,
+        COUNT(*) FILTER (WHERE skatter_bokförda = true) as skatter_klara
+      FROM lönespecifikationer 
+      WHERE lönekorning_id = $1
+    `;
+
+    const statusResult = await pool.query(statusQuery, [lönekörning.id]);
+    const stats = statusResult.rows[0];
+    const total = parseInt(stats.total);
+
+    // Uppdatera lönekörning-status
+    const allaKlara =
+      parseInt(stats.bankgiro_klara) === total &&
+      parseInt(stats.maila_klara) === total &&
+      parseInt(stats.bokfor_klara) === total &&
+      parseInt(stats.agi_klara) === total &&
+      parseInt(stats.skatter_klara) === total;
+
+    await uppdateraLönekörningStatus(lönekörning.id, statusTyp, allaKlara);
+
+    // Uppdatera totaler
+    await uppdateraLönekörningTotaler(lönekörning.id);
+
+    logPersonalDataEvent("modify", userId, `Markerade ${statusTyp} för lönekörning ${period}`);
+    revalidatePath("/personal");
+
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Fel vid markering av ${statusTyp}:`, error);
+    return { success: false, error: `Kunde inte markera ${statusTyp}` };
+  }
 }
