@@ -93,27 +93,6 @@ export default function LonespecLista({
 
   return (
     <div className="space-y-2">
-      {/* Lönespecar */}
-      <>
-        {valdaSpecar.map((spec) => {
-          const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-          const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
-
-          return (
-            <LönespecView
-              key={spec.id}
-              lönespec={spec}
-              anställd={anstalld}
-              utlägg={utlagg}
-              ingenAnimering={false}
-              taBortLoading={taBortLaddning[spec.id] || false}
-              visaExtraRader={true}
-              onTaBortLönespec={() => handleTaBortLönespec(spec)}
-            />
-          );
-        })}
-      </>
-
       {/* Workflow validation warning */}
       {valdaSpecar.some((spec) => !spec.bruttolön || !spec.nettolön) && (
         <div className="bg-yellow-600 p-3 rounded text-white text-center mb-4">
@@ -195,8 +174,32 @@ export default function LonespecLista({
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Action buttons with validation */}
+      {/* Lönespecar */}
+      <>
+        {valdaSpecar.map((spec) => {
+          const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+          const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
+
+          return (
+            <LönespecView
+              key={spec.id}
+              lönespec={spec}
+              anställd={anstalld}
+              utlägg={utlagg}
+              ingenAnimering={false}
+              taBortLoading={taBortLaddning[spec.id] || false}
+              visaExtraRader={true}
+              onTaBortLönespec={() => handleTaBortLönespec(spec)}
+            />
+          );
+        })}
+      </>
+
+      {/* Action buttons with validation */}
+      <div className="bg-slate-700 rounded-lg p-6">
+        <h5 className="text-white font-semibold mb-4 text-center">Lönekörnings-åtgärder</h5>
         <div className="flex gap-4 justify-center flex-wrap">
           <Knapp
             text={allaHarBankgiro ? "✅ Bankgirofil exporterad" : "🏦 Hämta bankgirofil"}
