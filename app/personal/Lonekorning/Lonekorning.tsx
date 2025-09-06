@@ -17,6 +17,7 @@ import {
   markeraBokförd,
   markeraAGIGenererad,
   markeraSkatternaBokförda,
+  hämtaLönespecifikationerFörLönekörning,
 } from "../actions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
@@ -41,6 +42,8 @@ export default function Lonekorning() {
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
   const [valdLonekorning, setValdLonekorning] = useState<any>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
   const { extrarader, beräknadeVärden } = useLonespecContext();
   //#endregion
 
@@ -154,6 +157,34 @@ export default function Lonekorning() {
       setValdaSpecar(specarPerDatum[utbetalningsdatum]);
     }
   }, [utbetalningsdatum, specarPerDatum]);
+
+  // Ladda lönespecar för vald lönekörning
+  useEffect(() => {
+    if (valdLonekorning) {
+      loadLönekörningSpecar();
+    }
+  }, [valdLonekorning]);
+
+  const loadLönekörningSpecar = async () => {
+    if (!valdLonekorning) return;
+
+    try {
+      setLoading(true);
+      const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
+
+      if (result.success && result.data) {
+        setLönekörningSpecar(result.data);
+      } else {
+        console.error("❌ Fel vid laddning av lönespecar:", result.error);
+        setLönekörningSpecar([]);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid laddning av lönespecar:", error);
+      setLönekörningSpecar([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   //#endregion
 
   // Refresh-funktion för att ladda om data efter statusuppdateringar
@@ -230,58 +261,49 @@ export default function Lonekorning() {
     <div className="space-y-6">
       {/* Header med knappar */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">Lönekörningar</h2>
-        <div className="flex gap-3">
-          <Knapp text="🏗️ Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+        <div>
           {valdLonekorning && (
-            <Knapp text="👤 Lägg till anställd" onClick={() => setNySpecModalOpen(true)} />
+            <button
+              onClick={() => setValdLonekorning(null)}
+              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors"
+            >
+              ← Tillbaka till lönekörningar
+            </button>
           )}
+        </div>
+        <div className="flex gap-3">
+          <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
         </div>
       </div>
 
-      {/* Lönekörnings-lista */}
-      <LonekorningLista onValjLonekorning={setValdLonekorning} valdLonekorning={valdLonekorning} />
+      {/* Lönekörnings-lista - bara när ingen är vald */}
+      {!valdLonekorning && (
+        <LonekorningLista
+          onValjLonekorning={setValdLonekorning}
+          valdLonekorning={valdLonekorning}
+          refreshTrigger={refreshTrigger}
+        />
+      )}
 
       {/* Nya modaler */}
       <NyLonekorningModal
         isOpen={nyLonekorningModalOpen}
         onClose={() => setNyLonekorningModalOpen(false)}
-        onLonekorningCreated={() => {
-          console.log("Lönekörning skapad!");
-          // TODO: Refresha lönekörningar
+        onLonekorningCreated={async (nyLonekorning) => {
+          console.log("Lönekörning skapad!", nyLonekorning);
+          setRefreshTrigger((prev) => prev + 1); // Trigga refresh
+          setValdLonekorning(nyLonekorning); // Välj den nya lönekörningen automatiskt
+          setNyLonekorningModalOpen(false);
+          // Ladda lönespecifikationer för den nya lönekörningen automatiskt
+          setTimeout(() => {
+            loadLönekörningSpecar();
+          }, 100); // Kort delay för att säkerställa att valdLonekorning är satt
         }}
       />
 
-      {/* Info när ingen lönekörning är vald */}
-      {!valdLonekorning && (
-        <div className="bg-slate-800 rounded-lg p-8 text-center">
-          <div className="text-gray-400">
-            <span className="text-4xl mb-4 block">🏗️</span>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Välj eller skapa en lönekörning
-            </h3>
-            <p className="text-sm">
-              Skapa en ny lönekörning för att börja hantera löner för en period.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Gamla UI som visas när lönekörning är vald */}
+      {/* UI som visas när lönekörning är vald */}
       {valdLonekorning && (
         <>
-          <div className="bg-slate-700 rounded-lg p-4">
-            <h3 className="text-white font-semibold mb-2">Lönekörning: {valdLonekorning.period}</h3>
-            <p className="text-gray-300 text-sm">
-              Status: {valdLonekorning.status} • Startad:{" "}
-              {valdLonekorning.startad_datum?.toLocaleDateString?.("sv-SE") || "Okänt datum"}
-            </p>
-          </div>
-
-          <div className="flex justify-end mb-4">
-            <Knapp text="📝 Skapa ny lönespecifikation" onClick={() => setNySpecModalOpen(true)} />
-          </div>
-
           <NySpecModal
             isOpen={nySpecModalOpen}
             onClose={() => setNySpecModalOpen(false)}
@@ -327,16 +349,13 @@ export default function Lonekorning() {
             }}
           />
 
-          <UtbetalningsdatumValjare
-            datumLista={datumLista}
-            utbetalningsdatum={utbetalningsdatum}
-            setUtbetalningsdatum={setUtbetalningsdatum}
-            specarPerDatum={specarPerDatum}
-          />
-
-          {utbetalningsdatum && (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
             <LonespecLista
-              valdaSpecar={valdaSpecar}
+              valdaSpecar={lönekörningSpecar}
               anstallda={anstallda}
               utlaggMap={utlaggMap}
               onTaBortSpec={lonespecManager.hanteraTaBortSpec}
@@ -345,7 +364,7 @@ export default function Lonekorning() {
               onBokför={() => setBokforModalOpen(true)}
               onGenereraAGI={agiGenerator.hanteraAGI}
               onBokförSkatter={() => setSkatteModalOpen(true)}
-              onRefreshData={refreshData}
+              onRefreshData={() => loadLönekörningSpecar()}
             />
           )}
 

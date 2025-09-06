@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { hämtaAllaLönekörningar } from "../actions";
 
 interface Lönekörning {
   id: number;
@@ -14,45 +15,40 @@ interface Lönekörning {
 interface LonekorningListaProps {
   onValjLonekorning: (lonekorning: Lönekörning) => void;
   valdLonekorning?: Lönekörning | null;
+  refreshTrigger?: number; // För att trigga refresh från parent
 }
 
 export default function LonekorningLista({
   onValjLonekorning,
   valdLonekorning,
+  refreshTrigger,
 }: LonekorningListaProps) {
   const [lonekorningar, setLonekorningar] = useState<Lönekörning[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadLonekorningar();
-  }, []);
+  }, [refreshTrigger]); // Lägg till refreshTrigger som dependency
 
   const loadLonekorningar = async () => {
     try {
       setLoading(true);
-      // TODO: Hämta lönekörningar från API
-      console.log("Hämtar lönekörningar...");
+      const result = await hämtaAllaLönekörningar();
 
-      // Simulera API-data
-      const mockData: Lönekörning[] = [
-        {
-          id: 1,
-          period: "2025-09",
-          status: "pågående",
-          startad_datum: new Date(),
-          antal_anstallda: 3,
-          total_bruttolön: 125000,
-        },
-      ];
+      if (result.success && result.data) {
+        setLonekorningar(result.data);
 
-      setLonekorningar(mockData);
-
-      // Auto-välj första om ingen är vald
-      if (!valdLonekorning && mockData.length > 0) {
-        onValjLonekorning(mockData[0]);
+        // Auto-välj första om ingen är vald
+        if (!valdLonekorning && result.data.length > 0) {
+          onValjLonekorning(result.data[0]);
+        }
+      } else {
+        console.error("❌ Fel vid laddning av lönekörningar:", result.error);
+        setLonekorningar([]);
       }
     } catch (error) {
       console.error("❌ Fel vid laddning av lönekörningar:", error);
+      setLonekorningar([]);
     } finally {
       setLoading(false);
     }

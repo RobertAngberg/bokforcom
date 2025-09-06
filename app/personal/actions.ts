@@ -2250,6 +2250,87 @@ export async function uppdateraLönekörningTotaler(lönekörningId: number): Pr
 }
 
 /**
+ * Hämtar alla lönekörningar för användaren
+ */
+export async function hämtaAllaLönekörningar(): Promise<{
+  success: boolean;
+  data?: Lönekörning[];
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    const query = `
+      SELECT * FROM lönekörningar 
+      WHERE startad_av = $1
+      ORDER BY startad_datum DESC
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    const lönekörningar = result.rows.map((row) => ({
+      ...row,
+      startad_datum: new Date(row.startad_datum),
+      avslutad_datum: row.avslutad_datum ? new Date(row.avslutad_datum) : undefined,
+      bankgiro_exporterad_datum: row.bankgiro_exporterad_datum
+        ? new Date(row.bankgiro_exporterad_datum)
+        : undefined,
+      mailade_datum: row.mailade_datum ? new Date(row.mailade_datum) : undefined,
+      bokford_datum: row.bokford_datum ? new Date(row.bokford_datum) : undefined,
+      agi_genererad_datum: row.agi_genererad_datum ? new Date(row.agi_genererad_datum) : undefined,
+      skatter_bokforda_datum: row.skatter_bokforda_datum
+        ? new Date(row.skatter_bokforda_datum)
+        : undefined,
+      skapad: new Date(row.skapad),
+      uppdaterad: new Date(row.uppdaterad),
+    }));
+
+    return {
+      success: true,
+      data: lönekörningar,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid hämtning av lönekörningar:", error);
+    return { success: false, error: "Kunde inte hämta lönekörningar" };
+  }
+}
+
+/**
+ * Hämtar lönespecifikationer för en specifik lönekörning
+ */
+export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id: number): Promise<{
+  success: boolean;
+  data?: any[];
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    const query = `
+      SELECT l.*, a.förnamn, a.efternamn, a.mail
+      FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.lonekorning_id = $1 AND a.user_id = $2
+      ORDER BY a.förnamn, a.efternamn
+    `;
+
+    const result = await pool.query(query, [lonekorning_id, userId]);
+
+    return {
+      success: true,
+      data: result.rows,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid hämtning av lönespecifikationer för lönekörning:", error);
+    return { success: false, error: "Kunde inte hämta lönespecifikationer" };
+  }
+} /**
  * Kopplar en lönespec till en lönekörning
  */
 export async function koppLaLönespecTillLönekörning(
@@ -2368,5 +2449,99 @@ export async function markeraLönekörningSteg(
   } catch (error) {
     console.error(`❌ Fel vid markering av ${statusTyp}:`, error);
     return { success: false, error: `Kunde inte markera ${statusTyp}` };
+  }
+}
+
+/**
+ * Skapar lönespecifikationer för valda anställda i en lönekörning
+ */
+export async function skapaLönespecifikationerFörLönekörning(
+  lönekörningId: number,
+  utbetalningsdatum: Date,
+  anställdaIds: number[]
+): Promise<{
+  success: boolean;
+  data?: any[];
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    const skapadeSpecar: any[] = [];
+
+    for (const anställdId of anställdaIds) {
+      // Hämta anställd info för att få grundlön/kompensation
+      const anställdQuery = `
+        SELECT * FROM anställda 
+        WHERE id = $1 AND user_id = $2
+      `;
+      const anställdResult = await pool.query(anställdQuery, [anställdId, userId]);
+
+      if (anställdResult.rows.length === 0) {
+        continue; // Skippa om anställd inte finns eller inte tillhör användaren
+      }
+
+      const anställd = anställdResult.rows[0];
+      const grundlön = anställd.kompensation || 35000; // Default grundlön
+
+      // Skapa lönespecifikation
+      const specQuery = `
+        INSERT INTO lönespecifikationer (
+          anställd_id,
+          grundlön,
+          bruttolön,
+          skatt,
+          sociala_avgifter,
+          nettolön,
+          utbetalningsdatum,
+          status,
+          skapad_av,
+          lonekorning_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING *
+      `;
+
+      // Enkla beräkningar (kan förbättras senare med riktiga beräkningar)
+      const bruttolön = grundlön;
+      const skatt = bruttolön * 0.3; // 30% skatt
+      const socialaAvgifter = bruttolön * 0.3142; // 31.42% sociala avgifter
+      const nettolön = bruttolön - skatt;
+
+      const specResult = await pool.query(specQuery, [
+        anställdId,
+        grundlön,
+        bruttolön,
+        skatt,
+        socialaAvgifter,
+        nettolön,
+        utbetalningsdatum,
+        "utkast",
+        userId,
+        lönekörningId,
+      ]);
+
+      skapadeSpecar.push(specResult.rows[0]);
+    }
+
+    // Uppdatera totaler för lönekörningen
+    await uppdateraLönekörningTotaler(lönekörningId);
+
+    logPersonalDataEvent(
+      "modify",
+      userId,
+      `Skapade ${skapadeSpecar.length} lönespecifikationer för lönekörning ${lönekörningId}`
+    );
+    revalidatePath("/personal");
+
+    return {
+      success: true,
+      data: skapadeSpecar,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid skapande av lönespecifikationer:", error);
+    return { success: false, error: "Kunde inte skapa lönespecifikationer" };
   }
 }
