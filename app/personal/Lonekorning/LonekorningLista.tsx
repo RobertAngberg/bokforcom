@@ -86,10 +86,26 @@ export default function LonekorningLista({
             <div className="flex items-center gap-3">
               <span className="text-xl">💰</span>
               <div>
-                <h4 className="font-semibold text-white">Period {lonekorning.period}</h4>
-                <p className="text-sm text-gray-400">
-                  Startad {lonekorning.startad_datum.toLocaleDateString("sv-SE")}
-                </p>
+                <h4 className="font-semibold text-white">
+                  {(() => {
+                    const [år, månad] = lonekorning.period.split("-");
+                    const månadsNamn = [
+                      "Januari",
+                      "Februari",
+                      "Mars",
+                      "April",
+                      "Maj",
+                      "Juni",
+                      "Juli",
+                      "Augusti",
+                      "September",
+                      "Oktober",
+                      "November",
+                      "December",
+                    ];
+                    return `${månadsNamn[parseInt(månad) - 1]} ${år}`;
+                  })()}
+                </h4>
               </div>
             </div>
 
