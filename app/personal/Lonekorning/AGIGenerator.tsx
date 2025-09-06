@@ -11,10 +11,8 @@ interface AGIGeneratorProps {
   extrarader: any;
   utbetalningsdatum: string | null;
   session: any;
-  setAgiDebugData: (data: any) => void;
-  setVisaDebug: (show: boolean) => void;
   hämtaFöretagsprofil: (userId: string) => Promise<any>;
-  onAGIComplete?: () => void; // Ny callback för när AGI är genererad
+  onAGIComplete?: () => void; // Callback för när AGI är genererad
 }
 
 export default function AGIGenerator({
@@ -24,8 +22,6 @@ export default function AGIGenerator({
   extrarader,
   utbetalningsdatum,
   session,
-  setAgiDebugData,
-  setVisaDebug,
   hämtaFöretagsprofil,
   onAGIComplete,
 }: AGIGeneratorProps) {
@@ -213,13 +209,7 @@ export default function AGIGenerator({
 
       const xml = genereraAGIXML(agiData);
 
-      // Spara XML för debug
-      (debugInfo as any).generatedXML = xml;
-
-      setAgiDebugData(debugInfo);
-      setVisaDebug(true);
-
-      // Ladda ner filen
+      // Ladda ner filen direkt utan debug-modal
       const blob = new Blob([xml], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

@@ -25,7 +25,6 @@ import Knapp from "../../_components/Knapp";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
-import AGIDebugModal from "./AGIDebugModal";
 import NySpecModal from "./NySpecModal";
 import UtbetalningsdatumValjare from "./UtbetalningsdatumValjare";
 import LonespecLista from "./LonespecLista";
@@ -56,8 +55,6 @@ export default function Lonekorning() {
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
   const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
-  const [agiDebugData, setAgiDebugData] = useState<any>(null);
-  const [visaDebug, setVisaDebug] = useState(false);
   //#endregion
 
   //#region Skatteberäkningar
@@ -208,8 +205,6 @@ export default function Lonekorning() {
     extrarader,
     utbetalningsdatum,
     session,
-    setAgiDebugData,
-    setVisaDebug,
     hämtaFöretagsprofil,
     onAGIComplete: async () => {
       // Markera alla lönespecar som AGI-genererade
@@ -430,12 +425,6 @@ export default function Lonekorning() {
           }}
         />
       )}
-
-      <AGIDebugModal
-        visaDebug={visaDebug}
-        setVisaDebug={setVisaDebug}
-        agiDebugData={agiDebugData}
-      />
 
       <SkatteBokforingModal
         skatteModalOpen={skatteModalOpen}
