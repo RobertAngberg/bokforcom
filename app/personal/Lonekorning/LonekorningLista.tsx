@@ -37,11 +37,6 @@ export default function LonekorningLista({
 
       if (result.success && result.data) {
         setLonekorningar(result.data);
-
-        // Auto-välj första om ingen är vald
-        if (!valdLonekorning && result.data.length > 0) {
-          onValjLonekorning(result.data[0]);
-        }
       } else {
         console.error("❌ Fel vid laddning av lönekörningar:", result.error);
         setLonekorningar([]);
@@ -89,7 +84,7 @@ export default function LonekorningLista({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-xl">🔄</span>
+              <span className="text-xl">💰</span>
               <div>
                 <h4 className="font-semibold text-white">Period {lonekorning.period}</h4>
                 <p className="text-sm text-gray-400">
