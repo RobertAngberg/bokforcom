@@ -11,6 +11,11 @@ import {
   hämtaUtlägg,
   hämtaFöretagsprofil,
   bokförLöneskatter,
+  markeraBankgiroExporterad,
+  markeraMailad,
+  markeraBokförd,
+  markeraAGIGenererad,
+  markeraSkatternaBokförda,
 } from "../actions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
@@ -62,6 +67,16 @@ export default function Lonekorning() {
     setSkatteBokförPågår,
     setSkatteModalOpen,
     bokförLöneskatter,
+    onSkatteComplete: async () => {
+      // Markera alla lönespecar som skatter-bokförda
+      for (const spec of valdaSpecar) {
+        if (!spec.skatter_bokförda) {
+          await markeraSkatternaBokförda(spec.id);
+        }
+      }
+      // Refresha data för att visa uppdaterade knappar
+      await refreshData();
+    },
   });
 
   const lonespecManager = LonespecManager({
@@ -139,6 +154,50 @@ export default function Lonekorning() {
   }, [utbetalningsdatum, specarPerDatum]);
   //#endregion
 
+  // Refresh-funktion för att ladda om data efter statusuppdateringar
+  const refreshData = async () => {
+    try {
+      const [specar, anstallda] = await Promise.all([
+        hämtaAllaLönespecarFörUser(),
+        hämtaAllaAnställda(),
+      ]);
+      setAnstallda(anstallda);
+
+      // Hämta utlägg för varje anställd parallellt
+      const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+      const utlaggResults = await Promise.all(utlaggPromises);
+      const utlaggMap: Record<number, any[]> = {};
+      anstallda.forEach((a, idx) => {
+        utlaggMap[a.id] = utlaggResults[idx];
+      });
+      setUlaggMap(utlaggMap);
+
+      // Gruppera per utbetalningsdatum och ta bort tomma datum
+      const grupperat: Record<string, any[]> = {};
+      specar.forEach((spec) => {
+        if (spec.utbetalningsdatum) {
+          if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+          grupperat[spec.utbetalningsdatum].push(spec);
+        }
+      });
+      const grupperatUtanTomma = Object.fromEntries(
+        Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+      );
+      const datumSort = Object.keys(grupperatUtanTomma).sort(
+        (a, b) => new Date(b).getTime() - new Date(a).getTime()
+      );
+      setDatumLista(datumSort);
+      setSpecarPerDatum(grupperatUtanTomma);
+
+      // Uppdatera valda lönespecar för aktuellt datum
+      if (utbetalningsdatum && grupperatUtanTomma[utbetalningsdatum]) {
+        setValdaSpecar(grupperatUtanTomma[utbetalningsdatum]);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid refresh av data:", error);
+    }
+  };
+
   const { data: session } = useSession();
 
   const agiGenerator = AGIGenerator({
@@ -151,6 +210,16 @@ export default function Lonekorning() {
     setAgiDebugData,
     setVisaDebug,
     hämtaFöretagsprofil,
+    onAGIComplete: async () => {
+      // Markera alla lönespecar som AGI-genererade
+      for (const spec of valdaSpecar) {
+        if (!spec.agi_genererad) {
+          await markeraAGIGenererad(spec.id);
+        }
+      }
+      // Refresha data för att visa uppdaterade knappar
+      await refreshData();
+    },
   });
 
   if (loading) {
@@ -226,6 +295,7 @@ export default function Lonekorning() {
           onBokför={() => setBokforModalOpen(true)}
           onGenereraAGI={agiGenerator.hanteraAGI}
           onBokförSkatter={() => setSkatteModalOpen(true)}
+          onRefreshData={refreshData}
         />
       )}
 
@@ -235,7 +305,19 @@ export default function Lonekorning() {
           utbetalningsdatum={utbetalningsdatum ? new Date(utbetalningsdatum) : null}
           lönespecar={Object.fromEntries(valdaSpecar.map((spec) => [spec.anställd_id, spec]))}
           open={true}
+          showButton={false}
           onClose={() => setBankgiroModalOpen(false)}
+          onExportComplete={async () => {
+            // Markera alla lönespecar som bankgiro-exporterade
+            for (const spec of valdaSpecar) {
+              if (!spec.bankgiro_exporterad) {
+                await markeraBankgiroExporterad(spec.id);
+              }
+            }
+            // Refresha data för att visa uppdaterade knappar
+            await refreshData();
+            setBankgiroModalOpen(false);
+          }}
         />
       )}
 
@@ -251,6 +333,17 @@ export default function Lonekorning() {
           batchMode={true}
           open={true}
           onClose={() => setBatchMailModalOpen(false)}
+          onMailComplete={async () => {
+            // Markera alla lönespecar som mailade
+            for (const spec of valdaSpecar) {
+              if (!spec.mailad) {
+                await markeraMailad(spec.id);
+              }
+            }
+            // Refresha data för att visa uppdaterade knappar
+            await refreshData();
+            setBatchMailModalOpen(false);
+          }}
         />
       )}
 
@@ -268,6 +361,17 @@ export default function Lonekorning() {
           }
           isOpen={true}
           onClose={() => setBokforModalOpen(false)}
+          onBokfört={async () => {
+            // Markera alla lönespecar som bokförda
+            for (const spec of valdaSpecar) {
+              if (!spec.bokförd) {
+                await markeraBokförd(spec.id);
+              }
+            }
+            // Refresha data för att visa uppdaterade knappar
+            await refreshData();
+            setBokforModalOpen(false);
+          }}
         />
       )}
 

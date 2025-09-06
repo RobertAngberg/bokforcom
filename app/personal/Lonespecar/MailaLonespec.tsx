@@ -25,6 +25,7 @@ interface MailaLonespecProps {
   batchMode?: boolean;
   open?: boolean;
   onClose?: () => void;
+  onMailComplete?: () => void; // Ny callback för när mailing är klar
 }
 
 export default function MailaLonespec({
@@ -37,6 +38,7 @@ export default function MailaLonespec({
   batchMode = false,
   open,
   onClose,
+  onMailComplete,
 }: MailaLonespecProps) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -111,6 +113,8 @@ export default function MailaLonespec({
         }
       }
       setSent(true);
+      // Anropa callback när mailing är klar
+      onMailComplete?.();
     } catch (err: any) {
       setError(err.message || "Något gick fel vid utskick av lönespecar.");
     } finally {
@@ -168,6 +172,8 @@ export default function MailaLonespec({
       const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Kunde inte skicka e-post.");
       setSent(true);
+      // Anropa callback när mailing är klar
+      onMailComplete?.();
     } catch (err: any) {
       setError(err.message || "Något gick fel.");
     } finally {

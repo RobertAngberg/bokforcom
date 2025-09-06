@@ -987,6 +987,290 @@ export async function skapaNyLönespec(data: {
   }
 }
 
+export async function uppdateraLönespec(data: {
+  lönespecId: number;
+  bruttolön?: number;
+  skatt?: number;
+  socialaAvgifter?: number;
+  nettolön?: number;
+  lönekostnad?: number;
+}) {
+  const userId = await getUserId();
+  if (!userId) {
+    throw new Error("Ingen inloggad användare");
+  }
+
+  // SÄKERHETSVALIDERING: Rate limiting för känslig lönedata
+  if (!validateSessionAttempt(`hr-salary-update-${userId}`)) {
+    logPersonalDataEvent(
+      "violation",
+      userId,
+      "Rate limit exceeded for salary specification update"
+    );
+    return {
+      success: false,
+      error: "För många förfrågningar. Försök igen om 15 minuter.",
+    };
+  }
+
+  logPersonalDataEvent("modify", userId, `Updating salary specification ${data.lönespecId}`);
+
+  try {
+    const client = await pool.connect();
+
+    // Kontrollera att lönespec tillhör användarens anställd
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [data.lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad eller tillhör inte användaren");
+    }
+
+    // Bygg update query dynamiskt baserat på vilka fält som skickats
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (data.bruttolön !== undefined) {
+      updateFields.push(`bruttolön = $${paramIndex++}`);
+      values.push(data.bruttolön);
+    }
+    if (data.skatt !== undefined) {
+      updateFields.push(`skatt = $${paramIndex++}`);
+      values.push(data.skatt);
+    }
+    if (data.socialaAvgifter !== undefined) {
+      updateFields.push(`sociala_avgifter = $${paramIndex++}`);
+      values.push(data.socialaAvgifter);
+    }
+    if (data.nettolön !== undefined) {
+      updateFields.push(`nettolön = $${paramIndex++}`);
+      values.push(data.nettolön);
+    }
+
+    if (updateFields.length === 0) {
+      client.release();
+      return { success: false, error: "Inga fält att uppdatera" };
+    }
+
+    // Lägg till lönespec ID som sista parameter
+    values.push(data.lönespecId);
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET ${updateFields.join(", ")}, uppdaterad = NOW()
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, values);
+
+    client.release();
+    revalidatePath("/personal");
+
+    return {
+      success: true,
+      message: "Lönespec uppdaterad!",
+      lönespec: result.rows[0],
+    };
+  } catch (error) {
+    console.error("❌ uppdateraLönespec error:", error);
+    throw error;
+  }
+}
+
+// Markera åtgärder som genomförda för lönespec
+export async function markeraBankgiroExporterad(lönespecId: number) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("Ingen inloggad användare");
+
+  try {
+    const client = await pool.connect();
+
+    // Kontrollera att lönespec tillhör användaren
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad");
+    }
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET bankgiro_exporterad = true, bankgiro_exporterad_datum = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [lönespecId]);
+    client.release();
+    revalidatePath("/personal");
+
+    return { success: true, lönespec: result.rows[0] };
+  } catch (error) {
+    console.error("❌ markeraBankgiroExporterad error:", error);
+    throw error;
+  }
+}
+
+export async function markeraMailad(lönespecId: number) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("Ingen inloggad användare");
+
+  try {
+    const client = await pool.connect();
+
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad");
+    }
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET mailad = true, mailad_datum = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [lönespecId]);
+    client.release();
+    revalidatePath("/personal");
+
+    return { success: true, lönespec: result.rows[0] };
+  } catch (error) {
+    console.error("❌ markeraMailad error:", error);
+    throw error;
+  }
+}
+
+export async function markeraBokförd(lönespecId: number) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("Ingen inloggad användare");
+
+  try {
+    const client = await pool.connect();
+
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad");
+    }
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET bokförd = true, bokförd_datum = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [lönespecId]);
+    client.release();
+    revalidatePath("/personal");
+
+    return { success: true, lönespec: result.rows[0] };
+  } catch (error) {
+    console.error("❌ markeraBokförd error:", error);
+    throw error;
+  }
+}
+
+export async function markeraAGIGenererad(lönespecId: number) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("Ingen inloggad användare");
+
+  try {
+    const client = await pool.connect();
+
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad");
+    }
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET agi_genererad = true, agi_genererad_datum = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [lönespecId]);
+    client.release();
+    revalidatePath("/personal");
+
+    return { success: true, lönespec: result.rows[0] };
+  } catch (error) {
+    console.error("❌ markeraAGIGenererad error:", error);
+    throw error;
+  }
+}
+
+export async function markeraSkatternaBokförda(lönespecId: number) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("Ingen inloggad användare");
+
+  try {
+    const client = await pool.connect();
+
+    const checkQuery = `
+      SELECT l.id FROM lönespecifikationer l
+      JOIN anställda a ON l.anställd_id = a.id
+      WHERE l.id = $1 AND a.user_id = $2
+    `;
+    const checkResult = await client.query(checkQuery, [lönespecId, userId]);
+
+    if (checkResult.rows.length === 0) {
+      client.release();
+      throw new Error("Lönespec inte hittad");
+    }
+
+    const updateQuery = `
+      UPDATE lönespecifikationer 
+      SET skatter_bokförda = true, skatter_bokförda_datum = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [lönespecId]);
+    client.release();
+    revalidatePath("/personal");
+
+    return { success: true, lönespec: result.rows[0] };
+  } catch (error) {
+    console.error("❌ markeraSkatternaBokförda error:", error);
+    throw error;
+  }
+}
+
 export async function taBortLönespec(lönespecId: number) {
   const userId = await getUserId();
   if (!userId) {

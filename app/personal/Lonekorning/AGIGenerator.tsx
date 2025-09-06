@@ -14,6 +14,7 @@ interface AGIGeneratorProps {
   setAgiDebugData: (data: any) => void;
   setVisaDebug: (show: boolean) => void;
   hämtaFöretagsprofil: (userId: string) => Promise<any>;
+  onAGIComplete?: () => void; // Ny callback för när AGI är genererad
 }
 
 export default function AGIGenerator({
@@ -26,6 +27,7 @@ export default function AGIGenerator({
   setAgiDebugData,
   setVisaDebug,
   hämtaFöretagsprofil,
+  onAGIComplete,
 }: AGIGeneratorProps) {
   const [toast, setToast] = useState<{
     type: "success" | "error" | "info";
@@ -227,6 +229,9 @@ export default function AGIGenerator({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      // Anropa callback när AGI är genererad
+      onAGIComplete?.();
     } catch (error: any) {
       console.error("Fel vid AGI-generering:", error);
       setToast({ type: "error", message: `Fel vid AGI-generering: ${error?.message || error}` });

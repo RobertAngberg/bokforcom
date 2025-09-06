@@ -6,9 +6,11 @@ import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
+import Toast from "../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import { useLonespecContext } from "./LonespecContext";
+import { uppdateraLönespec } from "../actions";
 import FormelVisning from "./FormelVisning";
 
 interface LönespecViewProps {
@@ -20,22 +22,49 @@ interface LönespecViewProps {
   taBortLoading?: boolean;
   företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLonespec
   visaExtraRader?: boolean; // NY PROP
+  // Åtgärder props
+  onHämtaBankgiro?: () => void;
+  onMailaSpecar?: () => void;
+  onBokför?: () => void;
+  onGenereraAGI?: () => void;
+  onBokförSkatter?: () => void;
+  allaHarBankgiro?: boolean;
+  allaHarMailats?: boolean;
+  allaHarBokförts?: boolean;
+  allaHarAGI?: boolean;
+  allaHarSkatter?: boolean;
 }
 
 export default function LönespecView({
   lönespec,
   anställd,
   utlägg,
-  ingenAnimering,
+  ingenAnimering = false,
   onTaBortLönespec,
-  taBortLoading,
+  taBortLoading = false,
   företagsprofil,
   visaExtraRader = false,
+  // Åtgärder props
+  onHämtaBankgiro,
+  onMailaSpecar,
+  onBokför,
+  onGenereraAGI,
+  onBokförSkatter,
+  allaHarBankgiro = false,
+  allaHarMailats = false,
+  allaHarBokförts = false,
+  allaHarAGI = false,
+  allaHarSkatter = false,
 }: LönespecViewProps) {
   const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
 
   // Lokal state för utlägg så vi kan uppdatera UI direkt
   const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);
+  const [sparar, setSparar] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   //#endregion
 
@@ -109,6 +138,48 @@ export default function LönespecView({
       ]);
     }
   };
+
+  // Spara lönespec-ändringar till databas
+  const handleSparaLönespec = async () => {
+    if (!aktuellBeräkning) {
+      setToast({
+        type: "error",
+        message: "Inga ändringar att spara",
+      });
+      return;
+    }
+
+    setSparar(true);
+    try {
+      const result = await uppdateraLönespec({
+        lönespecId: lönespec.id,
+        bruttolön: aktuellBeräkning.bruttolön,
+        skatt: aktuellBeräkning.skatt,
+        socialaAvgifter: aktuellBeräkning.socialaAvgifter,
+        nettolön: aktuellBeräkning.nettolön,
+      });
+
+      if (result.success) {
+        setToast({
+          type: "success",
+          message: "Lönespec sparad!",
+        });
+      } else {
+        setToast({
+          type: "error",
+          message: result.error || "Kunde inte spara lönespec",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Fel vid sparning av lönespec:", error);
+      setToast({
+        type: "error",
+        message: "Kunde inte spara lönespec",
+      });
+    } finally {
+      setSparar(false);
+    }
+  };
   //#endregion
 
   //#region Render Content
@@ -160,18 +231,73 @@ export default function LönespecView({
         />
       )}
 
-      <div className="flex gap-3 mt-4 justify-between items-center">
-        <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaForhandsgranskning(true)} />
-        {onTaBortLönespec && (
-          <div className="flex-1 flex justify-end">
+      {/* Åtgärder sektion */}
+      <div className="bg-slate-700 text-white p-4 rounded-lg mb-4">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Åtgärder</h3>
+        <div className="flex justify-between items-center flex-wrap gap-3">
+          <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaForhandsgranskning(true)} />
+          <div className="flex gap-3">
             <Knapp
-              text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort"}
-              onClick={onTaBortLönespec}
-              disabled={taBortLoading}
+              text={sparar ? "💾 Sparar..." : "💾 Spara"}
+              onClick={handleSparaLönespec}
+              disabled={sparar || !aktuellBeräkning}
             />
+            {onTaBortLönespec && (
+              <Knapp
+                text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort"}
+                onClick={onTaBortLönespec}
+                disabled={taBortLoading}
+              />
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Lönekörningsåtgärder sektion */}
+      {(onHämtaBankgiro || onMailaSpecar || onBokför || onGenereraAGI || onBokförSkatter) && (
+        <div className="bg-slate-700 text-white p-4 rounded-lg mb-4">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            Lönekörningsåtgärder
+          </h3>
+          <div className="flex gap-4 justify-center flex-wrap">
+            {onHämtaBankgiro && (
+              <Knapp
+                text={allaHarBankgiro ? "✅ Bankgirofil exporterad" : "🏦 Hämta bankgirofil"}
+                onClick={onHämtaBankgiro}
+                className={allaHarBankgiro ? "bg-green-600 hover:bg-green-700" : ""}
+              />
+            )}
+            {onMailaSpecar && (
+              <Knapp
+                text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
+                onClick={onMailaSpecar}
+                className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
+              />
+            )}
+            {onBokför && (
+              <Knapp
+                text={allaHarBokförts ? "✅ Löner bokförda" : "📖 Bokför"}
+                onClick={onBokför}
+                className={allaHarBokförts ? "bg-green-600 hover:bg-green-700" : ""}
+              />
+            )}
+            {onGenereraAGI && (
+              <Knapp
+                text={allaHarAGI ? "✅ AGI genererad" : "📊 Generera AGI"}
+                onClick={onGenereraAGI}
+                className={allaHarAGI ? "bg-green-600 hover:bg-green-700" : ""}
+              />
+            )}
+            {onBokförSkatter && (
+              <Knapp
+                text={allaHarSkatter ? "✅ Skatter bokförda" : "💰 Bokför skatter"}
+                onClick={onBokförSkatter}
+                className={allaHarSkatter ? "bg-green-600 hover:bg-green-700" : ""}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {visaForhandsgranskning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -193,6 +319,15 @@ export default function LönespecView({
             />
           </div>
         </div>
+      )}
+
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          isVisible={true}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

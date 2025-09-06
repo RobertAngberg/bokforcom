@@ -9,6 +9,8 @@ interface BankgiroExportProps {
   lönespecar: Record<string, any>;
   open?: boolean;
   onClose?: () => void;
+  onExportComplete?: () => void; // Ny callback för när export är klar
+  showButton?: boolean; // Ny prop för att styra om knappen ska visas
 }
 
 export default function BankgiroExport({
@@ -17,6 +19,8 @@ export default function BankgiroExport({
   lönespecar,
   open,
   onClose,
+  onExportComplete,
+  showButton = true, // Default till true för bakåtkompatibilitet
 }: BankgiroExportProps) {
   const [visaModal, setVisaModal] = useState(false);
   const [kundnummer, setKundnummer] = useState("123456");
@@ -71,6 +75,9 @@ export default function BankgiroExport({
     a.click();
     URL.revokeObjectURL(url);
 
+    // Markera export som genomförd
+    onExportComplete?.();
+
     setVisaModal(false);
   };
 
@@ -83,7 +90,7 @@ export default function BankgiroExport({
 
   return (
     <>
-      <Knapp text="💳 Hämta Bankgirofil" onClick={() => setVisaModal(true)} />
+      {showButton && <Knapp text="💳 Hämta Bankgirofil" onClick={() => setVisaModal(true)} />}
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

@@ -10,6 +10,7 @@ interface SkatteManagerProps {
   setSkatteBokförPågår: (loading: boolean) => void;
   setSkatteModalOpen: (open: boolean) => void;
   bokförLöneskatter: (data: any) => Promise<any>;
+  onSkatteComplete?: () => void; // Ny callback för när skatter är bokförda
 }
 
 export default function SkatteManager({
@@ -19,6 +20,7 @@ export default function SkatteManager({
   setSkatteBokförPågår,
   setSkatteModalOpen,
   bokförLöneskatter,
+  onSkatteComplete,
 }: SkatteManagerProps) {
   const [toast, setToast] = useState<{
     type: "success" | "error" | "info";
@@ -75,6 +77,8 @@ export default function SkatteManager({
       if (result.success) {
         setToast({ type: "success", message: "Löneskatter bokförda!" });
         setSkatteModalOpen(false);
+        // Anropa callback när skatter är bokförda
+        onSkatteComplete?.();
       } else {
         setToast({ type: "error", message: `Fel vid bokföring: ${result.error || "Okänt fel"}` });
       }

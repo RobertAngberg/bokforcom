@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../_components/Modal";
@@ -27,10 +27,23 @@ export default function NySpecModal({
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
+  const [valdAnställd, setValdAnställd] = useState<string>("");
+
+  // Rensa val när modalen öppnas
+  useEffect(() => {
+    if (isOpen) {
+      setValdAnställd("");
+      setToast(null);
+    }
+  }, [isOpen]);
 
   const handleCreateSpec = async () => {
     if (!nySpecDatum) {
       setToast({ type: "error", message: "Välj ett datum först!" });
+      return;
+    }
+    if (!valdAnställd) {
+      setToast({ type: "error", message: "Välj en anställd först!" });
       return;
     }
     if (anstallda.length === 0) {
@@ -47,7 +60,7 @@ export default function NySpecModal({
     }
     const res = await import("../actions").then((mod) =>
       mod.skapaNyLönespec({
-        anställd_id: parseInt(anstallda[0].id),
+        anställd_id: parseInt(valdAnställd),
         utbetalningsdatum,
       })
     );
@@ -64,17 +77,38 @@ export default function NySpecModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Välj utbetalningsdatum" maxWidth="sm">
-      <div className="mb-6">
-        <DatePicker
-          selected={nySpecDatum}
-          onChange={(date) => setNySpecDatum(date)}
-          dateFormat="yyyy-MM-dd"
-          className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
-          placeholderText="Välj datum"
-          calendarClassName="bg-slate-900 text-white"
-          dayClassName={(date) => "text-cyan-400"}
-        />
+    <Modal isOpen={isOpen} onClose={onClose} title="Skapa ny lönespecifikation" maxWidth="sm">
+      <div className="space-y-4 mb-6">
+        {/* Anställd-väljare */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Välj anställd</label>
+          <select
+            value={valdAnställd}
+            onChange={(e) => setValdAnställd(e.target.value)}
+            className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
+          >
+            <option value="">-- Välj anställd --</option>
+            {anstallda.map((anställd) => (
+              <option key={anställd.id} value={anställd.id}>
+                {anställd.förnamn} {anställd.efternamn}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Datum-väljare */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Utbetalningsdatum</label>
+          <DatePicker
+            selected={nySpecDatum}
+            onChange={(date) => setNySpecDatum(date)}
+            dateFormat="yyyy-MM-dd"
+            className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
+            placeholderText="Välj datum"
+            calendarClassName="bg-slate-900 text-white"
+            dayClassName={(date) => "text-cyan-400"}
+          />
+        </div>
       </div>
       <div className="flex gap-3 justify-end">
         <button
