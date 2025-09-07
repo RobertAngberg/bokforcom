@@ -115,13 +115,26 @@ export default function SokForval({
         });
       }
 
+      // Filtrera även sökresultat för utlägg - bara kostnadskonton (4xxx, 5xxx, 6xxx)
+      if (utlaggMode) {
+        träffar = träffar.filter((f) => {
+          // Kontrollera att förvalet har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
+          const harKostnadskonto = f.konton.some((k: KontoRad) => {
+            const kontonummer = k.kontonummer || "";
+            return /^[456]/.test(kontonummer);
+          });
+
+          return harKostnadskonto;
+        });
+      }
+
       setResults(träffar);
       setHighlightedIndex(0);
       setLoading(false);
     }, 300);
 
     return () => clearTimeout(delay);
-  }, [searchText, favoritFörvalen, levfaktMode]);
+  }, [searchText, favoritFörvalen, levfaktMode, utlaggMode]);
 
   const väljFörval = (f: Förval) => {
     loggaFavoritförval(f.id);

@@ -742,7 +742,8 @@ export async function hämtaUtlägg(anställdId: number) {
         COALESCE(t.kontobeskrivning, 'Utlägg') as beskrivning,
         COALESCE(t.transaktionsdatum::text, u.skapad::date::text) as datum,
         COALESCE(t.kommentar, '') as kategori,
-        t.fil as kvitto_fil
+        t.fil as kvitto_fil,
+        t.blob_url as kvitto_url
       FROM utlägg u 
       LEFT JOIN transaktioner t ON u.transaktion_id = t.id
       WHERE u.anställd_id = $1 
@@ -874,7 +875,9 @@ export async function läggTillUtläggILönespec(lönespecId: number) {
         u.*, 
         t.belopp,
         t.kontobeskrivning as beskrivning,
-        t.transaktionsdatum as datum
+        t.transaktionsdatum as datum,
+        t.fil as kvitto_fil,
+        t.blob_url as kvitto_url
       FROM utlägg u 
       LEFT JOIN transaktioner t ON u.transaktion_id = t.id
       WHERE u.anställd_id = $1 AND u.status = 'Väntande'

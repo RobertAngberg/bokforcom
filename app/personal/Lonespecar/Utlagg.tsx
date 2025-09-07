@@ -166,7 +166,16 @@ export default function Utlägg({
 
             <div className="flex justify-between items-center text-xs text-gray-500">
               <span>ID: #{utläggItem.id}</span>
-              {utläggItem.kvitto_fil && <span>📎 Kvitto: {utläggItem.kvitto_fil}</span>}
+              {utläggItem.kvitto_url ? (
+                <Knapp
+                  text="Visa kvitto"
+                  onClick={() =>
+                    window.open(utläggItem.kvitto_url, "_blank", "noopener,noreferrer")
+                  }
+                />
+              ) : utläggItem.kvitto_fil ? (
+                <span className="text-gray-400">Kvitto ej tillgängligt</span>
+              ) : null}
             </div>
           </div>
         ))}

@@ -18,6 +18,7 @@ interface Utlägg {
   status: string;
   anställd_namn?: string;
   kvitto_fil?: string;
+  kvitto_url?: string;
 }
 
 export default function UtlaggPage() {
@@ -65,6 +66,7 @@ export default function UtlaggPage() {
                 kategori: u.kategori || "",
                 status: u.status || "Väntande",
                 kvitto_fil: u.kvitto_fil || null,
+                kvitto_url: u.kvitto_url || null,
                 anställd_namn: `${anställd.förnamn} ${anställd.efternamn}`,
               };
               console.log("🗂️ Mapped utlägg:", mapped);
