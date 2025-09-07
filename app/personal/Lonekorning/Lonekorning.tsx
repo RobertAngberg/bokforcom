@@ -423,30 +423,33 @@ export default function Lonekorning() {
             />
           )}
 
-          {bokforModalOpen && valdaSpecar.length > 0 && (
+          {bokforModalOpen && lönekörningSpecar.length > 0 && (
             <BokforLoner
               lönespec={{
-                ...valdaSpecar[0], // Använd första som bas
+                ...lönekörningSpecar[0], // Använd första som bas
                 // Summera alla värden från alla lönespecar
-                bruttolön: valdaSpecar.reduce(
+                bruttolön: lönekörningSpecar.reduce(
                   (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
                   0
                 ),
-                sociala_avgifter: valdaSpecar.reduce(
+                sociala_avgifter: lönekörningSpecar.reduce(
                   (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
                   0
                 ),
-                skatt: valdaSpecar.reduce((sum, spec) => sum + (parseFloat(spec.skatt) || 0), 0),
-                nettolön: valdaSpecar.reduce(
+                skatt: lönekörningSpecar.reduce(
+                  (sum, spec) => sum + (parseFloat(spec.skatt) || 0),
+                  0
+                ),
+                nettolön: lönekörningSpecar.reduce(
                   (sum, spec) => sum + (parseFloat(spec.nettolön) || 0),
                   0
                 ),
-                lönekostnad: valdaSpecar.reduce(
+                lönekostnad: lönekörningSpecar.reduce(
                   (sum, spec) => sum + (parseFloat(spec.lönekostnad) || 0),
                   0
                 ),
               }}
-              extrarader={valdaSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
+              extrarader={lönekörningSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
               beräknadeVärden={{
                 bruttolön: valdaSpecar.reduce(
                   (sum, spec) =>

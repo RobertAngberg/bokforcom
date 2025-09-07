@@ -104,6 +104,7 @@ export default function LonespecLista({
   };
 
   const handleBokför = async () => {
+    console.log("🔍 handleBokför ANROPAD!");
     onBokför();
   };
 
