@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { hamtaForetagsprofilAdmin, uppdateraForetagsprofilAdmin } from "../_actions";
+import {
+  hamtaForetagsprofilAdmin,
+  uppdateraForetagsprofilAdmin,
+} from "../_actions/foretagsActions";
 import type { ForetagsProfil, MessageState } from "../_types/types";
 
 export const useCompanyProfile = () => {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { raderaForetag } from "../_actions";
+import { raderaForetag } from "../_actions/foretagsActions";
 
 export const useDeleteConfirmation = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

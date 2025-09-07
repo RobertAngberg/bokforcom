@@ -9,10 +9,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-/**
- * 🔥 Hamta foretags profil (Admin version)
- * Enterprise-grade company profile fetching
- */
+// ============================================================================
+// Företagsprofil
+// ============================================================================
+
 export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null> {
   try {
     const { session, userId } = await getSessionAndUserId();
@@ -68,10 +68,6 @@ export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null>
   }
 }
 
-/**
- * 🔥 Uppdatera foretags profil (Admin version)
- * Enterprise-grade company profile updating
- */
 export async function uppdateraForetagsprofilAdmin(
   formData: FormData
 ): Promise<ActionResult<ForetagsProfil>> {
@@ -144,10 +140,10 @@ export async function uppdateraForetagsprofilAdmin(
   }
 }
 
-/**
- * 🔥 Radera foretag (DANGER ZONE)
- * Enterprise-grade company deletion with full cleanup
- */
+// ============================================================================
+// Företag - Radering
+// ============================================================================
+
 export async function raderaForetag(): Promise<ActionResult> {
   try {
     const { session, userId } = await getSessionAndUserId();

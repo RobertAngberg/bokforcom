@@ -1,5 +1,6 @@
-// 🎯 Admin Type Definitions
-// Enterprise-grade types for admin module
+// ============================================================================
+// Admin Type Definitions
+// ============================================================================
 
 export interface UserInfo {
   id: string;
@@ -32,66 +33,35 @@ export interface UserEditForm {
   email: string;
 }
 
-// Hook return types
-export interface UseAdminAnvandarhanteringReturn {
-  // Data state
+// Component Props
+export interface UserProfileSectionProps {
   userInfo: UserInfo | null;
   editForm: UserEditForm;
-
-  // UI state
-  isEditing: boolean;
-  isSaving: boolean;
-  loading: boolean;
-  message: MessageState | null;
-
-  // Actions
-  handleEdit: () => void;
-  handleCancel: () => void;
-  handleSave: () => Promise<void>;
-  updateEditForm: (field: keyof UserEditForm, value: string) => void;
-  clearMessage: () => void;
+  state: {
+    isEditing: boolean;
+    isSaving: boolean;
+    message: MessageState | null;
+  };
+  session: any;
+  handlers: {
+    handleEdit: () => void;
+    handleCancel: () => void;
+    handleSave: () => void;
+    updateEditForm: (field: keyof UserEditForm, value: string) => void;
+  };
 }
 
-export interface UseAdminForetagshanteringReturn {
-  // Data
+export interface CompanyProfileSectionProps {
   foretagsProfil: ForetagsProfil;
-
-  // State
   isEditingCompany: boolean;
   isSavingCompany: boolean;
-  isDeleting: boolean;
-  showDeleteConfirm: boolean;
   companyMessage: MessageState | null;
-
-  // Actions
   handleEditCompany: () => void;
   handleCancelCompany: () => void;
-  handleSaveCompany: () => Promise<void>;
-  handleDeleteCompany: () => Promise<void>;
-  updateCompanyField: (field: keyof ForetagsProfil, value: string) => void;
-  setShowDeleteConfirm: (show: boolean) => void;
-  clearCompanyMessage: () => void;
-
-  // Utils
-  fetchCompanyProfile: () => Promise<void>;
+  handleSaveCompany: () => void;
+  handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
 }
 
-export interface UseAdminSakerhetReturn {
-  // Security state
-  adminAttempts: Map<string, { attempts: number; lastAttempt: number }>;
-
-  // Actions
-  validateAdminSession: () => Promise<{ valid: boolean; userId?: string; error?: string }>;
-  validateAdminAttempt: (userId: string) => Promise<boolean>;
-  logAdminSecurityEvent: (userId: string, eventType: string, details: string) => Promise<void>;
-
-  // Additional utilities
-  adminStats: any;
-  securityLoading: boolean;
-  fetchAdminStats: () => Promise<void>;
-}
-
-// Component Props
 export interface DeleteSectionProps {
   showDeleteConfirm: boolean;
   isDeleting: boolean;

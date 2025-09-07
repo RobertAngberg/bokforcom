@@ -1,8 +1,10 @@
 "use client";
 
 import MainLayout from "../_components/MainLayout";
-import { useAdminPageState } from "./_hooks";
-import { UserProfileSection, CompanyProfileSection, DeleteSection } from "./_components";
+import { useAdminPageState } from "./_hooks/useAdminPageState";
+import UserProfileSection from "./_components/UserProfileSection";
+import CompanyProfileSection from "./_components/CompanyProfileSection";
+import DeleteSection from "./_components/DeleteSection";
 
 export default function AdminPage() {
   const { auth, userProfile, companyProfile, deleteConfirmation, isLoading } = useAdminPageState();

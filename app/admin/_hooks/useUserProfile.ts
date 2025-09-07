@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions";
+import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions/anvandarActions";
 import type { UserInfo, UserEditForm, MessageState } from "../_types/types";
 
 export const useUserProfile = () => {
@@ -85,21 +85,29 @@ export const useUserProfile = () => {
   };
 
   return {
-    // State
+    // Data
     userInfo,
     editForm,
-    isEditing,
-    isSaving,
-    message,
-    loading,
     session,
 
-    // Actions
+    // State grupperat
+    state: {
+      isEditing,
+      isSaving,
+      message,
+    },
+
+    // Handlers grupperat
+    handlers: {
+      handleEdit,
+      handleCancel,
+      handleSave,
+      updateEditForm,
+    },
+
+    // Intern state (för admin page)
+    loading,
     fetchUserInfo,
-    handleEdit,
-    handleCancel,
-    handleSave,
-    updateEditForm,
     setMessage,
   };
 };

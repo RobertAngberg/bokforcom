@@ -13,10 +13,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-/**
- * 🔥 Hamta transaktionsposter
- * Enterprise-grade transaction post fetching with security
- */
+// ============================================================================
+// Transaktionsposter
+// ============================================================================
+
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 KRITISK ADMIN-SAKERHET
@@ -82,10 +82,10 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
   }
 }
 
-/**
- * 🔥 Hamta alla forval med filter
- * Enterprise-grade forval fetching with advanced filtering
- */
+// ============================================================================
+// Förval
+// ============================================================================
+
 export async function fetchAllaForval(filters?: { sok?: string; kategori?: string; typ?: string }) {
   try {
     // 🔒 KRITISK ADMIN-SAKERHET
@@ -151,10 +151,10 @@ export async function fetchAllaForval(filters?: { sok?: string; kategori?: strin
   }
 }
 
-/**
- * 🔥 Uppdatera fakturanummer
- * Enterprise-grade invoice number updating
- */
+// ============================================================================
+// Fakturanummer
+// ============================================================================
+
 export async function uppdateraFakturanummer(id: number, nyttNummer: string) {
   try {
     const adminAuth = await validateAdminSession();

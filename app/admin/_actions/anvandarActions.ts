@@ -8,10 +8,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-/**
- * 🔥 Hamta anvandare information
- * Enterprise-grade user fetching
- */
+// ============================================================================
+// Användarinformation
+// ============================================================================
+
 export async function hamtaAnvandarInfo(): Promise<UserInfo | null> {
   try {
     const { session, userId } = await getSessionAndUserId();
@@ -40,10 +40,6 @@ export async function hamtaAnvandarInfo(): Promise<UserInfo | null> {
   }
 }
 
-/**
- * 🔥 Uppdatera anvandare information
- * Enterprise-grade user updating with validation
- */
 export async function uppdateraAnvandarInfo(formData: FormData): Promise<ActionResult<UserInfo>> {
   try {
     const { session, userId } = await getSessionAndUserId();

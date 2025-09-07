@@ -7,13 +7,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// 🔒 ENTERPRISE ADMIN SAKERHETS-FUNKTIONER
+// ============================================================================
+// Admin Säkerhetsfunktioner
+// ============================================================================
+
 const adminAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
 
-/**
- * 🔥 Validera admin session
- * Enterprise-grade admin validation
- */
 export async function validateAdminSession(): Promise<{
   valid: boolean;
   userId?: string;
@@ -47,10 +46,6 @@ export async function validateAdminSession(): Promise<{
   }
 }
 
-/**
- * 🔥 Validera admin forsok (Rate limiting)
- * Enterprise-grade rate limiting for admin operations
- */
 export async function validateAdminAttempt(userId: string): Promise<boolean> {
   const now = Date.now();
   const windowMs = 15 * 60 * 1000; // 15 minuter
@@ -77,11 +72,6 @@ export async function validateAdminAttempt(userId: string): Promise<boolean> {
 
   return true;
 }
-
-/**
- * 🔥 Logga admin sakerhetshändelse
- * Enterprise-grade security event logging
- */
 export async function logAdminSecurityEvent(
   userId: string,
   eventType: string,
@@ -103,10 +93,6 @@ export async function logAdminSecurityEvent(
   }
 }
 
-/**
- * 🔥 Hamta admin statistik
- * Enterprise-grade admin metrics
- */
 export async function hamtaAdminStatistik() {
   try {
     const adminAuth = await validateAdminSession();

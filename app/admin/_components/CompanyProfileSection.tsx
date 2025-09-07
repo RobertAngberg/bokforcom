@@ -1,18 +1,8 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { ForetagsProfil, MessageState } from "../_types/types";
-
-interface CompanyProfileSectionProps {
-  foretagsProfil: ForetagsProfil;
-  isEditingCompany: boolean;
-  isSavingCompany: boolean;
-  companyMessage: MessageState | null;
-  handleEditCompany: () => void;
-  handleCancelCompany: () => void;
-  handleSaveCompany: () => void;
-  handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
-}
+import TextFalt from "../../_components/TextFalt";
+import type { CompanyProfileSectionProps } from "../_types/types";
 
 export default function CompanyProfileSection({
   foretagsProfil,
@@ -53,108 +43,111 @@ export default function CompanyProfileSection({
         {isEditingCompany ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 mb-2">Företagsnamn:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.foretagsnamn}
-                  onChange={(e) => handleCompanyInputChange("foretagsnamn", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="Företagsnamn AB"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-2">Organisationsnummer:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.organisationsnummer}
-                  onChange={(e) => handleCompanyInputChange("organisationsnummer", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="556789-1234"
-                />
-              </div>
+              <TextFalt
+                label="Företagsnamn"
+                name="foretagsnamn"
+                type="text"
+                value={foretagsProfil.foretagsnamn}
+                onChange={(e) => handleCompanyInputChange("foretagsnamn", e.target.value)}
+                placeholder="Företagsnamn AB"
+                maxLength={100}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
+              <TextFalt
+                label="Organisationsnummer"
+                name="organisationsnummer"
+                type="text"
+                value={foretagsProfil.organisationsnummer}
+                onChange={(e) => handleCompanyInputChange("organisationsnummer", e.target.value)}
+                placeholder="556789-1234"
+                pattern="[0-9]{6}-[0-9]{4}"
+                maxLength={11}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
             </div>
 
-            <div>
-              <label className="block text-gray-400 mb-2">Adress:</label>
-              <input
+            <TextFalt
+              label="Adress"
+              name="adress"
+              type="text"
+              value={foretagsProfil.adress}
+              onChange={(e) => handleCompanyInputChange("adress", e.target.value)}
+              placeholder="Företagsgatan 123"
+              maxLength={200}
+              className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextFalt
+                label="Postnummer"
+                name="postnummer"
                 type="text"
-                value={foretagsProfil.adress}
-                onChange={(e) => handleCompanyInputChange("adress", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                placeholder="Företagsgatan 123"
+                value={foretagsProfil.postnummer}
+                onChange={(e) => handleCompanyInputChange("postnummer", e.target.value)}
+                placeholder="123 45"
+                pattern="[0-9]{3} [0-9]{2}"
+                maxLength={6}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
+              <TextFalt
+                label="Stad"
+                name="stad"
+                type="text"
+                value={foretagsProfil.stad}
+                onChange={(e) => handleCompanyInputChange("stad", e.target.value)}
+                placeholder="Stockholm"
+                maxLength={50}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 mb-2">Postnummer:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.postnummer}
-                  onChange={(e) => handleCompanyInputChange("postnummer", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="123 45"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-2">Stad:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.stad}
-                  onChange={(e) => handleCompanyInputChange("stad", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="Stockholm"
-                />
-              </div>
+              <TextFalt
+                label="Telefonnummer"
+                name="telefonnummer"
+                type="tel"
+                value={foretagsProfil.telefonnummer}
+                onChange={(e) => handleCompanyInputChange("telefonnummer", e.target.value)}
+                placeholder="08-123 45 67"
+                maxLength={20}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
+              <TextFalt
+                label="Email"
+                name="epost"
+                type="email"
+                value={foretagsProfil.epost}
+                onChange={(e) => handleCompanyInputChange("epost", e.target.value)}
+                placeholder="info@företag.se"
+                maxLength={100}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 mb-2">Telefonnummer:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.telefonnummer}
-                  onChange={(e) => handleCompanyInputChange("telefonnummer", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="08-123 45 67"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-2">Email:</label>
-                <input
-                  type="email"
-                  value={foretagsProfil.epost}
-                  onChange={(e) => handleCompanyInputChange("epost", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="info@företag.se"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 mb-2">Momsregistreringsnummer:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.momsregistreringsnummer}
-                  onChange={(e) =>
-                    handleCompanyInputChange("momsregistreringsnummer", e.target.value)
-                  }
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="SE556789123401"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-2">Webbplats:</label>
-                <input
-                  type="text"
-                  value={foretagsProfil.webbplats}
-                  onChange={(e) => handleCompanyInputChange("webbplats", e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="https://www.företag.se"
-                />
-              </div>
+              <TextFalt
+                label="Momsregistreringsnummer"
+                name="momsregistreringsnummer"
+                type="text"
+                value={foretagsProfil.momsregistreringsnummer}
+                onChange={(e) =>
+                  handleCompanyInputChange("momsregistreringsnummer", e.target.value)
+                }
+                placeholder="SE556789123401"
+                pattern="SE[0-9]{12}"
+                maxLength={14}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
+              <TextFalt
+                label="Webbplats"
+                name="webbplats"
+                type="url"
+                value={foretagsProfil.webbplats}
+                onChange={(e) => handleCompanyInputChange("webbplats", e.target.value)}
+                placeholder="https://www.företag.se"
+                maxLength={200}
+                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              />
             </div>
 
             <div className="flex gap-3 pt-2">

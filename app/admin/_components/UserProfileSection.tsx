@@ -1,32 +1,14 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { UserInfo, UserEditForm, MessageState } from "../_types/types";
-
-interface UserProfileSectionProps {
-  userInfo: UserInfo | null;
-  editForm: UserEditForm;
-  isEditing: boolean;
-  isSaving: boolean;
-  message: MessageState | null;
-  session: any;
-  handleEdit: () => void;
-  handleCancel: () => void;
-  handleSave: () => void;
-  updateEditForm: (field: keyof UserEditForm, value: string) => void;
-}
+import type { UserProfileSectionProps } from "../_types/types";
 
 export default function UserProfileSection({
   userInfo,
   editForm,
-  isEditing,
-  isSaving,
-  message,
+  state: { isEditing, isSaving, message },
   session,
-  handleEdit,
-  handleCancel,
-  handleSave,
-  updateEditForm,
+  handlers: { handleEdit, handleCancel, handleSave, updateEditForm },
 }: UserProfileSectionProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
