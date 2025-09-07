@@ -428,10 +428,13 @@ export default function Lonekorning() {
               lönespec={{
                 ...lönekörningSpecar[0], // Använd första som bas
                 // Summera alla värden från alla lönespecar
-                bruttolön: lönekörningSpecar.reduce(
-                  (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
-                  0
-                ),
+                bruttolön: (() => {
+                  console.log("🔍 lönekörningSpecar för bokföring:", lönekörningSpecar);
+                  return lönekörningSpecar.reduce(
+                    (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
+                    0
+                  );
+                })(),
                 sociala_avgifter: lönekörningSpecar.reduce(
                   (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
                   0

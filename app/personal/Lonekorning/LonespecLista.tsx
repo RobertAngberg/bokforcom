@@ -69,13 +69,6 @@ export default function LonespecLista({
   const allaHarAGI = valdaSpecar.every((spec) => spec.agi_genererad);
   const allaHarSkatter = valdaSpecar.every((spec) => spec.skatter_bokförda);
 
-  // Debug: logga status
-  console.log(
-    "🔍 valdaSpecar:",
-    valdaSpecar.map((s) => ({ id: s.id, mailad: s.mailad, bokförd: s.bokförd }))
-  );
-  console.log("🔍 allaHarMailats:", allaHarMailats, "allaHarBokförts:", allaHarBokförts);
-
   const handleTaBortLönespec = async (spec: any) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
     setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
@@ -104,7 +97,6 @@ export default function LonespecLista({
   };
 
   const handleBokför = async () => {
-    console.log("🔍 handleBokför ANROPAD!");
     onBokför();
   };
 
