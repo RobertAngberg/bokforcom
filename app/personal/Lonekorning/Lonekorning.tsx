@@ -391,7 +391,7 @@ export default function Lonekorning() {
 
           {batchMailModalOpen && (
             <MailaLonespec
-              batch={valdaSpecar.map((spec) => ({
+              batch={lönekörningSpecar.map((spec) => ({
                 lönespec: spec,
                 anställd: anstallda.find((a) => a.id === spec.anställd_id),
                 företagsprofil: undefined,
@@ -403,13 +403,13 @@ export default function Lonekorning() {
               onClose={() => setBatchMailModalOpen(false)}
               onMailComplete={async () => {
                 // Markera alla lönespecar som mailade
-                for (const spec of valdaSpecar) {
+                for (const spec of lönekörningSpecar) {
                   if (!spec.mailad) {
                     await markeraMailad(spec.id);
                   }
                 }
                 // Refresha data för att visa uppdaterade knappar
-                await refreshData();
+                await loadLönekörningSpecar();
                 setBatchMailModalOpen(false);
               }}
             />

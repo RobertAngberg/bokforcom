@@ -2212,7 +2212,7 @@ export async function uppdateraLönekörningTotaler(lönekörningId: number): Pr
         COALESCE(SUM(sociala_avgifter), 0) as total_sociala_avgifter,
         COALESCE(SUM(nettolön), 0) as total_nettolön
       FROM lönespecifikationer 
-      WHERE lönekorning_id = $1
+      WHERE lonekorning_id = $1
     `;
 
     const totalerResult = await pool.query(totalerQuery, [lönekörningId]);
@@ -2399,8 +2399,17 @@ export async function markeraLönekörningSteg(
     const lönekörning = lönekörningResult.data!;
 
     // Markera alla lönespecar för denna lönekörning
-    const kolumnNamn = statusTyp;
-    const datumKolumn = `${statusTyp}_datum`;
+    // Mappa statusTyp till rätt kolumnnamn
+    const kolumnMapping: Record<string, string> = {
+      bankgiro_exporterad: "bankgiro_exporterad",
+      mailade: "mailad",
+      bokford: "bokförd",
+      agi_genererad: "agi_genererad",
+      skatter_bokforda: "skatter_bokförda",
+    };
+
+    const kolumnNamn = kolumnMapping[statusTyp] || statusTyp;
+    const datumKolumn = `${kolumnNamn}_datum`;
 
     const updateQuery = `
       UPDATE lönespecifikationer 

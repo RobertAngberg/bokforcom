@@ -69,6 +69,13 @@ export default function LonespecLista({
   const allaHarAGI = valdaSpecar.every((spec) => spec.agi_genererad);
   const allaHarSkatter = valdaSpecar.every((spec) => spec.skatter_bokförda);
 
+  // Debug: logga status
+  console.log(
+    "🔍 valdaSpecar:",
+    valdaSpecar.map((s) => ({ id: s.id, mailad: s.mailad, bokförd: s.bokförd }))
+  );
+  console.log("🔍 allaHarMailats:", allaHarMailats, "allaHarBokförts:", allaHarBokförts);
+
   const handleTaBortLönespec = async (spec: any) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
     setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
@@ -98,10 +105,14 @@ export default function LonespecLista({
 
   const handleMailaSpecar = async () => {
     if (period) {
+      console.log("🔍 Maila: Innan markeraLönekörningSteg");
       const result = await markeraLönekörningSteg(period, "mailade");
+      console.log("🔍 Maila: Result:", result);
       if (result.success) {
         setToast({ type: "success", message: "Lönespecar markerade som mailade!" });
+        console.log("🔍 Maila: Innan onRefreshData");
         if (onRefreshData) await onRefreshData();
+        console.log("🔍 Maila: Efter onRefreshData");
       } else {
         setToast({ type: "error", message: result.error || "Fel vid markering" });
       }
@@ -111,10 +122,14 @@ export default function LonespecLista({
 
   const handleBokför = async () => {
     if (period) {
+      console.log("🔍 Bokför: Innan markeraLönekörningSteg");
       const result = await markeraLönekörningSteg(period, "bokford");
+      console.log("🔍 Bokför: Result:", result);
       if (result.success) {
         setToast({ type: "success", message: "Löner markerade som bokförda!" });
+        console.log("🔍 Bokför: Innan onRefreshData");
         if (onRefreshData) await onRefreshData();
+        console.log("🔍 Bokför: Efter onRefreshData");
       } else {
         setToast({ type: "error", message: result.error || "Fel vid markering" });
       }
