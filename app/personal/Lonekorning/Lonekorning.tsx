@@ -75,7 +75,8 @@ export default function Lonekorning() {
     bokförLöneskatter,
     onSkatteComplete: async () => {
       // Markera alla lönespecar som skatter-bokförda
-      for (const spec of lönekörningSpecar) { // Använd lönekörningSpecar
+      for (const spec of lönekörningSpecar) {
+        // Använd lönekörningSpecar
         if (!spec.skatter_bokförda) {
           await markeraSkatternaBokförda(spec.id);
         }
