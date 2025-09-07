@@ -672,6 +672,7 @@ export default function Lonekorning() {
             setSkatteDatum={setSkatteDatum}
             hanteraBokförSkatter={skatteManager.hanteraBokförSkatter}
             skatteBokförPågår={skatteBokförPågår}
+            onHämtaBankgiro={() => setBankgiroModalOpen(true)} // Lägg till bankgiro-funktionen
           />
         </>
       )}

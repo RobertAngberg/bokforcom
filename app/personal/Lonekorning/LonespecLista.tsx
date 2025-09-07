@@ -103,57 +103,84 @@ export default function LonespecLista({
           {/* REMOVED lönekörning info för enkelhet */}
         </div>
 
-        {/* Progress Steps - SIE Style */}
-        <div className="flex items-center space-x-4 mb-6">
+        {/* Progress Steps - Integrerad med knappar */}
+        <div className="space-y-4 mb-6">
           {[
             {
               id: "maila",
               title: "Maila",
               description: "Skicka lönespecar",
               completed: !!lönekörning?.mailade_datum,
+              buttonText: "✉️ Maila lönespecar",
+              onClick: onMailaSpecar,
+              enabled: true,
             },
             {
               id: "bokfor",
               title: "Bokför",
               description: "Registrera i bokföring",
               completed: !!lönekörning?.bokford_datum,
+              buttonText: "📖 Bokför",
+              onClick: handleBokför,
+              enabled: bokförEnabled,
             },
             {
               id: "agi",
               title: "AGI",
               description: "Generera deklaration",
               completed: !!lönekörning?.agi_genererad_datum,
+              buttonText: "📊 Generera AGI",
+              onClick: handleGenereraAGI,
+              enabled: agiEnabled,
             },
             {
               id: "skatter",
               title: "Skatter",
               description: "Bokför skatter",
               completed: !!lönekörning?.skatter_bokforda_datum,
+              buttonText: "💰 Bokför skatter",
+              onClick: handleBokförSkatter,
+              enabled: skatterEnabled,
             },
           ].map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-sm font-bold ${
-                  step.completed ? "bg-green-600 text-white" : "bg-slate-600 text-gray-400"
-                }`}
-              >
-                {step.completed ? "✓" : index + 1}
-              </div>
-              <div className="ml-2">
+            <div
+              key={step.id}
+              className="flex items-center justify-between bg-slate-600 rounded-lg p-4"
+            >
+              {/* Vänster sida: Status och info */}
+              <div className="flex items-center">
                 <div
-                  className={`text-sm font-medium ${
-                    step.completed ? "text-white" : "text-gray-400"
+                  className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
+                    step.completed ? "bg-green-600 text-white" : "bg-slate-500 text-gray-300"
                   }`}
                 >
-                  {step.title}
+                  {step.completed ? "✓" : index + 1}
                 </div>
-                <div className="text-xs text-gray-500">{step.description}</div>
+                <div>
+                  <div
+                    className={`text-sm font-medium ${
+                      step.completed ? "text-green-400" : "text-white"
+                    }`}
+                  >
+                    {step.title}
+                  </div>
+                  <div className="text-xs text-gray-400">{step.description}</div>
+                </div>
               </div>
-              {index < 3 && (
-                <div
-                  className={`w-8 h-0.5 mx-4 ${step.completed ? "bg-green-600" : "bg-slate-600"}`}
+
+              {/* Höger sida: Knapp */}
+              <div>
+                <Knapp
+                  text={step.buttonText}
+                  onClick={step.onClick}
+                  className={
+                    step.enabled
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-500 cursor-not-allowed"
+                  }
+                  disabled={!step.enabled}
                 />
-              )}
+              </div>
             </div>
           ))}
         </div>
@@ -180,42 +207,10 @@ export default function LonespecLista({
         })}
       </>
 
-      {/* Bankgiro export - separate från workflow */}
-      {/* REMOVED - moved to action buttons */}
-
-      {/* Action buttons - SUPERENKLA */}
-      <div className="bg-slate-700 rounded-lg p-6">
-        <h5 className="text-white font-semibold mb-4 text-center">Lönekörnings-åtgärder</h5>
+      {/* Frivilliga åtgärder - REMOVED bankgiro, moved to skatte modal */}
+      {/* <div className="bg-slate-700 rounded-lg p-6">
+        <h5 className="text-white font-semibold mb-4 text-center">Frivilliga åtgärder</h5>
         <div className="flex gap-4 justify-center flex-wrap">
-          <Knapp
-            text="✉️ Maila lönespecar"
-            onClick={onMailaSpecar}
-            className="bg-blue-600 hover:bg-blue-700"
-          />
-          <Knapp
-            text="📖 Bokför"
-            onClick={handleBokför}
-            className={
-              bokförEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
-            }
-            disabled={!bokförEnabled}
-          />
-          <Knapp
-            text="📊 Generera AGI"
-            onClick={handleGenereraAGI}
-            className={
-              agiEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
-            }
-            disabled={!agiEnabled}
-          />
-          <Knapp
-            text="💰 Bokför skatter"
-            onClick={handleBokförSkatter}
-            className={
-              skatterEnabled ? "bg-cyan-600 hover:bg-cyan-700" : "bg-gray-500 cursor-not-allowed"
-            }
-            disabled={!skatterEnabled}
-          />
           <Knapp
             text="🏦 Bankgirofil (Frivilligt)"
             onClick={handleHämtaBankgiro}
@@ -223,19 +218,17 @@ export default function LonespecLista({
             disabled={false}
           />
         </div>
+      </div> */}
 
-        {/* Completion status */}
-        {allaHarSkatter && (
-          <div className="mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-center shadow-lg">
-            <div className="text-white text-xl font-bold mb-2">🎉 LÖNEKÖRNING AVSLUTAD!</div>
-            <div className="text-green-100 text-sm">
-              Alla steg har genomförts framgångsrikt. Lönekörningen är nu komplett.
-            </div>
+      {/* Completion status */}
+      {allaHarSkatter && (
+        <div className="mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-center shadow-lg">
+          <div className="text-white text-xl font-bold mb-2">🎉 LÖNEKÖRNING AVSLUTAD!</div>
+          <div className="text-green-100 text-sm">
+            Alla steg har genomförts framgångsrikt. Lönekörningen är nu komplett.
           </div>
-        )}
-      </div>
-
-      {/* REMOVED toast för enkelhet */}
+        </div>
+      )}
     </div>
   );
 }

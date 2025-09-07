@@ -15,6 +15,7 @@ interface SkatteBokforingModalProps {
   setSkatteDatum: (date: Date | null) => void;
   hanteraBokförSkatter: () => void;
   skatteBokförPågår: boolean;
+  onHämtaBankgiro?: () => void; // Ny prop för bankgiro
 }
 
 export default function SkatteBokforingModal({
@@ -27,6 +28,7 @@ export default function SkatteBokforingModal({
   setSkatteDatum,
   hanteraBokförSkatter,
   skatteBokförPågår,
+  onHämtaBankgiro,
 }: SkatteBokforingModalProps) {
   return (
     <Modal
@@ -142,30 +144,45 @@ export default function SkatteBokforingModal({
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-end gap-4 pt-4 border-t border-slate-600">
-          <button
-            onClick={() => setSkatteModalOpen(false)}
-            className="px-4 py-2 bg-slate-700 text-white border border-slate-600 rounded hover:bg-slate-600"
-          >
-            Stäng
-          </button>
-          <button
-            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            onClick={hanteraBokförSkatter}
-            disabled={
-              skatteBokförPågår ||
-              (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0)
-            }
-          >
-            {skatteBokförPågår ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Bokför...
-              </>
-            ) : (
-              "Bokför transaktioner"
+        <div className="flex justify-between items-center pt-4 border-t border-slate-600">
+          {/* Vänster sida: Bankgiro */}
+          <div>
+            {onHämtaBankgiro && (
+              <button
+                onClick={onHämtaBankgiro}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                🏦 Bankgirofil (Frivilligt)
+              </button>
             )}
-          </button>
+          </div>
+
+          {/* Höger sida: Huvudknappar */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setSkatteModalOpen(false)}
+              className="px-4 py-2 bg-slate-700 text-white border border-slate-600 rounded hover:bg-slate-600"
+            >
+              Stäng
+            </button>
+            <button
+              className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              onClick={hanteraBokförSkatter}
+              disabled={
+                skatteBokförPågår ||
+                (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0)
+              }
+            >
+              {skatteBokförPågår ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Bokför...
+                </>
+              ) : (
+                "Bokför transaktioner"
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>
