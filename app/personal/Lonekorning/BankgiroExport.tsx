@@ -98,10 +98,6 @@ export default function BankgiroExport({
             {/* Header */}
             <div className="bg-slate-800 text-white p-4 rounded-t-lg">
               <h2 className="text-xl font-bold">Hämta Bankgirofil</h2>
-              <p className="text-sm text-gray-300 mt-1">
-                Bankgiro-filer kan användas för att snabbt ladda upp flera betalningar till din
-                bank. Men du måste köpa den extratjänsten från din bank innan det fungerar.
-              </p>
             </div>
 
             {/* Content */}

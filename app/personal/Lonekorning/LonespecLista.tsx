@@ -181,18 +181,7 @@ export default function LonespecLista({
       </>
 
       {/* Bankgiro export - separate från workflow */}
-      <div className="bg-slate-800 rounded-lg p-4">
-        <div className="text-center">
-          <Knapp
-            text="🏦 Hämta bankgirofil"
-            onClick={handleHämtaBankgiro}
-            className="bg-blue-600 hover:bg-blue-700"
-          />
-          <p className="text-gray-400 text-sm mt-2">
-            Exportera betalningsfil för banken (frivilligt)
-          </p>
-        </div>
-      </div>
+      {/* REMOVED - moved to action buttons */}
 
       {/* Action buttons - SUPERENKLA */}
       <div className="bg-slate-700 rounded-lg p-6">
@@ -226,6 +215,12 @@ export default function LonespecLista({
               skatterEnabled ? "bg-cyan-600 hover:bg-cyan-700" : "bg-gray-500 cursor-not-allowed"
             }
             disabled={!skatterEnabled}
+          />
+          <Knapp
+            text="🏦 Bankgirofil (Frivilligt)"
+            onClick={handleHämtaBankgiro}
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={false}
           />
         </div>
 
