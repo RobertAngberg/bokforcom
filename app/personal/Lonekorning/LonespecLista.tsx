@@ -101,7 +101,12 @@ export default function LonespecLista({
       const result = await markeraLönekörningSteg(period, "mailade");
       if (result.success) {
         setToast({ type: "success", message: "Lönespecar markerade som mailade!" });
+        // Först uppdatera via callback
         if (onRefreshData) await onRefreshData();
+        // Sedan trigga UI refresh med en kort delay för att säkerställa att databasen är uppdaterad
+        setTimeout(async () => {
+          if (onRefreshData) await onRefreshData();
+        }, 100);
       } else {
         setToast({ type: "error", message: result.error || "Fel vid markering" });
       }
