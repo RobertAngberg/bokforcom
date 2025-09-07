@@ -11,6 +11,7 @@ interface BankgiroExportProps {
   onClose?: () => void;
   onExportComplete?: () => void; // Ny callback för när export är klar
   showButton?: boolean; // Ny prop för att styra om knappen ska visas
+  direktNedladdning?: boolean; // Ny prop för direkt nedladdning
 }
 
 export default function BankgiroExport({
@@ -21,6 +22,7 @@ export default function BankgiroExport({
   onClose,
   onExportComplete,
   showButton = true, // Default till true för bakåtkompatibilitet
+  direktNedladdning = false, // Default till false
 }: BankgiroExportProps) {
   const [visaModal, setVisaModal] = useState(false);
   const [kundnummer, setKundnummer] = useState("123456");
@@ -81,8 +83,64 @@ export default function BankgiroExport({
     setVisaModal(false);
   };
 
+  // Direkt nedladdning utan modal
+  const laddarNerDirekt = () => {
+    if (!utbetalningsdatum) {
+      alert("Utbetalningsdatum saknas!");
+      return;
+    }
+
+    const datum = utbetalningsdatum.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
+
+    let fil = "";
+
+    // Header (01-post) - använd defaults för snabb nedladdning
+    const header = `01${datum}  LÖN${" ".repeat(46)}SEK1234560001123456789   \n`;
+    fil += header;
+
+    // Betalningsposter (35-post) för varje anställd
+    anställdaMedLönespec.forEach((anställd) => {
+      const lönespec = lönespecar[anställd.id];
+      const nettolön = Math.round(parseFloat(lönespec?.nettolön || 0) * 100); // Öre
+      const clearingPadded = (anställd.clearingnummer || "0000").padStart(4, "0");
+      const kontoPadded = (anställd.bankkonto || "0").padStart(10, "0");
+      const beloppPadded = nettolön.toString().padStart(12, "0");
+      const namn = `Lön ${anställd.förnamn} ${anställd.efternamn}`.substring(0, 12);
+
+      const betalning = `35${datum}    ${clearingPadded}${kontoPadded}${beloppPadded}${" ".repeat(18)}${kontoPadded}${namn.padEnd(12, " ")}\n`;
+      fil += betalning;
+    });
+
+    // Slutpost (09-post)
+    const totalÖre = Math.round(totalBelopp * 100);
+    const antalPoster = anställdaMedLönespec.length.toString().padStart(8, "0");
+    const totalBeloppPadded = totalÖre.toString().padStart(12, "0");
+
+    const slutpost = `09${datum}${" ".repeat(20)}${totalBeloppPadded}${antalPoster}${" ".repeat(40)}\n`;
+    fil += slutpost;
+
+    // Ladda ner filen
+    const blob = new Blob([fil], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `loner_${datum}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Markera export som genomförd
+    onExportComplete?.();
+    onClose?.();
+  };
+
   // Modal state: styrs av prop om satt, annars lokalt
   const showModal = open !== undefined ? open : visaModal;
+
+  // Om direkt nedladdning är aktiverat, kör nedladdning direkt när komponenten används
+  if (direktNedladdning && anställdaMedLönespec.length > 0) {
+    laddarNerDirekt();
+    return null; // Visa inget UI
+  }
 
   if (anställdaMedLönespec.length === 0) {
     return null; // Ingen knapp om inga lönespecar

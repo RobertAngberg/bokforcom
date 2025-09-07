@@ -51,8 +51,14 @@ export default function LonespecLista({
   const allaHarBankgiro = valdaSpecar.every((spec) => spec.bankgiro_exporterad);
   const allaHarMailats = valdaSpecar.every((spec) => spec.mailad);
   const allaHarBokförts = valdaSpecar.every((spec) => spec.bokförd);
-  const allaHarAGI = valdaSpecar.every((spec) => spec.agi_genererad);
-  const allaHarSkatter = valdaSpecar.every((spec) => spec.skatter_bokförda);
+
+  // Kolla om lönekörningen är komplett (alla steg genomförda på lönekörning-nivå)
+  const lönekörningKomplett = !!(
+    lönekörning?.mailade_datum &&
+    lönekörning?.bokford_datum &&
+    lönekörning?.agi_genererad_datum &&
+    lönekörning?.skatter_bokforda_datum
+  );
 
   const handleTaBortLönespec = async (spec: any) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
@@ -231,7 +237,7 @@ export default function LonespecLista({
       </div> */}
 
       {/* Completion status */}
-      {allaHarSkatter && (
+      {lönekörningKomplett && (
         <div className="mt-6 p-6 bg-slate-600 rounded-lg text-center shadow-lg">
           <div className="text-white text-xl font-bold mb-2">🎉 Lönekörning avslutad</div>
           <div className="text-gray-300 text-sm">

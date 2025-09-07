@@ -1274,8 +1274,9 @@ export async function markeraAGIGenererad(lönespecId: number) {
   try {
     const client = await pool.connect();
 
+    // Hämta lönekörning_id från lönespecifikationen
     const checkQuery = `
-      SELECT l.id FROM lönespecifikationer l
+      SELECT l.lonekorning_id FROM lönespecifikationer l
       JOIN anställda a ON l.anställd_id = a.id
       WHERE l.id = $1 AND a.user_id = $2
     `;
@@ -1286,14 +1287,17 @@ export async function markeraAGIGenererad(lönespecId: number) {
       throw new Error("Lönespec inte hittad");
     }
 
+    const lönekörningId = checkResult.rows[0].lonekorning_id;
+
+    // Uppdatera lönekörning istället för lönespec
     const updateQuery = `
-      UPDATE lönespecifikationer 
+      UPDATE lönekörningar 
       SET agi_genererad = true, agi_genererad_datum = NOW()
-      WHERE id = $1
+      WHERE id = $1 AND startad_av = $2
       RETURNING *
     `;
 
-    const result = await client.query(updateQuery, [lönespecId]);
+    const result = await client.query(updateQuery, [lönekörningId, userId]);
     client.release();
     revalidatePath("/personal");
 
@@ -1311,8 +1315,9 @@ export async function markeraSkatternaBokförda(lönespecId: number) {
   try {
     const client = await pool.connect();
 
+    // Hämta lönekörning_id från lönespecifikationen
     const checkQuery = `
-      SELECT l.id FROM lönespecifikationer l
+      SELECT l.lonekorning_id FROM lönespecifikationer l
       JOIN anställda a ON l.anställd_id = a.id
       WHERE l.id = $1 AND a.user_id = $2
     `;
@@ -1323,14 +1328,17 @@ export async function markeraSkatternaBokförda(lönespecId: number) {
       throw new Error("Lönespec inte hittad");
     }
 
+    const lönekörningId = checkResult.rows[0].lonekorning_id;
+
+    // Uppdatera lönekörning istället för lönespec
     const updateQuery = `
-      UPDATE lönespecifikationer 
+      UPDATE lönekörningar 
       SET skatter_bokförda = true, skatter_bokförda_datum = NOW()
-      WHERE id = $1
+      WHERE id = $1 AND startad_av = $2
       RETURNING *
     `;
 
-    const result = await client.query(updateQuery, [lönespecId]);
+    const result = await client.query(updateQuery, [lönekörningId, userId]);
     client.release();
     revalidatePath("/personal");
 
@@ -2602,10 +2610,9 @@ export async function skapaLönespecifikationerFörLönekörning(
           sociala_avgifter,
           nettolön,
           utbetalningsdatum,
-          status,
           skapad_av,
           lonekorning_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `;
 
@@ -2623,7 +2630,6 @@ export async function skapaLönespecifikationerFörLönekörning(
         socialaAvgifter,
         nettolön,
         utbetalningsdatum,
-        "utkast",
         userId,
         lönekörningId,
       ]);

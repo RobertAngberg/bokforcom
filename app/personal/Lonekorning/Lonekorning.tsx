@@ -707,7 +707,67 @@ export default function Lonekorning() {
             setSkatteDatum={setSkatteDatum}
             hanteraBokförSkatter={skatteManager.hanteraBokförSkatter}
             skatteBokförPågår={skatteBokförPågår}
-            onHämtaBankgiro={() => setBankgiroModalOpen(true)} // Lägg till bankgiro-funktionen
+            onHämtaBankgiro={() => {
+              // Direkt nedladdning av bankgirofil
+              const specarAttAnvända = valdLonekorning ? lönekörningSpecar : valdaSpecar;
+
+              if (specarAttAnvända.length === 0) {
+                alert("Inga lönespecifikationer att exportera!");
+                return;
+              }
+
+              if (!utbetalningsdatum) {
+                alert("Utbetalningsdatum saknas!");
+                return;
+              }
+
+              const datum = new Date(utbetalningsdatum)
+                .toISOString()
+                .slice(2, 10)
+                .replace(/-/g, "");
+
+              let fil = "";
+
+              // Header
+              const header = `01${datum}  LÖN${" ".repeat(46)}SEK1234560001123456789   \n`;
+              fil += header;
+
+              // Betalningsposter
+              specarAttAnvända.forEach((spec) => {
+                const anställd = anstallda.find((a) => a.id === spec.anställd_id);
+                if (!anställd) return;
+
+                const nettolön = Math.round(parseFloat(spec.nettolön || 0) * 100);
+                const clearingPadded = (anställd.clearingnummer || "0000").padStart(4, "0");
+                const kontoPadded = (anställd.bankkonto || "0").padStart(10, "0");
+                const beloppPadded = nettolön.toString().padStart(12, "0");
+                const namn = `Lön ${anställd.förnamn} ${anställd.efternamn}`.substring(0, 12);
+
+                const betalning = `35${datum}    ${clearingPadded}${kontoPadded}${beloppPadded}${" ".repeat(18)}${kontoPadded}${namn.padEnd(12, " ")}\n`;
+                fil += betalning;
+              });
+
+              // Slutpost
+              const totalBelopp = specarAttAnvända.reduce(
+                (sum, spec) => sum + parseFloat(spec.nettolön || 0),
+                0
+              );
+              const totalÖre = Math.round(totalBelopp * 100);
+              const antalPoster = specarAttAnvända.length.toString().padStart(8, "0");
+              const totalBeloppPadded = totalÖre.toString().padStart(12, "0");
+
+              const slutpost = `09${datum}${" ".repeat(20)}${totalBeloppPadded}${antalPoster}${" ".repeat(40)}\n`;
+              fil += slutpost;
+
+              // Ladda ner filen
+              const blob = new Blob([fil], { type: "text/plain" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `loner_${datum}.txt`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }} // Lägg till bankgiro-funktionen
           />
         </>
       )}
