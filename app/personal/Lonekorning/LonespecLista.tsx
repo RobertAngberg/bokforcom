@@ -36,7 +36,8 @@ export default function LonespecLista({
   const [taBortLaddning, setTaBortLaddning] = useState<Record<number, boolean>>({});
 
   // Använd aktuellt_steg från databasen istället för lokal state
-  const currentStep = lönekörning?.aktuellt_steg || 1;
+  const currentStep = lönekörning?.aktuellt_steg || 0; // Börja med 0 istället för 1
+  const mailaEnabled = currentStep >= 1;
   const bokförEnabled = currentStep >= 2;
   const agiEnabled = currentStep >= 3;
   const skatterEnabled = currentStep >= 4;
@@ -109,33 +110,31 @@ export default function LonespecLista({
               id: "maila",
               title: "Maila",
               description: "Skicka lönespecar",
-              completed: allaHarMailats,
+              completed: !!lönekörning?.mailade_datum,
             },
             {
               id: "bokfor",
               title: "Bokför",
               description: "Registrera i bokföring",
-              completed: allaHarBokförts,
+              completed: !!lönekörning?.bokford_datum,
             },
-            { id: "agi", title: "AGI", description: "Generera deklaration", completed: allaHarAGI },
+            {
+              id: "agi",
+              title: "AGI",
+              description: "Generera deklaration",
+              completed: !!lönekörning?.agi_genererad_datum,
+            },
             {
               id: "skatter",
               title: "Skatter",
               description: "Bokför skatter",
-              completed: allaHarSkatter,
+              completed: !!lönekörning?.skatter_bokforda_datum,
             },
           ].map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
                 className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-sm font-bold ${
-                  step.completed
-                    ? "bg-green-600 text-white"
-                    : index === 0 ||
-                        (index === 1 && bokförEnabled) ||
-                        (index === 2 && agiEnabled) ||
-                        (index === 3 && skatterEnabled)
-                      ? "bg-cyan-600 text-white"
-                      : "bg-slate-600 text-gray-400"
+                  step.completed ? "bg-green-600 text-white" : "bg-slate-600 text-gray-400"
                 }`}
               >
                 {step.completed ? "✓" : index + 1}
@@ -143,13 +142,7 @@ export default function LonespecLista({
               <div className="ml-2">
                 <div
                   className={`text-sm font-medium ${
-                    step.completed ||
-                    index === 0 ||
-                    (index === 1 && bokförEnabled) ||
-                    (index === 2 && agiEnabled) ||
-                    (index === 3 && skatterEnabled)
-                      ? "text-white"
-                      : "text-gray-400"
+                    step.completed ? "text-white" : "text-gray-400"
                   }`}
                 >
                   {step.title}
