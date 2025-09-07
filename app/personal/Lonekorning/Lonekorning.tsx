@@ -18,6 +18,7 @@ import {
   markeraAGIGenererad,
   markeraSkatternaBokförda,
   hämtaLönespecifikationerFörLönekörning,
+  uppdateraLönekörningSteg,
 } from "../actions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
@@ -357,12 +358,130 @@ export default function Lonekorning() {
               valdaSpecar={lönekörningSpecar}
               anstallda={anstallda}
               utlaggMap={utlaggMap}
+              lönekörning={valdLonekorning} // Skicka hela lönekörning-objektet
               onTaBortSpec={lonespecManager.hanteraTaBortSpec}
               onHämtaBankgiro={() => setBankgiroModalOpen(true)}
-              onMailaSpecar={() => setBatchMailModalOpen(true)}
-              onBokför={() => setBokforModalOpen(true)}
-              onGenereraAGI={agiGenerator.hanteraAGI}
-              onBokförSkatter={() => setSkatteModalOpen(true)}
+              onMailaSpecar={async () => {
+                console.log("📧 onMailaSpecar anropad!");
+
+                // Uppdatera UI FÖRST för smidig UX
+                if (valdLonekorning?.id) {
+                  setValdLonekorning((prev) => ({
+                    ...prev,
+                    aktuellt_steg: 2,
+                    mailade_datum: new Date(),
+                  }));
+
+                  // Spara till DB i bakgrunden
+                  uppdateraLönekörningSteg(valdLonekorning.id, 2).then((result) => {
+                    if (result.success) {
+                      console.log("✅ Lönekörning uppdaterad till steg 2");
+                    } else {
+                      console.error("❌ Fel vid uppdatering:", result.error);
+                      // Återställ vid fel
+                      setValdLonekorning((prev) => ({
+                        ...prev,
+                        aktuellt_steg: 1,
+                        mailade_datum: undefined,
+                      }));
+                    }
+                  });
+                }
+
+                setBatchMailModalOpen(true);
+              }}
+              onBokför={async () => {
+                console.log("🔥 onBokför anropad från LonespecLista!");
+
+                // Uppdatera UI FÖRST för smidig UX
+                if (valdLonekorning?.id) {
+                  setValdLonekorning((prev) => ({
+                    ...prev,
+                    aktuellt_steg: 3,
+                    bokford_datum: new Date(),
+                  }));
+
+                  // Spara till DB i bakgrunden
+                  uppdateraLönekörningSteg(valdLonekorning.id, 3).then((result) => {
+                    if (result.success) {
+                      console.log("✅ Lönekörning uppdaterad till steg 3");
+                    } else {
+                      console.error("❌ Fel vid uppdatering:", result.error);
+                      // Återställ vid fel
+                      setValdLonekorning((prev) => ({
+                        ...prev,
+                        aktuellt_steg: 2,
+                        bokford_datum: undefined,
+                      }));
+                    }
+                  });
+                }
+
+                setBokforModalOpen(true);
+              }}
+              onGenereraAGI={async () => {
+                console.log("📊 onGenereraAGI anropad!");
+
+                // Uppdatera UI FÖRST för smidig UX
+                if (valdLonekorning?.id) {
+                  setValdLonekorning((prev) => ({
+                    ...prev,
+                    aktuellt_steg: 4,
+                    agi_genererad_datum: new Date(),
+                  }));
+
+                  // Kör AGI i bakgrunden
+                  agiGenerator.hanteraAGI();
+
+                  // Spara till DB i bakgrunden
+                  uppdateraLönekörningSteg(valdLonekorning.id, 4).then((result) => {
+                    if (result.success) {
+                      console.log("✅ Lönekörning uppdaterad till steg 4");
+                    } else {
+                      console.error("❌ Fel vid uppdatering:", result.error);
+                      // Återställ vid fel
+                      setValdLonekorning((prev) => ({
+                        ...prev,
+                        aktuellt_steg: 3,
+                        agi_genererad_datum: undefined,
+                      }));
+                    }
+                  });
+                }
+              }}
+              onBokförSkatter={async () => {
+                console.log("💰 onBokförSkatter anropad!");
+
+                // Uppdatera UI FÖRST för smidig UX
+                if (valdLonekorning?.id) {
+                  setValdLonekorning((prev) => ({
+                    ...prev,
+                    aktuellt_steg: 5,
+                    skatter_bokforda_datum: new Date(),
+                    status: "avslutad",
+                    avslutad_datum: new Date(),
+                  }));
+
+                  // Spara till DB i bakgrunden
+                  uppdateraLönekörningSteg(valdLonekorning.id, 5).then((result) => {
+                    if (result.success) {
+                      console.log("✅ Lönekörning uppdaterad till steg 5 (KOMPLETT!)");
+                    } else {
+                      console.error("❌ Fel vid uppdatering:", result.error);
+                      // Återställ vid fel
+                      setValdLonekorning((prev) => ({
+                        ...prev,
+                        aktuellt_steg: 4,
+                        skatter_bokforda_datum: undefined,
+                        status: "pågående",
+                        avslutad_datum: undefined,
+                      }));
+                    }
+                  });
+                }
+
+                setSkatteModalOpen(true);
+              }}
               onRefreshData={async () => {
                 await loadLönekörningSpecar();
                 // Force re-render genom att sätta loading kort
@@ -430,36 +549,59 @@ export default function Lonekorning() {
                 // Summera alla värden från alla lönespecar
                 bruttolön: (() => {
                   console.log("🔍 lönekörningSpecar för bokföring:", lönekörningSpecar);
-                  return lönekörningSpecar.reduce(
-                    (sum, spec) => sum + (parseFloat(spec.bruttolön) || 0),
-                    0
-                  );
+                  const totalBrutto = lönekörningSpecar.reduce((sum, spec) => {
+                    const brutto = parseFloat(spec.bruttolön) || 0;
+                    console.log(`💰 Spec ${spec.id}: bruttolön=${brutto}`);
+                    return sum + brutto;
+                  }, 0);
+                  console.log(`📊 TOTAL BRUTTOLÖN: ${totalBrutto}`);
+                  return totalBrutto;
                 })(),
-                sociala_avgifter: lönekörningSpecar.reduce(
-                  (sum, spec) => sum + (parseFloat(spec.sociala_avgifter) || 0),
-                  0
-                ),
-                skatt: lönekörningSpecar.reduce(
-                  (sum, spec) => sum + (parseFloat(spec.skatt) || 0),
-                  0
-                ),
-                nettolön: lönekörningSpecar.reduce(
-                  (sum, spec) => sum + (parseFloat(spec.nettolön) || 0),
-                  0
-                ),
-                lönekostnad: lönekörningSpecar.reduce(
-                  (sum, spec) => sum + (parseFloat(spec.lönekostnad) || 0),
-                  0
-                ),
+                sociala_avgifter: (() => {
+                  const totalSociala = lönekörningSpecar.reduce((sum, spec) => {
+                    const sociala = parseFloat(spec.sociala_avgifter) || 0;
+                    console.log(`🏛️ Spec ${spec.id}: sociala_avgifter=${sociala}`);
+                    return sum + sociala;
+                  }, 0);
+                  console.log(`📊 TOTAL SOCIALA AVGIFTER: ${totalSociala}`);
+                  return totalSociala;
+                })(),
+                skatt: (() => {
+                  const totalSkatt = lönekörningSpecar.reduce((sum, spec) => {
+                    const skatt = parseFloat(spec.skatt) || 0;
+                    console.log(`💸 Spec ${spec.id}: skatt=${skatt}`);
+                    return sum + skatt;
+                  }, 0);
+                  console.log(`📊 TOTAL SKATT: ${totalSkatt}`);
+                  return totalSkatt;
+                })(),
+                nettolön: (() => {
+                  const totalNetto = lönekörningSpecar.reduce((sum, spec) => {
+                    const netto = parseFloat(spec.nettolön) || 0;
+                    console.log(`💵 Spec ${spec.id}: nettolön=${netto}`);
+                    return sum + netto;
+                  }, 0);
+                  console.log(`📊 TOTAL NETTOLÖN: ${totalNetto}`);
+                  return totalNetto;
+                })(),
+                lönekostnad: (() => {
+                  const totalKostnad = lönekörningSpecar.reduce((sum, spec) => {
+                    const kostnad = parseFloat(spec.lönekostnad) || 0;
+                    console.log(`🏪 Spec ${spec.id}: lönekostnad=${kostnad}`);
+                    return sum + kostnad;
+                  }, 0);
+                  console.log(`📊 TOTAL LÖNEKOSTNAD: ${totalKostnad}`);
+                  return totalKostnad;
+                })(),
               }}
               extrarader={lönekörningSpecar.flatMap((spec) => extrarader[spec.id] || [])} // Kombinera alla extrarader
               beräknadeVärden={{
-                bruttolön: valdaSpecar.reduce(
+                bruttolön: lönekörningSpecar.reduce(
                   (sum, spec) =>
                     sum + (beräknadeVärden[spec.id]?.bruttolön || parseFloat(spec.bruttolön) || 0),
                   0
                 ),
-                socialaAvgifter: valdaSpecar.reduce(
+                socialaAvgifter: lönekörningSpecar.reduce(
                   (sum, spec) =>
                     sum +
                     (beräknadeVärden[spec.id]?.socialaAvgifter ||
@@ -467,24 +609,24 @@ export default function Lonekorning() {
                       0),
                   0
                 ),
-                skatt: valdaSpecar.reduce(
+                skatt: lönekörningSpecar.reduce(
                   (sum, spec) =>
                     sum + (beräknadeVärden[spec.id]?.skatt || parseFloat(spec.skatt) || 0),
                   0
                 ),
-                nettolön: valdaSpecar.reduce(
+                nettolön: lönekörningSpecar.reduce(
                   (sum, spec) =>
                     sum + (beräknadeVärden[spec.id]?.nettolön || parseFloat(spec.nettolön) || 0),
                   0
                 ),
-                lönekostnad: valdaSpecar.reduce(
+                lönekostnad: lönekörningSpecar.reduce(
                   (sum, spec) =>
                     sum +
                     (beräknadeVärden[spec.id]?.lönekostnad || parseFloat(spec.lönekostnad) || 0),
                   0
                 ),
               }}
-              anställdNamn={`Batch-bokföring (${valdaSpecar.length} anställda)`}
+              anställdNamn={`Batch-bokföring (${lönekörningSpecar.length} anställda)`}
               isOpen={true}
               onClose={() => setBokforModalOpen(false)}
               onBokfört={async () => {

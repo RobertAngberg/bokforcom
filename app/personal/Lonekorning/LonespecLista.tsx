@@ -1,24 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
 import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import {
-  markeraBankgiroExporterad,
-  markeraMailad,
-  markeraBokförd,
-  markeraAGIGenererad,
-  markeraSkatternaBokförda,
-  markeraLönekörningSteg,
-  hämtaAktivLönekörning,
-  Lönekörning,
-} from "../actions";
 
 interface LonespecListaProps {
   valdaSpecar: any[];
   anstallda: any[];
   utlaggMap: Record<number, any[]>;
+  lönekörning?: any; // Lägg till lönekörning-objektet
   onTaBortSpec: (specId: number) => Promise<void>;
   onHämtaBankgiro: () => void;
   onMailaSpecar: () => void;
@@ -33,6 +23,7 @@ export default function LonespecLista({
   valdaSpecar,
   anstallda,
   utlaggMap,
+  lönekörning,
   onTaBortSpec,
   onHämtaBankgiro,
   onMailaSpecar,
@@ -43,22 +34,15 @@ export default function LonespecLista({
   period,
 }: LonespecListaProps) {
   const [taBortLaddning, setTaBortLaddning] = useState<Record<number, boolean>>({});
-  const [lönekörning, setLönekörning] = useState<Lönekörning | null>(null);
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
+
+  // Använd aktuellt_steg från databasen istället för lokal state
+  const currentStep = lönekörning?.aktuellt_steg || 1;
+  const bokförEnabled = currentStep >= 2;
+  const agiEnabled = currentStep >= 3;
+  const skatterEnabled = currentStep >= 4;
 
   // Hämta lönekörning när komponenten laddas eller period ändras
-  useEffect(() => {
-    if (period) {
-      hämtaAktivLönekörning(period).then((result) => {
-        if (result.success && result.data) {
-          setLönekörning(result.data);
-        }
-      });
-    }
-  }, [period]);
+  // REMOVED - för enkelhet
 
   if (valdaSpecar.length === 0) return null;
 
@@ -76,53 +60,29 @@ export default function LonespecLista({
       await onTaBortSpec(spec.id);
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönespec:", error);
-      setToast({ type: "error", message: "Kunde inte ta bort lönespec" });
+      // REMOVED toast för enkelhet
     } finally {
       setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
     }
   };
 
-  // Wrapper-funktioner som markerar åtgärder som klara
-  const handleHämtaBankgiro = async () => {
-    if (period) {
-      const result = await markeraLönekörningSteg(period, "bankgiro_exporterad");
-      if (result.success) {
-        setToast({ type: "success", message: "Bankgiro markerat som exporterat!" });
-        if (onRefreshData) await onRefreshData();
-      } else {
-        setToast({ type: "error", message: result.error || "Fel vid markering" });
-      }
-    }
+  // SUPERENKLA wrapper-funktioner
+  const handleHämtaBankgiro = () => {
     onHämtaBankgiro();
   };
 
-  const handleBokför = async () => {
+  const handleBokför = () => {
+    console.log("🔥 handleBokför anropad!");
     onBokför();
+    // Ta bort setAgiEnabled - steg uppdateras nu i databasen
   };
 
-  const handleGenereraAGI = async () => {
-    if (period) {
-      const result = await markeraLönekörningSteg(period, "agi_genererad");
-      if (result.success) {
-        setToast({ type: "success", message: "AGI markerat som genererat!" });
-        if (onRefreshData) await onRefreshData();
-      } else {
-        setToast({ type: "error", message: result.error || "Fel vid markering" });
-      }
-    }
+  const handleGenereraAGI = () => {
     onGenereraAGI();
+    // Ta bort setSkatterEnabled - steg uppdateras nu i databasen
   };
 
-  const handleBokförSkatter = async () => {
-    if (period) {
-      const result = await markeraLönekörningSteg(period, "skatter_bokforda");
-      if (result.success) {
-        setToast({ type: "success", message: "Skatter markerade som bokförda!" });
-        if (onRefreshData) await onRefreshData();
-      } else {
-        setToast({ type: "error", message: result.error || "Fel vid markering" });
-      }
-    }
+  const handleBokförSkatter = () => {
     onBokförSkatter();
   };
 
@@ -139,27 +99,7 @@ export default function LonespecLista({
       <div className="bg-slate-700 rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
           <h5 className="text-white font-semibold">Lönekörnings-workflow</h5>
-          {lönekörning && (
-            <div className="text-right">
-              <div className="text-white text-sm font-medium">Period: {lönekörning.period}</div>
-              <div
-                className={`text-xs px-2 py-1 rounded ${
-                  lönekörning.status === "avslutad"
-                    ? "bg-green-600 text-white"
-                    : lönekörning.status === "pågående"
-                      ? "bg-cyan-600 text-white"
-                      : "bg-gray-600 text-white"
-                }`}
-              >
-                {lönekörning.status.toUpperCase()}
-              </div>
-              {lönekörning.total_bruttolön && (
-                <div className="text-gray-300 text-xs mt-1">
-                  Totalt: {lönekörning.total_bruttolön.toLocaleString("sv-SE")} kr
-                </div>
-              )}
-            </div>
-          )}
+          {/* REMOVED lönekörning info för enkelhet */}
         </div>
 
         {/* Progress Steps - SIE Style */}
@@ -191,9 +131,9 @@ export default function LonespecLista({
                   step.completed
                     ? "bg-green-600 text-white"
                     : index === 0 ||
-                        (index === 1 && allaHarMailats) ||
-                        (index === 2 && allaHarBokförts) ||
-                        (index === 3 && allaHarAGI)
+                        (index === 1 && bokförEnabled) ||
+                        (index === 2 && agiEnabled) ||
+                        (index === 3 && skatterEnabled)
                       ? "bg-cyan-600 text-white"
                       : "bg-slate-600 text-gray-400"
                 }`}
@@ -205,9 +145,9 @@ export default function LonespecLista({
                   className={`text-sm font-medium ${
                     step.completed ||
                     index === 0 ||
-                    (index === 1 && allaHarMailats) ||
-                    (index === 2 && allaHarBokförts) ||
-                    (index === 3 && allaHarAGI)
+                    (index === 1 && bokförEnabled) ||
+                    (index === 2 && agiEnabled) ||
+                    (index === 3 && skatterEnabled)
                       ? "text-white"
                       : "text-gray-400"
                   }`}
@@ -261,50 +201,38 @@ export default function LonespecLista({
         </div>
       </div>
 
-      {/* Action buttons with validation */}
+      {/* Action buttons - SUPERENKLA */}
       <div className="bg-slate-700 rounded-lg p-6">
         <h5 className="text-white font-semibold mb-4 text-center">Lönekörnings-åtgärder</h5>
         <div className="flex gap-4 justify-center flex-wrap">
           <Knapp
-            text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
+            text="✉️ Maila lönespecar"
             onClick={onMailaSpecar}
-            className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
+            className="bg-blue-600 hover:bg-blue-700"
           />
           <Knapp
-            text={allaHarBokförts ? "✅ Löner bokförda" : "📖 Bokför"}
-            onClick={allaHarMailats ? handleBokför : () => alert("⚠️ Skicka lönespecar först!")}
+            text="📖 Bokför"
+            onClick={handleBokför}
             className={
-              allaHarBokförts
-                ? "bg-green-600 hover:bg-green-700"
-                : !allaHarMailats
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : ""
+              bokförEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
             }
-            disabled={!allaHarMailats}
+            disabled={!bokförEnabled}
           />
           <Knapp
-            text={allaHarAGI ? "✅ AGI genererad" : "📊 Generera AGI"}
-            onClick={allaHarBokförts ? handleGenereraAGI : () => alert("⚠️ Bokför löner först!")}
+            text="📊 Generera AGI"
+            onClick={handleGenereraAGI}
             className={
-              allaHarAGI
-                ? "bg-green-600 hover:bg-green-700"
-                : !allaHarBokförts
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : ""
+              agiEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
             }
-            disabled={!allaHarBokförts}
+            disabled={!agiEnabled}
           />
           <Knapp
-            text={allaHarSkatter ? "✅ Skatter bokförda" : "💰 Bokför skatter"}
-            onClick={allaHarAGI ? handleBokförSkatter : () => alert("⚠️ Generera AGI först!")}
+            text="💰 Bokför skatter"
+            onClick={handleBokförSkatter}
             className={
-              allaHarSkatter
-                ? "bg-green-600 hover:bg-green-700"
-                : !allaHarAGI
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : "bg-cyan-600 hover:bg-cyan-700"
+              skatterEnabled ? "bg-cyan-600 hover:bg-cyan-700" : "bg-gray-500 cursor-not-allowed"
             }
-            disabled={!allaHarAGI}
+            disabled={!skatterEnabled}
           />
         </div>
 
@@ -319,14 +247,7 @@ export default function LonespecLista({
         )}
       </div>
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {/* REMOVED toast för enkelhet */}
     </div>
   );
 }
