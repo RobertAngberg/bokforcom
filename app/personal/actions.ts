@@ -2650,3 +2650,47 @@ export async function skapaLönespecifikationerFörLönekörning(
     return { success: false, error: "Kunde inte skapa lönespecifikationer" };
   }
 }
+
+/**
+ * Tar bort en lönekörning och alla tillhörande lönespecifikationer
+ */
+export async function taBortLönekörning(lönekörningId: number): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    // Kontrollera att användaren äger lönekörningen
+    const kontrollQuery = `
+      SELECT id FROM lönekörningar 
+      WHERE id = $1 AND startad_av = $2
+    `;
+    const kontrollResult = await pool.query(kontrollQuery, [lönekörningId, userId]);
+
+    if (kontrollResult.rows.length === 0) {
+      return {
+        success: false,
+        error: "Lönekörning hittades inte eller du har inte behörighet",
+      };
+    }
+
+    // Ta bort lönekörningen (CASCADE tar hand om lönespecifikationer)
+    const deleteQuery = `
+      DELETE FROM lönekörningar 
+      WHERE id = $1 AND startad_av = $2
+    `;
+    await pool.query(deleteQuery, [lönekörningId, userId]);
+
+    logPersonalDataEvent("delete", userId, `Tog bort lönekörning ${lönekörningId}`);
+    revalidatePath("/personal");
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Fel vid borttagning av lönekörning:", error);
+    return { success: false, error: "Kunde inte ta bort lönekörning" };
+  }
+}

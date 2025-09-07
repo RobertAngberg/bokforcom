@@ -19,6 +19,7 @@ import {
   markeraSkatternaBokförda,
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
+  taBortLönekörning,
 } from "../actions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
@@ -45,6 +46,7 @@ export default function Lonekorning() {
   const [valdLonekorning, setValdLonekorning] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
+  const [taBortLoading, setTaBortLoading] = useState(false);
   const { extrarader, beräknadeVärden } = useLonespecContext();
   //#endregion
 
@@ -187,6 +189,35 @@ export default function Lonekorning() {
       setLoading(false);
     }
   };
+
+  // Funktion för att ta bort lönekörning
+  const handleTaBortLönekörning = async () => {
+    if (!valdLonekorning) return;
+
+    const bekräfta = confirm(
+      `Är du säker på att du vill ta bort lönekörningen för ${valdLonekorning.period}?\n\nDetta kommer att:\n- Ta bort alla lönespecifikationer\n- Ta bort all workflow-data\n- Detta kan INTE ångras!`
+    );
+
+    if (!bekräfta) return;
+
+    try {
+      setTaBortLoading(true);
+      const result = await taBortLönekörning(valdLonekorning.id);
+
+      if (result.success) {
+        // Gå tillbaka till listan och refresha
+        setValdLonekorning(null);
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        alert(`Fel vid borttagning: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid borttagning av lönekörning:", error);
+      alert("Ett oväntat fel uppstod vid borttagning");
+    } finally {
+      setTaBortLoading(false);
+    }
+  };
   //#endregion
 
   // Refresh-funktion för att ladda om data efter statusuppdateringar
@@ -271,6 +302,13 @@ export default function Lonekorning() {
         <div className="flex gap-3">
           {!valdLonekorning && ( // Visa bara när ingen lönekörning är vald
             <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+          )}
+          {valdLonekorning && ( // Visa bara när en lönekörning är vald
+            <Knapp
+              text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort lönekörning"}
+              onClick={handleTaBortLönekörning}
+              disabled={taBortLoading}
+            />
           )}
         </div>
       </div>

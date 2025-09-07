@@ -183,7 +183,19 @@ export default function LonespecLista({
                   >
                     {step.title}
                   </div>
-                  <div className="text-xs text-gray-400">{step.description}</div>
+                  <div className="text-xs text-gray-400 flex items-center gap-2">
+                    {step.description}
+                    {step.id === "agi" && (
+                      <a
+                        href="https://www.skatteverket.se/foretagochorganisationer/arbetsgivare/nyttlamnaarbetsgivardeklarationpaindividniva.4.41f1c61d16193087d7fcaeb.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 underline ml-2"
+                      >
+                        Länk till Skatteverket
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -220,9 +232,9 @@ export default function LonespecLista({
 
       {/* Completion status */}
       {allaHarSkatter && (
-        <div className="mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-center shadow-lg">
-          <div className="text-white text-xl font-bold mb-2">🎉 LÖNEKÖRNING AVSLUTAD!</div>
-          <div className="text-green-100 text-sm">
+        <div className="mt-6 p-6 bg-slate-600 rounded-lg text-center shadow-lg">
+          <div className="text-white text-xl font-bold mb-2">🎉 Lönekörning avslutad</div>
+          <div className="text-gray-300 text-sm">
             Alla steg har genomförts framgångsrikt. Lönekörningen är nu komplett.
           </div>
         </div>
