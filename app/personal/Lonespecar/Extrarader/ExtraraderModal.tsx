@@ -92,7 +92,13 @@ export default function ExtraraderModal({
   if (!open) return null;
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={title || ""} maxWidth="md">
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title={title || ""}
+      maxWidth="2xl"
+      containerClassName="!max-w-sm w-full"
+    >
       {title === "Betald semester" && (
         <div className="mb-4">
           <p className="text-sm text-gray-300">

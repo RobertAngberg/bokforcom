@@ -188,12 +188,6 @@ export default function LonespecLista({
         <div className="flex items-center space-x-4 mb-6">
           {[
             {
-              id: "bankgiro",
-              title: "Bankgiro",
-              description: "Exportera utbetalningsfil",
-              completed: allaHarBankgiro,
-            },
-            {
               id: "maila",
               title: "Maila",
               description: "Skicka lönespecar",
@@ -219,10 +213,9 @@ export default function LonespecLista({
                   step.completed
                     ? "bg-green-600 text-white"
                     : index === 0 ||
-                        (index === 1 && allaHarBankgiro) ||
-                        (index === 2 && allaHarMailats) ||
-                        (index === 3 && allaHarBokförts) ||
-                        (index === 4 && allaHarAGI)
+                        (index === 1 && allaHarMailats) ||
+                        (index === 2 && allaHarBokförts) ||
+                        (index === 3 && allaHarAGI)
                       ? "bg-cyan-600 text-white"
                       : "bg-slate-600 text-gray-400"
                 }`}
@@ -234,10 +227,9 @@ export default function LonespecLista({
                   className={`text-sm font-medium ${
                     step.completed ||
                     index === 0 ||
-                    (index === 1 && allaHarBankgiro) ||
-                    (index === 2 && allaHarMailats) ||
-                    (index === 3 && allaHarBokförts) ||
-                    (index === 4 && allaHarAGI)
+                    (index === 1 && allaHarMailats) ||
+                    (index === 2 && allaHarBokförts) ||
+                    (index === 3 && allaHarAGI)
                       ? "text-white"
                       : "text-gray-400"
                   }`}
@@ -246,7 +238,7 @@ export default function LonespecLista({
                 </div>
                 <div className="text-xs text-gray-500">{step.description}</div>
               </div>
-              {index < 4 && (
+              {index < 3 && (
                 <div
                   className={`w-8 h-0.5 mx-4 ${step.completed ? "bg-green-600" : "bg-slate-600"}`}
                 />
@@ -277,28 +269,28 @@ export default function LonespecLista({
         })}
       </>
 
+      {/* Bankgiro export - separate från workflow */}
+      <div className="bg-slate-800 rounded-lg p-4">
+        <div className="text-center">
+          <Knapp
+            text="🏦 Hämta bankgirofil"
+            onClick={handleHämtaBankgiro}
+            className="bg-blue-600 hover:bg-blue-700"
+          />
+          <p className="text-gray-400 text-sm mt-2">
+            Exportera betalningsfil för banken (frivilligt)
+          </p>
+        </div>
+      </div>
+
       {/* Action buttons with validation */}
       <div className="bg-slate-700 rounded-lg p-6">
         <h5 className="text-white font-semibold mb-4 text-center">Lönekörnings-åtgärder</h5>
         <div className="flex gap-4 justify-center flex-wrap">
           <Knapp
-            text={allaHarBankgiro ? "✅ Bankgirofil exporterad" : "🏦 Hämta bankgirofil"}
-            onClick={handleHämtaBankgiro}
-            className={allaHarBankgiro ? "bg-green-600 hover:bg-green-700" : ""}
-          />
-          <Knapp
             text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
-            onClick={
-              allaHarBankgiro ? handleMailaSpecar : () => alert("⚠️ Exportera bankgirofil först!")
-            }
-            className={
-              allaHarMailats
-                ? "bg-green-600 hover:bg-green-700"
-                : !allaHarBankgiro
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : ""
-            }
-            disabled={!allaHarBankgiro}
+            onClick={handleMailaSpecar}
+            className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
           />
           <Knapp
             text={allaHarBokförts ? "✅ Löner bokförda" : "📖 Bokför"}
