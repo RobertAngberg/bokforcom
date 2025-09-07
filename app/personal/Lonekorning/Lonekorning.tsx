@@ -67,7 +67,7 @@ export default function Lonekorning() {
 
   //#region Skatteberäkningar
   const skatteManager = SkatteManager({
-    valdaSpecar,
+    valdaSpecar: lönekörningSpecar, // Använd lönekörningSpecar
     beräknadeVärden,
     skatteDatum,
     setSkatteBokförPågår,
@@ -75,13 +75,13 @@ export default function Lonekorning() {
     bokförLöneskatter,
     onSkatteComplete: async () => {
       // Markera alla lönespecar som skatter-bokförda
-      for (const spec of valdaSpecar) {
+      for (const spec of lönekörningSpecar) { // Använd lönekörningSpecar
         if (!spec.skatter_bokförda) {
           await markeraSkatternaBokförda(spec.id);
         }
       }
       // Refresha data för att visa uppdaterade knappar
-      await refreshData();
+      await loadLönekörningSpecar(); // Ladda om lönekörningspecar istället
     },
   });
 
@@ -664,7 +664,7 @@ export default function Lonekorning() {
           <SkatteBokforingModal
             skatteModalOpen={skatteModalOpen}
             setSkatteModalOpen={setSkatteModalOpen}
-            valdaSpecar={valdaSpecar}
+            valdaSpecar={lönekörningSpecar} // Använd lönekörningSpecar istället för valdaSpecar
             skatteData={skatteData}
             utbetalningsdatum={utbetalningsdatum}
             skatteDatum={skatteDatum}
