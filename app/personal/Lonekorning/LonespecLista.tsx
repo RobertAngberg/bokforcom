@@ -103,37 +103,7 @@ export default function LonespecLista({
     onHämtaBankgiro();
   };
 
-  const handleMailaSpecar = async () => {
-    if (period) {
-      console.log("🔍 Maila: Innan markeraLönekörningSteg");
-      const result = await markeraLönekörningSteg(period, "mailade");
-      console.log("🔍 Maila: Result:", result);
-      if (result.success) {
-        setToast({ type: "success", message: "Lönespecar markerade som mailade!" });
-        console.log("🔍 Maila: Innan onRefreshData");
-        if (onRefreshData) await onRefreshData();
-        console.log("🔍 Maila: Efter onRefreshData");
-      } else {
-        setToast({ type: "error", message: result.error || "Fel vid markering" });
-      }
-    }
-    onMailaSpecar();
-  };
-
   const handleBokför = async () => {
-    if (period) {
-      console.log("🔍 Bokför: Innan markeraLönekörningSteg");
-      const result = await markeraLönekörningSteg(period, "bokford");
-      console.log("🔍 Bokför: Result:", result);
-      if (result.success) {
-        setToast({ type: "success", message: "Löner markerade som bokförda!" });
-        console.log("🔍 Bokför: Innan onRefreshData");
-        if (onRefreshData) await onRefreshData();
-        console.log("🔍 Bokför: Efter onRefreshData");
-      } else {
-        setToast({ type: "error", message: result.error || "Fel vid markering" });
-      }
-    }
     onBokför();
   };
 
@@ -304,7 +274,7 @@ export default function LonespecLista({
         <div className="flex gap-4 justify-center flex-wrap">
           <Knapp
             text={allaHarMailats ? "✅ Lönespecar mailade" : "✉️ Maila lönespecar"}
-            onClick={handleMailaSpecar}
+            onClick={onMailaSpecar}
             className={allaHarMailats ? "bg-green-600 hover:bg-green-700" : ""}
           />
           <Knapp

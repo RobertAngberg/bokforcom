@@ -363,7 +363,12 @@ export default function Lonekorning() {
               onBokför={() => setBokforModalOpen(true)}
               onGenereraAGI={agiGenerator.hanteraAGI}
               onBokförSkatter={() => setSkatteModalOpen(true)}
-              onRefreshData={() => loadLönekörningSpecar()}
+              onRefreshData={async () => {
+                await loadLönekörningSpecar();
+                // Force re-render genom att sätta loading kort
+                setLoading(true);
+                setTimeout(() => setLoading(false), 10);
+              }}
             />
           )}
 
@@ -410,6 +415,9 @@ export default function Lonekorning() {
                 }
                 // Refresha data för att visa uppdaterade knappar
                 await loadLönekörningSpecar();
+                // Force re-render genom att sätta loading kort
+                setLoading(true);
+                setTimeout(() => setLoading(false), 10);
                 setBatchMailModalOpen(false);
               }}
             />
