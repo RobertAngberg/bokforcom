@@ -385,11 +385,13 @@ export default function Steg3({
       <TillbakaPil onClick={() => setCurrentStep?.(2)} />
 
       <h1 className="text-3xl mb-4 text-center">
-        {levfaktMode
-          ? ärFörsäljning
-            ? "Steg 3: Kundfaktura - Kontrollera och slutför"
-            : "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
-          : "Steg 3: Kontrollera och slutför"}
+        {utlaggMode
+          ? "Steg 3: Kontrollera och slutför utlägg"
+          : levfaktMode
+            ? ärFörsäljning
+              ? "Steg 3: Kundfaktura - Kontrollera och slutför"
+              : "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
+            : "Steg 3: Kontrollera och slutför"}
       </h1>
       <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
       <p className="text-center text-gray-300 mb-2">

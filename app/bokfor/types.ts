@@ -147,6 +147,7 @@ export interface SokForvalProps {
   setKontonummer: (val: string) => void;
   setKontobeskrivning: (val: string) => void;
   levfaktMode?: boolean;
+  utlaggMode?: boolean;
 }
 
 export interface Step2Props {

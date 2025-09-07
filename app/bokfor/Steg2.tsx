@@ -159,7 +159,9 @@ export default function Steg2({
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep(1)} />
 
-        <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Fyll i uppgifter</h1>
+        <h1 className="mb-6 text-3xl text-center text-white">
+          {utlaggMode ? "Steg 2: Fyll i uppgifter för utlägg" : "Steg 2: Fyll i uppgifter"}
+        </h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil

@@ -192,7 +192,7 @@ export default function UtlaggPage() {
   ];
 
   if (showNyttUtlägg && favoritFörvalen) {
-    return <BokforPage searchParams={Promise.resolve({})} />;
+    return <BokforPage searchParams={Promise.resolve({ utlagg: "true" })} />;
   }
 
   return (

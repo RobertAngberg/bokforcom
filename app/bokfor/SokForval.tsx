@@ -13,6 +13,7 @@ export default function SokForval({
   setKontonummer,
   setKontobeskrivning,
   levfaktMode = false,
+  utlaggMode = false,
 }: SokForvalProps) {
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<Förval[]>([]); // Börja med tom lista
@@ -164,7 +165,11 @@ export default function SokForval({
   return (
     <div className="w-full">
       <h1 className="mb-8 text-3xl text-center text-white">
-        {levfaktMode ? "Steg 1: Välj förval för leverantörsfaktura" : "Steg 1: Sök förval"}
+        {utlaggMode
+          ? "Steg 1: Välj förval för utlägg"
+          : levfaktMode
+            ? "Steg 1: Välj förval för leverantörsfaktura"
+            : "Steg 1: Sök förval"}
       </h1>
 
       <div onKeyDown={handleKeyDown}>

@@ -20,6 +20,7 @@ registerLocale("sv", sv);
 export default function Page({ searchParams }: PageProps) {
   const [favoritFörvalen, setFavoritFörvalen] = useState<Förval[]>([]);
   const [isLevfaktMode, setIsLevfaktMode] = useState(false);
+  const [isUtlaggMode, setIsUtlaggMode] = useState(false);
   const [leverantorId, setLeverantorId] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [kontonummer, setKontonummer] = useState<string>("");
@@ -45,11 +46,13 @@ export default function Page({ searchParams }: PageProps) {
     const loadData = async () => {
       const params = await searchParams;
       const levfaktMode = params.levfakt === "true";
+      const utlaggMode = params.utlagg === "true";
       const leverantorIdParam = params.leverantorId
         ? parseInt(params.leverantorId as string)
         : null;
 
       setIsLevfaktMode(levfaktMode);
+      setIsUtlaggMode(utlaggMode);
       setLeverantorId(leverantorIdParam);
 
       const favoritData = await fetchFavoritforval();
@@ -93,6 +96,7 @@ export default function Page({ searchParams }: PageProps) {
           setKontonummer={setKontonummer}
           setKontobeskrivning={setKontobeskrivning}
           levfaktMode={isLevfaktMode}
+          utlaggMode={isUtlaggMode}
         />
       )}
 
@@ -116,6 +120,7 @@ export default function Page({ searchParams }: PageProps) {
           setBokförSomFaktura={setBokförSomFaktura}
           kundfakturadatum={kundfakturadatum}
           setKundfakturadatum={setKundfakturadatum}
+          utlaggMode={isUtlaggMode}
         />
       )}
 
@@ -163,6 +168,7 @@ export default function Page({ searchParams }: PageProps) {
           valtFörval={valtFörval}
           setCurrentStep={setCurrentStep}
           extrafält={extrafält}
+          utlaggMode={isUtlaggMode}
           levfaktMode={isLevfaktMode}
           leverantör={leverantör}
           fakturanummer={fakturanummer ?? ""}
