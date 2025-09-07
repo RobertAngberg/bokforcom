@@ -79,18 +79,42 @@ export const useCompanyProfile = () => {
   };
 
   return {
-    // State
+    // Data
     foretagsProfil,
-    isEditingCompany,
-    isSavingCompany,
-    companyMessage,
 
-    // Actions
+    // State grupperat
+    state: {
+      isEditingCompany,
+      isSavingCompany,
+      companyMessage,
+    },
+
+    // Handlers grupperat
+    handlers: {
+      handleEditCompany,
+      handleCancelCompany,
+      handleSaveCompany,
+      handleCompanyInputChange,
+    },
+
+    // Helper för komponentprops
+    getComponentProps: () => ({
+      foretagsProfil,
+      state: {
+        isEditingCompany,
+        isSavingCompany,
+        companyMessage,
+      },
+      handlers: {
+        handleEditCompany,
+        handleCancelCompany,
+        handleSaveCompany,
+        handleCompanyInputChange,
+      },
+    }),
+
+    // Intern state (för admin page)
     fetchCompanyProfile,
-    handleEditCompany,
-    handleCancelCompany,
-    handleSaveCompany,
-    handleCompanyInputChange,
     setCompanyMessage,
   };
 };

@@ -4,11 +4,8 @@ import Knapp from "../../_components/Knapp";
 import type { DeleteSectionProps } from "../_types/types";
 
 export default function DeleteSection({
-  showDeleteConfirm,
-  isDeleting,
-  handleDeleteCompany,
-  confirmDelete,
-  cancelDelete,
+  state: { showDeleteConfirm, isDeleting },
+  handlers: { handleDeleteCompany, confirmDelete, cancelDelete },
 }: DeleteSectionProps) {
   return (
     <>

@@ -53,21 +53,29 @@ export interface UserProfileSectionProps {
 
 export interface CompanyProfileSectionProps {
   foretagsProfil: ForetagsProfil;
-  isEditingCompany: boolean;
-  isSavingCompany: boolean;
-  companyMessage: MessageState | null;
-  handleEditCompany: () => void;
-  handleCancelCompany: () => void;
-  handleSaveCompany: () => void;
-  handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
+  state: {
+    isEditingCompany: boolean;
+    isSavingCompany: boolean;
+    companyMessage: MessageState | null;
+  };
+  handlers: {
+    handleEditCompany: () => void;
+    handleCancelCompany: () => void;
+    handleSaveCompany: () => void;
+    handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
+  };
 }
 
 export interface DeleteSectionProps {
-  showDeleteConfirm: boolean;
-  isDeleting: boolean;
-  handleDeleteCompany: () => void;
-  confirmDelete: () => void;
-  cancelDelete: () => void;
+  state: {
+    showDeleteConfirm: boolean;
+    isDeleting: boolean;
+  };
+  handlers: {
+    handleDeleteCompany: () => void;
+    confirmDelete: () => void;
+    cancelDelete: () => void;
+  };
 }
 
 // Action result types

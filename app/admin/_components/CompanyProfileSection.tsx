@@ -6,13 +6,8 @@ import type { CompanyProfileSectionProps } from "../_types/types";
 
 export default function CompanyProfileSection({
   foretagsProfil,
-  isEditingCompany,
-  isSavingCompany,
-  companyMessage,
-  handleEditCompany,
-  handleCancelCompany,
-  handleSaveCompany,
-  handleCompanyInputChange,
+  state: { isEditingCompany, isSavingCompany, companyMessage },
+  handlers: { handleEditCompany, handleCancelCompany, handleSaveCompany, handleCompanyInputChange },
 }: CompanyProfileSectionProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { raderaForetag } from "../_actions/foretagsActions";
 
-export const useDeleteConfirmation = () => {
+export const useDeleteSection = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -37,14 +37,33 @@ export const useDeleteConfirmation = () => {
   };
 
   return {
-    // State
-    showDeleteConfirm,
-    isDeleting,
+    // State grupperat
+    state: {
+      showDeleteConfirm,
+      isDeleting,
+    },
 
-    // Actions
-    handleDeleteCompany,
-    confirmDelete,
-    cancelDelete,
+    // Handlers grupperat
+    handlers: {
+      handleDeleteCompany,
+      confirmDelete,
+      cancelDelete,
+    },
+
+    // Helper för komponentprops
+    getComponentProps: () => ({
+      state: {
+        showDeleteConfirm,
+        isDeleting,
+      },
+      handlers: {
+        handleDeleteCompany,
+        confirmDelete,
+        cancelDelete,
+      },
+    }),
+
+    // Intern state (för admin page)
     setShowDeleteConfirm,
   };
 };

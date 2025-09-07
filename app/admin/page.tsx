@@ -34,8 +34,8 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto px-6 pt-2">
         <h1 className="text-3xl mb-8 text-center">Administration</h1>
         <UserProfileSection {...userProfile} />
-        <CompanyProfileSection {...companyProfile} />
-        <DeleteSection {...deleteConfirmation} />
+        <CompanyProfileSection {...companyProfile.getComponentProps()} />
+        <DeleteSection {...deleteConfirmation.getComponentProps()} />
 
         <div className="mb-4 text-center">
           <a
