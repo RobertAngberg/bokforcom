@@ -39,56 +39,10 @@ export default function SkatteBokforingModal({
     >
       <div className="mb-8"></div>
       <div className="space-y-6">
-        {/* Sammanfattning */}
-        {valdaSpecar && valdaSpecar.length > 0 && (
-          <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
-            <h3 className="text-lg text-white font-semibold mb-3">
-              📊 Sammanfattning för {valdaSpecar.length} lönespec
-              {valdaSpecar.length !== 1 ? "ar" : ""}
-            </h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-lg font-bold text-white">
-                  {skatteData.socialaAvgifter.toLocaleString("sv-SE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  kr
-                </div>
-                <div className="text-sm text-gray-300">Sociala avgifter</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-white">
-                  {skatteData.personalskatt.toLocaleString("sv-SE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  kr
-                </div>
-                <div className="text-sm text-gray-300">Personalskatt</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-white">
-                  {skatteData.totaltSkatter.toLocaleString("sv-SE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  kr
-                </div>
-                <div className="text-sm text-gray-300">Totalt skatter</div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Sammanfattning - REMOVED */}
 
         {/* Bokföringsposter */}
         <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
-          <h3 className="text-lg text-white font-semibold mb-4">
-            {utbetalningsdatum
-              ? new Date(utbetalningsdatum).toLocaleDateString("sv-SE")
-              : "2025-08-19"}{" "}
-            - Bokföringsposter för skatter
-          </h3>
           <Tabell
             data={[
               {
@@ -152,7 +106,7 @@ export default function SkatteBokforingModal({
                 onClick={onHämtaBankgiro}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                🏦 Bankgirofil (Frivilligt)
+                🏦 Ladda ner bankgirofil (Frivilligt)
               </button>
             )}
           </div>

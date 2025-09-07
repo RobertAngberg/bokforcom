@@ -96,13 +96,32 @@ export default function LonespecLista({
         </div>
       )}
 
-      {/* Lönekörnings-workflow - SIE Wizard Style */}
-      <div className="bg-slate-700 rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h5 className="text-white font-semibold">Lönekörnings-workflow</h5>
-          {/* REMOVED lönekörning info för enkelhet */}
-        </div>
+      {/* Lönespecar */}
+      <>
+        {valdaSpecar.map((spec) => {
+          const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
+          const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
 
+          return (
+            <LönespecView
+              key={spec.id}
+              lönespec={spec}
+              anställd={anstalld}
+              utlägg={utlagg}
+              ingenAnimering={false}
+              taBortLoading={taBortLaddning[spec.id] || false}
+              visaExtraRader={true}
+              onTaBortLönespec={() => handleTaBortLönespec(spec)}
+            />
+          );
+        })}
+      </>
+
+      {/* Extra spacing */}
+      <div className="h-4"></div>
+
+      {/* Lönekörnings-workflow */}
+      <div className="bg-slate-700 rounded-lg p-6">
         {/* Progress Steps - Integrerad med knappar */}
         <div className="space-y-4 mb-6">
           {[
@@ -113,7 +132,7 @@ export default function LonespecLista({
               completed: !!lönekörning?.mailade_datum,
               buttonText: "✉️ Maila lönespecar",
               onClick: onMailaSpecar,
-              enabled: true,
+              enabled: true, // Första steget är alltid enabled
             },
             {
               id: "bokfor",
@@ -122,7 +141,7 @@ export default function LonespecLista({
               completed: !!lönekörning?.bokford_datum,
               buttonText: "📖 Bokför",
               onClick: handleBokför,
-              enabled: bokförEnabled,
+              enabled: !!lönekörning?.bokford_datum || !!lönekörning?.mailade_datum, // Enabled om klart ELLER om föregående steg är klart
             },
             {
               id: "agi",
@@ -131,7 +150,7 @@ export default function LonespecLista({
               completed: !!lönekörning?.agi_genererad_datum,
               buttonText: "📊 Generera AGI",
               onClick: handleGenereraAGI,
-              enabled: agiEnabled,
+              enabled: !!lönekörning?.agi_genererad_datum || !!lönekörning?.bokford_datum, // Enabled om klart ELLER om föregående steg är klart
             },
             {
               id: "skatter",
@@ -140,7 +159,7 @@ export default function LonespecLista({
               completed: !!lönekörning?.skatter_bokforda_datum,
               buttonText: "💰 Bokför skatter",
               onClick: handleBokförSkatter,
-              enabled: skatterEnabled,
+              enabled: !!lönekörning?.skatter_bokforda_datum || !!lönekörning?.agi_genererad_datum, // Enabled om klart ELLER om föregående steg är klart
             },
           ].map((step, index) => (
             <div
@@ -185,27 +204,6 @@ export default function LonespecLista({
           ))}
         </div>
       </div>
-
-      {/* Lönespecar */}
-      <>
-        {valdaSpecar.map((spec) => {
-          const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-          const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
-
-          return (
-            <LönespecView
-              key={spec.id}
-              lönespec={spec}
-              anställd={anstalld}
-              utlägg={utlagg}
-              ingenAnimering={false}
-              taBortLoading={taBortLaddning[spec.id] || false}
-              visaExtraRader={true}
-              onTaBortLönespec={() => handleTaBortLönespec(spec)}
-            />
-          );
-        })}
-      </>
 
       {/* Frivilliga åtgärder - REMOVED bankgiro, moved to skatte modal */}
       {/* <div className="bg-slate-700 rounded-lg p-6">

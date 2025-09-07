@@ -265,16 +265,13 @@ export default function Lonekorning() {
       <div className="flex justify-between items-center">
         <div>
           {valdLonekorning && (
-            <button
-              onClick={() => setValdLonekorning(null)}
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors"
-            >
-              ← Tillbaka till lönekörningar
-            </button>
+            <Knapp text="← Tillbaka till lönekörningar" onClick={() => setValdLonekorning(null)} />
           )}
         </div>
         <div className="flex gap-3">
-          <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+          {!valdLonekorning && ( // Visa bara när ingen lönekörning är vald
+            <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+          )}
         </div>
       </div>
 
