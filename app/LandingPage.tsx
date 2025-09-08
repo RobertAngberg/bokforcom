@@ -20,7 +20,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">B</span>
             </div>
-            <span className="text-2xl font-bold text-white">Bokför.com</span>
+            <span className="text-2xl font-bold text-white">Bokföringsapp</span>
           </div>
           <div className="space-x-4">
             <button
@@ -50,8 +50,8 @@ export default function LandingPage() {
               <span className="text-blue-400 block">svenska företag</span>
             </h1>
             <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Bokför.com gör bokföring enkelt och effektivt. Hantera transaktioner, skapa fakturor,
-              kör löner och få full kontroll över din ekonomi - allt i en plattform.
+              Bokföringsapp gör bokföring enkelt och effektivt. Hantera transaktioner, skapa
+              fakturor, kör löner och få full kontroll över din ekonomi - allt i en plattform.
             </p>
             <div className="space-x-4">
               <button
@@ -122,7 +122,7 @@ export default function LandingPage() {
           <section className="py-20">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold text-white mb-6">Varför välja Bokför.com?</h2>
+                <h2 className="text-4xl font-bold text-white mb-6">Varför välja Bokföringsapp?</h2>
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mt-1">
@@ -199,7 +199,7 @@ export default function LandingPage() {
               <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-white font-semibold">Bokför.com</span>
+              <span className="text-white font-semibold">Bokföringsapp</span>
             </div>
             <div className="flex space-x-6 text-slate-400">
               <a href="/signup" className="hover:text-white transition-colors">
@@ -214,7 +214,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="text-center text-slate-400 text-sm mt-4">
-            © 2025 Bokför.com. Svensk bokföring gjord enkelt.
+            © 2025 Bokföringsapp. Svensk bokföring gjord enkelt.
           </div>
         </div>
       </footer>

@@ -24,8 +24,8 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
           </h2>
           <p className="mb-3">
             Detta användaravtal ("Avtalet") utgör en juridiskt bindande överenskommelse mellan dig
-            som användare ("Kund", "Du", "Användare") och Bokför.com ("Vi", "Tjänsteleverantör",
-            "Bolaget") avseende användning av den webbaserade bokföringstjänsten Bokför.com
+            som användare ("Kund", "Du", "Användare") och Bokföringsapp ("Vi", "Tjänsteleverantör",
+            "Bolaget") avseende användning av den webbaserade bokföringstjänsten Bokföringsapp
             ("Tjänsten", "Plattformen").
           </p>
           <p className="mb-3">
@@ -82,7 +82,7 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
             3. Tjänstebeskrivning och funktionalitet
           </h2>
           <p className="mb-3">
-            Bokför.com är en Software-as-a-Service (SaaS) lösning som tillhandahåller:
+            Bokföringsapp är en Software-as-a-Service (SaaS) lösning som tillhandahåller:
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Webbaserad bokföring enligt svensk redovisningsstandard (K-regelverket)</li>
@@ -150,7 +150,7 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
           <h2 className="text-2xl font-semibold text-white mb-4">6. Immateriella rättigheter</h2>
           <p className="mb-3">
             Alla immateriella rättigheter till Tjänsten, inklusive men inte begränsat till källkod,
-            design, logotyper, varumärken och dokumentation, tillhör Bokför.com eller våra
+            design, logotyper, varumärken och dokumentation, tillhör Bokföringsapp eller våra
             licensgivare.
           </p>
           <p className="mb-3">Du beviljas en begränsad, icke-exklusiv licens att:</p>
@@ -379,13 +379,13 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
           <p className="mb-3">För frågor om detta Avtal eller Tjänsten, kontakta oss:</p>
           <div className="bg-slate-700 p-4 rounded-lg">
             <p>
-              <strong>Bokför.com</strong>
+              <strong>Bokföringsapp</strong>
             </p>
-            <p>E-post: support@bokför.com</p>
+            <p>E-post: support@Bokföringsapp</p>
             <p>Telefon: 08-123 456 78</p>
             <p>Kundtjänst: Måndag-Fredag 09:00-17:00</p>
-            <p>Dataskyddsombud: dpo@bokför.com</p>
-            <p>Postadress: Bokför.com AB, Box 12345, 111 23 Stockholm</p>
+            <p>Dataskyddsombud: dpo@Bokföringsapp</p>
+            <p>Postadress: Bokföringsapp AB, Box 12345, 111 23 Stockholm</p>
           </div>
           <p className="mt-3 text-xs text-gray-400">
             Detta avtal träder i kraft 2025-08-22 och ersätter alla tidigare versioner.

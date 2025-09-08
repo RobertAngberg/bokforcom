@@ -8,8 +8,8 @@ import React from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bokför.com - Svensk bokföring gjord enkelt",
-  description: "Bokför.com - Professionell bokföring för svenska företag",
+  title: "Bokföringsapp - Svensk bokföring gjord enkelt",
+  description: "Bokföringsapp - Professionell bokföring för svenska företag",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

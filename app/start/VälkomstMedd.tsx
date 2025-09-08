@@ -9,7 +9,9 @@ export default function VälkomstMedd({ onClose }: VälkomstMeddProps) {
     <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-600">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h2 className="text-xl font-semibold text-white mb-3">🎉 Välkommen till Bokför.com!</h2>
+          <h2 className="text-xl font-semibold text-white mb-3">
+            🎉 Välkommen till Bokföringsapp!
+          </h2>
           <p className="text-slate-300 leading-relaxed">
             Grattis! Du har nu skapat ditt konto och kan börja bokföra. Du får mer än gärna använda
             Hjälp/Feedback nere till höger närhelst du behöver hjälp eller har frågor!

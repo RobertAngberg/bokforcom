@@ -165,9 +165,9 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
               </h3>
               <p className="mb-3">
                 Detta användaravtal ("Avtalet") utgör en juridiskt bindande överenskommelse mellan
-                dig som användare ("Kund", "Du", "Användare") och Bokför.com ("Vi",
+                dig som användare ("Kund", "Du", "Användare") och Bokföringsapp ("Vi",
                 "Tjänsteleverantör", "Bolaget") avseende användning av den webbaserade
-                bokföringstjänsten Bokför.com.
+                bokföringstjänsten Bokföringsapp.
               </p>
               <p className="mb-2">
                 <strong>Definitioner:</strong>
@@ -215,7 +215,7 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
                 3. Tjänstebeskrivning och funktionalitet
               </h3>
               <p className="mb-2">
-                Bokför.com är en Software-as-a-Service (SaaS) lösning som tillhandahåller:
+                Bokföringsapp är en Software-as-a-Service (SaaS) lösning som tillhandahåller:
               </p>
               <ul className="list-disc pl-6 space-y-1 text-xs">
                 <li>Webbaserad bokföring enligt svensk redovisningsstandard (K-regelverket)</li>
