@@ -16,16 +16,23 @@ export default function LeverantorsfakturorPage() {
   const [loading, setLoading] = useState(true);
 
   // Ladda leverantörer för att kontrollera om knappen ska vara disabled
+  const loadLeverantörer = async () => {
+    setLoading(true);
+    const result = await getLeverantörer();
+    if (result.success) {
+      setLeverantörer(result.leverantörer || []);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const loadLeverantörer = async () => {
-      const result = await getLeverantörer();
-      if (result.success) {
-        setLeverantörer(result.leverantörer || []);
-      }
-      setLoading(false);
-    };
     loadLeverantörer();
   }, []);
+
+  // Callback för att uppdatera leverantörslistan när en ny läggs till
+  const handleLeverantörUpdated = () => {
+    loadLeverantörer();
+  };
 
   const harLeverantörer = leverantörer.length > 0;
   const registreraKnappText = loading ? "⏳ Laddar..." : "+ Registrera leverantörsfaktura";
@@ -49,7 +56,7 @@ export default function LeverantorsfakturorPage() {
 
       {/* Leverantörer flik */}
       <div className="mb-6">
-        <LeverantorFlik />
+        <LeverantorFlik onLeverantörUpdated={handleLeverantörUpdated} />
       </div>
 
       {/* Bokförda leverantörsfakturor flik */}

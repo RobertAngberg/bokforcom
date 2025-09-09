@@ -203,7 +203,9 @@ export default function Steg2Levfakt({
               fullWidth
               text="Bokför leverantörsfaktura"
               onClick={() => setCurrentStep(3)}
-              disabled={!belopp || !fakturanummer || !fakturadatum || !förfallodatum}
+              disabled={
+                !belopp || !fakturanummer || !fakturadatum || !förfallodatum || !fil || !pdfUrl
+              }
             />
           </div>
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

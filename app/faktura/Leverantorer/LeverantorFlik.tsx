@@ -7,7 +7,11 @@ import NyLeverantorModal from "./NyLeverantorModal";
 import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
 import { getLeverantörer, deleteLeverantör, type Leverantör } from "../actions";
 
-export default function LeverantörFlik() {
+interface LeverantorFlikProps {
+  onLeverantörUpdated?: () => void;
+}
+
+export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlikProps) {
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -35,6 +39,10 @@ export default function LeverantörFlik() {
 
   const handleLeverantörAdded = () => {
     loadLeverantörer();
+    // Meddela även föräldrakomponenten att listan har uppdaterats
+    if (onLeverantörUpdated) {
+      onLeverantörUpdated();
+    }
   };
 
   const handleEditLeverantör = (leverantör: Leverantör) => {
@@ -59,6 +67,10 @@ export default function LeverantörFlik() {
     if (result.success) {
       setDeleteModal({ show: false });
       loadLeverantörer();
+      // Meddela även föräldrakomponenten att listan har uppdaterats
+      if (onLeverantörUpdated) {
+        onLeverantörUpdated();
+      }
     }
     setDeleteLoading(false);
   };
@@ -66,6 +78,10 @@ export default function LeverantörFlik() {
   const handleModalClose = () => {
     setShowModal(false);
     setEditLeverantör(undefined);
+    // Om vi hade en redigering, ladda om listan för säkerhets skull
+    if (editLeverantör && onLeverantörUpdated) {
+      onLeverantörUpdated();
+    }
   };
 
   return (

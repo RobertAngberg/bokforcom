@@ -208,7 +208,7 @@ export default function Steg2({
             <Knapp
               text="Bokför"
               onClick={() => setCurrentStep(3)}
-              disabled={!belopp || !transaktionsdatum}
+              disabled={!belopp || !transaktionsdatum || !fil || !pdfUrl}
               fullWidth
             />
           </div>
