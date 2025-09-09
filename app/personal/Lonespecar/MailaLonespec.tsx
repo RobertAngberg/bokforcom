@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 
 interface SingleLönespec {
   lönespec: any;
@@ -44,6 +45,11 @@ export default function MailaLonespec({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visaModal, setVisaModal] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
   const showModal = open !== undefined ? open : visaModal;
 
   // Helper for single or batch
@@ -113,8 +119,20 @@ export default function MailaLonespec({
         }
       }
       setSent(true);
-      // Anropa callback när mailing är klar
-      onMailComplete?.();
+
+      // Visa success toast
+      setToast({
+        message: `${sentCount} lönespecar skickade!`,
+        type: "success",
+        isVisible: true,
+      });
+
+      // Vänta lite så användaren hinner se toast:en innan modalen stängs
+      setTimeout(() => {
+        // Anropa callback när mailing är klar
+        onMailComplete?.();
+        closeModal();
+      }, 2000); // Stäng efter 2 sekunder
     } catch (err: any) {
       setError(err.message || "Något gick fel vid utskick av lönespecar.");
     } finally {
@@ -172,8 +190,20 @@ export default function MailaLonespec({
       const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Kunde inte skicka e-post.");
       setSent(true);
-      // Anropa callback när mailing är klar
-      onMailComplete?.();
+
+      // Visa success toast
+      setToast({
+        message: "Lönespec skickad!",
+        type: "success",
+        isVisible: true,
+      });
+
+      // Vänta lite så användaren hinner se toast:en innan modalen stängs
+      setTimeout(() => {
+        // Anropa callback när mailing är klar
+        onMailComplete?.();
+        closeModal();
+      }, 2000); // Stäng efter 2 sekunder
     } catch (err: any) {
       setError(err.message || "Något gick fel.");
     } finally {
@@ -262,6 +292,16 @@ export default function MailaLonespec({
             )}
           </div>
         </div>
+      )}
+
+      {/* Toast för mail-bekräftelse */}
+      {toast.isVisible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+        />
       )}
     </>
   );

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Toast from "../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
   hämtaAllaAnställda,
@@ -770,6 +771,16 @@ export default function Lonekorning() {
             }} // Lägg till bankgiro-funktionen
           />
         </>
+      )}
+
+      {/* Toast för skatte-bokföring */}
+      {skatteManager.toast && (
+        <Toast
+          message={skatteManager.toast.message}
+          type={skatteManager.toast.type}
+          isVisible={true}
+          onClose={() => skatteManager.setToast(null)}
+        />
       )}
     </div>
   );

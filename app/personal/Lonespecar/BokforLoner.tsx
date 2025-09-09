@@ -160,8 +160,12 @@ export default function BokforLoner({
         type: "success",
         isVisible: true,
       });
-      onBokfört?.();
-      onClose();
+
+      // Vänta lite så användaren hinner se toast:en innan modalen stängs
+      setTimeout(() => {
+        onBokfört?.();
+        onClose();
+      }, 2000); // Stäng efter 2 sekunder
     } catch (error: any) {
       setError(error.message || "Ett fel inträffade vid bokföring");
       console.error("Bokföringsfel:", error);

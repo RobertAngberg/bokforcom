@@ -76,9 +76,13 @@ export default function SkatteManager({
 
       if (result.success) {
         setToast({ type: "success", message: "Löneskatter bokförda!" });
-        setSkatteModalOpen(false);
-        // Anropa callback när skatter är bokförda
-        onSkatteComplete?.();
+
+        // Vänta lite så användaren hinner se toast:en innan modalen stängs
+        setTimeout(() => {
+          setSkatteModalOpen(false);
+          // Anropa callback när skatter är bokförda
+          onSkatteComplete?.();
+        }, 2000); // Stäng efter 2 sekunder
       } else {
         setToast({ type: "error", message: `Fel vid bokföring: ${result.error || "Okänt fel"}` });
       }

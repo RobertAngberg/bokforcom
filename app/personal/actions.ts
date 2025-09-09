@@ -1828,15 +1828,15 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
     const lönespec = lönespecResult.rows[0];
 
     // Kontrollera att lönespec inte redan är bokförd
-    if (lönespec.status === "Utbetald") {
+    if (lönespec.bokförd === true) {
       client.release();
       throw new Error("Lönespecifikation är redan bokförd");
     }
 
-    // Sätt alltid status till 'Skapad' innan bokföring
+    // Sätt bokförd till false innan bokföring (reset)
     const updateLönespecQueryReset = `
       UPDATE lönespecifikationer 
-      SET status = 'Skapad', uppdaterad = CURRENT_TIMESTAMP
+      SET bokförd = false, uppdaterad = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
     await client.query(updateLönespecQueryReset, [data.lönespecId]);
@@ -1906,10 +1906,10 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
       await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
     }
 
-    // Markera lönespecifikation som utbetald
+    // Markera lönespecifikation som bokförd
     const updateLönespecQuery = `
       UPDATE lönespecifikationer 
-      SET status = 'Utbetald', uppdaterad = CURRENT_TIMESTAMP
+      SET bokförd = true, bokförd_datum = CURRENT_TIMESTAMP, uppdaterad = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
     await client.query(updateLönespecQuery, [data.lönespecId]);
