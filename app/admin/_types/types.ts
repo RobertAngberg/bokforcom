@@ -2,7 +2,7 @@
 // Admin Type Definitions
 // ============================================================================
 
-export interface UserInfo {
+export interface AnvandarInfo {
   id: string;
   email: string;
   name: string;
@@ -23,40 +23,40 @@ export interface ForetagsProfil {
   webbplats: string;
 }
 
-export interface MessageState {
+export interface MeddelandeTillstand {
   type: "success" | "error";
   text: string;
 }
 
-export interface UserEditForm {
+export interface AnvandarRedigeringsFormular {
   name: string;
   email: string;
 }
 
 // Component Props
-export interface UserProfileSectionProps {
-  userInfo: UserInfo | null;
-  editForm: UserEditForm;
+export interface AnvandarprofilSektionProps {
+  userInfo: AnvandarInfo | null;
+  editForm: AnvandarRedigeringsFormular;
   state: {
     isEditing: boolean;
     isSaving: boolean;
-    message: MessageState | null;
+    message: MeddelandeTillstand | null;
   };
   session: any;
   handlers: {
     handleEdit: () => void;
     handleCancel: () => void;
     handleSave: () => void;
-    updateEditForm: (field: keyof UserEditForm, value: string) => void;
+    updateEditForm: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
   };
 }
 
-export interface CompanyProfileSectionProps {
+export interface ForetagsprofilSektionProps {
   foretagsProfil: ForetagsProfil;
   state: {
     isEditingCompany: boolean;
     isSavingCompany: boolean;
-    companyMessage: MessageState | null;
+    companyMessage: MeddelandeTillstand | null;
   };
   handlers: {
     handleEditCompany: () => void;
@@ -66,7 +66,7 @@ export interface CompanyProfileSectionProps {
   };
 }
 
-export interface DeleteSectionProps {
+export interface RaderingsSektionProps {
   state: {
     showDeleteConfirm: boolean;
     isDeleting: boolean;
@@ -79,9 +79,9 @@ export interface DeleteSectionProps {
 }
 
 // Action result types
-export interface ActionResult<T = any> {
+export interface AktionsResultat<T = any> {
   success: boolean;
   data?: T;
   error?: string;
-  user?: UserInfo;
+  user?: AnvandarInfo;
 }

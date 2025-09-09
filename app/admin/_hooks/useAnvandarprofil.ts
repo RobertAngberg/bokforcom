@@ -3,18 +3,22 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions/anvandarActions";
-import type { UserInfo, UserEditForm, MessageState } from "../_types/types";
+import type {
+  AnvandarInfo,
+  AnvandarRedigeringsFormular,
+  MeddelandeTillstand,
+} from "../_types/types";
 
 export const useUserProfile = () => {
   const { data: session } = useSession();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [editForm, setEditForm] = useState<UserEditForm>({
+  const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(null);
+  const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>({
     name: "",
     email: "",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<MessageState | null>(null);
+  const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserInfo = async () => {
@@ -80,7 +84,7 @@ export const useUserProfile = () => {
     }
   };
 
-  const updateEditForm = (field: keyof UserEditForm, value: string) => {
+  const updateEditForm = (field: keyof AnvandarRedigeringsFormular, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 

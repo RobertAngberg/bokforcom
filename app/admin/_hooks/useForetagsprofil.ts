@@ -5,7 +5,7 @@ import {
   hamtaForetagsprofilAdmin,
   uppdateraForetagsprofilAdmin,
 } from "../_actions/foretagsActions";
-import type { ForetagsProfil, MessageState } from "../_types/types";
+import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
 export const useCompanyProfile = () => {
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>({
@@ -21,7 +21,7 @@ export const useCompanyProfile = () => {
   });
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
-  const [companyMessage, setCompanyMessage] = useState<MessageState | null>(null);
+  const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
 
   const fetchCompanyProfile = async () => {
     try {

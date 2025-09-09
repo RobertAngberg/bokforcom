@@ -2,7 +2,7 @@
 
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../../_utils/authUtils";
-import type { UserInfo, ActionResult } from "../_types/types";
+import type { AnvandarInfo, AktionsResultat } from "../_types/types";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -12,7 +12,7 @@ const pool = new Pool({
 // Användarinformation
 // ============================================================================
 
-export async function hamtaAnvandarInfo(): Promise<UserInfo | null> {
+export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
     const { session, userId } = await getSessionAndUserId();
     if (!session?.user?.email) {
@@ -40,7 +40,9 @@ export async function hamtaAnvandarInfo(): Promise<UserInfo | null> {
   }
 }
 
-export async function uppdateraAnvandarInfo(formData: FormData): Promise<ActionResult<UserInfo>> {
+export async function uppdateraAnvandarInfo(
+  formData: FormData
+): Promise<AktionsResultat<AnvandarInfo>> {
   try {
     const { session, userId } = await getSessionAndUserId();
     if (!session?.user?.email) {

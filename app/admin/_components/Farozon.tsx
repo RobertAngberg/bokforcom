@@ -1,12 +1,12 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { DeleteSectionProps } from "../_types/types";
+import type { RaderingsSektionProps } from "../_types/types";
 
 export default function DeleteSection({
   state: { showDeleteConfirm, isDeleting },
   handlers: { handleDeleteCompany, confirmDelete, cancelDelete },
-}: DeleteSectionProps) {
+}: RaderingsSektionProps) {
   return (
     <>
       {/* Danger Zone */}

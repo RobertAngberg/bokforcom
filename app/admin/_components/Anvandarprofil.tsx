@@ -1,7 +1,7 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { UserProfileSectionProps } from "../_types/types";
+import type { AnvandarprofilSektionProps } from "../_types/types";
 
 export default function UserProfileSection({
   userInfo,
@@ -9,7 +9,7 @@ export default function UserProfileSection({
   state: { isEditing, isSaving, message },
   session,
   handlers: { handleEdit, handleCancel, handleSave, updateEditForm },
-}: UserProfileSectionProps) {
+}: AnvandarprofilSektionProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">

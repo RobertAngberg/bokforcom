@@ -2,13 +2,13 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { CompanyProfileSectionProps } from "../_types/types";
+import type { ForetagsprofilSektionProps } from "../_types/types";
 
 export default function CompanyProfileSection({
   foretagsProfil,
   state: { isEditingCompany, isSavingCompany, companyMessage },
   handlers: { handleEditCompany, handleCancelCompany, handleSaveCompany, handleCompanyInputChange },
-}: CompanyProfileSectionProps) {
+}: ForetagsprofilSektionProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">

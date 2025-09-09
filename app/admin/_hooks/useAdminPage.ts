@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useAuth } from "./useAuth";
-import { useUserProfile } from "./useUserProfile";
-import { useCompanyProfile } from "./useCompanyProfile";
-import { useDeleteSection } from "./useDeleteSection";
+import { useUserProfile } from "./useAnvandarprofil";
+import { useCompanyProfile } from "./useForetagsprofil";
+import { useDeleteSection } from "./useFarozon";
 
 export const useAdminPageState = () => {
   const auth = useAuth();

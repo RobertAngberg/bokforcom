@@ -3,7 +3,7 @@
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../../_utils/authUtils";
 import { sanitizeAdminInput } from "../../_utils/validationUtils";
-import type { ForetagsProfil, ActionResult } from "../_types/types";
+import type { ForetagsProfil, AktionsResultat } from "../_types/types";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -70,7 +70,7 @@ export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null>
 
 export async function uppdateraForetagsprofilAdmin(
   formData: FormData
-): Promise<ActionResult<ForetagsProfil>> {
+): Promise<AktionsResultat<ForetagsProfil>> {
   try {
     const { session, userId } = await getSessionAndUserId();
     if (!session?.user?.email) {
@@ -144,7 +144,7 @@ export async function uppdateraForetagsprofilAdmin(
 // Företag - Radering
 // ============================================================================
 
-export async function raderaForetag(): Promise<ActionResult> {
+export async function raderaForetag(): Promise<AktionsResultat> {
   try {
     const { session, userId } = await getSessionAndUserId();
     if (!session?.user?.email) {
