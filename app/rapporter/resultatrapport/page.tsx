@@ -293,9 +293,30 @@ export default function Page() {
           },
         },
         {
+          key: "verifikat",
+          label: "Verifikat",
+          render: (_, row: any) => {
+            if (row.isTransaction) {
+              // Transaktionsrad - visa verifikat-ID här
+              return (
+                <div className="text-left">
+                  <div
+                    className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
+                    onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+                  >
+                    {row.id}
+                  </div>
+                </div>
+              );
+            }
+            // För konto- och summeringsrader, visa inget
+            return "";
+          },
+        },
+        {
           key: "IngBalans",
-          label: `Ing. balans\n${previousYear}-01-01`,
-          className: "text-right whitespace-pre-line",
+          label: "Ing. balans",
+          className: "text-left whitespace-pre-line",
           render: (_, row: any) => {
             if (row.isTransaction) {
               return "";
@@ -309,10 +330,10 @@ export default function Page() {
         {
           key: "Resultat",
           label: "Resultat",
-          className: "text-right",
+          className: "text-left",
           render: (_, row: any) => {
             if (row.isTransaction) {
-              return <div className="text-right">{formatSEK(row.belopp)}</div>;
+              return <div className="text-left">{formatSEK(row.belopp)}</div>;
             }
             // Invertera intäkter för att visa dem som positiva
             const value = row[currentYear] || 0;
@@ -322,8 +343,8 @@ export default function Page() {
         },
         {
           key: "UtgBalans",
-          label: `Utg. balans\n${currentYear}-12-31`,
-          className: "text-right whitespace-pre-line",
+          label: "Utg. balans",
+          className: "text-left whitespace-pre-line",
           render: (_, row: any) => {
             if (row.isTransaction) {
               return "";
@@ -782,10 +803,9 @@ export default function Page() {
         <Totalrad
           label="Summa rörelsens intäkter"
           values={{
-            [`Ing. balans\n${previousYear}-01-01`]: intaktsSum[previousYear] ?? 0,
+            "Ing. balans": intaktsSum[previousYear] ?? 0,
             Resultat: intaktsSum[currentYear] ?? 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (intaktsSum[previousYear] ?? 0) + (intaktsSum[currentYear] ?? 0),
+            "Utg. balans": (intaktsSum[previousYear] ?? 0) + (intaktsSum[currentYear] ?? 0),
           }}
         />
 
@@ -796,10 +816,9 @@ export default function Page() {
           <Totalrad
             label="Summa rörelsens kostnader"
             values={{
-              [`Ing. balans\n${previousYear}-01-01`]: -rorelsensSum[previousYear] || 0,
+              "Ing. balans": -rorelsensSum[previousYear] || 0,
               Resultat: -rorelsensSum[currentYear] || 0,
-              [`Utg. balans\n${currentYear}-12-31`]:
-                (-rorelsensSum[previousYear] || 0) + (-rorelsensSum[currentYear] || 0),
+              "Utg. balans": (-rorelsensSum[previousYear] || 0) + (-rorelsensSum[currentYear] || 0),
             }}
           />
         </div>
@@ -812,9 +831,9 @@ export default function Page() {
             <Totalrad
               label="Summa finansiella intäkter"
               values={{
-                [`Ing. balans\n${previousYear}-01-01`]: finansiellaIntakterSum[previousYear] ?? 0,
+                "Ing. balans": finansiellaIntakterSum[previousYear] ?? 0,
                 Resultat: finansiellaIntakterSum[currentYear] ?? 0,
-                [`Utg. balans\n${currentYear}-12-31`]:
+                "Utg. balans":
                   (finansiellaIntakterSum[previousYear] ?? 0) +
                   (finansiellaIntakterSum[currentYear] ?? 0),
               }}
@@ -830,9 +849,9 @@ export default function Page() {
             <Totalrad
               label="Summa finansiella kostnader"
               values={{
-                [`Ing. balans\n${previousYear}-01-01`]: finansiellaKostnaderSum[previousYear] ?? 0,
+                "Ing. balans": finansiellaKostnaderSum[previousYear] ?? 0,
                 Resultat: finansiellaKostnaderSum[currentYear] ?? 0,
-                [`Utg. balans\n${currentYear}-12-31`]:
+                "Utg. balans":
                   (finansiellaKostnaderSum[previousYear] ?? 0) +
                   (finansiellaKostnaderSum[currentYear] ?? 0),
               }}
@@ -966,10 +985,9 @@ export default function Page() {
         <Totalrad
           label="Beräknat resultat"
           values={{
-            [`Ing. balans\n${previousYear}-01-01`]: resultat[previousYear] ?? 0,
+            "Ing. balans": resultat[previousYear] ?? 0,
             Resultat: resultat[currentYear] ?? 0,
-            [`Utg. balans\n${currentYear}-12-31`]:
-              (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
+            "Utg. balans": (resultat[previousYear] ?? 0) + (resultat[currentYear] ?? 0),
           }}
         />
       </div>

@@ -5,7 +5,6 @@ import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
-import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
 import { getMomsrapport, fetchFöretagsprofil } from "./actions";
 
 type MomsRad = {
@@ -140,22 +139,6 @@ export default function Page() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  const exportPDF = async () => {
-    try {
-      await exportMomsrapportPDF(initialData, företagsnamn, organisationsnummer, år);
-    } catch (error) {
-      console.error("PDF export failed:", error);
-    }
-  };
-
-  const exportCSV = async () => {
-    try {
-      await exportMomsrapportCSV(initialData, företagsnamn, organisationsnummer, år);
-    } catch (error) {
-      console.error("CSV export failed:", error);
-    }
-  };
   //#endregion
 
   //#region Calculations
@@ -273,8 +256,6 @@ export default function Page() {
           />
 
           <div className="flex gap-3">
-            <Knapp text="📄 Exportera PDF" onClick={exportPDF} />
-            <Knapp text="📊 Exportera CSV" onClick={exportCSV} />
             <Knapp text="Exportera XML" onClick={exportXML} />
           </div>
         </div>

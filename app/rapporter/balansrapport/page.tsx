@@ -531,15 +531,8 @@ export default function Page() {
         label: "Konto",
         render: (_, row) => {
           if (row.isTransaction) {
-            // Transaktionsrad - visa bara ID-numret, inget annat
-            return (
-              <div
-                className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
-                onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
-              >
-                {row.id}
-              </div>
-            );
+            // Transaktionsrad - visa bara tomt för Konto-kolumnen
+            return "";
           } else if (row.isSummary) {
             // Summeringsrad
             return <div className="font-bold">{row.beskrivning}</div>;
@@ -554,8 +547,27 @@ export default function Page() {
         },
       },
       {
+        key: "verifikat",
+        label: "Verifikat",
+        render: (_, row) => {
+          if (row.isTransaction) {
+            // Transaktionsrad - visa verifikat-ID här
+            return (
+              <div
+                className="ml-4 text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
+                onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+              >
+                {row.id}
+              </div>
+            );
+          }
+          // För konto- och summeringsrader, visa inget
+          return "";
+        },
+      },
+      {
         key: "ingaendeSaldo",
-        label: `Ing. balans ${year}-01-01`,
+        label: "Ing. balans",
         render: (_, row) => {
           if (row.isTransaction) return "";
           return formatSEK(row.ingaendeSaldo || 0);
@@ -576,14 +588,14 @@ export default function Page() {
               // Moms konton ska visa negativa belopp för utgående moms
               belopp = -Math.abs(belopp);
             }
-            return <div className="text-right">{formatSEK(belopp)}</div>;
+            return <div className="text-left">{formatSEK(belopp)}</div>;
           }
           return formatSEK(row.aretsResultat || 0);
         },
       },
       {
         key: "utgaendeSaldo",
-        label: `Utg. balans ${year}-12-31`,
+        label: "Utg. balans",
         render: (_, row) => {
           if (row.isTransaction) return "";
           const className = row.isSummary ? "font-bold" : "";
@@ -664,7 +676,7 @@ export default function Page() {
       },
       {
         key: "ingaendeSaldo",
-        label: `Ing. balans ${year}-01-01`,
+        label: "Ing. balans",
         render: (_, row) => formatSEK(row.ingaendeSaldo || 0),
       },
       {
@@ -674,7 +686,7 @@ export default function Page() {
       },
       {
         key: "utgaendeSaldo",
-        label: `Utg. balans ${year}-12-31`,
+        label: "Utg. balans",
         render: (_, row) => formatSEK(row.utgaendeSaldo || 0),
       },
     ];
@@ -850,9 +862,9 @@ export default function Page() {
             <Totalrad
               label="Anläggningstillgångar"
               values={{
-                [`Ing. balans\n${processedData.year}-01-01`]: anläggningsSum.ingaende,
+                "Ing. balans": anläggningsSum.ingaende,
                 Resultat: anläggningsSum.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]: anläggningsSum.utgaende,
+                "Utg. balans": anläggningsSum.utgaende,
               }}
             />
           </>
@@ -865,9 +877,9 @@ export default function Page() {
             <Totalrad
               label="Omsättningstillgångar"
               values={{
-                [`Ing. balans\n${processedData.year}-01-01`]: omsättningsSum.ingaende,
+                "Ing. balans": omsättningsSum.ingaende,
                 Resultat: omsättningsSum.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]: omsättningsSum.utgaende,
+                "Utg. balans": omsättningsSum.utgaende,
               }}
             />
           </>
@@ -877,9 +889,9 @@ export default function Page() {
         <Totalrad
           label="Summa tillgångar"
           values={{
-            [`Ing. balans\n${processedData.year}-01-01`]: totalTillgangar.ingaende,
+            "Ing. balans": totalTillgangar.ingaende,
             Resultat: totalTillgangar.arets,
-            [`Utg. balans\n${processedData.year}-12-31`]: totalTillgangar.utgaende,
+            "Utg. balans": totalTillgangar.utgaende,
           }}
         />
 
@@ -900,11 +912,9 @@ export default function Page() {
               <Totalrad
                 label="Eget kapital"
                 values={{
-                  [`Ing. balans\n${processedData.year}-01-01`]:
-                    egetKapitalSum.ingaende + beraknatResultatData.ingaende,
+                  "Ing. balans": egetKapitalSum.ingaende + beraknatResultatData.ingaende,
                   Resultat: egetKapitalSum.arets + beraknatResultatData.arets,
-                  [`Utg. balans\n${processedData.year}-12-31`]:
-                    egetKapitalSum.utgaende + beraknatResultatData.utgaende,
+                  "Utg. balans": egetKapitalSum.utgaende + beraknatResultatData.utgaende,
                 }}
               />
             </div>
@@ -921,9 +931,9 @@ export default function Page() {
             <Totalrad
               label="Avsättningar"
               values={{
-                [`Ing. balans\n${processedData.year}-01-01`]: avsättningarSum.ingaende,
+                "Ing. balans": avsättningarSum.ingaende,
                 Resultat: avsättningarSum.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]: avsättningarSum.utgaende,
+                "Utg. balans": avsättningarSum.utgaende,
               }}
             />
           </>
@@ -936,9 +946,9 @@ export default function Page() {
             <Totalrad
               label="Långfristiga skulder"
               values={{
-                [`Ing. balans\n${processedData.year}-01-01`]: långfristigaSum.ingaende,
+                "Ing. balans": långfristigaSum.ingaende,
                 Resultat: långfristigaSum.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]: långfristigaSum.utgaende,
+                "Utg. balans": långfristigaSum.utgaende,
               }}
             />
           </>
@@ -951,9 +961,9 @@ export default function Page() {
             <Totalrad
               label="Kortfristiga skulder"
               values={{
-                [`Ing. balans\n${processedData.year}-01-01`]: kortfristigaSum.ingaende,
+                "Ing. balans": kortfristigaSum.ingaende,
                 Resultat: kortfristigaSum.arets,
-                [`Utg. balans\n${processedData.year}-12-31`]: kortfristigaSum.utgaende,
+                "Utg. balans": kortfristigaSum.utgaende,
               }}
             />
           </>
@@ -963,9 +973,9 @@ export default function Page() {
         <Totalrad
           label="Summa eget kapital och skulder"
           values={{
-            [`Ing. balans\n${processedData.year}-01-01`]: totalEgetKapitalOchSkulder.ingaende,
+            "Ing. balans": totalEgetKapitalOchSkulder.ingaende,
             Resultat: totalEgetKapitalOchSkulder.arets,
-            [`Utg. balans\n${processedData.year}-12-31`]: totalEgetKapitalOchSkulder.utgaende,
+            "Utg. balans": totalEgetKapitalOchSkulder.utgaende,
           }}
         />
       </div>
