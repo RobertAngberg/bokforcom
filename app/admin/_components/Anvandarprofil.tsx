@@ -3,7 +3,7 @@
 import Knapp from "../../_components/Knapp";
 import type { AnvandarprofilSektionProps } from "../_types/types";
 
-export default function UserProfileSection({
+export default function Anvandarprofil({
   userInfo,
   editForm,
   state: { isEditing, isSaving, message },

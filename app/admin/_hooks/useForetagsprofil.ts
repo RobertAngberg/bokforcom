@@ -7,7 +7,7 @@ import {
 } from "../_actions/foretagsActions";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
-export const useCompanyProfile = () => {
+export const useForetagsprofil = () => {
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>({
     foretagsnamn: "",
     adress: "",

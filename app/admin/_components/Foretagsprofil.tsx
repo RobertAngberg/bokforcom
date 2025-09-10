@@ -4,7 +4,7 @@ import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
 import type { ForetagsprofilSektionProps } from "../_types/types";
 
-export default function CompanyProfileSection({
+export default function Foretagsprofil({
   foretagsProfil,
   state: { isEditingCompany, isSavingCompany, companyMessage },
   handlers: { handleEditCompany, handleCancelCompany, handleSaveCompany, handleCompanyInputChange },

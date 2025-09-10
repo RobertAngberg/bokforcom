@@ -3,7 +3,7 @@
 import Knapp from "../../_components/Knapp";
 import type { RaderingsSektionProps } from "../_types/types";
 
-export default function DeleteSection({
+export default function Farozon({
   state: { showDeleteConfirm, isDeleting },
   handlers: { handleDeleteCompany, confirmDelete, cancelDelete },
 }: RaderingsSektionProps) {

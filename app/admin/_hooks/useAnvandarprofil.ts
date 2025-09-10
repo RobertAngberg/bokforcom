@@ -9,7 +9,7 @@ import type {
   MeddelandeTillstand,
 } from "../_types/types";
 
-export const useUserProfile = () => {
+export const useAnvandarprofil = () => {
   const { data: session } = useSession();
   const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(null);
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>({

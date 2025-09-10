@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useAuth } from "./useAuth";
-import { useUserProfile } from "./useAnvandarprofil";
-import { useCompanyProfile } from "./useForetagsprofil";
-import { useDeleteSection } from "./useFarozon";
+import { useAnvandarprofil } from "./useAnvandarprofil";
+import { useForetagsprofil } from "./useForetagsprofil";
+import { useFarozon } from "./useFarozon";
 
 export const useAdminPageState = () => {
   const auth = useAuth();
-  const userProfile = useUserProfile();
-  const companyProfile = useCompanyProfile();
-  const deleteConfirmation = useDeleteSection();
+  const userProfile = useAnvandarprofil();
+  const companyProfile = useForetagsprofil();
+  const deleteConfirmation = useFarozon();
 
   useEffect(() => {
     if (auth.session?.user?.id) {

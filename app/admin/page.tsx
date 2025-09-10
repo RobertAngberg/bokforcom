@@ -1,10 +1,10 @@
 "use client";
 
 import MainLayout from "../_components/MainLayout";
-import { useAdminPageState } from "./_hooks/useAdminPageState";
-import UserProfileSection from "./_components/UserProfileSection";
-import CompanyProfileSection from "./_components/CompanyProfileSection";
-import DeleteSection from "./_components/DeleteSection";
+import { useAdminPageState } from "./_hooks/useAdminPage";
+import Anvandarprofil from "./_components/Anvandarprofil";
+import Foretagsprofil from "./_components/Foretagsprofil";
+import Farozon from "./_components/Farozon";
 
 export default function AdminPage() {
   const { auth, userProfile, companyProfile, deleteConfirmation, isLoading } = useAdminPageState();
@@ -33,9 +33,9 @@ export default function AdminPage() {
     <MainLayout>
       <div className="max-w-4xl mx-auto px-6 pt-2">
         <h1 className="text-3xl mb-8 text-center">Administration</h1>
-        <UserProfileSection {...userProfile} />
-        <CompanyProfileSection {...companyProfile.getComponentProps()} />
-        <DeleteSection {...deleteConfirmation.getComponentProps()} />
+        <Anvandarprofil {...userProfile} />
+        <Foretagsprofil {...companyProfile.getComponentProps()} />
+        <Farozon {...deleteConfirmation.getComponentProps()} />
 
         <div className="mb-4 text-center">
           <a
