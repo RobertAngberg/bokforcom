@@ -29,7 +29,7 @@ export default function BokfordaFakturorFlik() {
 
   return (
     <AnimeradFlik
-      title="Bokförda fakturor"
+      title="Leverantörsfakturor"
       icon="📊"
       visaSummaDirekt={loading ? "..." : `${fakturorAntal} st`}
     >

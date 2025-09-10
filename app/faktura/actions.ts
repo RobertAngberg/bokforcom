@@ -1627,6 +1627,26 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
   const client = await pool.connect();
 
   try {
+    // Kontrollera att fakturan är bokförd och obetald
+    const { rows: fakturaRows } = await client.query(
+      `SELECT status_bokförd, status_betalning FROM leverantörsfakturor 
+       WHERE id = $1 AND "user_id" = $2`,
+      [leverantörsfakturaId, userId]
+    );
+
+    if (fakturaRows.length === 0) {
+      return { success: false, error: "Leverantörsfaktura hittades inte" };
+    }
+
+    const faktura = fakturaRows[0];
+    if (faktura.status_bokförd !== "Bokförd") {
+      return { success: false, error: "Fakturan måste vara bokförd innan den kan betalas" };
+    }
+
+    if (faktura.status_betalning === "Betald") {
+      return { success: false, error: "Fakturan är redan betald" };
+    }
+
     // Skapa ny transaktion för betalningen
     const { rows: transRows } = await client.query(
       `INSERT INTO transaktioner (
@@ -1682,6 +1702,100 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     return {
       success: false,
       error: "Kunde inte registrera betalning",
+    };
+  } finally {
+    client.release();
+  }
+}
+
+// Betala och bokför en leverantörsfaktura i ett steg
+export async function betalaOchBokförLeverantörsfaktura(
+  leverantörsfakturaId: number,
+  belopp: number
+) {
+  const userId = await getUserId();
+  if (!userId) {
+    return { success: false, error: "Ej autentiserad" };
+  }
+
+  const client = await pool.connect();
+
+  try {
+    // Kontrollera att fakturan finns och är ej bokförd
+    const { rows: fakturaRows } = await client.query(
+      `SELECT status_bokförd, status_betalning FROM leverantörsfakturor 
+       WHERE id = $1 AND "user_id" = $2`,
+      [leverantörsfakturaId, userId]
+    );
+
+    if (fakturaRows.length === 0) {
+      return { success: false, error: "Leverantörsfaktura hittades inte" };
+    }
+
+    const faktura = fakturaRows[0];
+    if (faktura.status_bokförd === "Bokförd") {
+      return { success: false, error: "Fakturan är redan bokförd" };
+    }
+
+    await client.query("BEGIN");
+
+    // Skapa ny transaktion för betalningen
+    const { rows: transRows } = await client.query(
+      `INSERT INTO transaktioner (
+        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id`,
+      [
+        new Date().toISOString().split("T")[0], // Dagens datum
+        "Betalning leverantörsfaktura",
+        belopp,
+        "Betalning och bokföring av leverantörsfaktura",
+        userId,
+      ]
+    );
+
+    const transaktionsId = transRows[0].id;
+
+    // Hämta konto-id för 1930 (Företagskonto) och 2440 (Leverantörsskulder)
+    const kontoRes = await client.query(
+      `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
+    );
+    const kontoMap = Object.fromEntries(kontoRes.rows.map((r: any) => [r.kontonummer, r.id]));
+
+    if (!kontoMap["1930"] || !kontoMap["2440"]) {
+      throw new Error("Konto 1930 eller 2440 saknas");
+    }
+
+    // Skapa transaktionsposter för betalningen
+    // 1930 Företagskonto - Kredit (pengar ut)
+    await client.query(
+      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
+      [transaktionsId, kontoMap["1930"], 0, belopp]
+    );
+
+    // 2440 Leverantörsskulder - Debet (skuld minskar)
+    await client.query(
+      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
+      [transaktionsId, kontoMap["2440"], belopp, 0]
+    );
+
+    // Uppdatera leverantörsfaktura med betaldatum och status
+    const updateResult = await client.query(
+      `UPDATE leverantörsfakturor 
+       SET betaldatum = $1, status_betalning = 'Betald', status_bokförd = 'Bokförd' 
+       WHERE id = $2 AND "user_id" = $3`,
+      [new Date().toISOString().split("T")[0], leverantörsfakturaId, userId]
+    );
+
+    await client.query("COMMIT");
+
+    return { success: true, transaktionsId };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Fel vid betalning och bokföring:", error);
+    return {
+      success: false,
+      error: "Kunde inte betala och bokföra leverantörsfaktura",
     };
   } finally {
     client.release();

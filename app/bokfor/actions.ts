@@ -630,10 +630,10 @@ export async function saveTransaction(formData: FormData) {
           fakturanummer,
           formattedFakturadatum,
           formattedFörfallodatum,
-          formattedBetaldatum,
+          null, // betaldatum ska alltid vara null vid registrering
           belopp,
-          formattedBetaldatum ? "Betald" : "Obetald", // status_betalning
-          "Bokförd", // status_bokförd
+          "Obetald", // status_betalning ska alltid vara "Obetald" vid registrering
+          "Ej bokförd", // status_bokförd ska vara "Ej bokförd" (inte "Registrerad")
         ]
       );
       console.log("📝 Leverantörsfaktura SQL-result:", res.rows);
