@@ -1157,7 +1157,7 @@ interface Analys {
   totaltAnvanda: number;
 }
 
-type WizardStep = "konton" | "inställningar" | "förhandsvisning" | "import" | "resultat";
+type WizardStep = "inställningar" | "förhandsvisning" | "import" | "resultat";
 
 // Wizard-komponenter
 function ImportWizard({
@@ -1173,7 +1173,7 @@ function ImportWizard({
   onCancel: () => void;
   selectedFile?: File | null;
 }) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>("konton");
+  const [currentStep, setCurrentStep] = useState<WizardStep>("inställningar");
   const [importResultat, setImportResultat] = useState<any>(null);
   const [rensarDubbletter, setRensarDubbletter] = useState(false);
   const [dublettResultat, setDublettResultat] = useState<any>(null);
@@ -1263,7 +1263,6 @@ function ImportWizard({
   };
 
   const steps = [
-    { id: "konton", title: "Kontohantering", description: "Granska och skapa saknade konton" },
     {
       id: "inställningar",
       title: "Importinställningar",
@@ -1331,26 +1330,16 @@ function ImportWizard({
 
         {/* Step Content */}
         <div className="bg-slate-700 rounded-lg p-6">
-          {currentStep === "konton" && (
-            <KontoSteg
-              sieData={sieData}
-              saknadeKonton={saknadeKonton}
-              analys={analys}
-              onNext={() => setCurrentStep("inställningar")}
-              rensarDubbletter={rensarDubbletter}
-              dublettResultat={dublettResultat}
-              harDubbletter={harDubbletter}
-              onRensaDubbletter={handleRensaDubbletter}
-            />
-          )}
-
           {currentStep === "inställningar" && (
             <InställningarSteg
               sieData={sieData}
               settings={importSettings}
               onSettingsChange={setImportSettings}
               onNext={() => setCurrentStep("förhandsvisning")}
-              onBack={() => setCurrentStep("konton")}
+              rensarDubbletter={rensarDubbletter}
+              dublettResultat={dublettResultat}
+              harDubbletter={harDubbletter}
+              onRensaDubbletter={handleRensaDubbletter}
             />
           )}
 
@@ -1520,12 +1509,20 @@ function InställningarSteg({
   onSettingsChange,
   onNext,
   onBack,
+  rensarDubbletter,
+  dublettResultat,
+  harDubbletter,
+  onRensaDubbletter,
 }: {
   sieData: SieData;
   settings: any;
   onSettingsChange: (settings: any) => void;
   onNext: () => void;
-  onBack: () => void;
+  onBack?: () => void;
+  rensarDubbletter?: boolean;
+  dublettResultat?: any;
+  harDubbletter?: boolean;
+  onRensaDubbletter?: () => void;
 }) {
   const tidigasteDatum =
     sieData.verifikationer.length > 0
@@ -1545,22 +1542,51 @@ function InställningarSteg({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-white mb-4">Steg 2: Importinställningar</h2>
+      <h2 className="text-xl font-semibold text-white mb-4 text-center">
+        Steg 1: Importinställningar
+      </h2>
 
       <div className="space-y-6">
+        {/* Dubbletthantering */}
+        {harDubbletter && (
+          <div className="bg-slate-800 rounded-lg p-4">
+            <h3 className="font-semibold text-white mb-3">Dubbletthantering</h3>
+            <div className="bg-orange-500/20 border border-orange-500 text-orange-400 px-4 py-3 rounded mb-3">
+              <strong>⚠️ Dubbletter hittades i kontoplanen</strong>
+              <br />
+              <span className="text-sm">
+                Det finns dubbletter av vissa konton. Klicka nedan för att rensa dem automatiskt.
+              </span>
+            </div>
+
+            <div className="flex gap-2">
+              <Knapp
+                text={rensarDubbletter ? "Rensar..." : "🗑️ Rensa dubbletter"}
+                onClick={onRensaDubbletter}
+                disabled={rensarDubbletter}
+                className="bg-orange-600 hover:bg-orange-700"
+              />
+            </div>
+
+            {dublettResultat && (
+              <div
+                className={`p-3 rounded mt-3 ${
+                  dublettResultat.success
+                    ? "bg-green-500/20 border border-green-500 text-green-400"
+                    : "bg-red-500/20 border border-red-500 text-red-400"
+                }`}
+              >
+                {dublettResultat.success
+                  ? `✅ Rensade ${dublettResultat.rensade} dubbletter`
+                  : `❌ Fel: ${dublettResultat.error}`}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Datumintervall */}
         <div className="bg-slate-800 rounded-lg p-4">
           <h3 className="font-semibold text-white mb-3">Datumintervall</h3>
-          <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded mb-3">
-            <strong>
-              📅 SIE-filen innehåller data från {tidigasteDatum} till {senasteDatum}
-            </strong>
-            <br />
-            <span className="text-sm">
-              Datumintervallet nedan är automatiskt förifyllt, men du kan justera det om du bara
-              vill importera en del av perioden.
-            </span>
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Från datum</label>
@@ -1601,44 +1627,6 @@ function InställningarSteg({
               </span>
             </label>
 
-            {/* Visa verifikationer för exkludering */}
-            {settings.inkluderaVerifikationer && sieData.verifikationer.length > 0 && (
-              <div className="ml-6 mt-2 bg-slate-700 rounded p-3">
-                <h4 className="text-sm font-medium text-white mb-2">
-                  Exkludera specifika verifikationer:
-                </h4>
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {sieData.verifikationer.slice(0, 20).map((v) => (
-                    <label key={`${v.serie}-${v.nummer}`} className="flex items-center text-sm">
-                      <input
-                        type="checkbox"
-                        checked={settings.exkluderaVerifikationer.includes(
-                          `${v.serie}-${v.nummer}`
-                        )}
-                        onChange={(e) => {
-                          const verifikationId = `${v.serie}-${v.nummer}`;
-                          const newExkludera = e.target.checked
-                            ? [...settings.exkluderaVerifikationer, verifikationId]
-                            : settings.exkluderaVerifikationer.filter(
-                                (id: string) => id !== verifikationId
-                              );
-                          onSettingsChange({ ...settings, exkluderaVerifikationer: newExkludera });
-                        }}
-                        className="mr-2 scale-75"
-                      />
-                      <span className="text-gray-300">
-                        V{v.nummer}: {v.beskrivning} ({v.datum})
-                      </span>
-                    </label>
-                  ))}
-                  {sieData.verifikationer.length > 20 && (
-                    <p className="text-xs text-gray-400 mt-2">
-                      Visar första 20 av {sieData.verifikationer.length} verifikationer
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -1677,23 +1665,19 @@ function InställningarSteg({
               />
               <span className="text-white">Skapa saknade konton automatiskt</span>
             </label>
-            <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-3 py-2 rounded text-sm">
-              <strong>🛡️ Duplicate-skydd:</strong> Importen avbryts automatiskt om befintliga
-              verifikationer upptäcks för att förhindra dubbletter.
-            </div>
           </div>
         </div>
       </div>
 
       <div className="mt-6 flex justify-between">
-        <Knapp text="← Tillbaka" onClick={onBack} />
+        {onBack && <Knapp text="← Tillbaka" onClick={onBack} />}
         <Knapp text="Fortsätt till förhandsvisning →" onClick={onNext} />
       </div>
     </div>
   );
 }
 
-// Komponent för Steg 3: Förhandsvisning
+// Komponent för Steg 2: Förhandsvisning
 function FörhandsvisningSteg({
   sieData,
   settings,
@@ -1724,12 +1708,12 @@ function FörhandsvisningSteg({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-white mb-4">Steg 3: Förhandsvisning</h2>
+      <h2 className="text-xl font-semibold text-white mb-4 text-center">Steg 2: Förhandsvisning</h2>
 
       {/* Info om bilagor */}
-      <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded mb-4">
-        <div className="flex items-start space-x-2">
-          <span className="text-lg">📎</span>
+      <div className="text-gray-300 px-4 py-3 mb-4 text-center">
+        <div className="flex items-start space-x-2 justify-center">
+          <span className="text-lg">ℹ️</span>
           <div>
             <strong>OBS:</strong> SIE-filer innehåller endast transaktionsdata. Verifikatbilagor
             (PDFer, bilder, kvitton) måste laddas upp separat efter importen.
@@ -1738,8 +1722,10 @@ function FörhandsvisningSteg({
       </div>
 
       <div className="space-y-4">
-        <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded">
-          <strong>📋 Sammanfattning:</strong> Följande kommer att importeras till din databas:
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            📋 Sammanfattning: Följande kommer att importeras till din databas:
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1770,19 +1756,6 @@ function FörhandsvisningSteg({
               <div className="text-sm text-gray-400">resultatposter</div>
             </div>
           )}
-        </div>
-
-        {settings.startDatum || settings.slutDatum ? (
-          <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
-            <strong>📅 Datumfilter:</strong>
-            {settings.startDatum && ` Från ${settings.startDatum}`}
-            {settings.slutDatum && ` Till ${settings.slutDatum}`}
-          </div>
-        ) : null}
-
-        <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded">
-          <strong>⚠️ Varning:</strong> Detta är en permanent åtgärd. Se till att du har en backup av
-          din databas innan du fortsätter.
         </div>
       </div>
 
@@ -2408,7 +2381,7 @@ export default function SiePage() {
           <div className="bg-slate-800 rounded-lg p-6">
             {/* Header med företagsinfo */}
             <div className="mb-6 bg-slate-700 rounded-lg p-6">
-              <h2 className="text-2xl font-bold text-white mb-4">Företagsinformation</h2>
+              <h2 className="text-3xl text-white mb-10 text-center">Import av bokföringsdata</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white">
                 <div>
                   <strong>Program:</strong> {sieData.header.program}
@@ -2428,7 +2401,7 @@ export default function SiePage() {
               {analys && (analys.specialKonton > 0 || analys.kritiskaKonton.length > 0) && (
                 <div className="mt-4 space-y-2">
                   {/* Info om kontoanalys */}
-                  <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded">
+                  <div className="text-gray-300 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <strong>ℹ️ Kontoanalys:</strong> SIE-filen innehåller {analys.totaltAntal}{" "}
@@ -2483,26 +2456,18 @@ export default function SiePage() {
 
                   {/* Info om standardkonton */}
                   {analys.standardKonton > 0 && (
-                    <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded text-sm">
+                    <div className="text-gray-300 px-4 py-3">
                       <strong>ℹ️ Info:</strong> {analys.standardKonton} BAS-standardkonton hittades
                       som inte finns i din kontoplan (detta är normalt).
                     </div>
                   )}
-
-                  {/* Import-knapp */}
-                  <div className="bg-green-500/20 border border-green-500 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-green-400 mb-1">Redo att importera?</h3>
-                        <p className="text-green-300 text-sm">
-                          Starta import-wizarden för att säkert importera data till din databas.
-                        </p>
-                      </div>
-                      <Knapp text="Starta Import-wizard →" onClick={() => setVisaWizard(true)} />
-                    </div>
-                  </div>
                 </div>
               )}
+            </div>
+
+            {/* Titel för importdata */}
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold text-white">Importdata</h2>
             </div>
 
             {/* Flikar */}
@@ -2517,7 +2482,7 @@ export default function SiePage() {
                     }}
                     className={`px-4 py-2 rounded-md capitalize transition-colors ${
                       activeTab === tab
-                        ? "bg-cyan-600 text-white"
+                        ? "bg-cyan-600 text-white my-1"
                         : "text-gray-300 hover:text-white hover:bg-slate-600"
                     }`}
                   >
@@ -2702,9 +2667,24 @@ export default function SiePage() {
           </div>
         )}
 
+        {/* Import-knapp längst ner - endast när SIE-data är uppladdad */}
+        {sieData && (
+          <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 mt-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-green-400 mb-1">Redo att importera?</h3>
+                <p className="text-green-300 text-sm">
+                  Starta import-wizarden för att säkert importera data till din databas.
+                </p>
+              </div>
+              <Knapp text="Starta Import-wizard →" onClick={() => setVisaWizard(true)} />
+            </div>
+          </div>
+        )}
+
         {/* Export knapp längst ner - endast när ingen SIE-data är uppladdad */}
         {!sieData && (
-          <div className="text-center mt-8">
+          <div className="flex justify-end mt-8">
             <Knapp
               text={exportLoading ? "Exporterar..." : "📤 Exportera SIE-fil"}
               onClick={handleExport}
