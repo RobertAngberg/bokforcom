@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
+import TillbakaPil from "../_components/TillbakaPil";
 import {
   uploadSieFile,
   exporteraSieData,
@@ -2300,19 +2301,31 @@ export default function SiePage() {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto p-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">SIE Import</h1>
-          <p className="text-gray-300">Ladda upp SIE-filer för att visa bokföringsdata</p>
-
-          {/* Export knapp */}
-          <div className="mt-6">
-            <Knapp
-              text={exportLoading ? "Exporterar..." : "📤 Exportera SIE-fil"}
-              onClick={handleExport}
-              disabled={exportLoading}
+        {/* Tillbakapil uppe till vänster */}
+        {sieData && (
+          <div className="flex justify-start mb-6">
+            <TillbakaPil
+              onClick={() => {
+                setSieData(null);
+                setSelectedFile(null);
+                setSaknadeKonton([]);
+                setVisaSaknade(false);
+                setAnalys(null);
+                setActiveTab("översikt");
+                setCurrentPage(1);
+              }}
+              className="relative left-auto top-auto"
             />
           </div>
-        </div>
+        )}
+
+        {/* Titel och beskrivning - endast när ingen SIE-data är uppladdad */}
+        {!sieData && (
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-4">SIE Import</h1>
+            <p className="text-gray-300">Ladda upp SIE-filer för att visa bokföringsdata</p>
+          </div>
+        )}
 
         {/* Filuppladdning */}
         {!sieData && (
@@ -2341,7 +2354,7 @@ export default function SiePage() {
               </label>
 
               {selectedFile && (
-                <div className="mt-6">
+                <div className="mt-6 flex flex-col items-center">
                   <p className="text-white mb-4">
                     Vald fil: <strong>{selectedFile.name}</strong>
                   </p>
@@ -2466,7 +2479,7 @@ export default function SiePage() {
 
             {/* Flikar */}
             <div className="mb-6">
-              <div className="flex space-x-1 bg-slate-700 p-1 rounded-lg">
+              <div className="flex justify-center space-x-1 bg-slate-700 p-1 rounded-lg">
                 {["översikt", "konton", "verifikationer", "balanser", "resultat"].map((tab) => (
                   <button
                     key={tab}
@@ -2657,21 +2670,18 @@ export default function SiePage() {
               </div>
             )}
 
-            {/* Återställ knapp */}
-            <div className="mt-8 text-center">
-              <Knapp
-                text="Ladda upp ny fil"
-                onClick={() => {
-                  setSieData(null);
-                  setSelectedFile(null);
-                  setSaknadeKonton([]);
-                  setVisaSaknade(false);
-                  setAnalys(null);
-                  setActiveTab("översikt");
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
+            {/* Slutet av SIE-data visning */}
+          </div>
+        )}
+
+        {/* Export knapp längst ner - endast när ingen SIE-data är uppladdad */}
+        {!sieData && (
+          <div className="text-center mt-8">
+            <Knapp
+              text={exportLoading ? "Exporterar..." : "📤 Exportera SIE-fil"}
+              onClick={handleExport}
+              disabled={exportLoading}
+            />
           </div>
         )}
       </div>

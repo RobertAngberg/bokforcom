@@ -1851,15 +1851,13 @@ export async function exporteraSieData(
     // Kontoplan
     sieContent += `#KPTYP BAS2014\n`;
 
-    // 🔒 SÄKER DATABASACCESS - Hämta endast användarens egna konton
+    // 🔒 SÄKER DATABASACCESS - Hämta alla konton (de är globala)
     const kontoQuery = await pool.query(
       `
       SELECT kontonummer, beskrivning 
       FROM konton 
-      WHERE "user_id" = $1
       ORDER BY kontonummer::integer
-    `,
-      [userId]
+    `
     );
 
     // Lägg till #KONTO-poster
@@ -1883,7 +1881,7 @@ export async function exporteraSieData(
       FROM transaktioner t
       JOIN transaktionsposter tp ON t.id = tp.transaktions_id
       JOIN konton k ON tp.konto_id = k.id
-      WHERE t."user_id" = $1 
+      WHERE t.user_id = $1 
       ORDER BY t.transaktionsdatum, t.id
     `,
       [userId]
