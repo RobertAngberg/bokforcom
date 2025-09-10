@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import StartPage from "./start/page";
-import LandingPage from "./LandingPage";
+import Startsidan from "./Startsidan";
 
 export default function Page() {
   const { data: session, status } = useSession();
@@ -16,7 +16,7 @@ export default function Page() {
 
   // Icke-inloggad användare - visa landing page
   if (status === "unauthenticated" || !session) {
-    return <LandingPage />;
+    return <Startsidan />;
   }
 
   // Inloggad användare - visa dashboard
