@@ -2119,6 +2119,58 @@ export async function rensaDubblettkonton(): Promise<{
   }
 }
 
+export async function kontrolleraDubbletter(): Promise<{
+  success: boolean;
+  harDubbletter: boolean;
+  antalDubbletter?: number;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return {
+        success: false,
+        harDubbletter: false,
+        error: "Åtkomst nekad - ingen giltig session",
+      };
+    }
+
+    const { Pool } = require("pg");
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+
+    const client = await pool.connect();
+
+    // Hitta dubbletter för användaren
+    const dublettQuery = `
+      SELECT kontonummer, COUNT(*) as antal
+      FROM konton 
+      WHERE user_id = $1 
+      GROUP BY kontonummer 
+      HAVING COUNT(*) > 1
+    `;
+
+    const { rows: dubletter } = await client.query(dublettQuery, [userId]);
+
+    client.release();
+    await pool.end();
+
+    return {
+      success: true,
+      harDubbletter: dubletter.length > 0,
+      antalDubbletter: dubletter.length,
+    };
+  } catch (error) {
+    console.error("❌ Fel vid kontroll av dubbletter:", error);
+    return {
+      success: false,
+      harDubbletter: false,
+      error: "Kunde inte kontrollera dubbletter",
+    };
+  }
+}
+
 // Hjälpfunktion för SIE 4 text-escaping
 function sieEscape(text: string): string {
   return text

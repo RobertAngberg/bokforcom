@@ -10,6 +10,7 @@ import {
   skapaKonton,
   importeraSieData,
   rensaDubblettkonton,
+  kontrolleraDubbletter,
 } from "./actions";
 import { dateTillÅÅÅÅMMDD } from "../_utils/trueDatum";
 
@@ -1176,6 +1177,7 @@ function ImportWizard({
   const [importResultat, setImportResultat] = useState<any>(null);
   const [rensarDubbletter, setRensarDubbletter] = useState(false);
   const [dublettResultat, setDublettResultat] = useState<any>(null);
+  const [harDubbletter, setHarDubbletter] = useState(false);
   const [importSettings, setImportSettings] = useState({
     startDatum: "",
     slutDatum: "",
@@ -1214,6 +1216,22 @@ function ImportWizard({
     }
   }, [sieData, importSettings.startDatum]);
 
+  // Kontrollera dubbletter när komponenten laddas
+  useEffect(() => {
+    const kontrolleraDublettStatus = async () => {
+      try {
+        const resultat = await kontrolleraDubbletter();
+        if (resultat.success) {
+          setHarDubbletter(resultat.harDubbletter);
+        }
+      } catch (error) {
+        console.error("❌ Kunde inte kontrollera dubbletter:", error);
+      }
+    };
+
+    kontrolleraDublettStatus();
+  }, []); // Kör en gång när komponenten laddas
+
   // Funktion för att rensa dubbletter
   const handleRensaDubbletter = async () => {
     setRensarDubbletter(true);
@@ -1225,6 +1243,11 @@ function ImportWizard({
 
       if (resultat.success) {
         console.log(`✅ Rensade ${resultat.rensade} dubbletter`);
+        // Kontrollera igen om det finns fler dubbletter
+        const kontrollResultat = await kontrolleraDubbletter();
+        if (kontrollResultat.success) {
+          setHarDubbletter(kontrollResultat.harDubbletter);
+        }
       } else {
         console.error("❌ Kunde inte rensa dubbletter:", resultat.error);
       }
@@ -1316,6 +1339,7 @@ function ImportWizard({
               onNext={() => setCurrentStep("inställningar")}
               rensarDubbletter={rensarDubbletter}
               dublettResultat={dublettResultat}
+              harDubbletter={harDubbletter}
               onRensaDubbletter={handleRensaDubbletter}
             />
           )}
@@ -1369,6 +1393,7 @@ function KontoSteg({
   onNext,
   rensarDubbletter,
   dublettResultat,
+  harDubbletter,
   onRensaDubbletter,
 }: {
   sieData: SieData;
@@ -1377,6 +1402,7 @@ function KontoSteg({
   onNext: () => void;
   rensarDubbletter: boolean;
   dublettResultat: any;
+  harDubbletter: boolean;
   onRensaDubbletter: () => void;
 }) {
   return (
@@ -1453,12 +1479,14 @@ function KontoSteg({
             </div>
 
             <div className="flex gap-2">
-              <Knapp
-                text={rensarDubbletter ? "Rensar..." : "🗑️ Rensa dubbletter"}
-                onClick={onRensaDubbletter}
-                disabled={rensarDubbletter}
-                className="bg-orange-600 hover:bg-orange-700"
-              />
+              {harDubbletter && (
+                <Knapp
+                  text={rensarDubbletter ? "Rensar..." : "🗑️ Rensa dubbletter"}
+                  onClick={onRensaDubbletter}
+                  disabled={rensarDubbletter}
+                  className="bg-orange-600 hover:bg-orange-700"
+                />
+              )}
             </div>
 
             {dublettResultat && (
