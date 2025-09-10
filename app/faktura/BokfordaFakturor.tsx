@@ -7,6 +7,7 @@ import {
   hamtaBokfordaFakturor,
   hamtaTransaktionsposter,
   betalaOchBokförLeverantörsfaktura,
+  taBortLeverantörsfaktura,
 } from "./actions";
 import VerifikatModal from "./VerifikatModal";
 import Knapp from "../_components/Knapp";
@@ -180,6 +181,38 @@ export default function BokfordaFakturor() {
     });
   };
 
+  const taBortFaktura = async (fakturaId: number) => {
+    if (confirm("Är du säker på att du vill ta bort denna leverantörsfaktura?")) {
+      try {
+        const result = await taBortLeverantörsfaktura(fakturaId);
+
+        if (result.success) {
+          // Ta bort från listan lokalt
+          setFakturor((prev) => prev.filter((f) => f.id !== fakturaId));
+
+          setToast({
+            message: "Leverantörsfaktura borttagen!",
+            type: "success",
+            isVisible: true,
+          });
+        } else {
+          setToast({
+            message: `Fel vid borttagning: ${result.error}`,
+            type: "error",
+            isVisible: true,
+          });
+        }
+      } catch (error) {
+        console.error("Fel vid borttagning av faktura:", error);
+        setToast({
+          message: "Fel vid borttagning av faktura",
+          type: "error",
+          isVisible: true,
+        });
+      }
+    }
+  };
+
   const utförBokföring = async (faktura: BokfordFaktura) => {
     try {
       const result = await betalaOchBokförLeverantörsfaktura(faktura.id, faktura.belopp);
@@ -249,24 +282,25 @@ export default function BokfordaFakturor() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-700">
-              <th className="text-left text-gray-300 pb-2">Datum</th>
-              <th className="text-left text-gray-300 pb-2">Leverantör/Kund</th>
-              <th className="text-left text-gray-300 pb-2">Fakturanr</th>
-              <th className="text-left text-gray-300 pb-2">Belopp</th>
-              <th className="text-left text-gray-300 pb-2">Status</th>
-              <th className="text-left text-gray-300 pb-2">Kommentar</th>
+              <th className="text-center text-gray-300 pb-2">Datum</th>
+              <th className="text-center text-gray-300 pb-2">Leverantör/Kund</th>
+              <th className="text-center text-gray-300 pb-2">Fakturanr</th>
+              <th className="text-center text-gray-300 pb-2">Belopp</th>
+              <th className="text-center text-gray-300 pb-2">Status</th>
+              <th className="text-center text-gray-300 pb-2">Kommentar</th>
               <th className="text-center text-gray-300 pb-2">Verifikat</th>
               <th className="text-center text-gray-300 pb-2">Åtgärder</th>
+              <th className="text-center text-gray-300 pb-2">Ta bort</th>
             </tr>
           </thead>
           <tbody>
             {fakturor.map((faktura) => (
               <tr key={faktura.id} className="border-b border-gray-800">
-                <td className="py-2 text-white">{formateraDatum(faktura.datum)}</td>
-                <td className="py-2 text-gray-300">{faktura.leverantör || "-"}</td>
-                <td className="py-2 text-gray-300">{faktura.fakturanummer || "-"}</td>
-                <td className="py-2 text-white">{formatSEK(faktura.belopp)}</td>
-                <td className="py-2">
+                <td className="py-2 text-white text-center">{formateraDatum(faktura.datum)}</td>
+                <td className="py-2 text-gray-300 text-center">{faktura.leverantör || "-"}</td>
+                <td className="py-2 text-gray-300 text-center">{faktura.fakturanummer || "-"}</td>
+                <td className="py-2 text-white text-center">{formatSEK(faktura.belopp)}</td>
+                <td className="py-2 text-center">
                   <span
                     className={`px-2 py-1 rounded text-xs ${
                       faktura.status_bokförd === "Bokförd"
@@ -277,10 +311,12 @@ export default function BokfordaFakturor() {
                     {faktura.status_bokförd === "Bokförd" ? "Bokförd" : "Ej bokförd"}
                   </span>
                 </td>
-                <td className="py-2 text-gray-300 max-w-xs truncate">{faktura.kommentar}</td>
+                <td className="py-2 text-gray-300 max-w-xs truncate text-center">
+                  {faktura.kommentar}
+                </td>
                 <td className="py-2 text-center">
                   <Knapp
-                    text="📄 Verifikat"
+                    text="Visa"
                     onClick={() => öppnaVerifikat(faktura)}
                     className="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1"
                   />
@@ -298,6 +334,15 @@ export default function BokfordaFakturor() {
                       <span className="text-gray-500 text-xs">Bokförd</span>
                     )}
                   </div>
+                </td>
+                <td className="py-2 text-center">
+                  <span
+                    onClick={() => taBortFaktura(faktura.id)}
+                    className="cursor-pointer text-red-500 hover:text-red-400 text-lg"
+                    title="Ta bort leverantörsfaktura"
+                  >
+                    ❌
+                  </span>
                 </td>
               </tr>
             ))}

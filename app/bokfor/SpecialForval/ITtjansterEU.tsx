@@ -5,6 +5,7 @@ import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
+import InfoTooltip from "../../_components/InfoTooltip";
 import { type Leverantör } from "../../faktura/actions";
 import { ITtjansterEUProps } from "../types";
 // #endregion
@@ -131,16 +132,16 @@ export default function ITtjansterEU({
         title="IT-tjänster EU"
       >
         {/* ITtjansterEU-specifikt innehåll */}
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-900 mb-2">IT-tjänster från EU</h3>
-          <p className="text-sm text-blue-700 mb-2">
+        <div className="mb-4 p-4 bg-slate-800 rounded-lg">
+          <h3 className="font-medium text-gray-400 mb-2">IT-tjänster från EU</h3>
+          <p className="text-sm text-gray-400 mb-2">
             <strong>Omvänd skattskyldighet:</strong> Du betalar momsen i Sverige istället för i
             leverantörens land.
           </p>
-          <p className="text-sm text-blue-700 mb-2">
+          <p className="text-sm text-gray-400 mb-2">
             <strong>Momshantering:</strong> 25% utgående moms + 25% ingående moms (kvittar varandra)
           </p>
-          <p className="text-sm text-blue-700">
+          <p className="text-sm text-gray-400">
             <strong>Bokföring:</strong> IT-tjänster (6540) + EU-inköp (4535) med justeringspost
             (4598)
           </p>

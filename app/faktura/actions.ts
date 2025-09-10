@@ -2272,3 +2272,67 @@ export async function uploadLogoAction(formData: FormData) {
   const { uploadCompanyLogo } = await import("../_utils/blobUpload");
   return await uploadCompanyLogo(file);
 }
+
+// Ta bort en leverantörsfaktura
+export async function taBortLeverantörsfaktura(leverantörsfakturaId: number) {
+  const userId = await getUserId();
+  if (!userId) {
+    return { success: false, error: "Ej autentiserad" };
+  }
+
+  const client = await pool.connect();
+
+  try {
+    // Först, kolla om leverantörsfakturan tillhör användaren
+    const { rows: checkRows } = await client.query(
+      `
+      SELECT lf.id, t.user_id 
+      FROM leverantörsfakturor lf
+      JOIN transaktioner t ON lf.transaktions_id = t.id
+      WHERE lf.id = $1
+      `,
+      [leverantörsfakturaId]
+    );
+
+    if (checkRows.length === 0) {
+      return { success: false, error: "Leverantörsfaktura hittades inte" };
+    }
+
+    if (checkRows[0].user_id !== userId) {
+      return { success: false, error: "Ej behörig att ta bort denna leverantörsfaktura" };
+    }
+
+    const transaktionsId = await client.query(
+      `SELECT transaktions_id FROM leverantörsfakturor WHERE id = $1`,
+      [leverantörsfakturaId]
+    );
+
+    if (transaktionsId.rows.length === 0) {
+      return { success: false, error: "Transaktions-ID hittades inte" };
+    }
+
+    const transId = transaktionsId.rows[0].transaktions_id;
+
+    // Ta bort leverantörsfakturan
+    await client.query(`DELETE FROM leverantörsfakturor WHERE id = $1`, [leverantörsfakturaId]);
+
+    // Ta bort relaterade transaktionsposter
+    await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [transId]);
+
+    // Ta bort transaktionen
+    await client.query(`DELETE FROM transaktioner WHERE id = $1 AND user_id = $2`, [
+      transId,
+      userId,
+    ]);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Fel vid borttagning av leverantörsfaktura:", error);
+    return {
+      success: false,
+      error: "Kunde inte ta bort leverantörsfaktura",
+    };
+  } finally {
+    client.release();
+  }
+}
