@@ -32,6 +32,7 @@ export default function BokfordaFakturorFlik() {
       title="Leverantörsfakturor"
       icon="📊"
       visaSummaDirekt={loading ? "..." : `${fakturorAntal} st`}
+      forcedOpen={true}
     >
       {loading ? (
         <div className="flex justify-center items-center py-8">

@@ -388,22 +388,14 @@ export default function BokfordaFakturor() {
                   </div>
                 )}
               </div>
-
-              <p className="mt-4 text-yellow-400">
-                ⚠️ Denna åtgärd kommer att bokföra fakturan. Är du säker på att du vill fortsätta?
-              </p>
             </div>
 
             <div className="flex gap-3 justify-end pt-4">
+              <Knapp text="❌ Avbryt" onClick={stängBekraftelseModal} className="px-6 py-2" />
               <Knapp
-                text="Avbryt"
-                onClick={stängBekraftelseModal}
-                className="bg-gray-600 hover:bg-gray-500 px-6 py-2"
-              />
-              <Knapp
-                text="Ja, bokför"
+                text="✅ Bokför"
                 onClick={() => utförBokföring(bekraftelseModal.faktura!)}
-                className="bg-green-700 hover:bg-green-600 px-6 py-2"
+                className="px-6 py-2"
               />
             </div>
           </div>
