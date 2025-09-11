@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions/anvandarActions";
-import {
-  hamtaForetagsprofilAdmin,
-  uppdateraForetagsprofilAdmin,
-  raderaForetag,
-} from "../_actions/foretagsActions";
+import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions";
+import { hamtaForetagsprofilAdmin, uppdateraForetagsprofilAdmin, raderaForetag } from "../_actions";
 import type {
   AnvandarInfo,
   AnvandarRedigeringsFormular,
