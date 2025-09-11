@@ -1,7 +1,11 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { AnvandarInfo, AnvandarRedigeringsFormular, MeddelandeTillstand } from "../_types/types";
+import type {
+  AnvandarInfo,
+  AnvandarRedigeringsFormular,
+  MeddelandeTillstand,
+} from "../_types/types";
 
 interface AnvandarprofilKomponentProps {
   userInfo: AnvandarInfo | null;
