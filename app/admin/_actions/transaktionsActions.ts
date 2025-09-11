@@ -1,13 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
-import {
-  validateAdminSession,
-  validateAdminAttempt,
-  logAdminSecurityEvent,
-} from "./sakerhetsActions";
-import { sanitizeAdminInput } from "../../_utils/validationUtils";
-import { updateFakturanummerCore } from "../../_utils/dbUtils";
+import { getSessionAndUserId } from "../../_utils/authUtils";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -19,27 +13,14 @@ const pool = new Pool({
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
-    // 🔒 KRITISK ADMIN-SAKERHET
-    const adminAuth = await validateAdminSession();
-    if (!adminAuth.valid) {
-      throw new Error(adminAuth.error || "Atkomst nekad");
-    }
-
-    const userId = adminAuth.userId!;
-
-    if (!(await validateAdminAttempt(userId))) {
-      throw new Error("For manga admin-forsok - vanta 15 minuter");
+    const { session } = await getSessionAndUserId();
+    if (!session?.user?.email) {
+      throw new Error("Ingen session hittad");
     }
 
     if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
       throw new Error("Ogiltigt transaktions-ID");
     }
-
-    await logAdminSecurityEvent(
-      userId,
-      "fetch_transaction_posts_attempt",
-      `Admin fetching transaction posts for ID: ${transaktionsId}`
-    );
 
     const result = await pool.query(
       `
@@ -55,28 +36,8 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
       [transaktionsId]
     );
 
-    await logAdminSecurityEvent(
-      userId,
-      "fetch_transaction_posts_success",
-      `Retrieved ${result.rows.length} transaction posts for transaction ID: ${transaktionsId}`
-    );
-
     return result.rows;
   } catch (error) {
-    // Logga fel om vi har admin session
-    try {
-      const adminAuth = await validateAdminSession();
-      if (adminAuth.valid) {
-        await logAdminSecurityEvent(
-          adminAuth.userId!,
-          "fetch_transaction_posts_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ hamtaTransaktionsposter error:", error);
     return [];
   }
@@ -88,46 +49,30 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
 
 export async function fetchAllaForval(filters?: { sok?: string; kategori?: string; typ?: string }) {
   try {
-    // 🔒 KRITISK ADMIN-SAKERHET
-    const adminAuth = await validateAdminSession();
-    if (!adminAuth.valid) {
-      throw new Error(adminAuth.error || "Atkomst nekad");
+    const { session } = await getSessionAndUserId();
+    if (!session?.user?.email) {
+      throw new Error("Ingen session hittad");
     }
-
-    const userId = adminAuth.userId!;
-
-    if (!(await validateAdminAttempt(userId))) {
-      throw new Error("For manga admin-forsok - vanta 15 minuter");
-    }
-
-    await logAdminSecurityEvent(
-      userId,
-      "fetch_all_forval_attempt",
-      `Admin fetching all forval with filters: ${JSON.stringify(filters)}`
-    );
 
     let query = "SELECT * FROM forval";
     const values: any[] = [];
     const conditions: string[] = [];
 
     if (filters?.sok) {
-      const safeSok = sanitizeAdminInput(filters.sok);
       conditions.push(
         `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`
       );
-      values.push(`%${safeSok.toLowerCase()}%`);
+      values.push(`%${filters.sok.toLowerCase()}%`);
     }
 
     if (filters?.kategori) {
-      const safeKategori = sanitizeAdminInput(filters.kategori);
       conditions.push(`kategori = $${values.length + 1}`);
-      values.push(safeKategori);
+      values.push(filters.kategori);
     }
 
     if (filters?.typ) {
-      const safeTyp = sanitizeAdminInput(filters.typ);
       conditions.push(`typ = $${values.length + 1}`);
-      values.push(safeTyp);
+      values.push(filters.typ);
     }
 
     if (conditions.length > 0) {
@@ -137,13 +82,6 @@ export async function fetchAllaForval(filters?: { sok?: string; kategori?: strin
     query += " ORDER BY namn ASC";
 
     const result = await pool.query(query, values);
-
-    await logAdminSecurityEvent(
-      userId,
-      "fetch_all_forval_success",
-      `Retrieved ${result.rows.length} forval entries`
-    );
-
     return result.rows;
   } catch (error) {
     console.error("❌ fetchAllaForval error:", error);
@@ -157,32 +95,17 @@ export async function fetchAllaForval(filters?: { sok?: string; kategori?: strin
 
 export async function uppdateraFakturanummer(id: number, nyttNummer: string) {
   try {
-    const adminAuth = await validateAdminSession();
-    if (!adminAuth.valid) {
-      throw new Error(adminAuth.error || "Atkomst nekad");
+    const { session } = await getSessionAndUserId();
+    if (!session?.user?.email) {
+      throw new Error("Ingen session hittad");
     }
 
-    const userId = adminAuth.userId!;
-
-    if (!(await validateAdminAttempt(userId))) {
-      throw new Error("For manga admin-forsok - vanta 15 minuter");
-    }
-
-    await logAdminSecurityEvent(
-      userId,
-      "update_invoice_number_attempt",
-      `Admin updating invoice ${id} number to: ${nyttNummer}`
+    const result = await pool.query(
+      "UPDATE fakturamallar SET fakturanummer = $1 WHERE id = $2 RETURNING *",
+      [nyttNummer, id]
     );
 
-    const result = await updateFakturanummerCore(id, nyttNummer);
-
-    await logAdminSecurityEvent(
-      userId,
-      "update_invoice_number_success",
-      `Invoice ${id} number updated to: ${nyttNummer}`
-    );
-
-    return result;
+    return { success: true, data: result.rows[0] };
   } catch (error) {
     console.error("❌ uppdateraFakturanummer error:", error);
     throw error;

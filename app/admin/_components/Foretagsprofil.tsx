@@ -46,7 +46,7 @@ export default function Foretagsprofil({
                 onChange={(e) => handleCompanyInputChange("foretagsnamn", e.target.value)}
                 placeholder="Företagsnamn AB"
                 maxLength={100}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
               <TextFalt
                 label="Organisationsnummer"
@@ -57,7 +57,7 @@ export default function Foretagsprofil({
                 placeholder="556789-1234"
                 pattern="[0-9]{6}-[0-9]{4}"
                 maxLength={11}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
             </div>
 
@@ -69,7 +69,7 @@ export default function Foretagsprofil({
               onChange={(e) => handleCompanyInputChange("adress", e.target.value)}
               placeholder="Företagsgatan 123"
               maxLength={200}
-              className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+              
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -82,7 +82,7 @@ export default function Foretagsprofil({
                 placeholder="123 45"
                 pattern="[0-9]{3} [0-9]{2}"
                 maxLength={6}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
               <TextFalt
                 label="Stad"
@@ -92,7 +92,7 @@ export default function Foretagsprofil({
                 onChange={(e) => handleCompanyInputChange("stad", e.target.value)}
                 placeholder="Stockholm"
                 maxLength={50}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
             </div>
 
@@ -105,7 +105,7 @@ export default function Foretagsprofil({
                 onChange={(e) => handleCompanyInputChange("telefonnummer", e.target.value)}
                 placeholder="08-123 45 67"
                 maxLength={20}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
               <TextFalt
                 label="Email"
@@ -115,7 +115,7 @@ export default function Foretagsprofil({
                 onChange={(e) => handleCompanyInputChange("epost", e.target.value)}
                 placeholder="info@företag.se"
                 maxLength={100}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
             </div>
 
@@ -131,7 +131,7 @@ export default function Foretagsprofil({
                 placeholder="SE556789123401"
                 pattern="SE[0-9]{12}"
                 maxLength={14}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
               <TextFalt
                 label="Webbplats"
@@ -141,7 +141,7 @@ export default function Foretagsprofil({
                 onChange={(e) => handleCompanyInputChange("webbplats", e.target.value)}
                 placeholder="https://www.företag.se"
                 maxLength={200}
-                className="mb-0 [&>label]:text-gray-400 [&>input]:bg-gray-700 [&>input]:border-gray-600 [&>input]:text-white [&>input]:focus:border-blue-500 [&>input]:focus:ring-1 [&>input]:focus:ring-blue-500"
+                
               />
             </div>
 

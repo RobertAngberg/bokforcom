@@ -2,7 +2,6 @@
 
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../../_utils/authUtils";
-import { sanitizeAdminInput } from "../../_utils/validationUtils";
 import type { ForetagsProfil, AktionsResultat } from "../_types/types";
 
 const pool = new Pool({
@@ -77,19 +76,15 @@ export async function uppdateraForetagsprofilAdmin(
       return { success: false, error: "Ingen session hittad" };
     }
 
-    const foretagsnamn = sanitizeAdminInput(formData.get("foretagsnamn")?.toString() || "");
-    const adress = sanitizeAdminInput(formData.get("adress")?.toString() || "");
-    const postnummer = sanitizeAdminInput(formData.get("postnummer")?.toString() || "");
-    const stad = sanitizeAdminInput(formData.get("stad")?.toString() || "");
-    const organisationsnummer = sanitizeAdminInput(
-      formData.get("organisationsnummer")?.toString() || ""
-    );
-    const momsregistreringsnummer = sanitizeAdminInput(
-      formData.get("momsregistreringsnummer")?.toString() || ""
-    );
-    const telefonnummer = sanitizeAdminInput(formData.get("telefonnummer")?.toString() || "");
-    const epost = sanitizeAdminInput(formData.get("epost")?.toString() || "");
-    const webbplats = sanitizeAdminInput(formData.get("webbplats")?.toString() || "");
+    const foretagsnamn = formData.get("foretagsnamn")?.toString() || "";
+    const adress = formData.get("adress")?.toString() || "";
+    const postnummer = formData.get("postnummer")?.toString() || "";
+    const stad = formData.get("stad")?.toString() || "";
+    const organisationsnummer = formData.get("organisationsnummer")?.toString() || "";
+    const momsregistreringsnummer = formData.get("momsregistreringsnummer")?.toString() || "";
+    const telefonnummer = formData.get("telefonnummer")?.toString() || "";
+    const epost = formData.get("epost")?.toString() || "";
+    const webbplats = formData.get("webbplats")?.toString() || "";
 
     const client = await pool.connect();
     try {

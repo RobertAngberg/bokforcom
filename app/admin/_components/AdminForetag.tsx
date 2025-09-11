@@ -1,10 +1,8 @@
-// 🎯 EXEMPEL: Admin Company Section Component
-// Visar hur den nya hook-strukturen kan anvandas for foretagshantering
-
 "use client";
 
 import { useEffect } from "react";
-import { useAdminForetagshantering } from "../_hooks/useAdminForetagshantering";
+import TextFalt from "../../_components/TextFalt";
+import { useAdminForetagshantering } from "../_hooks/useForetagshantering";
 
 export default function AdminForetag() {
   const {
@@ -68,42 +66,38 @@ export default function AdminForetag() {
       {isEditingCompany ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-400 mb-2">Foretagsnamn:</label>
-              <input
-                type="text"
-                value={foretagsProfil.foretagsnamn}
-                onChange={(e) => updateCompanyField("foretagsnamn", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 mb-2">Organisationsnummer:</label>
-              <input
-                type="text"
-                value={foretagsProfil.organisationsnummer}
-                onChange={(e) => updateCompanyField("organisationsnummer", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 mb-2">Adress:</label>
-              <input
-                type="text"
-                value={foretagsProfil.adress}
-                onChange={(e) => updateCompanyField("adress", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 mb-2">Telefonnummer:</label>
-              <input
-                type="text"
-                value={foretagsProfil.telefonnummer}
-                onChange={(e) => updateCompanyField("telefonnummer", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500"
-              />
-            </div>
+            <TextFalt
+              label="Foretagsnamn"
+              name="foretagsnamn"
+              type="text"
+              value={foretagsProfil.foretagsnamn}
+              onChange={(e) => updateCompanyField("foretagsnamn", e.target.value)}
+              
+            />
+            <TextFalt
+              label="Organisationsnummer"
+              name="organisationsnummer"
+              type="text"
+              value={foretagsProfil.organisationsnummer}
+              onChange={(e) => updateCompanyField("organisationsnummer", e.target.value)}
+              
+            />
+            <TextFalt
+              label="Adress"
+              name="adress"
+              type="text"
+              value={foretagsProfil.adress}
+              onChange={(e) => updateCompanyField("adress", e.target.value)}
+              
+            />
+            <TextFalt
+              label="Telefonnummer"
+              name="telefonnummer"
+              type="text"
+              value={foretagsProfil.telefonnummer}
+              onChange={(e) => updateCompanyField("telefonnummer", e.target.value)}
+              
+            />
           </div>
 
           <div className="flex gap-3 pt-4">

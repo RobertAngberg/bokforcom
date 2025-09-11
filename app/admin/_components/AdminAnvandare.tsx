@@ -1,9 +1,7 @@
-// 🎯 EXEMPEL: Admin User Section Component
-// Visar hur den nya hook-strukturen kan anvandas
-
 "use client";
 
-import { useAdminAnvandarhantering } from "../_hooks/useAdminAnvandarhantering";
+import TextFalt from "../../_components/TextFalt";
+import { useAdminAnvandarhantering } from "../_hooks/useAnvandarhantering";
 
 export default function AdminAnvandare() {
   const {
@@ -56,26 +54,24 @@ export default function AdminAnvandare() {
       <div className="grid grid-cols-1 gap-4">
         {isEditing ? (
           <div className="space-y-4">
-            <div>
-              <label className="block text-gray-400 mb-2">Namn:</label>
-              <input
-                type="text"
-                value={editForm.name}
-                onChange={(e) => updateEditForm("name", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                placeholder="Ditt namn"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 mb-2">Email:</label>
-              <input
-                type="email"
-                value={editForm.email}
-                onChange={(e) => updateEditForm("email", e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                placeholder="din@email.com"
-              />
-            </div>
+            <TextFalt
+              label="Namn"
+              name="name"
+              type="text"
+              value={editForm.name}
+              onChange={(e) => updateEditForm("name", e.target.value)}
+              placeholder="Ditt namn"
+              
+            />
+            <TextFalt
+              label="Email"
+              name="email"
+              type="email"
+              value={editForm.email}
+              onChange={(e) => updateEditForm("email", e.target.value)}
+              placeholder="din@email.com"
+              
+            />
 
             <div className="flex gap-3 pt-2">
               <button

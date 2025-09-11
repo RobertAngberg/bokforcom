@@ -9,7 +9,6 @@ export default function Farozon({
 }: RaderingsSektionProps) {
   return (
     <>
-      {/* Danger Zone */}
       <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 mb-6">
         <h2 className="text-xl text-red-400 mb-4 flex items-center gap-2">⚠️ Farlig zon</h2>
         <p className="text-gray-300 mb-4">
