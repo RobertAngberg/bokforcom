@@ -1,50 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import {
-  hamtaForetagsprofilAdmin,
-  uppdateraForetagsprofilAdmin,
-  raderaForetag,
-} from "../_actions/foretagsActions";
-import { signOut } from "next-auth/react";
+import { useState, useRef, useMemo } from "react";
+import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsActions";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
-export function useAdminForetagshantering() {
-  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>({
-    foretagsnamn: "",
-    adress: "",
-    postnummer: "",
-    stad: "",
-    organisationsnummer: "",
-    momsregistreringsnummer: "",
-    telefonnummer: "",
-    epost: "",
-    webbplats: "",
-  });
+const TOM_FORETAG: ForetagsProfil = {
+  foretagsnamn: "",
+  adress: "",
+  postnummer: "",
+  stad: "",
+  organisationsnummer: "",
+  momsregistreringsnummer: "",
+  telefonnummer: "",
+  epost: "",
+  webbplats: "",
+};
+
+export function useAdminForetagshantering(initialForetag: ForetagsProfil | null) {
+  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(
+    initialForetag || TOM_FORETAG
+  );
+  // Snapshot av ursprungliga värden (används ev. senare för jämförelse / undo)
+  const originalRef = useRef(initialForetag || TOM_FORETAG);
 
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
 
-  // 🚀 Fetch company profile
-  const fetchCompanyProfile = async () => {
-    try {
-      const data = await hamtaForetagsprofilAdmin();
-      if (data) {
-        setForetagsProfil(data);
-      }
-    } catch (error) {
-      console.error("Error fetching company profile:", error);
-      setCompanyMessage({
-        type: "error",
-        text: "Kunde inte hamta foretagsprofil",
-      });
-    }
-  };
-
-  // 🎯 Company management actions
   const handleEditCompany = () => {
     setIsEditingCompany(true);
     setCompanyMessage(null);
@@ -53,28 +35,17 @@ export function useAdminForetagshantering() {
   const handleCancelCompany = () => {
     setIsEditingCompany(false);
     setCompanyMessage(null);
-    // Restore original values
-    fetchCompanyProfile();
   };
 
   const handleSaveCompany = async () => {
     setIsSavingCompany(true);
 
     try {
-      const formData = new FormData();
-      Object.entries(foretagsProfil).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
-      const result = await uppdateraForetagsprofilAdmin(formData);
+      const result = await uppdateraForetagsprofilAdmin({ ...foretagsProfil });
 
       if (result.success) {
         setIsEditingCompany(false);
-        setCompanyMessage({
-          type: "success",
-          text: "Foretagsprofil uppdaterad!",
-        });
-        await fetchCompanyProfile();
+        setCompanyMessage({ type: "success", text: "Foretagsprofil uppdaterad!" });
       } else {
         setCompanyMessage({
           type: "error",
@@ -92,38 +63,40 @@ export function useAdminForetagshantering() {
     }
   };
 
-  const handleDeleteCompany = async () => {
-    setIsDeleting(true);
-
-    try {
-      const result = await raderaForetag();
-
-      if (result.success) {
-        // Successful deletion - sign out user
-        await signOut({ callbackUrl: "/" });
-      } else {
-        setCompanyMessage({
-          type: "error",
-          text: result.error || "Kunde inte radera foretag",
-        });
-        setShowDeleteConfirm(false);
-      }
-    } catch (error) {
-      console.error("Error deleting company:", error);
-      setCompanyMessage({
-        type: "error",
-        text: "Ett fel uppstod vid radering",
-      });
-      setShowDeleteConfirm(false);
-    } finally {
-      setIsDeleting(false);
+  const normalizeField = (field: keyof ForetagsProfil, value: string): string => {
+    if (field === "postnummer") {
+      const digits = value.replace(/\D/g, "").slice(0, 5);
+      return digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits;
     }
+    if (field === "organisationsnummer") {
+      const digits = value.replace(/\D/g, "").slice(0, 10); // 10 siffror
+      if (digits.length <= 6) return digits; // skrivs progressivt
+      return `${digits.slice(0, 6)}-${digits.slice(6)}`;
+    }
+    if (field === "momsregistreringsnummer") {
+      let v = value.toUpperCase().replace(/\s/g, "");
+      // Om exakt 12 siffror skrivits utan SE – prefixa
+      if (/^[0-9]{12}$/.test(v)) v = `SE${v}`;
+      // Tillåt format SE + 12 siffror
+      if (!/^SE[0-9]{0,12}$/.test(v)) {
+        // Rensa allt utom SE + siffror i början
+        if (v.startsWith("SE")) {
+          v = "SE" + v.slice(2).replace(/[^0-9]/g, "");
+        } else {
+          v = v.replace(/[^0-9]/g, "");
+          if (v.length > 0) v = `SE${v}`; // börja bygga korrekt
+        }
+      }
+      return v.slice(0, 14); // SE + 12 siffror = 14 tecken
+    }
+    return value; // default – ingen normalisering
   };
 
   const updateCompanyField = (field: keyof ForetagsProfil, value: string) => {
+    const normalized = normalizeField(field, value);
     setForetagsProfil((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: normalized,
     }));
   };
 
@@ -133,23 +106,18 @@ export function useAdminForetagshantering() {
     // Data
     foretagsProfil,
 
-    // State
+    // State (företagsprofilsektion)
     isEditingCompany,
     isSavingCompany,
-    isDeleting,
-    showDeleteConfirm,
     companyMessage,
 
-    // Actions
-    handleEditCompany,
-    handleCancelCompany,
-    handleSaveCompany,
-    handleDeleteCompany,
-    updateCompanyField,
-    setShowDeleteConfirm,
-    clearCompanyMessage,
+    // Matchar Företagsprofil-komponentens props
+    onEditCompany: handleEditCompany,
+    onCancelCompany: handleCancelCompany,
+    onSaveCompany: handleSaveCompany,
+    onChangeCompany: updateCompanyField,
 
-    // Utils
-    fetchCompanyProfile,
+    // Övrigt
+    clearCompanyMessage,
   };
 }

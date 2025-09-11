@@ -1,3 +1,5 @@
+import type { Session } from "next-auth";
+
 export interface AnvandarInfo {
   id: string;
   email: string;
@@ -30,48 +32,37 @@ export interface AnvandarRedigeringsFormular {
 }
 
 // Component Props
-export interface AnvandarprofilSektionProps {
+// Ny platt variant (ersätter nested state/handlers i komponenten)
+export interface AnvandarprofilProps {
   userInfo: AnvandarInfo | null;
   editForm: AnvandarRedigeringsFormular;
-  state: {
-    isEditing: boolean;
-    isSaving: boolean;
-    message: MeddelandeTillstand | null;
-  };
-  session: any;
-  handlers: {
-    handleEdit: () => void;
-    handleCancel: () => void;
-    handleSave: () => void;
-    updateEditForm: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
-  };
+  isEditing: boolean;
+  isSaving: boolean;
+  message: MeddelandeTillstand | null;
+  session: Session | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onChange: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
 }
 
-export interface ForetagsprofilSektionProps {
+export interface ForetagsprofilProps {
   foretagsProfil: ForetagsProfil;
-  state: {
-    isEditingCompany: boolean;
-    isSavingCompany: boolean;
-    companyMessage: MeddelandeTillstand | null;
-  };
-  handlers: {
-    handleEditCompany: () => void;
-    handleCancelCompany: () => void;
-    handleSaveCompany: () => void;
-    handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
-  };
+  isEditingCompany: boolean;
+  isSavingCompany: boolean;
+  companyMessage: MeddelandeTillstand | null;
+  onEditCompany: () => void;
+  onCancelCompany: () => void;
+  onSaveCompany: () => void;
+  onChangeCompany: (field: keyof ForetagsProfil, value: string) => void;
 }
 
-export interface RaderingsSektionProps {
-  state: {
-    showDeleteConfirm: boolean;
-    isDeleting: boolean;
-  };
-  handlers: {
-    handleDeleteCompany: () => void;
-    confirmDelete: () => void;
-    cancelDelete: () => void;
-  };
+export interface FarozonProps {
+  showDeleteConfirm: boolean;
+  isDeleting: boolean;
+  onDeleteCompany: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 // Action result types
@@ -80,4 +71,20 @@ export interface AktionsResultat<T = any> {
   data?: T;
   error?: string;
   user?: AnvandarInfo;
+}
+
+// Payloads för server actions (delade)
+export interface UppdateraAnvandarPayload {
+  name: string;
+  email: string;
+}
+
+// Företagsprofil uppdatering – identisk med ForetagsProfil just nu men separerat för ev. framtida fält/behörighetskontroll
+export type UppdateraForetagsprofilPayload = ForetagsProfil;
+
+// AdminSektion props (wrapper kring tre sektioner)
+export interface AdminSektionProps {
+  initialUser: AnvandarInfo | null;
+  initialForetag: ForetagsProfil | null;
+  session: Session | null;
 }

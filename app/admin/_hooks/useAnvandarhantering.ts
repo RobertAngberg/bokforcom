@@ -1,66 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { hamtaAnvandarInfo, uppdateraAnvandarInfo } from "../_actions/anvandarActions";
+import { useState } from "react";
+import { uppdateraAnvandarInfo } from "../_actions/anvandarActions";
 import type {
   AnvandarInfo,
   AnvandarRedigeringsFormular,
   MeddelandeTillstand,
 } from "../_types/types";
 
-export function useAdminAnvandarhantering() {
-  const { data: session } = useSession();
-
-  // State management
-  const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(null);
-  const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>({
-    name: "",
-    email: "",
-  });
+export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
+  // State management (initial data injiceras server-side)
+  const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
+  const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
+    name: initialUser?.name || "",
+    email: initialUser?.email || "",
+  }));
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
 
-  // 🚀 Data fetching effect
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserInfo();
-    }
-  }, [session]);
-
-  // 🎯 Private methods
-  const fetchUserInfo = async () => {
-    try {
-      setLoading(true);
-      const data = await hamtaAnvandarInfo();
-
-      if (data) {
-        setUserInfo(data);
-        setEditForm({
-          name: data.name || "",
-          email: data.email || "",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-      setMessage({
-        type: "error",
-        text: "Kunde inte hamta anvandarinformation",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 🎯 Public API methods
-  const handleEdit = () => {
+  const onEdit = () => {
     setIsEditing(true);
     setMessage(null);
   };
 
-  const handleCancel = () => {
+  const onCancel = () => {
     setIsEditing(false);
     setEditForm({
       name: userInfo?.name || "",
@@ -69,7 +34,7 @@ export function useAdminAnvandarhantering() {
     setMessage(null);
   };
 
-  const handleSave = async () => {
+  const onSave = async () => {
     // Validation
     if (!editForm.name.trim() || !editForm.email.trim()) {
       setMessage({
@@ -82,11 +47,10 @@ export function useAdminAnvandarhantering() {
     setIsSaving(true);
 
     try {
-      const formData = new FormData();
-      formData.append("name", editForm.name.trim());
-      formData.append("email", editForm.email.trim());
-
-      const result = await uppdateraAnvandarInfo(formData);
+      const result = await uppdateraAnvandarInfo({
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+      });
 
       if (result.success) {
         // Optimistic update
@@ -113,7 +77,7 @@ export function useAdminAnvandarhantering() {
     }
   };
 
-  const updateEditForm = (field: keyof AnvandarRedigeringsFormular, value: string) => {
+  const onChange = (field: keyof AnvandarRedigeringsFormular, value: string) => {
     setEditForm((prev) => ({
       ...prev,
       [field]: value,
@@ -130,14 +94,13 @@ export function useAdminAnvandarhantering() {
     // State
     isEditing,
     isSaving,
-    loading,
     message,
 
     // Actions
-    handleEdit,
-    handleCancel,
-    handleSave,
-    updateEditForm,
+    onEdit,
+    onCancel,
+    onSave,
+    onChange,
     clearMessage,
   };
 }

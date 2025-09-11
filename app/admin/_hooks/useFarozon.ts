@@ -37,33 +37,10 @@ export const useFarozon = () => {
   };
 
   return {
-    // State grupperat
-    state: {
-      showDeleteConfirm,
-      isDeleting,
-    },
-
-    // Handlers grupperat
-    handlers: {
-      handleDeleteCompany,
-      confirmDelete,
-      cancelDelete,
-    },
-
-    // Helper för komponentprops
-    getComponentProps: () => ({
-      state: {
-        showDeleteConfirm,
-        isDeleting,
-      },
-      handlers: {
-        handleDeleteCompany,
-        confirmDelete,
-        cancelDelete,
-      },
-    }),
-
-    // Intern state (för admin page)
-    setShowDeleteConfirm,
+    showDeleteConfirm,
+    isDeleting,
+    onDeleteCompany: handleDeleteCompany,
+    onConfirm: confirmDelete,
+    onCancel: cancelDelete,
   };
 };

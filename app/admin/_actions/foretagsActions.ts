@@ -2,7 +2,12 @@
 
 import { Pool } from "pg";
 import { getSessionAndUserId } from "../../_utils/authUtils";
-import type { ForetagsProfil, AktionsResultat } from "../_types/types";
+import type {
+  ForetagsProfil,
+  AktionsResultat,
+  UppdateraForetagsprofilPayload,
+} from "../_types/types";
+import { revalidatePath } from "next/cache";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -68,7 +73,7 @@ export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null>
 }
 
 export async function uppdateraForetagsprofilAdmin(
-  formData: FormData
+  payload: UppdateraForetagsprofilPayload
 ): Promise<AktionsResultat<ForetagsProfil>> {
   try {
     const { session, userId } = await getSessionAndUserId();
@@ -76,15 +81,17 @@ export async function uppdateraForetagsprofilAdmin(
       return { success: false, error: "Ingen session hittad" };
     }
 
-    const foretagsnamn = formData.get("foretagsnamn")?.toString() || "";
-    const adress = formData.get("adress")?.toString() || "";
-    const postnummer = formData.get("postnummer")?.toString() || "";
-    const stad = formData.get("stad")?.toString() || "";
-    const organisationsnummer = formData.get("organisationsnummer")?.toString() || "";
-    const momsregistreringsnummer = formData.get("momsregistreringsnummer")?.toString() || "";
-    const telefonnummer = formData.get("telefonnummer")?.toString() || "";
-    const epost = formData.get("epost")?.toString() || "";
-    const webbplats = formData.get("webbplats")?.toString() || "";
+    const {
+      foretagsnamn,
+      adress,
+      postnummer,
+      stad,
+      organisationsnummer,
+      momsregistreringsnummer,
+      telefonnummer,
+      epost,
+      webbplats,
+    } = payload;
 
     const client = await pool.connect();
     try {
@@ -119,6 +126,8 @@ export async function uppdateraForetagsprofilAdmin(
         ]
       );
 
+      // Revalidera admin-sidan så att SSR-data blir uppdaterad vid nästa visning
+      revalidatePath("/admin");
       return {
         success: true,
         data: result.rows[0],

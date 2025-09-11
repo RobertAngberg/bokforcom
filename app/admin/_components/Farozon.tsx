@@ -1,12 +1,15 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { RaderingsSektionProps } from "../_types/types";
+import type { FarozonProps } from "../_types/types";
 
 export default function Farozon({
-  state: { showDeleteConfirm, isDeleting },
-  handlers: { handleDeleteCompany, confirmDelete, cancelDelete },
-}: RaderingsSektionProps) {
+  showDeleteConfirm,
+  isDeleting,
+  onDeleteCompany,
+  onConfirm,
+  onCancel,
+}: FarozonProps) {
   return (
     <>
       <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 mb-6">
@@ -17,7 +20,7 @@ export default function Farozon({
         </p>
         <Knapp
           text={isDeleting ? "Raderar..." : "Radera företag"}
-          onClick={confirmDelete}
+          onClick={onConfirm}
           disabled={isDeleting}
           loading={isDeleting}
           loadingText="Raderar..."
@@ -45,13 +48,13 @@ export default function Farozon({
             <div className="flex gap-3">
               <Knapp
                 text="Avbryt"
-                onClick={cancelDelete}
+                onClick={onCancel}
                 disabled={isDeleting}
                 className="flex-1 bg-gray-600 hover:bg-gray-500 text-gray-200"
               />
               <Knapp
                 text={isDeleting ? "Raderar..." : "Ja, radera allt"}
-                onClick={handleDeleteCompany}
+                onClick={onDeleteCompany}
                 disabled={isDeleting}
                 loading={isDeleting}
                 loadingText="Raderar..."

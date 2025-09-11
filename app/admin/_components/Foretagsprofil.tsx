@@ -2,13 +2,18 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { ForetagsprofilSektionProps } from "../_types/types";
+import type { ForetagsprofilProps } from "../_types/types";
 
 export default function Foretagsprofil({
   foretagsProfil,
-  state: { isEditingCompany, isSavingCompany, companyMessage },
-  handlers: { handleEditCompany, handleCancelCompany, handleSaveCompany, handleCompanyInputChange },
-}: ForetagsprofilSektionProps) {
+  isEditingCompany,
+  isSavingCompany,
+  companyMessage,
+  onEditCompany,
+  onCancelCompany,
+  onSaveCompany,
+  onChangeCompany,
+}: ForetagsprofilProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -16,7 +21,7 @@ export default function Foretagsprofil({
         {!isEditingCompany && (
           <Knapp
             text="✏️ Redigera"
-            onClick={handleEditCompany}
+            onClick={onEditCompany}
             className="bg-blue-600 hover:bg-blue-700"
           />
         )}
@@ -43,21 +48,19 @@ export default function Foretagsprofil({
                 name="foretagsnamn"
                 type="text"
                 value={foretagsProfil.foretagsnamn}
-                onChange={(e) => handleCompanyInputChange("foretagsnamn", e.target.value)}
+                onChange={(e) => onChangeCompany("foretagsnamn", e.target.value)}
                 placeholder="Företagsnamn AB"
                 maxLength={100}
-                
               />
               <TextFalt
                 label="Organisationsnummer"
                 name="organisationsnummer"
                 type="text"
                 value={foretagsProfil.organisationsnummer}
-                onChange={(e) => handleCompanyInputChange("organisationsnummer", e.target.value)}
+                onChange={(e) => onChangeCompany("organisationsnummer", e.target.value)}
                 placeholder="556789-1234"
                 pattern="[0-9]{6}-[0-9]{4}"
                 maxLength={11}
-                
               />
             </div>
 
@@ -66,10 +69,9 @@ export default function Foretagsprofil({
               name="adress"
               type="text"
               value={foretagsProfil.adress}
-              onChange={(e) => handleCompanyInputChange("adress", e.target.value)}
+              onChange={(e) => onChangeCompany("adress", e.target.value)}
               placeholder="Företagsgatan 123"
               maxLength={200}
-              
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -78,21 +80,19 @@ export default function Foretagsprofil({
                 name="postnummer"
                 type="text"
                 value={foretagsProfil.postnummer}
-                onChange={(e) => handleCompanyInputChange("postnummer", e.target.value)}
+                onChange={(e) => onChangeCompany("postnummer", e.target.value)}
                 placeholder="123 45"
                 pattern="[0-9]{3} [0-9]{2}"
                 maxLength={6}
-                
               />
               <TextFalt
                 label="Stad"
                 name="stad"
                 type="text"
                 value={foretagsProfil.stad}
-                onChange={(e) => handleCompanyInputChange("stad", e.target.value)}
+                onChange={(e) => onChangeCompany("stad", e.target.value)}
                 placeholder="Stockholm"
                 maxLength={50}
-                
               />
             </div>
 
@@ -102,20 +102,18 @@ export default function Foretagsprofil({
                 name="telefonnummer"
                 type="tel"
                 value={foretagsProfil.telefonnummer}
-                onChange={(e) => handleCompanyInputChange("telefonnummer", e.target.value)}
+                onChange={(e) => onChangeCompany("telefonnummer", e.target.value)}
                 placeholder="08-123 45 67"
                 maxLength={20}
-                
               />
               <TextFalt
                 label="Email"
                 name="epost"
                 type="email"
                 value={foretagsProfil.epost}
-                onChange={(e) => handleCompanyInputChange("epost", e.target.value)}
+                onChange={(e) => onChangeCompany("epost", e.target.value)}
                 placeholder="info@företag.se"
                 maxLength={100}
-                
               />
             </div>
 
@@ -125,37 +123,33 @@ export default function Foretagsprofil({
                 name="momsregistreringsnummer"
                 type="text"
                 value={foretagsProfil.momsregistreringsnummer}
-                onChange={(e) =>
-                  handleCompanyInputChange("momsregistreringsnummer", e.target.value)
-                }
+                onChange={(e) => onChangeCompany("momsregistreringsnummer", e.target.value)}
                 placeholder="SE556789123401"
                 pattern="SE[0-9]{12}"
                 maxLength={14}
-                
               />
               <TextFalt
                 label="Webbplats"
                 name="webbplats"
                 type="url"
                 value={foretagsProfil.webbplats}
-                onChange={(e) => handleCompanyInputChange("webbplats", e.target.value)}
+                onChange={(e) => onChangeCompany("webbplats", e.target.value)}
                 placeholder="https://www.företag.se"
                 maxLength={200}
-                
               />
             </div>
 
             <div className="flex gap-3 pt-2">
               <Knapp
                 text="💾 Spara"
-                onClick={handleSaveCompany}
+                onClick={onSaveCompany}
                 disabled={isSavingCompany}
                 loading={isSavingCompany}
                 loadingText="Sparar..."
               />
               <Knapp
                 text="❌ Avbryt"
-                onClick={handleCancelCompany}
+                onClick={onCancelCompany}
                 disabled={isSavingCompany}
                 className="bg-gray-600 hover:bg-gray-700"
               />

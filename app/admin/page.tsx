@@ -1,25 +1,12 @@
-"use client";
-
 import MainLayout from "../_components/MainLayout";
-import { useAdminPageState } from "./_hooks/useAdminPageState";
-import Anvandarprofil from "./_components/Anvandarprofil";
-import Foretagsprofil from "./_components/Foretagsprofil";
-import Farozon from "./_components/Farozon";
+import { hamtaAnvandarInfo } from "./_actions/anvandarActions";
+import { hamtaForetagsprofilAdmin } from "./_actions/foretagsActions";
+import { auth } from "../auth";
+import Admin from "./_components/Admin";
 
-export default function AdminPage() {
-  const { auth, userProfile, companyProfile, deleteConfirmation, isLoading } = useAdminPageState();
-
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white">Laddar...</div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!auth.isAuthenticated) {
+export default async function AdminPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -29,14 +16,16 @@ export default function AdminPage() {
     );
   }
 
+  const [initialUser, initialForetag] = await Promise.all([
+    hamtaAnvandarInfo(),
+    hamtaForetagsprofilAdmin(),
+  ]);
+
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-6 pt-2">
         <h1 className="text-3xl mb-8 text-center">Administration</h1>
-        <Anvandarprofil {...userProfile} />
-        <Foretagsprofil {...companyProfile.getComponentProps()} />
-        <Farozon {...deleteConfirmation.getComponentProps()} />
-
+        <Admin session={session} initialUser={initialUser} initialForetag={initialForetag} />
         <div className="mb-4 text-center">
           <a
             href="/sie"
