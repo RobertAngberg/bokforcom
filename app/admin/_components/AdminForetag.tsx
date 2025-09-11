@@ -6,7 +6,7 @@
 import { useEffect } from "react";
 import { useAdminForetagshantering } from "../_hooks/useAdminForetagshantering";
 
-export default function AdminCompanySection() {
+export default function AdminForetag() {
   const {
     foretagsProfil,
     isEditingCompany,

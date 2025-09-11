@@ -1,20 +1,20 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import type { ForetagsProfil, MessageState } from "../_types/types";
+import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
-interface CompanyProfileSectionProps {
+interface ForetagsprofilKomponentProps {
   foretagsProfil: ForetagsProfil;
   isEditingCompany: boolean;
   isSavingCompany: boolean;
-  companyMessage: MessageState | null;
+  companyMessage: MeddelandeTillstand | null;
   handleEditCompany: () => void;
   handleCancelCompany: () => void;
   handleSaveCompany: () => void;
   handleCompanyInputChange: (field: keyof ForetagsProfil, value: string) => void;
 }
 
-export default function CompanyProfileSection({
+export default function ForetagsprofilKomponent({
   foretagsProfil,
   isEditingCompany,
   isSavingCompany,
@@ -23,7 +23,7 @@ export default function CompanyProfileSection({
   handleCancelCompany,
   handleSaveCompany,
   handleCompanyInputChange,
-}: CompanyProfileSectionProps) {
+}: ForetagsprofilKomponentProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">

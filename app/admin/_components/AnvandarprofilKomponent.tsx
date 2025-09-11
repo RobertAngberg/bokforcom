@@ -1,40 +1,43 @@
-// 🎯 EXEMPEL: Admin User Section Component
-// Visar hur den nya hook-strukturen kan anvandas
-
 "use client";
 
-import { useAdminAnvandarhantering } from "../_hooks/useAdminAnvandarhantering";
+import Knapp from "../../_components/Knapp";
+import type { AnvandarInfo, AnvandarRedigeringsFormular, MeddelandeTillstand } from "../_types/types";
 
-export default function AdminUserSection() {
-  const {
-    userInfo,
-    editForm,
-    isEditing,
-    isSaving,
-    loading,
-    message,
-    handleEdit,
-    handleCancel,
-    handleSave,
-    updateEditForm,
-    clearMessage,
-  } = useAdminAnvandarhantering();
+interface AnvandarprofilKomponentProps {
+  userInfo: AnvandarInfo | null;
+  editForm: AnvandarRedigeringsFormular;
+  isEditing: boolean;
+  isSaving: boolean;
+  message: MeddelandeTillstand | null;
+  session: any;
+  handleEdit: () => void;
+  handleCancel: () => void;
+  handleSave: () => void;
+  updateEditForm: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
+}
 
-  if (loading) {
-    return <div className="text-white">Laddar anvandarinformation...</div>;
-  }
-
+export default function AnvandarprofilKomponent({
+  userInfo,
+  editForm,
+  isEditing,
+  isSaving,
+  message,
+  session,
+  handleEdit,
+  handleCancel,
+  handleSave,
+  updateEditForm,
+}: AnvandarprofilKomponentProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl text-white flex items-center gap-2">👤 Anvandarinformation</h2>
+        <h2 className="text-xl text-white flex items-center gap-2">👤 Användarinformation</h2>
         {!isEditing && (
-          <button
+          <Knapp
+            text="✏️ Redigera"
             onClick={handleEdit}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm transition-colors"
-          >
-            ✏️ Redigera
-          </button>
+            className="bg-blue-600 hover:bg-blue-700"
+          />
         )}
       </div>
 
@@ -47,9 +50,6 @@ export default function AdminUserSection() {
           }`}
         >
           {message.text}
-          <button onClick={clearMessage} className="ml-2 text-sm underline">
-            Stang
-          </button>
         </div>
       )}
 
@@ -78,42 +78,39 @@ export default function AdminUserSection() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button
+              <Knapp
+                text="💾 Spara"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-md text-sm transition-colors"
-              >
-                {isSaving ? "Sparar..." : "💾 Spara"}
-              </button>
-              <button
+                loading={isSaving}
+                loadingText="Sparar..."
+              />
+              <Knapp
+                text="❌ Avbryt"
                 onClick={handleCancel}
                 disabled={isSaving}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm transition-colors"
-              >
-                ❌ Avbryt
-              </button>
+                className="bg-gray-600 hover:bg-gray-700"
+              />
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             <div>
               <span className="text-gray-400">Namn:</span>
-              <span className="text-white ml-2">{userInfo?.name || "Ej angivet"}</span>
+              <span className="text-white ml-2">{userInfo?.name || session?.user?.name}</span>
             </div>
             <div>
               <span className="text-gray-400">Email:</span>
-              <span className="text-white ml-2">{userInfo?.email || "Ej angivet"}</span>
+              <span className="text-white ml-2">{userInfo?.email || session?.user?.email}</span>
             </div>
-            <div>
-              <span className="text-gray-400">ID:</span>
-              <span className="text-white ml-2">{userInfo?.id || "Ej angivet"}</span>
-            </div>
-            {userInfo?.skapad && (
+            {session?.user?.image && (
               <div>
-                <span className="text-gray-400">Skapad:</span>
-                <span className="text-white ml-2">
-                  {new Date(userInfo.skapad).toLocaleDateString("sv-SE")}
-                </span>
+                <span className="text-gray-400">Profilbild:</span>
+                <img
+                  src={session.user.image}
+                  alt="Profilbild"
+                  className="w-12 h-12 rounded-full ml-2 inline-block"
+                />
               </div>
             )}
           </div>
