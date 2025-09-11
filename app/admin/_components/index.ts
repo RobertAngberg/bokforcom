@@ -1,8 +1,8 @@
 // 🎯 Barrel Export - Components
 // Centralized export for all admin components
 
-export { default as AnvandarprofilKomponent } from "./AnvandarprofilKomponent";
-export { default as ForetagsprofilKomponent } from "./ForetagsprofilKomponent";
+export { default as Anvandarprofil } from "./Anvandarprofil";
+export { default as Foretagsprofil } from "./Foretagsprofil";
 export { default as Radering } from "./Radering";
 
 // Future components can be added here:
