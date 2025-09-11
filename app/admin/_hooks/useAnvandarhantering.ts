@@ -96,9 +96,6 @@ export function useAdminAnvandarhantering() {
           type: "success",
           text: "Anvandarinformation uppdaterad!",
         });
-
-        // Session refresh
-        window.location.reload();
       } else {
         setMessage({
           type: "error",
