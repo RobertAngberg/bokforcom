@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SökFörval from "./SokForval";
 import Steg2 from "./Steg2";
 import Steg2Levfakt from "./steg2Levfakt";
@@ -18,6 +19,7 @@ import { Förval, PageProps } from "./types";
 registerLocale("sv", sv);
 
 export default function Page({ searchParams }: PageProps) {
+  const router = useRouter();
   const [favoritFörvalen, setFavoritFörvalen] = useState<Förval[]>([]);
   const [isLevfaktMode, setIsLevfaktMode] = useState(false);
   const [isUtlaggMode, setIsUtlaggMode] = useState(false);
@@ -86,12 +88,34 @@ export default function Page({ searchParams }: PageProps) {
     fetchLeverantör();
   }, [leverantorId]);
 
+  // Wrapper för att fånga tillbaka-händelser och återställa levfakt-läge
+  const handleSetCurrentStep = (step: number) => {
+    if (step === 1) {
+      // Återställ levfakt-läge så att standard Steg2 med checkbox kan visas igen
+      setIsLevfaktMode(false);
+      setLeverantör(null);
+      setLeverantorId(null);
+      // Ta bort ev. query params levfakt & leverantorId
+      router.replace("/bokfor");
+    }
+    setCurrentStep(step);
+  };
+
+  // Lämna levfakt-läge (t.ex. när användaren klickar "Ta bort" leverantör)
+  const exitLevfaktMode = () => {
+    setIsLevfaktMode(false);
+    setLeverantör(null);
+    setLeverantorId(null);
+    // Rensa query params och stanna kvar i steg 2
+    router.replace("/bokfor?step=2");
+  };
+
   return (
     <MainLayout>
       {currentStep === 1 && (
         <SökFörval
           favoritFörvalen={favoritFörvalen}
-          setCurrentStep={setCurrentStep}
+          setCurrentStep={handleSetCurrentStep}
           setvaltFörval={setValtFörval}
           setKontonummer={setKontonummer}
           setKontobeskrivning={setKontobeskrivning}
@@ -102,7 +126,7 @@ export default function Page({ searchParams }: PageProps) {
 
       {currentStep === 2 && !isLevfaktMode && (
         <Steg2
-          setCurrentStep={setCurrentStep}
+          setCurrentStep={handleSetCurrentStep}
           fil={fil}
           setFil={setFil}
           pdfUrl={pdfUrl}
@@ -127,7 +151,8 @@ export default function Page({ searchParams }: PageProps) {
       {currentStep === 2 && isLevfaktMode && (
         <Steg2Levfakt
           favoritFörvalen={favoritFörvalen}
-          setCurrentStep={setCurrentStep}
+          setCurrentStep={handleSetCurrentStep}
+          exitLevfaktMode={exitLevfaktMode}
           setKontonummer={setKontonummer}
           setKontobeskrivning={setKontobeskrivning}
           setValtFörval={setValtFörval}
@@ -166,7 +191,7 @@ export default function Page({ searchParams }: PageProps) {
           transaktionsdatum={transaktionsdatum ?? ""}
           kommentar={kommentar ?? ""}
           valtFörval={valtFörval}
-          setCurrentStep={setCurrentStep}
+          setCurrentStep={handleSetCurrentStep}
           extrafält={extrafält}
           utlaggMode={isUtlaggMode}
           levfaktMode={isLevfaktMode}

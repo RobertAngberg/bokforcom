@@ -12,7 +12,7 @@ interface VäljLeverantörModalProps {
   onClose: () => void;
 }
 
-export default function VäljLeverantörModal({ isOpen, onClose }: VäljLeverantörModalProps) {
+export default function ValjLeverantorModal({ isOpen, onClose }: VäljLeverantörModalProps) {
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLeverantör, setSelectedLeverantör] = useState<number | null>(null);

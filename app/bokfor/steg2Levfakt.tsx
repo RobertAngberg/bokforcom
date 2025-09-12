@@ -16,11 +16,13 @@ import TillbakaPil from "../_components/TillbakaPil";
 import Knapp from "../_components/Knapp";
 import TextFalt from "../_components/TextFalt";
 import { Step2LevfaktProps } from "./types";
+import ValjLeverantorModal from "../_components/ValjLeverantorModal";
 
 // #endregion
 
 export default function Steg2Levfakt({
   setCurrentStep,
+  exitLevfaktMode,
   fil,
   setFil,
   pdfUrl,
@@ -45,6 +47,7 @@ export default function Steg2Levfakt({
   betaldatum,
   setBetaldatum,
 }: Step2LevfaktProps) {
+  const [visaLeverantorModal, setVisaLeverantorModal] = useState(false);
   // Datepicker styling
   useEffect(() => {
     const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
@@ -136,6 +139,24 @@ export default function Steg2Levfakt({
               setFörfallodatum={setFörfallodatum}
               setFakturanummer={setFakturanummer}
             />
+            {leverantör && (
+              <div className="mt-4 mb-4 rounded-lg border border-cyan-600/40 bg-cyan-900/20 p-3 text-sm flex items-center justify-between gap-4">
+                <div>
+                  <div className="font-semibold text-cyan-300">Leverantör vald</div>
+                  <div className="text-cyan-100/80 mt-1 break-all">{leverantör.namn}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeverantör(null);
+                    exitLevfaktMode && exitLevfaktMode();
+                  }}
+                  className="text-[11px] px-2 py-1 rounded bg-red-700/40 hover:bg-red-700/60 border border-red-500/40"
+                >
+                  Ta bort
+                </button>
+              </div>
+            )}
 
             {/* Fakturadatum */}
             <div className="mb-4">
@@ -211,6 +232,19 @@ export default function Steg2Levfakt({
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
         </div>
       </div>
+      <ValjLeverantorModal
+        isOpen={visaLeverantorModal}
+        skipNavigate
+        onSelected={(lev) => {
+          setLeverantör(lev);
+        }}
+        onClose={() => setVisaLeverantorModal(false)}
+      />
     </>
   );
 }
+
+// Modal mount (utanför layout return for clarity) – actually needs to be inside fragment:
+// NOTE: We'll render it inside the fragment above just before closing.
+
+// Flytta modal-renderingen in i return (ny patch nedan)

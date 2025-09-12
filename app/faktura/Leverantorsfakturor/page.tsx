@@ -3,15 +3,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MainLayout from "../../_components/MainLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
-import Knapp from "../../_components/Knapp";
 import LeverantorFlik from "../Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
-import VäljLeverantörModal from "./VäljLeverantörModal";
+import ValjLeverantorModal from "../../_components/ValjLeverantorModal"; // Behålls om modal fortfarande ska kunna användas på annat sätt
 import { getLeverantörer, type Leverantör } from "../actions";
 
 export default function LeverantorsfakturorPage() {
   const router = useRouter();
-  const [showLeverantörModal, setShowLeverantörModal] = useState(false);
+  // const [showLeverantörModal, setShowLeverantörModal] = useState(false); // borttagen knapp gör att state pausas
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +33,8 @@ export default function LeverantorsfakturorPage() {
     loadLeverantörer();
   };
 
-  const harLeverantörer = leverantörer.length > 0;
-  const registreraKnappText = loading ? "⏳ Laddar..." : "+ Registrera leverantörsfaktura";
+  const harLeverantörer = leverantörer.length > 0; // ev. används längre ner
+  // Registreringsknapp borttagen enligt önskemål
 
   return (
     <MainLayout>
@@ -44,15 +43,7 @@ export default function LeverantorsfakturorPage() {
         <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
       </div>
 
-      {/* Registrera ny leverantörsfaktura knapp */}
-      <div className="mb-8 text-center">
-        <Knapp
-          text={registreraKnappText}
-          onClick={() => setShowLeverantörModal(true)}
-          disabled={loading || !harLeverantörer}
-          className="bg-cyan-600 hover:bg-cyan-700 px-6 py-3"
-        />
-      </div>
+      {/* (Knapp för att registrera leverantörsfaktura borttagen) */}
 
       {/* Leverantörer flik */}
       <div className="mb-6">
@@ -64,10 +55,7 @@ export default function LeverantorsfakturorPage() {
         <BokfordaFakturorFlik />
       </div>
 
-      <VäljLeverantörModal
-        isOpen={showLeverantörModal}
-        onClose={() => setShowLeverantörModal(false)}
-      />
+      {/* Modal bortkopplad eftersom knappen togs bort */}
     </MainLayout>
   );
 }

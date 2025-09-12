@@ -20,7 +20,7 @@ export default function BokforLeverantorsfakturaPage() {
     <MainLayout>
       <div className="relative mb-6">
         <TillbakaPil onClick={() => router.push("/faktura/Leverantorsfakturor")} />
-        <h1 className="text-3xl mb-6 text-center text-white">Registrera leverantörsfaktura</h1>
+        {/* Rubrik borttagen enligt önskemål att ta bort registreringsflödesknappen */}
       </div>
 
       <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 mb-6">
@@ -41,7 +41,7 @@ export default function BokforLeverantorsfakturaPage() {
 
         <div className="flex justify-center">
           <Knapp
-            text="📚 Fortsätt till bokföring"
+            text="📚 Fortsätt"
             onClick={handleContinueToBokforing}
             disabled={!leverantorId}
             className="bg-cyan-600 hover:bg-cyan-700 px-6 py-3"

@@ -175,6 +175,7 @@ export interface Step2Props {
 export interface Step2LevfaktProps {
   favoritFörvalen: Förval[];
   setCurrentStep: (step: number) => void;
+  exitLevfaktMode?: () => void; // Ny: för att lämna levfakt-läge och visa checkbox igen
   setKontonummer: (konto: string) => void;
   setKontobeskrivning: (beskrivning: string) => void;
   setFil: (fil: File | null) => void;
