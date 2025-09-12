@@ -1,4 +1,5 @@
 import MainLayout from "../_components/MainLayout";
+import { authFallback } from "../_components/AuthFallback";
 import { hamtaAnvandarInfo } from "./_actions/anvandarActions";
 import { hamtaForetagsprofilAdmin } from "./_actions/foretagsActions";
 import { auth } from "../auth";
@@ -6,15 +7,7 @@ import Admin from "./_components/Admin";
 
 export default async function AdminPage() {
   const session = await auth();
-  if (!session?.user?.id) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white">Du måste vara inloggad för att se denna sida.</div>
-        </div>
-      </MainLayout>
-    );
-  }
+  if (!session?.user?.id) return authFallback();
 
   const [initialUser, initialForetag] = await Promise.all([
     hamtaAnvandarInfo(),
