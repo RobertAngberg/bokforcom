@@ -8,7 +8,7 @@ import { useAdminForetagshantering } from "../_hooks/useForetagshantering";
 import { useFarozon } from "../_hooks/useFarozon";
 import type { AdminSektionProps } from "../_types/types";
 
-export default function AdminSektion({ initialUser, initialForetag, session }: AdminSektionProps) {
+export default function Admin({ initialUser, initialForetag, session }: AdminSektionProps) {
   const user = useAdminAnvandarhantering(initialUser);
   const foretag = useAdminForetagshantering(initialForetag);
   const farozon = useFarozon();
