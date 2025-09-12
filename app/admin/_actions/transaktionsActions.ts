@@ -1,11 +1,9 @@
 "use server";
 
-import { Pool } from "pg";
-import { getSessionAndUserId } from "../../_utils/authUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { ensureSession } from "../../_utils/session";
+import { query, queryOne } from "../../_utils/dbUtils";
+import { validateId, sanitizeFormInput } from "../../_utils/validationUtils";
+import { logError } from "../../_utils/errorUtils";
 
 // ============================================================================
 // Transaktionsposter
@@ -13,32 +11,24 @@ const pool = new Pool({
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
-    const { session } = await getSessionAndUserId();
-    if (!session?.user?.email) {
-      throw new Error("Ingen session hittad");
-    }
+    await ensureSession();
 
-    if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
-      throw new Error("Ogiltigt transaktions-ID");
-    }
+    if (!validateId(transaktionsId)) return [];
 
-    const result = await pool.query(
-      `
-      SELECT 
+    const res = await query(
+      `SELECT 
         k.kontonummer, 
         k.beskrivning AS kontobeskrivning, 
         tp.debet, 
         tp.kredit
-      FROM transaktionsposter tp
-      LEFT JOIN konton k ON k.id = tp.konto_id
-      WHERE tp.transaktions_id = $1
-    `,
+       FROM transaktionsposter tp
+       LEFT JOIN konton k ON k.id = tp.konto_id
+       WHERE tp.transaktions_id = $1`,
       [transaktionsId]
     );
-
-    return result.rows;
+    return res.rows;
   } catch (error) {
-    console.error("❌ hamtaTransaktionsposter error:", error);
+    logError(error as Error, "hamtaTransaktionsposter");
     return [];
   }
 }
@@ -49,20 +39,18 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
 
 export async function fetchAllaForval(filters?: { sok?: string; kategori?: string; typ?: string }) {
   try {
-    const { session } = await getSessionAndUserId();
-    if (!session?.user?.email) {
-      throw new Error("Ingen session hittad");
-    }
+    await ensureSession();
 
-    let query = "SELECT * FROM forval";
+    let base = "SELECT * FROM forval";
     const values: any[] = [];
     const conditions: string[] = [];
 
     if (filters?.sok) {
+      const term = sanitizeFormInput(filters.sok.toLowerCase());
       conditions.push(
         `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`
       );
-      values.push(`%${filters.sok.toLowerCase()}%`);
+      values.push(`%${term}%`);
     }
 
     if (filters?.kategori) {
@@ -76,15 +64,15 @@ export async function fetchAllaForval(filters?: { sok?: string; kategori?: strin
     }
 
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(" AND ")}`;
+      base += ` WHERE ${conditions.join(" AND ")}`;
     }
 
-    query += " ORDER BY namn ASC";
+    base += " ORDER BY namn ASC";
 
-    const result = await pool.query(query, values);
-    return result.rows;
+    const res = await query(base, values);
+    return res.rows;
   } catch (error) {
-    console.error("❌ fetchAllaForval error:", error);
+    logError(error as Error, "fetchAllaForval");
     return [];
   }
 }
@@ -95,19 +83,18 @@ export async function fetchAllaForval(filters?: { sok?: string; kategori?: strin
 
 export async function uppdateraFakturanummer(id: number, nyttNummer: string) {
   try {
-    const { session } = await getSessionAndUserId();
-    if (!session?.user?.email) {
-      throw new Error("Ingen session hittad");
-    }
+    await ensureSession();
+    if (!validateId(id)) return { success: false, error: "Ogiltigt ID" };
 
-    const result = await pool.query(
+    const cleaned = sanitizeFormInput(nyttNummer).toUpperCase();
+    const updated = await queryOne(
       "UPDATE fakturamallar SET fakturanummer = $1 WHERE id = $2 RETURNING *",
-      [nyttNummer, id]
+      [cleaned, id]
     );
 
-    return { success: true, data: result.rows[0] };
+    return { success: true, data: updated };
   } catch (error) {
-    console.error("❌ uppdateraFakturanummer error:", error);
-    throw error;
+    logError(error as Error, "uppdateraFakturanummer");
+    return { success: false, error: (error as Error).message };
   }
 }

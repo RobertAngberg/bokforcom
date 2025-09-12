@@ -14,15 +14,12 @@ export const useFarozon = () => {
       const result = await raderaForetag();
 
       if (result.success) {
-        // Success - user will be logged out automatically
         await signOut({ callbackUrl: "/" });
       } else {
         console.error("Delete error:", result.error);
-        // Keep modal open on error so user can try again
       }
     } catch (error) {
       console.error("Unexpected delete error:", error);
-      // Keep modal open on error
     } finally {
       setIsDeleting(false);
     }

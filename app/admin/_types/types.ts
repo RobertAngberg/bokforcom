@@ -31,8 +31,6 @@ export interface AnvandarRedigeringsFormular {
   email: string;
 }
 
-// Component Props
-// Ny platt variant (ersätter nested state/handlers i komponenten)
 export interface AnvandarprofilProps {
   userInfo: AnvandarInfo | null;
   editForm: AnvandarRedigeringsFormular;
@@ -78,9 +76,6 @@ export interface UppdateraAnvandarPayload {
   name: string;
   email: string;
 }
-
-// Företagsprofil uppdatering – identisk med ForetagsProfil just nu men separerat för ev. framtida fält/behörighetskontroll
-export type UppdateraForetagsprofilPayload = ForetagsProfil;
 
 // AdminSektion props (wrapper kring tre sektioner)
 export interface AdminSektionProps {

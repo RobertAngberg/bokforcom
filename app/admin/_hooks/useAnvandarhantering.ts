@@ -9,7 +9,7 @@ import type {
 } from "../_types/types";
 
 export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
-  // State management (initial data injiceras server-side)
+  // State management (initial data kommer från server-side)
   const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
     name: initialUser?.name || "",
@@ -19,7 +19,6 @@ export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
 
-  // 🎯 Public API methods
   const onEdit = () => {
     setIsEditing(true);
     setMessage(null);
@@ -53,7 +52,7 @@ export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
       });
 
       if (result.success) {
-        // Optimistic update
+        // Uppdatera state först efter bekräftat lyckat svar från servern
         setUserInfo(result.user!);
         setIsEditing(false);
         setMessage({

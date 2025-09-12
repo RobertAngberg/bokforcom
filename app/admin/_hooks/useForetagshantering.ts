@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState } from "react";
 import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsActions";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
@@ -20,8 +20,6 @@ export function useAdminForetagshantering(initialForetag: ForetagsProfil | null)
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(
     initialForetag || TOM_FORETAG
   );
-  // Snapshot av ursprungliga värden (används ev. senare för jämförelse / undo)
-  const originalRef = useRef(initialForetag || TOM_FORETAG);
 
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
