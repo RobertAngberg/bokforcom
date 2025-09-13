@@ -1,8 +1,4 @@
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "../db/pool"; // Centraliserad pool (singleton)
 
 /**
  * Exekverar en databas-operation med automatisk connection management

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { Pool } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
+import { pool } from "./db/pool"; // Centraliserad pg-pool (ersätter @neondatabase/serverless Pool)
 
 export const { auth, handlers, signIn, signOut } = NextAuth(() => {
   return {
@@ -17,8 +17,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth(() => {
           if (!credentials?.email || !credentials?.password) {
             return null;
           }
-
-          const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
           try {
             // 🔒 SÄKERHET: Hämta användare OCH kontrollera att de inte är OAuth-only
