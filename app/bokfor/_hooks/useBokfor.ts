@@ -1,20 +1,26 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getLeverantörer, type Leverantör } from "../../faktura/actions";
-import { fetchFavoritforval } from "../_actions/actions";
-import { Förval, PageProps } from "../_types/types";
+import { Förval } from "../_types/types";
 
-export function useBokfor(searchParams: PageProps["searchParams"]) {
+interface InitialData {
+  favoritFörvalen: Förval[];
+  currentStep: number;
+  isLevfaktMode: boolean;
+  isUtlaggMode: boolean;
+  leverantör: any;
+}
+
+export function useBokfor(initialData: InitialData) {
   const router = useRouter();
 
-  // State variables
-  const [favoritFörvalen, setFavoritFörvalen] = useState<Förval[]>([]);
-  const [isLevfaktMode, setIsLevfaktMode] = useState(false);
-  const [isUtlaggMode, setIsUtlaggMode] = useState(false);
-  const [leverantorId, setLeverantorId] = useState<number | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
+  // State variables - initiera med data från server
+  const [favoritFörvalen] = useState<Förval[]>(initialData.favoritFörvalen);
+  const [isLevfaktMode, setIsLevfaktMode] = useState(initialData.isLevfaktMode);
+  const [isUtlaggMode] = useState(initialData.isUtlaggMode);
+  const [currentStep, setCurrentStep] = useState(initialData.currentStep);
+  const [leverantör, setLeverantör] = useState(initialData.leverantör);
+
+  // Form state variables
   const [kontonummer, setKontonummer] = useState<string>("");
   const [kontobeskrivning, setKontobeskrivning] = useState<string | null>(null);
   const [fil, setFil] = useState<File | null>(null);
@@ -26,7 +32,6 @@ export function useBokfor(searchParams: PageProps["searchParams"]) {
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
   >({});
-  const [leverantör, setLeverantör] = useState<Leverantör | null>(null);
   const [fakturanummer, setFakturanummer] = useState<string | null>("");
   const [fakturadatum, setFakturadatum] = useState<string | null>("");
   const [förfallodatum, setFörfallodatum] = useState<string | null>("");
@@ -34,58 +39,12 @@ export function useBokfor(searchParams: PageProps["searchParams"]) {
   const [bokförSomFaktura, setBokförSomFaktura] = useState(false);
   const [kundfakturadatum, setKundfakturadatum] = useState<string | null>("");
 
-  // Load initial data effect
-  useEffect(() => {
-    const loadData = async () => {
-      const params = await searchParams;
-      const levfaktMode = params.levfakt === "true";
-      const utlaggMode = params.utlagg === "true";
-      const leverantorIdParam = params.leverantorId
-        ? parseInt(params.leverantorId as string)
-        : null;
-
-      setIsLevfaktMode(levfaktMode);
-      setIsUtlaggMode(utlaggMode);
-      setLeverantorId(leverantorIdParam);
-
-      const favoritData = await fetchFavoritforval();
-      setFavoritFörvalen(favoritData);
-    };
-
-    loadData();
-  }, [searchParams]);
-
-  // Fetch leverantör when leverantorId changes
-  useEffect(() => {
-    const fetchLeverantör = async () => {
-      if (leverantorId) {
-        try {
-          const result = await getLeverantörer();
-          if (result.success && result.leverantörer) {
-            const valdLeverantör = result.leverantörer.find((l) => l.id === leverantorId);
-            setLeverantör(valdLeverantör || null);
-          } else {
-            setLeverantör(null);
-          }
-        } catch (error) {
-          console.error("Fel vid hämtning av leverantör:", error);
-          setLeverantör(null);
-        }
-      } else {
-        setLeverantör(null);
-      }
-    };
-
-    fetchLeverantör();
-  }, [leverantorId]);
-
   // Handler functions
   const handleSetCurrentStep = (step: number) => {
     if (step === 1) {
       // Återställ levfakt-läge så att standard Steg2 med checkbox kan visas igen
       setIsLevfaktMode(false);
       setLeverantör(null);
-      setLeverantorId(null);
       // Ta bort ev. query params levfakt & leverantorId
       router.replace("/bokfor");
     }
@@ -95,7 +54,6 @@ export function useBokfor(searchParams: PageProps["searchParams"]) {
   const exitLevfaktMode = () => {
     setIsLevfaktMode(false);
     setLeverantör(null);
-    setLeverantorId(null);
     // Rensa query params och stanna kvar i steg 2
     router.replace("/bokfor?step=2");
   };
@@ -103,13 +61,9 @@ export function useBokfor(searchParams: PageProps["searchParams"]) {
   return {
     // State
     favoritFörvalen,
-    setFavoritFörvalen,
     isLevfaktMode,
     setIsLevfaktMode,
     isUtlaggMode,
-    setIsUtlaggMode,
-    leverantorId,
-    setLeverantorId,
     currentStep,
     setCurrentStep,
     kontonummer,
