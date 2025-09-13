@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { pool } from "./db/pool"; // Centraliserad pg-pool (ersätter @neondatabase/serverless Pool)
+import { pool } from "./_utils/dbPool"; // Centraliserad pg-pool (flyttad till _utils)
 
 export const { auth, handlers, signIn, signOut } = NextAuth(() => {
   return {

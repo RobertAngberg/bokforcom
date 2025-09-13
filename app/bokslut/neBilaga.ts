@@ -1,12 +1,8 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { getUserId } from "../_utils/authUtils";
 import { validateYear } from "../_utils/validationUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // Hämta användarens session - nu via authUtils
 async function requireAuth() {

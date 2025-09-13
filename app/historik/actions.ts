@@ -1,13 +1,9 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateYear, sanitizeInput } from "../_utils/validationUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 interface TransactionDetail {
   transaktionspost_id: number;

@@ -1,8 +1,6 @@
 "use server";
 
-import { Pool } from "pg";
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { pool } from "../../_utils/dbPool";
 
 export async function getMomsrapport(year: string, kvartal?: string) {
   /* ---- datumintervall ---- */

@@ -1,12 +1,9 @@
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { getUserId } from "../_utils/authUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   const userId = await getUserId();
+  if (!userId) throw new Error("Ingen användare inloggad");
 
   const client = await pool.connect();
   try {
@@ -14,9 +11,10 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
       `SELECT tp.*, k.kontonummer, k.beskrivning
        FROM transaktionsposter tp
        JOIN konton k ON tp.konto_id = k.id
-       WHERE tp.transaktions_id = $1
+       JOIN transaktioner t ON tp.transaktions_id = t.id
+       WHERE tp.transaktions_id = $1 AND t.user_id = $2
        ORDER BY tp.id`,
-      [transaktionsId]
+      [transaktionsId, userId]
     );
     return result.rows;
   } finally {

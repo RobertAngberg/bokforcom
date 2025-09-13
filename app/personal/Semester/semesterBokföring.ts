@@ -1,13 +1,5 @@
-/**
- * Bokföring av semesterrelaterade transaktioner
- * Enligt BAS-kontoplanen och svenska redovisningsregler
- */
-
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "../../_utils/dbPool";
+import { getUserId } from "../../_utils/authUtils";
 
 interface SemesterBokföring {
   anställdId: number;
@@ -29,6 +21,7 @@ export async function bokförSemesteruttag(data: SemesterBokföring) {
   const client = await pool.connect();
 
   try {
+    const userId = await getUserId();
     const semesterlön = data.månadslön * 0.0043 * data.dagar;
     const semesterersättning = semesterlön * 0.12;
     const totaltBelopp = semesterlön + semesterersättning;
@@ -46,7 +39,7 @@ export async function bokförSemesteruttag(data: SemesterBokföring) {
       `Semesteruttag ${data.anställdNamn}`,
       totaltBelopp,
       data.kommentar || `Semesteruttag ${data.dagar} dagar för ${data.anställdNamn}`,
-      1, // userId - byt ut mot rätt värde
+      userId,
     ]);
 
     const transaktionId = transaktionResult.rows[0].id;
@@ -103,6 +96,7 @@ export async function bokförSemesteravsättning(data: SemesterBokföring) {
   const client = await pool.connect();
 
   try {
+    const userId = await getUserId();
     // Beräkna månatlig avsättning (1/12 av årlig semesterersättning)
     const årligSemesterersättning = data.månadslön * 0.0043 * 25 * 0.12; // 25 dagar × 12%
     const månatligAvsättning = årligSemesterersättning / 12;
@@ -120,7 +114,7 @@ export async function bokförSemesteravsättning(data: SemesterBokföring) {
       `Semesteravsättning ${data.anställdNamn}`,
       månatligAvsättning,
       data.kommentar || `Månatlig semesteravsättning för ${data.anställdNamn}`,
-      1, // userId
+      userId,
     ]);
 
     const transaktionId = transaktionResult.rows[0].id;
@@ -178,6 +172,7 @@ export async function bokförSemesteruppsägning(data: SemesterBokföring) {
   const client = await pool.connect();
 
   try {
+    const userId = await getUserId();
     const semesterlön = data.månadslön * 0.0043 * data.dagar;
     const semesterersättning = semesterlön * 0.12;
     const totaltBelopp = semesterlön + semesterersättning;
@@ -195,7 +190,7 @@ export async function bokförSemesteruppsägning(data: SemesterBokföring) {
       `Semesterutbetalning uppsägning ${data.anställdNamn}`,
       totaltBelopp,
       data.kommentar || `Utbetalning ej uttagen semester vid uppsägning - ${data.dagar} dagar`,
-      1, // userId
+      userId,
     ]);
 
     const transaktionId = transaktionResult.rows[0].id;

@@ -1,15 +1,11 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { getUserId } from "../_utils/authUtils";
-import { readSessionRateLimit, validateSessionAttempt } from "../_utils/rateLimit";
+import { validateSessionAttempt } from "../_utils/rateLimit";
 import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // 🎉 VÄLKOMSTMEDDELANDE FUNKTIONER
 export async function checkWelcomeStatus(): Promise<boolean> {
@@ -539,8 +535,8 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
     throw new Error("Ogiltigt fakturanummer");
   }
 
-  // Använd centraliserad databasoperation
-  await updateFakturanummerCore(id, safeNummer);
+  // Använd centraliserad databasoperation med ägarskapskontroll
+  await updateFakturanummerCore(id, safeNummer, userId);
 }
 
 export async function saveInvoice(data: any) {

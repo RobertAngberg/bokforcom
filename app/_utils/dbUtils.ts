@@ -1,4 +1,4 @@
-import { pool } from "../db/pool"; // Centraliserad pool (singleton)
+import { pool } from "./dbPool";
 
 /**
  * Exekverar en databas-operation med automatisk connection management
@@ -77,9 +77,20 @@ export async function exists(table: string, conditions: Record<string, any>): Pr
  * Uppdaterar fakturanummer för en specifik faktura
  * Core database operation utan auth - ska wrappers med säkerhet
  */
-export async function updateFakturanummerCore(id: number, nyttNummer: string): Promise<void> {
-  await withDatabase(async (client) => {
-    await client.query(`UPDATE fakturor SET fakturanummer = $1 WHERE id = $2`, [nyttNummer, id]);
+export async function updateFakturanummerCore(
+  id: number,
+  nyttNummer: string,
+  userId: number
+): Promise<{ rowCount: number }> {
+  return withDatabase(async (client) => {
+    const res = await client.query(
+      `UPDATE fakturor SET fakturanummer = $1 WHERE id = $2 AND user_id = $3`,
+      [nyttNummer, id, userId]
+    );
+    if (res.rowCount === 0) {
+      throw new Error("Faktura hittades inte eller otillåten åtkomst");
+    }
+    return { rowCount: res.rowCount };
   });
 }
 

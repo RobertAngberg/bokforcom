@@ -1,16 +1,11 @@
 //#region
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateKontonummer } from "../_utils/validationUtils";
 import { validateEmail } from "../login/sakerhet/loginValidation";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
-// import { Resend } from "resend";
-// TA BORT DENNA RAD:
-// const resend = new Resend(process.env.RESEND_API_KEY);
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Säker input-sanitization för faktura-modulen
 function sanitizeFakturaInput(text: string): string {
@@ -1533,34 +1528,12 @@ export async function hamtaBokfordaFakturor() {
 
 export async function hamtaTransaktionsposter(transaktionId: number) {
   const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Ej autentiserad" };
-  }
+  if (!userId) return { success: false, error: "Ej autentiserad" };
 
-  // userId already a number from getUserId()
   const client = await pool.connect();
-
   try {
-    console.log("🔍 Hämtar transaktionsposter för:", { transaktionId, userId });
-
-    // Först, kolla om transaktionen finns
-    const { rows: transCheck } = await client.query(
-      `SELECT id, "user_id" FROM transaktioner WHERE id = $1`,
-      [transaktionId]
-    );
-    console.log("🔍 Transaktion existerar:", transCheck);
-
-    // Sedan, kolla transaktionsposter utan JOIN först
-    const { rows: posterSimple } = await client.query(
-      `SELECT * FROM transaktionsposter WHERE transaktions_id = $1`,
-      [transaktionId]
-    );
-    console.log("🔍 Transaktionsposter (simple):", posterSimple);
-
-    // Hämta transaktionsposter med kontoinformation
     const { rows } = await client.query(
-      `
-      SELECT 
+      `SELECT 
         tp.id,
         tp.debet,
         tp.kredit,
@@ -1569,31 +1542,13 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
         t.transaktionsdatum,
         t.kommentar as transaktionskommentar,
         t.id as transaktion_id
-      FROM transaktionsposter tp
-      JOIN konton k ON tp.konto_id = k.id
-      JOIN transaktioner t ON tp.transaktions_id = t.id
-      WHERE tp.transaktions_id = $1 AND t."user_id" = $2
-      ORDER BY tp.id
-    `,
+       FROM transaktionsposter tp
+       JOIN konton k ON tp.konto_id = k.id
+       JOIN transaktioner t ON tp.transaktions_id = t.id
+       WHERE tp.transaktions_id = $1 AND t.user_id = $2
+       ORDER BY tp.id`,
       [transaktionId, userId]
     );
-
-    console.log("📝 Hittade transaktionsposter:", rows.length);
-
-    // Om inga poster hittades, kolla vad som finns i transaktioner
-    if (rows.length === 0) {
-      const { rows: transaktionCheck } = await client.query(
-        `SELECT id, transaktionsdatum, kommentar, "user_id" FROM transaktioner WHERE id = $1`,
-        [transaktionId]
-      );
-      console.log("🔍 Transaktion check:", transaktionCheck);
-
-      const { rows: posterCheck } = await client.query(
-        `SELECT COUNT(*) as antal FROM transaktionsposter WHERE transaktions_id = $1`,
-        [transaktionId]
-      );
-      console.log("🔍 Poster check:", posterCheck);
-    }
 
     const poster = rows.map((row) => ({
       id: row.id,
@@ -1604,14 +1559,10 @@ export async function hamtaTransaktionsposter(transaktionId: number) {
       transaktionsdatum: row.transaktionsdatum,
       transaktionskommentar: row.transaktionskommentar,
     }));
-
     return { success: true, poster };
   } catch (error) {
     console.error("Fel vid hämtning av transaktionsposter:", error);
-    return {
-      success: false,
-      error: "Kunde inte hämta transaktionsposter",
-    };
+    return { success: false, error: "Kunde inte hämta transaktionsposter" };
   } finally {
     client.release();
   }

@@ -1,13 +1,9 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { getUserId } from "../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import { validateSessionAttempt } from "../_utils/rateLimit";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(
@@ -1464,9 +1460,10 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
       `SELECT tp.*, k.kontonummer, k.beskrivning
        FROM transaktionsposter tp
        JOIN konton k ON tp.konto_id = k.id
-       WHERE tp.transaktions_id = $1
+       JOIN transaktioner t ON tp.transaktions_id = t.id
+       WHERE tp.transaktions_id = $1 AND t.user_id = $2
        ORDER BY tp.id`,
-      [transaktionsId]
+      [transaktionsId, userId]
     );
     return result.rows;
   } finally {

@@ -12,7 +12,7 @@ function generateVerificationToken(): string {
 
 // Skicka verification email
 async function sendVerificationEmail(email: string, token: string, name: string) {
-  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
 
   try {
     await resend.emails.send({

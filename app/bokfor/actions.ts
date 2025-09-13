@@ -1,20 +1,13 @@
-//#region Use server, imports, pool
 "use server";
 
-import { Pool } from "pg";
-import { formatSEK } from "../_utils/format";
-import { getUserId, getSessionAndUserId, requireOwnership } from "../_utils/authUtils";
-import { dateTillÅÅÅÅMMDD, stringTillDate, datumTillPostgreSQL } from "../_utils/trueDatum";
+import { pool } from "../_utils/dbPool";
+import { getUserId, requireOwnership } from "../_utils/authUtils";
+import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../_utils/trueDatum";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import OpenAI from "openai";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-// Invalidera cache för bokföring
 export async function invalidateBokförCache() {
   revalidatePath("/historik");
   revalidatePath("/rapporter/huvudbok");
@@ -23,9 +16,9 @@ export async function invalidateBokförCache() {
   revalidatePath("/rapporter/momsrapport");
 }
 
-// Hämta transaktionsposter för en viss transaktion
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   const userId = await getUserId();
+  if (!userId) throw new Error("Ingen användare inloggad");
 
   const client = await pool.connect();
   try {
@@ -33,18 +26,17 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
       `SELECT tp.*, k.kontonummer, k.beskrivning
        FROM transaktionsposter tp
        JOIN konton k ON tp.konto_id = k.id
-       WHERE tp.transaktions_id = $1
+       JOIN transaktioner t ON tp.transaktions_id = t.id
+       WHERE tp.transaktions_id = $1 AND t.user_id = $2
        ORDER BY tp.id`,
-      [transaktionsId]
+      [transaktionsId, userId]
     );
     return result.rows;
   } finally {
     client.release();
   }
 }
-//#endregion
 
-// Säker text-sanitization för OpenAI input
 function sanitizeOCRText(text: string): string {
   if (!text || typeof text !== "string") return "";
 

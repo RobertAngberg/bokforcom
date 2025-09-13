@@ -3,11 +3,7 @@
  * Använder din befintliga databasstruktur
  */
 
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "../../_utils/dbPool";
 
 export interface SemesterRecord {
   id?: number;

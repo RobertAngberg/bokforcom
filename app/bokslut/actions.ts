@@ -1,12 +1,8 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { getUserId } from "../_utils/authUtils";
 import { validatePeriod } from "../_utils/validationUtils";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // Hämta användarens session - nu via authUtils
 async function requireAuth() {
@@ -28,9 +24,10 @@ export async function testDatabaseConnection() {
     console.log("[DEBUG] Authenticated userId:", userId);
 
     // Andra: kolla hur många transaktioner som finns för den inloggade användaren
-    const userCount = await client.query('SELECT COUNT(*) FROM transaktioner WHERE "user_id" = $1', [
-      userId,
-    ]);
+    const userCount = await client.query(
+      'SELECT COUNT(*) FROM transaktioner WHERE "user_id" = $1',
+      [userId]
+    );
     console.log(`[DEBUG] Transactions for userId ${userId}:`, userCount.rows[0]);
 
     // Kolla vilka userId som faktiskt finns

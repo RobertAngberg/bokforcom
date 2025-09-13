@@ -11,8 +11,7 @@ import { logError } from "../../_utils/errorUtils";
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
-    await ensureSession();
-
+    const { userId } = await ensureSession();
     if (!validateId(transaktionsId)) return [];
 
     const res = await query(
@@ -23,8 +22,9 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
         tp.kredit
        FROM transaktionsposter tp
        LEFT JOIN konton k ON k.id = tp.konto_id
-       WHERE tp.transaktions_id = $1`,
-      [transaktionsId]
+       JOIN transaktioner t ON tp.transaktions_id = t.id
+       WHERE tp.transaktions_id = $1 AND t.user_id = $2`,
+      [transaktionsId, userId]
     );
     return res.rows;
   } catch (error) {

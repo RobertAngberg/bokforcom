@@ -1,6 +1,6 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../_utils/dbPool";
 import { auth, signOut } from "../auth";
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { signupRateLimit } from "../_utils/rateLimit";
@@ -10,7 +10,6 @@ import bcrypt from "bcryptjs";
 import { validateEmail, validatePassword } from "./sakerhet/loginValidation";
 import { Resend } from "resend";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function logSignupSecurityEvent(
@@ -61,7 +60,7 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
 
 // Skicka verification email
 async function sendVerificationEmail(email: string, token: string, name: string): Promise<boolean> {
-  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
 
   try {
     await resend.emails.send({

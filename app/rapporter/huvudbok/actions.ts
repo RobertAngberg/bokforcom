@@ -1,13 +1,9 @@
 //#region
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "../../_utils/dbPool";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // SÄKERHETSVALIDERING: Logga huvudbok-åtkomst
 function logLedgerDataEvent(
