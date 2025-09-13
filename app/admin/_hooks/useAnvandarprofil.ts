@@ -8,7 +8,6 @@ import type {
   MeddelandeTillstand,
 } from "../_types/types";
 
-// Hook: useAnvandarprofil - hanterar redigering av användarprofil i admin
 export function useAnvandarprofil(initialUser: AnvandarInfo | null) {
   const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({

@@ -7,10 +7,6 @@ import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-// ============================================================================
-// Användarinformation
-// ============================================================================
-
 export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
     const { userId } = await ensureSession();

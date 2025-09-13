@@ -7,10 +7,6 @@ import { query, queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-// ============================================================================
-// Företagsprofil
-// ============================================================================
-
 export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null> {
   try {
     const { userId } = await ensureSession();
