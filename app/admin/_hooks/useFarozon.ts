@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { raderaForetag } from "../_actions/foretagsActions";
+import { raderaForetag } from "../_actions/farozonActions";
 
 export const useFarozon = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

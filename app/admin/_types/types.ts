@@ -31,36 +31,21 @@ export interface AnvandarRedigeringsFormular {
   email: string;
 }
 
-export interface AnvandarprofilProps {
-  userInfo: AnvandarInfo | null;
-  editForm: AnvandarRedigeringsFormular;
-  isEditing: boolean;
-  isSaving: boolean;
-  message: MeddelandeTillstand | null;
+// Tidigare komponent-props (nu inlinade via hooks) borttagna efter refactor
+// Återinför centraliserade prop-interfaces för komponenternas publika API
+
+export interface AnvandarprofilComponentProps {
+  initialUser: AnvandarInfo | null;
   session: Session | null;
-  onEdit: () => void;
-  onCancel: () => void;
-  onSave: () => void;
-  onChange: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
 }
 
-export interface ForetagsprofilProps {
-  foretagsProfil: ForetagsProfil;
-  isEditingCompany: boolean;
-  isSavingCompany: boolean;
-  companyMessage: MeddelandeTillstand | null;
-  onEditCompany: () => void;
-  onCancelCompany: () => void;
-  onSaveCompany: () => void;
-  onChangeCompany: (field: keyof ForetagsProfil, value: string) => void;
+export interface ForetagsprofilComponentProps {
+  initialForetag: ForetagsProfil | null;
 }
 
-export interface FarozonProps {
-  showDeleteConfirm: boolean;
-  isDeleting: boolean;
-  onDeleteCompany: () => void;
-  onConfirm: () => void;
-  onCancel: () => void;
+export interface FarozonComponentProps {
+  // För närvarande inga inkommande props – men reserverad för framtida styrning (feature flags etc)
+  // Lämnas tom för konsekvens och möjlig framtida expansion
 }
 
 // Action result types
@@ -78,8 +63,4 @@ export interface UppdateraAnvandarPayload {
 }
 
 // AdminSektion props (wrapper kring tre sektioner)
-export interface AdminSektionProps {
-  initialUser: AnvandarInfo | null;
-  initialForetag: ForetagsProfil | null;
-  session: Session | null;
-}
+// AdminSektionProps togs bort när Admin-wrappern försvann

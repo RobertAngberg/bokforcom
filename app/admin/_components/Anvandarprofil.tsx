@@ -2,20 +2,12 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { AnvandarprofilProps } from "../_types/types";
+import type { AnvandarprofilComponentProps } from "../_types/types";
+import { useAnvandarprofil } from "../_hooks/useAnvandarprofil";
 
-export default function Anvandarprofil({
-  userInfo,
-  editForm,
-  isEditing,
-  isSaving,
-  message,
-  session,
-  onEdit,
-  onCancel,
-  onSave,
-  onChange,
-}: AnvandarprofilProps) {
+export default function Anvandarprofil({ initialUser, session }: AnvandarprofilComponentProps) {
+  const { userInfo, editForm, isEditing, isSaving, message, onEdit, onCancel, onSave, onChange } =
+    useAnvandarprofil(initialUser);
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">

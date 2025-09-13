@@ -3,7 +3,7 @@
 import { ensureSession } from "../../_utils/session";
 import type { ForetagsProfil, AktionsResultat } from "../_types/types";
 import { revalidatePath } from "next/cache";
-import { query, queryOne, withTransaction } from "../../_utils/dbUtils";
+import { query, queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
@@ -62,12 +62,11 @@ export async function uppdateraForetagsprofilAdmin(
   try {
     const { userId } = await ensureSession();
 
-    // Sanera fria fält
     const foretagsnamn = sanitizeFormInput(payload.foretagsnamn || "");
     const adress = sanitizeFormInput(payload.adress || "");
-    const postnummer = payload.postnummer || ""; // redan normaliserat i hook
+    const postnummer = payload.postnummer || "";
     const stad = sanitizeFormInput(payload.stad || "");
-    const organisationsnummer = payload.organisationsnummer || ""; // normalisation i hook
+    const organisationsnummer = payload.organisationsnummer || "";
     const momsregistreringsnummer = payload.momsregistreringsnummer || "";
     const telefonnummer = sanitizeFormInput(payload.telefonnummer || "");
     const epost = sanitizeFormInput(payload.epost || "");
@@ -109,34 +108,5 @@ export async function uppdateraForetagsprofilAdmin(
   } catch (error) {
     logError(error as Error, "uppdateraForetagsprofilAdmin");
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
-  }
-}
-
-// ============================================================================
-// Företag - Radering
-// ============================================================================
-
-export async function raderaForetag(): Promise<AktionsResultat> {
-  try {
-    const { userId } = await ensureSession();
-
-    await withTransaction(async (client: any) => {
-      await client.query(
-        "DELETE FROM transaktionsposter WHERE transaktions_id IN (SELECT id FROM transaktioner WHERE anvandare_id = $1)",
-        [userId]
-      );
-      await client.query("DELETE FROM transaktioner WHERE anvandare_id = $1", [userId]);
-      await client.query("DELETE FROM fakturor WHERE anvandare_id = $1", [userId]);
-      await client.query("DELETE FROM företagsprofil WHERE id = $1", [userId]);
-      await client.query("DELETE FROM users WHERE id = $1", [userId]);
-    });
-
-    return { success: true };
-  } catch (error) {
-    logError(error as Error, "raderaForetag");
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Ett fel uppstod vid radering",
-    };
   }
 }

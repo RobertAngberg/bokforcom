@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsActions";
+import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsprofilActions";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
 const TOM_FORETAG: ForetagsProfil = {
@@ -16,11 +16,10 @@ const TOM_FORETAG: ForetagsProfil = {
   webbplats: "",
 };
 
-export function useAdminForetagshantering(initialForetag: ForetagsProfil | null) {
+export function useForetagsprofil(initialForetag: ForetagsProfil | null) {
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(
     initialForetag || TOM_FORETAG
   );
-
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
@@ -37,10 +36,8 @@ export function useAdminForetagshantering(initialForetag: ForetagsProfil | null)
 
   const handleSaveCompany = async () => {
     setIsSavingCompany(true);
-
     try {
       const result = await uppdateraForetagsprofilAdmin({ ...foretagsProfil });
-
       if (result.success) {
         setIsEditingCompany(false);
         setCompanyMessage({ type: "success", text: "Foretagsprofil uppdaterad!" });
@@ -52,10 +49,7 @@ export function useAdminForetagshantering(initialForetag: ForetagsProfil | null)
       }
     } catch (error) {
       console.error("Error updating company profile:", error);
-      setCompanyMessage({
-        type: "error",
-        text: "Ett fel uppstod vid uppdatering",
-      });
+      setCompanyMessage({ type: "error", text: "Ett fel uppstod vid uppdatering" });
     } finally {
       setIsSavingCompany(false);
     }
@@ -67,55 +61,42 @@ export function useAdminForetagshantering(initialForetag: ForetagsProfil | null)
       return digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits;
     }
     if (field === "organisationsnummer") {
-      const digits = value.replace(/\D/g, "").slice(0, 10); // 10 siffror
-      if (digits.length <= 6) return digits; // skrivs progressivt
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      if (digits.length <= 6) return digits;
       return `${digits.slice(0, 6)}-${digits.slice(6)}`;
     }
     if (field === "momsregistreringsnummer") {
       let v = value.toUpperCase().replace(/\s/g, "");
-      // Om exakt 12 siffror skrivits utan SE – prefixa
       if (/^[0-9]{12}$/.test(v)) v = `SE${v}`;
-      // Tillåt format SE + 12 siffror
       if (!/^SE[0-9]{0,12}$/.test(v)) {
-        // Rensa allt utom SE + siffror i början
         if (v.startsWith("SE")) {
           v = "SE" + v.slice(2).replace(/[^0-9]/g, "");
         } else {
           v = v.replace(/[^0-9]/g, "");
-          if (v.length > 0) v = `SE${v}`; // börja bygga korrekt
+          if (v.length > 0) v = `SE${v}`;
         }
       }
-      return v.slice(0, 14); // SE + 12 siffror = 14 tecken
+      return v.slice(0, 14);
     }
-    return value; // default – ingen normalisering
+    return value;
   };
 
   const updateCompanyField = (field: keyof ForetagsProfil, value: string) => {
     const normalized = normalizeField(field, value);
-    setForetagsProfil((prev) => ({
-      ...prev,
-      [field]: normalized,
-    }));
+    setForetagsProfil((prev) => ({ ...prev, [field]: normalized }));
   };
 
   const clearCompanyMessage = () => setCompanyMessage(null);
 
   return {
-    // Data
     foretagsProfil,
-
-    // State (företagsprofilsektion)
     isEditingCompany,
     isSavingCompany,
     companyMessage,
-
-    // Matchar Företagsprofil-komponentens props
     onEditCompany: handleEditCompany,
     onCancelCompany: handleCancelCompany,
     onSaveCompany: handleSaveCompany,
     onChangeCompany: updateCompanyField,
-
-    // Övrigt
     clearCompanyMessage,
   };
 }

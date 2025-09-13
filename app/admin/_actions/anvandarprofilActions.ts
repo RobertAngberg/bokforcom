@@ -15,7 +15,6 @@ export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
     const { userId } = await ensureSession();
 
-    // En rad via helper – returnerar null om ingen
     return await queryOne<AnvandarInfo>(
       "SELECT id, email, name, created_at as skapad FROM users WHERE id = $1",
       [userId]
@@ -32,7 +31,6 @@ export async function uppdateraAnvandarInfo(
   try {
     const { userId } = await ensureSession();
 
-    // Sanering & trim
     const name = sanitizeFormInput(payload.name || "").trim();
     const email = sanitizeFormInput(payload.email || "").trim();
 
@@ -40,7 +38,6 @@ export async function uppdateraAnvandarInfo(
       return { success: false, error: "Namn och email ar obligatoriska" };
     }
 
-    // Central validering via requireValid (inline validator)
     try {
       requireValid(email, (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Ogiltig email-format");
     } catch (e) {

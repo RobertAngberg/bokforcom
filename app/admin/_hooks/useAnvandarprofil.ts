@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { uppdateraAnvandarInfo } from "../_actions/anvandarActions";
+import { uppdateraAnvandarInfo } from "../_actions/anvandarprofilActions";
 import type {
   AnvandarInfo,
   AnvandarRedigeringsFormular,
   MeddelandeTillstand,
 } from "../_types/types";
 
-export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
-  // State management (initial data kommer från server-side)
+// Hook: useAnvandarprofil - hanterar redigering av användarprofil i admin
+export function useAnvandarprofil(initialUser: AnvandarInfo | null) {
   const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
     name: initialUser?.name || "",
@@ -34,68 +34,44 @@ export function useAdminAnvandarhantering(initialUser: AnvandarInfo | null) {
   };
 
   const onSave = async () => {
-    // Validation
     if (!editForm.name.trim() || !editForm.email.trim()) {
-      setMessage({
-        type: "error",
-        text: "Namn och email far inte vara tomma",
-      });
+      setMessage({ type: "error", text: "Namn och email far inte vara tomma" });
       return;
     }
 
     setIsSaving(true);
-
     try {
       const result = await uppdateraAnvandarInfo({
         name: editForm.name.trim(),
         email: editForm.email.trim(),
       });
-
       if (result.success) {
-        // Uppdatera state först efter bekräftat lyckat svar från servern
         setUserInfo(result.user!);
         setIsEditing(false);
-        setMessage({
-          type: "success",
-          text: "Anvandarinformation uppdaterad!",
-        });
+        setMessage({ type: "success", text: "Anvandarinformation uppdaterad!" });
       } else {
-        setMessage({
-          type: "error",
-          text: result.error || "Kunde inte uppdatera information",
-        });
+        setMessage({ type: "error", text: result.error || "Kunde inte uppdatera information" });
       }
     } catch (error) {
       console.error("Error updating user:", error);
-      setMessage({
-        type: "error",
-        text: "Ett fel uppstod vid uppdatering",
-      });
+      setMessage({ type: "error", text: "Ett fel uppstod vid uppdatering" });
     } finally {
       setIsSaving(false);
     }
   };
 
   const onChange = (field: keyof AnvandarRedigeringsFormular, value: string) => {
-    setEditForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const clearMessage = () => setMessage(null);
 
   return {
-    // Data
     userInfo,
     editForm,
-
-    // State
     isEditing,
     isSaving,
     message,
-
-    // Actions
     onEdit,
     onCancel,
     onSave,

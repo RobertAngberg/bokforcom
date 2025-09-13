@@ -2,15 +2,10 @@
 
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
-import type { FarozonProps } from "../_types/types";
+import { useFarozon } from "../_hooks/useFarozon";
 
-export default function Farozon({
-  showDeleteConfirm,
-  isDeleting,
-  onDeleteCompany,
-  onConfirm,
-  onCancel,
-}: FarozonProps) {
+export default function Farozon() {
+  const { showDeleteConfirm, isDeleting, onDeleteCompany, onConfirm, onCancel } = useFarozon();
   return (
     <>
       <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 mb-6">
