@@ -66,10 +66,6 @@ export async function hamtaFavoritforval(): Promise<any[]> {
   }
 }
 
-// Whitelist för tillåtna kolumner
-const ALLOWED_CATEGORIES = ["Försäljning", "Inköp", "Moms", "Löner", "Administration", "Övriga"];
-const ALLOWED_TYPES = ["Kundfaktura", "Leverantörsfaktura", "Utlägg", "Allmän"];
-
 export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   let query = "SELECT * FROM förval";
   const values: any[] = [];
@@ -85,12 +81,12 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     }
   }
 
-  if (filters?.kategori && ALLOWED_CATEGORIES.includes(filters.kategori)) {
+  if (filters?.kategori) {
     conditions.push(`kategori = $${values.length + 1}`);
     values.push(filters.kategori);
   }
 
-  if (filters?.typ && ALLOWED_TYPES.includes(filters.typ)) {
+  if (filters?.typ) {
     conditions.push(`typ = $${values.length + 1}`);
     values.push(filters.typ);
   }
