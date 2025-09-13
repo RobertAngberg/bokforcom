@@ -14,37 +14,9 @@ import TillbakaPil from "../../../../_components/TillbakaPil";
 import Knapp from "../../../../_components/Knapp";
 import Dropdown from "../../../../_components/Dropdown";
 import TextFalt from "../../../../_components/TextFalt";
-
-interface LevfaktLayoutProps {
-  // Specialförval basics
-  title: string;
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  onSubmit: () => void;
-  isValid: boolean;
-
-  // Leverantörsfaktura-specifika props
-  leverantör?: string | Leverantör;
-  setLeverantör?: (val: string | Leverantör | null) => void;
-  fakturanummer?: string;
-  setFakturanummer?: (val: string) => void;
-  fakturadatum?: string;
-  setFakturadatum?: (val: string) => void;
-  förfallodatum?: string;
-  setFörfallodatum?: (val: string) => void;
-
-  // Optional extra content
-  children?: React.ReactNode;
-}
+import { Leverantör } from "../../../../faktura/actions";
+import { LevfaktLayoutProps } from "../../../_types/types";
+import { useLevfaktLayout } from "../../../_hooks/useLevfaktLayout";
 
 export default function LevfaktLayout({
   title,
@@ -71,27 +43,21 @@ export default function LevfaktLayout({
   setFörfallodatum,
   children,
 }: LevfaktLayoutProps) {
-  // Extra validering för leverantörsfaktura-specifika fält
-  const leverantörIsValid =
-    leverantör &&
-    (typeof leverantör === "string"
-      ? leverantör.trim() !== ""
-      : typeof leverantör === "object" && leverantör.namn && leverantör.namn.trim() !== "");
-  const fakturanummerIsValid =
-    fakturanummer && typeof fakturanummer === "string" && fakturanummer.trim() !== "";
-  const fakturadatumIsValid =
-    fakturadatum && typeof fakturadatum === "string" && fakturadatum.trim() !== "";
-  const fullIsValid = isValid && leverantörIsValid && fakturanummerIsValid && fakturadatumIsValid;
-  const leverantörOptions = [
-    { label: "Välj leverantör...", value: "" },
-    { label: "Telia", value: "telia" },
-    { label: "Ellevio", value: "ellevio" },
-    { label: "ICA", value: "ica" },
-    { label: "Staples", value: "staples" },
-    { label: "Office Depot", value: "office_depot" },
-  ];
+  // Använd hook för validering och options
+  const {
+    leverantörIsValid,
+    fakturanummerIsValid,
+    fakturadatumIsValid,
+    fullIsValid,
+    leverantörOptions,
+  } = useLevfaktLayout({
+    leverantör,
+    fakturanummer,
+    fakturadatum,
+    isValid,
+  });
 
-  // Datepicker styling
+  // Datepicker styling och default values
   useEffect(() => {
     const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
     datePickerEls.forEach((el) => {

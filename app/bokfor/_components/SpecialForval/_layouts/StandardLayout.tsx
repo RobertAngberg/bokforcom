@@ -8,24 +8,7 @@ import TextFalt from "../../../../_components/TextFalt";
 import Knapp from "../../../../_components/Knapp";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/trueDatum";
-
-interface StandardLayoutProps {
-  title: string;
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  onSubmit: () => void;
-  isValid: boolean;
-  children?: React.ReactNode;
-}
+import { StandardLayoutProps } from "../../../_types/types";
 
 export default function StandardLayout({
   title,

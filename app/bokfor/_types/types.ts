@@ -265,14 +265,48 @@ export interface UberAvgiftProps extends BaseSpecialProps {}
 
 // ===== LAYOUT PROPS =====
 export interface StandardLayoutProps {
-  children: React.ReactNode;
   title: string;
+  belopp?: number | null;
+  setBelopp: (val: number | null) => void;
+  transaktionsdatum?: string | null;
+  setTransaktionsdatum: (val: string) => void;
+  kommentar?: string | null;
+  setKommentar?: (val: string | null) => void;
+  setCurrentStep?: (val: number) => void;
+  fil: File | null;
+  setFil: (val: File | null) => void;
+  pdfUrl: string | null;
+  setPdfUrl: (val: string) => void;
+  onSubmit: () => void;
+  isValid: boolean;
+  children?: React.ReactNode;
 }
 
 export interface LevfaktLayoutProps {
-  children: React.ReactNode;
   title: string;
-  mode: "steg2" | "steg3";
+  belopp?: number | null;
+  setBelopp: (val: number | null) => void;
+  transaktionsdatum?: string | null;
+  setTransaktionsdatum: (val: string) => void;
+  kommentar?: string | null;
+  setKommentar?: (val: string | null) => void;
+  setCurrentStep?: (val: number) => void;
+  fil: File | null;
+  setFil: (val: File | null) => void;
+  pdfUrl: string | null;
+  setPdfUrl: (val: string) => void;
+  onSubmit: () => void;
+  isValid: boolean;
+  // Leverantörsfaktura-specifika props
+  leverantör?: string | any; // Will be properly typed as Leverantör
+  setLeverantör?: (val: string | any | null) => void;
+  fakturanummer?: string;
+  setFakturanummer?: (val: string) => void;
+  fakturadatum?: string;
+  setFakturadatum?: (val: string) => void;
+  förfallodatum?: string;
+  setFörfallodatum?: (val: string) => void;
+  children?: React.ReactNode;
 }
 
 // ===== UTILITY TYPES =====
@@ -366,4 +400,17 @@ export interface UseSokForvalProps {
   setKontobeskrivning: (beskrivning: string) => void;
   levfaktMode?: boolean;
   utlaggMode?: boolean;
+}
+
+// useLevfaktLayout
+export interface UseLevfaktLayoutProps {
+  leverantör?: string | any;
+  fakturanummer?: string;
+  fakturadatum?: string;
+  isValid: boolean;
+}
+
+// useStandardLayout
+export interface UseStandardLayoutProps {
+  // Placeholder för eventuell logik i framtiden
 }

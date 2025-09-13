@@ -81,7 +81,7 @@ export default function Steg2(props: Step2Props) {
   if (valtFörval?.specialtyp) {
     try {
       console.log("🔍 Försöker ladda specialförval:", valtFörval.specialtyp);
-      const SpecialComponent = require(`./SpecialForval/${valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
           mode="steg2"
