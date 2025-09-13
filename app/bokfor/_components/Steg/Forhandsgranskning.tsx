@@ -1,28 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useMemo, useEffect } from "react";
 import { ForhandsgranskningProps } from "../../_types/types";
+import { useForhandsgranskning } from "../../_hooks/useForhandsgranskning";
 
 export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
-  const [showModal, setShowModal] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Memoize blob URL för att förhindra nya URLs varje render
-  const blobUrl = useMemo(() => {
-    return fil ? URL.createObjectURL(fil) : null;
-  }, [fil]);
-
-  // Cleanup blob URL när komponenten unmountar eller fil ändras
-  useEffect(() => {
-    return () => {
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-      }
-    };
-  }, [blobUrl]);
-
-  const hasFile = fil || pdfUrl;
+  const {
+    showModal,
+    blobUrl,
+    hasFile,
+    isImage,
+    isPdf,
+    displayUrl,
+    closeModal,
+    handleFileClick,
+    getButtonText,
+    handlePdfOpenClick,
+  } = useForhandsgranskning({ fil, pdfUrl });
 
   return (
     <>
@@ -57,9 +51,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
               <div className="p-4 text-center bg-gray-50 rounded border">
                 <p className="mb-2">PDF kan inte visas inline i denna webbläsare</p>
                 <button
-                  onClick={() => {
-                    if (blobUrl) window.open(blobUrl, "_blank");
-                  }}
+                  onClick={handlePdfOpenClick}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Öppna PDF i ny flik
@@ -81,23 +73,10 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
         {hasFile && (
           <button
-            onClick={() => {
-              if (fil?.type === "application/pdf") {
-                // För PDFs, öppna i ny flik
-                if (blobUrl) window.open(blobUrl, "_blank");
-              } else if (fil?.type.startsWith("image/")) {
-                // För bilder, visa modal som vanligt
-                setShowModal(true);
-              } else if (pdfUrl) {
-                // För andra filer, öppna uploaded URL
-                window.open(pdfUrl, "_blank");
-              }
-            }}
+            onClick={handleFileClick}
             className="absolute top-2 right-2 px-4 py-2 text-sm font-medium text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition"
           >
-            {fil?.type === "application/pdf" || (!fil?.type.startsWith("image/") && pdfUrl)
-              ? "Öppna i ny flik"
-              : "Visa större"}
+            {getButtonText()}
           </button>
         )}
       </div>
@@ -106,7 +85,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div className="relative max-w-6xl w-full h-[90vh] overflow-auto bg-slate-900 rounded-xl p-4">
             <button
-              onClick={() => setShowModal(false)}
+              onClick={closeModal}
               className="absolute top-4 right-4 text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded font-bold"
             >
               Stäng

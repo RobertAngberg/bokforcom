@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "../_actions/actions";
+import { useState, useEffect, useCallback } from "react";
+import { hämtaBokföringsmetod } from "../_actions/actions";
+import { extractDataFromOCRKundfaktura } from "../_actions/ocrActions";
 import { Step2Props } from "../_types/types";
 
 export function useSteg2({

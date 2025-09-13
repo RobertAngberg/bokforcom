@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR } from "../../_actions/ocrActions";
-import { compressImageFile } from "../../../_utils/blobUpload";
+import { extractDataFromOCRLevFakt } from "../_actions/ocrActions";
+import { compressImageFile } from "../../_utils/blobUpload";
 import Tesseract from "tesseract.js";
-import Toast from "../../../_components/Toast";
-import { FileUploadProps } from "../../_types/types";
+import { UseLaddaUppFilLevfaktProps } from "../_types/types";
 
-// Säker filvalidering
+// Säker filvalidering (samma som useLaddaUppFil)
 const ALLOWED_FILE_TYPES = {
   "application/pdf": ".pdf",
   "image/jpeg": ".jpg",
@@ -20,7 +19,6 @@ const ALLOWED_FILE_TYPES = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 function validateFile(file: File): { valid: boolean; error?: string } {
-  // Kontrollera filstorlek
   if (file.size > MAX_FILE_SIZE) {
     return {
       valid: false,
@@ -28,12 +26,10 @@ function validateFile(file: File): { valid: boolean; error?: string } {
     };
   }
 
-  // Kontrollera filtyp
   if (!ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES]) {
     return { valid: false, error: "Endast PDF, JPG, PNG och WebP filer är tillåtna" };
   }
 
-  // Kontrollera filnamn för säkra tecken
   const unsafeChars = /[<>:"/\\|?*\x00-\x1f]/;
   if (unsafeChars.test(file.name)) {
     return { valid: false, error: "Filnamnet innehåller ogiltiga tecken" };
@@ -42,23 +38,60 @@ function validateFile(file: File): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-function sanitizeFilename(filename: string): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken med underscore
-    .substring(0, 100) // Begränsa längd
-    .toLowerCase();
+async function förbättraOchLäsBild(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas context inte tillgänglig"));
+        return;
+      }
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Kunde inte skapa blob"));
+            return;
+          }
+
+          Tesseract.recognize(blob, "swe", {
+            logger: () => {},
+          })
+            .then(({ data: { text } }) => {
+              resolve(text);
+            })
+            .catch(reject);
+        },
+        "image/png",
+        0.95
+      );
+    };
+
+    img.onerror = () => reject(new Error("Kunde inte ladda bilden"));
+    img.src = URL.createObjectURL(file);
+  });
 }
 
-export default function LaddaUppFil({
+export function useLaddaUppFilLevfakt({
   setFil,
   setPdfUrl,
   setTransaktionsdatum,
   setBelopp,
   fil,
-  onOcrTextChange,
-  skipBasicAI,
-  onReprocessTrigger,
-}: FileUploadProps) {
+  setLeverantör,
+  setFakturadatum,
+  setFörfallodatum,
+  setFakturanummer,
+}: UseLaddaUppFilLevfaktProps) {
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
@@ -72,6 +105,8 @@ export default function LaddaUppFil({
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
 
+    console.log("📁 Original fil:", originalFile.name, (originalFile.size / 1024).toFixed(1), "KB");
+
     // Säker filvalidering
     const validation = validateFile(originalFile);
     if (!validation.valid) {
@@ -80,7 +115,7 @@ export default function LaddaUppFil({
         type: "error",
         isVisible: true,
       });
-      event.target.value = ""; // Rensa input
+      event.target.value = "";
       return;
     }
 
@@ -88,7 +123,7 @@ export default function LaddaUppFil({
     const sizeMB = originalFile.size / (1024 * 1024);
 
     if (originalFile.type === "application/pdf") {
-      const maxPdfMB = 2; // 2MB gräns för PDF
+      const maxPdfMB = 2;
       if (sizeMB > maxPdfMB) {
         console.error(`❌ PDF för stor: ${sizeMB.toFixed(1)}MB (max ${maxPdfMB}MB)`);
         setToast({
@@ -96,12 +131,11 @@ export default function LaddaUppFil({
           type: "error",
           isVisible: true,
         });
-        // Rensa input
         event.target.value = "";
         return;
       }
     } else if (originalFile.type.startsWith("image/")) {
-      const maxImageMB = 10; // 10MB gräns för bilder
+      const maxImageMB = 10;
       if (sizeMB > maxImageMB) {
         console.error(`❌ Bild för stor: ${sizeMB.toFixed(1)}MB (max ${maxImageMB}MB)`);
         setToast({
@@ -109,7 +143,6 @@ export default function LaddaUppFil({
           type: "error",
           isVisible: true,
         });
-        // Rensa input
         event.target.value = "";
         return;
       }
@@ -119,16 +152,23 @@ export default function LaddaUppFil({
 
     // Komprimera bilder mjukt - PDF behålls original
     if (originalFile.type.startsWith("image/")) {
+      console.log("🖼️ Startar mjuk bildkomprimering...");
       file = await compressImageFile(originalFile);
     } else if (originalFile.type === "application/pdf") {
+      console.log(`📄 PDF (${sizeMB.toFixed(1)}MB) - behåller original`);
       file = originalFile;
     } else {
-      file = originalFile;
+      console.log("📄 Okänd filtyp - behåller original");
     }
 
-    // Visa filstorlek efter eventuell komprimering
     const finalSizeKB = file.size / 1024;
     const finalSizeMB = finalSizeKB / 1024;
+
+    if (finalSizeMB >= 1) {
+      console.log(`📊 Slutlig filstorlek: ${finalSizeMB.toFixed(1)}MB`);
+    } else {
+      console.log(`📊 Slutlig filstorlek: ${finalSizeKB.toFixed(1)}KB`);
+    }
 
     setIsLoading(true);
     setTimeoutTriggered(false);
@@ -139,9 +179,7 @@ export default function LaddaUppFil({
     }, 10000);
 
     try {
-      // Spara filen lokalt utan att ladda upp till blob storage än
       setFil(file);
-      // Skapa temporär URL för förhandsvisning
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
       console.log("Fil sparad lokalt för förhandsvisning:", file.name);
@@ -156,10 +194,7 @@ export default function LaddaUppFil({
 
       if (file.type === "application/pdf") {
         try {
-          // Försök textextraktion först (snabbt för text-baserade PDF:er)
           text = (await extractTextFromPDF(file, "clean")) || "";
-
-          // Om ingen text hittades, acceptera att vi inte kan läsa skannade PDFs
           if (!text || text.trim().length === 0) {
             text = "";
           }
@@ -193,106 +228,64 @@ export default function LaddaUppFil({
 
     (async () => {
       try {
-        const parsed = await extractDataFromOCR(recognizedText);
+        console.log("🧠 Anropar extractDataFromOCRLevFakt för leverantörsfaktura...");
+        const parsed = await extractDataFromOCRLevFakt(recognizedText);
 
-        if (parsed?.datum) {
-          setTransaktionsdatum(parsed.datum);
+        if (parsed?.leverantör) {
+          setLeverantör(parsed.leverantör);
         }
 
-        if (parsed?.belopp && !isNaN(parsed.belopp)) {
-          setBelopp(Number(parsed.belopp));
+        if (parsed?.belopp && parsed.belopp > 0) {
+          setBelopp(parsed.belopp);
         }
+
+        if (parsed?.fakturanummer) {
+          setFakturanummer(parsed.fakturanummer);
+        }
+
+        if (parsed?.fakturadatum) {
+          setFakturadatum(parsed.fakturadatum);
+        }
+
+        if (parsed?.förfallodatum) {
+          setFörfallodatum(parsed.förfallodatum);
+        }
+
+        if (parsed?.betaldatum) {
+          setTransaktionsdatum(parsed.betaldatum);
+        }
+
+        setIsLoading(false);
       } catch (error) {
-        console.error("❌ OpenAI parsing error:", error);
-      } finally {
+        console.error("❌ OCR processing fel:", error);
         setIsLoading(false);
       }
     })();
-  }, [recognizedText, setBelopp, setTransaktionsdatum]);
+  }, [
+    recognizedText,
+    setLeverantör,
+    setBelopp,
+    setFakturanummer,
+    setFakturadatum,
+    setFörfallodatum,
+    setTransaktionsdatum,
+  ]);
 
-  return (
-    <>
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
-      />
+  const clearFile = () => {
+    setFil(null as any);
+    setPdfUrl("");
+    setRecognizedText("");
+    setTimeoutTriggered(false);
+  };
 
-      <input
-        type="file"
-        id="fileUpload"
-        accept="application/pdf,image/png,image/jpeg"
-        onChange={handleFileChange}
-        required
-        style={{ display: "none" }}
-        autoFocus
-      />
-      <label
-        htmlFor="fileUpload"
-        className="flex items-center justify-center px-4 py-2 mb-6 font-bold text-white rounded cursor-pointer bg-cyan-600 hover:bg-cyan-700"
-      >
-        {fil ? `📎 ${fil.name}` : "Ladda upp underlag"}
-      </label>
-
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center mb-6 text-white">
-          <div className="w-6 h-6 mb-2 border-4 rounded-full border-cyan-400 border-t-transparent animate-spin" />
-          <span className="text-sm text-cyan-200">Läser och tolkar dokument...</span>
-        </div>
-      )}
-
-      {timeoutTriggered && (
-        <div className="mb-6 text-sm text-center text-yellow-300">
-          ⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt.
-        </div>
-      )}
-    </>
-  );
-}
-
-async function förbättraOchLäsBild(file: File): Promise<string> {
-  const img = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) throw new Error("Kunde inte skapa canvas");
-
-  // Bildbearbetning för bättre OCR-läsning
-  const scaleFactor = img.width < 800 ? 2 : 1.5;
-  canvas.width = img.width * scaleFactor;
-  canvas.height = img.height * scaleFactor;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
-    const bw = avg > 140 ? 255 : 0;
-    imageData.data[i] = bw;
-    imageData.data[i + 1] = bw;
-    imageData.data[i + 2] = bw;
-  }
-  ctx.putImageData(imageData, 0, 0);
-
-  try {
-    // Använd Tesseract.js direkt på den förbättrade bilden
-    const {
-      data: { text },
-    } = await Tesseract.recognize(
-      canvas,
-      "swe+eng", // Svenska och engelska
-      {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            // Progress logging removed
-          }
-        },
-      }
-    );
-
-    return text;
-  } catch (error) {
-    console.error("❌ Tesseract OCR fel:", error);
-    throw new Error("OCR misslyckades");
-  }
+  return {
+    recognizedText,
+    isLoading,
+    timeoutTriggered,
+    toast,
+    setToast,
+    handleFileChange,
+    clearFile,
+    validateFile,
+  };
 }

@@ -292,3 +292,78 @@ export interface CacheInvalidationResult {
   message?: string;
   error?: string;
 }
+
+// ===== HOOK PROPS TYPES =====
+
+// useAnstalldDropdown
+export interface UseAnstalldDropdownProps {
+  anstallda: Anstalld[];
+  value: string;
+  onChange: (value: string) => void;
+}
+
+// useForvalKort
+export interface UseForvalKortProps {
+  förval: Förval;
+  isHighlighted: boolean;
+  onClick: () => void;
+}
+
+// useKommentar
+export interface UseKommentarProps {
+  kommentar: string;
+  setKommentar: (kommentar: string) => void;
+}
+
+// useInformation
+export interface UseInformationProps {
+  belopp: number;
+  setBelopp: (belopp: number) => void;
+  transaktionsdatum: string;
+  setTransaktionsdatum: (datum: string) => void;
+  visaFakturadatum?: boolean;
+  fakturadatum?: string;
+  setFakturadatum?: (datum: string) => void;
+}
+
+// useForhandsgranskning
+export interface UseForhandsgranskningProps {
+  fil: File | null | undefined;
+  pdfUrl: string | null | undefined;
+}
+
+// useLaddaUppFil
+export interface UseLaddaUppFilProps {
+  setFil: (file: File) => void;
+  setPdfUrl: (url: string) => void;
+  setTransaktionsdatum: (datum: string) => void;
+  setBelopp: (belopp: number) => void;
+  fil: File | null;
+  onOcrTextChange?: (text: string) => void;
+  skipBasicAI?: boolean;
+  onReprocessTrigger?: () => void;
+}
+
+// useLaddaUppFilLevfakt
+export interface UseLaddaUppFilLevfaktProps {
+  setFil: (file: File) => void;
+  setPdfUrl: (url: string) => void;
+  setTransaktionsdatum: (datum: string) => void;
+  setBelopp: (belopp: number) => void;
+  fil: File | null;
+  setLeverantör: (leverantor: string) => void;
+  setFakturadatum: (datum: string) => void;
+  setFörfallodatum: (datum: string) => void;
+  setFakturanummer: (nummer: string) => void;
+}
+
+// useSokForval
+export interface UseSokForvalProps {
+  favoritFörvalen: Förval[];
+  setCurrentStep: (step: number) => void;
+  setvaltFörval: (förval: Förval) => void;
+  setKontonummer: (nummer: string) => void;
+  setKontobeskrivning: (beskrivning: string) => void;
+  levfaktMode?: boolean;
+  utlaggMode?: boolean;
+}

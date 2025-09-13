@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { hämtaUtlägg } from "../actions";
-import { bokförUtlägg } from "../../bokfor/actions";
+import { bokförUtlägg } from "../../bokfor/_actions/transactionActions";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import UtlaggBokforModal from "./UtlaggBokforModal";

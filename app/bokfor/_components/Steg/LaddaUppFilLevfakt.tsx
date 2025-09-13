@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCRLevFakt } from "../../_actions/actions";
+import { extractDataFromOCRLevFakt } from "../../_actions/ocrActions";
 import { compressImageFile } from "../../../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import Toast from "../../../_components/Toast";

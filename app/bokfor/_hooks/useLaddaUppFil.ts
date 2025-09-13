@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR } from "../../_actions/ocrActions";
-import { compressImageFile } from "../../../_utils/blobUpload";
+import { extractDataFromOCR } from "../_actions/ocrActions";
+import { compressImageFile } from "../../_utils/blobUpload";
 import Tesseract from "tesseract.js";
-import Toast from "../../../_components/Toast";
-import { FileUploadProps } from "../../_types/types";
+import { UseLaddaUppFilProps } from "../_types/types";
 
 // Säker filvalidering
 const ALLOWED_FILE_TYPES = {
@@ -49,7 +48,50 @@ function sanitizeFilename(filename: string): string {
     .toLowerCase();
 }
 
-export default function LaddaUppFil({
+async function förbättraOchLäsBild(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas context inte tillgänglig"));
+        return;
+      }
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Kunde inte skapa blob"));
+            return;
+          }
+
+          Tesseract.recognize(blob, "swe", {
+            logger: () => {}, // Inaktivera loggning
+          })
+            .then(({ data: { text } }) => {
+              resolve(text);
+            })
+            .catch(reject);
+        },
+        "image/png",
+        0.95
+      );
+    };
+
+    img.onerror = () => reject(new Error("Kunde inte ladda bilden"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+export function useLaddaUppFil({
   setFil,
   setPdfUrl,
   setTransaktionsdatum,
@@ -58,7 +100,7 @@ export default function LaddaUppFil({
   onOcrTextChange,
   skipBasicAI,
   onReprocessTrigger,
-}: FileUploadProps) {
+}: UseLaddaUppFilProps) {
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
@@ -96,7 +138,6 @@ export default function LaddaUppFil({
           type: "error",
           isVisible: true,
         });
-        // Rensa input
         event.target.value = "";
         return;
       }
@@ -109,7 +150,6 @@ export default function LaddaUppFil({
           type: "error",
           isVisible: true,
         });
-        // Rensa input
         event.target.value = "";
         return;
       }
@@ -125,10 +165,6 @@ export default function LaddaUppFil({
     } else {
       file = originalFile;
     }
-
-    // Visa filstorlek efter eventuell komprimering
-    const finalSizeKB = file.size / 1024;
-    const finalSizeMB = finalSizeKB / 1024;
 
     setIsLoading(true);
     setTimeoutTriggered(false);
@@ -199,100 +235,38 @@ export default function LaddaUppFil({
           setTransaktionsdatum(parsed.datum);
         }
 
-        if (parsed?.belopp && !isNaN(parsed.belopp)) {
-          setBelopp(Number(parsed.belopp));
+        if (parsed?.belopp && parsed.belopp > 0) {
+          setBelopp(parsed.belopp);
         }
+
+        if (onOcrTextChange) {
+          onOcrTextChange(recognizedText);
+        }
+
+        setIsLoading(false);
       } catch (error) {
-        console.error("❌ OpenAI parsing error:", error);
-      } finally {
+        console.error("❌ OCR processing fel:", error);
         setIsLoading(false);
       }
     })();
-  }, [recognizedText, setBelopp, setTransaktionsdatum]);
+  }, [recognizedText, setTransaktionsdatum, setBelopp, onOcrTextChange]);
 
-  return (
-    <>
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
-      />
+  const clearFile = () => {
+    setFil(null as any);
+    setPdfUrl("");
+    setRecognizedText("");
+    setTimeoutTriggered(false);
+  };
 
-      <input
-        type="file"
-        id="fileUpload"
-        accept="application/pdf,image/png,image/jpeg"
-        onChange={handleFileChange}
-        required
-        style={{ display: "none" }}
-        autoFocus
-      />
-      <label
-        htmlFor="fileUpload"
-        className="flex items-center justify-center px-4 py-2 mb-6 font-bold text-white rounded cursor-pointer bg-cyan-600 hover:bg-cyan-700"
-      >
-        {fil ? `📎 ${fil.name}` : "Ladda upp underlag"}
-      </label>
-
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center mb-6 text-white">
-          <div className="w-6 h-6 mb-2 border-4 rounded-full border-cyan-400 border-t-transparent animate-spin" />
-          <span className="text-sm text-cyan-200">Läser och tolkar dokument...</span>
-        </div>
-      )}
-
-      {timeoutTriggered && (
-        <div className="mb-6 text-sm text-center text-yellow-300">
-          ⏱️ Tolkningen tog för lång tid – fyll i uppgifterna manuellt.
-        </div>
-      )}
-    </>
-  );
-}
-
-async function förbättraOchLäsBild(file: File): Promise<string> {
-  const img = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) throw new Error("Kunde inte skapa canvas");
-
-  // Bildbearbetning för bättre OCR-läsning
-  const scaleFactor = img.width < 800 ? 2 : 1.5;
-  canvas.width = img.width * scaleFactor;
-  canvas.height = img.height * scaleFactor;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
-    const bw = avg > 140 ? 255 : 0;
-    imageData.data[i] = bw;
-    imageData.data[i + 1] = bw;
-    imageData.data[i + 2] = bw;
-  }
-  ctx.putImageData(imageData, 0, 0);
-
-  try {
-    // Använd Tesseract.js direkt på den förbättrade bilden
-    const {
-      data: { text },
-    } = await Tesseract.recognize(
-      canvas,
-      "swe+eng", // Svenska och engelska
-      {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            // Progress logging removed
-          }
-        },
-      }
-    );
-
-    return text;
-  } catch (error) {
-    console.error("❌ Tesseract OCR fel:", error);
-    throw new Error("OCR misslyckades");
-  }
+  return {
+    recognizedText,
+    isLoading,
+    timeoutTriggered,
+    toast,
+    setToast,
+    handleFileChange,
+    clearFile,
+    validateFile,
+    sanitizeFilename,
+  };
 }

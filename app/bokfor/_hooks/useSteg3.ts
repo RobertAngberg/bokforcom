@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../../personal/actions";
-import { saveTransaction } from "../_actions/actions";
+import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../_utils/trueDatum";
 import { formatCurrency, round } from "../../_utils/format";
