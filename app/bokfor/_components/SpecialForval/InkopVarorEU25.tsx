@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import Steg3 from "../Steg/Steg3";
@@ -6,7 +5,6 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { InkopVarorEU25Props } from "../../_types/types";
-// #endregion
 
 export default function InkopVarorEU25({
   mode,

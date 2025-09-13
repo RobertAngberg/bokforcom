@@ -54,7 +54,6 @@ export default function Steg2Levfakt(props: Step2LevfaktProps) {
     setBetaldatum,
   });
 
-  //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
       const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
@@ -94,7 +93,6 @@ export default function Steg2Levfakt(props: Step2LevfaktProps) {
       );
     }
   }
-  // #endregion
 
   return (
     <>

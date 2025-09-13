@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import LaddaUppFil from "../Steg/LaddaUppFil";

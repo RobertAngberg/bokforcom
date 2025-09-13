@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import Steg3 from "../Steg/Steg3";
@@ -7,7 +6,6 @@ import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import InfoTooltip from "../../../_components/InfoTooltip";
 import { ITtjansterEUProps } from "../../_types/types";
-// #endregion
 
 export default function ITtjansterEU({
   mode,

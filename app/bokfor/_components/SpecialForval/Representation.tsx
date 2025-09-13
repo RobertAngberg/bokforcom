@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import { useState } from "react";
@@ -29,7 +28,6 @@ function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, t
     procent: totalBelopp > 0 ? (avdragsgillDel / totalBelopp) * 100 : 0,
   };
 }
-// #endregion
 
 export default function Representation({
   mode,

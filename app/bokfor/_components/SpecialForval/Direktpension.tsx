@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import LaddaUppFil from "../Steg/LaddaUppFil";
@@ -10,7 +9,6 @@ import Steg3 from "../Steg/Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../_utils/trueDatum";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { DirektpensionProps } from "../../_types/types";
-// #endregion
 
 export default function Direktpension({
   mode,

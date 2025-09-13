@@ -1,4 +1,3 @@
-// #region
 "use client";
 
 import { useState } from "react";
@@ -11,7 +10,6 @@ import TillbakaPil from "../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
 import Forhandsgranskning from "../Steg/Forhandsgranskning";
 import { AmorteringBanklanProps } from "../../_types/types";
-// #endregion
 
 export default function AmorteringBanklan({
   mode,

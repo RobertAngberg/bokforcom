@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import { useState } from "react";
@@ -11,7 +10,6 @@ import Steg3 from "../Steg/Steg3";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
 import { UberAvgiftProps } from "../../_types/types";
-// #endregion
 
 export default function UberAvgift({
   mode,

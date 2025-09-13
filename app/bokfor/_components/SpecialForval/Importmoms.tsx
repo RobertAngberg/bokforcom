@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import { useState } from "react";
@@ -8,7 +7,6 @@ import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import TextFalt from "../../../_components/TextFalt";
 import { ImportmomsProps } from "../../_types/types";
-// #endregion
 
 export default function Importmoms({
   mode,

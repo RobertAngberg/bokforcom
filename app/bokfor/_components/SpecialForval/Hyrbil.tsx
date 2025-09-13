@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import Steg3 from "../Steg/Steg3";
@@ -7,7 +6,6 @@ import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { HyrbilProps } from "../../_types/types";
-// #endregion
 
 export default function Hyrbil({
   mode,
@@ -34,7 +32,6 @@ export default function Hyrbil({
   förfallodatum,
   setFörfallodatum,
 }: HyrbilProps) {
-  // #region Beräkningar
   // Beräkna korrekt för hyrbil: 50% av momsen är avdragsgill
   const totalBelopp = Number(belopp ?? 0);
   const fullMoms = (totalBelopp / 1.25) * 0.25; // Full moms (25%)
@@ -67,7 +64,6 @@ export default function Hyrbil({
   };
 
   const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
-  // #endregion
 
   if (mode === "steg2") {
     return (

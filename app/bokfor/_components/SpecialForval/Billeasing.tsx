@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import Steg3 from "../Steg/Steg3";
@@ -8,7 +7,6 @@ import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import TextFalt from "../../../_components/TextFalt";
 import { BilleasingProps } from "../../_types/types";
-// #endregion
 
 export default function Billeasing({
   mode,

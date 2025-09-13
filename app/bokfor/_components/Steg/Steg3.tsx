@@ -1,4 +1,3 @@
-// #region Imports och types
 "use client";
 
 import React from "react";
@@ -11,7 +10,6 @@ import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/trueDatum";
 import { Step3Props } from "../../_types/types";
 import { useSteg3 } from "../../_hooks/useSteg3";
-// #endregion
 
 export default function Steg3(props: Step3Props) {
   const {

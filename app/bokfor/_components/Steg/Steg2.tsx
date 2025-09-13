@@ -1,4 +1,3 @@
-// #region Huvud
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -11,7 +10,6 @@ import Knapp from "../../../_components/Knapp";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { Step2Props } from "../../_types/types";
 import { useSteg2 } from "../../_hooks/useSteg2";
-// #endregion
 
 export default function Steg2(props: Step2Props) {
   const {
@@ -76,7 +74,6 @@ export default function Steg2(props: Step2Props) {
     [reprocessFile]
   );
 
-  //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
       const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
@@ -108,7 +105,6 @@ export default function Steg2(props: Step2Props) {
       );
     }
   }
-  // #endregion
 
   return (
     <>

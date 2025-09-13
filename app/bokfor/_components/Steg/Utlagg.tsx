@@ -1,9 +1,7 @@
-//#region Huvud
 "use client";
 
 import { UtläggProps } from "../../_types/types";
 import { useUtlagg } from "../../_hooks/useUtlagg";
-//#endregion
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
   const { isUtlägg, anställda, valdaAnställda, loading, handleUtläggChange, handleAnställdChange } =
