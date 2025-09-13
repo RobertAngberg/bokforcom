@@ -1,50 +1,13 @@
 //#region Huvud
 "use client";
 
-import { useState } from "react";
-import { hämtaAnställda } from "../../_actions/actions";
-import { UtlaggAnställd, UtläggProps } from "../../_types/types";
+import { UtläggProps } from "../../_types/types";
+import { useUtlagg } from "../../_hooks/useUtlagg";
 //#endregion
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
-  //#region State
-  const [isUtlägg, setIsUtlägg] = useState(initialValue);
-  const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
-  const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  //#endregion
-
-  //#region Handlers
-  const handleUtläggChange = async (checked: boolean) => {
-    setIsUtlägg(checked);
-
-    if (checked) {
-      setLoading(true);
-      try {
-        const anställdaData = await hämtaAnställda();
-        setAnställda(anställdaData || []);
-      } catch (error) {
-        console.error("❌ Fel vid hämtning av anställda:", error);
-        setAnställda([]);
-      }
-      setLoading(false);
-    } else {
-      setAnställda([]);
-      setValdaAnställda([]);
-    }
-
-    onUtläggChange?.(checked, checked ? valdaAnställda : []);
-  };
-
-  const handleAnställdChange = (anställdId: number, checked: boolean) => {
-    const nyaValda = checked
-      ? [...valdaAnställda, anställdId]
-      : valdaAnställda.filter((id) => id !== anställdId);
-
-    setValdaAnställda(nyaValda);
-    onUtläggChange?.(isUtlägg, nyaValda);
-  };
-  //#endregion
+  const { isUtlägg, anställda, valdaAnställda, loading, handleUtläggChange, handleAnställdChange } =
+    useUtlagg({ initialValue, onUtläggChange });
 
   return (
     <div className="space-y-4">

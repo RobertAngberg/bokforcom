@@ -1,3 +1,5 @@
+"use client";
+
 import SökFörval from "./_components/SokForval";
 import Steg2 from "./_components/Steg/Steg2";
 import Steg2Levfakt from "./_components/Steg/Steg2Levfakt";
@@ -9,8 +11,6 @@ import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { PageProps } from "./_types/types";
 import { useBokfor } from "./_hooks/useBokfor";
-
-// För React DatePicker
 registerLocale("sv", sv);
 
 export default function Page({ searchParams }: PageProps) {

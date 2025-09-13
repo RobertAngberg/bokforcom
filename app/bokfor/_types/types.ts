@@ -1,5 +1,3 @@
-// RENA CENTRALISERADE TYPES - INGA DUPLIKATIONER
-
 // ===== GEMENSAMMA BASTYPER =====
 export interface KontoRad {
   beskrivning: string;

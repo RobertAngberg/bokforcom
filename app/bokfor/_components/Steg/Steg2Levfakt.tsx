@@ -1,14 +1,10 @@
-// #region Huvud
 "use client";
 
-import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
-registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
-
 import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
@@ -17,65 +13,46 @@ import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
 import { Step2LevfaktProps } from "../../_types/types";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
+import { useSteg2Levfakt } from "../../_hooks/useSteg2Levfakt";
+registerLocale("sv", sv);
 
-// #endregion
+export default function Steg2Levfakt(props: Step2LevfaktProps) {
+  const {
+    setCurrentStep,
+    exitLevfaktMode,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
+    belopp,
+    setBelopp,
+    transaktionsdatum,
+    setTransaktionsdatum,
+    kommentar,
+    setKommentar,
+    valtFörval,
+    extrafält,
+    setExtrafält,
+    leverantör,
+    setLeverantör,
+    fakturanummer,
+    setFakturanummer,
+    fakturadatum,
+    setFakturadatum,
+    förfallodatum,
+    setFörfallodatum,
+    betaldatum,
+    setBetaldatum,
+  } = props;
 
-export default function Steg2Levfakt({
-  setCurrentStep,
-  exitLevfaktMode,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
-  valtFörval,
-  extrafält,
-  setExtrafält,
-  leverantör,
-  setLeverantör,
-  fakturanummer,
-  setFakturanummer,
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-  betaldatum,
-  setBetaldatum,
-}: Step2LevfaktProps) {
-  const [visaLeverantorModal, setVisaLeverantorModal] = useState(false);
-  // Datepicker styling
-  useEffect(() => {
-    const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
-    datePickerEls.forEach((el) => {
-      (el as HTMLElement).style.width = "100%";
-    });
-
-    const inputEls = document.querySelectorAll(".react-datepicker__input-container input");
-    inputEls.forEach((el) => {
-      (el as HTMLElement).className =
-        "w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700";
-    });
-
-    // Sätt default datum
-    if (!fakturadatum) {
-      setFakturadatum(datePickerOnChange(new Date()));
-    }
-    if (!förfallodatum) {
-      // Default 30 dagar från idag
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      setFörfallodatum(datePickerOnChange(thirtyDaysFromNow));
-    }
-    if (!betaldatum) {
-      // Default betaldatum till idag
-      setBetaldatum(datePickerOnChange(new Date()));
-    }
-  }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
+  const { visaLeverantorModal, setVisaLeverantorModal } = useSteg2Levfakt({
+    fakturadatum,
+    setFakturadatum,
+    förfallodatum,
+    setFörfallodatum,
+    betaldatum,
+    setBetaldatum,
+  });
 
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
@@ -243,8 +220,3 @@ export default function Steg2Levfakt({
     </>
   );
 }
-
-// Modal mount (utanför layout return for clarity) – actually needs to be inside fragment:
-// NOTE: We'll render it inside the fragment above just before closing.
-
-// Flytta modal-renderingen in i return (ny patch nedan)
