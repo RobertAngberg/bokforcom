@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import { hämtaAllaAnställda, hämtaUtlägg, taBortUtlägg } from "../actions";
-import { fetchFavoritforval } from "../../bokfor/actions";
-import BokforPage from "../../bokfor/page";
 
 interface Utlägg {
   id: number;
@@ -22,14 +21,13 @@ interface Utlägg {
 }
 
 export default function UtlaggPage() {
+  const router = useRouter();
   const [utlägg, setUtlägg] = useState<Utlägg[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNyttUtlägg, setShowNyttUtlägg] = useState(false);
   const [toast, setToast] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
-  const [favoritFörvalen, setFavoritFörvalen] = useState<any[] | null>(null);
 
   useEffect(() => {
     hämtaAllaUtlägg();
@@ -90,11 +88,7 @@ export default function UtlaggPage() {
   };
 
   const handleNyttUtlägg = async () => {
-    if (!favoritFörvalen) {
-      const res = await fetchFavoritforval();
-      setFavoritFörvalen(res);
-    }
-    setShowNyttUtlägg(true);
+    router.push("/bokfor?utlagg=true");
   };
 
   const handleTaBortUtlägg = async (utläggId: number) => {
@@ -192,10 +186,6 @@ export default function UtlaggPage() {
       ),
     },
   ];
-
-  if (showNyttUtlägg && favoritFörvalen) {
-    return <BokforPage searchParams={Promise.resolve({ utlagg: "true" })} />;
-  }
 
   return (
     <MainLayout>
