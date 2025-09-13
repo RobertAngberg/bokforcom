@@ -3,16 +3,16 @@
 
 import { useState, useEffect } from "react";
 import SökFörval from "./SokForval";
-import Steg2 from "./Steg2";
-import Steg2Levfakt from "./Steg2Levfakt";
-import Steg3 from "./Steg3";
-import Steg4 from "./Steg4";
+import Steg2 from "./Steg/Steg2";
+import Steg2Levfakt from "./Steg/Steg2Levfakt";
+import Steg3 from "./Steg/Steg3";
+import Steg4 from "./Steg/Steg4";
 import MainLayout from "../_components/MainLayout";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
-import { KontoRad, Extrafält, Förval, BokforProps } from "./types";
+import { KontoRad, Extrafält, Förval, BokforProps } from "./_types/types";
 
 // För React DatePicker
 registerLocale("sv", sv);

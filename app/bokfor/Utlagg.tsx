@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { hämtaAnställda } from "./actions";
-import { UtlaggAnställd, UtläggProps } from "./types";
+import { hämtaAnställda } from "./_actions/actions";
+import { UtlaggAnställd, UtläggProps } from "./_types/types";
 //#endregion
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {

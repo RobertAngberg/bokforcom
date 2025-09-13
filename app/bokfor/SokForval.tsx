@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchAllaForval, loggaFavoritförval } from "./actions";
+import { fetchAllaForval, loggaFavoritförval } from "./_actions/actions";
 import FörvalKort from "./ForvalKort";
 import TextFalt from "../_components/TextFalt";
-import { KontoRad, Förval, SokForvalProps } from "./types";
+import { KontoRad, Förval, SokForvalProps } from "./_types/types";
 
 export default function SokForval({
   favoritFörvalen,

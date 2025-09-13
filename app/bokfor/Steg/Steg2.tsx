@@ -10,8 +10,8 @@ import Forhandsgranskning from "../Forhandsgranskning";
 import TillbakaPil from "../../_components/TillbakaPil";
 import Knapp from "../../_components/Knapp";
 import ValjLeverantorModal from "../../_components/ValjLeverantorModal";
-import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "../actions";
-import { Step2Props } from "../types";
+import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "../_actions/actions";
+import { Step2Props } from "../_types/types";
 // #endregion
 
 export default function Steg2({

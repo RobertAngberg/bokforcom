@@ -7,7 +7,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
-import { InformationProps } from "./types";
+import { InformationProps } from "./_types/types";
 
 export default function Information({
   belopp,

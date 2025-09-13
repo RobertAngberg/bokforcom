@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR } from "./actions";
+import { extractDataFromOCR } from "./_actions/actions";
 import { compressImageFile } from "../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import Toast from "../_components/Toast";
-import { FileUploadProps } from "./types";
+import { FileUploadProps } from "./_types/types";
 
 // Säker filvalidering
 const ALLOWED_FILE_TYPES = {

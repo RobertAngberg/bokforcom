@@ -1,6 +1,6 @@
 "use client";
 
-import { ForvalKortProps } from "./types";
+import { ForvalKortProps } from "./_types/types";
 
 export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
   return (

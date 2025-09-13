@@ -12,8 +12,8 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { getLeverantörer, type Leverantör } from "../faktura/actions";
-import { fetchFavoritforval } from "./actions";
-import { Förval, PageProps } from "./types";
+import { fetchFavoritforval } from "./_actions/actions";
+import { Förval, PageProps } from "./_types/types";
 
 // För React DatePicker
 registerLocale("sv", sv);

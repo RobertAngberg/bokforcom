@@ -415,7 +415,6 @@ export async function hämtaAnställda() {
   }
 }
 
-// Säker filnamn-sanitization
 function sanitizeFilename(filename: string): string {
   return filename
     .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken
@@ -632,7 +631,6 @@ export async function saveTransaction(formData: FormData) {
   }
 }
 
-// Bokför ett utlägg och koppla till transaktion
 export async function bokförUtlägg(utläggId: number) {
   const userId = await getUserId();
 
