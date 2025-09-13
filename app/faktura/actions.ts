@@ -2,6 +2,10 @@
 "use server";
 
 import { pool } from "../_utils/dbPool";
+import {
+  hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
+  TransaktionspostMedMeta,
+} from "../_utils/transaktioner/hamtaTransaktionsposter";
 import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateKontonummer } from "../_utils/validationUtils";
 import { validateEmail } from "../login/sakerhet/loginValidation";
@@ -1526,46 +1530,13 @@ export async function hamtaBokfordaFakturor() {
   }
 }
 
-export async function hamtaTransaktionsposter(transaktionId: number) {
-  const userId = await getUserId();
-  if (!userId) return { success: false, error: "Ej autentiserad" };
-
-  const client = await pool.connect();
-  try {
-    const { rows } = await client.query(
-      `SELECT 
-        tp.id,
-        tp.debet,
-        tp.kredit,
-        k.kontonummer,
-        k.beskrivning as konto_beskrivning,
-        t.transaktionsdatum,
-        t.kommentar as transaktionskommentar,
-        t.id as transaktion_id
-       FROM transaktionsposter tp
-       JOIN konton k ON tp.konto_id = k.id
-       JOIN transaktioner t ON tp.transaktions_id = t.id
-       WHERE tp.transaktions_id = $1 AND t.user_id = $2
-       ORDER BY tp.id`,
-      [transaktionId, userId]
-    );
-
-    const poster = rows.map((row) => ({
-      id: row.id,
-      kontonummer: row.kontonummer,
-      kontobeskrivning: row.konto_beskrivning,
-      debet: parseFloat(row.debet) || 0,
-      kredit: parseFloat(row.kredit) || 0,
-      transaktionsdatum: row.transaktionsdatum,
-      transaktionskommentar: row.transaktionskommentar,
-    }));
-    return { success: true, poster };
-  } catch (error) {
-    console.error("Fel vid hämtning av transaktionsposter:", error);
-    return { success: false, error: "Kunde inte hämta transaktionsposter" };
-  } finally {
-    client.release();
-  }
+// Förenklad: returnerar direkt array av poster (med meta-fält) istället för { success, poster }
+export async function hamtaTransaktionsposter(
+  transaktionId: number
+): Promise<TransaktionspostMedMeta[]> {
+  return (await hamtaTransaktionsposterUtil(transaktionId, {
+    meta: true,
+  })) as TransaktionspostMedMeta[];
 }
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {

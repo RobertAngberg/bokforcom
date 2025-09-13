@@ -144,19 +144,12 @@ export default function BokfordaFakturor() {
     // Hämta transaktionsposter för att visa debet/kredit
     if (faktura.transaktionId) {
       try {
-        const result = await hamtaTransaktionsposter(faktura.transaktionId);
-        if (result.success && result.poster) {
-          setBekraftelseModal((prev) => ({
-            ...prev,
-            transaktionsposter: result.poster,
-            loadingPoster: false,
-          }));
-        } else {
-          setBekraftelseModal((prev) => ({
-            ...prev,
-            loadingPoster: false,
-          }));
-        }
+        const poster = await hamtaTransaktionsposter(faktura.transaktionId);
+        setBekraftelseModal((prev) => ({
+          ...prev,
+          transaktionsposter: Array.isArray(poster) ? poster : [],
+          loadingPoster: false,
+        }));
       } catch (error) {
         console.error("Fel vid hämtning av transaktionsposter:", error);
         setBekraftelseModal((prev) => ({

@@ -2,6 +2,7 @@
 
 import { ensureSession } from "../../_utils/session";
 import { query, queryOne } from "../../_utils/dbUtils";
+import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
 import { validateId, sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
@@ -11,22 +12,14 @@ import { logError } from "../../_utils/errorUtils";
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
-    const { userId } = await ensureSession();
     if (!validateId(transaktionsId)) return [];
-
-    const res = await query(
-      `SELECT 
-        k.kontonummer, 
-        k.beskrivning AS kontobeskrivning, 
-        tp.debet, 
-        tp.kredit
-       FROM transaktionsposter tp
-       LEFT JOIN konton k ON k.id = tp.konto_id
-       JOIN transaktioner t ON tp.transaktions_id = t.id
-       WHERE tp.transaktions_id = $1 AND t.user_id = $2`,
-      [transaktionsId, userId]
-    );
-    return res.rows;
+    const poster = await hamtaTransaktionsposterCore(transaktionsId);
+    return poster.map((p) => ({
+      kontonummer: p.kontonummer,
+      kontobeskrivning: p.kontobeskrivning,
+      debet: p.debet,
+      kredit: p.kredit,
+    }));
   } catch (error) {
     logError(error as Error, "hamtaTransaktionsposter");
     return [];

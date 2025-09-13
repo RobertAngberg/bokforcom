@@ -46,8 +46,8 @@ export default function VerifikatModal({
     try {
       const result = await hamtaTransaktionsposter(transaktionId);
       console.log("📝 Verifikat-resultat:", result);
-      if (result.success && result.poster) {
-        setPoster(result.poster);
+      if (Array.isArray(result)) {
+        setPoster(result as any);
       }
     } catch (error) {
       console.error("Fel vid hämtning av transaktionsposter:", error);
