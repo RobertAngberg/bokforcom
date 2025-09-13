@@ -1,0 +1,147 @@
+// #region Huvud
+"use client";
+
+import { useState } from "react";
+import LaddaUppFil from "../Steg/LaddaUppFil";
+import Forhandsgranskning from "../Steg/Forhandsgranskning";
+import TextFalt from "../../../_components/TextFalt";
+import Knapp from "../../../_components/Knapp";
+import DatePicker from "react-datepicker";
+import Steg3 from "../Steg/Steg3";
+import TillbakaPil from "../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
+import { RantekostnaderProps } from "../../_types/types";
+// #endregion
+
+export default function Rantekostnader({
+  mode,
+  belopp,
+  setBelopp,
+  transaktionsdatum,
+  setTransaktionsdatum,
+  kommentar,
+  setKommentar,
+  setCurrentStep,
+  fil,
+  setFil,
+  pdfUrl,
+  setPdfUrl,
+  extrafält,
+  setExtrafält,
+}: RantekostnaderProps) {
+  const [amortering, setAmortering] = useState(0);
+  const giltigt = !!belopp && !!transaktionsdatum;
+
+  function gåTillSteg3() {
+    const total = belopp ?? 0;
+
+    const extrafaltObj = {
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "2310": { label: "Obligations- och förlagslån", debet: amortering, kredit: 0 },
+      "8410": {
+        label: "Räntekostnader för långfristiga skulder",
+        debet: total - amortering,
+        kredit: 0,
+      },
+    };
+
+    setExtrafält?.(extrafaltObj);
+    setCurrentStep?.(3);
+  }
+
+  if (mode === "steg2") {
+    return (
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
+
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Räntekostnader</h1>
+          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
+            <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
+              <LaddaUppFil
+                fil={fil}
+                setFil={setFil}
+                setPdfUrl={setPdfUrl}
+                setTransaktionsdatum={setTransaktionsdatum}
+                setBelopp={setBelopp}
+              />
+
+              <TextFalt
+                label="Totalt belopp (ränta + amortering)"
+                name="total"
+                value={belopp ?? 0}
+                onChange={(e) => setBelopp(Number(e.target.value))}
+              />
+
+              <TextFalt
+                label="Varav amortering"
+                name="amortering"
+                value={amortering}
+                onChange={(e) => setAmortering(Number(e.target.value))}
+              />
+
+              <label className="block text-sm font-medium text-white mb-2">
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
+              </label>
+              <DatePicker
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+                selected={datePickerValue(transaktionsdatum)}
+                onChange={(d) => setTransaktionsdatum(datePickerOnChange(d))}
+                dateFormat="yyyy-MM-dd"
+                locale="sv"
+                required
+              />
+
+              <TextFalt
+                label="Kommentar"
+                name="kommentar"
+                value={kommentar ?? ""}
+                onChange={(e) => setKommentar?.(e.target.value)}
+                required={false}
+              />
+
+              <Knapp
+                fullWidth
+                text="Bokför"
+                type="button"
+                onClick={gåTillSteg3}
+                disabled={!giltigt}
+              />
+            </div>
+            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (mode === "steg3") {
+    return (
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+          <Steg3
+            kontonummer="8410"
+            kontobeskrivning="Räntekostnader"
+            belopp={belopp ?? 0}
+            transaktionsdatum={transaktionsdatum ?? ""}
+            kommentar={kommentar ?? ""}
+            valtFörval={{
+              id: 0,
+              namn: "Räntekostnader",
+              beskrivning: "",
+              typ: "",
+              kategori: "",
+              konton: [],
+              momssats: 0,
+              specialtyp: "rantekostnader",
+              sökord: [],
+            }}
+            setCurrentStep={setCurrentStep}
+            extrafält={extrafält}
+          />
+        </div>
+      </>
+    );
+  }
+}

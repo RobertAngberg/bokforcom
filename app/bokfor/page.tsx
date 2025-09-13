@@ -1,10 +1,8 @@
-"use client";
-
-import SökFörval from "./SokForval";
-import Steg2 from "./Steg/Steg2";
-import Steg2Levfakt from "./Steg/Steg2Levfakt";
-import Steg3 from "./Steg/Steg3";
-import Steg4 from "./Steg/Steg4";
+import SökFörval from "./_components/SokForval";
+import Steg2 from "./_components/Steg/Steg2";
+import Steg2Levfakt from "./_components/Steg/Steg2Levfakt";
+import Steg3 from "./_components/Steg/Steg3";
+import Steg4 from "./_components/Steg/Steg4";
 import MainLayout from "../_components/MainLayout";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
@@ -17,7 +15,6 @@ registerLocale("sv", sv);
 
 export default function Page({ searchParams }: PageProps) {
   const {
-    // State
     favoritFörvalen,
     isLevfaktMode,
     isUtlaggMode,
@@ -55,7 +52,6 @@ export default function Page({ searchParams }: PageProps) {
     kundfakturadatum,
     setKundfakturadatum,
 
-    // Handlers
     handleSetCurrentStep,
     exitLevfaktMode,
   } = useBokfor(searchParams);
