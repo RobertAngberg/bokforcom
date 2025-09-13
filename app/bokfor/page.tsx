@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SökFörval from "./SokForval";
-import Steg2 from "./Steg2";
-import Steg2Levfakt from "./steg2Levfakt";
-import Steg3 from "./Steg3";
-import Steg4 from "./Steg4";
+import Steg2 from "./Steg/Steg2";
+import Steg2Levfakt from "./Steg/Steg2Levfakt";
+import Steg3 from "./Steg/Steg3";
+import Steg4 from "./Steg/Steg4";
 import MainLayout from "../_components/MainLayout";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";

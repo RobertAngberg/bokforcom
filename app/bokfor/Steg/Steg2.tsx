@@ -3,15 +3,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 // import { useRouter } from "next/navigation"; // router ej längre använd efter borttag av info-rutor
-import LaddaUppFil from "./LaddaUppFil";
-import Information from "./Information";
-import Kommentar from "./Kommentar";
-import Forhandsgranskning from "./Forhandsgranskning";
-import TillbakaPil from "../_components/TillbakaPil";
-import Knapp from "../_components/Knapp";
-import ValjLeverantorModal from "../_components/ValjLeverantorModal";
-import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "./actions";
-import { Step2Props } from "./types";
+import LaddaUppFil from "../LaddaUppFil";
+import Information from "../Information";
+import Kommentar from "../Kommentar";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TillbakaPil from "../../_components/TillbakaPil";
+import Knapp from "../../_components/Knapp";
+import ValjLeverantorModal from "../../_components/ValjLeverantorModal";
+import { hämtaBokföringsmetod, extractDataFromOCRKundfaktura } from "../actions";
+import { Step2Props } from "../types";
 // #endregion
 
 export default function Steg2({

@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import SökFörval from "./SokForval";
 import Steg2 from "./Steg2";
-import Steg2Levfakt from "./steg2Levfakt";
+import Steg2Levfakt from "./Steg2Levfakt";
 import Steg3 from "./Steg3";
 import Steg4 from "./Steg4";
 import MainLayout from "../_components/MainLayout";

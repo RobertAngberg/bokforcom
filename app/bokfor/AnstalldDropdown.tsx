@@ -1,5 +1,5 @@
 import Dropdown from "../_components/Dropdown";
-import { AnstalldDropdownProps } from "./types";
+import { AnstalldDropdownProps } from "./_types/types";
 
 export default function AnstalldDropdown({ anstallda, value, onChange }: AnstalldDropdownProps) {
   const options = anstallda.map((a) => ({

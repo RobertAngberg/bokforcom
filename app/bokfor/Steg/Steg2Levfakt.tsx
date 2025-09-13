@@ -7,16 +7,16 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
-import { datePickerValue, datePickerOnChange } from "../_utils/trueDatum";
+import { datePickerValue, datePickerOnChange } from "../../_utils/trueDatum";
 
-import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
-import Kommentar from "./Kommentar";
-import Forhandsgranskning from "./Forhandsgranskning";
-import TillbakaPil from "../_components/TillbakaPil";
-import Knapp from "../_components/Knapp";
-import TextFalt from "../_components/TextFalt";
-import { Step2LevfaktProps } from "./types";
-import ValjLeverantorModal from "../_components/ValjLeverantorModal";
+import LaddaUppFilLevfakt from "../LaddaUppFilLevfakt";
+import Kommentar from "../Kommentar";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TillbakaPil from "../../_components/TillbakaPil";
+import Knapp from "../../_components/Knapp";
+import TextFalt from "../../_components/TextFalt";
+import { Step2LevfaktProps } from "../_types/types";
+import ValjLeverantorModal from "../../_components/ValjLeverantorModal";
 
 // #endregion
 
