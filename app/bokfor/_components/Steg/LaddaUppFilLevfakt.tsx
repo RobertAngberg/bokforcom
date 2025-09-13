@@ -32,8 +32,6 @@ export default function LaddaUppFilLevfakt({
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
 
-    console.log("📁 Original fil:", originalFile.name, (originalFile.size / 1024).toFixed(1), "KB");
-
     // VALIDERA FILSTORLEK FÖRST
     const sizeMB = originalFile.size / (1024 * 1024);
 
@@ -69,24 +67,16 @@ export default function LaddaUppFilLevfakt({
 
     // Komprimera bilder mjukt - PDF behålls original
     if (originalFile.type.startsWith("image/")) {
-      console.log("🖼️ Startar mjuk bildkomprimering...");
       file = await compressImageFile(originalFile);
     } else if (originalFile.type === "application/pdf") {
-      console.log(`📄 PDF (${sizeMB.toFixed(1)}MB) - behåller original`);
       file = originalFile;
     } else {
-      console.log("📄 Okänd filtyp - behåller original");
+      file = originalFile;
     }
 
     // Visa filstorlek efter eventuell komprimering
     const finalSizeKB = file.size / 1024;
     const finalSizeMB = finalSizeKB / 1024;
-
-    if (finalSizeMB >= 1) {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeMB.toFixed(1)}MB`);
-    } else {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeKB.toFixed(1)}KB`);
-    }
 
     setIsLoading(true);
     setTimeoutTriggered(false);
@@ -97,7 +87,6 @@ export default function LaddaUppFilLevfakt({
       // Skapa temporär URL för förhandsvisning
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
-      console.log("Fil sparad lokalt för förhandsvisning:", file.name);
     } catch (error) {
       console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);
@@ -105,7 +94,6 @@ export default function LaddaUppFilLevfakt({
     }
 
     const timeout = setTimeout(() => {
-      console.log("⏰ Timeout efter 10 sekunder!");
       setIsLoading(false);
       setTimeoutTriggered(true);
     }, 10000);
@@ -114,22 +102,18 @@ export default function LaddaUppFilLevfakt({
       let text = "";
 
       if (file.type === "application/pdf") {
-        console.log("🔍 Extraherar text från PDF...");
         try {
           const pdfText = await extractTextFromPDF(file, "clean");
           text = pdfText || "";
-          console.log("✅ PDF text extraherad:", text ? `${text.length} tecken` : "tom");
         } catch (pdfError) {
           console.error("❌ PDF extraktion misslyckades:", pdfError);
           text = "";
         }
       } else if (file.type.startsWith("image/")) {
-        console.log("🔍 OCR på komprimerad bild...");
         text = await förbättraOchLäsBild(file);
       }
 
       if (!text || text.trim().length === 0) {
-        console.log("⚠️ Ingen text extraherad från fil");
         setTimeoutTriggered(true);
         setIsLoading(false);
         clearTimeout(timeout);
@@ -151,15 +135,15 @@ export default function LaddaUppFilLevfakt({
 
     (async () => {
       try {
-        console.log("🧠 Anropar extractDataFromOCRLevFakt för leverantörsfaktura...");
         const parsed = await extractDataFromOCRLevFakt(recognizedText);
-        console.log("📄 Parsed leverantörsfaktura data:", parsed);
 
         // Fyll i alla fält automatiskt
-        // TODO: Uppdatera när OCR returnerar Leverantör-objekt istället för string
-        // if (parsed?.leverantör) {
-        //   setLeverantör(parsed.leverantör);
-        // }
+        if (parsed?.leverantör && typeof parsed.leverantör === "string") {
+          // Konvertera string till leverantör-objekt
+          setLeverantör({
+            namn: parsed.leverantör,
+          });
+        }
 
         if (parsed?.fakturadatum) {
           setFakturadatum(parsed.fakturadatum);
@@ -184,7 +168,6 @@ export default function LaddaUppFilLevfakt({
           // Fallback: Använd dagens datum om inget betaldatum hittades
           const today = new Date().toISOString();
           setTransaktionsdatum(today);
-          console.log("💡 Ingen betaldatum hittades, använder dagens datum:", today);
         }
       } catch (error) {
         console.error("❌ OpenAI leverantörsfaktura parsing error:", error);
@@ -238,8 +221,6 @@ export default function LaddaUppFilLevfakt({
 }
 
 async function förbättraOchLäsBild(file: File): Promise<string> {
-  console.log("🖼️ Förbereder bild för client-side OCR...");
-
   const img = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -262,8 +243,6 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
   }
   ctx.putImageData(imageData, 0, 0);
 
-  console.log("🔍 Startar Tesseract OCR...");
-
   try {
     // Använd Tesseract.js direkt på den förbättrade bilden
     const {
@@ -273,14 +252,11 @@ async function förbättraOchLäsBild(file: File): Promise<string> {
       "swe+eng", // Svenska och engelska
       {
         logger: (m) => {
-          if (m.status === "recognizing text") {
-            console.log(`📖 OCR progress: ${Math.round(m.progress * 100)}%`);
-          }
+          // OCR progress logging removed for production
         },
       }
     );
 
-    console.log("✅ OCR klar! Extraherad text:", text.substring(0, 100) + "...");
     return text;
   } catch (error) {
     console.error("❌ Tesseract OCR fel:", error);

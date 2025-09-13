@@ -57,7 +57,6 @@ export default function Steg2Levfakt(props: Step2LevfaktProps) {
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
-      console.log("🔍 Försöker ladda specialförval:", valtFörval.specialtyp);
       const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent

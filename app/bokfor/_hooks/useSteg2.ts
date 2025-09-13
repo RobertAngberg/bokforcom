@@ -51,27 +51,7 @@ export function useSteg2({
         Object.entries(extrafält || {}).map(([k, v]) => [k, v])
       );
 
-      // Använd groupCollapsed för att inte spamma konsolen
-      console.groupCollapsed("🧪 Heuristik Steg2 | foreslaLevfakt=" + foreslaLevfakt);
-      console.log("bokföringsmetod:", bokföringsmetod);
-      console.log("harIntaktskonto:", harIntaktskonto);
-      console.log("harKostnadskonto:", harKostnadskonto);
-      console.log("utlaggMode:", utlaggMode);
-      if (valtFörval) {
-        console.log("valtFörval.id:", (valtFörval as any).id);
-        console.log("valtFörval.namn:", (valtFörval as any).namn);
-      } else {
-        console.log("valtFörval: none");
-      }
-      console.log("Extrafält:", extrafaltData);
-      if (kontonData.length) {
-        console.table(kontonData);
-        const klasser = Array.from(new Set(kontonData.map((k) => k.klass))).filter(Boolean);
-        console.log("Kontoklasser i valtFörval:", klasser.join(", "));
-      } else {
-        console.log("Inga konton i valtFörval ännu.");
-      }
-      console.groupEnd();
+      // Debug information removed for production
     } catch (err) {
       console.warn("Heuristik debug misslyckades:", err);
     }
@@ -117,7 +97,6 @@ export function useSteg2({
     if (bokförSomFaktura && ocrText && setBelopp && setFakturadatum) {
       const runKundfakturaAI = async () => {
         try {
-          console.log("🧠 Kör AI-extraktion för kundfaktura (auto)...");
           const parsed = await extractDataFromOCRKundfaktura(ocrText);
 
           if (parsed?.fakturadatum) {

@@ -105,7 +105,6 @@ export async function extractDataFromOCRLevFakt(text: string) {
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
-      console.log("✅ Leverantörsfaktura OCR extracted:", parsed);
       return parsed;
     }
 
@@ -132,8 +131,6 @@ export async function extractDataFromOCRLevFakt(text: string) {
 }
 
 export async function extractDataFromOCRKundfaktura(text: string) {
-  console.log("🧠 Extracting kundfaktura data from OCR text:", text);
-
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
   });
@@ -171,7 +168,6 @@ export async function extractDataFromOCRKundfaktura(text: string) {
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
-      console.log("✅ Kundfaktura OCR extracted:", parsed);
       return parsed;
     }
 

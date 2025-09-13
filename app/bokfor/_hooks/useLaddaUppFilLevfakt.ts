@@ -105,8 +105,6 @@ export function useLaddaUppFilLevfakt({
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
 
-    console.log("📁 Original fil:", originalFile.name, (originalFile.size / 1024).toFixed(1), "KB");
-
     // Säker filvalidering
     const validation = validateFile(originalFile);
     if (!validation.valid) {
@@ -152,23 +150,15 @@ export function useLaddaUppFilLevfakt({
 
     // Komprimera bilder mjukt - PDF behålls original
     if (originalFile.type.startsWith("image/")) {
-      console.log("🖼️ Startar mjuk bildkomprimering...");
       file = await compressImageFile(originalFile);
     } else if (originalFile.type === "application/pdf") {
-      console.log(`📄 PDF (${sizeMB.toFixed(1)}MB) - behåller original`);
       file = originalFile;
     } else {
-      console.log("📄 Okänd filtyp - behåller original");
+      file = originalFile;
     }
 
     const finalSizeKB = file.size / 1024;
     const finalSizeMB = finalSizeKB / 1024;
-
-    if (finalSizeMB >= 1) {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeMB.toFixed(1)}MB`);
-    } else {
-      console.log(`📊 Slutlig filstorlek: ${finalSizeKB.toFixed(1)}KB`);
-    }
 
     setIsLoading(true);
     setTimeoutTriggered(false);
@@ -182,7 +172,6 @@ export function useLaddaUppFilLevfakt({
       setFil(file);
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
-      console.log("Fil sparad lokalt för förhandsvisning:", file.name);
     } catch (error) {
       console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);
@@ -228,7 +217,6 @@ export function useLaddaUppFilLevfakt({
 
     (async () => {
       try {
-        console.log("🧠 Anropar extractDataFromOCRLevFakt för leverantörsfaktura...");
         const parsed = await extractDataFromOCRLevFakt(recognizedText);
 
         if (parsed?.leverantör) {

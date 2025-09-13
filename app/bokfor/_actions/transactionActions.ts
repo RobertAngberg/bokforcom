@@ -93,8 +93,6 @@ export async function saveTransaction(formData: FormData) {
   const utlaggMode = formData.get("utlaggMode") === "true";
   const levfaktMode = formData.get("levfaktMode") === "true";
 
-  console.log(`🎯 Processing transaction: ${valtFörval.namn}`);
-
   // Formatera transaktionsdatum för PostgreSQL
   let formattedDate = "";
   if (transaktionsdatum) {
@@ -111,13 +109,8 @@ export async function saveTransaction(formData: FormData) {
   if (bilageUrl) {
     blobUrl = bilageUrl;
     filename = bilageUrl.split("/").pop() || "unknown";
-    console.log("🔍 DEBUG: Använder befintlig bilageUrl:", blobUrl);
   } else if (fil) {
     // Fallback för gammal kod som skickar fil direkt
-    console.log("🔍 DEBUG: Fil namn:", fil.name);
-    console.log("🔍 DEBUG: Fil storlek:", fil.size);
-    console.log("🔍 DEBUG: Fil typ:", fil.type);
-
     try {
       const datum = dateTillÅÅÅÅMMDD(new Date(transaktionsdatum));
       const fileExtension = fil.name.split(".").pop() || "";
@@ -127,9 +120,6 @@ export async function saveTransaction(formData: FormData) {
 
       const blobPath = `bokforing/${userId}/${datum}/${filename}`;
 
-      console.log("🔍 DEBUG: Blob path:", blobPath);
-      console.log("🔍 DEBUG: Försöker ladda upp fil...");
-
       const blob = await put(blobPath, fil, {
         access: "public",
         contentType: fil.type,
@@ -137,11 +127,8 @@ export async function saveTransaction(formData: FormData) {
       });
 
       blobUrl = blob.url; // Spara blob URL:en!
-      console.log(`✅ Fil sparad till Blob Storage: ${blob.url}`);
-      console.log("🔍 DEBUG: blobUrl satt till:", blobUrl);
     } catch (blobError) {
       console.error("❌ Kunde inte spara fil till Blob Storage:", blobError);
-      console.log("🔍 DEBUG: Blob error detaljer:", blobError);
       filename = sanitizeFilename(fil.name);
     }
   }
@@ -159,7 +146,6 @@ export async function saveTransaction(formData: FormData) {
     );
     const transaktionsId = rows[0].id;
     const sparadBlobUrl = rows[0].blob_url;
-    console.log("🆔 Skapad transaktion:", transaktionsId);
 
     // Spara alla transaktionsposter som beräknats på frontend
     const insertPost = `
@@ -180,28 +166,17 @@ export async function saveTransaction(formData: FormData) {
       }
 
       if (post.debet === 0 && post.kredit === 0) {
-        console.log(`⚠️ Skipping konto ${post.kontonummer} because both debet and kredit are 0`);
         continue;
       }
 
-      console.log(`� Sparar post för konto ${post.kontonummer}: D=${post.debet}, K=${post.kredit}`);
       await client.query(insertPost, [transaktionsId, kontoRows[0].id, post.debet, post.kredit]);
     }
     // Skapa utlägg-rad om utläggs-mode och anstalldId finns
     if (utlaggMode && anstalldId) {
-      console.log("🔍 Utlägg formData:", {
-        userId,
-        transaktionsId,
-        anstalldId,
-        belopp,
-        transaktionsdatum,
-        kommentar,
-      });
       const res = await client.query(
         `INSERT INTO utlägg (user_id, transaktion_id, anställd_id) VALUES ($1, $2, $3) RETURNING *`,
         [userId, transaktionsId, anstalldId]
       );
-      console.log("📝 Utlägg SQL-result:", res.rows);
     }
 
     // Skapa leverantörsfaktura-rad om levfakt-mode
@@ -223,18 +198,6 @@ export async function saveTransaction(formData: FormData) {
       const fakturadatum = formData.get("fakturadatum")?.toString() || null;
       const förfallodatum = formData.get("förfallodatum")?.toString() || null;
       const betaldatum = formData.get("betaldatum")?.toString() || null;
-
-      console.log("🔍 Leverantörsfaktura formData:", {
-        userId,
-        transaktionsId,
-        leverantorId,
-        leverantörNamn,
-        fakturanummer,
-        fakturadatum,
-        förfallodatum,
-        betaldatum,
-        belopp,
-      });
 
       // Formatera datum korrekt för PostgreSQL
       const formatDate = (dateStr: string | null) => {
@@ -266,7 +229,6 @@ export async function saveTransaction(formData: FormData) {
           "Ej bokförd", // status_bokförd ska vara "Ej bokförd" (inte "Registrerad")
         ]
       );
-      console.log("📝 Leverantörsfaktura SQL-result:", res.rows);
     }
 
     client.release();

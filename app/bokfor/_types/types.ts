@@ -1,3 +1,5 @@
+import type { Leverantör } from "../../faktura/actions";
+
 // ===== GEMENSAMMA BASTYPER =====
 export interface KontoRad {
   beskrivning: string;
@@ -195,7 +197,7 @@ export interface Step2LevfaktProps {
   valtFörval?: Förval | null;
   extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
   // Leverantörsfaktura-specifika props
-  leverantör: any | null; // TODO: Use proper Leverantör type from faktura/actions
+  leverantör: Leverantör | null;
   setLeverantör: (leverantör: any | null) => void;
   fakturanummer: string | null;
   setFakturanummer: (nummer: string | null) => void;

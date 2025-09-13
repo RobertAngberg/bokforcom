@@ -180,7 +180,6 @@ export function useLaddaUppFil({
       // Skapa temporär URL för förhandsvisning
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
-      console.log("Fil sparad lokalt för förhandsvisning:", file.name);
     } catch (error) {
       console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);

@@ -38,7 +38,6 @@ export async function loggaFavoritförval(forvalId: number) {
       `,
       [userId, forvalId]
     );
-    console.log(`🌟 Favoritförval uppdaterad för user ${userId}, förval ${forvalId}`);
   } catch (error) {
     console.error("❌ loggaFavoritförval error:", error);
   }
@@ -60,7 +59,6 @@ export async function hamtaFavoritforval(): Promise<any[]> {
       [userId]
     );
 
-    console.log(`📥 Hittade ${result.rows.length} favoritförval för user ${userId}`);
     return result.rows;
   } catch (error) {
     console.error("❌ hamtaFavoritforval error:", error);

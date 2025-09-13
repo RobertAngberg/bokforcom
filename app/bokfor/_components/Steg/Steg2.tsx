@@ -70,7 +70,6 @@ export default function Steg2(props: Step2Props) {
       setBokförSomFaktura(checked);
 
       if (checked && reprocessFile) {
-        console.log("🔄 Triggar ny OCR för fakturamoden...");
         await reprocessFile();
       }
     },
@@ -80,7 +79,6 @@ export default function Steg2(props: Step2Props) {
   //#region Visa specialförval om det finns
   if (valtFörval?.specialtyp) {
     try {
-      console.log("🔍 Försöker ladda specialförval:", valtFörval.specialtyp);
       const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
