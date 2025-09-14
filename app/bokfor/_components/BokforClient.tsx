@@ -9,19 +9,9 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { useBokfor } from "../_hooks/useBokfor";
-import type { Förval } from "../_types/types";
+import type { BokforClientProps } from "../_types/types";
 
 registerLocale("sv", sv);
-
-interface BokforClientProps {
-  initialData: {
-    favoritFörvalen: Förval[];
-    currentStep: number;
-    isLevfaktMode: boolean;
-    isUtlaggMode: boolean;
-    leverantör: any;
-  };
-}
 
 export default function BokforClient({ initialData }: BokforClientProps) {
   const {

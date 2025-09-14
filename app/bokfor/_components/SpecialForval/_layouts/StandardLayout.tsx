@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import DatePicker from "react-datepicker";
 import LaddaUppFil from "../../Steg/LaddaUppFil";
 import Forhandsgranskning from "../../Steg/Forhandsgranskning";

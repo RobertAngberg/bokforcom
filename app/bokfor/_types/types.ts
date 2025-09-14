@@ -43,6 +43,16 @@ export interface Anstalld {
   efternamn: string;
 }
 
+export interface BokforClientProps {
+  initialData: {
+    favoritFörvalen: Förval[];
+    currentStep: number;
+    isLevfaktMode: boolean;
+    isUtlaggMode: boolean;
+    leverantör: any;
+  };
+}
+
 // ===== GEMENSAM PROPS BASE FÖR ALLA SPECIALFÖRVAL =====
 export interface BaseSpecialProps {
   mode: "steg2" | "steg3";
