@@ -150,16 +150,6 @@ export interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export interface SokForvalProps {
-  favoritFörvalen?: Förval[]; // Nu valfri - kan hämtas från annan plats
-  setCurrentStep?: (val: number) => void; // Nu valfri - kommer från Zustand store
-  setvaltFörval?: (val: Förval) => void; // Nu valfri - kommer från Zustand store
-  setKontonummer?: (val: string) => void; // Nu valfri - kommer från Zustand store
-  setKontobeskrivning?: (val: string) => void; // Nu valfri - kommer från Zustand store
-  levfaktMode?: boolean;
-  utlaggMode?: boolean;
-}
-
 export interface Step2Props {
   setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
   fil?: File | null; // Nu valfri - kommer från Zustand store
@@ -401,17 +391,6 @@ export interface UseLaddaUppFilLevfaktProps {
   setFakturadatum: (datum: string) => void;
   setFörfallodatum: (datum: string) => void;
   setFakturanummer: (nummer: string) => void;
-}
-
-// useSokForval
-export interface UseSokForvalProps {
-  favoritFörvalen: Förval[];
-  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
-  setvaltFörval: (förval: Förval) => void;
-  setKontonummer: (nummer: string) => void;
-  setKontobeskrivning: (beskrivning: string) => void;
-  levfaktMode?: boolean;
-  utlaggMode?: boolean;
 }
 
 // useLevfaktLayout

@@ -15,22 +15,18 @@ import type { BokforClientProps } from "../_types/types";
 registerLocale("sv", sv);
 
 export default function BokforClient({ initialData }: BokforClientProps) {
-  // Nu behöver vi bara currentStep från Zustand store!
+  // Hämta state från Zustand store
   const { currentStep } = useBokforStore();
 
-  // Bara de hooks vi verkligen behöver för UI-logik som inte är formulärdata
-  const { favoritFörvalen, isLevfaktMode, isUtlaggMode, leverantör, exitLevfaktMode } =
-    useBokfor(initialData);
+  // Hämta data från hook (behövs fortfarande för UI-logik)
+  const { leverantör, exitLevfaktMode } = useBokfor(initialData);
+
+  // Store-värden används direkt från Zustand
+  const { levfaktMode: isLevfaktMode, utlaggMode: isUtlaggMode } = useBokforStore();
 
   return (
     <>
-      {currentStep === 1 && (
-        <SökFörval
-          favoritFörvalen={favoritFörvalen}
-          levfaktMode={isLevfaktMode}
-          utlaggMode={isUtlaggMode}
-        />
-      )}
+      {currentStep === 1 && <SökFörval />}
 
       {currentStep === 2 && !isLevfaktMode && <Steg2 utlaggMode={isUtlaggMode} />}
 

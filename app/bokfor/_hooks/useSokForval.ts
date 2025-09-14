@@ -2,17 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { fetchAllaForval, loggaFavoritförval } from "../_actions/actions";
-import { UseSokForvalProps, KontoRad, Förval } from "../_types/types";
+import { KontoRad, Förval } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 
-export function useSokForval({
-  favoritFörvalen,
-  setCurrentStep,
-  setvaltFörval,
-  setKontonummer,
-  setKontobeskrivning,
-  levfaktMode = false,
-  utlaggMode = false,
-}: UseSokForvalProps) {
+export function useSokForval() {
+  // Hämta allt från Zustand store
+  const {
+    favoritFörvalen,
+    levfaktMode,
+    utlaggMode,
+    setCurrentStep,
+    setValtFörval,
+    setKontonummer,
+    setKontobeskrivning,
+  } = useBokforStore();
+
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<Förval[]>([]); // Börja med tom lista
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -132,7 +136,7 @@ export function useSokForval({
 
   const väljFörval = (f: Förval) => {
     loggaFavoritförval(f.id);
-    setvaltFörval(f);
+    setValtFörval(f);
 
     const huvudkonto = f.konton.find(
       (k: KontoRad) => k.kontonummer !== "1930" && (k.kredit || k.debet) && !!k.kontonummer

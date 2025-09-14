@@ -6,6 +6,11 @@ interface BokforStore {
   // Navigation state
   currentStep: number;
 
+  // Data & UI state
+  favoritFörvalen: Förval[];
+  levfaktMode: boolean;
+  utlaggMode: boolean;
+
   // Formulärfält
   kontonummer: string;
   kontobeskrivning: string | null;
@@ -28,6 +33,9 @@ interface BokforStore {
 
   // Navigation actions
   setCurrentStep: (step: number) => void;
+  setFavoritFörvalen: (förvalen: Förval[]) => void;
+  setLevfaktMode: (mode: boolean) => void;
+  setUtlaggMode: (mode: boolean) => void;
   handleSetCurrentStep: (
     step: number,
     router?: any,
@@ -57,11 +65,22 @@ interface BokforStore {
 
   // Utility för att återställa alla fält
   resetAllFields: () => void;
+
+  // Initialisera store med server data
+  initStore: (data: {
+    favoritFörvalen: Förval[];
+    levfaktMode: boolean;
+    utlaggMode: boolean;
+    currentStep: number;
+  }) => void;
 }
 
 export const useBokforStore = create<BokforStore>((set, get) => ({
   // Initial state
   currentStep: 1,
+  favoritFörvalen: [],
+  levfaktMode: false,
+  utlaggMode: false,
 
   // Formulärfält
   kontonummer: "",
@@ -85,6 +104,9 @@ export const useBokforStore = create<BokforStore>((set, get) => ({
 
   // Navigation actions
   setCurrentStep: (currentStep: number) => set({ currentStep }),
+  setFavoritFörvalen: (favoritFörvalen: Förval[]) => set({ favoritFörvalen }),
+  setLevfaktMode: (levfaktMode: boolean) => set({ levfaktMode }),
+  setUtlaggMode: (utlaggMode: boolean) => set({ utlaggMode }),
 
   handleSetCurrentStep: (
     step: number,
@@ -143,4 +165,14 @@ export const useBokforStore = create<BokforStore>((set, get) => ({
       bokförSomFaktura: false,
       kundfakturadatum: null,
     }),
+
+  // Initialisera store med server data
+  initStore: (data) => {
+    set({
+      favoritFörvalen: data.favoritFörvalen,
+      levfaktMode: data.levfaktMode,
+      utlaggMode: data.utlaggMode,
+      currentStep: data.currentStep,
+    });
+  },
 }));
