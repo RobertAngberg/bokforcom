@@ -1,7 +1,7 @@
 "use server";
 
-import { pool } from "../_utils/dbPool";
-import { auth, signOut } from "../auth";
+import { pool } from "../lib/db";
+import { auth, signOut } from "../lib/auth";
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { signupRateLimit } from "../_utils/rateLimit";
 import { sanitizeFormInput } from "../_utils/validationUtils";

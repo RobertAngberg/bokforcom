@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
-// Centraliserad pg-pool (singleton). Flyttad hit från /db/pool.ts.
-// OBS: Om vi senare inför migrations/RLS/bootstrap kan en separat `db/` katalog återinföras.
+// Centraliserad databaskonfiguration - flytta hit från _utils för bättre organisation
+// Singleton pattern för att återanvända samma connection pool
 
 declare global {
   // eslint-disable-next-line no-var
@@ -20,7 +20,7 @@ export function getPool(): Pool {
     });
 
     if (process.env.NODE_ENV !== "production") {
-      console.log("[DB] Created new pg Pool instance (dbPool)");
+      console.log("[DB] Created new pg Pool instance");
     }
   }
   return globalThis.__APP_PG_POOL__;

@@ -1,7 +1,7 @@
 //#region
 "use server";
 
-import { pool } from "../../_utils/dbPool";
+import { pool } from "../../lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
 

@@ -3,7 +3,7 @@
  * Använder din befintliga databasstruktur
  */
 
-import { pool } from "../../_utils/dbPool";
+import { pool } from "../../lib/db";
 
 export interface SemesterRecord {
   id?: number;

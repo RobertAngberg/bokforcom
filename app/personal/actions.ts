@@ -1,6 +1,6 @@
 "use server";
 
-import { pool } from "../_utils/dbPool";
+import { pool } from "../lib/db";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../_utils/transaktioner/hamtaTransaktionsposter";
 import { getUserId } from "../_utils/authUtils";
 import { revalidatePath } from "next/cache";

@@ -1,6 +1,6 @@
 "use server";
 
-import { pool } from "../../_utils/dbPool";
+import { pool } from "../../lib/db";
 
 export async function getMomsrapport(year: string, kvartal?: string) {
   /* ---- datumintervall ---- */

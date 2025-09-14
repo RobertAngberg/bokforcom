@@ -1,6 +1,6 @@
 "use server";
 
-import { pool } from "../_utils/dbPool";
+import { pool } from "../lib/db";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateYear, sanitizeInput } from "../_utils/validationUtils";

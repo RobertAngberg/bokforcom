@@ -1,4 +1,4 @@
-import { pool } from "../../_utils/dbPool";
+import { pool } from "../../lib/db";
 import { getUserId } from "../../_utils/authUtils";
 
 interface SemesterBokföring {
