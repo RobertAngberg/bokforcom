@@ -8,22 +8,13 @@ import Steg4 from "./Steg/Steg4";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import { useBokfor } from "../_hooks/useBokfor";
-import { useBokforStore } from "../_stores/bokforStore";
+import { useBokforClient } from "../_hooks/useBokforClient";
 import type { BokforClientProps } from "../_types/types";
-
 registerLocale("sv", sv);
 
 export default function BokforClient({ initialData }: BokforClientProps) {
-  // Hämta state från Zustand store
-  const { currentStep } = useBokforStore();
-
-  // Hämta data från hook (behövs fortfarande för UI-logik)
-  const { leverantör, exitLevfaktMode } = useBokfor(initialData);
-
-  // Store-värden används direkt från Zustand
-  const { levfaktMode: isLevfaktMode, utlaggMode: isUtlaggMode } = useBokforStore();
-
+  const { currentStep, isLevfaktMode, isUtlaggMode, exitLevfaktMode } =
+    useBokforClient(initialData);
   return (
     <>
       {currentStep === 1 && <SökFörval />}

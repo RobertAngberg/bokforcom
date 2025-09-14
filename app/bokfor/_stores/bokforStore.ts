@@ -66,6 +66,9 @@ interface BokforStore {
   // Utility för att återställa alla fält
   resetAllFields: () => void;
 
+  // Business logic functions
+  exitLevfaktMode: (router?: any) => void;
+
   // Initialisera store med server data
   initStore: (data: {
     favoritFörvalen: Förval[];
@@ -166,13 +169,30 @@ export const useBokforStore = create<BokforStore>((set, get) => ({
       kundfakturadatum: null,
     }),
 
-  // Initialisera store med server data
+  // Initialisera store med server data (idempotent)
   initStore: (data) => {
-    set({
-      favoritFörvalen: data.favoritFörvalen,
-      levfaktMode: data.levfaktMode,
-      utlaggMode: data.utlaggMode,
-      currentStep: data.currentStep,
-    });
+    const current = get();
+    // Bara uppdatera om det faktiskt har ändrats
+    if (
+      current.currentStep !== data.currentStep ||
+      current.levfaktMode !== data.levfaktMode ||
+      current.utlaggMode !== data.utlaggMode ||
+      current.favoritFörvalen.length !== data.favoritFörvalen.length
+    ) {
+      set({
+        favoritFörvalen: data.favoritFörvalen,
+        levfaktMode: data.levfaktMode,
+        utlaggMode: data.utlaggMode,
+        currentStep: data.currentStep,
+      });
+    }
+  },
+
+  // Business logic functions
+  exitLevfaktMode: (router) => {
+    set({ levfaktMode: false, leverantör: null });
+    if (router) {
+      router.replace("/bokfor?step=2");
+    }
   },
 }));

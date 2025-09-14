@@ -1,3 +1,5 @@
+import { escapeInput } from "../_utils/textUtils";
+
 // Tillåtna input-typer för säkerhet
 type AllowedInputTypes =
   | "text"
@@ -39,14 +41,14 @@ export default function TextFalt({
   autoFocus = false,
 }: TextFaltProps) {
   // Säker escaping av label för XSS-skydd
-  const safeLabel = String(label).replace(/[<>'"]/g, "");
+  const safeLabel = escapeInput(label);
 
   // Säker onChange-hantering med live-validering
   const handleSafeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     let newValue = e.target.value;
 
-    // ENDAST ta bort script-farliga tecken, inte vanliga tecken
-    newValue = newValue.replace(/[<>]/g, "");
+    // Använd centraliserad escaping-funktion
+    newValue = escapeInput(newValue);
 
     // Begränsa längd
     if (maxLength && newValue.length > maxLength) {

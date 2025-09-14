@@ -1,90 +1,65 @@
+/**
+ * LevfaktLayout - Återanvändbar layout för leverantörsfaktura-specialförval
+ *
+ * Används specifikt av specialförval som hanterar leverantörsfakturor:
+ * - InkopTjansterSverigeOmvand, InkopTjanstUtanfEU, InkopTjanstEU
+ * - Hyrbil, Billeasing, Importmoms, Representation
+ * - ITtjansterEU, ITtjansterUtanfEU
+ *
+ * INTE används av enkla specialförval som EgetUttag, Banklan,
+ * Pensionsforsakring etc. (de har egna layouts utan leverantörsfält)
+ *
+ * Children-prop används för specialförval-specifikt innehåll:
+ * - Vissa specialförval har extra fält (children med innehåll)
+ * - Andra har bara standard-fälten (tomma children)
+ * - Flexibilitet för framtida leverantörsfaktura-specialförval
+ */
+
 "use client";
 
-import React, { useEffect } from "react";
-import DatePicker from "react-datepicker";
-import { registerLocale } from "react-datepicker";
-import { sv } from "date-fns/locale/sv";
-registerLocale("sv", sv);
 import { datePickerValue, datePickerOnChange } from "../../../../_utils/trueDatum";
-
 import LaddaUppFilLevfakt from "../../Steg/LaddaUppFilLevfakt";
 import Kommentar from "../../Steg/Kommentar";
 import Forhandsgranskning from "../../Steg/Forhandsgranskning";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import Knapp from "../../../../_components/Knapp";
-import Dropdown from "../../../../_components/Dropdown";
 import TextFalt from "../../../../_components/TextFalt";
-import { Leverantör } from "../../../../faktura/actions";
-import { LevfaktLayoutProps } from "../../../_types/types";
 import { useLevfaktLayout } from "../../../_hooks/useLevfaktLayout";
+import DatePicker from "react-datepicker";
+import { registerLocale } from "react-datepicker";
+import { sv } from "date-fns/locale/sv";
+registerLocale("sv", sv);
 
-export default function LevfaktLayout({
-  title,
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  onSubmit,
-  isValid,
-  leverantör = "",
-  setLeverantör,
-  fakturanummer = "",
-  setFakturanummer,
-  fakturadatum = "",
-  setFakturadatum,
-  förfallodatum = "",
-  setFörfallodatum,
-  children,
-}: LevfaktLayoutProps) {
-  // Använd hook för validering och options
+export default function LevfaktLayout({ children }: { children?: React.ReactNode }) {
   const {
-    leverantörIsValid,
-    fakturanummerIsValid,
-    fakturadatumIsValid,
-    fullIsValid,
-    leverantörOptions,
-  } = useLevfaktLayout({
+    belopp,
+    transaktionsdatum,
+    kommentar,
+    fil,
+    pdfUrl,
     leverantör,
     fakturanummer,
     fakturadatum,
-    isValid,
-  });
-
-  // Datepicker styling och default values
-  useEffect(() => {
-    const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
-    datePickerEls.forEach((el) => {
-      (el as HTMLElement).style.width = "100%";
-    });
-
-    const inputEls = document.querySelectorAll(".react-datepicker__input-container input");
-    inputEls.forEach((el) => {
-      (el as HTMLElement).className =
-        "w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700";
-    });
-
-    // Sätt default datum
-    if (!fakturadatum && setFakturadatum) {
-      setFakturadatum(datePickerOnChange(new Date()));
-    }
-    if (!förfallodatum && setFörfallodatum) {
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      setFörfallodatum(datePickerOnChange(thirtyDaysFromNow));
-    }
-  }, [fakturadatum, förfallodatum, setFakturadatum, setFörfallodatum]);
+    förfallodatum,
+    setBelopp,
+    setTransaktionsdatum,
+    setKommentar,
+    setFil,
+    setPdfUrl,
+    setLeverantör,
+    setFakturanummer,
+    setFakturadatum,
+    setFörfallodatum,
+    setCurrentStep,
+    title,
+    onSubmit,
+    fullIsValid,
+  } = useLevfaktLayout();
 
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep?.(1)} />
+        <TillbakaPil onClick={() => setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">{title}</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
@@ -95,22 +70,10 @@ export default function LevfaktLayout({
               setPdfUrl={setPdfUrl}
               setBelopp={setBelopp}
               setTransaktionsdatum={setTransaktionsdatum}
-              setLeverantör={
-                setLeverantör
-                  ? (leverantör) => {
-                      if (typeof leverantör === "string") {
-                        setLeverantör(leverantör);
-                      } else {
-                        setLeverantör(leverantör);
-                      }
-                    }
-                  : () => {}
-              }
-              setFakturadatum={setFakturadatum ? (datum) => setFakturadatum(datum || "") : () => {}}
-              setFörfallodatum={
-                setFörfallodatum ? (datum) => setFörfallodatum(datum || "") : () => {}
-              }
-              setFakturanummer={setFakturanummer || (() => {})}
+              setLeverantör={setLeverantör}
+              setFakturadatum={setFakturadatum}
+              setFörfallodatum={setFörfallodatum}
+              setFakturanummer={setFakturanummer}
             />
 
             {/* Leverantör - alltid från första steget */}
@@ -134,8 +97,8 @@ export default function LevfaktLayout({
             <TextFalt
               label="Fakturanummer"
               name="fakturanummer"
-              value={fakturanummer}
-              onChange={(e) => setFakturanummer?.(e.target.value)}
+              value={fakturanummer ?? ""}
+              onChange={(e) => setFakturanummer(e.target.value)}
               required
             />
 
@@ -144,7 +107,7 @@ export default function LevfaktLayout({
             <DatePicker
               className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
               selected={datePickerValue(fakturadatum)}
-              onChange={(date) => setFakturadatum?.(datePickerOnChange(date))}
+              onChange={(date) => setFakturadatum(datePickerOnChange(date))}
               dateFormat="yyyy-MM-dd"
               locale="sv"
               required
@@ -155,7 +118,7 @@ export default function LevfaktLayout({
             <DatePicker
               className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
               selected={datePickerValue(förfallodatum)}
-              onChange={(date) => setFörfallodatum?.(datePickerOnChange(date))}
+              onChange={(date) => setFörfallodatum(datePickerOnChange(date))}
               dateFormat="yyyy-MM-dd"
               locale="sv"
               required
@@ -185,10 +148,7 @@ export default function LevfaktLayout({
             {children}
 
             {/* Kommentar */}
-            <Kommentar
-              kommentar={kommentar ?? ""}
-              setKommentar={setKommentar ? (val) => setKommentar(val) : () => {}}
-            />
+            <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
 
             {/* Submit knapp */}
             <Knapp fullWidth text="Bokför" onClick={onSubmit} disabled={!fullIsValid} />

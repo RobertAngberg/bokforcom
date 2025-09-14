@@ -26,7 +26,7 @@ export default function SokForval() {
           name="forval-search"
           type="text"
           value={searchText}
-          onChange={(e) => handleSearchChange(e as React.ChangeEvent<HTMLInputElement>)}
+          onChange={handleSearchChange}
           placeholder="Sök förval..."
           required={false}
           autoFocus

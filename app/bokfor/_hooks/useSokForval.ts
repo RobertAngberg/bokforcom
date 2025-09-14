@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { fetchAllaForval, loggaFavoritförval } from "../_actions/actions";
 import { KontoRad, Förval } from "../_types/types";
 import { useBokforStore } from "../_stores/bokforStore";
+import { normalize } from "../../_utils/textUtils";
 
 export function useSokForval() {
   // Hämta allt från Zustand store
@@ -17,35 +18,27 @@ export function useSokForval() {
     setKontobeskrivning,
   } = useBokforStore();
 
-  const [searchText, setSearchText] = useState("");
-  const [results, setResults] = useState<Förval[]>([]); // Börja med tom lista
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
+  // Lokal UI state (INTE Zustand) - bara för denna komponent
+  const [searchText, setSearchText] = useState(""); // Temporär söktext
+  const [results, setResults] = useState<Förval[]>(favoritFörvalen || []); // Initiera med favoriter
+  const [highlightedIndex, setHighlightedIndex] = useState(0); // Keyboard navigation
+  const [loading, setLoading] = useState(false); // Visuell loading state
 
-  // Säker text-normalisering med escaping
-  const normalize = (s: string) => {
-    if (!s || typeof s !== "string") return "";
-    return s
-      .toLowerCase()
-      .replace(/[<>'"&]/g, "") // Ta bort farliga tecken
-      .replace(/\s+/g, " ")
-      .trim()
-      .substring(0, 100); // Begränsa längd
-  };
+  // Sökfunktion som kan anropas direkt
+  const performSearch = async (inputText: string) => {
+    const input = normalize(inputText); // Säker normalisering
 
-  useEffect(() => {
-    const delay = setTimeout(async () => {
-      const input = normalize(searchText); // Säker normalisering
+    // Visa bara förval när användaren skriver (minst 2 tecken)
+    if (input.length < 2) {
+      setResults([]); // Tom lista när ingen sökning
+      setHighlightedIndex(0);
+      setLoading(false);
+      return;
+    }
 
-      // Visa bara förval när användaren skriver (minst 2 tecken)
-      if (input.length < 2) {
-        setResults([]); // Tom lista när ingen sökning
-        setHighlightedIndex(0);
-        setLoading(false);
-        return;
-      }
+    setLoading(true);
 
-      setLoading(true);
+    try {
       const alla = await fetchAllaForval();
       const q = input; // Redan normaliserad
 
@@ -129,10 +122,11 @@ export function useSokForval() {
       setResults(träffar);
       setHighlightedIndex(0);
       setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [searchText, favoritFörvalen, levfaktMode, utlaggMode]);
+    } catch (error) {
+      console.error("Sökfel:", error);
+      setLoading(false);
+    }
+  };
 
   const väljFörval = (f: Förval) => {
     loggaFavoritförval(f.id);
@@ -173,8 +167,10 @@ export function useSokForval() {
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setSearchText(newValue);
+    performSearch(newValue); // Direkt sökning utan useEffect
   };
 
   const getTitle = () => {

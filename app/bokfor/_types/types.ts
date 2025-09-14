@@ -1,5 +1,20 @@
 import type { Leverantör } from "../../faktura/actions";
 
+// ===== INITIAL DATA INTERFACES =====
+export interface InitialData {
+  favoritFörvalen: Förval[];
+  currentStep: number;
+  isLevfaktMode: boolean;
+  isUtlaggMode: boolean;
+  leverantör: any;
+}
+
+// ===== LAYOUT INTERFACES =====
+export interface StandardLayoutProps {
+  title?: string;
+  onSubmit?: () => void;
+}
+
 // ===== GEMENSAMMA BASTYPER =====
 export interface KontoRad {
   beskrivning: string;
@@ -266,23 +281,6 @@ export interface RepresentationProps extends BaseSpecialProps {}
 export interface UberAvgiftProps extends BaseSpecialProps {}
 
 // ===== LAYOUT PROPS =====
-export interface StandardLayoutProps {
-  title: string;
-  belopp?: number | null;
-  setBelopp: (val: number | null) => void;
-  transaktionsdatum?: string | null;
-  setTransaktionsdatum: (val: string) => void;
-  kommentar?: string | null;
-  setKommentar?: (val: string | null) => void;
-  setCurrentStep?: (val: number) => void;
-  fil: File | null;
-  setFil: (val: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (val: string) => void;
-  onSubmit: () => void;
-  isValid: boolean;
-  children?: React.ReactNode;
-}
 
 export interface LevfaktLayoutProps {
   title: string;

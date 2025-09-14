@@ -1,21 +1,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Förval } from "../_types/types";
 import { useBokforStore } from "../_stores/bokforStore";
+import type { InitialData } from "../_types/types";
 
-interface InitialData {
-  favoritFörvalen: Förval[];
-  currentStep: number;
-  isLevfaktMode: boolean;
-  isUtlaggMode: boolean;
-  leverantör: any;
-}
-
-export function useBokfor(initialData: InitialData) {
+export function useBokforClient(initialData: InitialData) {
   const router = useRouter();
-  const { initStore, setLevfaktMode } = useBokforStore();
+  const { initStore, setLevfaktMode, currentStep, levfaktMode, utlaggMode } = useBokforStore();
 
-  // Initialisera store en gång med server data
+  // OK, useEffect är tyvärr nödvändigt för att undvika React-errors
   useEffect(() => {
     initStore({
       favoritFörvalen: initialData.favoritFörvalen,
@@ -23,7 +15,7 @@ export function useBokfor(initialData: InitialData) {
       utlaggMode: initialData.isUtlaggMode,
       currentStep: initialData.currentStep,
     });
-  }, []); // Bara vid första render
+  }, []); // Bara en gång
 
   // State variables som inte är i store än
   const [leverantör, setLeverantör] = useState(initialData.leverantör);
@@ -37,9 +29,14 @@ export function useBokfor(initialData: InitialData) {
   };
 
   return {
-    // Bara det som inte är i store
+    // Store values
+    currentStep,
+    isLevfaktMode: levfaktMode,
+    isUtlaggMode: utlaggMode,
+    // Local state
     leverantör,
     setLeverantör,
+    // Functions
     exitLevfaktMode,
   };
 }
