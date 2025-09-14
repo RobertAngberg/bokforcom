@@ -10,30 +10,30 @@ import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/trueDatum";
 import { Step3Props } from "../../_types/types";
 import { useSteg3 } from "../../_hooks/useSteg3";
+import { useBokforStore } from "../../_stores/bokforStore";
 
 export default function Steg3(props: Step3Props) {
+  // Hämta ALLA formulärfält från Zustand store istället för props
   const {
-    kontonummer = "",
-    kontobeskrivning = "",
-    fil,
-    belopp = 0,
-    transaktionsdatum,
-    kommentar = "",
-    valtFörval = null,
+    belopp,
+    kommentar,
     setCurrentStep,
-    extrafält = {},
-    utlaggMode = false,
-    levfaktMode = false,
-    // Leverantörsfaktura-specifika props
-    leverantör = null,
-    fakturanummer = null,
-    fakturadatum = null,
-    förfallodatum = null,
-    betaldatum = null,
-    // Kundfaktura-specifika props
-    bokförSomFaktura = false,
-    kundfakturadatum = null,
-  } = props;
+    kontonummer,
+    kontobeskrivning,
+    fil,
+    transaktionsdatum,
+    valtFörval,
+    extrafält,
+    leverantör,
+    fakturanummer,
+    fakturadatum,
+    förfallodatum,
+    betaldatum,
+    bokförSomFaktura,
+    kundfakturadatum,
+  } = useBokforStore();
+
+  const { utlaggMode = false, levfaktMode = false } = props;
 
   const {
     anstallda,
@@ -55,9 +55,9 @@ export default function Steg3(props: Step3Props) {
     levfaktMode,
     bokförSomFaktura,
     valtFörval,
-    belopp,
-    transaktionsdatum,
-    kommentar,
+    belopp: belopp ?? 0, // Konvertera null till 0
+    transaktionsdatum: transaktionsdatum ?? "",
+    kommentar: kommentar ?? "", // Konvertera null till ""
     extrafält,
     leverantör,
     fakturanummer,

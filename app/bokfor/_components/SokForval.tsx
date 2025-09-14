@@ -5,16 +5,15 @@ import { fetchAllaForval, loggaFavoritförval } from "../_actions/actions";
 import FörvalKort from "./ForvalKort";
 import TextFalt from "../../_components/TextFalt";
 import { KontoRad, Förval, SokForvalProps } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 
 export default function SokForval({
   favoritFörvalen,
-  setCurrentStep,
-  setvaltFörval,
-  setKontonummer,
-  setKontobeskrivning,
   levfaktMode = false,
   utlaggMode = false,
 }: SokForvalProps) {
+  // Hämta alla funktioner från Zustand store istället för props
+  const { setCurrentStep, setValtFörval, setKontonummer, setKontobeskrivning } = useBokforStore();
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<Förval[]>([]); // Börja med tom lista
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -138,7 +137,7 @@ export default function SokForval({
 
   const väljFörval = (f: Förval) => {
     loggaFavoritförval(f.id);
-    setvaltFörval(f);
+    setValtFörval(f);
 
     const huvudkonto = f.konton.find(
       (k) => k.kontonummer !== "1930" && (k.kredit || k.debet) && !!k.kontonummer
@@ -170,7 +169,7 @@ export default function SokForval({
     }
     if (e.key === "Escape") {
       setSearchText("");
-      setResults(favoritFörvalen);
+      setResults(favoritFörvalen || []);
       setHighlightedIndex(0);
     }
   };

@@ -14,22 +14,23 @@ import TextFalt from "../../../_components/TextFalt";
 import { Step2LevfaktProps } from "../../_types/types";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useSteg2Levfakt } from "../../_hooks/useSteg2Levfakt";
+import { useBokforStore } from "../../_stores/bokforStore";
 registerLocale("sv", sv);
 
 export default function Steg2Levfakt(props: Step2LevfaktProps) {
+  // Hämta ALLA formulärfält från Zustand store istället för props
   const {
+    belopp,
+    setBelopp,
+    kommentar,
+    setKommentar,
     setCurrentStep,
-    exitLevfaktMode,
     fil,
     setFil,
     pdfUrl,
     setPdfUrl,
-    belopp,
-    setBelopp,
     transaktionsdatum,
     setTransaktionsdatum,
-    kommentar,
-    setKommentar,
     valtFörval,
     extrafält,
     setExtrafält,
@@ -43,7 +44,9 @@ export default function Steg2Levfakt(props: Step2LevfaktProps) {
     setFörfallodatum,
     betaldatum,
     setBetaldatum,
-  } = props;
+  } = useBokforStore();
+
+  const { exitLevfaktMode, utlaggMode } = props;
 
   const { visaLeverantorModal, setVisaLeverantorModal } = useSteg2Levfakt({
     fakturadatum,

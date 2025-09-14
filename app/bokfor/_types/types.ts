@@ -109,18 +109,18 @@ export interface ForvalKortProps {
 }
 
 export interface InformationProps {
-  belopp: number;
-  setBelopp: (value: number) => void;
-  transaktionsdatum: string | null;
-  setTransaktionsdatum: (value: string) => void;
+  belopp?: number; // Nu valfri - kommer från Zustand store
+  setBelopp?: (value: number) => void; // Nu valfri - kommer från Zustand store
+  transaktionsdatum?: string | null; // Nu valfri - kommer från Zustand store
+  setTransaktionsdatum?: (value: string) => void; // Nu valfri - kommer från Zustand store
   visaFakturadatum?: boolean;
   fakturadatum?: string | null;
   setFakturadatum?: (value: string) => void;
 }
 
 export interface CommentProps {
-  kommentar: string;
-  setKommentar: (value: string) => void;
+  kommentar?: string; // Nu valfri - kommer från Zustand store
+  setKommentar?: (value: string) => void; // Nu valfri - kommer från Zustand store
 }
 
 export interface FileUploadProps {
@@ -151,54 +151,54 @@ export interface PageProps {
 }
 
 export interface SokForvalProps {
-  favoritFörvalen: Förval[];
-  setCurrentStep: (val: number) => void;
-  setvaltFörval: (val: Förval) => void;
-  setKontonummer: (val: string) => void;
-  setKontobeskrivning: (val: string) => void;
+  favoritFörvalen?: Förval[]; // Nu valfri - kan hämtas från annan plats
+  setCurrentStep?: (val: number) => void; // Nu valfri - kommer från Zustand store
+  setvaltFörval?: (val: Förval) => void; // Nu valfri - kommer från Zustand store
+  setKontonummer?: (val: string) => void; // Nu valfri - kommer från Zustand store
+  setKontobeskrivning?: (val: string) => void; // Nu valfri - kommer från Zustand store
   levfaktMode?: boolean;
   utlaggMode?: boolean;
 }
 
 export interface Step2Props {
-  setCurrentStep: (step: number) => void;
-  fil: File | null;
-  setFil: (file: File | null) => void;
-  pdfUrl: string | null;
-  setPdfUrl: (url: string | null) => void;
-  belopp: number | null;
-  setBelopp: (amount: number | null) => void;
-  transaktionsdatum: string | null;
-  setTransaktionsdatum: (date: string | null) => void;
-  kommentar: string | null;
-  setKommentar: (comment: string | null) => void;
-  valtFörval: Förval | null;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-  setExtrafält: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
+  fil?: File | null; // Nu valfri - kommer från Zustand store
+  setFil?: (file: File | null) => void; // Nu valfri - kommer från Zustand store
+  pdfUrl?: string | null; // Nu valfri - kommer från Zustand store
+  setPdfUrl?: (url: string | null) => void; // Nu valfri - kommer från Zustand store
+  belopp?: number | null; // Nu valfri - kommer från Zustand store
+  setBelopp?: (amount: number | null) => void; // Nu valfri - kommer från Zustand store
+  transaktionsdatum?: string | null; // Nu valfri - kommer från Zustand store
+  setTransaktionsdatum?: (date: string | null) => void; // Nu valfri - kommer från Zustand store
+  kommentar?: string | null; // Nu valfri - kommer från Zustand store
+  setKommentar?: (comment: string | null) => void; // Nu valfri - kommer från Zustand store
+  valtFörval?: Förval | null; // Nu valfri - kommer från Zustand store
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>; // Nu valfri - kommer från Zustand store
+  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void; // Nu valfri - kommer från Zustand store
   utlaggMode?: boolean;
-  bokförSomFaktura?: boolean;
-  setBokförSomFaktura?: (value: boolean) => void;
-  kundfakturadatum?: string | null;
-  setKundfakturadatum?: (value: string | null) => void;
+  bokförSomFaktura?: boolean; // Nu valfri - kommer från Zustand store
+  setBokförSomFaktura?: (value: boolean) => void; // Nu valfri - kommer från Zustand store
+  kundfakturadatum?: string | null; // Nu valfri - kommer från Zustand store
+  setKundfakturadatum?: (value: string | null) => void; // Nu valfri - kommer från Zustand store
 }
 
 export interface Step2LevfaktProps {
-  favoritFörvalen: Förval[];
-  setCurrentStep: (step: number) => void;
+  favoritFörvalen?: Förval[]; // Nu valfri - kan hämtas från annan plats
+  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
   exitLevfaktMode?: () => void; // Ny: för att lämna levfakt-läge och visa checkbox igen
-  setKontonummer: (konto: string) => void;
-  setKontobeskrivning: (beskrivning: string) => void;
-  setFil: (fil: File | null) => void;
-  setPdfUrl: (url: string | null) => void;
-  setBelopp: (belopp: number | null) => void;
-  setTransaktionsdatum: (datum: string | null) => void;
-  setKommentar: (kommentar: string | null) => void;
-  setValtFörval: (förval: Förval | null) => void;
-  setExtrafält: (
+  setKontonummer?: (konto: string) => void; // Nu valfri - kommer från Zustand store
+  setKontobeskrivning?: (beskrivning: string) => void; // Nu valfri - kommer från Zustand store
+  setFil?: (fil: File | null) => void; // Nu valfri - kommer från Zustand store
+  setPdfUrl?: (url: string | null) => void; // Nu valfri - kommer från Zustand store
+  setBelopp?: (belopp: number | null) => void; // Nu valfri - kommer från Zustand store
+  setTransaktionsdatum?: (datum: string | null) => void; // Nu valfri - kommer från Zustand store
+  setKommentar?: (kommentar: string | null) => void; // Nu valfri - kommer från Zustand store
+  setValtFörval?: (förval: Förval | null) => void; // Nu valfri - kommer från Zustand store
+  setExtrafält?: (
     extrafält: Record<string, { label: string; debet: number; kredit: number }>
-  ) => void;
+  ) => void; // Nu valfri - kommer från Zustand store
   utlaggMode?: boolean;
-  // Aktuella states behövs för visning
+  // Aktuella states behövs för visning (alla nu valfria - kommer från store)
   fil?: File | null;
   pdfUrl?: string | null;
   belopp?: number | null;
@@ -206,17 +206,17 @@ export interface Step2LevfaktProps {
   kommentar?: string | null;
   valtFörval?: Förval | null;
   extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
-  // Leverantörsfaktura-specifika props
-  leverantör: Leverantör | null;
-  setLeverantör: (leverantör: any | null) => void;
-  fakturanummer: string | null;
-  setFakturanummer: (nummer: string | null) => void;
-  fakturadatum: string | null;
-  setFakturadatum: (datum: string | null) => void;
-  förfallodatum: string | null;
-  setFörfallodatum: (datum: string | null) => void;
-  betaldatum: string | null;
-  setBetaldatum: (datum: string | null) => void;
+  // Leverantörsfaktura-specifika props (behåller dessa som required för nu)
+  leverantör?: Leverantör | null;
+  setLeverantör?: (leverantör: any | null) => void;
+  fakturanummer?: string | null;
+  setFakturanummer?: (nummer: string | null) => void;
+  fakturadatum?: string | null;
+  setFakturadatum?: (datum: string | null) => void;
+  förfallodatum?: string | null;
+  setFörfallodatum?: (datum: string | null) => void;
+  betaldatum?: string | null;
+  setBetaldatum?: (datum: string | null) => void;
 }
 
 export interface Step3Props {
@@ -224,7 +224,7 @@ export interface Step3Props {
   kontobeskrivning?: string;
   fil?: File | null;
   belopp?: number;
-  transaktionsdatum: string;
+  transaktionsdatum?: string; // Nu valfri - kommer från Zustand store
   kommentar?: string;
   valtFörval?: Förval | null;
   setCurrentStep?: (step: number) => void;
@@ -406,7 +406,7 @@ export interface UseLaddaUppFilLevfaktProps {
 // useSokForval
 export interface UseSokForvalProps {
   favoritFörvalen: Förval[];
-  setCurrentStep: (step: number) => void;
+  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
   setvaltFörval: (förval: Förval) => void;
   setKontonummer: (nummer: string) => void;
   setKontobeskrivning: (beskrivning: string) => void;

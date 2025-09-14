@@ -9,146 +9,36 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { useBokfor } from "../_hooks/useBokfor";
+import { useBokforStore } from "../_stores/bokforStore";
 import type { BokforClientProps } from "../_types/types";
 
 registerLocale("sv", sv);
 
 export default function BokforClient({ initialData }: BokforClientProps) {
-  const {
-    favoritFörvalen,
-    isLevfaktMode,
-    isUtlaggMode,
-    currentStep,
-    kontonummer,
-    setKontonummer,
-    kontobeskrivning,
-    setKontobeskrivning,
-    fil,
-    setFil,
-    pdfUrl,
-    setPdfUrl,
-    belopp,
-    setBelopp,
-    transaktionsdatum,
-    setTransaktionsdatum,
-    kommentar,
-    setKommentar,
-    valtFörval,
-    setValtFörval,
-    extrafält,
-    setExtrafält,
-    leverantör,
-    setLeverantör,
-    fakturanummer,
-    setFakturanummer,
-    fakturadatum,
-    setFakturadatum,
-    förfallodatum,
-    setFörfallodatum,
-    betaldatum,
-    setBetaldatum,
-    bokförSomFaktura,
-    setBokförSomFaktura,
-    kundfakturadatum,
-    setKundfakturadatum,
-    handleSetCurrentStep,
-    exitLevfaktMode,
-  } = useBokfor(initialData);
+  // Nu behöver vi bara currentStep från Zustand store!
+  const { currentStep } = useBokforStore();
+
+  // Bara de hooks vi verkligen behöver för UI-logik som inte är formulärdata
+  const { favoritFörvalen, isLevfaktMode, isUtlaggMode, leverantör, exitLevfaktMode } =
+    useBokfor(initialData);
 
   return (
     <>
       {currentStep === 1 && (
         <SökFörval
           favoritFörvalen={favoritFörvalen}
-          setCurrentStep={handleSetCurrentStep}
-          setvaltFörval={setValtFörval}
-          setKontonummer={setKontonummer}
-          setKontobeskrivning={setKontobeskrivning}
           levfaktMode={isLevfaktMode}
           utlaggMode={isUtlaggMode}
         />
       )}
 
-      {currentStep === 2 && !isLevfaktMode && (
-        <Steg2
-          setCurrentStep={handleSetCurrentStep}
-          fil={fil}
-          setFil={setFil}
-          pdfUrl={pdfUrl}
-          setPdfUrl={setPdfUrl}
-          belopp={belopp}
-          setBelopp={setBelopp}
-          transaktionsdatum={transaktionsdatum}
-          setTransaktionsdatum={setTransaktionsdatum}
-          kommentar={kommentar}
-          setKommentar={setKommentar}
-          valtFörval={valtFörval}
-          extrafält={extrafält}
-          setExtrafält={setExtrafält}
-          bokförSomFaktura={bokförSomFaktura}
-          setBokförSomFaktura={setBokförSomFaktura}
-          kundfakturadatum={kundfakturadatum}
-          setKundfakturadatum={setKundfakturadatum}
-          utlaggMode={isUtlaggMode}
-        />
-      )}
+      {currentStep === 2 && !isLevfaktMode && <Steg2 utlaggMode={isUtlaggMode} />}
 
       {currentStep === 2 && isLevfaktMode && (
-        <Steg2Levfakt
-          favoritFörvalen={favoritFörvalen}
-          setCurrentStep={handleSetCurrentStep}
-          exitLevfaktMode={exitLevfaktMode}
-          setKontonummer={setKontonummer}
-          setKontobeskrivning={setKontobeskrivning}
-          setValtFörval={setValtFörval}
-          fil={fil}
-          setFil={setFil}
-          pdfUrl={pdfUrl}
-          setPdfUrl={setPdfUrl}
-          belopp={belopp}
-          setBelopp={setBelopp}
-          transaktionsdatum={transaktionsdatum}
-          setTransaktionsdatum={setTransaktionsdatum}
-          kommentar={kommentar}
-          setKommentar={setKommentar}
-          valtFörval={valtFörval}
-          extrafält={extrafält}
-          setExtrafält={setExtrafält}
-          leverantör={leverantör}
-          setLeverantör={setLeverantör}
-          fakturanummer={fakturanummer}
-          setFakturanummer={setFakturanummer}
-          fakturadatum={fakturadatum}
-          setFakturadatum={setFakturadatum}
-          förfallodatum={förfallodatum}
-          setFörfallodatum={setFörfallodatum}
-          betaldatum={betaldatum}
-          setBetaldatum={setBetaldatum}
-        />
+        <Steg2Levfakt exitLevfaktMode={exitLevfaktMode} utlaggMode={isUtlaggMode} />
       )}
 
-      {currentStep === 3 && (
-        <Steg3
-          kontonummer={kontonummer}
-          kontobeskrivning={kontobeskrivning ?? ""}
-          fil={fil ?? undefined}
-          belopp={belopp ?? 0}
-          transaktionsdatum={transaktionsdatum ?? ""}
-          kommentar={kommentar ?? ""}
-          valtFörval={valtFörval}
-          setCurrentStep={handleSetCurrentStep}
-          extrafält={extrafält}
-          utlaggMode={isUtlaggMode}
-          levfaktMode={isLevfaktMode}
-          leverantör={leverantör}
-          fakturanummer={fakturanummer ?? ""}
-          fakturadatum={fakturadatum ?? ""}
-          förfallodatum={förfallodatum ?? ""}
-          betaldatum={betaldatum ?? ""}
-          bokförSomFaktura={bokförSomFaktura}
-          kundfakturadatum={kundfakturadatum}
-        />
-      )}
+      {currentStep === 3 && <Steg3 utlaggMode={isUtlaggMode} levfaktMode={isLevfaktMode} />}
 
       {currentStep === 4 && <Steg4 />}
     </>

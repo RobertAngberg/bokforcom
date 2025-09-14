@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Förval } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 
 interface InitialData {
   favoritFörvalen: Förval[];
@@ -12,22 +13,28 @@ interface InitialData {
 
 export function useBokfor(initialData: InitialData) {
   const router = useRouter();
+  const { setCurrentStep } = useBokforStore();
+
+  // Initialisera store med currentStep från server data
+  useEffect(() => {
+    setCurrentStep(initialData.currentStep);
+  }, [initialData.currentStep, setCurrentStep]);
 
   // State variables - initiera med data från server
   const [favoritFörvalen] = useState<Förval[]>(initialData.favoritFörvalen);
   const [isLevfaktMode, setIsLevfaktMode] = useState(initialData.isLevfaktMode);
   const [isUtlaggMode] = useState(initialData.isUtlaggMode);
-  const [currentStep, setCurrentStep] = useState(initialData.currentStep);
+  // const [currentStep, setCurrentStep] = useState(initialData.currentStep); // Nu i store
   const [leverantör, setLeverantör] = useState(initialData.leverantör);
 
-  // Form state variables
+  // Form state variables (ta bort belopp och kommentar - nu i store)
   const [kontonummer, setKontonummer] = useState<string>("");
   const [kontobeskrivning, setKontobeskrivning] = useState<string | null>(null);
   const [fil, setFil] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [belopp, setBelopp] = useState<number | null>(null);
+  // const [belopp, setBelopp] = useState<number | null>(null); // Nu i store
   const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
-  const [kommentar, setKommentar] = useState<string | null>(null);
+  // const [kommentar, setKommentar] = useState<string | null>(null); // Nu i store
   const [valtFörval, setValtFörval] = useState<Förval | null>(null);
   const [extrafält, setExtrafält] = useState<
     Record<string, { label: string; debet: number; kredit: number }>
@@ -39,17 +46,7 @@ export function useBokfor(initialData: InitialData) {
   const [bokförSomFaktura, setBokförSomFaktura] = useState(false);
   const [kundfakturadatum, setKundfakturadatum] = useState<string | null>("");
 
-  // Handler functions
-  const handleSetCurrentStep = (step: number) => {
-    if (step === 1) {
-      // Återställ levfakt-läge så att standard Steg2 med checkbox kan visas igen
-      setIsLevfaktMode(false);
-      setLeverantör(null);
-      // Ta bort ev. query params levfakt & leverantorId
-      router.replace("/bokfor");
-    }
-    setCurrentStep(step);
-  };
+  // Handler functions (handleSetCurrentStep flyttad till store)
 
   const exitLevfaktMode = () => {
     setIsLevfaktMode(false);
@@ -64,8 +61,8 @@ export function useBokfor(initialData: InitialData) {
     isLevfaktMode,
     setIsLevfaktMode,
     isUtlaggMode,
-    currentStep,
-    setCurrentStep,
+    // currentStep, // Nu i store
+    // setCurrentStep, // Nu i store
     kontonummer,
     setKontonummer,
     kontobeskrivning,
@@ -74,12 +71,12 @@ export function useBokfor(initialData: InitialData) {
     setFil,
     pdfUrl,
     setPdfUrl,
-    belopp,
-    setBelopp,
+    // belopp, // Nu i store
+    // setBelopp, // Nu i store
     transaktionsdatum,
     setTransaktionsdatum,
-    kommentar,
-    setKommentar,
+    // kommentar, // Nu i store
+    // setKommentar, // Nu i store
     valtFörval,
     setValtFörval,
     extrafält,
@@ -100,7 +97,7 @@ export function useBokfor(initialData: InitialData) {
     setKundfakturadatum,
 
     // Handlers
-    handleSetCurrentStep,
+    // handleSetCurrentStep, // Nu i store
     exitLevfaktMode,
   };
 }

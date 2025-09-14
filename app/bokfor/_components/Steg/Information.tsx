@@ -8,16 +8,15 @@ import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { InformationProps } from "../../_types/types";
+import { useBokforStore } from "../../_stores/bokforStore";
 
 export default function Information({
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
   visaFakturadatum = false,
   fakturadatum,
   setFakturadatum,
 }: InformationProps) {
+  // Hämta från Zustand store istället för props
+  const { belopp, setBelopp, transaktionsdatum, setTransaktionsdatum } = useBokforStore();
   // Säker beloppvalidering
   const handleBeloppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -67,7 +66,7 @@ export default function Information({
         min="0"
         max="999999999"
         step="0.01"
-        value={belopp}
+        value={belopp || ""}
         onChange={handleBeloppChange}
       />
 
