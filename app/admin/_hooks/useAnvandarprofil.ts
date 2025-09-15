@@ -30,15 +30,15 @@ export function useAnvandarprofil() {
     }
   }, [userInfo, isLoadingUser, setUserInfo, setIsLoadingUser]);
 
-  // Update form when userInfo changes
+  // Update form when userInfo changes (but not during editing to preserve user changes)
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo && !isEditing) {
       setEditForm({
         name: userInfo.name || "",
         email: userInfo.email || "",
       });
     }
-  }, [userInfo]);
+  }, [userInfo, isEditing]);
 
   const onEdit = () => {
     setIsEditing(true);

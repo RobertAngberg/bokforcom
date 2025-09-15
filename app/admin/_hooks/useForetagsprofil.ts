@@ -42,10 +42,12 @@ export function useForetagsprofil() {
     }
   }, [foretagsInfo, isLoadingForetag, setForetagsInfo, setIsLoadingForetag]);
 
-  // Update local state when store changes
+  // Update local state when store changes (but not during editing to preserve user changes)
   useEffect(() => {
-    setForetagsProfil(foretagsInfo || TOM_FORETAG);
-  }, [foretagsInfo]);
+    if (!isEditingCompany) {
+      setForetagsProfil(foretagsInfo || TOM_FORETAG);
+    }
+  }, [foretagsInfo, isEditingCompany]);
 
   const handleEditCompany = () => {
     setIsEditingCompany(true);
@@ -54,6 +56,7 @@ export function useForetagsprofil() {
 
   const handleCancelCompany = () => {
     setIsEditingCompany(false);
+    setForetagsProfil(foretagsInfo || TOM_FORETAG); // Reset to original data
     setCompanyMessage(null);
   };
 
