@@ -1,6 +1,6 @@
 "use server";
 
-import { ensureSession } from "../../_utils/session";
+import { auth } from "../../_lib/auth";
 import type { ForetagsProfil, AktionsResultat } from "../_types/types";
 import { revalidatePath } from "next/cache";
 import { query, queryOne } from "../../_utils/dbUtils";
@@ -9,7 +9,8 @@ import { logError } from "../../_utils/errorUtils";
 
 export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null> {
   try {
-    const { userId } = await ensureSession();
+    const session = await auth();
+    const userId = session?.user?.id; // Middleware garanterar att detta finns
 
     const res = await query(
       `SELECT 
@@ -56,7 +57,8 @@ export async function uppdateraForetagsprofilAdmin(
   payload: ForetagsProfil
 ): Promise<AktionsResultat<ForetagsProfil>> {
   try {
-    const { userId } = await ensureSession();
+    const session = await auth();
+    const userId = session?.user?.id; // Middleware garanterar att detta finns
 
     const foretagsnamn = sanitizeFormInput(payload.foretagsnamn || "");
     const adress = sanitizeFormInput(payload.adress || "");

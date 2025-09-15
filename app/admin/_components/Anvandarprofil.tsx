@@ -2,10 +2,9 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { AnvandarprofilComponentProps } from "../_types/types";
 import { useAnvandarprofil } from "../_hooks/useAnvandarprofil";
 
-export default function Anvandarprofil({ initialUser, session }: AnvandarprofilComponentProps) {
+export default function Anvandarprofil({ initialUser }: { initialUser: any }) {
   const { userInfo, editForm, isEditing, isSaving, message, onEdit, onCancel, onSave, onChange } =
     useAnvandarprofil(initialUser);
   return (
@@ -69,22 +68,12 @@ export default function Anvandarprofil({ initialUser, session }: AnvandarprofilC
           <div className="space-y-3">
             <div>
               <span className="text-gray-400">Namn:</span>
-              <span className="text-white ml-2">{userInfo?.name || session?.user?.name}</span>
+              <span className="text-white ml-2">{userInfo?.name}</span>
             </div>
             <div>
               <span className="text-gray-400">Email:</span>
-              <span className="text-white ml-2">{userInfo?.email || session?.user?.email}</span>
+              <span className="text-white ml-2">{userInfo?.email}</span>
             </div>
-            {session?.user?.image && (
-              <div>
-                <span className="text-gray-400">Profilbild:</span>
-                <img
-                  src={session.user.image}
-                  alt="Profilbild"
-                  className="w-12 h-12 rounded-full ml-2 inline-block"
-                />
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { pool } from "../dbPool";
+import { pool } from "../../_lib/db";
 import { hamtaKontoIdMap } from "./kontoLookup";
 
 export interface TransaktionsPostInput {

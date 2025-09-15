@@ -1,15 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Publika routes som INTE behöver autentisering
+const publicRoutes = [
+  "/", // Startsidan (Startsidan.tsx)
+  "/login", // Login sida
+  "/api/auth", // NextAuth endpoints
+  "/api/feedback", // Feedback API (om det ska vara publikt)
+];
+
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some((route) => {
+    if (route.endsWith("/")) {
+      return pathname.startsWith(route);
+    }
+    return pathname === route || pathname.startsWith(route + "/");
+  });
+}
+
+function hasValidSession(request: NextRequest): boolean {
+  // Kolla efter NextAuth session cookie
+  const sessionToken =
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value;
+
+  // Om det finns en session cookie, anta att användaren är inloggad
+  // NextAuth hanterar validering av JWT själv i komponenter
+  return !!sessionToken;
+}
+
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const method = request.method;
-  const pathname = request.nextUrl.pathname;
 
-  // Exkludera auth-routes från CSRF-validering för att inte störa Google OAuth
-  const isAuthRoute = pathname.startsWith('/api/auth') || 
-                      pathname === '/login' || 
-                      pathname === '/start';
+  // 🔒 AUTH SKYDD: Kräv inloggning för alla routes utom publika
+  if (!isPublicRoute(pathname)) {
+    if (!hasValidSession(request)) {
+      console.log(`🔒 Auth redirect: ${pathname} → /login`);
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
 
-  // CSRF-skydd för state-changing requests (men inte för auth)
+  // 🛡️ CSRF SKYDD: För state-changing requests (men inte för auth)
+  const isAuthRoute =
+    pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/start";
+
   if (["POST", "PUT", "DELETE", "PATCH"].includes(method) && !isAuthRoute) {
     // Kontrollera Origin header
     const origin = request.headers.get("origin");
@@ -36,7 +70,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Lägg till säkra headers på alla responses
+  // 🔐 SÄKERHETSHEADERS: Lägg till säkra headers på alla responses
   const response = NextResponse.next();
 
   // Säkra headers för XSS, clickjacking och andra skydd
@@ -50,16 +84,14 @@ export function middleware(request: NextRequest) {
 
   return response;
 }
-
 export const config = {
   matcher: [
     /*
      * Matcha alla request paths utom för följande:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

@@ -1,4 +1,4 @@
-import { pool } from "./dbPool";
+import { pool } from "../_lib/db";
 
 /**
  * Exekverar en databas-operation med automatisk connection management

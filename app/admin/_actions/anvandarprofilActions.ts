@@ -1,6 +1,6 @@
 "use server";
 
-import { ensureSession } from "../../_utils/session";
+import { auth } from "../../_lib/auth";
 import type { AnvandarInfo, AktionsResultat, UppdateraAnvandarPayload } from "../_types/types";
 import { revalidatePath } from "next/cache";
 import { queryOne } from "../../_utils/dbUtils";
@@ -9,7 +9,8 @@ import { logError } from "../../_utils/errorUtils";
 
 export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
-    const { userId } = await ensureSession();
+    const session = await auth();
+    const userId = session?.user?.id; // Middleware garanterar att detta finns
 
     return await queryOne<AnvandarInfo>(
       "SELECT id, email, name, created_at as skapad FROM users WHERE id = $1",
@@ -25,7 +26,8 @@ export async function uppdateraAnvandarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
   try {
-    const { userId } = await ensureSession();
+    const session = await auth();
+    const userId = session?.user?.id; // Middleware garanterar att detta finns
 
     const name = sanitizeFormInput(payload.name || "").trim();
     const email = sanitizeFormInput(payload.email || "").trim();

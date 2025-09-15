@@ -1,4 +1,4 @@
-import { pool } from "../dbPool";
+import { pool } from "../../_lib/db";
 import { getUserId } from "../authUtils";
 
 export interface TransaktionspostStandard {

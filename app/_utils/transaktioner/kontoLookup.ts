@@ -1,4 +1,4 @@
-import { pool } from "../dbPool";
+import { pool } from "../../_lib/db";
 
 /**
  * Hämtar id för en lista av kontonummer i en query.
