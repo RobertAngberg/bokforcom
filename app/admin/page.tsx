@@ -1,22 +1,15 @@
 import MainLayout from "../_components/MainLayout";
-import { hamtaAnvandarInfo } from "./_actions/anvandarprofilActions";
-import { hamtaForetagsprofilAdmin } from "./_actions/foretagsprofilActions";
 import Anvandarprofil from "./_components/Anvandarprofil";
 import Foretagsprofil from "./_components/Foretagsprofil";
 import Farozon from "./_components/Farozon";
 
-export default async function AdminPage() {
-  const [initialUser, initialForetag] = await Promise.all([
-    hamtaAnvandarInfo(),
-    hamtaForetagsprofilAdmin(),
-  ]);
-
+export default function AdminPage() {
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-6 pt-2">
         <h1 className="text-3xl mb-8 text-center">Administration</h1>
-        <Anvandarprofil initialUser={initialUser} />
-        <Foretagsprofil initialForetag={initialForetag} />
+        <Anvandarprofil />
+        <Foretagsprofil />
         <Farozon />
         <div className="mb-4 text-center">
           <a

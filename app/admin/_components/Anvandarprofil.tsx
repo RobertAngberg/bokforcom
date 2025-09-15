@@ -4,9 +4,19 @@ import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
 import { useAnvandarprofil } from "../_hooks/useAnvandarprofil";
 
-export default function Anvandarprofil({ initialUser }: { initialUser: any }) {
-  const { userInfo, editForm, isEditing, isSaving, message, onEdit, onCancel, onSave, onChange } =
-    useAnvandarprofil(initialUser);
+export default function Anvandarprofil() {
+  const {
+    userInfo,
+    editForm,
+    isEditing,
+    isSaving,
+    isLoadingUser,
+    message,
+    onEdit,
+    onCancel,
+    onSave,
+    onChange,
+  } = useAnvandarprofil();
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -26,6 +36,10 @@ export default function Anvandarprofil({ initialUser }: { initialUser: any }) {
         >
           {message.text}
         </div>
+      )}
+
+      {isLoadingUser && (
+        <div className="mb-4 p-3 text-gray-400 text-center">Laddar användarinformation...</div>
       )}
 
       <div className="grid grid-cols-1 gap-4">

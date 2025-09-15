@@ -9,12 +9,10 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { useBokforClient } from "../_hooks/useBokforClient";
-import type { BokforClientProps } from "../_types/types";
 registerLocale("sv", sv);
 
-export default function BokforClient({ initialData }: BokforClientProps) {
-  const { currentStep, isLevfaktMode, isUtlaggMode, exitLevfaktMode } =
-    useBokforClient(initialData);
+export default function BokforClient() {
+  const { currentStep, isLevfaktMode, isUtlaggMode, exitLevfaktMode } = useBokforClient();
   return (
     <>
       {currentStep === 1 && <SökFörval />}

@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsprofilActions";
+import { useState, useEffect } from "react";
+import {
+  uppdateraForetagsprofilAdmin,
+  hamtaForetagsprofilAdmin,
+} from "../_actions/foretagsprofilActions";
+import { useAdminStore } from "../_stores/adminStore";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
 const TOM_FORETAG: ForetagsProfil = {
@@ -16,13 +20,32 @@ const TOM_FORETAG: ForetagsProfil = {
   webbplats: "",
 };
 
-export function useForetagsprofil(initialForetag: ForetagsProfil | null) {
-  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(
-    initialForetag || TOM_FORETAG
-  );
+export function useForetagsprofil() {
+  const { foretagsInfo, setForetagsInfo, isLoadingForetag, setIsLoadingForetag } = useAdminStore();
+
+  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(foretagsInfo || TOM_FORETAG);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
+
+  // Load company data if not already loaded
+  useEffect(() => {
+    if (!foretagsInfo && !isLoadingForetag) {
+      setIsLoadingForetag(true);
+      hamtaForetagsprofilAdmin()
+        .then(setForetagsInfo)
+        .catch((error) => {
+          console.error("Failed to load company info:", error);
+          setCompanyMessage({ type: "error", text: "Kunde inte ladda företagsinfo" });
+        })
+        .finally(() => setIsLoadingForetag(false));
+    }
+  }, [foretagsInfo, isLoadingForetag, setForetagsInfo, setIsLoadingForetag]);
+
+  // Update local state when store changes
+  useEffect(() => {
+    setForetagsProfil(foretagsInfo || TOM_FORETAG);
+  }, [foretagsInfo]);
 
   const handleEditCompany = () => {
     setIsEditingCompany(true);
@@ -39,6 +62,7 @@ export function useForetagsprofil(initialForetag: ForetagsProfil | null) {
     try {
       const result = await uppdateraForetagsprofilAdmin({ ...foretagsProfil });
       if (result.success) {
+        setForetagsInfo(foretagsProfil); // Update store with saved data
         setIsEditingCompany(false);
         setCompanyMessage({ type: "success", text: "Foretagsprofil uppdaterad!" });
       } else {
@@ -92,6 +116,7 @@ export function useForetagsprofil(initialForetag: ForetagsProfil | null) {
     foretagsProfil,
     isEditingCompany,
     isSavingCompany,
+    isLoadingForetag,
     companyMessage,
     onEditCompany: handleEditCompany,
     onCancelCompany: handleCancelCompany,

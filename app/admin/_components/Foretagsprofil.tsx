@@ -2,20 +2,20 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { ForetagsprofilComponentProps } from "../_types/types";
 import { useForetagsprofil } from "../_hooks/useForetagsprofil";
 
-export default function Foretagsprofil({ initialForetag }: ForetagsprofilComponentProps) {
+export default function Foretagsprofil() {
   const {
     foretagsProfil,
     isEditingCompany,
     isSavingCompany,
+    isLoadingForetag,
     companyMessage,
     onEditCompany,
     onCancelCompany,
     onSaveCompany,
     onChangeCompany,
-  } = useForetagsprofil(initialForetag);
+  } = useForetagsprofil();
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -39,6 +39,10 @@ export default function Foretagsprofil({ initialForetag }: ForetagsprofilCompone
         >
           {companyMessage.text}
         </div>
+      )}
+
+      {isLoadingForetag && (
+        <div className="mb-4 p-3 text-gray-400 text-center">Laddar företagsinformation...</div>
       )}
 
       <div className="grid grid-cols-1 gap-4">

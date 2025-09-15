@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import Navbar from "../Navbar";
+import Navbar from "./Navbar";
 
 export default function UtloggadNav() {
   const { data: session } = useSession();

@@ -1,24 +1,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useBokforStore } from "../_stores/bokforStore";
-import type { InitialData } from "../_types/types";
 
-export function useBokforClient(initialData: InitialData) {
+export function useBokforClient() {
   const router = useRouter();
   const { initStore, setLevfaktMode, currentStep, levfaktMode, utlaggMode } = useBokforStore();
 
-  // OK, useEffect är tyvärr nödvändigt för att undvika React-errors
+  // Initialisera store med defaults (ingen server data behövs)
   useEffect(() => {
     initStore({
-      favoritFörvalen: initialData.favoritFörvalen,
-      levfaktMode: initialData.isLevfaktMode,
-      utlaggMode: initialData.isUtlaggMode,
-      currentStep: initialData.currentStep,
+      favoritFörvalen: [], // Tom array som default
+      levfaktMode: false, // Default värde
+      utlaggMode: false, // Default värde
+      currentStep: 1, // Börja på steg 1
     });
   }, []); // Bara en gång
 
   // State variables som inte är i store än
-  const [leverantör, setLeverantör] = useState(initialData.leverantör);
+  const [leverantör, setLeverantör] = useState(null); // Default null
 
   // Handler functions
   const exitLevfaktMode = () => {

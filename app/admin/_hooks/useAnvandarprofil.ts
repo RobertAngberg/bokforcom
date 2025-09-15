@@ -1,22 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { uppdateraAnvandarInfo } from "../_actions/anvandarprofilActions";
-import type {
-  AnvandarInfo,
-  AnvandarRedigeringsFormular,
-  MeddelandeTillstand,
-} from "../_types/types";
+import { useState, useEffect } from "react";
+import { uppdateraAnvandarInfo, hamtaAnvandarInfo } from "../_actions/anvandarprofilActions";
+import { useAdminStore } from "../_stores/adminStore";
+import type { AnvandarRedigeringsFormular, MeddelandeTillstand } from "../_types/types";
 
-export function useAnvandarprofil(initialUser: AnvandarInfo | null) {
-  const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
+export function useAnvandarprofil() {
+  const { userInfo, setUserInfo, isLoadingUser, setIsLoadingUser } = useAdminStore();
+
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
-    name: initialUser?.name || "",
-    email: initialUser?.email || "",
+    name: userInfo?.name || "",
+    email: userInfo?.email || "",
   }));
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
+
+  // Load user data if not already loaded
+  useEffect(() => {
+    if (!userInfo && !isLoadingUser) {
+      setIsLoadingUser(true);
+      hamtaAnvandarInfo()
+        .then(setUserInfo)
+        .catch((error) => {
+          console.error("Failed to load user info:", error);
+          setMessage({ type: "error", text: "Kunde inte ladda användarinfo" });
+        })
+        .finally(() => setIsLoadingUser(false));
+    }
+  }, [userInfo, isLoadingUser, setUserInfo, setIsLoadingUser]);
+
+  // Update form when userInfo changes
+  useEffect(() => {
+    if (userInfo) {
+      setEditForm({
+        name: userInfo.name || "",
+        email: userInfo.email || "",
+      });
+    }
+  }, [userInfo]);
 
   const onEdit = () => {
     setIsEditing(true);
@@ -70,6 +92,7 @@ export function useAnvandarprofil(initialUser: AnvandarInfo | null) {
     editForm,
     isEditing,
     isSaving,
+    isLoadingUser,
     message,
     onEdit,
     onCancel,
