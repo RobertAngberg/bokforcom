@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { clearRememberMePreference } from "./login/_utils/rememberMe";
+import { clearRememberMePreference } from "../login/_utils/rememberMe";
 //#endregion
 
 export default function Navbar() {

@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import StartPage from "./start/page";
-import Startsidan from "./Startsidan";
+import Startsidan from "./_components/pages/Startsidan";
 
 export default function Page() {
   const { data: session, status } = useSession();

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Navbar from "./Navbar";
-import { ClientProviders } from "./ClientProviders";
+import Navbar from "./_components/Navbar";
+import { ClientProviders } from "./_lib/providers";
 import "./globals.css";
 import React from "react";
 

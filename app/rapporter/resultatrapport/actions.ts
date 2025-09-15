@@ -1,5 +1,5 @@
 "use server";
-import { pool } from "../../lib/db";
+import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
 

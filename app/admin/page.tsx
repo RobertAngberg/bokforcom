@@ -2,7 +2,7 @@ import MainLayout from "../_components/MainLayout";
 import { authFallback } from "../_components/AuthFallback";
 import { hamtaAnvandarInfo } from "./_actions/anvandarprofilActions";
 import { hamtaForetagsprofilAdmin } from "./_actions/foretagsprofilActions";
-import { auth } from "../lib/auth";
+import { auth } from "../_lib/auth";
 import Anvandarprofil from "./_components/Anvandarprofil";
 import Foretagsprofil from "./_components/Foretagsprofil";
 import Farozon from "./_components/Farozon";

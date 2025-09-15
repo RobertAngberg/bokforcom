@@ -1,6 +1,6 @@
 "use server";
 
-import { pool } from "../lib/db";
+import { pool } from "../_lib/db";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { getUserId } from "../_utils/authUtils";

@@ -1,7 +1,7 @@
 //#region
 "use server";
 
-import { pool } from "../lib/db";
+import { pool } from "../_lib/db";
 import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,

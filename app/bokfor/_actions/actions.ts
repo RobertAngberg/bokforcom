@@ -1,6 +1,6 @@
 "use server";
 
-import { pool } from "../../lib/db";
+import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 
