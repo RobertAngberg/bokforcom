@@ -1,8 +1,6 @@
-// app/_utils/blobUpload.ts
 "use server";
 
 import { put } from "@vercel/blob";
-import { createHash } from "crypto";
 import { getUserId } from "./authUtils";
 
 // Tillåtna filtyper och deras MIME-types

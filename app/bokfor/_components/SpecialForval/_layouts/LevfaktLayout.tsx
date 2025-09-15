@@ -17,7 +17,7 @@
 
 "use client";
 
-import { datePickerValue, datePickerOnChange } from "../../../../_utils/trueDatum";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
 import LaddaUppFil from "../../Steg/LaddaUppFil";
 import Kommentar from "../../Steg/Kommentar";
 import Forhandsgranskning from "../../Steg/Forhandsgranskning";

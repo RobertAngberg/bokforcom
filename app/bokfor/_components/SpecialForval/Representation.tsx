@@ -8,7 +8,7 @@ import Knapp from "../../../_components/Knapp";
 import DatePicker from "react-datepicker";
 import LaddaUppFil from "../Steg/LaddaUppFil";
 import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import { datePickerValue } from "../../../_utils/trueDatum";
+import { datePickerValue } from "../../../_utils/datum";
 import { useSteg2 } from "../../_hooks/useSteg2";
 
 interface RepresentationProps {

@@ -1,6 +1,3 @@
-// Centralized authentication utilities
-// Eliminerar repetitiv auth-kod genom hela applikationen
-
 import { auth } from "../../auth";
 import { redirect } from "next/navigation";
 

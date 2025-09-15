@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { hämtaAllaAnställda } from "../../personal/actions";
 import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../_utils/datum";
 import { formatCurrency, round } from "../../_utils/format";
 import { Anstalld } from "../_types/types";
 import { useBokforStore } from "../_stores/bokforStore";

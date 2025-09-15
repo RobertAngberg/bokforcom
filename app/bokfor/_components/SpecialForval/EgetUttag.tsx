@@ -7,7 +7,7 @@ import Knapp from "../../../_components/Knapp";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg/Steg3";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
+import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
 import { EgetUttagProps } from "../../_types/types";
 
 export default function EgetUttag({

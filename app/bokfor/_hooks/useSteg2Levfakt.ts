@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { datePickerOnChange } from "../../_utils/trueDatum";
+import { datePickerOnChange } from "../../_utils/datum";
 import { useBokforStore } from "../_stores/bokforStore";
 
 export function useSteg2Levfakt() {

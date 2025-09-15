@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { put } from "@vercel/blob";
 import { getUserId } from "../_utils/authUtils";
 import { validateSessionAttempt } from "../_utils/rateLimit";
-import { dateTillÅÅÅÅMMDD } from "../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

@@ -1,9 +1,4 @@
 /**
- * Centraliserade valideringsfunktioner för hela applikationen
- * Eliminerar upprepning av valideringslogik
- */
-
-/**
  * Validerar årtal för bokföringsoperationer
  */
 export function validateYear(year: number | string): boolean {

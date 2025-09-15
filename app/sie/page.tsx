@@ -12,7 +12,7 @@ import {
   rensaDubblettkonton,
   kontrolleraDubbletter,
 } from "./actions";
-import { dateTillÅÅÅÅMMDD } from "../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
 
 // CP850 (Code Page 850) till Unicode mapping för svenska tecken
 const CP850_TO_UNICODE: { [key: number]: string } = {

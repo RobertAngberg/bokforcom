@@ -1,10 +1,8 @@
 import { Pool } from "pg";
 
-// Centraliserad databaskonfiguration - flytta hit från _utils för bättre organisation
 // Singleton pattern för att återanvända samma connection pool
 
 declare global {
-  // eslint-disable-next-line no-var
   var __APP_PG_POOL__: Pool | undefined;
 }
 

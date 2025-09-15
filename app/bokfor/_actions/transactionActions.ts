@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/datum";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
@@ -96,7 +96,7 @@ export async function saveTransaction(formData: FormData) {
   // Formatera transaktionsdatum för PostgreSQL
   let formattedDate = "";
   if (transaktionsdatum) {
-    // Använd timezone-säker funktion från trueDatum.ts
+    // Använd timezone-säker funktion från datum.ts
     formattedDate = datumTillPostgreSQL(transaktionsdatum) || "";
   } else {
     throw new Error("Transaktionsdatum saknas");

@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
+import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
 import LaddaUppFil from "./LaddaUppFil";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";

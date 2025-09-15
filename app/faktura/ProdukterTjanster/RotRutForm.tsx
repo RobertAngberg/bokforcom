@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 
 // Registrera svensk locale för DatePicker
 registerLocale("sv", sv);

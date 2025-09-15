@@ -1,8 +1,3 @@
-/**
- * Centraliserade error handling utilities
- * Konsistent felhantering och logging över hela applikationen
- */
-
 export interface AppError {
   message: string;
   code?: string;

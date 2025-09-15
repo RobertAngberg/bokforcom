@@ -1,8 +1,4 @@
 /**
- * Text utilities för normalisering och säker hantering
- */
-
-/**
  * Normaliserar text för sökning och matchning
  * Gör text lowercase, tar bort endast kritiskt farliga tecken, normaliserar whitespace
  */

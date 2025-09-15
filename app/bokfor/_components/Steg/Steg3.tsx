@@ -7,7 +7,7 @@ import TillbakaPil from "../../../_components/TillbakaPil";
 import Toast from "../../../_components/Toast";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
 import { useSteg3 } from "../../_hooks/useSteg3";
 
 export default function Steg3() {

@@ -1,8 +1,3 @@
-/**
- * Centraliserade fil-utilities
- * Eliminerar upprepning av fil-hanteringslogik
- */
-
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 

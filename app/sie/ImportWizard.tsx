@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
 import { skapaKonton, importeraSieData } from "./actions";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/trueDatum";
+import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/datum";
 
 interface SieData {
   header: {

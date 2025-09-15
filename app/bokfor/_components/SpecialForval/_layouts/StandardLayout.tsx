@@ -6,7 +6,7 @@ import Forhandsgranskning from "../../Steg/Forhandsgranskning";
 import TextFalt from "../../../../_components/TextFalt";
 import Knapp from "../../../../_components/Knapp";
 import TillbakaPil from "../../../../_components/TillbakaPil";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/trueDatum";
+import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 import { useStandardLayout } from "../../../_hooks/useStandardLayout";
 import type { StandardLayoutProps } from "../../../_types/types";
 
