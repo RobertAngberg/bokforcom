@@ -10,64 +10,37 @@ import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useSteg2 } from "../../_hooks/useSteg2";
 
 export default function Steg2() {
-  const {
-    currentStep,
-    belopp,
-    setBelopp,
-    transaktionsdatum,
-    setTransaktionsdatum,
-    valtFörval,
-    extrafält,
-    setExtrafält,
-    levfaktMode,
-    utlaggMode,
-    bokförSomFaktura,
-    fil,
-    setFil,
-    pdfUrl,
-    setPdfUrl,
-    leverantör,
-    setCurrentStep,
-    bokföringsmetod,
-    fakturadatum,
-    setFakturadatum,
-    visaLeverantorModal,
-    handleOcrTextChange,
-    handleReprocessTrigger,
-    handleLeverantorCheckboxChange,
-    handleLeverantorRemove,
-    handleLeverantorSelected,
-    handleLeverantorModalClose,
-  } = useSteg2();
+  // Tidigare: lång lista med destructuring, nu grupperat
+  const { state, actions, handlers } = useSteg2();
 
   // Visa bara på steg 2 och inte i levfakt mode
-  if (currentStep !== 2 || levfaktMode) return null;
+  if (state.currentStep !== 2 || state.levfaktMode) return null;
 
-  if (valtFörval?.specialtyp) {
+  if (state.valtFörval?.specialtyp) {
     try {
-      const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`../SpecialForval/${state.valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
           mode="steg2"
-          setCurrentStep={setCurrentStep}
-          fil={fil}
-          setFil={setFil}
-          pdfUrl={pdfUrl}
-          setPdfUrl={setPdfUrl}
-          belopp={belopp}
-          setBelopp={setBelopp}
-          transaktionsdatum={transaktionsdatum}
-          setTransaktionsdatum={setTransaktionsdatum}
-          valtFörval={valtFörval}
-          extrafält={extrafält}
-          setExtrafält={setExtrafält}
+          setCurrentStep={actions.setCurrentStep}
+          fil={state.fil}
+          setFil={actions.setFil}
+          pdfUrl={state.pdfUrl}
+          setPdfUrl={actions.setPdfUrl}
+          belopp={state.belopp}
+          setBelopp={actions.setBelopp}
+          transaktionsdatum={state.transaktionsdatum}
+          setTransaktionsdatum={actions.setTransaktionsdatum}
+          valtFörval={state.valtFörval}
+          extrafält={state.extrafält}
+          setExtrafält={actions.setExtrafält}
         />
       );
     } catch (err) {
-      console.error("❌ Fel vid laddning av specialförval:", valtFörval.specialtyp, err);
+      console.error("❌ Fel vid laddning av specialförval:", state.valtFörval.specialtyp, err);
       return (
         <div className="p-10 text-white bg-red-900 text-center">
-          ⚠️ Kunde inte ladda specialförval: {valtFörval.specialtyp}
+          ⚠️ Kunde inte ladda specialförval: {state.valtFörval.specialtyp}
         </div>
       );
     }
@@ -76,50 +49,50 @@ export default function Steg2() {
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep(1)} />
+        <TillbakaPil onClick={() => actions.setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">
-          {utlaggMode ? "Steg 2: Fyll i uppgifter för utlägg" : "Steg 2: Fyll i uppgifter"}
+          {state.utlaggMode ? "Steg 2: Fyll i uppgifter för utlägg" : "Steg 2: Fyll i uppgifter"}
         </h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil
-              fil={fil}
-              setFil={setFil}
-              setPdfUrl={setPdfUrl}
-              setBelopp={setBelopp}
-              setTransaktionsdatum={setTransaktionsdatum}
-              onOcrTextChange={handleOcrTextChange}
-              skipBasicAI={bokförSomFaktura}
-              onReprocessTrigger={handleReprocessTrigger}
+              fil={state.fil}
+              setFil={actions.setFil}
+              setPdfUrl={actions.setPdfUrl}
+              setBelopp={actions.setBelopp}
+              setTransaktionsdatum={actions.setTransaktionsdatum}
+              onOcrTextChange={handlers.handleOcrTextChange}
+              skipBasicAI={state.bokförSomFaktura}
+              onReprocessTrigger={handlers.handleReprocessTrigger}
             />
 
-            {bokföringsmetod === "Fakturametoden" && !utlaggMode && (
+            {state.bokföringsmetod === "Fakturametoden" && !state.utlaggMode && (
               <div className="mt-4 mb-4">
                 <label className="flex items-center gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     className="w-4 h-4 text-amber-500 bg-gray-700 border-gray-600 rounded focus:ring-amber-500"
-                    checked={!!leverantör || visaLeverantorModal}
-                    onChange={(e) => handleLeverantorCheckboxChange(e.target.checked)}
+                    checked={!!state.leverantör || state.visaLeverantorModal}
+                    onChange={(e) => handlers.handleLeverantorCheckboxChange(e.target.checked)}
                   />
                   <span className="text-sm text-white">Bokför som leverantörsfaktura</span>
                 </label>
 
                 {/* Visa vald leverantör */}
-                {leverantör && (
+                {state.leverantör && (
                   <div className="mt-2 p-3 bg-gray-800 rounded border border-gray-600">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-green-400 font-medium">{leverantör.namn}</span>
-                        {leverantör.organisationsnummer && (
+                        <span className="text-green-400 font-medium">{state.leverantör.namn}</span>
+                        {state.leverantör.organisationsnummer && (
                           <span className="text-gray-400 text-sm ml-2">
-                            ({leverantör.organisationsnummer})
+                            ({state.leverantör.organisationsnummer})
                           </span>
                         )}
                       </div>
                       <button
-                        onClick={handleLeverantorRemove}
+                        onClick={handlers.handleLeverantorRemove}
                         className="text-red-400 hover:text-red-300 text-sm"
                       >
                         Ta bort
@@ -131,25 +104,25 @@ export default function Steg2() {
             )}
 
             <Information
-              visaFakturadatum={bokförSomFaktura}
-              fakturadatum={fakturadatum}
-              setFakturadatum={setFakturadatum}
+              visaFakturadatum={state.bokförSomFaktura}
+              fakturadatum={state.fakturadatum}
+              setFakturadatum={actions.setFakturadatum}
             />
             <Kommentar />
             <Knapp
               text="Bokför"
-              onClick={() => setCurrentStep(3)}
-              disabled={!belopp || !transaktionsdatum || !fil || !pdfUrl}
+              onClick={() => actions.setCurrentStep(3)}
+              disabled={!state.belopp || !state.transaktionsdatum || !state.fil || !state.pdfUrl}
               fullWidth
             />
           </div>
-          <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+          <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
         </div>
       </div>
       <ValjLeverantorModal
-        isOpen={visaLeverantorModal}
-        onClose={handleLeverantorModalClose}
-        onSelected={handleLeverantorSelected}
+        isOpen={state.visaLeverantorModal}
+        onClose={handlers.handleLeverantorModalClose}
+        onSelected={handlers.handleLeverantorSelected}
         skipNavigate={true}
       />
     </>

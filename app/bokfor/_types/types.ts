@@ -12,6 +12,7 @@ export interface InitialData {
 // ===== LAYOUT INTERFACES =====
 export interface StandardLayoutProps {
   title?: string;
+  onSubmit?: () => void;
 }
 
 // ===== GEMENSAMMA BASTYPER =====
