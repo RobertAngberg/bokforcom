@@ -1,15 +1,17 @@
 import React from "react";
 import TextFalt from "../../../_components/TextFalt";
 import { CommentProps } from "../../_types/types";
-import { useBokforStore } from "../../_stores/bokforStore";
+import { useKommentar } from "../../_hooks/useKommentar";
 
-export default function Kommentar({}: CommentProps) {
-  // Hämta från Zustand store istället för props
-  const { kommentar, setKommentar } = useBokforStore();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setKommentar(e.target.value);
-  };
+export default function Kommentar({
+  kommentar: propsKommentar,
+  setKommentar: propsSetKommentar,
+}: CommentProps = {}) {
+  // Använd hooken med optional props
+  const { kommentar, handleChange } = useKommentar({
+    kommentar: propsKommentar,
+    setKommentar: propsSetKommentar,
+  });
 
   return (
     <TextFalt

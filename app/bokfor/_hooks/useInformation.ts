@@ -1,32 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
-import { UseInformationProps } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 registerLocale("sv", sv);
 
-export function useInformation({
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  visaFakturadatum = false,
-  fakturadatum,
-  setFakturadatum,
-}: UseInformationProps) {
+export function useInformation() {
+  // Hämta data från Zustand store
+  const { belopp, setBelopp, transaktionsdatum, setTransaktionsdatum } = useBokforStore();
   // Säker beloppvalidering
-  const handleBeloppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const numValue = Number(value);
+  const handleBeloppChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const numValue = Number(value);
 
-    // Begränsa till rimliga värden
-    if (isNaN(numValue) || numValue < 0 || numValue > 999999999) {
-      return; // Ignorera ogiltiga värden
-    }
+      // Begränsa till rimliga värden
+      if (isNaN(numValue) || numValue < 0 || numValue > 999999999) {
+        return; // Ignorera ogiltiga värden
+      }
 
-    setBelopp(numValue);
-  };
+      setBelopp(numValue);
+    },
+    [setBelopp]
+  );
 
   // Datepicker setup
   useEffect(() => {
@@ -47,21 +44,18 @@ export function useInformation({
     }
   }, [transaktionsdatum, setTransaktionsdatum]);
 
-  const handleTransaktionsdatumChange = (date: Date | null) => {
-    setTransaktionsdatum(date ? date.toISOString() : "");
-  };
-
-  const handleFakturadatumChange = (date: Date | null) => {
-    if (setFakturadatum) {
-      setFakturadatum(date ? date.toISOString() : "");
-    }
-  };
+  const handleTransaktionsdatumChange = useCallback(
+    (date: Date | null) => {
+      setTransaktionsdatum(date ? date.toISOString() : "");
+    },
+    [setTransaktionsdatum]
+  );
 
   return {
+    belopp,
+    transaktionsdatum,
     handleBeloppChange,
     handleTransaktionsdatumChange,
-    handleFakturadatumChange,
     transaktionsdatumDate: transaktionsdatum ? new Date(transaktionsdatum) : new Date(),
-    fakturadatumDate: fakturadatum ? new Date(fakturadatum) : new Date(),
   };
 }

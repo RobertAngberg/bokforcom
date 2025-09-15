@@ -11,24 +11,11 @@ import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/true
 import { useSteg3 } from "../../_hooks/useSteg3";
 
 export default function Steg3() {
-  // Hämta ALL data från useSteg3 hook
   const {
     currentStep,
-    belopp,
-    kommentar,
-    kontonummer,
-    kontobeskrivning,
-    fil,
     transaktionsdatum,
     valtFörval,
-    extrafält,
     leverantör,
-    fakturanummer,
-    fakturadatum,
-    förfallodatum,
-    betaldatum,
-    bokförSomFaktura,
-    kundfakturadatum,
     levfaktMode,
     utlaggMode,
     setCurrentStep,
@@ -38,14 +25,9 @@ export default function Steg3() {
     loading,
     toast,
     hideToast,
-    momsSats,
-    moms,
-    beloppUtanMoms,
     ärFörsäljning,
     handleButtonClick,
     fallbackRows,
-    totalDebet,
-    totalKredit,
   } = useSteg3();
 
   // Visa bara på steg 3

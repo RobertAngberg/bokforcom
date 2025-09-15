@@ -18,7 +18,7 @@
 "use client";
 
 import { datePickerValue, datePickerOnChange } from "../../../../_utils/trueDatum";
-import LaddaUppFilLevfakt from "../../Steg/LaddaUppFilLevfakt";
+import LaddaUppFil from "../../Steg/LaddaUppFil";
 import Kommentar from "../../Steg/Kommentar";
 import Forhandsgranskning from "../../Steg/Forhandsgranskning";
 import TillbakaPil from "../../../../_components/TillbakaPil";
@@ -64,7 +64,7 @@ export default function LevfaktLayout({ children }: { children?: React.ReactNode
         <h1 className="mb-6 text-3xl text-center text-white">{title}</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
-            <LaddaUppFilLevfakt
+            <LaddaUppFil
               fil={fil || null}
               setFil={setFil}
               setPdfUrl={setPdfUrl}

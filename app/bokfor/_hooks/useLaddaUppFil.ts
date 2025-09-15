@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR } from "../_actions/ocrActions";
+import { extractDataFromOCR, extractDataFromOCRLevFakt } from "../_actions/ocrActions";
 import { compressImageFile } from "../../_utils/blobUpload";
 import Tesseract from "tesseract.js";
 import { UseLaddaUppFilProps } from "../_types/types";
@@ -100,6 +100,10 @@ export function useLaddaUppFil({
   onOcrTextChange,
   skipBasicAI,
   onReprocessTrigger,
+  setLeverantör,
+  setFakturadatum,
+  setFörfallodatum,
+  setFakturanummer,
 }: UseLaddaUppFilProps) {
   const [recognizedText, setRecognizedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -228,7 +232,17 @@ export function useLaddaUppFil({
 
     (async () => {
       try {
-        const parsed = await extractDataFromOCR(recognizedText);
+        // Determine if this is leverantörsfaktura mode
+        const isLevfaktMode = !!(
+          setLeverantör &&
+          setFakturadatum &&
+          setFörfallodatum &&
+          setFakturanummer
+        );
+
+        const parsed = isLevfaktMode
+          ? await extractDataFromOCRLevFakt(recognizedText)
+          : await extractDataFromOCR(recognizedText);
 
         if (parsed?.datum) {
           setTransaktionsdatum(parsed.datum);
@@ -236,6 +250,22 @@ export function useLaddaUppFil({
 
         if (parsed?.belopp && parsed.belopp > 0) {
           setBelopp(parsed.belopp);
+        }
+
+        // Leverantörsfaktura specific fields
+        if (isLevfaktMode && parsed) {
+          if (parsed.leverantör && setLeverantör) {
+            setLeverantör(parsed.leverantör);
+          }
+          if (parsed.fakturadatum && setFakturadatum) {
+            setFakturadatum(parsed.fakturadatum);
+          }
+          if (parsed.förfallodatum && setFörfallodatum) {
+            setFörfallodatum(parsed.förfallodatum);
+          }
+          if (parsed.fakturanummer && setFakturanummer) {
+            setFakturanummer(parsed.fakturanummer);
+          }
         }
 
         if (onOcrTextChange) {
@@ -248,7 +278,16 @@ export function useLaddaUppFil({
         setIsLoading(false);
       }
     })();
-  }, [recognizedText, setTransaktionsdatum, setBelopp, onOcrTextChange]);
+  }, [
+    recognizedText,
+    setTransaktionsdatum,
+    setBelopp,
+    onOcrTextChange,
+    setLeverantör,
+    setFakturadatum,
+    setFörfallodatum,
+    setFakturanummer,
+  ]);
 
   const clearFile = () => {
     setFil(null as any);

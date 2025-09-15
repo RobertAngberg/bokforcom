@@ -12,7 +12,6 @@ export interface InitialData {
 // ===== LAYOUT INTERFACES =====
 export interface StandardLayoutProps {
   title?: string;
-  onSubmit?: () => void;
 }
 
 // ===== GEMENSAMMA BASTYPER =====
@@ -56,16 +55,6 @@ export interface Anstalld {
   id: number;
   förnamn: string;
   efternamn: string;
-}
-
-export interface BokforClientProps {
-  initialData: {
-    favoritFörvalen: Förval[];
-    currentStep: number;
-    isLevfaktMode: boolean;
-    isUtlaggMode: boolean;
-    leverantör: any;
-  };
 }
 
 // ===== GEMENSAM PROPS BASE FÖR ALLA SPECIALFÖRVAL =====
@@ -147,18 +136,11 @@ export interface FileUploadProps {
   onOcrTextChange?: (text: string) => void;
   skipBasicAI?: boolean;
   onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
-}
-
-export interface FileUploadLevfaktProps {
-  setFil: (file: File | null) => void;
-  setPdfUrl: (url: string) => void;
-  setTransaktionsdatum: (datum: string) => void;
-  setBelopp: (belopp: number) => void;
-  fil: File | null;
-  setLeverantör: (leverantör: any | null) => void;
-  setFakturadatum: (datum: string | null) => void;
-  setFörfallodatum: (datum: string | null) => void;
-  setFakturanummer: (nummer: string) => void;
+  // Optional leverantörsfaktura props
+  setLeverantör?: (leverantör: any | null) => void;
+  setFakturadatum?: (datum: string | null) => void;
+  setFörfallodatum?: (datum: string | null) => void;
+  setFakturanummer?: (nummer: string) => void;
 }
 
 export interface PageProps {
@@ -343,23 +325,6 @@ export interface UseForvalKortProps {
   onClick: () => void;
 }
 
-// useKommentar
-export interface UseKommentarProps {
-  kommentar: string;
-  setKommentar: (kommentar: string) => void;
-}
-
-// useInformation
-export interface UseInformationProps {
-  belopp: number;
-  setBelopp: (belopp: number) => void;
-  transaktionsdatum: string;
-  setTransaktionsdatum: (datum: string) => void;
-  visaFakturadatum?: boolean;
-  fakturadatum?: string;
-  setFakturadatum?: (datum: string) => void;
-}
-
 // useForhandsgranskning
 export interface UseForhandsgranskningProps {
   fil: File | null | undefined;
@@ -368,14 +333,19 @@ export interface UseForhandsgranskningProps {
 
 // useLaddaUppFil
 export interface UseLaddaUppFilProps {
-  setFil: (file: File) => void;
+  setFil: (file: File | null) => void;
   setPdfUrl: (url: string) => void;
   setTransaktionsdatum: (datum: string) => void;
   setBelopp: (belopp: number) => void;
   fil: File | null;
   onOcrTextChange?: (text: string) => void;
   skipBasicAI?: boolean;
-  onReprocessTrigger?: () => void;
+  onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
+  // Optional leverantörsfaktura props
+  setLeverantör?: (leverantör: any | null) => void;
+  setFakturadatum?: (datum: string | null) => void;
+  setFörfallodatum?: (datum: string | null) => void;
+  setFakturanummer?: (nummer: string) => void;
 }
 
 // useLaddaUppFilLevfakt

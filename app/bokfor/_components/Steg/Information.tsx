@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import React from "react";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
@@ -8,46 +7,15 @@ import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { InformationProps } from "../../_types/types";
-import { useBokforStore } from "../../_stores/bokforStore";
+import { useInformation } from "../../_hooks/useInformation";
 
 export default function Information({
   visaFakturadatum = false,
   fakturadatum,
   setFakturadatum,
 }: InformationProps) {
-  // Hämta från Zustand store istället för props
-  const { belopp, setBelopp, transaktionsdatum, setTransaktionsdatum } = useBokforStore();
-  // Säker beloppvalidering
-  const handleBeloppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const numValue = Number(value);
-
-    // Begränsa till rimliga värden
-    if (isNaN(numValue) || numValue < 0 || numValue > 999999999) {
-      return; // Ignorera ogiltiga värden
-    }
-
-    setBelopp(numValue);
-  };
-
-  // Datepicker
-  useEffect(() => {
-    const datePickerEl = document.querySelector(".react-datepicker-wrapper");
-    if (datePickerEl) {
-      (datePickerEl as HTMLElement).style.width = "100%";
-    }
-
-    const inputEl = document.querySelector(".react-datepicker__input-container input");
-    if (inputEl) {
-      (inputEl as HTMLElement).className =
-        "w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700";
-    }
-
-    if (!transaktionsdatum) {
-      // Default dagens datum
-      setTransaktionsdatum(new Date().toISOString());
-    }
-  }, [transaktionsdatum, setTransaktionsdatum]);
+  const { belopp, handleBeloppChange, handleTransaktionsdatumChange, transaktionsdatumDate } =
+    useInformation();
 
   return (
     <div className="padder">
@@ -98,10 +66,8 @@ export default function Information({
       <DatePicker
         className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
         id="datum"
-        selected={transaktionsdatum ? new Date(transaktionsdatum) : new Date()}
-        onChange={(date) => {
-          setTransaktionsdatum(date ? date.toISOString() : "");
-        }}
+        selected={transaktionsdatumDate}
+        onChange={handleTransaktionsdatumChange}
         dateFormat="yyyy-MM-dd"
         locale="sv"
         required

@@ -5,7 +5,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/trueDatum";
-import LaddaUppFilLevfakt from "./LaddaUppFilLevfakt";
+import LaddaUppFil from "./LaddaUppFil";
 import Kommentar from "./Kommentar";
 import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
@@ -97,7 +97,7 @@ export default function Steg2Levfakt() {
         <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Leverantörsfaktura</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
-            <LaddaUppFilLevfakt
+            <LaddaUppFil
               fil={fil || null}
               setFil={setFil}
               setPdfUrl={setPdfUrl}
