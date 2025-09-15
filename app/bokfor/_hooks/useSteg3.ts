@@ -6,30 +6,38 @@ import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../_utils/trueDatum";
 import { formatCurrency, round } from "../../_utils/format";
-import { Anstalld, Step3Props } from "../_types/types";
+import { Anstalld } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 
-export function useSteg3({
-  utlaggMode = false,
-  levfaktMode = false,
-  bokförSomFaktura = false,
-  valtFörval = null,
-  belopp = 0,
-  transaktionsdatum,
-  kommentar = "",
-  extrafält = {},
-  leverantör = null,
-  fakturanummer = null,
-  fakturadatum = null,
-  förfallodatum = null,
-  betaldatum = null,
-  kundfakturadatum = null,
-  fil,
-  setCurrentStep,
-}: Partial<Step3Props> & {
-  utlaggMode?: boolean;
-  levfaktMode?: boolean;
-  bokförSomFaktura?: boolean;
-}) {
+export function useSteg3() {
+  // Hämta ALL data från Zustand store
+  const {
+    belopp,
+    kommentar,
+    setCurrentStep,
+    kontonummer,
+    kontobeskrivning,
+    fil,
+    transaktionsdatum,
+    valtFörval,
+    extrafält,
+    leverantör,
+    fakturanummer,
+    fakturadatum,
+    förfallodatum,
+    betaldatum,
+    bokförSomFaktura,
+    kundfakturadatum,
+    currentStep,
+    levfaktMode,
+    utlaggMode,
+  } = useBokforStore();
+
+  // Safe defaults för null värden
+  const safeBelopp = belopp ?? 0;
+  const safeKommentar = kommentar ?? "";
+  const safeTransaktionsdatum = transaktionsdatum ?? "";
+
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
   const [anstalldId, setAnstalldId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -78,8 +86,8 @@ export function useSteg3({
 
   // Moms- och beloppsberäkning
   const momsSats = valtFörval?.momssats ?? 0;
-  const moms = +(belopp * (momsSats / (1 + momsSats))).toFixed(2);
-  const beloppUtanMoms = +(belopp - moms).toFixed(2);
+  const moms = +(safeBelopp * (momsSats / (1 + momsSats))).toFixed(2);
+  const beloppUtanMoms = +(safeBelopp - moms).toFixed(2);
 
   // Kolla om det är försäljning inom leverantörsfaktura-mode
   const ärFörsäljning =
@@ -95,11 +103,11 @@ export function useSteg3({
     if (typ === "debet") {
       // Specifikt för 1930 vid försäljning
       if (kontonummer === "1930" && ärFörsäljning) {
-        return belopp;
+        return safeBelopp;
       }
       // Kundfordringar (1510) ska få hela beloppet som debet
       if (kontonummer === "1510") {
-        return belopp;
+        return safeBelopp;
       }
       // Alla andra klass 1-konton får beloppUtanMoms
       if (klass === "1") return beloppUtanMoms;
@@ -122,14 +130,14 @@ export function useSteg3({
     }
     // Utlägg (2890) ska få hela beloppet som kredit
     if (kontonummer === "2890") {
-      return belopp;
+      return safeBelopp;
     }
     // Leverantörsskulder (2440) ska få hela beloppet som kredit
     if (kontonummer === "2440") {
-      return belopp;
+      return safeBelopp;
     }
     // Alla andra klass 1-konton får belopp som kredit
-    if (klass === "1") return belopp;
+    if (klass === "1") return safeBelopp;
     if (klass === "2") {
       return moms; // Utgående moms ska vara kredit vid försäljning
     }
@@ -222,8 +230,8 @@ export function useSteg3({
       // För leverantörsfaktura: använd fakturadatum som transaktionsdatum
       const effektivtTransaktionsdatum = levfaktMode ? fakturadatum || "" : transaktionsdatum || "";
       formData.set("transaktionsdatum", effektivtTransaktionsdatum);
-      formData.set("kommentar", kommentar);
-      formData.set("belopp", belopp.toString());
+      formData.set("kommentar", safeKommentar);
+      formData.set("belopp", safeBelopp.toString());
       formData.set("moms", moms.toString());
       formData.set("beloppUtanMoms", beloppUtanMoms.toString());
       formData.set("valtFörval", JSON.stringify(valtFörval));
@@ -316,30 +324,30 @@ export function useSteg3({
             if (utlaggMode && kontoNr === "1930") {
               kontoNr = "2890";
               namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
-              beloppAttVisa = belopp;
+              beloppAttVisa = safeBelopp;
             }
             // Om kundfaktura-mode (bokför som faktura), byt ut 1930 mot 1510
             else if (bokförSomFaktura && kontoNr === "1930") {
               kontoNr = "1510";
               namn = `1510 Kundfordringar`;
-              beloppAttVisa = belopp;
+              beloppAttVisa = safeBelopp;
             }
             // Om leverantörsfaktura-mode (inköp), byt ut 1930 mot 2440
             else if (levfaktMode && !ärFörsäljning && kontoNr === "1930") {
               kontoNr = "2440";
               namn = `2440 Leverantörsskulder`;
-              beloppAttVisa = belopp;
+              beloppAttVisa = safeBelopp;
             }
             // Om kundfaktura (försäljning), byt ut 1930 mot 1510
             else if (levfaktMode && ärFörsäljning && kontoNr === "1930") {
               kontoNr = "1510";
               namn = `1510 Kundfordringar`;
-              beloppAttVisa = belopp;
+              beloppAttVisa = safeBelopp;
             } else if (kontoNr?.startsWith("26")) {
               beloppAttVisa = moms;
             } else if (kontoNr === "1930") {
               // CHECKPOINT FIX 2025-07-31: 1930 ska visa hela beloppet, inte beloppUtanMoms
-              beloppAttVisa = belopp;
+              beloppAttVisa = safeBelopp;
             } else {
               beloppAttVisa = beloppUtanMoms;
             }
@@ -368,6 +376,28 @@ export function useSteg3({
   const totalKredit = fallbackRows.reduce((sum, r) => sum + r.kredit, 0);
 
   return {
+    // Store data som komponenten behöver
+    currentStep,
+    belopp: safeBelopp,
+    kommentar: safeKommentar,
+    kontonummer,
+    kontobeskrivning,
+    fil,
+    transaktionsdatum: safeTransaktionsdatum,
+    valtFörval,
+    extrafält,
+    leverantör,
+    fakturanummer,
+    fakturadatum,
+    förfallodatum,
+    betaldatum,
+    bokförSomFaktura,
+    kundfakturadatum,
+    levfaktMode,
+    utlaggMode,
+    setCurrentStep,
+
+    // Hook-specific data
     anstallda,
     setAnstallda,
     anstalldId,

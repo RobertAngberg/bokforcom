@@ -11,15 +11,18 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
-import { Step2LevfaktProps } from "../../_types/types";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useSteg2Levfakt } from "../../_hooks/useSteg2Levfakt";
-import { useBokforStore } from "../../_stores/bokforStore";
 registerLocale("sv", sv);
 
-export default function Steg2Levfakt(props: Step2LevfaktProps) {
-  // Hämta ALLA formulärfält från Zustand store istället för props
+export default function Steg2Levfakt() {
   const {
+    currentStep,
+    levfaktMode,
+    fakturadatum,
+    setFakturadatum,
+    förfallodatum,
+    setFörfallodatum,
     belopp,
     setBelopp,
     kommentar,
@@ -38,24 +41,13 @@ export default function Steg2Levfakt(props: Step2LevfaktProps) {
     setLeverantör,
     fakturanummer,
     setFakturanummer,
-    fakturadatum,
-    setFakturadatum,
-    förfallodatum,
-    setFörfallodatum,
-    betaldatum,
-    setBetaldatum,
-  } = useBokforStore();
+    visaLeverantorModal,
+    setVisaLeverantorModal,
+    exitLevfaktMode,
+  } = useSteg2Levfakt();
 
-  const { exitLevfaktMode, utlaggMode } = props;
-
-  const { visaLeverantorModal, setVisaLeverantorModal } = useSteg2Levfakt({
-    fakturadatum,
-    setFakturadatum,
-    förfallodatum,
-    setFörfallodatum,
-    betaldatum,
-    setBetaldatum,
-  });
+  // Visa bara på steg 2 och i levfakt mode
+  if (currentStep !== 2 || !levfaktMode) return null;
 
   if (valtFörval?.specialtyp) {
     try {

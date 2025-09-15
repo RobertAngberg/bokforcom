@@ -12,6 +12,7 @@ export function useSokForval() {
     favoritFörvalen,
     levfaktMode,
     utlaggMode,
+    currentStep,
     setCurrentStep,
     setValtFörval,
     setKontonummer,
@@ -180,6 +181,7 @@ export function useSokForval() {
   };
 
   return {
+    currentStep,
     searchText,
     results,
     highlightedIndex,

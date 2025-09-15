@@ -6,6 +6,7 @@ import { useSokForval } from "../_hooks/useSokForval";
 
 export default function SokForval() {
   const {
+    currentStep,
     searchText,
     results,
     highlightedIndex,
@@ -16,6 +17,8 @@ export default function SokForval() {
     getTitle,
   } = useSokForval();
 
+  // Visa bara på steg 1
+  if (currentStep !== 1) return null;
   return (
     <div className="w-full">
       <h1 className="mb-8 text-3xl text-center text-white">{getTitle()}</h1>

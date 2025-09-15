@@ -3,39 +3,38 @@
 import { useState, useEffect, useCallback } from "react";
 import { hämtaBokföringsmetod } from "../_actions/actions";
 import { extractDataFromOCRKundfaktura } from "../_actions/ocrActions";
-import { Step2Props } from "../_types/types";
+import { useBokforStore } from "../_stores/bokforStore";
 
-export function useSteg2({
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
-  valtFörval,
-  extrafält,
-  setExtrafält,
-  utlaggMode,
-  bokförSomFaktura: initialBokförSomFaktura = false,
-  setBokförSomFaktura: externalSetBokförSomFaktura,
-  kundfakturadatum: initialKundfakturadatum = null,
-  setKundfakturadatum: externalSetKundfakturadatum,
-}: Partial<Step2Props>) {
-  // State för fakturametod-funktionalitet
+export function useSteg2() {
+  // Hämta ALL data från Zustand store
+  const {
+    belopp,
+    setBelopp,
+    transaktionsdatum,
+    setTransaktionsdatum,
+    valtFörval,
+    extrafält,
+    setExtrafält,
+    currentStep,
+    levfaktMode,
+    utlaggMode,
+    bokförSomFaktura,
+    setBokförSomFaktura,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
+    leverantör,
+    setLeverantör,
+    setCurrentStep,
+  } = useBokforStore();
+
+  // Lokal state bara för denna komponent
   const [bokföringsmetod, setBokföringsmetod] = useState<string>("");
-  const [bokförSomFaktura, setBokförSomFaktura] = useState<boolean>(initialBokförSomFaktura);
-  const [fakturadatum, setFakturadatum] = useState<string | null>(initialKundfakturadatum);
+  const [fakturadatum, setFakturadatum] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState<string>("");
   const [reprocessFile, setReprocessFile] = useState<(() => Promise<void>) | null>(null);
   const [visaLeverantorModal, setVisaLeverantorModal] = useState(false);
-
-  // Heuristik: detektera kostnads- vs intäktskonton i valt förval
-  const harIntaktskonto = valtFörval?.konton?.some((k) => k.kontonummer?.startsWith("3")) || false;
-  const harKostnadskonto =
-    valtFörval?.konton?.some((k) => /^(4|5|6|7|8)/.test(k.kontonummer ?? "")) || false;
-  // Föreslå leverantörsfaktura om användaren kör fakturametoden, vi hittat kostnadskonto och inga intäktskonton
-  const foreslaLevfakt =
-    bokföringsmetod === "Fakturametoden" && harKostnadskonto && !harIntaktskonto;
 
   // DEBUG: Logga heuristik-data (utan att påverka logiken)
   useEffect(() => {
@@ -55,28 +54,7 @@ export function useSteg2({
     } catch (err) {
       console.warn("Heuristik debug misslyckades:", err);
     }
-  }, [
-    bokföringsmetod,
-    valtFörval,
-    harIntaktskonto,
-    harKostnadskonto,
-    foreslaLevfakt,
-    extrafält,
-    utlaggMode,
-  ]);
-
-  // Sync med external state när det finns
-  useEffect(() => {
-    if (externalSetBokförSomFaktura) {
-      externalSetBokförSomFaktura(bokförSomFaktura);
-    }
-  }, [bokförSomFaktura, externalSetBokförSomFaktura]);
-
-  useEffect(() => {
-    if (externalSetKundfakturadatum) {
-      externalSetKundfakturadatum(fakturadatum);
-    }
-  }, [fakturadatum, externalSetKundfakturadatum]);
+  }, [bokföringsmetod, valtFörval, extrafält, utlaggMode]);
 
   // Hämta användarens bokföringsmetod
   useEffect(() => {
@@ -113,21 +91,90 @@ export function useSteg2({
     }
   }, [bokförSomFaktura, ocrText, setBelopp, setFakturadatum]);
 
+  // Callback functions som komponenten behöver
+  const handleOcrTextChange = useCallback((text: string) => {
+    setOcrText(text);
+  }, []);
+
+  const handleReprocessTrigger = useCallback((reprocessFn: () => Promise<void>) => {
+    setReprocessFile(() => reprocessFn);
+  }, []);
+
+  const handleCheckboxChange = useCallback(
+    async (checked: boolean) => {
+      setBokförSomFaktura(checked);
+
+      if (checked && reprocessFile) {
+        await reprocessFile();
+      }
+    },
+    [reprocessFile, setBokförSomFaktura]
+  );
+
+  const handleLeverantorCheckboxChange = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        setVisaLeverantorModal(true);
+      } else {
+        setVisaLeverantorModal(false);
+        setLeverantör(null);
+      }
+    },
+    [setVisaLeverantorModal, setLeverantör]
+  );
+
+  const handleLeverantorRemove = useCallback(() => {
+    setLeverantör(null);
+    setVisaLeverantorModal(false);
+  }, [setLeverantör, setVisaLeverantorModal]);
+
+  const handleLeverantorSelected = useCallback(
+    (leverantörData: any) => {
+      setLeverantör(leverantörData);
+      setVisaLeverantorModal(false);
+    },
+    [setLeverantör, setVisaLeverantorModal]
+  );
+
+  const handleLeverantorModalClose = useCallback(() => {
+    setVisaLeverantorModal(false);
+  }, [setVisaLeverantorModal]);
+
   return {
-    bokföringsmetod,
-    setBokföringsmetod,
+    // Store data som komponenten behöver
+    currentStep,
+    belopp,
+    setBelopp,
+    transaktionsdatum,
+    setTransaktionsdatum,
+    valtFörval,
+    extrafält,
+    setExtrafält,
+    levfaktMode,
+    utlaggMode,
     bokförSomFaktura,
-    setBokförSomFaktura,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
+    leverantör,
+    setLeverantör,
+    setCurrentStep,
+
+    // Hook-specific data
+    bokföringsmetod,
     fakturadatum,
     setFakturadatum,
-    ocrText,
-    setOcrText,
-    reprocessFile,
-    setReprocessFile,
     visaLeverantorModal,
     setVisaLeverantorModal,
-    harIntaktskonto,
-    harKostnadskonto,
-    foreslaLevfakt,
+
+    // Callback functions
+    handleOcrTextChange,
+    handleReprocessTrigger,
+    handleCheckboxChange,
+    handleLeverantorCheckboxChange,
+    handleLeverantorRemove,
+    handleLeverantorSelected,
+    handleLeverantorModalClose,
   };
 }

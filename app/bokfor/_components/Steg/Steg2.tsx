@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import LaddaUppFil from "./LaddaUppFil";
 import Information from "./Information";
 import Kommentar from "./Kommentar";
@@ -8,82 +7,41 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
-import { Step2Props } from "../../_types/types";
 import { useSteg2 } from "../../_hooks/useSteg2";
-import { useBokforStore } from "../../_stores/bokforStore";
 
-export default function Steg2(props: Step2Props) {
-  // ✨ CLEAN: Alla formulärfält från Zustand store
+export default function Steg2() {
   const {
+    currentStep,
     belopp,
     setBelopp,
-    kommentar,
-    setKommentar,
-    setCurrentStep,
-    fil,
-    setFil,
-    pdfUrl,
-    setPdfUrl,
     transaktionsdatum,
     setTransaktionsdatum,
     valtFörval,
     extrafält,
     setExtrafält,
+    levfaktMode,
+    utlaggMode,
     bokförSomFaktura,
-    setBokförSomFaktura,
-    kundfakturadatum,
-    setKundfakturadatum,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
     leverantör,
-    setLeverantör,
-  } = useBokforStore();
-
-  // Bara UI-läge från props
-  const { utlaggMode } = props;
-
-  const {
+    setCurrentStep,
     bokföringsmetod,
-    setBokföringsmetod,
     fakturadatum,
     setFakturadatum,
-    ocrText,
-    setOcrText,
-    reprocessFile,
-    setReprocessFile,
     visaLeverantorModal,
-    setVisaLeverantorModal,
-    harIntaktskonto,
-    harKostnadskonto,
-    foreslaLevfakt,
-  } = useSteg2({
-    ...props,
-    // Skicka store-värden till hook
-    bokförSomFaktura,
-    setBokförSomFaktura,
-    kundfakturadatum,
-    setKundfakturadatum,
-  });
+    handleOcrTextChange,
+    handleReprocessTrigger,
+    handleLeverantorCheckboxChange,
+    handleLeverantorRemove,
+    handleLeverantorSelected,
+    handleLeverantorModalClose,
+  } = useSteg2();
 
-  // Hantera OCR-text från LaddaUppFil
-  const handleOcrTextChange = useCallback((text: string) => {
-    setOcrText(text);
-  }, []);
-
-  // Ta emot reprocess-funktionen från LaddaUppFil
-  const handleReprocessTrigger = useCallback((reprocessFn: () => Promise<void>) => {
-    setReprocessFile(() => reprocessFn);
-  }, []);
-
-  // Hantera checkbox-klick - trigga OCR igen för fakturamoden
-  const handleCheckboxChange = useCallback(
-    async (checked: boolean) => {
-      setBokförSomFaktura(checked);
-
-      if (checked && reprocessFile) {
-        await reprocessFile();
-      }
-    },
-    [reprocessFile]
-  );
+  // Visa bara på steg 2 och inte i levfakt mode
+  if (currentStep !== 2 || levfaktMode) return null;
 
   if (valtFörval?.specialtyp) {
     try {
@@ -100,8 +58,6 @@ export default function Steg2(props: Step2Props) {
           setBelopp={setBelopp}
           transaktionsdatum={transaktionsdatum}
           setTransaktionsdatum={setTransaktionsdatum}
-          kommentar={kommentar}
-          setKommentar={setKommentar}
           valtFörval={valtFörval}
           extrafält={extrafält}
           setExtrafält={setExtrafält}
@@ -127,7 +83,6 @@ export default function Steg2(props: Step2Props) {
         </h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
-            {/* (Tidigare info-rutor borttagna) */}
             <LaddaUppFil
               fil={fil}
               setFil={setFil}
@@ -146,14 +101,7 @@ export default function Steg2(props: Step2Props) {
                     type="checkbox"
                     className="w-4 h-4 text-amber-500 bg-gray-700 border-gray-600 rounded focus:ring-amber-500"
                     checked={!!leverantör || visaLeverantorModal}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setVisaLeverantorModal(true);
-                      } else {
-                        setVisaLeverantorModal(false);
-                        setLeverantör(null);
-                      }
-                    }}
+                    onChange={(e) => handleLeverantorCheckboxChange(e.target.checked)}
                   />
                   <span className="text-sm text-white">Bokför som leverantörsfaktura</span>
                 </label>
@@ -171,10 +119,7 @@ export default function Steg2(props: Step2Props) {
                         )}
                       </div>
                       <button
-                        onClick={() => {
-                          setLeverantör(null);
-                          setVisaLeverantorModal(false);
-                        }}
+                        onClick={handleLeverantorRemove}
                         className="text-red-400 hover:text-red-300 text-sm"
                       >
                         Ta bort
@@ -201,14 +146,10 @@ export default function Steg2(props: Step2Props) {
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
         </div>
       </div>
-      {/* Leverantörsmodal */}
       <ValjLeverantorModal
         isOpen={visaLeverantorModal}
-        onClose={() => setVisaLeverantorModal(false)}
-        onSelected={(leverantör) => {
-          setLeverantör(leverantör);
-          setVisaLeverantorModal(false);
-        }}
+        onClose={handleLeverantorModalClose}
+        onSelected={handleLeverantorSelected}
         skipNavigate={true}
       />
     </>

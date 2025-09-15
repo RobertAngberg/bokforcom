@@ -1,23 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { datePickerOnChange } from "../../_utils/trueDatum";
+import { useBokforStore } from "../_stores/bokforStore";
 
-export function useSteg2Levfakt({
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-  betaldatum,
-  setBetaldatum,
-}: {
-  fakturadatum?: string | null;
-  setFakturadatum?: (datum: string | null) => void;
-  förfallodatum?: string | null;
-  setFörfallodatum?: (datum: string | null) => void;
-  betaldatum?: string | null;
-  setBetaldatum?: (datum: string | null) => void;
-}) {
+export function useSteg2Levfakt() {
+  // Hämta ALL data från Zustand store
+  const {
+    currentStep,
+    levfaktMode,
+    setLevfaktMode,
+    fakturadatum,
+    setFakturadatum,
+    förfallodatum,
+    setFörfallodatum,
+    betaldatum,
+    setBetaldatum,
+    // Resterande data som komponenten behöver
+    belopp,
+    setBelopp,
+    kommentar,
+    setKommentar,
+    setCurrentStep,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
+    transaktionsdatum,
+    setTransaktionsdatum,
+    valtFörval,
+    extrafält,
+    setExtrafält,
+    leverantör,
+    setLeverantör,
+    fakturanummer,
+    setFakturanummer,
+  } = useBokforStore();
+
   const [visaLeverantorModal, setVisaLeverantorModal] = useState(false);
 
   // Datepicker styling och default värden
@@ -49,8 +68,45 @@ export function useSteg2Levfakt({
     }
   }, [fakturadatum, förfallodatum, betaldatum, setFakturadatum, setFörfallodatum, setBetaldatum]);
 
+  // Callback functions
+  const exitLevfaktMode = useCallback(() => {
+    setLevfaktMode(false);
+  }, [setLevfaktMode]);
+
   return {
+    // State från Zustand store
+    currentStep,
+    levfaktMode,
+    setLevfaktMode,
+    fakturadatum,
+    setFakturadatum,
+    förfallodatum,
+    setFörfallodatum,
+    betaldatum,
+    setBetaldatum,
+    // Resterande data som komponenten behöver
+    belopp,
+    setBelopp,
+    kommentar,
+    setKommentar,
+    setCurrentStep,
+    fil,
+    setFil,
+    pdfUrl,
+    setPdfUrl,
+    transaktionsdatum,
+    setTransaktionsdatum,
+    valtFörval,
+    extrafält,
+    setExtrafält,
+    leverantör,
+    setLeverantör,
+    fakturanummer,
+    setFakturanummer,
+    // Lokal state
     visaLeverantorModal,
     setVisaLeverantorModal,
+    // Callback functions
+    exitLevfaktMode,
   };
 }

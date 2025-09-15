@@ -8,16 +8,14 @@ import Toast from "../../../_components/Toast";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/trueDatum";
-import { Step3Props } from "../../_types/types";
 import { useSteg3 } from "../../_hooks/useSteg3";
-import { useBokforStore } from "../../_stores/bokforStore";
 
-export default function Steg3(props: Step3Props) {
-  // Hämta ALLA formulärfält från Zustand store istället för props
+export default function Steg3() {
+  // Hämta ALL data från useSteg3 hook
   const {
+    currentStep,
     belopp,
     kommentar,
-    setCurrentStep,
     kontonummer,
     kontobeskrivning,
     fil,
@@ -31,11 +29,9 @@ export default function Steg3(props: Step3Props) {
     betaldatum,
     bokförSomFaktura,
     kundfakturadatum,
-  } = useBokforStore();
-
-  const { utlaggMode = false, levfaktMode = false } = props;
-
-  const {
+    levfaktMode,
+    utlaggMode,
+    setCurrentStep,
     anstallda,
     anstalldId,
     setAnstalldId,
@@ -50,24 +46,10 @@ export default function Steg3(props: Step3Props) {
     fallbackRows,
     totalDebet,
     totalKredit,
-  } = useSteg3({
-    utlaggMode,
-    levfaktMode,
-    bokförSomFaktura,
-    valtFörval,
-    belopp: belopp ?? 0, // Konvertera null till 0
-    transaktionsdatum: transaktionsdatum ?? "",
-    kommentar: kommentar ?? "", // Konvertera null till ""
-    extrafält,
-    leverantör,
-    fakturanummer,
-    fakturadatum,
-    förfallodatum,
-    betaldatum,
-    kundfakturadatum,
-    fil,
-    setCurrentStep,
-  });
+  } = useSteg3();
+
+  // Visa bara på steg 3
+  if (currentStep !== 3) return null;
 
   return (
     <div className="relative">
