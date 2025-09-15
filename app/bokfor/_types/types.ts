@@ -13,6 +13,38 @@ export interface InitialData {
 export interface StandardLayoutProps {
   title?: string;
   onSubmit?: () => void;
+  belopp?: number | null;
+  setBelopp?: (v: number | null) => void;
+  transaktionsdatum?: string | null;
+  setTransaktionsdatum?: (v: string) => void;
+  kommentar?: string | null;
+  setKommentar?: (v: string | null) => void;
+  setCurrentStep?: (v: number) => void;
+  fil?: File | null;
+  setFil?: (f: File | null) => void;
+  pdfUrl?: string | null;
+  setPdfUrl?: (u: string) => void;
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
+  setExtrafält?: (f: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  formRef?: React.RefObject<HTMLFormElement>;
+  handleSubmit?: (fd: FormData) => void;
+  isValid?: boolean;
+  leverantör?: string | any;
+  setLeverantör?: (val: string | any | null) => void;
+  fakturanummer?: string;
+  setFakturanummer?: (val: string) => void;
+  fakturadatum?: string;
+  setFakturadatum?: (val: string) => void;
+  förfallodatum?: string;
+  setFörfallodatum?: (val: string) => void;
+  betaldatum?: string;
+  setBetaldatum?: (val: string) => void;
+  mode?: string;
+  renderMode?: string;
+  valtFörval?: Förval;
+  kontonummer?: string;
+  kontobeskrivning?: string;
+  [key: string]: any;
 }
 
 // ===== GEMENSAMMA BASTYPER =====
@@ -86,6 +118,17 @@ export interface BaseSpecialProps {
   setFakturadatum?: (val: string) => void;
   förfallodatum?: string;
   setFörfallodatum?: (val: string) => void;
+}
+
+export interface Steg3Props {
+  kontonummer?: string;
+  kontobeskrivning?: string;
+  belopp?: number;
+  transaktionsdatum?: string;
+  kommentar?: string;
+  valtFörval?: Förval;
+  setCurrentStep?: (step: number) => void;
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
 }
 
 // ===== SPECIFIKA COMPONENT PROPS =====

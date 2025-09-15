@@ -9,8 +9,9 @@ import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
 import { useSteg3 } from "../../_hooks/useSteg3";
+import { Steg3Props } from "../../_types/types";
 
-export default function Steg3() {
+export default function Steg3(props?: Steg3Props) {
   const { state, actions, handlers } = useSteg3();
 
   // Visa bara på steg 3
