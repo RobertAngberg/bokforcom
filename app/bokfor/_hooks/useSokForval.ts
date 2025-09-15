@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { fetchAllaForval, loggaFavoritförval } from "../_actions/actions";
 import { KontoRad, Förval } from "../_types/types";
 import { useBokforStore } from "../_stores/bokforStore";
@@ -17,13 +18,30 @@ export function useSokForval() {
     setValtFörval,
     setKontonummer,
     setKontobeskrivning,
+    setUtlaggMode,
+    setLevfaktMode,
   } = useBokforStore();
+
+  const searchParams = useSearchParams();
 
   // Lokal UI state (INTE Zustand) - bara för denna komponent
   const [searchText, setSearchText] = useState(""); // Temporär söktext
   const [results, setResults] = useState<Förval[]>(favoritFörvalen || []); // Initiera med favoriter
   const [highlightedIndex, setHighlightedIndex] = useState(0); // Keyboard navigation
   const [loading, setLoading] = useState(false); // Visuell loading state
+
+  // Läs URL-parametrar och sätt store-state
+  useEffect(() => {
+    const isUtlagg = searchParams.get("utlagg") === "true";
+    const isLevfakt = searchParams.get("levfakt") === "true";
+
+    if (isUtlagg !== utlaggMode) {
+      setUtlaggMode(isUtlagg);
+    }
+    if (isLevfakt !== levfaktMode) {
+      setLevfaktMode(isLevfakt);
+    }
+  }, [searchParams, utlaggMode, levfaktMode, setUtlaggMode, setLevfaktMode]);
 
   // Sökfunktion som kan anropas direkt
   const performSearch = async (inputText: string) => {
@@ -107,13 +125,13 @@ export function useSokForval() {
         });
       }
 
-      // Filtrera även sökresultat för utlägg - bara kostnadskonton (4xxx, 5xxx, 6xxx)
+      // Filtrera även sökresultat för utlägg - bara kostnadskonton (4xxx-8xxx)
       if (utlaggMode) {
         träffar = träffar.filter((f) => {
-          // Kontrollera att förvalet har minst ett kostnadskonto (4xxx, 5xxx, 6xxx)
+          // Kontrollera att förvalet har minst ett kostnadskonto (4xxx-8xxx)
           const harKostnadskonto = f.konton.some((k: KontoRad) => {
             const kontonummer = k.kontonummer || "";
-            return /^[456]/.test(kontonummer);
+            return /^[45678]/.test(kontonummer);
           });
 
           return harKostnadskonto;
