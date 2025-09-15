@@ -15,7 +15,11 @@ import type { StandardLayoutProps } from "../../../_types/types";
  * - Olika titel: "Hyrbil", "Inköp tjänster Sverige", "Representation" etc.
  * - Olika submit-logik: Unik gåTillSteg3-funktion för varje specialförval
  */
-export default function StandardLayout({ title, onSubmit }: StandardLayoutProps) {
+export default function StandardLayout({
+  title,
+  onSubmit,
+  children,
+}: StandardLayoutProps & { children?: React.ReactNode }) {
   const {
     belopp,
     transaktionsdatum,
@@ -72,6 +76,8 @@ export default function StandardLayout({ title, onSubmit }: StandardLayoutProps)
               onChange={(e) => setKommentar(e.target.value)}
               required={false}
             />
+
+            {children}
 
             <Knapp fullWidth text="Gå vidare" onClick={hookOnSubmit} disabled={!isValid} />
           </div>

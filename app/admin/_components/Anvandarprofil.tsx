@@ -5,75 +5,69 @@ import TextFalt from "../../_components/TextFalt";
 import { useAnvandarprofil } from "../_hooks/useAnvandarprofil";
 
 export default function Anvandarprofil() {
-  const {
-    userInfo,
-    editForm,
-    isEditing,
-    isSaving,
-    isLoadingUser,
-    message,
-    onEdit,
-    onCancel,
-    onSave,
-    onChange,
-  } = useAnvandarprofil();
+  const { state, handlers } = useAnvandarprofil();
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl text-white flex items-center gap-2">👤 Användarinformation</h2>
-        {!isEditing && (
-          <Knapp text="✏️ Redigera" onClick={onEdit} className="bg-blue-600 hover:bg-blue-700" />
+        {!state.isEditing && (
+          <Knapp
+            text="✏️ Redigera"
+            onClick={handlers.onEdit}
+            className="bg-blue-600 hover:bg-blue-700"
+          />
         )}
       </div>
 
-      {message && (
+      {state.message && (
         <div
           className={`mb-4 p-3 rounded-md ${
-            message.type === "success"
+            state.message.type === "success"
               ? "bg-green-600/20 text-green-400"
               : "bg-red-600/20 text-red-400"
           }`}
         >
-          {message.text}
+          {state.message.text}
         </div>
       )}
 
-      {isLoadingUser && (
+      {state.isLoadingUser && (
         <div className="mb-4 p-3 text-gray-400 text-center">Laddar användarinformation...</div>
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        {isEditing ? (
+        {state.isEditing ? (
           <div className="space-y-4">
             <TextFalt
               label="Namn"
               name="name"
               type="text"
-              value={editForm.name}
-              onChange={(e) => onChange("name", e.target.value)}
+              value={state.editForm.name}
+              onChange={(e) => handlers.onChange("name", e.target.value)}
               placeholder="Ditt namn"
             />
             <TextFalt
               label="E-post"
               name="email"
               type="email"
-              value={editForm.email}
-              onChange={(e) => onChange("email", e.target.value)}
+              value={state.editForm.email}
+              onChange={(e) => handlers.onChange("email", e.target.value)}
               placeholder="din@email.com"
             />
 
             <div className="flex gap-3 pt-2">
               <Knapp
                 text="💾 Spara"
-                onClick={onSave}
-                disabled={isSaving}
-                loading={isSaving}
+                onClick={handlers.onSave}
+                disabled={state.isSaving}
+                loading={state.isSaving}
                 loadingText="Sparar..."
               />
               <Knapp
                 text="❌ Avbryt"
-                onClick={onCancel}
-                disabled={isSaving}
+                onClick={handlers.onCancel}
+                disabled={state.isSaving}
                 className="bg-gray-600 hover:bg-gray-700"
               />
             </div>
@@ -82,11 +76,11 @@ export default function Anvandarprofil() {
           <div className="space-y-3">
             <div>
               <span className="text-gray-400">Namn:</span>
-              <span className="text-white ml-2">{userInfo?.name}</span>
+              <span className="text-white ml-2">{state.userInfo?.name}</span>
             </div>
             <div>
               <span className="text-gray-400">Email:</span>
-              <span className="text-white ml-2">{userInfo?.email}</span>
+              <span className="text-white ml-2">{state.userInfo?.email}</span>
             </div>
           </div>
         )}

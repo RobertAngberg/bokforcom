@@ -54,17 +54,25 @@ export function useForhandsgranskning({ fil, pdfUrl }: UseForhandsgranskningProp
   };
 
   return {
-    showModal,
-    iframeRef,
-    blobUrl,
-    hasFile,
-    isImage,
-    isPdf,
-    displayUrl,
-    openModal,
-    closeModal,
-    handleFileClick,
-    getButtonText,
-    handlePdfOpenClick,
+    state: {
+      showModal,
+      blobUrl,
+      hasFile,
+      isImage,
+      isPdf,
+      displayUrl,
+    },
+    actions: {
+      openModal,
+      closeModal,
+    },
+    handlers: {
+      handleFileClick,
+      getButtonText,
+      handlePdfOpenClick,
+    },
+    refs: {
+      iframeRef,
+    },
   };
 }

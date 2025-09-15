@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Steg3 from "../Steg/Steg3";
-import StandardLayout from "./_layouts/StandardLayout";
-import LevfaktLayout from "./_layouts/LevfaktLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import TextFalt from "../../../_components/TextFalt";
-import { RepresentationProps } from "../../_types/types";
+import Knapp from "../../../_components/Knapp";
+import DatePicker from "react-datepicker";
+import LaddaUppFil from "../Steg/LaddaUppFil";
+import Forhandsgranskning from "../Steg/Forhandsgranskning";
+import { datePickerValue } from "../../../_utils/trueDatum";
+import { useSteg2 } from "../../_hooks/useSteg2";
+
+interface RepresentationProps {
+  mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt";
+}
 
 type RepresentationsTypLocal = "maltid_alkohol" | "enklare_fortaring";
 
@@ -29,43 +37,21 @@ function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, t
   };
 }
 
-export default function Representation({
-  mode,
-  renderMode = "standard",
-  belopp = null,
-  setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-  leverantör,
-  setLeverantör,
-  fakturanummer,
-  setFakturanummer,
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-}: RepresentationProps) {
+export default function Representation({ mode, renderMode = "standard" }: RepresentationProps) {
+  const { state, actions } = useSteg2();
+
   const [antalPersoner, setAntalPersoner] = useState("");
   const [representationstyp, setRepresentationstyp] =
     useState<RepresentationsTypLocal>("maltid_alkohol");
 
   // Använd totalt belopp för beräkningar
-  const totalBelopp = belopp ?? 0;
+  const totalBelopp = state.belopp ?? 0;
 
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-      : !!belopp && !!transaktionsdatum;
+      ? !!state.belopp && !!state.transaktionsdatum && !!state.leverantör && !!state.fakturadatum
+      : !!state.belopp && !!state.transaktionsdatum;
 
   function gåTillSteg3() {
     // Beräkna schablon och bestäm avdragsgillhet
@@ -90,7 +76,7 @@ export default function Representation({
         [konto]: { label: kontoBeskrivning, debet: kostnadEjAvdragsgill, kredit: 0 },
       };
 
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält(extrafältObj);
     } else {
       // Standard: Direkt betalning från företagskonto
       const extrafältObj: Record<string, { label: string; debet: number; kredit: number }> = {
@@ -99,87 +85,92 @@ export default function Representation({
         [konto]: { label: kontoBeskrivning, debet: kostnadEjAvdragsgill, kredit: 0 },
       };
 
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält(extrafältObj);
     }
-    setCurrentStep?.(3);
+    actions.setCurrentStep(3);
   }
-  const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
 
   if (mode === "steg2") {
     return (
-      <Layout
-        belopp={belopp}
-        setBelopp={setBelopp}
-        transaktionsdatum={transaktionsdatum}
-        setTransaktionsdatum={setTransaktionsdatum}
-        kommentar={kommentar}
-        setKommentar={setKommentar}
-        fil={fil}
-        setFil={setFil}
-        pdfUrl={pdfUrl}
-        setPdfUrl={setPdfUrl}
-        isValid={giltigt}
-        onSubmit={gåTillSteg3}
-        setCurrentStep={setCurrentStep}
-        leverantör={leverantör}
-        setLeverantör={setLeverantör}
-        fakturanummer={fakturanummer}
-        setFakturanummer={setFakturanummer}
-        fakturadatum={fakturadatum}
-        setFakturadatum={setFakturadatum}
-        förfallodatum={förfallodatum}
-        setFörfallodatum={setFörfallodatum}
-        title="Representation"
-      >
-        {/* Representation-specifika fält - Bokio-design */}
-        <div className="space-y-4">
-          {/* Typ av representation */}
-          <div className="bg-gray-800/50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-300 mb-3">Typ:</label>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="representationstyp"
-                  value="maltid_alkohol"
-                  checked={representationstyp === "maltid_alkohol"}
-                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
-                  className="text-blue-500"
-                />
-                <span className="text-white">Måltid</span>
-              </label>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <TillbakaPil onClick={() => actions.setCurrentStep(1)} />
 
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="representationstyp"
-                  value="enklare_fortaring"
-                  checked={representationstyp === "enklare_fortaring"}
-                  onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
-                  className="text-blue-500"
-                />
-                <span className="text-white">Enklare förtäring</span>
+          <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Representation</h1>
+          <div className="flex flex-col-reverse justify-between md:flex-row">
+            <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
+              <LaddaUppFil
+                fil={state.fil}
+                setFil={actions.setFil}
+                setPdfUrl={actions.setPdfUrl}
+                setBelopp={actions.setBelopp}
+                setTransaktionsdatum={actions.setTransaktionsdatum}
+              />
+
+              <TextFalt
+                label="Total kostnad inkl. moms"
+                name="total"
+                value={state.belopp ?? ""}
+                onChange={(e) => actions.setBelopp(Number(e.target.value))}
+                required
+              />
+
+              <label className="block text-sm font-medium text-white mb-2">
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
               </label>
+              <DatePicker
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+                selected={datePickerValue(state.transaktionsdatum)}
+                onChange={(date) => {
+                  const dateStr = date ? date.toISOString().split("T")[0] : "";
+                  actions.setTransaktionsdatum(dateStr);
+                }}
+                locale="sv"
+                placeholderText="Välj datum"
+                dateFormat="yyyy-MM-dd"
+              />
+
+              {/* Representation-specifika fält */}
+              <TextFalt
+                label="Antal personer"
+                name="antalPersoner"
+                value={antalPersoner}
+                onChange={(e) => setAntalPersoner(e.target.value)}
+                placeholder="Ange antal personer"
+                required
+              />
+
+              <label className="block text-sm font-medium text-white mb-2">
+                Typ av representation
+              </label>
+              <select
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+                value={representationstyp}
+                onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
+              >
+                <option value="maltid_alkohol">Måltid med alkohol</option>
+                <option value="enklare_fortaring">Enklare förtäring</option>
+              </select>
+
+              <TextFalt
+                label="Kommentar"
+                name="kommentar"
+                value={state.kommentar ?? ""}
+                onChange={(e) => actions.setKommentar(e.target.value)}
+                placeholder="Beskriv representationen..."
+              />
+
+              <Knapp text="Gå vidare" onClick={gåTillSteg3} disabled={!giltigt} fullWidth />
             </div>
+            <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
           </div>
+        </div>
 
-          {/* Antal personer (för båda typerna) */}
-          <div className="bg-gray-800/50 p-4 rounded-lg">
-            <TextFalt
-              label="Antal personer"
-              name="antalPersoner"
-              value={antalPersoner}
-              onChange={(e) => setAntalPersoner(e.target.value)}
-              type="number"
-              placeholder="Ange antal personer"
-              required
-            />
-          </div>
-
-          {/* Info om representation */}
-          <div className="mb-3 p-2 bg-blue-900/20 border border-blue-600/30 rounded text-sm text-blue-200 flex items-center gap-2">
+        {/* Info om representation */}
+        <div className="max-w-5xl mx-auto px-4 mt-6">
+          <div className="bg-blue-900 border border-blue-700 rounded-xl p-4 flex items-start space-x-3">
             <svg
-              className="w-4 h-4 text-blue-400 flex-shrink-0"
+              className="w-6 h-6 text-blue-300 mt-0.5 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -192,11 +183,14 @@ export default function Representation({
               />
             </svg>
             <div>
-              <p>Dokumentera vilka som deltog på kvittot eller i kommentaren.</p>
+              <p className="text-blue-100">
+                <strong>Dokumentera deltagare:</strong> Anteckna vilka som deltog på kvittot eller i
+                kommentaren för att uppfylla Skatteverkets krav.
+              </p>
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -210,28 +204,11 @@ export default function Representation({
 
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer={konto}
-          kontobeskrivning={kontoBeskrivning}
-          belopp={belopp ?? 0}
-          transaktionsdatum={transaktionsdatum ?? ""}
-          kommentar={kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Representation",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            momssats: 0.25,
-            specialtyp: "Representation",
-            sökord: [],
-          }}
-          setCurrentStep={setCurrentStep}
-          extrafält={extrafält}
-        />
+        <TillbakaPil onClick={() => actions.setCurrentStep(2)} />
+        <Steg3 />
       </div>
     );
   }
+
+  return null; // Fallback om inget mode matchar
 }

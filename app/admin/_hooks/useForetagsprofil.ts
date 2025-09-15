@@ -116,15 +116,25 @@ export function useForetagsprofil() {
   const clearCompanyMessage = () => setCompanyMessage(null);
 
   return {
-    foretagsProfil,
-    isEditingCompany,
-    isSavingCompany,
-    isLoadingForetag,
-    companyMessage,
-    onEditCompany: handleEditCompany,
-    onCancelCompany: handleCancelCompany,
-    onSaveCompany: handleSaveCompany,
-    onChangeCompany: updateCompanyField,
-    clearCompanyMessage,
+    state: {
+      foretagsProfil,
+      isEditingCompany,
+      isSavingCompany,
+      isLoadingForetag,
+      companyMessage,
+    },
+    actions: {
+      setForetagsProfil,
+      setIsEditingCompany,
+      setIsSavingCompany,
+      setCompanyMessage,
+    },
+    handlers: {
+      onEditCompany: handleEditCompany,
+      onCancelCompany: handleCancelCompany,
+      onSaveCompany: handleSaveCompany,
+      onChangeCompany: updateCompanyField,
+      clearCompanyMessage,
+    },
   };
 }

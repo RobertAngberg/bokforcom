@@ -11,64 +11,51 @@ import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/true
 import { useSteg3 } from "../../_hooks/useSteg3";
 
 export default function Steg3() {
-  const {
-    currentStep,
-    transaktionsdatum,
-    valtFörval,
-    leverantör,
-    levfaktMode,
-    utlaggMode,
-    setCurrentStep,
-    anstallda,
-    anstalldId,
-    setAnstalldId,
-    loading,
-    toast,
-    hideToast,
-    ärFörsäljning,
-    handleButtonClick,
-    fallbackRows,
-  } = useSteg3();
+  const { state, actions, handlers } = useSteg3();
 
   // Visa bara på steg 3
-  if (currentStep !== 3) return null;
+  if (state.currentStep !== 3) return null;
 
   return (
     <div className="relative">
       <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
+        message={state.toast.message}
+        type={state.toast.type}
+        isVisible={state.toast.isVisible}
+        onClose={handlers.hideToast}
       />
 
-      <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+      <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
 
       <h1 className="text-3xl mb-4 text-center">
-        {utlaggMode
+        {state.utlaggMode
           ? "Steg 3: Kontrollera och slutför utlägg"
-          : levfaktMode
-            ? ärFörsäljning
+          : state.levfaktMode
+            ? state.ärFörsäljning
               ? "Steg 3: Kundfaktura - Kontrollera och slutför"
               : "Steg 3: Leverantörsfaktura - Kontrollera och slutför"
             : "Steg 3: Kontrollera och slutför"}
       </h1>
-      <p className="text-center font-bold text-xl mb-1">{valtFörval ? valtFörval.namn : ""}</p>
-      <p className="text-center text-gray-300 mb-6">
-        {transaktionsdatum ? dateTillÅÅÅÅMMDD(ÅÅÅÅMMDDTillDate(transaktionsdatum)) : ""}
+      <p className="text-center font-bold text-xl mb-1">
+        {state.valtFörval ? state.valtFörval.namn : ""}
       </p>
-      {levfaktMode && leverantör && (
+      <p className="text-center text-gray-300 mb-6">
+        {state.transaktionsdatum ? dateTillÅÅÅÅMMDD(ÅÅÅÅMMDDTillDate(state.transaktionsdatum)) : ""}
+      </p>
+      {state.levfaktMode && state.leverantör && (
         <div className="text-center mb-6">
           <div className="inline-flex items-center bg-slate-800 border border-slate-600 rounded-lg px-4 py-2">
             <span className="text-gray-400 text-sm mr-2">Leverantör:</span>
-            <span className="text-white font-medium">{leverantör.namn}</span>
-            {leverantör.organisationsnummer && (
-              <span className="text-gray-400 text-sm ml-2">({leverantör.organisationsnummer})</span>
+            <span className="text-white font-medium">{state.leverantör.namn}</span>
+            {state.leverantör.organisationsnummer && (
+              <span className="text-gray-400 text-sm ml-2">
+                ({state.leverantör.organisationsnummer})
+              </span>
             )}
           </div>
         </div>
       )}
-      {levfaktMode && ärFörsäljning && (
+      {state.levfaktMode && state.ärFörsäljning && (
         <div className="mb-6 flex items-center px-4 py-3 bg-green-900 text-green-100 rounded-lg text-base">
           <span className="mr-3 flex items-center justify-center w-7 h-7 rounded-full bg-green-700 text-white text-lg font-bold">
             💰
@@ -84,7 +71,7 @@ export default function Steg3() {
       <form id="bokforingForm" className="space-y-6">
         {/* Display tabell med transaktioner */}
         <Tabell
-          data={fallbackRows}
+          data={state.fallbackRows}
           columns={[
             {
               key: "konto",
@@ -104,14 +91,18 @@ export default function Steg3() {
               render: (value, row) => (row.kredit > 0 ? formatCurrency(row.kredit) : ""),
             },
           ]}
-          getRowId={(row) => row.key}
+          getRowId={(row) => `${row.konto}-${row.debet}-${row.kredit}`}
         />
 
         {/* Utlägg: Visa anställd-dropdown */}
-        {utlaggMode && (
+        {state.utlaggMode && (
           <div className="bg-slate-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Anställd för utlägg</h3>
-            <AnstalldDropdown anstallda={anstallda} value={anstalldId} onChange={setAnstalldId} />
+            <AnstalldDropdown
+              anstallda={state.anstallda}
+              value={state.anstalldId}
+              onChange={actions.setAnstalldId}
+            />
           </div>
         )}
 
@@ -119,18 +110,18 @@ export default function Steg3() {
         <div className="flex justify-center">
           <Knapp
             text={
-              loading
+              state.loading
                 ? "Bokför..."
-                : utlaggMode
+                : state.utlaggMode
                   ? "Slutför utlägg"
-                  : levfaktMode
-                    ? ärFörsäljning
+                  : state.levfaktMode
+                    ? state.ärFörsäljning
                       ? "Slutför kundfaktura"
                       : "Slutför leverantörsfaktura"
                     : "Bokför"
             }
-            onClick={handleButtonClick}
-            disabled={loading}
+            onClick={handlers.handleButtonClick}
+            disabled={state.loading}
             className="px-8 py-4 text-xl"
           />
         </div>

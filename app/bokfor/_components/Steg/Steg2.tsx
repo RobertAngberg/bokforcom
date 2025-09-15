@@ -19,6 +19,7 @@ export default function Steg2() {
   if (state.valtFörval?.specialtyp) {
     try {
       const SpecialComponent = require(`../SpecialForval/${state.valtFörval.specialtyp}`).default;
+
       return (
         <SpecialComponent
           mode="steg2"
@@ -31,18 +32,15 @@ export default function Steg2() {
           setBelopp={actions.setBelopp}
           transaktionsdatum={state.transaktionsdatum}
           setTransaktionsdatum={actions.setTransaktionsdatum}
+          kommentar={state.kommentar}
+          setKommentar={actions.setKommentar}
           valtFörval={state.valtFörval}
           extrafält={state.extrafält}
           setExtrafält={actions.setExtrafält}
         />
       );
-    } catch (err) {
-      console.error("❌ Fel vid laddning av specialförval:", state.valtFörval.specialtyp, err);
-      return (
-        <div className="p-10 text-white bg-red-900 text-center">
-          ⚠️ Kunde inte ladda specialförval: {state.valtFörval.specialtyp}
-        </div>
-      );
+    } catch (error) {
+      return <div>Fel vid laddning av specialkomponent: {state.valtFörval.specialtyp}</div>;
     }
   }
 

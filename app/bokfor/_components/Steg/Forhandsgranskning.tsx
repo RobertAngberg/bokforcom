@@ -5,20 +5,12 @@ import { ForhandsgranskningProps } from "../../_types/types";
 import { useForhandsgranskning } from "../../_hooks/useForhandsgranskning";
 
 export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
-  const {
-    showModal,
-    blobUrl,
-    hasFile,
-    closeModal,
-    handleFileClick,
-    getButtonText,
-    handlePdfOpenClick,
-  } = useForhandsgranskning({ fil, pdfUrl });
+  const { state, actions, handlers } = useForhandsgranskning({ fil, pdfUrl });
 
   return (
     <>
       <div className="relative flex flex-col items-center justify-center w-full h-auto border-2 border-dashed border-gray-700 bg-slate-900 rounded-xl p-4 md:w-4/5 md:ml-4 mb-4 md:mb-0 transition">
-        {!hasFile && (
+        {!state.hasFile && (
           <p className="text-gray-500 text-center">Ditt underlag kommer att visas här</p>
         )}
 
@@ -26,7 +18,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
         {fil?.type.startsWith("image/") && (
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
-              src={pdfUrl || blobUrl!}
+              src={pdfUrl || state.blobUrl!}
               alt="Forhandsgranskning"
               width={800}
               height={600}
@@ -39,7 +31,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
         {fil?.type === "application/pdf" && (
           <div className="w-full">
             <object
-              data={blobUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
+              data={state.blobUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
               type="application/pdf"
               width="100%"
               height="600px"
@@ -48,7 +40,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
               <div className="p-4 text-center bg-gray-50 rounded border">
                 <p className="mb-2">PDF kan inte visas inline i denna webbläsare</p>
                 <button
-                  onClick={handlePdfOpenClick}
+                  onClick={handlers.handlePdfOpenClick}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Öppna PDF i ny flik
@@ -68,21 +60,21 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
           </div>
         )}
 
-        {hasFile && (
+        {state.hasFile && (
           <button
-            onClick={handleFileClick}
+            onClick={handlers.handleFileClick}
             className="absolute top-2 right-2 px-4 py-2 text-sm font-medium text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition"
           >
-            {getButtonText()}
+            {handlers.getButtonText()}
           </button>
         )}
       </div>
 
-      {showModal && (
+      {state.showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div className="relative max-w-6xl w-full h-[90vh] overflow-auto bg-slate-900 rounded-xl p-4">
             <button
-              onClick={closeModal}
+              onClick={actions.closeModal}
               className="absolute top-4 right-4 text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded font-bold"
             >
               Stäng
@@ -91,7 +83,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
             <div className="flex justify-center items-center">
               {fil?.type.startsWith("image/") && (
                 <Image
-                  src={pdfUrl || blobUrl!}
+                  src={pdfUrl || state.blobUrl!}
                   alt="Stor förhandsgranskning"
                   width={1200}
                   height={1000}
@@ -101,7 +93,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
               {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
                 <iframe
-                  src={`${pdfUrl || blobUrl!}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`${pdfUrl || state.blobUrl!}#toolbar=0&navpanes=0&scrollbar=0`}
                   className="w-full h-[80vh] rounded"
                   title="PDF förhandsgranskning stor"
                 />

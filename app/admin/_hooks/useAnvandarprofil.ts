@@ -88,16 +88,26 @@ export function useAnvandarprofil() {
   const clearMessage = () => setMessage(null);
 
   return {
-    userInfo,
-    editForm,
-    isEditing,
-    isSaving,
-    isLoadingUser,
-    message,
-    onEdit,
-    onCancel,
-    onSave,
-    onChange,
-    clearMessage,
+    state: {
+      userInfo,
+      editForm,
+      isEditing,
+      isSaving,
+      isLoadingUser,
+      message,
+    },
+    actions: {
+      setEditForm,
+      setIsEditing,
+      setIsSaving,
+      setMessage,
+    },
+    handlers: {
+      onEdit,
+      onCancel,
+      onSave,
+      onChange,
+      clearMessage,
+    },
   };
 }

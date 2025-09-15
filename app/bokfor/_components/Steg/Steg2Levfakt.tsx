@@ -13,77 +13,50 @@ import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useSteg2Levfakt } from "../../_hooks/useSteg2Levfakt";
+
 registerLocale("sv", sv);
 
 export default function Steg2Levfakt() {
-  const {
-    currentStep,
-    levfaktMode,
-    fakturadatum,
-    setFakturadatum,
-    förfallodatum,
-    setFörfallodatum,
-    belopp,
-    setBelopp,
-    kommentar,
-    setKommentar,
-    setCurrentStep,
-    fil,
-    setFil,
-    pdfUrl,
-    setPdfUrl,
-    transaktionsdatum,
-    setTransaktionsdatum,
-    valtFörval,
-    extrafält,
-    setExtrafält,
-    leverantör,
-    setLeverantör,
-    fakturanummer,
-    setFakturanummer,
-    visaLeverantorModal,
-    setVisaLeverantorModal,
-    exitLevfaktMode,
-  } = useSteg2Levfakt();
+  const { state, actions, handlers } = useSteg2Levfakt();
 
   // Visa bara på steg 2 och i levfakt mode
-  if (currentStep !== 2 || !levfaktMode) return null;
+  if (state.currentStep !== 2 || !state.levfaktMode) return null;
 
-  if (valtFörval?.specialtyp) {
+  if (state.valtFörval?.specialtyp) {
     try {
-      const SpecialComponent = require(`../SpecialForval/${valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`../SpecialForval/${state.valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
           mode="steg2"
           renderMode="levfakt"
-          setCurrentStep={setCurrentStep}
-          fil={fil}
-          setFil={setFil}
-          pdfUrl={pdfUrl}
-          setPdfUrl={setPdfUrl}
-          belopp={belopp}
-          setBelopp={setBelopp}
-          transaktionsdatum={transaktionsdatum}
-          setTransaktionsdatum={setTransaktionsdatum}
-          kommentar={kommentar}
-          setKommentar={setKommentar}
-          extrafält={extrafält}
-          setExtrafält={setExtrafält}
-          leverantör={leverantör}
-          setLeverantör={setLeverantör}
-          fakturanummer={fakturanummer}
-          setFakturanummer={setFakturanummer}
-          fakturadatum={fakturadatum}
-          setFakturadatum={setFakturadatum}
-          förfallodatum={förfallodatum}
-          setFörfallodatum={setFörfallodatum}
+          belopp={state.belopp}
+          setBelopp={actions.setBelopp}
+          transaktionsdatum={state.transaktionsdatum}
+          setTransaktionsdatum={actions.setTransaktionsdatum}
+          kommentar={state.kommentar}
+          setKommentar={actions.setKommentar}
+          setCurrentStep={actions.setCurrentStep}
+          fil={state.fil}
+          setFil={actions.setFil}
+          pdfUrl={state.pdfUrl}
+          setPdfUrl={actions.setPdfUrl}
+          extrafält={state.extrafält}
+          setExtrafält={actions.setExtrafält}
+          leverantör={state.leverantör}
+          setLeverantör={actions.setLeverantör}
+          fakturanummer={state.fakturanummer}
+          setFakturanummer={actions.setFakturanummer}
+          fakturadatum={state.fakturadatum}
+          setFakturadatum={actions.setFakturadatum}
+          förfallodatum={state.förfallodatum}
+          setFörfallodatum={actions.setFörfallodatum}
         />
       );
     } catch (err) {
-      console.error("❌ Fel vid laddning av specialförval:", valtFörval.specialtyp, err);
+      console.error("❌ Fel vid laddning av specialförval:", state.valtFörval.specialtyp, err);
       return (
         <div className="p-10 text-white bg-red-900 text-center">
-          ⚠️ Kunde inte ladda specialförval: {valtFörval.specialtyp}
+          ⚠️ Kunde inte ladda specialförval: {state.valtFörval.specialtyp}
         </div>
       );
     }
@@ -92,33 +65,33 @@ export default function Steg2Levfakt() {
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep(1)} />
+        <TillbakaPil onClick={() => actions.setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Leverantörsfaktura</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil
-              fil={fil || null}
-              setFil={setFil}
-              setPdfUrl={setPdfUrl}
-              setBelopp={setBelopp}
-              setTransaktionsdatum={setTransaktionsdatum}
-              setLeverantör={setLeverantör}
-              setFakturadatum={setFakturadatum}
-              setFörfallodatum={setFörfallodatum}
-              setFakturanummer={setFakturanummer}
+              fil={state.fil || null}
+              setFil={actions.setFil}
+              setPdfUrl={actions.setPdfUrl}
+              setBelopp={actions.setBelopp}
+              setTransaktionsdatum={actions.setTransaktionsdatum}
+              setLeverantör={actions.setLeverantör}
+              setFakturadatum={actions.setFakturadatum}
+              setFörfallodatum={actions.setFörfallodatum}
+              setFakturanummer={actions.setFakturanummer}
             />
-            {leverantör && (
+            {state.leverantör && (
               <div className="mt-4 mb-4 rounded-lg border border-cyan-600/40 bg-cyan-900/20 p-3 text-sm flex items-center justify-between gap-4">
                 <div>
                   <div className="font-semibold text-cyan-300">Leverantör vald</div>
-                  <div className="text-cyan-100/80 mt-1 break-all">{leverantör.namn}</div>
+                  <div className="text-cyan-100/80 mt-1 break-all">{state.leverantör.namn}</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setLeverantör(null);
-                    exitLevfaktMode && exitLevfaktMode();
+                    actions.setLeverantör(null);
+                    handlers.exitLevfaktMode && handlers.exitLevfaktMode();
                   }}
                   className="text-[11px] px-2 py-1 rounded bg-red-700/40 hover:bg-red-700/60 border border-red-500/40"
                 >
@@ -132,9 +105,9 @@ export default function Steg2Levfakt() {
               <label className="block mb-2 text-white">Fakturadatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(fakturadatum) || new Date()}
+                selected={datePickerValue(state.fakturadatum) || new Date()}
                 onChange={(date) => {
-                  setFakturadatum(datePickerOnChange(date));
+                  actions.setFakturadatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -147,9 +120,9 @@ export default function Steg2Levfakt() {
               <label className="block mb-2 text-white">Förfallodatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(förfallodatum) || new Date()}
+                selected={datePickerValue(state.förfallodatum) || new Date()}
                 onChange={(date) => {
-                  setFörfallodatum(datePickerOnChange(date));
+                  actions.setFörfallodatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -163,8 +136,8 @@ export default function Steg2Levfakt() {
                 label="Fakturanummer"
                 name="fakturanummer"
                 type="text"
-                value={fakturanummer || ""}
-                onChange={(e) => setFakturanummer(e.target.value)}
+                value={state.fakturanummer || ""}
+                onChange={(e) => actions.setFakturanummer(e.target.value)}
                 placeholder="Ange fakturanummer..."
               />
             </div>
@@ -183,31 +156,36 @@ export default function Steg2Levfakt() {
                 id="belopp"
                 name="belopp"
                 required
-                value={belopp || ""}
-                onChange={(e) => setBelopp(Number(e.target.value))}
+                value={state.belopp || ""}
+                onChange={(e) => actions.setBelopp(Number(e.target.value))}
               />
             </div>
 
-            <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
+            <Kommentar kommentar={state.kommentar ?? ""} setKommentar={actions.setKommentar} />
             <Knapp
               fullWidth
               text="Bokför leverantörsfaktura"
-              onClick={() => setCurrentStep(3)}
+              onClick={() => actions.setCurrentStep(3)}
               disabled={
-                !belopp || !fakturanummer || !fakturadatum || !förfallodatum || !fil || !pdfUrl
+                !state.belopp ||
+                !state.fakturanummer ||
+                !state.fakturadatum ||
+                !state.förfallodatum ||
+                !state.fil ||
+                !state.pdfUrl
               }
             />
           </div>
-          <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+          <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
         </div>
       </div>
       <ValjLeverantorModal
-        isOpen={visaLeverantorModal}
+        isOpen={state.visaLeverantorModal}
         skipNavigate
         onSelected={(lev) => {
-          setLeverantör(lev);
+          actions.setLeverantör(lev);
         }}
-        onClose={() => setVisaLeverantorModal(false)}
+        onClose={() => actions.setVisaLeverantorModal(false)}
       />
     </>
   );

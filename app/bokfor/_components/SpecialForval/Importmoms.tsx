@@ -117,30 +117,7 @@ export default function Importmoms({
 
   if (mode === "steg2") {
     return (
-      <Layout
-        belopp={belopp}
-        setBelopp={setBelopp}
-        transaktionsdatum={transaktionsdatum}
-        setTransaktionsdatum={setTransaktionsdatum}
-        kommentar={kommentar}
-        setKommentar={setKommentar}
-        fil={fil}
-        setFil={setFil}
-        pdfUrl={pdfUrl}
-        setPdfUrl={setPdfUrl}
-        isValid={giltigt}
-        onSubmit={gåTillSteg3}
-        setCurrentStep={setCurrentStep}
-        leverantör={leverantör}
-        setLeverantör={setLeverantör}
-        fakturanummer={fakturanummer}
-        setFakturanummer={setFakturanummer}
-        fakturadatum={fakturadatum}
-        setFakturadatum={setFakturadatum}
-        förfallodatum={förfallodatum}
-        setFörfallodatum={setFörfallodatum}
-        title="Importmoms"
-      >
+      <Layout title="Importmoms" onSubmit={gåTillSteg3}>
         {/* Importmoms-specifika fält */}
         <div className="mb-3 p-2 bg-blue-900/20 border border-blue-600/30 rounded text-sm text-blue-200 flex items-center gap-2">
           <svg
@@ -227,26 +204,7 @@ export default function Importmoms({
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="4545"
-          kontobeskrivning="Importmoms"
-          belopp={belopp ?? 0}
-          transaktionsdatum={transaktionsdatum ?? ""}
-          kommentar={kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Importmoms",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            momssats: 0.25,
-            specialtyp: "Importmoms",
-            sökord: [],
-          }}
-          setCurrentStep={setCurrentStep}
-          extrafält={extrafält}
-        />
+        <Steg3 />
       </div>
     );
   }
