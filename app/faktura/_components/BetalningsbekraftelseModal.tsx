@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Modal from "../_components/Modal";
-import Tabell, { ColumnDefinition } from "../_components/Tabell";
-import { formatSEK } from "../_utils/format";
+import Modal from "../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+import { formatSEK } from "../../_utils/format";
 
 type BokföringsPost = {
   konto: string;

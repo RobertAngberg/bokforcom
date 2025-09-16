@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { hämtaNästaFakturanummer } from "./actions";
+import { hämtaNästaFakturanummer } from "../actions";
 
 export type FakturaFormData = {
   id: string;

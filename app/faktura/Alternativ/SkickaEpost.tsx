@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-import { useFakturaContext } from "../FakturaProvider";
+import { useFakturaContext } from "../_components/FakturaProvider";
 import { generatePDFAsBase64 } from "./pdfGenerator";
 
 interface Props {

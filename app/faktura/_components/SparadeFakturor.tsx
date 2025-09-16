@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { deleteFaktura, hämtaFakturaMedRader, registreraKundfakturaBetalning } from "./actions";
+import { deleteFaktura, hämtaFakturaMedRader, registreraKundfakturaBetalning } from "../actions";
 import { useFakturaContext } from "./FakturaProvider";
-import Toast from "../_components/Toast";
+import Toast from "../../_components/Toast";
 
 //#region Business Logic - Migrated from actions.ts
 // Beräkna totalbelopp för faktura (flyttad från actions.ts)

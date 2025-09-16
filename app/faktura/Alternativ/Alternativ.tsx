@@ -17,7 +17,7 @@ import {
   uppdateraRotRutStatus,
   registreraRotRutBetalning,
 } from "../actions";
-import { useFakturaContext } from "../FakturaProvider";
+import { useFakturaContext } from "../_components/FakturaProvider";
 import { laddaNerHUSFil } from "./husFilGenerator";
 
 // Lokal typ för bokföringsposter

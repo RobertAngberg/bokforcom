@@ -6,7 +6,7 @@ import { useFakturaContext } from "./FakturaProvider";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { sv } from "date-fns/locale";
-import { hämtaSenasteBetalningsmetod } from "./actions";
+import { hämtaSenasteBetalningsmetod } from "../actions";
 import { useSession } from "next-auth/react";
 //#endregion
 

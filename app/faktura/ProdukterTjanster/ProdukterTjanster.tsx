@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFakturaContext } from "../FakturaProvider";
+import { useFakturaContext } from "../_components/FakturaProvider";
 import {
   saveInvoice,
   sparaFavoritArtikel,

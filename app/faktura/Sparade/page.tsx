@@ -4,20 +4,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FakturaProvider } from "../FakturaProvider";
-import { useFakturaContext } from "../FakturaProvider";
+import { FakturaProvider } from "../_components/FakturaProvider";
+import { useFakturaContext } from "../_components/FakturaProvider";
 import { useSession } from "next-auth/react";
-import KundUppgifter from "../KundUppgifter";
+import KundUppgifter from "../_components/KundUppgifter";
 import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
-import SparadeFakturor from "../SparadeFakturor";
+import SparadeFakturor from "../_components/SparadeFakturor";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import TillbakaPil from "../../_components/TillbakaPil";
 import Knapp from "../../_components/Knapp";
 import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";
-import Betalning from "../Betalning";
-import Avsandare from "../Avsandare";
+import Betalning from "../_components/Betalning";
+import Avsandare from "../_components/Avsandare";
 import Link from "next/link";
 import {
   saveInvoice,

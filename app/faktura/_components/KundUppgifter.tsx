@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from "react";
 import { useFakturaContext } from "./FakturaProvider";
-import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "./actions";
-import Knapp from "../_components/Knapp";
-import Dropdown from "../_components/Dropdown";
-import TextFalt from "../_components/TextFalt";
-import Toast from "../_components/Toast";
+import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions";
+import Knapp from "../../_components/Knapp";
+import Dropdown from "../../_components/Dropdown";
+import TextFalt from "../../_components/TextFalt";
+import Toast from "../../_components/Toast";
 
 //#region Business Logic - Migrated from actions.ts
 // Säker text-sanitering för kunddata

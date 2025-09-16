@@ -4,12 +4,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import TextFalt from "../_components/TextFalt";
-import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from "./actions";
-import { getProxyImageUrl } from "./_utils/imageProxy";
+import TextFalt from "../../_components/TextFalt";
+import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from "../actions";
+import { getProxyImageUrl } from "../_utils/imageProxy";
 import { useFakturaContext } from "./FakturaProvider";
-import Knapp from "../_components/Knapp";
-import Toast from "../_components/Toast";
+import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
 //#endregion
 
 export default function Avsandare() {

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Modal from "../_components/Modal";
-import Tabell, { ColumnDefinition } from "../_components/Tabell";
-import { formatSEK } from "../_utils/format";
-import { hamtaTransaktionsposter } from "./actions";
+import Modal from "../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+import { formatSEK } from "../../_utils/format";
+import { hamtaTransaktionsposter } from "../actions";
 
 type TransaktionsPost = {
   id: number;

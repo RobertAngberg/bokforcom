@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { formatSEK } from "../_utils/format";
-import { stringTillDate } from "../_utils/datum";
+import { formatSEK } from "../../_utils/format";
+import { stringTillDate } from "../../_utils/datum";
 import {
   hamtaBokfordaFakturor,
   hamtaTransaktionsposter,
   betalaOchBokförLeverantörsfaktura,
   taBortLeverantörsfaktura,
-} from "./actions";
+} from "../actions";
 import VerifikatModal from "./VerifikatModal";
-import Knapp from "../_components/Knapp";
-import Toast from "../_components/Toast";
-import Modal from "../_components/Modal";
-import Tabell, { ColumnDefinition } from "../_components/Tabell";
+import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
+import Modal from "../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 
 type BokfordFaktura = {
   id: number; // leverantörsfaktura.id

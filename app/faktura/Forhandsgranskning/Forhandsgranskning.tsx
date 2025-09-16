@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useFakturaContext } from "../FakturaProvider";
+import { useFakturaContext } from "../_components/FakturaProvider";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import BetalningsInfo from "./BetalningsInfo";
