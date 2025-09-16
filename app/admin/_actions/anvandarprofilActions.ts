@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "../../_lib/auth";
+import { getUserId } from "../../_utils/authUtils";
 import type { AnvandarInfo, AktionsResultat, UppdateraAnvandarPayload } from "../_types/types";
 import { revalidatePath } from "next/cache";
 import { queryOne } from "../../_utils/dbUtils";
@@ -11,8 +11,7 @@ export async function uppdateraAnvändarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
   try {
-    const session = await auth();
-    const userId = session?.user?.id; // Middleware garanterar att detta finns
+    const userId = await getUserId();
 
     const name = sanitizeFormInput(payload.name || "").trim();
     const email = sanitizeFormInput(payload.email || "").trim();

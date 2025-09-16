@@ -1,14 +1,13 @@
 "use server";
 
-import { auth } from "../../_lib/auth";
+import { getUserId } from "../../_utils/authUtils";
 import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../_types/types";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
-    const session = await auth();
-    const userId = session?.user?.id; // Middleware garanterar att detta finns
+    const userId = await getUserId();
 
     await withTransaction(async (client: any) => {
       await client.query(
