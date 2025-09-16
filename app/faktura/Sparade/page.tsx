@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { FakturaProvider } from "../_components/FakturaProvider";
-import { useFakturaContext } from "../_components/FakturaProvider";
+import { useFakturaClient } from "../_hooks/useFakturaClient";
 import { useSession } from "next-auth/react";
 import KundUppgifter from "../_components/KundUppgifter";
 import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
@@ -48,7 +48,7 @@ function FakturorComponent({
     isVisible: false,
   });
   //#region Context och state
-  const { formData, setFormData, setKundStatus } = useFakturaContext();
+  const { formData, setFormData, setKundStatus } = useFakturaClient();
   // Funktion för att hantera när en faktura väljs
   const hanteraValdFaktura = async (fakturaId: number) => {
     const data = await hämtaFakturaMedRader(fakturaId);
@@ -62,8 +62,7 @@ function FakturorComponent({
     }
     const { faktura, artiklar, rotRut } = data;
 
-    setFormData((prev: any) => ({
-      ...prev,
+    setFormData({
       id: faktura.id,
       fakturanummer: faktura.fakturanummer ?? "",
       fakturadatum: faktura.fakturadatum?.toISOString
@@ -164,7 +163,7 @@ function FakturorComponent({
         (rotRut as any).rotRutSlutdatum ||
         artiklar.find((a: any) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
         "",
-    }));
+    });
     setShowAllFlikar(true);
   };
   const { data: session } = useSession();
@@ -180,8 +179,7 @@ function FakturorComponent({
     if (session?.user?.id && !formData.företagsnamn) {
       hämtaFöretagsprofil().then((profil: any) => {
         if (profil) {
-          setFormData((prev: any) => ({
-            ...prev,
+          setFormData({
             företagsnamn: profil.företagsnamn ?? "",
             adress: profil.adress ?? "",
             postnummer: profil.postnummer ?? "",
@@ -192,7 +190,7 @@ function FakturorComponent({
             epost: profil.epost ?? "",
             bankinfo: profil.bankinfo ?? "",
             webbplats: profil.webbplats ?? "",
-          }));
+          });
         }
       });
     }

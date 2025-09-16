@@ -497,13 +497,6 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
   return (
     <div className="space-y-6">
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
-      />
-
       <div className="flex flex-wrap gap-4">
         <Knapp
           onClick={hanteraSpara}

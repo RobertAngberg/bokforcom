@@ -240,3 +240,15 @@ export interface LäggTillFavoritartikelProps {
   className?: string;
   labelClassName?: string;
 }
+
+// SparadeFakturor types
+export interface SparadeFakturorProps {
+  fakturor: any[];
+  activeInvoiceId?: number;
+  onSelectInvoice?: (id: number) => void | Promise<void>;
+}
+
+export interface BetalningsModal {
+  fakturaId: number;
+  belopp: number;
+}
