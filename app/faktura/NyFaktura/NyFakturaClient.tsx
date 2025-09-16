@@ -8,7 +8,7 @@ import Knapp from "../../_components/Knapp";
 import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";
 import Betalning from "../_components/Betalning";
-import AvsandareZustand from "../_components/AvsandareZustand";
+import Avsandare from "../_components/Avsandare";
 import FakturaStoreInit from "../_components/FakturaStoreInit";
 import { useNyFaktura } from "../_hooks/useFakturaClient";
 import type { NyFakturaClientProps } from "../_types/types";
@@ -36,7 +36,7 @@ export default function NyFakturaClient({ initialData }: NyFakturaClientProps) {
         </div>
 
         <AnimeradFlik title="Avsändare" icon="🧑‍💻">
-          <AvsandareZustand />
+          <Avsandare />
         </AnimeradFlik>
 
         <AnimeradFlik title="Kunduppgifter" icon="🧑‍💼">

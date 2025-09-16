@@ -763,8 +763,10 @@ export async function uppdateraKund(id: number, formData: FormData) {
   }
 }
 
-export async function hämtaFöretagsprofil(userId: string): Promise<any | null> {
+export async function hämtaFöretagsprofil(): Promise<any | null> {
   try {
+    const userId = await getUserId();
+
     const { rows } = await pool.query(
       `
       SELECT
@@ -791,22 +793,21 @@ export async function hämtaFöretagsprofil(userId: string): Promise<any | null>
   }
 }
 
-export async function sparaFöretagsprofil(
-  userId: string,
-  data: {
-    företagsnamn: string;
-    adress: string;
-    postnummer: string;
-    stad: string;
-    organisationsnummer: string;
-    momsregistreringsnummer: string;
-    telefonnummer: string;
-    epost: string;
-    webbplats: string;
-    logoWidth?: number;
-  }
-): Promise<{ success: boolean }> {
+export async function sparaFöretagsprofil(data: {
+  företagsnamn: string;
+  adress: string;
+  postnummer: string;
+  stad: string;
+  organisationsnummer: string;
+  momsregistreringsnummer: string;
+  telefonnummer: string;
+  epost: string;
+  webbplats: string;
+  logoWidth?: number;
+}): Promise<{ success: boolean }> {
   try {
+    const userId = await getUserId();
+
     await pool.query(
       `
       INSERT INTO företagsprofil (

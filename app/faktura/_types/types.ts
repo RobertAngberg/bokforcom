@@ -112,6 +112,21 @@ export type ToastState = {
   isVisible: boolean;
 };
 
+// Form types
+export type AvsandareForm = {
+  företagsnamn: string;
+  adress: string;
+  postnummer: string;
+  stad: string;
+  organisationsnummer: string;
+  momsregistreringsnummer: string;
+  telefonnummer: string;
+  epost: string;
+  webbplats: string;
+  logo: string;
+  logoWidth: number;
+};
+
 // Component props types
 export interface NyFakturaClientProps {
   initialData: ServerData;

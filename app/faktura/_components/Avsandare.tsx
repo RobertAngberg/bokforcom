@@ -1,200 +1,23 @@
-//#region Huvud
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import TextFalt from "../../_components/TextFalt";
-import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from "../actions";
 import { getProxyImageUrl } from "../_utils/imageProxy";
-import { useFakturaContext } from "./FakturaProvider";
+import { useAvsandare } from "../_hooks/useAvsandare";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-//#endregion
 
 export default function Avsandare() {
-  //#region Session, state och vars
-  const { data: session } = useSession();
-  const { formData, setFormData } = useFakturaContext();
-
-  const [form, setForm] = useState({
-    företagsnamn: "",
-    adress: "",
-    postnummer: "",
-    stad: "",
-    organisationsnummer: "",
-    momsregistreringsnummer: "",
-    telefonnummer: "",
-    epost: "",
-    webbplats: "",
-    logo: "",
-    logoWidth: 200,
-  });
-
-  const [sparat, setSparat] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "error" as "success" | "error" | "info",
-    isVisible: false,
-  });
-  //#endregion
-
-  //#region Ladda företagsprofil
-  // Ladda företagsprofil när komponenten mountas
-  useEffect(() => {
-    const ladda = async () => {
-      if (session?.user?.id) {
-        const data = await hämtaFöretagsprofil(session.user.id);
-        if (data) {
-          // Säkerställ att alla fält är strängar (inte null/undefined)
-          setForm({
-            företagsnamn: data.företagsnamn || "",
-            adress: data.adress || "",
-            postnummer: data.postnummer || "",
-            stad: data.stad || "",
-            organisationsnummer: data.organisationsnummer || "",
-            momsregistreringsnummer: data.momsregistreringsnummer || "",
-            telefonnummer: data.telefonnummer || "",
-            epost: data.epost || "",
-            webbplats: data.webbplats || "",
-            logo: "", // Laddas separat från localStorage
-            logoWidth: 200,
-          });
-        }
-
-        // Endast logo från localStorage (inte logoWidth)
-        const logo = localStorage.getItem("company_logo");
-        if (logo) setForm((prev) => ({ ...prev, logo }));
-      }
-    };
-    ladda();
-  }, [session]);
-
-  // Ladda sparad logotyp från localStorage
-  useEffect(() => {
-    const savedLogo = localStorage.getItem("company_logo");
-    if (savedLogo) {
-      setForm((prev) => ({ ...prev, logo: savedLogo }));
-      setFormData((prev) => ({ ...prev, logo: savedLogo }));
-    }
-  }, [setFormData]);
-  //#endregion
-
-  //#region Hanterare
-  // Hantera ändringar i formuläret
-  const hanteraTangentNer = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const hanteraLoggaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // SÄKERHETSVALIDERING: Filtyp
-    if (!file.type.startsWith("image/")) {
-      setToast({
-        message: "Bara bildfiler tillåtna (PNG, JPG, GIF, WebP).",
-        type: "error",
-        isVisible: true,
-      });
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-
-    try {
-      // Skapa FormData för Server Action
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Anropa Server Action
-      const result = await uploadLogoAction(formData);
-
-      if (result.success && result.url) {
-        // Uppdatera form med URL:en från Vercel Blob
-        setForm((prev) => ({ ...prev, logo: result.url || "" }));
-
-        // Uppdatera även FakturaProvider för förhandsgranskning
-        setFormData((prev) => ({ ...prev, logo: result.url || "" }));
-
-        // Spara även i localStorage som backup/cache
-        localStorage.setItem("company_logo", result.url);
-
-        setToast({
-          message: "Logotyp uppladdad!",
-          type: "success",
-          isVisible: true,
-        });
-      } else {
-        setToast({
-          message: `Upload misslyckades: ${result.error}`,
-          type: "error",
-          isVisible: true,
-        });
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    } catch (error) {
-      console.error("Logo upload error:", error);
-      setToast({
-        message: "Ett fel uppstod vid uppladdning",
-        type: "error",
-        isVisible: true,
-      });
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const hanteraTaBortLogga = () => {
-    setForm((prev) => ({ ...prev, logo: "" }));
-    setFormData((prev) => ({ ...prev, logo: "" }));
-    localStorage.removeItem("company_logo");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Nollställ inputen!
-    }
-  };
-
-  const hanteraSubmit = async () => {
-    if (!session?.user?.id) return;
-
-    console.log("🔍 Sparar epost:", form.epost); // Debug
-
-    const dataToSave = {
-      företagsnamn: form.företagsnamn,
-      adress: form.adress,
-      postnummer: form.postnummer,
-      stad: form.stad,
-      organisationsnummer: form.organisationsnummer,
-      momsregistreringsnummer: form.momsregistreringsnummer,
-      telefonnummer: form.telefonnummer,
-      epost: form.epost,
-      webbplats: form.webbplats,
-    };
-
-    console.log("📤 Data som skickas:", dataToSave); // Debug
-
-    const res = await sparaFöretagsprofil(session.user.id, dataToSave);
-
-    if (res.success) {
-      setSparat(true);
-      setTimeout(() => setSparat(false), 3000);
-    } else {
-      setToast({
-        message: "Kunde inte spara uppgifter.",
-        type: "error",
-        isVisible: true,
-      });
-    }
-  };
-  //#endregion
+  const { form, toast, fileInputRef, hanteraTangentNer, hanteraLoggaUpload, spara, closeToast } =
+    useAvsandare();
 
   return (
-    <div className="max-w-4xl mx-auto bg-slate-900 text-white rounded-lg">
+    <>
       <Toast
         message={toast.message}
         type={toast.type}
         isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
+        onClose={closeToast}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -203,80 +26,107 @@ export default function Avsandare() {
           name="företagsnamn"
           value={form.företagsnamn}
           onChange={hanteraTangentNer}
+          placeholder="Ange företagsnamn"
         />
-        <TextFalt label="Adress" name="adress" value={form.adress} onChange={hanteraTangentNer} />
-        <TextFalt
-          label="Postnummer"
-          name="postnummer"
-          value={form.postnummer}
-          onChange={hanteraTangentNer}
-        />
-        <TextFalt label="Stad" name="stad" value={form.stad} onChange={hanteraTangentNer} />
+
         <TextFalt
           label="Organisationsnummer"
           name="organisationsnummer"
           value={form.organisationsnummer}
           onChange={hanteraTangentNer}
+          placeholder="123456-7890"
         />
+
         <TextFalt
-          label="Momsregistreringsnummer"
-          name="momsregistreringsnummer"
-          value={form.momsregistreringsnummer}
+          label="Adress"
+          name="adress"
+          value={form.adress}
           onChange={hanteraTangentNer}
+          placeholder="Gatunamn 123"
         />
+
+        <TextFalt
+          label="Postnummer"
+          name="postnummer"
+          value={form.postnummer}
+          onChange={hanteraTangentNer}
+          placeholder="12345"
+        />
+
+        <TextFalt
+          label="Stad"
+          name="stad"
+          value={form.stad}
+          onChange={hanteraTangentNer}
+          placeholder="Stockholm"
+        />
+
         <TextFalt
           label="Telefonnummer"
           name="telefonnummer"
           value={form.telefonnummer}
           onChange={hanteraTangentNer}
+          placeholder="08-123 456 78"
         />
-        <TextFalt label="E-post" name="epost" value={form.epost} onChange={hanteraTangentNer} />
+
+        <TextFalt
+          label="E-post"
+          name="epost"
+          value={form.epost}
+          onChange={hanteraTangentNer}
+          placeholder="info@företag.se"
+        />
+
         <TextFalt
           label="Webbplats"
           name="webbplats"
           value={form.webbplats}
           onChange={hanteraTangentNer}
+          placeholder="www.företag.se"
+        />
+
+        <TextFalt
+          label="Momsregistreringsnummer"
+          name="momsregistreringsnummer"
+          value={form.momsregistreringsnummer}
+          onChange={hanteraTangentNer}
+          placeholder="SE556123123401"
         />
       </div>
 
-      <div className="mt-8 flex flex-col items-start gap-4 mb-6">
-        <label className="font-semibold">Logotyp</label>
-        <div className="flex items-center gap-4">
-          <Knapp onClick={() => fileInputRef.current?.click()} text="Ladda upp logotyp" />
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={hanteraLoggaUpload}
-          />
-
+      {/* Logosektion */}
+      <div className="mt-4 p-4 rounded-lg">
+        <h3 className="text-lg font-medium text-white mb-4">Företagslogga</h3>
+        <div className="flex items-center space-x-4">
           {form.logo && (
-            <Image
-              src={getProxyImageUrl(form.logo)}
-              alt="Logotyp"
-              width={form.logoWidth}
-              height={120}
-              style={{
-                maxWidth: `${form.logoWidth}px`,
-                maxHeight: "120px",
-                objectFit: "contain",
-                background: "#fff",
-                borderRadius: 4,
-                padding: 2,
-              }}
-              unoptimized // Viktigt för proxy URLs
-            />
+            <div className="shrink-0">
+              <Image
+                src={getProxyImageUrl(form.logo)}
+                alt="Företagslogga"
+                width={form.logoWidth}
+                height={100}
+                className="object-contain rounded"
+                style={{ height: "auto", maxHeight: "100px" }}
+              />
+            </div>
           )}
+          <div className="flex-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={hanteraLoggaUpload}
+              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-cyan-600 file:text-white hover:file:bg-cyan-700"
+            />
+            <p className="text-sm text-gray-500 mt-1">PNG, JPG, GIF eller WebP. Max 5MB.</p>
+          </div>
         </div>
-
-        {form.logo && <Knapp onClick={hanteraTaBortLogga} text="❌ Ta bort logotyp" />}
       </div>
 
-      <Knapp onClick={hanteraSubmit} text="💾 Spara uppgifter" />
-
-      {sparat && <p className="text-green-400 mt-4">✅ Uppgifterna sparades!</p>}
-    </div>
+      {/* Sparaknappar */}
+      <div className="flex justify-end space-x-3 mt-6 pt-4">
+        <Knapp text="Spara avsändare" onClick={spara} />
+      </div>
+    </>
   );
 }
