@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useFakturaContext } from "../_components/FakturaProvider";
+import { useFakturaClient } from "../_hooks/useFakturaClient";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import BetalningsInfo from "./BetalningsInfo";
@@ -15,7 +15,7 @@ import TotalerInfo from "./TotalerInfo";
 //#endregion
 
 export default function Forhandsgranskning() {
-  const { formData, setFormData } = useFakturaContext();
+  const { formData, updateFormField } = useFakturaClient();
   const { data: session } = useSession();
   const rows = formData.artiklar || [];
 
@@ -26,7 +26,7 @@ export default function Forhandsgranskning() {
   const handleLogoSliderChange = (value: number) => {
     setLogoSliderValue(value);
     const calculated = 50 + (value / 100) * 150;
-    setFormData((prev) => ({ ...prev, logoWidth: calculated }));
+    updateFormField("logoWidth", calculated);
     localStorage.setItem("company_logoWidth", calculated.toString());
   };
 

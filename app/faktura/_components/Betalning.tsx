@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useFakturaContext } from "./FakturaProvider";
+import { useFakturaClient } from "../_stores/fakturaStore";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { sv } from "date-fns/locale";
@@ -11,7 +11,7 @@ import { useSession } from "next-auth/react";
 //#endregion
 
 export default function Betalning() {
-  const { formData, setFormData } = useFakturaContext();
+  const { formData, setFormData } = useFakturaClient();
   const { data: session } = useSession();
 
   registerLocale("sv", sv);
@@ -43,45 +43,22 @@ export default function Betalning() {
         senasteBetalning = await hämtaSenasteBetalningsmetod(session.user.id);
       }
 
-      setFormData((prev) => {
-        const updated = { ...prev };
-        let changed = false;
-
-        // Standard datum/villkor
-        if (!prev.fakturadatum) {
-          updated.fakturadatum = todayISO;
-          changed = true;
-        }
-        if (!prev.betalningsvillkor) {
-          updated.betalningsvillkor = "30";
-          changed = true;
-        }
-        if (!prev.drojsmalsranta) {
-          updated.drojsmalsranta = "12";
-          changed = true;
-        }
-
-        // ✅ Sätt senaste betalningsmetod om ingen är vald
-        if (!prev.betalningsmetod && senasteBetalning.betalningsmetod) {
-          updated.betalningsmetod = senasteBetalning.betalningsmetod;
-          changed = true;
-        }
-        if (!prev.nummer && senasteBetalning.nummer) {
-          updated.nummer = senasteBetalning.nummer;
-          changed = true;
-        }
-
-        if (changed) {
-          const fd = parseISODate(updated.fakturadatum);
-          if (fd) {
-            updated.forfallodatum = addDays(fd, parseInt(updated.betalningsvillkor, 10))
-              .toISOString()
-              .slice(0, 10);
-          }
-          return updated;
-        }
-
-        return prev;
+      setFormData({
+        fakturadatum: formData.fakturadatum || todayISO,
+        betalningsvillkor: formData.betalningsvillkor || "30",
+        drojsmalsranta: formData.drojsmalsranta || "12",
+        betalningsmetod: formData.betalningsmetod || senasteBetalning.betalningsmetod || "",
+        nummer: formData.nummer || senasteBetalning.nummer || "",
+        forfallodatum:
+          formData.forfallodatum ||
+          (formData.fakturadatum
+            ? addDays(
+                new Date(formData.fakturadatum),
+                parseInt(formData.betalningsvillkor || "30", 10)
+              )
+                .toISOString()
+                .slice(0, 10)
+            : ""),
       });
     };
 
@@ -89,7 +66,7 @@ export default function Betalning() {
     if (session?.user?.id) {
       initializeDefaults();
     }
-  }, [setFormData, session?.user?.id]);
+  }, [session?.user?.id]); // Ta bort setFormData från dependencies
 
   const fakturadatumDate = parseISODate(formData.fakturadatum);
   const fallbackForfallo = fakturadatumDate
@@ -104,16 +81,15 @@ export default function Betalning() {
     const calc = addDays(fakturadatumDate, isNaN(days) ? 30 : days)
       .toISOString()
       .slice(0, 10);
-    setFormData((prev) => ({ ...prev, forfallodatum: calc }));
-  }, [fakturadatumDate, formData.betalningsvillkor, formData.forfallodatum, setFormData]);
+    setFormData({ forfallodatum: calc });
+  }, [fakturadatumDate, formData.betalningsvillkor, formData.forfallodatum]); // Ta bort setFormData
 
   //#region Hanterare
   function hanteraÄndraDatum(field: "fakturadatum" | "forfallodatum") {
     return (d: Date | null) =>
-      setFormData((p) => ({
-        ...p,
+      setFormData({
         [field]: d ? d.toISOString().slice(0, 10) : "",
-      }));
+      });
   }
 
   function hanteraÄndradText(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -122,15 +98,15 @@ export default function Betalning() {
     // Blockera farliga tecken för nummer-fältet
     if (name === "nummer") {
       const sanitizedValue = value.replace(/[<>'"&]/g, "");
-      setFormData((p) => ({ ...p, [name]: sanitizedValue }));
+      setFormData({ [name]: sanitizedValue });
       return;
     }
 
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData({ [name]: value });
   }
 
   function hanteraÄndradDropdown(e: React.ChangeEvent<HTMLSelectElement>) {
-    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
+    setFormData({ [e.target.name]: e.target.value });
   }
   //#endregion
 

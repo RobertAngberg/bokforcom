@@ -17,7 +17,7 @@ import {
   uppdateraRotRutStatus,
   registreraRotRutBetalning,
 } from "../actions";
-import { useFakturaContext } from "../_components/FakturaProvider";
+import { useFakturaClient } from "../_hooks/useFakturaClient";
 import { laddaNerHUSFil } from "./husFilGenerator";
 
 // Lokal typ för bokföringsposter
@@ -38,7 +38,7 @@ interface Props {
 //#endregion
 
 export default function Alternativ({ onReload, onPreview }: Props) {
-  const { formData, setFormData } = useFakturaContext();
+  const { formData, updateFormField } = useFakturaClient();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
@@ -93,10 +93,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
         // UPPDATERA FORMDATA MED NYTT ID!
         if (res.id) {
-          setFormData((prev) => ({
-            ...prev,
-            id: res.id.toString(),
-          }));
+          updateFormField("id", res.id.toString());
         }
 
         // Trigga reload event så Fakturor.tsx uppdaterar sin lista
@@ -137,10 +134,7 @@ export default function Alternativ({ onReload, onPreview }: Props) {
 
           if (res.success && res.id) {
             // UPPDATERA FORMDATA MED NYTT ID!
-            setFormData((prev) => ({
-              ...prev,
-              id: res.id.toString(),
-            }));
+            updateFormField("id", res.id.toString());
             // Trigga reload event så Fakturor.tsx uppdaterar sin lista
             window.dispatchEvent(new Event("reloadFakturor"));
 

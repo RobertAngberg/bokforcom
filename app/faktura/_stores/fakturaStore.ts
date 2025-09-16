@@ -156,3 +156,24 @@ export const useFakturaStore = create<FakturaStoreState>((set, get) => ({
     }
   },
 }));
+
+// Custom hook for easier access to common operations
+export function useFakturaClient() {
+  const store = useFakturaStore();
+
+  return {
+    formData: store.formData,
+    kundStatus: store.kundStatus,
+    nyArtikel: store.nyArtikel,
+    produkterTjansterState: store.produkterTjansterState,
+    setFormData: store.setFormData,
+    resetFormData: store.resetFormData,
+    setKundStatus: store.setKundStatus,
+    resetKund: store.resetKund,
+    setNyArtikel: store.setNyArtikel,
+    resetNyArtikel: store.resetNyArtikel,
+    setProdukterTjansterState: store.setProdukterTjansterState,
+    resetProdukterTjanster: store.resetProdukterTjanster,
+    initStore: store.initStore,
+  };
+}

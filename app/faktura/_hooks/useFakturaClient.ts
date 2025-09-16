@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useFakturaStore } from "../_stores/fakturaStore";
+import { hämtaNästaFakturanummer } from "../actions";
 import type { FakturaFormData, NyArtikel, KundStatus, ServerData } from "../_types/types";
 
 export function useFakturaClient() {
@@ -255,6 +256,17 @@ export function useNyFaktura(initialData: ServerData) {
   useEffect(() => {
     fakturaClient.initializeForNewFaktura();
   }, [fakturaClient.initializeForNewFaktura]);
+
+  // Hämta nästa fakturanummer när det är en ny faktura (dvs ingen id och inget fakturanummer)
+  useEffect(() => {
+    if (!fakturaClient.formData.id && !fakturaClient.formData.fakturanummer) {
+      hämtaNästaFakturanummer().then((nummer) => {
+        fakturaClient.setFormData({
+          fakturanummer: nummer.toString(),
+        });
+      });
+    }
+  }, [fakturaClient.formData.id, fakturaClient.formData.fakturanummer, fakturaClient.setFormData]);
 
   return fakturaClient;
 }
