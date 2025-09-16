@@ -127,6 +127,11 @@ export type AvsandareForm = {
   logoWidth: number;
 };
 
+export type KundSaveResponse = {
+  success: boolean;
+  id?: number;
+};
+
 // Component props types
 export interface NyFakturaClientProps {
   initialData: ServerData;

@@ -1,207 +1,27 @@
-//#region Huvud
 "use client";
 
-import { useState, useEffect } from "react";
-import { useFakturaContext } from "./FakturaProvider";
-import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions";
 import Knapp from "../../_components/Knapp";
 import Dropdown from "../../_components/Dropdown";
 import TextFalt from "../../_components/TextFalt";
 import Toast from "../../_components/Toast";
-
-//#region Business Logic - Migrated from actions.ts
-// Säker text-sanitering för kunddata
-function sanitizeKundInput(input: string): string {
-  if (!input) return "";
-  return input
-    .trim()
-    .replace(/[<>]/g, "") // Ta bort potentiellt farliga tecken
-    .substring(0, 255); // Begränsa längd
-}
-
-// Email-validering för kunder
-function validateKundEmail(email: string): boolean {
-  if (!email) return true; // Email är valfritt
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
-
-// Personnummer-validering (grundläggande format)
-function validatePersonnummer(personnummer: string): boolean {
-  if (!personnummer) return true; // Personnummer är valfritt
-  return /^\d{6}-?\d{4}$/.test(personnummer.replace(/\s/g, ""));
-}
-
-// Validera komplett kunddata
-function validateKundData(formData: any): { isValid: boolean; error?: string } {
-  // Validera obligatoriska fält
-  const kundnamn = sanitizeKundInput(formData.kundnamn || "");
-  if (!kundnamn || kundnamn.length < 2) {
-    return { isValid: false, error: "Kundnamn krävs (minst 2 tecken)" };
-  }
-
-  // Validera email om angivet
-  if (formData.kundemail && !validateKundEmail(formData.kundemail)) {
-    return { isValid: false, error: "Ogiltig email-adress" };
-  }
-
-  // Validera personnummer om angivet
-  if (formData.personnummer && !validatePersonnummer(formData.personnummer)) {
-    return { isValid: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
-  }
-
-  return { isValid: true };
-}
-
-// Sanitera all kunddata innan spara
-function sanitizeKundFormData(formData: any) {
-  return {
-    ...formData,
-    kundnamn: sanitizeKundInput(formData.kundnamn || ""),
-    kundorganisationsnummer: sanitizeKundInput(formData.kundorganisationsnummer || ""),
-    kundnummer: sanitizeKundInput(formData.kundnummer || ""),
-    kundmomsnummer: sanitizeKundInput(formData.kundmomsnummer || ""),
-    kundadress: sanitizeKundInput(formData.kundadress || ""),
-    kundpostnummer: sanitizeKundInput(formData.kundpostnummer || ""),
-    kundstad: sanitizeKundInput(formData.kundstad || ""),
-    personnummer: sanitizeKundInput(formData.personnummer || ""),
-  };
-}
-//#endregion
-
-type KundSaveResponse = {
-  success: boolean;
-  id?: number;
-};
-//#endregion
+import { useKundUppgifter } from "../_hooks/useKundUppgifter";
 
 export default function KundUppgifter() {
-  //#region State och context
-  const { formData, setFormData, kundStatus, setKundStatus, resetKund } = useFakturaContext();
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
-  const [kunder, setKunder] = useState<any[]>([]);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "error" as "success" | "error" | "info",
-    isVisible: false,
-  });
-
-  //#endregion
-
-  useEffect(() => {
-    const laddaKunder = async () => {
-      const sparade = await hämtaSparadeKunder();
-      setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
-    };
-    laddaKunder();
-  }, []);
-
-  //#region Formulärhanterare
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
-    if (kundStatus === "loaded") setKundStatus("editing");
-  };
-
-  const handleSave = async () => {
-    // Validera kunddata innan sparande
-    const validation = validateKundData(formData);
-    if (!validation.isValid) {
-      setToast({
-        message: validation.error || "Valideringsfel",
-        type: "error",
-        isVisible: true,
-      });
-      return;
-    }
-
-    // Sanitera data
-    const sanitizedData = sanitizeKundFormData(formData);
-
-    const fd = new FormData();
-    fd.append("kundnamn", sanitizedData.kundnamn);
-    fd.append("kundorgnummer", sanitizedData.kundorganisationsnummer);
-    fd.append("kundnummer", sanitizedData.kundnummer);
-    fd.append("kundmomsnummer", sanitizedData.kundmomsnummer);
-    fd.append("kundadress1", sanitizedData.kundadress);
-    fd.append("kundpostnummer", sanitizedData.kundpostnummer);
-    fd.append("kundstad", sanitizedData.kundstad);
-    fd.append("kundemail", formData.kundemail); // Email valideras men saniteras inte
-    fd.append("personnummer", sanitizedData.personnummer);
-
-    const res: KundSaveResponse = formData.kundId
-      ? await uppdateraKund(parseInt(formData.kundId, 10), fd)
-      : await sparaNyKund(fd);
-
-    if (res.success) {
-      if (!formData.kundId && res.id) {
-        setFormData((p) => ({ ...p, kundId: res.id!.toString() }));
-      }
-      setKundStatus("loaded");
-      setShowSuccess(true);
-      setFadeOut(false);
-      setTimeout(() => setFadeOut(true), 1500);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } else {
-      setToast({
-        message: "Kunde inte spara kund",
-        type: "error",
-        isVisible: true,
-      });
-    }
-  };
-
-  const handleSelectCustomer = (kundId: string) => {
-    const valdKund = kunder.find((k) => k.id.toString() === kundId);
-    if (!valdKund) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      kundId: valdKund.id.toString(),
-      kundnamn: valdKund.kundnamn,
-      kundorganisationsnummer: valdKund.kundorgnummer,
-      kundnummer: valdKund.kundnummer,
-      kundmomsnummer: valdKund.kundmomsnummer,
-      kundadress: valdKund.kundadress1,
-      kundpostnummer: valdKund.kundpostnummer,
-      kundstad: valdKund.kundstad,
-      kundemail: valdKund.kundemail,
-      personnummer: valdKund.personnummer || "",
-    }));
-    setKundStatus("loaded");
-  };
-
-  const handleCreateNewCustomer = () => {
-    resetKund();
-    setKundStatus("editing");
-  };
-
-  const handleDeleteCustomer = async () => {
-    if (!formData.kundId) return;
-    if (!confirm("Är du säker på att du vill ta bort kunden?")) return;
-
-    try {
-      await deleteKund(parseInt(formData.kundId, 10));
-      resetKund();
-      setKundStatus("none");
-      const sparade = await hämtaSparadeKunder();
-      setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
-      setToast({
-        message: "Kund raderad",
-        type: "success",
-        isVisible: true,
-      });
-    } catch (error) {
-      console.error("Fel vid radering av kund:", error);
-      setToast({
-        message: "Kunde inte radera kunden",
-        type: "error",
-        isVisible: true,
-      });
-    }
-  };
-  //#endregion
+  const {
+    formData,
+    kunder,
+    kundStatus,
+    showSuccess,
+    fadeOut,
+    toast,
+    handleChange,
+    handleSave,
+    handleSelectCustomer,
+    handleCreateNewCustomer,
+    handleDeleteCustomer,
+    handleEditCustomer,
+    closeToast,
+  } = useKundUppgifter();
 
   return (
     <div className="space-y-6 text-white">
@@ -209,7 +29,7 @@ export default function KundUppgifter() {
         message={toast.message}
         type={toast.type}
         isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
+        onClose={closeToast}
       />
 
       <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -225,7 +45,7 @@ export default function KundUppgifter() {
 
         {kundStatus === "loaded" && (
           <div className="flex gap-2">
-            <Knapp onClick={() => setKundStatus("editing")} text="👤 Redigera kund" />
+            <Knapp onClick={handleEditCustomer} text="👤 Redigera kund" />
             <Knapp onClick={handleDeleteCustomer} text="🗑️ Ta bort kund" />
           </div>
         )}

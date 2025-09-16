@@ -87,12 +87,6 @@ export function sanitizeAdminInput(input: string, isSQL: boolean = false): strin
 }
 
 /**
- * Legacy alias för bakåtkompatibilitet
- * @deprecated Använd sanitizeInput() med explicit längdgräns istället
- */
-export const sanitizeInputLegacy = sanitizeInput;
-
-/**
  * Validerar belopp (positiva decimaler)
  */
 export function validateAmount(amount: number | string): boolean {
@@ -144,4 +138,22 @@ export function isSafeSql(sql: string): boolean {
   ];
 
   return !dangerousPatterns.some((pattern) => pattern.test(sql));
+}
+
+/**
+ * Validerar svenskt personnummer (YYMMDD-XXXX eller YYYYMMDD-XXXX format)
+ * Stöder både 10-siffriga (YYMMDD-XXXX) och 12-siffriga (YYYYMMDD-XXXX) format
+ * Personnummer är valfritt - returnerar true för tomma strängar
+ */
+export function validatePersonnummer(personnummer: string): boolean {
+  if (!personnummer) return true; // Personnummer är valfritt
+
+  // Ta bort mellanslag och normalisera
+  const cleaned = personnummer.replace(/\s/g, "");
+
+  // Acceptera både YYMMDD-XXXX och YYYYMMDD-XXXX format
+  const pattern10 = /^\d{6}-?\d{4}$/; // YYMMDD-XXXX eller YYMMDDXXXX
+  const pattern12 = /^\d{8}-?\d{4}$/; // YYYYMMDD-XXXX eller YYYYMMDDXXXX
+
+  return pattern10.test(cleaned) || pattern12.test(cleaned);
 }
