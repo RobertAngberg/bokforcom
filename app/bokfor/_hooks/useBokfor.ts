@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Förval } from "../_types/types";
-
-interface InitialData {
-  favoritFörvalen: Förval[];
-  currentStep: number;
-  isLevfaktMode: boolean;
-  isUtlaggMode: boolean;
-  leverantör: any;
-}
+import { Förval, InitialData } from "../_types/types";
 
 export function useBokfor(initialData: InitialData) {
   const router = useRouter();
