@@ -46,7 +46,9 @@ export function useSteg3() {
     type: "error" as "success" | "error" | "info",
     isVisible: false,
   });
-  const [konto2890Beskrivning, setKonto2890Beskrivning] = useState<string>("");
+  const [konto2890Beskrivning, setKonto2890Beskrivning] = useState<string>(
+    "Övriga kortfristiga skulder"
+  );
 
   // Hämta anställda för utläggs-mode
   useEffect(() => {
@@ -56,24 +58,6 @@ export function useSteg3() {
         if (res.length === 1) setAnstalldId(res[0].id.toString());
       });
     }
-  }, [utlaggMode]);
-
-  // Hämta beskrivning för konto 2890 från DB
-  useEffect(() => {
-    async function fetchKonto2890() {
-      try {
-        const res = await fetch("/api/konto-beskrivning?kontonummer=2890");
-        if (res.ok) {
-          const data = await res.json();
-          setKonto2890Beskrivning(data.beskrivning || "Övriga kortfristiga skulder");
-        } else {
-          setKonto2890Beskrivning("Övriga kortfristiga skulder");
-        }
-      } catch {
-        setKonto2890Beskrivning("Övriga kortfristiga skulder");
-      }
-    }
-    if (utlaggMode) fetchKonto2890();
   }, [utlaggMode]);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "error") => {

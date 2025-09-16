@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { fetchAllaForval, loggaFavoritförval } from "../_actions/actions";
+import { loggaFavoritförval } from "../_actions/actions";
 import { KontoRad, Förval } from "../_types/types";
 import { useBokforStore } from "../_stores/bokforStore";
 import { normalize } from "../../_utils/textUtils";
@@ -10,7 +10,8 @@ import { normalize } from "../../_utils/textUtils";
 export function useSokForval() {
   // Hämta allt från Zustand store
   const {
-    favoritFörvalen,
+    favoritFörval,
+    allaFörval,
     levfaktMode,
     utlaggMode,
     currentStep,
@@ -26,9 +27,16 @@ export function useSokForval() {
 
   // Lokal UI state (INTE Zustand) - bara för denna komponent
   const [searchText, setSearchText] = useState(""); // Temporär söktext
-  const [results, setResults] = useState<Förval[]>(favoritFörvalen || []); // Initiera med favoriter
+  const [results, setResults] = useState<Förval[]>([]); // Tom initalt, uppdateras nedan
   const [highlightedIndex, setHighlightedIndex] = useState(0); // Keyboard navigation
   const [loading, setLoading] = useState(false); // Visuell loading state
+
+  // Uppdatera results när favoritFörval kommer från store
+  useEffect(() => {
+    if (searchText.length < 2 && favoritFörval.length > 0) {
+      setResults(favoritFörval);
+    }
+  }, [favoritFörval, searchText]);
 
   // Läs URL-parametrar och sätt store-state
   useEffect(() => {
@@ -58,7 +66,7 @@ export function useSokForval() {
     setLoading(true);
 
     try {
-      const alla = await fetchAllaForval();
+      const alla = allaFörval; // Använd data från store istället
       const q = input; // Redan normaliserad
 
       function score(f: Förval): number {
@@ -181,7 +189,7 @@ export function useSokForval() {
     }
     if (e.key === "Escape") {
       setSearchText("");
-      setResults(favoritFörvalen);
+      setResults(favoritFörval);
       setHighlightedIndex(0);
     }
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { hämtaAnställda } from "../_actions/actions";
+import { useBokforStore } from "../_stores/bokforStore";
 import { UtlaggAnställd } from "../_types/types";
 
 export function useUtlagg({
@@ -11,23 +11,20 @@ export function useUtlagg({
   initialValue?: boolean;
   onUtläggChange?: (isUtlägg: boolean, valdaAnställda: number[]) => void;
 }) {
+  const anställdaFromStore = useBokforStore((state) => state.anställda);
+
   const [isUtlägg, setIsUtlägg] = useState(initialValue);
   const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
   const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleUtläggChange = async (checked: boolean) => {
+  const handleUtläggChange = (checked: boolean) => {
     setIsUtlägg(checked);
 
     if (checked) {
       setLoading(true);
-      try {
-        const anställdaData = await hämtaAnställda();
-        setAnställda(anställdaData || []);
-      } catch (error) {
-        console.error("❌ Fel vid hämtning av anställda:", error);
-        setAnställda([]);
-      }
+      // Använd anställda från store
+      setAnställda(anställdaFromStore || []);
       setLoading(false);
     } else {
       setAnställda([]);

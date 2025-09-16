@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { hämtaBokföringsmetod } from "../_actions/actions";
 import { extractDataFromOCRKundfaktura } from "../_actions/ocrActions";
 import { useBokforStore } from "../_stores/bokforStore";
 
@@ -19,6 +18,7 @@ export function useSteg2() {
     setExtrafält,
     currentStep,
     levfaktMode,
+    bokföringsmetod, // Hämta från store istället
     utlaggMode,
     bokförSomFaktura,
     setBokförSomFaktura,
@@ -31,8 +31,7 @@ export function useSteg2() {
     setCurrentStep,
   } = useBokforStore();
 
-  // Lokal state bara för denna komponent
-  const [bokföringsmetod, setBokföringsmetod] = useState<string>("");
+  // Lokal state bara för denna komponent (utan bokföringsmetod som nu kommer från store)
   const [fakturadatum, setFakturadatum] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState<string>("");
   const [reprocessFile, setReprocessFile] = useState<(() => Promise<void>) | null>(null);
@@ -57,20 +56,6 @@ export function useSteg2() {
       console.warn("Heuristik debug misslyckades:", err);
     }
   }, [bokföringsmetod, valtFörval, extrafält, utlaggMode]);
-
-  // Hämta användarens bokföringsmetod
-  useEffect(() => {
-    const hämtaMetod = async () => {
-      try {
-        const metod = await hämtaBokföringsmetod();
-        setBokföringsmetod(metod);
-      } catch (error) {
-        console.error("❌ Fel vid hämtning av bokföringsmetod:", error);
-        setBokföringsmetod("Kontantmetoden");
-      }
-    };
-    hämtaMetod();
-  }, []);
 
   // Kör kundfaktura-AI när OCR-text finns och fakturamoden är aktiv
   useEffect(() => {

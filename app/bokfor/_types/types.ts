@@ -9,6 +9,96 @@ export interface InitialData {
   leverantör: any;
 }
 
+export interface BokforStoreInitProps {
+  favoritFörval: Förval[];
+  allaFörval: Förval[];
+  anställda: UtlaggAnställd[];
+  bokföringsmetod: string;
+}
+
+// Store interface
+export interface BokforStore {
+  // Navigation state
+  currentStep: number;
+
+  // Data & UI state
+  favoritFörval: Förval[];
+  allaFörval: Förval[];
+  anställda: UtlaggAnställd[];
+  bokföringsmetod: string;
+  levfaktMode: boolean;
+  utlaggMode: boolean;
+
+  // Formulärfält
+  kontonummer: string;
+  kontobeskrivning: string | null;
+  belopp: number | null;
+  kommentar: string | null;
+  fil: File | null;
+  pdfUrl: string | null;
+  transaktionsdatum: string | null;
+  valtFörval: Förval | null;
+  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
+
+  // Leverantörsfaktura-fält
+  leverantör: any | null;
+  fakturanummer: string | null;
+  fakturadatum: string | null;
+  förfallodatum: string | null;
+  betaldatum: string | null;
+  bokförSomFaktura: boolean;
+  kundfakturadatum: string | null;
+
+  // Navigation actions
+  setCurrentStep: (step: number) => void;
+  setFavoritFörvalen: (förvalen: Förval[]) => void;
+  setLevfaktMode: (mode: boolean) => void;
+  setUtlaggMode: (mode: boolean) => void;
+  handleSetCurrentStep: (
+    step: number,
+    router?: any,
+    setIsLevfaktMode?: (value: boolean) => void,
+    setLeverantör?: (value: any) => void
+  ) => void;
+
+  // Actions för alla formulärfält
+  setKontonummer: (value: string) => void;
+  setKontobeskrivning: (value: string | null) => void;
+  setBelopp: (value: number | null) => void;
+  setKommentar: (value: string | null) => void;
+  setFil: (value: File | null) => void;
+  setPdfUrl: (value: string | null) => void;
+  setTransaktionsdatum: (value: string | null) => void;
+  setValtFörval: (value: Förval | null) => void;
+  setExtrafält: (value: Record<string, { label: string; debet: number; kredit: number }>) => void;
+
+  // Leverantörsfaktura actions
+  setLeverantör: (value: any | null) => void;
+  setFakturanummer: (value: string | null) => void;
+  setFakturadatum: (value: string | null) => void;
+  setFörfallodatum: (value: string | null) => void;
+  setBetaldatum: (value: string | null) => void;
+  setBokförSomFaktura: (value: boolean) => void;
+  setKundfakturadatum: (value: string | null) => void;
+
+  // Utility för att återställa alla fält
+  resetAllFields: () => void;
+
+  // Business logic functions
+  exitLevfaktMode: (router?: any) => void;
+
+  // Initialisera store med server data
+  initStore: (data: {
+    favoritFörval: Förval[];
+    allaFörval: Förval[];
+    anställda: UtlaggAnställd[];
+    bokföringsmetod: string;
+    levfaktMode: boolean;
+    utlaggMode: boolean;
+    currentStep: number;
+  }) => void;
+}
+
 // ===== LAYOUT INTERFACES =====
 export interface StandardLayoutProps {
   title?: string;

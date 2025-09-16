@@ -1,87 +1,13 @@
 import { create } from "zustand";
-import { Förval } from "../_types/types";
-
-// Nu med ALLA formulärfält för att eliminera props drilling
-interface BokforStore {
-  // Navigation state
-  currentStep: number;
-
-  // Data & UI state
-  favoritFörvalen: Förval[];
-  levfaktMode: boolean;
-  utlaggMode: boolean;
-
-  // Formulärfält
-  kontonummer: string;
-  kontobeskrivning: string | null;
-  belopp: number | null;
-  kommentar: string | null;
-  fil: File | null;
-  pdfUrl: string | null;
-  transaktionsdatum: string | null;
-  valtFörval: Förval | null;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-
-  // Leverantörsfaktura-fält
-  leverantör: any | null;
-  fakturanummer: string | null;
-  fakturadatum: string | null;
-  förfallodatum: string | null;
-  betaldatum: string | null;
-  bokförSomFaktura: boolean;
-  kundfakturadatum: string | null;
-
-  // Navigation actions
-  setCurrentStep: (step: number) => void;
-  setFavoritFörvalen: (förvalen: Förval[]) => void;
-  setLevfaktMode: (mode: boolean) => void;
-  setUtlaggMode: (mode: boolean) => void;
-  handleSetCurrentStep: (
-    step: number,
-    router?: any,
-    setIsLevfaktMode?: (value: boolean) => void,
-    setLeverantör?: (value: any) => void
-  ) => void;
-
-  // Actions för alla formulärfält
-  setKontonummer: (value: string) => void;
-  setKontobeskrivning: (value: string | null) => void;
-  setBelopp: (value: number | null) => void;
-  setKommentar: (value: string | null) => void;
-  setFil: (value: File | null) => void;
-  setPdfUrl: (value: string | null) => void;
-  setTransaktionsdatum: (value: string | null) => void;
-  setValtFörval: (value: Förval | null) => void;
-  setExtrafält: (value: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Leverantörsfaktura actions
-  setLeverantör: (value: any | null) => void;
-  setFakturanummer: (value: string | null) => void;
-  setFakturadatum: (value: string | null) => void;
-  setFörfallodatum: (value: string | null) => void;
-  setBetaldatum: (value: string | null) => void;
-  setBokförSomFaktura: (value: boolean) => void;
-  setKundfakturadatum: (value: string | null) => void;
-
-  // Utility för att återställa alla fält
-  resetAllFields: () => void;
-
-  // Business logic functions
-  exitLevfaktMode: (router?: any) => void;
-
-  // Initialisera store med server data
-  initStore: (data: {
-    favoritFörvalen: Förval[];
-    levfaktMode: boolean;
-    utlaggMode: boolean;
-    currentStep: number;
-  }) => void;
-}
+import { Förval, UtlaggAnställd, BokforStore } from "../_types/types";
 
 export const useBokforStore = create<BokforStore>((set, get) => ({
   // Initial state
   currentStep: 1,
-  favoritFörvalen: [],
+  favoritFörval: [],
+  allaFörval: [],
+  anställda: [],
+  bokföringsmetod: "Kontantmetoden",
   levfaktMode: false,
   utlaggMode: false,
 
@@ -107,7 +33,7 @@ export const useBokforStore = create<BokforStore>((set, get) => ({
 
   // Navigation actions
   setCurrentStep: (currentStep: number) => set({ currentStep }),
-  setFavoritFörvalen: (favoritFörvalen: Förval[]) => set({ favoritFörvalen }),
+  setFavoritFörvalen: (förvalen: Förval[]) => set({ favoritFörval: förvalen }),
   setLevfaktMode: (levfaktMode: boolean) => set({ levfaktMode }),
   setUtlaggMode: (utlaggMode: boolean) => set({ utlaggMode }),
 
@@ -177,10 +103,16 @@ export const useBokforStore = create<BokforStore>((set, get) => ({
       current.currentStep !== data.currentStep ||
       current.levfaktMode !== data.levfaktMode ||
       current.utlaggMode !== data.utlaggMode ||
-      current.favoritFörvalen.length !== data.favoritFörvalen.length
+      current.bokföringsmetod !== data.bokföringsmetod ||
+      current.favoritFörval.length !== data.favoritFörval.length ||
+      current.allaFörval.length !== data.allaFörval.length ||
+      current.anställda.length !== data.anställda.length
     ) {
       set({
-        favoritFörvalen: data.favoritFörvalen,
+        favoritFörval: data.favoritFörval,
+        allaFörval: data.allaFörval,
+        anställda: data.anställda,
+        bokföringsmetod: data.bokföringsmetod,
         levfaktMode: data.levfaktMode,
         utlaggMode: data.utlaggMode,
         currentStep: data.currentStep,
