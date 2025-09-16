@@ -178,7 +178,7 @@ function FakturorComponent({
   //#region Ladda företagsdata centralt när session är tillgänglig
   useEffect(() => {
     if (session?.user?.id && !formData.företagsnamn) {
-      hämtaFöretagsprofil(session.user.id).then((profil: any) => {
+      hämtaFöretagsprofil().then((profil: any) => {
         if (profil) {
           setFormData((prev: any) => ({
             ...prev,

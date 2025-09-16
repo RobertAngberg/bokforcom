@@ -1,45 +1,23 @@
-//#region
 import Knapp from "../../_components/Knapp";
+import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
 
-type FavoritArtikel = {
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  moms: number;
-  valuta: string;
-  typ: "vara" | "tjänst";
-  rotRutTyp?: "ROT" | "RUT";
-  rotRutKategori?: string;
-  avdragProcent?: number;
-  arbetskostnadExMoms?: number | string;
-  id?: number;
-};
+export default function FavoritArtiklarList() {
+  const {
+    favoritArtiklar,
+    showFavoritArtiklar,
+    setShowFavoritArtiklar,
+    handleSelectFavorit,
+    handleDeleteFavorit,
+    ursprungligFavoritId,
+  } = useProdukterTjanster();
 
-interface Props {
-  favoritArtiklar: FavoritArtikel[];
-  showFavoritArtiklar: boolean;
-  onToggle: (v: boolean) => void;
-  onSelect: (a: FavoritArtikel) => void;
-  onDelete: (id?: number) => void;
-  inladdadFavoritId?: number | null;
-}
-//#endregion
-
-export default function FavoritArtiklarList({
-  favoritArtiklar,
-  showFavoritArtiklar,
-  onToggle,
-  onSelect,
-  onDelete,
-  inladdadFavoritId,
-}: Props) {
   if (!favoritArtiklar || favoritArtiklar.length === 0) return null;
   return (
     <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
       {/* Knapp som header */}
       <div className="border-b border-slate-600">
         <Knapp
-          onClick={() => onToggle(!showFavoritArtiklar)}
+          onClick={() => setShowFavoritArtiklar(!showFavoritArtiklar)}
           text={showFavoritArtiklar ? "🔼 Dölj sparade artiklar" : "📂 Ladda in sparade artiklar"}
           className="w-full rounded-none border-none"
         />
@@ -55,16 +33,16 @@ export default function FavoritArtiklarList({
                 className="bg-slate-700 hover:bg-slate-600 cursor-pointer p-3 rounded border border-slate-500 flex flex-col justify-between relative"
               >
                 <button
-                  onClick={() => onDelete(a.id)}
+                  onClick={() => handleDeleteFavorit(a.id)}
                   className="absolute top-2 right-2 text-red-400 hover:text-red-600"
                   title="Ta bort favoritartikel"
                 >
                   🗑️
                 </button>
-                <div onClick={() => onSelect(a)} className="flex-1">
+                <div onClick={() => handleSelectFavorit(a)} className="flex-1">
                   <div className="text-white font-semibold">
                     📌 {a.beskrivning}
-                    {inladdadFavoritId === a.id && (
+                    {ursprungligFavoritId === a.id && (
                       <span className="text-green-400 ml-2">— Inladdad</span>
                     )}
                   </div>

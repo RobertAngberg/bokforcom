@@ -1,38 +1,10 @@
-import { Artikel } from "../_types/types";
+import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
 
-type ExtendedArtikel = Artikel & {
-  rotRutMaterial?: boolean;
-  rotRutTyp?: "ROT" | "RUT";
-  rotRutKategori?: string;
-  avdragProcent?: number;
-  arbetskostnadExMoms?: number;
-  rotRutAntalTimmar?: number;
-  rotRutPrisPerTimme?: number;
-  rotRutBeskrivning?: string;
-  rotRutStartdatum?: string;
-  rotRutSlutdatum?: string;
-  rotRutPersonnummer?: string;
-  rotRutFastighetsbeteckning?: string;
-  rotRutBoendeTyp?: string;
-  rotRutBrfOrg?: string;
-  rotRutBrfLagenhet?: string;
-};
+export default function ArtiklarList() {
+  const { formData, blinkIndex, handleRemove, handleEdit, handleShowArtikelDetaljer } =
+    useProdukterTjanster();
 
-interface ArtiklarListProps {
-  artiklar: Artikel[];
-  blinkIndex: number | null;
-  onRemove: (idx: number) => void;
-  onEdit?: (artikel: Artikel, idx: number) => void;
-  onShow?: (artikel: Artikel) => void;
-}
-
-export default function ArtiklarList({
-  artiklar,
-  blinkIndex,
-  onRemove,
-  onEdit,
-  onShow,
-}: ArtiklarListProps) {
+  const artiklar = formData.artiklar || [];
   if (artiklar.length === 0) return null;
 
   return (
@@ -55,8 +27,11 @@ export default function ArtiklarList({
               className="flex-1 cursor-pointer"
               onClick={() => {
                 console.log("🔍 ArtiklarList: Klick registrerat på artikel:", a);
-                console.log("🔍 ArtiklarList: onShow finns?", !!onShow);
-                onShow?.(a);
+                console.log(
+                  "🔍 ArtiklarList: handleShowArtikelDetaljer finns?",
+                  !!handleShowArtikelDetaljer
+                );
+                handleShowArtikelDetaljer(a);
               }}
               title="Klicka för att visa detaljer"
             >
@@ -72,9 +47,16 @@ export default function ArtiklarList({
             </div>
             <div className="flex gap-2">
               <button
+                onClick={() => handleEdit(a, idx)}
+                className="text-blue-400 hover:text-blue-600 p-1"
+                title="Redigera artikel"
+              >
+                ✏️
+              </button>
+              <button
                 onClick={() => {
                   if (confirm(`Ta bort "${a.beskrivning}"?`)) {
-                    onRemove(idx);
+                    handleRemove(idx);
                   }
                 }}
                 className="text-red-400 hover:text-red-600 p-1"

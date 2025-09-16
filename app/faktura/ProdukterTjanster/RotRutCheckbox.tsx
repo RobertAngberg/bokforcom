@@ -1,9 +1,4 @@
-interface RotRutCheckboxProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  className?: string;
-  labelClassName?: string;
-}
+import type { RotRutCheckboxProps } from "../_types/types";
 
 export default function RotRutCheckbox({
   checked,

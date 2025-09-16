@@ -9,12 +9,15 @@ export function useFakturaClient() {
   const formData = useFakturaStore((state) => state.formData);
   const kundStatus = useFakturaStore((state) => state.kundStatus);
   const nyArtikel = useFakturaStore((state) => state.nyArtikel);
+  const produkterTjansterState = useFakturaStore((state) => state.produkterTjansterState);
   const setFormData = useFakturaStore((state) => state.setFormData);
   const resetFormData = useFakturaStore((state) => state.resetFormData);
   const setKundStatus = useFakturaStore((state) => state.setKundStatus);
   const resetKund = useFakturaStore((state) => state.resetKund);
   const setNyArtikel = useFakturaStore((state) => state.setNyArtikel);
   const resetNyArtikel = useFakturaStore((state) => state.resetNyArtikel);
+  const setProdukterTjansterState = useFakturaStore((state) => state.setProdukterTjansterState);
+  const resetProdukterTjanster = useFakturaStore((state) => state.resetProdukterTjanster);
 
   // Local UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -190,6 +193,7 @@ export function useFakturaClient() {
     formData,
     kundStatus,
     nyArtikel,
+    produkterTjansterState,
     isLoading,
     error,
     successMessage,
@@ -202,6 +206,8 @@ export function useFakturaClient() {
     resetKund,
     setNyArtikel,
     resetNyArtikel,
+    setProdukterTjansterState,
+    resetProdukterTjanster,
 
     // Helper functions
     updateFormField,

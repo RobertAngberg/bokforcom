@@ -1,244 +1,27 @@
-//#import { useFakturaContext } from "../_components/FakturaProvider";egion Huvud
 "use client";
 
-import { useFakturaContext } from "../_components/FakturaProvider";
-import { useEffect, useMemo } from "react";
+import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
 import TextFalt from "../../_components/TextFalt";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import type { RotRutFormProps } from "../_types/types";
 
 // Registrera svensk locale för DatePicker
 registerLocale("sv", sv);
 
-// Säker input-sanitization för ROT/RUT
-const sanitizeRotRutInput = (text: string): string => {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-    .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 500); // Begränsa längd
-};
-
-// Validera numeriska värden säkert
-const validateRotRutNumeric = (value: string): boolean => {
-  const num = parseFloat(value);
-  return !isNaN(num) && isFinite(num) && num >= 0 && num < 10000000;
-};
-
-// Validera personnummer
-const validatePersonnummer = (personnummer: string): boolean => {
-  if (!personnummer) return false;
-  const clean = personnummer.replace(/[-\s]/g, "");
-  return /^\d{10}$/.test(clean) || /^\d{12}$/.test(clean);
-};
-
-type RotRutFormProps = {
-  showCheckbox?: boolean;
-  disabled?: boolean;
-};
-//#endregion
-
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {
-  const { formData, setFormData, nyArtikel } = useFakturaContext();
-  // Använd useMemo för artiklar för att slippa eslint-varning
-  const artiklar = useMemo(() => formData.artiklar || [], [formData.artiklar]);
-
-  const rutKategorier = [
-    "Passa barn",
-    "Fiber- och it-tjänster",
-    "Flytta och packa",
-    "Transport till försäljning för återanvändning",
-    "Möblering",
-    "Ta hand om en person och ge omsorg",
-    "Reparera vitvaror",
-    "Skotta snö",
-    "Städa",
-    "Tvätta, laga och sy",
-    "Tvätt vid tvättinrättning",
-    "Trädgårdsarbete – fälla och beskära träd",
-    "Trädgårdsarbete – underhålla, klippa och gräva",
-    "Tillsyn",
-  ];
-
-  const rotKategorier = [
-    "Bygg – reparera och underhålla",
-    "Bygg – bygga om och bygga till",
-    "El",
-    "Glas och plåt",
-    "Gräv- och markarbete",
-    "Murning och sotning",
-    "Målning och tapetsering",
-    "Rengöring",
-    "VVS",
-  ];
-
-  // Sätt dagens datum som default för startdatum om det är tomt OCH det inte redan finns data
-  useEffect(() => {
-    if (!formData.rotRutStartdatum && formData.rotRutAktiverat) {
-      const today = dateTillÅÅÅÅMMDD(new Date());
-      setFormData((prev) => ({
-        ...prev,
-        rotRutStartdatum: today,
-      }));
-    }
-  }, [formData.rotRutAktiverat, formData.rotRutStartdatum, setFormData]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    let finalValue: string | boolean = value;
-
-    if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
-      finalValue = e.target.checked;
-    } else if (typeof value === "string") {
-      // SÄKERHETSVALIDERING: Sanitera alla textvärden
-      if (name === "rotRutBeskrivning") {
-        finalValue = sanitizeRotRutInput(value);
-      } else if (name === "personnummer") {
-        // Tillåt bara siffror och bindestreck för personnummer
-        finalValue = value.replace(/[^\d-]/g, "").substring(0, 13);
-      } else if (
-        name === "fastighetsbeteckning" ||
-        name === "brfOrganisationsnummer" ||
-        name === "brfLagenhetsnummer"
-      ) {
-        finalValue = sanitizeRotRutInput(value);
-      } else if (typeof value === "string") {
-        finalValue = sanitizeRotRutInput(value);
-      }
-    }
-
-    if (name === "rotRutAktiverat" && finalValue === false) {
-      setFormData((prev) => ({
-        ...prev,
-        rotRutAktiverat: false,
-        rotRutTyp: undefined,
-        rotRutKategori: undefined,
-        avdragProcent: undefined,
-        arbetskostnadExMoms: undefined,
-        avdragBelopp: undefined,
-        personnummer: undefined,
-        fastighetsbeteckning: undefined,
-        rotBoendeTyp: undefined,
-        brfOrganisationsnummer: undefined,
-        brfLagenhetsnummer: undefined,
-      }));
-      return;
-    }
-
-    if (name === "rotRutTyp") {
-      const procent = value === "ROT" ? 50 : value === "RUT" ? 50 : undefined; // 50% för både ROT och RUT
-      const isActive = value === "ROT" || value === "RUT";
-      setFormData((prev) => ({
-        ...prev,
-        rotRutAktiverat: isActive,
-        rotRutTyp: isActive ? value : undefined,
-        avdragProcent: procent,
-        rotRutKategori: undefined,
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: finalValue,
-    }));
-  };
-
-  // Automatisk beräkning av arbetskostnadExMoms och avdragBelopp
-  useEffect(() => {
-    // Använd antal och prisPerEnhet från nyArtikel istället för de borttagna fälten
-    if (formData.rotRutAktiverat && nyArtikel.antal && nyArtikel.prisPerEnhet) {
-      const antalTimmar = parseFloat(nyArtikel.antal);
-      const prisPerTimme = parseFloat(nyArtikel.prisPerEnhet);
-
-      // Kontrollera att vi har giltiga nummer
-      if (isNaN(antalTimmar) || isNaN(prisPerTimme)) {
-        return;
-      }
-
-      const arbetskostnadExMoms = antalTimmar * prisPerTimme;
-
-      // Beräkna avdragBelopp om procentsats finns
-      let avdragBelopp: number | undefined = undefined;
-      if (formData.avdragProcent !== undefined) {
-        // Hämta momssats från nyArtikel eller använd 25% som standard
-        let moms = 25;
-        if (nyArtikel.moms) {
-          const parsedMoms = parseFloat(nyArtikel.moms);
-          if (!isNaN(parsedMoms)) {
-            moms = parsedMoms;
-          }
-        }
-
-        // Räkna ut arbetskostnad inkl moms
-        const arbetskostnadInklMoms = arbetskostnadExMoms * (1 + moms / 100);
-        avdragBelopp =
-          Math.round(arbetskostnadInklMoms * (formData.avdragProcent / 100) * 100) / 100;
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        arbetskostnadExMoms: arbetskostnadExMoms,
-        avdragBelopp: avdragBelopp,
-      }));
-    }
-  }, [
-    nyArtikel.antal,
-    nyArtikel.prisPerEnhet,
-    formData.avdragProcent,
-    formData.rotRutAktiverat,
-    artiklar,
-    setFormData,
-    nyArtikel.moms,
-  ]);
-
-  // Automatisk ifyllning av arbetskostnad från nyArtikel eller artikel (bara om det inte redan finns)
-  useEffect(() => {
-    if (formData.rotRutAktiverat && !formData.arbetskostnadExMoms) {
-      let arbetskostnad: number | undefined = undefined;
-
-      if (
-        nyArtikel.typ === "tjänst" &&
-        nyArtikel.beskrivning &&
-        parseFloat(nyArtikel.prisPerEnhet) > 0
-      ) {
-        arbetskostnad = parseFloat(nyArtikel.antal) * parseFloat(nyArtikel.prisPerEnhet);
-      } else {
-        const tjänsteArtiklar = artiklar.filter((a) => a.typ === "tjänst");
-        if (tjänsteArtiklar.length === 1) {
-          const art = tjänsteArtiklar[0];
-          arbetskostnad = parseFloat(String(art.antal)) * parseFloat(String(art.prisPerEnhet));
-        }
-      }
-
-      if (arbetskostnad !== undefined) {
-        setFormData((prev) => ({
-          ...prev,
-          arbetskostnadExMoms: arbetskostnad,
-        }));
-      }
-    }
-  }, [formData.rotRutAktiverat, formData.arbetskostnadExMoms, artiklar, nyArtikel, setFormData]);
-
-  // DatePicker styling för att matcha applikationens tema
-  useEffect(() => {
-    const datePickerEls = document.querySelectorAll(".react-datepicker-wrapper");
-    datePickerEls.forEach((el) => {
-      (el as HTMLElement).style.width = "100%";
-    });
-
-    const inputEls = document.querySelectorAll(".react-datepicker__input-container input");
-    inputEls.forEach((el) => {
-      (el as HTMLElement).className =
-        "w-full p-2 rounded bg-slate-900 border border-slate-700 text-white";
-    });
-  }, [formData.rotRutAktiverat]);
+  const {
+    formData,
+    antal,
+    prisPerEnhet,
+    RUT_KATEGORIER,
+    ROT_KATEGORIER,
+    handleRotRutChange,
+    handleRotRutBoendeTypChange,
+    handleRotRutDateChange,
+  } = useProdukterTjanster();
 
   return (
     <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
@@ -249,7 +32,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
             <select
               name="rotRutTyp"
               value={formData.rotRutTyp ?? ""}
-              onChange={handleChange}
+              onChange={handleRotRutChange}
               disabled={disabled}
               className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
                 disabled ? "opacity-50 cursor-not-allowed" : ""
@@ -267,36 +50,36 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
               <select
                 name="rotRutKategori"
                 value={formData.rotRutKategori ?? ""}
-                onChange={handleChange}
+                onChange={handleRotRutChange}
                 disabled={disabled}
                 className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <option value="">Välj kategori</option>
-                {(formData.rotRutTyp === "ROT" ? rotKategorier : rutKategorier).map((kategori) => (
-                  <option key={kategori} value={kategori}>
-                    {kategori}
-                  </option>
-                ))}
+                {(formData.rotRutTyp === "ROT" ? ROT_KATEGORIER : RUT_KATEGORIER).map(
+                  (kategori: string) => (
+                    <option key={kategori} value={kategori}>
+                      {kategori}
+                    </option>
+                  )
+                )}
               </select>
+              {/* DEBUG: Checking if something renders here */}
             </div>
           )}
 
           {/* ROT/RUT-specifika fält */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Visa beräknad arbetskostnad baserat på huvudformulär */}
-            {nyArtikel.antal && nyArtikel.prisPerEnhet && (
+            {!!(antal && prisPerEnhet && Number(antal) > 0 && Number(prisPerEnhet) > 0) && (
               <div className="md:col-span-2 p-3 bg-slate-700 rounded">
                 <div className="text-white">
                   <span className="font-semibold">Beräknad arbetskostnad exkl. moms:</span>{" "}
-                  {(Number(nyArtikel.antal) * Number(nyArtikel.prisPerEnhet)).toLocaleString(
-                    "sv-SE",
-                    {
-                      style: "currency",
-                      currency: "SEK",
-                    }
-                  )}
+                  {(Number(antal) * Number(prisPerEnhet)).toLocaleString("sv-SE", {
+                    style: "currency",
+                    currency: "SEK",
+                  })}
                 </div>
               </div>
             )}
@@ -307,7 +90,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 label={`Beskrivning av ${formData.rotRutTyp}-tjänst *`}
                 name="rotRutBeskrivning"
                 value={formData.rotRutBeskrivning ?? ""}
-                onChange={handleChange}
+                onChange={handleRotRutChange}
                 placeholder="Beskriv de avdraggivna tjänsterna..."
                 disabled={disabled}
                 className={`${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -326,12 +109,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 selected={
                   formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : new Date()
                 }
-                onChange={(date) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    rotRutStartdatum: date ? date.toISOString().split("T")[0] : "",
-                  }));
-                }}
+                onChange={(date) => handleRotRutDateChange("rotRutStartdatum", date)}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 placeholderText="Välj startdatum"
@@ -347,12 +125,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
               <label className="block text-white font-semibold mb-1">Slutdatum för arbetet *</label>
               <DatePicker
                 selected={formData.rotRutSlutdatum ? new Date(formData.rotRutSlutdatum) : null}
-                onChange={(date) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    rotRutSlutdatum: date ? date.toISOString().split("T")[0] : "",
-                  }));
-                }}
+                onChange={(date) => handleRotRutDateChange("rotRutSlutdatum", date)}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 placeholderText="Välj slutdatum"
@@ -373,7 +146,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
               name="personnummer"
               type="text"
               value={formData.personnummer ?? ""}
-              onChange={handleChange}
+              onChange={handleRotRutChange}
               placeholder="YYYYMMDD-XXXX"
               required={true}
               disabled={disabled}
@@ -391,15 +164,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                         value="fastighet"
                         checked={formData.rotBoendeTyp !== "brf"}
                         disabled={disabled}
-                        onChange={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            rotBoendeTyp: "fastighet",
-                            fastighetsbeteckning: "",
-                            brfOrganisationsnummer: "",
-                            brfLagenhetsnummer: "",
-                          }))
-                        }
+                        onChange={() => handleRotRutBoendeTypChange("fastighet")}
                         className={`mr-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                       />
                       Fastighetsbeteckning
@@ -411,15 +176,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                         value="brf"
                         checked={formData.rotBoendeTyp === "brf"}
                         disabled={disabled}
-                        onChange={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            rotBoendeTyp: "brf",
-                            fastighetsbeteckning: "",
-                            brfOrganisationsnummer: "",
-                            brfLagenhetsnummer: "",
-                          }))
-                        }
+                        onChange={() => handleRotRutBoendeTypChange("brf")}
                         className={`mr-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                       />
                       Bostadsrättsförening
@@ -433,7 +190,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                     name="fastighetsbeteckning"
                     type="text"
                     value={formData.fastighetsbeteckning ?? ""}
-                    onChange={handleChange}
+                    onChange={handleRotRutChange}
                     required={true}
                     disabled={disabled}
                   />
@@ -446,7 +203,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                       name="brfOrganisationsnummer"
                       type="text"
                       value={formData.brfOrganisationsnummer ?? ""}
-                      onChange={handleChange}
+                      onChange={handleRotRutChange}
                       required={true}
                       disabled={disabled}
                     />
@@ -455,7 +212,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                       name="brfLagenhetsnummer"
                       type="text"
                       value={formData.brfLagenhetsnummer ?? ""}
-                      onChange={handleChange}
+                      onChange={handleRotRutChange}
                       required={true}
                       disabled={disabled}
                     />
@@ -467,7 +224,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
             {/* RUT har inga extra fält */}
           </div>
 
-          {formData.avdragBelopp !== undefined && (
+          {formData.avdragBelopp !== undefined && formData.avdragBelopp > 0 && (
             <div className="text-white font-semibold mt-4">
               Avdrag (50% av belopp inkl. moms):{" "}
               {formData.avdragBelopp.toLocaleString("sv-SE", {

@@ -1,9 +1,4 @@
-interface LäggTillFavoritartikelProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  className?: string;
-  labelClassName?: string;
-}
+import type { LäggTillFavoritartikelProps } from "../_types/types";
 
 export default function LäggTillFavoritartikel({
   checked,

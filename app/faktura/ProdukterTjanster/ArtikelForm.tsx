@@ -1,20 +1,5 @@
 import TextFalt from "../../_components/TextFalt";
-
-interface ArtikelFormProps {
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  moms: number;
-  typ: "vara" | "tjänst";
-  rotRutMaterial?: boolean;
-  onChangeBeskrivning: (v: string) => void;
-  onChangeAntal: (v: number) => void;
-  onChangePrisPerEnhet: (v: number) => void;
-  onChangeMoms: (v: number) => void;
-  onChangeTyp: (v: "vara" | "tjänst") => void;
-  onChangeRotRutMaterial?: (v: boolean) => void;
-  disabled?: boolean;
-}
+import type { ArtikelFormProps } from "../_types/types";
 
 export default function ArtikelForm({
   beskrivning,

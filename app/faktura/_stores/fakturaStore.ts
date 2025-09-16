@@ -67,11 +67,26 @@ const defaultNyArtikel: NyArtikel = {
   typ: "tjänst",
 };
 
+const defaultProdukterTjansterState = {
+  favoritArtiklar: [],
+  showFavoritArtiklar: false,
+  blinkIndex: null,
+  visaRotRutForm: false,
+  visaArtikelForm: false,
+  visaArtikelModal: false,
+  redigerarIndex: null,
+  favoritArtikelVald: false,
+  ursprungligFavoritId: null,
+  artikelSparadSomFavorit: false,
+  valtArtikel: null,
+};
+
 export const useFakturaStore = create<FakturaStoreState>((set, get) => ({
   // Initial state
   formData: defaultFormData,
   kundStatus: "none",
   nyArtikel: defaultNyArtikel,
+  produkterTjansterState: defaultProdukterTjansterState,
 
   // Actions
   setFormData: (data) =>
@@ -110,6 +125,14 @@ export const useFakturaStore = create<FakturaStoreState>((set, get) => ({
     })),
 
   resetNyArtikel: () => set({ nyArtikel: defaultNyArtikel }),
+
+  // ProdukterTjanster actions
+  setProdukterTjansterState: (state) =>
+    set((currentState) => ({
+      produkterTjansterState: { ...currentState.produkterTjansterState, ...state },
+    })),
+
+  resetProdukterTjanster: () => set({ produkterTjansterState: defaultProdukterTjansterState }),
 
   // Init function för server data
   initStore: (data: ServerData) => {
