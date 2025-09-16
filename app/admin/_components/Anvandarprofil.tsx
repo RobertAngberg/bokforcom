@@ -32,10 +32,6 @@ export default function Anvandarprofil() {
         </div>
       )}
 
-      {state.isLoadingUser && (
-        <div className="mb-4 p-3 text-gray-400 text-center">Laddar användarinformation...</div>
-      )}
-
       <div className="grid grid-cols-1 gap-4">
         {state.isEditing ? (
           <div className="space-y-4">

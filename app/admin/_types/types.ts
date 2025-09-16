@@ -51,3 +51,26 @@ export interface UppdateraAnvandarPayload {
   name: string;
   email: string;
 }
+
+// Store interfaces
+export interface AdminStoreState {
+  // User state
+  userInfo: AnvandarInfo | null;
+  setUserInfo: (user: AnvandarInfo | null) => void;
+
+  // Company state
+  foretagsInfo: ForetagsProfil | null;
+  setForetagsInfo: (foretag: ForetagsProfil | null) => void;
+
+  // Init function
+  initStore: (data: {
+    userInfo?: AnvandarInfo | null;
+    foretagsInfo?: ForetagsProfil | null;
+  }) => void;
+}
+
+// Component interfaces
+export interface AdminInitializerProps {
+  anvandarInfo: AnvandarInfo | null;
+  foretagsInfo: ForetagsProfil | null;
+}

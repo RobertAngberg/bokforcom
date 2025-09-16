@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  uppdateraForetagsprofilAdmin,
-  hamtaForetagsprofilAdmin,
-} from "../_actions/foretagsprofilActions";
+import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsprofilActions";
 import { useAdminStore } from "../_stores/adminStore";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
@@ -21,26 +18,12 @@ const TOM_FORETAG: ForetagsProfil = {
 };
 
 export function useForetagsprofil() {
-  const { foretagsInfo, setForetagsInfo, isLoadingForetag, setIsLoadingForetag } = useAdminStore();
+  const { foretagsInfo, setForetagsInfo } = useAdminStore();
 
   const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(foretagsInfo || TOM_FORETAG);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
-
-  // Load company data if not already loaded
-  useEffect(() => {
-    if (!foretagsInfo && !isLoadingForetag) {
-      setIsLoadingForetag(true);
-      hamtaForetagsprofilAdmin()
-        .then(setForetagsInfo)
-        .catch((error) => {
-          console.error("Failed to load company info:", error);
-          setCompanyMessage({ type: "error", text: "Kunde inte ladda företagsinfo" });
-        })
-        .finally(() => setIsLoadingForetag(false));
-    }
-  }, [foretagsInfo, isLoadingForetag, setForetagsInfo, setIsLoadingForetag]);
 
   // Update local state when store changes (but not during editing to preserve user changes)
   useEffect(() => {
@@ -120,7 +103,6 @@ export function useForetagsprofil() {
       foretagsProfil,
       isEditingCompany,
       isSavingCompany,
-      isLoadingForetag,
       companyMessage,
     },
     actions: {

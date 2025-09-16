@@ -32,10 +32,6 @@ export default function Foretagsprofil() {
         </div>
       )}
 
-      {state.isLoadingForetag && (
-        <div className="mb-4 p-3 text-gray-400 text-center">Laddar företagsinformation...</div>
-      )}
-
       <div className="grid grid-cols-1 gap-4">
         {state.isEditingCompany ? (
           <div className="space-y-4">

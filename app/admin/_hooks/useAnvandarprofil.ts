@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { uppdateraAnvandarInfo, hamtaAnvandarInfo } from "../_actions/anvandarprofilActions";
+import { uppdateraAnvandarInfo } from "../_actions/anvandarprofilActions";
 import { useAdminStore } from "../_stores/adminStore";
 import type { AnvandarRedigeringsFormular, MeddelandeTillstand } from "../_types/types";
 
 export function useAnvandarprofil() {
-  const { userInfo, setUserInfo, isLoadingUser, setIsLoadingUser } = useAdminStore();
+  const { userInfo, setUserInfo } = useAdminStore();
 
   const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
     name: userInfo?.name || "",
@@ -15,20 +15,6 @@ export function useAnvandarprofil() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
-
-  // Load user data if not already loaded
-  useEffect(() => {
-    if (!userInfo && !isLoadingUser) {
-      setIsLoadingUser(true);
-      hamtaAnvandarInfo()
-        .then(setUserInfo)
-        .catch((error) => {
-          console.error("Failed to load user info:", error);
-          setMessage({ type: "error", text: "Kunde inte ladda användarinfo" });
-        })
-        .finally(() => setIsLoadingUser(false));
-    }
-  }, [userInfo, isLoadingUser, setUserInfo, setIsLoadingUser]);
 
   // Update form when userInfo changes (but not during editing to preserve user changes)
   useEffect(() => {
@@ -93,7 +79,6 @@ export function useAnvandarprofil() {
       editForm,
       isEditing,
       isSaving,
-      isLoadingUser,
       message,
     },
     actions: {

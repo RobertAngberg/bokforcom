@@ -7,52 +7,6 @@ import { query, queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-export async function hamtaForetagsprofilAdmin(): Promise<ForetagsProfil | null> {
-  try {
-    const session = await auth();
-    const userId = session?.user?.id; // Middleware garanterar att detta finns
-
-    const res = await query(
-      `SELECT 
-        företagsnamn, adress, postnummer, stad, 
-        organisationsnummer, momsregistreringsnummer, 
-        telefonnummer, epost, webbplats 
-       FROM företagsprofil WHERE id = $1`,
-      [userId]
-    );
-
-    if (res.rows.length === 0) {
-      return {
-        foretagsnamn: "",
-        adress: "",
-        postnummer: "",
-        stad: "",
-        organisationsnummer: "",
-        momsregistreringsnummer: "",
-        telefonnummer: "",
-        epost: "",
-        webbplats: "",
-      };
-    }
-
-    const dbRow: any = res.rows[0];
-    return {
-      foretagsnamn: dbRow.företagsnamn || "",
-      adress: dbRow.adress || "",
-      postnummer: dbRow.postnummer || "",
-      stad: dbRow.stad || "",
-      organisationsnummer: dbRow.organisationsnummer || "",
-      momsregistreringsnummer: dbRow.momsregistreringsnummer || "",
-      telefonnummer: dbRow.telefonnummer || "",
-      epost: dbRow.epost || "",
-      webbplats: dbRow.webbplats || "",
-    };
-  } catch (error) {
-    logError(error as Error, "hamtaForetagsprofilAdmin");
-    return null;
-  }
-}
-
 export async function uppdateraForetagsprofilAdmin(
   payload: ForetagsProfil
 ): Promise<AktionsResultat<ForetagsProfil>> {

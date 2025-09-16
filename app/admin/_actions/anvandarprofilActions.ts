@@ -7,21 +7,6 @@ import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
-  try {
-    const session = await auth();
-    const userId = session?.user?.id; // Middleware garanterar att detta finns
-
-    return await queryOne<AnvandarInfo>(
-      "SELECT id, email, name, created_at as skapad FROM users WHERE id = $1",
-      [userId]
-    );
-  } catch (error) {
-    logError(error as Error, "hamtaAnvandarInfo");
-    return null;
-  }
-}
-
 export async function uppdateraAnvandarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
