@@ -252,3 +252,112 @@ export interface BetalningsModal {
   fakturaId: number;
   belopp: number;
 }
+
+// Email functionality types
+export interface SkickaEpostProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+// Leverantör types
+export interface VäljLeverantörModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export interface NavigationParams {
+  leverantorId: number | string;
+  levfakt?: boolean;
+}
+
+// Verifikat types
+export type TransaktionsPost = {
+  id: number;
+  kontonummer: string;
+  kontobeskrivning: string;
+  debet: number;
+  kredit: number;
+  transaktionsdatum: string;
+  transaktionskommentar: string;
+};
+
+export interface VerifikatModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transaktionId: number;
+  fakturanummer?: string;
+  leverantör?: string;
+}
+
+// Forhandsgranskning subcomponent types
+export interface ArtiklarListaProps {
+  rows: any[];
+}
+
+export interface AvsändMottagProps {
+  formData: any;
+}
+
+export interface BetalningsInfoProps {
+  formData: any;
+  summaAttBetala: number;
+}
+
+export interface FotProps {
+  formData: any;
+  session: any;
+}
+
+export interface LogotypProps {
+  logo?: string;
+  logoSize?: number;
+  logoSliderValue?: number;
+  setLogoSliderValue?: (value: number) => void;
+  showSlider?: boolean;
+}
+
+export interface RotRutInfoProps {
+  formData: any;
+  beraknatAvdrag?: number;
+}
+
+export interface TotalerInfoProps {
+  sumExkl: number;
+  totalMoms: number;
+  rotRutAvdrag: number;
+  summaAttBetala: number;
+  valuta?: string;
+  rotRutTyp?: "ROT" | "RUT";
+}
+
+// Forhandsgranskning hook types
+export interface ForhandsgranskningCalculations {
+  // Grundläggande summor
+  sumExkl: number;
+  totalMoms: number;
+
+  // ROT/RUT-relaterat
+  harROTRUTArtiklar: boolean;
+  rotRutTyp: string | undefined;
+  rotRutTjänsterSumExkl: number;
+  rotRutTjänsterMoms: number;
+  rotRutTjänsterInklMoms: number;
+  arbetskostnadInklMoms: number;
+  rotRutAvdrag: number;
+
+  // ROT/RUT display data
+  rotRutPersonnummer: string | undefined;
+  rotRutTotalTimmar: number;
+  rotRutGenomsnittsPris: number;
+  rotRutAvdragProcent: string;
+  shouldShowRotRut: boolean;
+
+  // Slutsummor
+  totalSum: number;
+  summaAttBetala: number;
+
+  // Logo-hantering
+  logoSize: number;
+  logoSliderValue: number;
+  handleLogoSliderChange: (value: number) => void;
+}

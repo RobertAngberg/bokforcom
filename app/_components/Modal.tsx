@@ -88,22 +88,28 @@ export default function Modal({
         }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-2 flex-shrink-0">
-          <h2 className="text-2xl text-white text-center flex-1 mt-2">{title}</h2>
-          {showCloseButton && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              className="text-gray-400 hover:text-white text-2xl transition-colors cursor-pointer"
-              aria-label="Stäng modal"
-            >
-              ×
-            </button>
-          )}
-        </div>
+        {/* Header - visa bara om det finns titel eller om close-knappen ska visas */}
+        {(title.trim() !== "" || showCloseButton) && (
+          <div className="flex justify-between items-center mb-2 flex-shrink-0">
+            {title.trim() !== "" ? (
+              <h2 className="text-2xl text-white text-center flex-1 mt-2">{title}</h2>
+            ) : (
+              <div className="flex-1"></div>
+            )}
+            {showCloseButton && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="text-gray-400 hover:text-white text-2xl transition-colors cursor-pointer"
+                aria-label="Stäng modal"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content */}
         <div className="overflow-y-auto flex-1">{isLoading ? <LoadingSpinner /> : children}</div>

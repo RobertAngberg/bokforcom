@@ -5,24 +5,7 @@ import Modal from "../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import { formatSEK } from "../../_utils/format";
 import { hamtaTransaktionsposter } from "../actions";
-
-type TransaktionsPost = {
-  id: number;
-  kontonummer: string;
-  kontobeskrivning: string;
-  debet: number;
-  kredit: number;
-  transaktionsdatum: string;
-  transaktionskommentar: string;
-};
-
-interface VerifikatModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  transaktionId: number;
-  fakturanummer?: string;
-  leverantör?: string;
-}
+import { TransaktionsPost, VerifikatModalProps } from "../_types/types";
 
 export default function VerifikatModal({
   isOpen,
@@ -93,7 +76,7 @@ export default function VerifikatModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="4xl" isLoading={loading}>
       {/* Egen titel-header */}
-      <div className="text-center mb-4 -mt-4">
+      <div className="text-center mb-4">
         <h2 className="text-white text-2xl">
           Verifikat - {leverantör || "Okänd leverantör"}
           {fakturanummer ? ` (${fakturanummer})` : ""}

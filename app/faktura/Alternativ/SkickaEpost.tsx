@@ -1,110 +1,26 @@
 //#region Huvud
 "use client";
-import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-import { useFakturaContext } from "../_components/FakturaProvider";
-import { generatePDFAsBase64 } from "./pdfGenerator";
-
-interface Props {
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-}
+import { useSkickaEpost } from "../_hooks/useSkickaEpost";
+import { SkickaEpostProps } from "../_types/types";
 //#endregion
 
-export default function SkickaEpost({ onSuccess, onError }: Props) {
-  //#region State
-  const [isSending, setIsSending] = useState(false);
-  const { formData, setFormData } = useFakturaContext();
-  const [mottagareEmail, setMottagareEmail] = useState("");
-  const [egetMeddelande, setEgetMeddelande] = useState("");
-  const [toast, setToast] = useState({
-    message: "",
-    type: "error" as "success" | "error" | "info",
-    isVisible: false,
-  });
-  //#endregion
-
-  // Uppdatera mottagarens e-post när kundens e-post ändras
-  useEffect(() => {
-    if (formData.kundemail && formData.kundemail.trim()) {
-      setMottagareEmail(formData.kundemail);
-    }
-  }, [formData.kundemail]);
-
-  const skickaTestmail = async () => {
-    // Validering
-    if (!mottagareEmail.trim()) {
-      setToast({
-        message: "Ange mottagarens e-postadress",
-        type: "error",
-        isVisible: true,
-      });
-      return;
-    }
-
-    if (!mottagareEmail.includes("@")) {
-      setToast({
-        message: "Ange en giltig e-postadress",
-        type: "error",
-        isVisible: true,
-      });
-      return;
-    }
-
-    setIsSending(true);
-
-    try {
-      // Generera PDF med den delade funktionen
-      const pdfBase64 = await generatePDFAsBase64();
-
-      // Skapa fakturanummer med nollutfyllnad
-      const fakturaNr = formData.fakturanummer
-        ? formData.fakturanummer.toString().padStart(4, "0")
-        : "faktura";
-
-      // Skicka e-post med PDF-bilaga och eget meddelande
-      const response = await fetch("/api/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          faktura: {
-            ...formData,
-            kundemail: mottagareEmail, // Använd det angivna e-postfältet
-          },
-          pdfAttachment: pdfBase64,
-          filename: `Faktura-${fakturaNr}.pdf`,
-          customMessage: egetMeddelande.trim(), // Skicka med det egna meddelandet
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Kunde inte skicka e-post");
-      }
-
-      setToast({
-        message: "Faktura skickad till kunden!",
-        type: "success",
-        isVisible: true,
-      });
-      onSuccess?.();
-    } catch (error) {
-      console.error("❌ E-postfel:", error);
-      const errorMessage = error instanceof Error ? error.message : "Okänt fel";
-      setToast({
-        message: `Kunde inte skicka faktura: ${errorMessage}`,
-        type: "error",
-        isVisible: true,
-      });
-      onError?.(errorMessage);
-    } finally {
-      setIsSending(false);
-    }
-  };
+export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
+  const {
+    isSending,
+    mottagareEmail,
+    setMottagareEmail,
+    egetMeddelande,
+    setEgetMeddelande,
+    toast,
+    skickaTestmail,
+    closeToast,
+    isButtonDisabled,
+    buttonText,
+    statusMessage,
+    hasCustomerEmail,
+  } = useSkickaEpost({ onSuccess, onError });
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow mt-4">
@@ -128,7 +44,7 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isSending}
           />
-          {formData.kundemail && formData.kundemail.trim() && (
+          {hasCustomerEmail && (
             <p className="text-slate-400 text-xs mt-1">💡 Förifylld med kundens e-postadress</p>
           )}
         </div>
@@ -159,10 +75,8 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
         <div className="flex justify-between items-center pt-4">
           <div className="flex-1">
             <p className="text-slate-400 text-sm">
-              {!formData.id ? (
-                <span className="text-orange-400">
-                  ⚠️ Spara fakturan först innan du skickar den
-                </span>
+              {statusMessage.type === "warning" ? (
+                <span className="text-orange-400">⚠️ {statusMessage.text}</span>
               ) : (
                 <>
                   E-posten skickas till{" "}
@@ -174,19 +88,7 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
             </p>
           </div>
 
-          <Knapp
-            onClick={skickaTestmail}
-            text={
-              isSending
-                ? "📤 Skickar..."
-                : !formData.id
-                  ? "❌ Spara faktura först"
-                  : "📧 Skicka faktura"
-            }
-            disabled={
-              isSending || !formData.fakturanummer || !mottagareEmail.trim() || !formData.id
-            }
-          />
+          <Knapp onClick={skickaTestmail} text={buttonText} disabled={isButtonDisabled} />
         </div>
 
         {toast.isVisible && (
@@ -194,7 +96,7 @@ export default function SkickaEpost({ onSuccess, onError }: Props) {
             message={toast.message}
             type={toast.type}
             isVisible={toast.isVisible}
-            onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+            onClose={closeToast}
           />
         )}
       </div>

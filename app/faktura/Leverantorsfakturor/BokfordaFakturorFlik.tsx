@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import BokfordaFakturor from "../BokfordaFakturor";
+import BokfordaFakturor from "../_components/BokfordaFakturor";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { hamtaBokfordaFakturor } from "../actions";
 

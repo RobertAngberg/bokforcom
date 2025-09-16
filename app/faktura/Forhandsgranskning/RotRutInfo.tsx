@@ -1,33 +1,18 @@
-// RotRutInfo.tsx
-import React from "react";
-
-interface RotRutInfoProps {
-  formData: any;
-  beraknatAvdrag?: number;
-}
+import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
+import { RotRutInfoProps } from "../_types/types";
 
 export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoProps) {
-  // Kolla om ROT/RUT är aktiverat på formulärnivå ELLER om det finns ROT/RUT-artiklar
-  const harROTRUTArtiklar =
-    formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
-  const rotRutTyp =
-    formData.rotRutTyp ||
-    (harROTRUTArtiklar &&
-      (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+  const {
+    shouldShowRotRut,
+    rotRutTyp,
+    harROTRUTArtiklar,
+    rotRutPersonnummer,
+    rotRutTotalTimmar,
+    rotRutGenomsnittsPris,
+    rotRutAvdragProcent,
+  } = useForhandsgranskning();
 
-  // Hämta personnummer från formData eller artiklar
-  const personnummer =
-    formData.personnummer ||
-    (formData.artiklar &&
-      (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutPersonnummer)
-        ?.rotRutPersonnummer);
-
-  // Visa ROT/RUT-info endast om ROT/RUT är aktiverat ELLER om det finns ROT/RUT-artiklar
-  if (
-    (!formData.rotRutAktiverat && !harROTRUTArtiklar) ||
-    !rotRutTyp ||
-    (rotRutTyp !== "ROT" && rotRutTyp !== "RUT")
-  ) {
+  if (!shouldShowRotRut) {
     return null;
   }
 
@@ -37,34 +22,19 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           {/* Visa information från ROT/RUT-artiklar */}
-          {formData.artiklar && formData.artiklar.some((a: any) => a.rotRutTyp) ? (
-            (() => {
-              const rotRutArtiklar = formData.artiklar.filter((a: any) => a.rotRutTyp);
-              const totalAntal = rotRutArtiklar.reduce(
-                (sum: number, a: any) => sum + (a.antal || 0),
-                0
-              );
-              const genomsnittsPris =
-                rotRutArtiklar.length > 0
-                  ? rotRutArtiklar.reduce((sum: number, a: any) => sum + (a.prisPerEnhet || 0), 0) /
-                    rotRutArtiklar.length
-                  : 0;
-
-              return (
-                <>
-                  <div>
-                    <span className="font-semibold">Antal timmar:</span> {totalAntal} h
-                  </div>
-                  <div>
-                    <span className="font-semibold">Genomsnittligt pris per timme exkl. moms:</span>{" "}
-                    {genomsnittsPris.toLocaleString("sv-SE", {
-                      style: "currency",
-                      currency: "SEK",
-                    })}
-                  </div>
-                </>
-              );
-            })()
+          {harROTRUTArtiklar ? (
+            <>
+              <div>
+                <span className="font-semibold">Antal timmar:</span> {rotRutTotalTimmar} h
+              </div>
+              <div>
+                <span className="font-semibold">Genomsnittligt pris per timme exkl. moms:</span>{" "}
+                {rotRutGenomsnittsPris.toLocaleString("sv-SE", {
+                  style: "currency",
+                  currency: "SEK",
+                })}
+              </div>
+            </>
           ) : (
             <div>
               <span className="font-semibold">Arbetskostnad exkl. moms:</span>{" "}
@@ -77,8 +47,7 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
             </div>
           )}
           <div>
-            <span className="font-semibold">Avdrag (%):</span>{" "}
-            {rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—"}
+            <span className="font-semibold">Avdrag (%):</span> {rotRutAvdragProcent}
           </div>
           <div>
             <span className="font-semibold">Beräknat avdrag:</span>{" "}
@@ -94,7 +63,7 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
           {rotRutTyp === "ROT" && (
             <>
               <div>
-                <span className="font-semibold">Personnummer:</span> {personnummer || "—"}
+                <span className="font-semibold">Personnummer:</span> {rotRutPersonnummer || "—"}
               </div>
               {formData.rotBoendeTyp === "brf" ? (
                 <>

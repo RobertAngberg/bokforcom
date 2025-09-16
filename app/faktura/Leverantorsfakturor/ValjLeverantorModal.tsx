@@ -1,43 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Modal from "../../_components/Modal";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
-import { getLeverantörer, type Leverantör } from "../actions";
-
-interface VäljLeverantörModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { type Leverantör } from "../actions";
+import { useLeverantorNavigation } from "../_hooks/useLeverantorNavigation";
+import { useLeverantörer } from "../_hooks/useLeverantorer";
+import { VäljLeverantörModalProps } from "../_types/types";
 
 export default function ValjLeverantorModal({ isOpen, onClose }: VäljLeverantörModalProps) {
-  const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedLeverantör, setSelectedLeverantör] = useState<number | null>(null);
-  const router = useRouter();
-
-  const loadLeverantörer = async () => {
-    setLoading(true);
-    const result = await getLeverantörer();
-    if (result.success) {
-      setLeverantörer(result.leverantörer || []);
-    }
-    setLoading(false);
-  };
+  const { navigateToBokforing } = useLeverantorNavigation();
+  const { leverantörer, loading, refresh } = useLeverantörer();
 
   useEffect(() => {
     if (isOpen) {
-      loadLeverantörer();
+      refresh();
     }
-  }, [isOpen]);
+  }, [isOpen, refresh]);
 
   const handleContinue = () => {
     if (selectedLeverantör) {
       onClose();
-      // Gå direkt till bokföringssystemet med levfakt=true
-      router.push(`/bokfor?levfakt=true&leverantorId=${selectedLeverantör}`);
+      // Navigera till bokföringssystemet med levfakt=true
+      navigateToBokforing({ leverantorId: selectedLeverantör });
     }
   };
 

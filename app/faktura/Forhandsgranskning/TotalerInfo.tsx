@@ -1,11 +1,4 @@
-interface TotalerInfoProps {
-  sumExkl: number;
-  totalMoms: number;
-  rotRutAvdrag: number;
-  summaAttBetala: number;
-  valuta?: string;
-  rotRutTyp?: "ROT" | "RUT";
-}
+import { TotalerInfoProps } from "../_types/types";
 
 export default function TotalerInfo({
   sumExkl,

@@ -1,13 +1,6 @@
 import Image from "next/image";
 import { getProxyImageUrl } from "../_utils/imageProxy";
-
-interface LogotypProps {
-  logo?: string;
-  logoSize?: number;
-  logoSliderValue?: number;
-  setLogoSliderValue?: (value: number) => void;
-  showSlider?: boolean;
-}
+import { LogotypProps } from "../_types/types";
 
 export default function Logotyp({
   logo,

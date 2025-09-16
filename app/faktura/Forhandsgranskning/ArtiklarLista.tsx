@@ -1,9 +1,4 @@
-// ArtiklarLista.tsx
-import React from "react";
-
-interface ArtiklarListaProps {
-  rows: any[];
-}
+import { ArtiklarListaProps } from "../_types/types";
 
 export default function ArtiklarLista({ rows }: ArtiklarListaProps) {
   return (

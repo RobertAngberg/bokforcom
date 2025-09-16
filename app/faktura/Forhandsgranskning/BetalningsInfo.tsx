@@ -1,7 +1,4 @@
-interface BetalningsInfoProps {
-  formData: any;
-  summaAttBetala: number;
-}
+import { BetalningsInfoProps } from "../_types/types";
 
 export default function BetalningsInfo({ formData, summaAttBetala }: BetalningsInfoProps) {
   return (
