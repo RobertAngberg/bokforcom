@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { uppdateraForetagsprofilAdmin } from "../_actions/foretagsprofilActions";
+import { uppdateraFöretagsprofilAdmin } from "../_actions/foretagsprofilActions";
 import { useAdminStore } from "../_stores/adminStore";
 import type { ForetagsProfil, MeddelandeTillstand } from "../_types/types";
 
@@ -46,7 +46,7 @@ export function useForetagsprofil() {
   const handleSaveCompany = async () => {
     setIsSavingCompany(true);
     try {
-      const result = await uppdateraForetagsprofilAdmin({ ...foretagsProfil });
+      const result = await uppdateraFöretagsprofilAdmin({ ...foretagsProfil });
       if (result.success) {
         setForetagsInfo(foretagsProfil); // Update store with saved data
         setIsEditingCompany(false);

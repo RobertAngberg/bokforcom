@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { uppdateraAnvandarInfo } from "../_actions/anvandarprofilActions";
+import { uppdateraAnvändarInfo } from "../_actions/anvandarprofilActions";
 import { useAdminStore } from "../_stores/adminStore";
 import type { AnvandarRedigeringsFormular, MeddelandeTillstand } from "../_types/types";
 
@@ -48,7 +48,7 @@ export function useAnvandarprofil() {
 
     setIsSaving(true);
     try {
-      const result = await uppdateraAnvandarInfo({
+      const result = await uppdateraAnvändarInfo({
         name: editForm.name.trim(),
         email: editForm.email.trim(),
       });

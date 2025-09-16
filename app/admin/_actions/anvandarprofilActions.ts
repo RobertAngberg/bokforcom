@@ -7,7 +7,7 @@ import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-export async function uppdateraAnvandarInfo(
+export async function uppdateraAnvändarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
   try {
@@ -39,7 +39,7 @@ export async function uppdateraAnvandarInfo(
     revalidatePath("/admin");
     return { success: true, user: updated, data: updated };
   } catch (error) {
-    logError(error as Error, "uppdateraAnvandarInfo");
+    logError(error as Error, "uppdateraAnvändarInfo");
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }

@@ -2,7 +2,7 @@ import { auth } from "../../_lib/auth";
 import { queryOne, query } from "../../_utils/dbUtils";
 import type { AnvandarInfo, ForetagsProfil } from "../_types/types";
 
-export async function getAnvandarInfo(): Promise<AnvandarInfo | null> {
+export async function hämtaAnvändarInfo(): Promise<AnvandarInfo | null> {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -18,7 +18,7 @@ export async function getAnvandarInfo(): Promise<AnvandarInfo | null> {
   }
 }
 
-export async function getForetagsprofil(): Promise<ForetagsProfil | null> {
+export async function hämtaFöretagsprofil(): Promise<ForetagsProfil | null> {
   try {
     const session = await auth();
     const userId = session?.user?.id;

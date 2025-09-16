@@ -7,7 +7,7 @@ import { query, queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
-export async function uppdateraForetagsprofilAdmin(
+export async function uppdateraFöretagsprofilAdmin(
   payload: ForetagsProfil
 ): Promise<AktionsResultat<ForetagsProfil>> {
   try {
@@ -58,7 +58,7 @@ export async function uppdateraForetagsprofilAdmin(
     revalidatePath("/admin");
     return { success: true, data: updated || undefined };
   } catch (error) {
-    logError(error as Error, "uppdateraForetagsprofilAdmin");
+    logError(error as Error, "uppdateraFöretagsprofilAdmin");
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }

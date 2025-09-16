@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { raderaForetag } from "../_actions/farozonActions";
+import { raderaFöretag } from "../_actions/farozonActions";
 
 export const useFarozon = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -11,7 +11,7 @@ export const useFarozon = () => {
   const handleDeleteCompany = async () => {
     setIsDeleting(true);
     try {
-      const result = await raderaForetag();
+      const result = await raderaFöretag();
 
       if (result.success) {
         await signOut({ callbackUrl: "/" });

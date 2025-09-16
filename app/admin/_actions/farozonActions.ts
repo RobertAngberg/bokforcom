@@ -5,7 +5,7 @@ import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../_types/types";
 
-export async function raderaForetag(): Promise<AktionsResultat> {
+export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
     const session = await auth();
     const userId = session?.user?.id; // Middleware garanterar att detta finns
@@ -23,7 +23,7 @@ export async function raderaForetag(): Promise<AktionsResultat> {
 
     return { success: true };
   } catch (error) {
-    logError(error as Error, "raderaForetag");
+    logError(error as Error, "raderaFöretag");
     return {
       success: false,
       error: error instanceof Error ? error.message : "Ett fel uppstod vid radering",
