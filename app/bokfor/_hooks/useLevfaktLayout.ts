@@ -34,7 +34,7 @@ export function useLevfaktLayout() {
   // Submit-hantering (kan anpassas baserat på context)
   const handleSubmit = () => {
     // Här kan vi lägga till submit-logik senare
-    console.log("Leverantörsfaktura bokföring...");
+    // Leverantörsfaktura bokföring
   };
 
   // Extra validering för leverantörsfaktura-specifika fält
