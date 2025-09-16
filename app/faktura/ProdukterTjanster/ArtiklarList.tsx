@@ -1,10 +1,6 @@
-type Artikel = {
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  moms: number;
-  valuta: string;
-  typ: "vara" | "tjänst";
+import { Artikel } from "../_types/types";
+
+type ExtendedArtikel = Artikel & {
   rotRutMaterial?: boolean;
   rotRutTyp?: "ROT" | "RUT";
   rotRutKategori?: string;
