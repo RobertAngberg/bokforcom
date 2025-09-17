@@ -28,8 +28,7 @@ export default function ProdukterTjanster() {
     valuta,
     typ,
     rotRutMaterial,
-    loading,
-    toast,
+    toastState,
 
     // Setters
     setBeskrivning,
@@ -48,24 +47,23 @@ export default function ProdukterTjanster() {
     handleResetForm,
     handleCloseArtikelModal,
     handleToggleArtikelForm,
-    closeToast,
     updateFormField,
+    clearToast,
+    closeToast,
   } = useProdukterTjanster();
 
   return (
     <div className="space-y-4">
       <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
+        message={toastState.message}
+        type={toastState.type}
+        isVisible={toastState.isVisible}
         onClose={closeToast}
       />
 
       <FavoritArtiklarList />
 
-      <ArtiklarList />
-
-      {/* ROT/RUT infobox - visas under artikellistan */}
+      {/* ROT/RUT infobox - visas under favoriter men innan ny artikel */}
       {formData.rotRutAktiverat &&
         formData.artiklar &&
         formData.artiklar.length > 0 &&
@@ -120,9 +118,9 @@ export default function ProdukterTjanster() {
           <div className="p-4 space-y-4">
             <ArtikelForm
               beskrivning={beskrivning}
-              antal={antal}
-              prisPerEnhet={prisPerEnhet}
-              moms={moms}
+              antal={parseFloat(antal) || 0}
+              prisPerEnhet={parseFloat(prisPerEnhet) || 0}
+              moms={parseFloat(moms) || 0}
               typ={typ}
               rotRutMaterial={rotRutMaterial}
               onChangeBeskrivning={setBeskrivning}
@@ -139,7 +137,7 @@ export default function ProdukterTjanster() {
               <Knapp
                 onClick={() => {
                   if (typ === "vara") {
-                    closeToast();
+                    clearToast();
                     // Visa error toast för vara + ROT/RUT
                     return;
                   }
@@ -174,9 +172,8 @@ export default function ProdukterTjanster() {
             <div className="mb-4">
               <Knapp
                 onClick={handleSaveAsFavorite}
-                text={loading ? "⏳ Sparar..." : "📌 Lägg till som favoritartikel"}
+                text="📌 Lägg till som favoritartikel"
                 disabled={
-                  loading ||
                   !beskrivning.trim() ||
                   !antal ||
                   !prisPerEnhet ||
@@ -206,6 +203,9 @@ export default function ProdukterTjanster() {
         </div>
       )}
 
+      {/* Artikellista - visas längst ner */}
+      <ArtiklarList />
+
       {/* Visa "Lägg till artikel"-knapp när favoritartikel är vald */}
       {favoritArtikelVald && (
         <div className="mb-4">
@@ -229,9 +229,9 @@ export default function ProdukterTjanster() {
           <div className="p-4 space-y-4">
             <ArtikelForm
               beskrivning={beskrivning}
-              antal={antal}
-              prisPerEnhet={prisPerEnhet}
-              moms={moms}
+              antal={parseFloat(antal) || 0}
+              prisPerEnhet={parseFloat(prisPerEnhet) || 0}
+              moms={parseFloat(moms) || 0}
               typ={typ}
               onChangeBeskrivning={setBeskrivning}
               onChangeAntal={setAntal}

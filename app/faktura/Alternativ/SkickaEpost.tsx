@@ -3,17 +3,18 @@
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import { useSkickaEpost } from "../_hooks/useSkickaEpost";
+import { useFakturaClient } from "../_hooks/useFakturaClient";
 import { SkickaEpostProps } from "../_types/types";
 //#endregion
 
 export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
+  const { toastState, clearToast } = useFakturaClient();
   const {
     isSending,
     mottagareEmail,
     setMottagareEmail,
     egetMeddelande,
     setEgetMeddelande,
-    toast,
     skickaTestmail,
     closeToast,
     isButtonDisabled,
@@ -91,12 +92,12 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
           <Knapp onClick={skickaTestmail} text={buttonText} disabled={isButtonDisabled} />
         </div>
 
-        {toast.isVisible && (
+        {toastState.isVisible && (
           <Toast
-            message={toast.message}
-            type={toast.type}
-            isVisible={toast.isVisible}
-            onClose={closeToast}
+            message={toastState.message}
+            type={toastState.type}
+            isVisible={toastState.isVisible}
+            onClose={clearToast}
           />
         )}
       </div>

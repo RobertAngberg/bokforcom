@@ -5,7 +5,7 @@ import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../
 import { useFakturaClient } from "./useFakturaClient";
 import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";
-import type { ToastState, KundSaveResponse } from "../_types/types";
+import type { KundSaveResponse } from "../_types/types";
 
 // Validera komplett kunddata
 function validateKundData(formData: any): { isValid: boolean; error?: string } {
@@ -41,18 +41,22 @@ function sanitizeKundFormData(formData: any) {
 }
 
 export function useKundUppgifter() {
-  const { formData, updateFormField, updateMultipleFields, kundStatus, setKundStatus, resetKund } =
-    useFakturaClient();
+  const {
+    formData,
+    updateFormField,
+    updateMultipleFields,
+    kundStatus,
+    setKundStatus,
+    resetKund,
+    showSuccess: showToastSuccess,
+    showError: showToastError,
+    toastState,
+  } = useFakturaClient();
 
   // Local state
   const [kunder, setKunder] = useState<any[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [toast, setToast] = useState<ToastState>({
-    message: "",
-    type: "error",
-    isVisible: false,
-  });
 
   // Hämta sparade kunder vid mount
   useEffect(() => {
@@ -83,11 +87,7 @@ export function useKundUppgifter() {
       // Validera kunddata
       const validation = validateKundData(formData);
       if (!validation.isValid) {
-        setToast({
-          message: validation.error || "Valideringsfel",
-          type: "error",
-          isVisible: true,
-        });
+        showToastError(validation.error || "Valideringsfel");
         return;
       }
 
@@ -123,18 +123,10 @@ export function useKundUppgifter() {
         const sparade = await hämtaSparadeKunder();
         setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
       } else {
-        setToast({
-          message: "Kunde inte spara kund",
-          type: "error",
-          isVisible: true,
-        });
+        showToastError("Kunde inte spara kund");
       }
     } catch (error) {
-      setToast({
-        message: "Kunde inte spara kund",
-        type: "error",
-        isVisible: true,
-      });
+      showToastError("Kunde inte spara kund");
     }
   }, [formData, updateFormField, setKundStatus]);
 
@@ -178,24 +170,17 @@ export function useKundUppgifter() {
       setKundStatus("none");
       const sparade = await hämtaSparadeKunder();
       setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
-      setToast({
-        message: "Kund raderad",
-        type: "success",
-        isVisible: true,
-      });
+      showToastSuccess("Kund raderad");
     } catch (error) {
       console.error("Fel vid radering av kund:", error);
-      setToast({
-        message: "Kunde inte radera kunden",
-        type: "error",
-        isVisible: true,
-      });
+      showToastError("Kunde inte radera kunden");
     }
   }, [formData.kundId, resetKund, setKundStatus]);
 
   // Stäng toast
   const closeToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
+    // Nu hanteras detta av den globala toast komponenten automatiskt
+    // eller via clearToast från useFakturaClient om behövs
   }, []);
 
   // Sätt till redigeringsläge
@@ -210,7 +195,7 @@ export function useKundUppgifter() {
     kundStatus,
     showSuccess,
     fadeOut,
-    toast,
+    toastState,
 
     // Event handlers
     handleChange,

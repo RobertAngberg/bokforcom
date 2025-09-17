@@ -2,14 +2,7 @@
 
 import Modal from "../../_components/Modal";
 import Knapp from "../../_components/Knapp";
-
-interface BekraftaBorttagnngModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  leverantorNamn: string;
-  loading?: boolean;
-}
+import { BekraftaBorttagnngModalProps } from "../_types/types";
 
 export default function BekraftaBorttagnngModal({
   isOpen,

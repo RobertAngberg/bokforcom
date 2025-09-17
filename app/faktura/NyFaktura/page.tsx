@@ -1,9 +1,7 @@
 import { hämtaFöretagsprofil, hämtaSparadeKunder, hämtaSparadeArtiklar } from "../_lib/data";
-import { FakturaProvider } from "../_components/FakturaProvider";
 import NyFakturaClient from "./NyFakturaClient";
 
 export default async function NyFakturaPage() {
-  // Server-side data fetching
   const [foretagsprofil, kunder, artiklar] = await Promise.all([
     hämtaFöretagsprofil(),
     hämtaSparadeKunder(),
@@ -16,9 +14,5 @@ export default async function NyFakturaPage() {
     artiklar: artiklar || [],
   };
 
-  return (
-    <FakturaProvider>
-      <NyFakturaClient initialData={initialData} />
-    </FakturaProvider>
-  );
+  return <NyFakturaClient initialData={initialData} />;
 }

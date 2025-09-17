@@ -1,244 +1,36 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { formatSEK } from "../../_utils/format";
-import { stringTillDate } from "../../_utils/datum";
-import {
-  hamtaBokfordaFakturor,
-  hamtaTransaktionsposter,
-  betalaOchBokförLeverantörsfaktura,
-  taBortLeverantörsfaktura,
-} from "../actions";
 import VerifikatModal from "./VerifikatModal";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Modal from "../../_components/Modal";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-
-type BokfordFaktura = {
-  id: number; // leverantörsfaktura.id
-  transaktionId?: number; // transaktion.id för verifikat
-  datum: string | Date;
-  belopp: number;
-  kommentar: string;
-  leverantör?: string;
-  fakturanummer?: string;
-  fakturadatum?: string;
-  förfallodatum?: string;
-  betaldatum?: string;
-  status_betalning?: string;
-  status_bokförd?: string;
-};
+import Tabell from "../../_components/Tabell";
+import { useBokfordaFakturor } from "../_hooks/useBokfordaFakturor";
 
 export default function BokfordaFakturor() {
-  // Hjälpfunktion för att säkert formatera datum
-  const formateraDatum = (datum: string | Date): string => {
-    if (typeof datum === "string") {
-      const dateObj = stringTillDate(datum);
-      return dateObj ? dateObj.toLocaleDateString("sv-SE") : datum;
-    }
-    return datum.toLocaleDateString("sv-SE");
-  };
+  const {
+    // State
+    fakturor,
+    loading,
+    verifikatModal,
+    toast,
+    bekraftelseModal,
 
-  // Kolumndefinitioner för transaktionsposter tabellen
-  const transaktionskolumner: ColumnDefinition<any>[] = [
-    {
-      key: "konto",
-      label: "Konto",
-      render: (_, post) => (
-        <div>
-          <div className="font-medium text-white">{post.kontonummer}</div>
-          <div className="text-sm text-gray-400">{post.kontobeskrivning}</div>
-        </div>
-      ),
-    },
-    {
-      key: "debet",
-      label: "Debet",
-      render: (_, post) => (
-        <div className="text-right text-white">{post.debet > 0 ? formatSEK(post.debet) : "—"}</div>
-      ),
-      className: "text-right",
-    },
-    {
-      key: "kredit",
-      label: "Kredit",
-      render: (_, post) => (
-        <div className="text-right text-white">
-          {post.kredit > 0 ? formatSEK(post.kredit) : "—"}
-        </div>
-      ),
-      className: "text-right",
-    },
-  ];
+    // Computed data
+    transaktionskolumner,
 
-  const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [verifikatModal, setVerifikatModal] = useState<{
-    isOpen: boolean;
-    transaktionId: number;
-    fakturanummer?: string;
-    leverantör?: string;
-  }>({
-    isOpen: false,
-    transaktionId: 0,
-  });
-  const [toast, setToast] = useState({
-    message: "",
-    type: "error" as "success" | "error" | "info",
-    isVisible: false,
-  });
-  const [bekraftelseModal, setBekraftelseModal] = useState<{
-    isOpen: boolean;
-    faktura: BokfordFaktura | null;
-    transaktionsposter: any[];
-    loadingPoster: boolean;
-  }>({
-    isOpen: false,
-    faktura: null,
-    transaktionsposter: [],
-    loadingPoster: false,
-  });
-
-  useEffect(() => {
-    async function hamtaFakturor() {
-      try {
-        const result = await hamtaBokfordaFakturor();
-        if (result.success && result.fakturor) {
-          setFakturor(result.fakturor);
-        }
-      } catch (error) {
-        console.error("Fel vid hämtning av bokförda fakturor:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    hamtaFakturor();
-  }, []);
-
-  const öppnaVerifikat = (faktura: BokfordFaktura) => {
-    setVerifikatModal({
-      isOpen: true,
-      transaktionId: faktura.transaktionId || faktura.id,
-      fakturanummer: faktura.fakturanummer,
-      leverantör: faktura.leverantör,
-    });
-  };
-
-  const stängVerifikat = () => {
-    setVerifikatModal({
-      isOpen: false,
-      transaktionId: 0,
-    });
-  };
-
-  const handleBetalaOchBokför = async (faktura: BokfordFaktura) => {
-    setBekraftelseModal({
-      isOpen: true,
-      faktura: faktura,
-      transaktionsposter: [],
-      loadingPoster: true,
-    });
-
-    // Hämta transaktionsposter för att visa debet/kredit
-    if (faktura.transaktionId) {
-      try {
-        const poster = await hamtaTransaktionsposter(faktura.transaktionId);
-        setBekraftelseModal((prev) => ({
-          ...prev,
-          transaktionsposter: Array.isArray(poster) ? poster : [],
-          loadingPoster: false,
-        }));
-      } catch (error) {
-        console.error("Fel vid hämtning av transaktionsposter:", error);
-        setBekraftelseModal((prev) => ({
-          ...prev,
-          loadingPoster: false,
-        }));
-      }
-    } else {
-      setBekraftelseModal((prev) => ({
-        ...prev,
-        loadingPoster: false,
-      }));
-    }
-  };
-
-  const stängBekraftelseModal = () => {
-    setBekraftelseModal({
-      isOpen: false,
-      faktura: null,
-      transaktionsposter: [],
-      loadingPoster: false,
-    });
-  };
-
-  const taBortFaktura = async (fakturaId: number) => {
-    if (confirm("Är du säker på att du vill ta bort denna leverantörsfaktura?")) {
-      try {
-        const result = await taBortLeverantörsfaktura(fakturaId);
-
-        if (result.success) {
-          // Ta bort från listan lokalt
-          setFakturor((prev) => prev.filter((f) => f.id !== fakturaId));
-
-          setToast({
-            message: "Leverantörsfaktura borttagen!",
-            type: "success",
-            isVisible: true,
-          });
-        } else {
-          setToast({
-            message: `Fel vid borttagning: ${result.error}`,
-            type: "error",
-            isVisible: true,
-          });
-        }
-      } catch (error) {
-        console.error("Fel vid borttagning av faktura:", error);
-        setToast({
-          message: "Fel vid borttagning av faktura",
-          type: "error",
-          isVisible: true,
-        });
-      }
-    }
-  };
-
-  const utförBokföring = async (faktura: BokfordFaktura) => {
-    try {
-      const result = await betalaOchBokförLeverantörsfaktura(faktura.id, faktura.belopp);
-
-      if (result.success) {
-        setToast({
-          message: "Leverantörsfaktura bokförd!",
-          type: "success",
-          isVisible: true,
-        });
-        // Ladda om data för att visa uppdaterad status
-        const updatedData = await hamtaBokfordaFakturor();
-        if (updatedData.success) {
-          setFakturor(updatedData.fakturor || []);
-        }
-      } else {
-        setToast({
-          message: `Fel vid bokföring: ${result.error}`,
-          type: "error",
-          isVisible: true,
-        });
-      }
-    } catch (error) {
-      console.error("Fel vid bokföring:", error);
-      setToast({
-        message: "Ett fel uppstod vid bokföring",
-        type: "error",
-        isVisible: true,
-      });
-    }
-    // Stäng modalen
-    stängBekraftelseModal();
-  };
+    // Actions
+    formateraDatum,
+    öppnaVerifikat,
+    stängVerifikat,
+    handleBetalaOchBokför,
+    stängBekraftelseModal,
+    taBortFaktura,
+    utförBokföring,
+    closeToast,
+  } = useBokfordaFakturor();
 
   if (loading) {
     return (
@@ -264,7 +56,7 @@ export default function BokfordaFakturor() {
         message={toast.message}
         type={toast.type}
         isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
+        onClose={closeToast}
       />
 
       <h2 className="text-xl font-semibold text-white mb-4">
@@ -400,7 +192,7 @@ export default function BokfordaFakturor() {
         message={toast.message}
         type={toast.type}
         isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
+        onClose={closeToast}
       />
     </div>
   );

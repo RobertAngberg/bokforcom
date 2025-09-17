@@ -189,6 +189,18 @@ export interface FakturaStoreState {
     valtArtikel: FavoritArtikel | null;
   };
 
+  // Toast state
+  toastState: {
+    message: string;
+    type: "success" | "error" | "info";
+    isVisible: boolean;
+  };
+
+  // User settings
+  userSettings: {
+    bokföringsmetod: "kontantmetoden" | "fakturametoden";
+  };
+
   // Actions
   setFormData: (data: Partial<FakturaFormData>) => void;
   resetFormData: () => void;
@@ -200,6 +212,13 @@ export interface FakturaStoreState {
   // ProdukterTjanster actions
   setProdukterTjansterState: (state: Partial<FakturaStoreState["produkterTjansterState"]>) => void;
   resetProdukterTjanster: () => void;
+
+  // Toast actions
+  setToast: (toast: { message: string; type: "success" | "error" | "info" }) => void;
+  clearToast: () => void;
+
+  // User settings actions
+  setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
 
   // Init function för server data
   initStore: (data: ServerData) => void;
@@ -289,6 +308,28 @@ export interface VerifikatModalProps {
   leverantör?: string;
 }
 
+export interface UseVerifikatModalProps {
+  isOpen: boolean;
+  transaktionId: number;
+  fakturanummer?: string;
+  leverantör?: string;
+}
+
+// Sparade types
+export interface FakturorComponentProps {
+  initialFakturor: any[];
+}
+
+export interface UseSparadeFakturorReturn {
+  hanteraValdFaktura: (fakturaId: number) => Promise<void>;
+}
+
+export interface UseSparadeFakturorPageReturn {
+  data: { kunder: any[]; fakturor: any[]; artiklar: any[] } | null;
+  loading: boolean;
+  loadData: () => Promise<void>;
+}
+
 // Forhandsgranskning subcomponent types
 export interface ArtiklarListaProps {
   rows: any[];
@@ -360,4 +401,195 @@ export interface ForhandsgranskningCalculations {
   logoSize: number;
   logoSliderValue: number;
   handleLogoSliderChange: (value: number) => void;
+}
+
+// =============================================================================
+// LEVERANTÖRER TYPES
+// =============================================================================
+export interface LeverantorFlikProps {
+  onLeverantörUpdated?: () => void;
+}
+
+export interface BekraftaBorttagnngModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  leverantorNamn: string;
+  loading?: boolean;
+}
+
+export interface NyLeverantorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+  editLeverantör?: any; // Import från actions.ts
+}
+
+export interface UseLeverantorFlikReturn {
+  // State
+  leverantörer: any[]; // Import från actions.ts
+  loading: boolean;
+  showModal: boolean;
+  editLeverantör: any | undefined; // Import från actions.ts
+  deleteModal: { show: boolean; leverantör?: any };
+  deleteLoading: boolean;
+  bokförModal: { show: boolean; leverantör?: any };
+
+  // Actions
+  loadLeverantörer: () => Promise<void>;
+  handleLeverantörAdded: () => void;
+  handleEditLeverantör: (leverantör: any) => void;
+  handleDeleteLeverantör: (leverantör: any) => void;
+  handleBokförLeverantör: (leverantör: any) => void;
+  confirmDelete: () => Promise<void>;
+  handleModalClose: () => void;
+  setShowModal: (show: boolean) => void;
+  setDeleteModal: (modal: { show: boolean; leverantör?: any }) => void;
+  setBokförModal: (modal: { show: boolean; leverantör?: any }) => void;
+}
+
+export interface UseNyLeverantorModalReturn {
+  // State
+  loading: boolean;
+  error: string | null;
+  formData: {
+    namn: string;
+    organisationsnummer: string;
+    adress: string;
+    postnummer: string;
+    stad: string;
+    telefon: string;
+    epost: string;
+  };
+  isEditing: boolean;
+
+  // Actions
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  setError: (error: string | null) => void;
+}
+
+// Hook parameter interfaces
+export interface UseLeverantörerReturn {
+  leverantörer: any[]; // Leverantör från actions.ts
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  harLeverantörer: boolean;
+}
+
+export interface UseLeverantorFlikParams {
+  onLeverantörUpdated?: () => void;
+}
+
+export interface UseNyLeverantorModalParams {
+  isOpen: boolean;
+  editLeverantör?: any; // Leverantör från actions.ts
+  onSaved: () => void;
+  onClose: () => void;
+}
+
+export interface UseValjLeverantorModalParams {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export interface UseValjLeverantorModalReturn {
+  // State
+  selectedLeverantör: number | null;
+
+  // Actions
+  setSelectedLeverantör: (id: number | null) => void;
+  handleContinue: () => void;
+}
+
+// =============================================================================
+// LEVERANTÖRSFAKTUROR TYPES
+// =============================================================================
+export interface UseBokfordaFakturorFlikReturn {
+  // State
+  fakturorAntal: number;
+  loading: boolean;
+
+  // Actions
+  loadFakturorAntal: () => Promise<void>;
+}
+
+// Bokför Faktura Modal types
+export interface BokforFakturaModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export interface BokforingsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
+// Alternativ component types
+export interface AlternativProps {
+  onReload: () => void;
+  onPreview: () => void;
+}
+
+// Betalning component types
+export interface BetalningProps {
+  // För framtida props om behövs
+}
+
+// BetalningsbekraftelseModal component types
+export type BetalningsPost = {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+};
+
+export interface BetalningsbekräftelseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  leverantör: string;
+  fakturanummer: string;
+  belopp: number;
+}
+
+export interface UseBetalningsbekraftelseModalProps {
+  leverantör: string;
+  fakturanummer: string;
+  belopp: number;
+}
+
+// BokfordaFakturor component types
+export type BokfordFaktura = {
+  id: number; // leverantörsfaktura.id
+  transaktionId?: number; // transaktion.id för verifikat
+  datum: string | Date;
+  belopp: number;
+  kommentar: string;
+  leverantör?: string;
+  fakturanummer?: string;
+  fakturadatum?: string;
+  förfallodatum?: string;
+  betaldatum?: string;
+  status_betalning?: string;
+  status_bokförd?: string;
+};
+
+// FramsidaKnapp component types
+export interface FakturaKnappProps {
+  emoji: string;
+  title: string;
+  description: string;
+  href: string;
+}
+
+// ExporteraPDFKnapp component types
+export interface ExporteraPDFKnappProps {
+  disabled?: boolean;
+  text?: string;
+  className?: string;
 }

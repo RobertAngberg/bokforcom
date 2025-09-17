@@ -1,88 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import NyLeverantorModal from "./NyLeverantorModal";
 import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
-import { getLeverantörer, deleteLeverantör, type Leverantör } from "../actions";
-
-interface LeverantorFlikProps {
-  onLeverantörUpdated?: () => void;
-}
+import { LeverantorFlikProps } from "../_types/types";
+import { useLeverantorFlik } from "../_hooks/useLeverantorer";
 
 export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlikProps) {
-  const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editLeverantör, setEditLeverantör] = useState<Leverantör | undefined>();
-  const [deleteModal, setDeleteModal] = useState<{ show: boolean; leverantör?: Leverantör }>({
-    show: false,
-  });
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [bokförModal, setBokförModal] = useState<{ show: boolean; leverantör?: Leverantör }>({
-    show: false,
-  });
-
-  const loadLeverantörer = async () => {
-    setLoading(true);
-    const result = await getLeverantörer();
-    if (result.success) {
-      setLeverantörer(result.leverantörer || []);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadLeverantörer();
-  }, []);
-
-  const handleLeverantörAdded = () => {
-    loadLeverantörer();
-    // Meddela även föräldrakomponenten att listan har uppdaterats
-    if (onLeverantörUpdated) {
-      onLeverantörUpdated();
-    }
-  };
-
-  const handleEditLeverantör = (leverantör: Leverantör) => {
-    setEditLeverantör(leverantör);
-    setShowModal(true);
-  };
-
-  const handleDeleteLeverantör = (leverantör: Leverantör) => {
-    setDeleteModal({ show: true, leverantör });
-  };
-
-  const handleBokförLeverantör = (leverantör: Leverantör) => {
-    setBokförModal({ show: true, leverantör });
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteModal.leverantör) return;
-
-    setDeleteLoading(true);
-    const result = await deleteLeverantör(deleteModal.leverantör.id!);
-
-    if (result.success) {
-      setDeleteModal({ show: false });
-      loadLeverantörer();
-      // Meddela även föräldrakomponenten att listan har uppdaterats
-      if (onLeverantörUpdated) {
-        onLeverantörUpdated();
-      }
-    }
-    setDeleteLoading(false);
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEditLeverantör(undefined);
-    // Om vi hade en redigering, ladda om listan för säkerhets skull
-    if (editLeverantör && onLeverantörUpdated) {
-      onLeverantörUpdated();
-    }
-  };
+  const {
+    leverantörer,
+    loading,
+    showModal,
+    editLeverantör,
+    deleteModal,
+    deleteLoading,
+    handleLeverantörAdded,
+    handleEditLeverantör,
+    handleDeleteLeverantör,
+    confirmDelete,
+    handleModalClose,
+    setShowModal,
+    setDeleteModal,
+  } = useLeverantorFlik({ onLeverantörUpdated });
 
   return (
     <>

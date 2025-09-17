@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Modal from "../../_components/Modal";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+import Tabell from "../../_components/Tabell";
 import { formatSEK } from "../../_utils/format";
-import { hamtaTransaktionsposter } from "../actions";
-import { TransaktionsPost, VerifikatModalProps } from "../_types/types";
+import { VerifikatModalProps } from "../_types/types";
+import { useVerifikatModal } from "../_hooks/useVerifikatModal";
 
 export default function VerifikatModal({
   isOpen,
@@ -14,73 +14,29 @@ export default function VerifikatModal({
   fakturanummer,
   leverantör,
 }: VerifikatModalProps) {
-  const [poster, setPoster] = useState<TransaktionsPost[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    // State
+    poster,
+    loading,
 
-  useEffect(() => {
-    if (isOpen && transaktionId) {
-      hämtaPoster();
-    }
-  }, [isOpen, transaktionId]);
-
-  const hämtaPoster = async () => {
-    setLoading(true);
-    console.log("🔍 Hämtar verifikat för transaktionId:", transaktionId);
-    try {
-      const result = await hamtaTransaktionsposter(transaktionId);
-      console.log("📝 Verifikat-resultat:", result);
-      if (Array.isArray(result)) {
-        setPoster(result as any);
-      }
-    } catch (error) {
-      console.error("Fel vid hämtning av transaktionsposter:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const columns: ColumnDefinition<TransaktionsPost>[] = [
-    {
-      key: "kontonummer",
-      label: "Konto",
-      render: (value, post) => (
-        <div>
-          <div className="font-medium text-white">{post.kontonummer}</div>
-          <div className="text-sm text-gray-400">{post.kontobeskrivning}</div>
-        </div>
-      ),
-    },
-    {
-      key: "debet",
-      label: "Debet",
-      render: (value, post) => (
-        <div className="text-right text-white">{post.debet > 0 ? formatSEK(post.debet) : "-"}</div>
-      ),
-    },
-    {
-      key: "kredit",
-      label: "Kredit",
-      render: (value, post) => (
-        <div className="text-right text-white">
-          {post.kredit > 0 ? formatSEK(post.kredit) : "-"}
-        </div>
-      ),
-    },
-  ];
-
-  const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
-  const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
-
-  const modalTitle = ""; // Tom titel så Modal.tsx inte visar den
+    // Computed data
+    columns,
+    totalDebet,
+    totalKredit,
+    modalTitle,
+    headerTitle,
+  } = useVerifikatModal({
+    isOpen,
+    transaktionId,
+    fakturanummer,
+    leverantör,
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="4xl" isLoading={loading}>
       {/* Egen titel-header */}
       <div className="text-center mb-4">
-        <h2 className="text-white text-2xl">
-          Verifikat - {leverantör || "Okänd leverantör"}
-          {fakturanummer ? ` (${fakturanummer})` : ""}
-        </h2>
+        <h2 className="text-white text-2xl">{headerTitle}</h2>
       </div>
 
       <div className="space-y-4">

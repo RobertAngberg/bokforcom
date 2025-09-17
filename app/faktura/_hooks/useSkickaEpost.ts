@@ -2,18 +2,13 @@
 import { useState, useEffect } from "react";
 import { useFakturaClient } from "./useFakturaClient";
 import { generatePDFAsBase64 } from "../Alternativ/pdfGenerator";
-import { ToastState, SkickaEpostProps } from "../_types/types";
+import { SkickaEpostProps } from "../_types/types";
 
 export function useSkickaEpost({ onSuccess, onError }: SkickaEpostProps = {}) {
-  const { formData } = useFakturaClient();
+  const { formData, showSuccess, showError } = useFakturaClient();
   const [isSending, setIsSending] = useState(false);
   const [mottagareEmail, setMottagareEmail] = useState("");
   const [egetMeddelande, setEgetMeddelande] = useState("");
-  const [toast, setToast] = useState<ToastState>({
-    message: "",
-    type: "error",
-    isVisible: false,
-  });
 
   // Uppdatera mottagarens e-post när kundens e-post ändras
   useEffect(() => {
@@ -22,16 +17,16 @@ export function useSkickaEpost({ onSuccess, onError }: SkickaEpostProps = {}) {
     }
   }, [formData.kundemail]);
 
-  const showToast = (message: string, type: ToastState["type"]) => {
-    setToast({
-      message,
-      type,
-      isVisible: true,
-    });
+  const showToast = (message: string, type: "success" | "error") => {
+    if (type === "success") {
+      showSuccess(message);
+    } else {
+      showError(message);
+    }
   };
 
   const closeToast = () => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
+    // Global toast hanterar stängning automatiskt
   };
 
   const validateEmail = (email: string): boolean => {
@@ -132,7 +127,6 @@ export function useSkickaEpost({ onSuccess, onError }: SkickaEpostProps = {}) {
     setMottagareEmail,
     egetMeddelande,
     setEgetMeddelande,
-    toast,
 
     // Actions
     skickaTestmail,

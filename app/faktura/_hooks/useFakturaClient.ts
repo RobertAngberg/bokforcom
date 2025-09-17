@@ -11,6 +11,8 @@ export function useFakturaClient() {
   const kundStatus = useFakturaStore((state) => state.kundStatus);
   const nyArtikel = useFakturaStore((state) => state.nyArtikel);
   const produkterTjansterState = useFakturaStore((state) => state.produkterTjansterState);
+  const toastState = useFakturaStore((state) => state.toastState);
+  const userSettings = useFakturaStore((state) => state.userSettings);
   const setFormData = useFakturaStore((state) => state.setFormData);
   const resetFormData = useFakturaStore((state) => state.resetFormData);
   const setKundStatus = useFakturaStore((state) => state.setKundStatus);
@@ -19,11 +21,11 @@ export function useFakturaClient() {
   const resetNyArtikel = useFakturaStore((state) => state.resetNyArtikel);
   const setProdukterTjansterState = useFakturaStore((state) => state.setProdukterTjansterState);
   const resetProdukterTjanster = useFakturaStore((state) => state.resetProdukterTjanster);
+  const setToast = useFakturaStore((state) => state.setToast);
+  const clearToast = useFakturaStore((state) => state.clearToast);
+  const setBokföringsmetod = useFakturaStore((state) => state.setBokföringsmetod);
 
   // Local UI state
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   // Helper functions
@@ -49,20 +51,22 @@ export function useFakturaClient() {
   );
 
   const clearMessages = useCallback(() => {
-    setError(null);
-    setSuccessMessage(null);
-  }, []);
+    clearToast();
+  }, [clearToast]);
 
-  const showSuccess = useCallback((message: string) => {
-    setSuccessMessage(message);
-    setError(null);
-    setTimeout(() => setSuccessMessage(null), 3000);
-  }, []);
+  const showSuccess = useCallback(
+    (message: string) => {
+      setToast({ message, type: "success" });
+    },
+    [setToast]
+  );
 
-  const showError = useCallback((message: string) => {
-    setError(message);
-    setSuccessMessage(null);
-  }, []);
+  const showError = useCallback(
+    (message: string) => {
+      setToast({ message, type: "error" });
+    },
+    [setToast]
+  );
 
   // Convenience functions for common operations
   const clearKund = useCallback(() => {
@@ -195,9 +199,8 @@ export function useFakturaClient() {
     kundStatus,
     nyArtikel,
     produkterTjansterState,
-    isLoading,
-    error,
-    successMessage,
+    toastState,
+    userSettings,
     showPreview,
 
     // Basic actions
@@ -209,6 +212,9 @@ export function useFakturaClient() {
     resetNyArtikel,
     setProdukterTjansterState,
     resetProdukterTjanster,
+    setToast,
+    clearToast,
+    setBokföringsmetod,
 
     // Helper functions
     updateFormField,
@@ -238,9 +244,6 @@ export function useFakturaClient() {
     initializeForNewFaktura,
     loadForetagsprofil,
     reloadFaktura,
-
-    // UI helpers
-    setIsLoading,
   };
 }
 

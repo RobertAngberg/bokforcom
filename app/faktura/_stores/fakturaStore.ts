@@ -81,12 +81,24 @@ const defaultProdukterTjansterState = {
   valtArtikel: null,
 };
 
+const defaultToastState = {
+  message: "",
+  type: "error" as "success" | "error" | "info",
+  isVisible: false,
+};
+
+const defaultUserSettings = {
+  bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
+};
+
 export const useFakturaStore = create<FakturaStoreState>((set, get) => ({
   // Initial state
   formData: defaultFormData,
   kundStatus: "none",
   nyArtikel: defaultNyArtikel,
   produkterTjansterState: defaultProdukterTjansterState,
+  toastState: defaultToastState,
+  userSettings: defaultUserSettings,
 
   // Actions
   setFormData: (data) =>
@@ -133,6 +145,23 @@ export const useFakturaStore = create<FakturaStoreState>((set, get) => ({
     })),
 
   resetProdukterTjanster: () => set({ produkterTjansterState: defaultProdukterTjansterState }),
+
+  // Toast actions
+  setToast: (toast) =>
+    set({
+      toastState: {
+        ...toast,
+        isVisible: true,
+      },
+    }),
+
+  clearToast: () => set({ toastState: defaultToastState }),
+
+  // User settings actions
+  setBokföringsmetod: (metod) =>
+    set((state) => ({
+      userSettings: { ...state.userSettings, bokföringsmetod: metod },
+    })),
 
   // Init function för server data
   initStore: (data: ServerData) => {

@@ -7,8 +7,6 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
 import type { RotRutFormProps } from "../_types/types";
-
-// Registrera svensk locale för DatePicker
 registerLocale("sv", sv);
 
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {

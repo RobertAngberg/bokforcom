@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { sparaFavoritArtikel, hämtaSparadeArtiklar, deleteFavoritArtikel } from "../actions";
 import { useFakturaClient } from "./useFakturaClient";
-import type { ToastState, Artikel, FavoritArtikel } from "../_types/types";
+import type { Artikel, FavoritArtikel } from "../_types/types";
 
 export function useProdukterTjanster() {
   const {
@@ -12,24 +12,20 @@ export function useProdukterTjanster() {
     updateMultipleFields,
     produkterTjansterState,
     setProdukterTjansterState,
+    nyArtikel,
+    updateArtikel,
+    resetNyArtikel,
+    showSuccess,
+    showError,
+    toastState,
+    clearToast,
   } = useFakturaClient();
 
-  // Form state för ny artikel (lokalt)
-  const [beskrivning, setBeskrivning] = useState("");
-  const [antal, setAntal] = useState(1);
-  const [prisPerEnhet, setPrisPerEnhet] = useState(0);
-  const [moms, setMoms] = useState(25);
-  const [valuta, setValuta] = useState("SEK");
-  const [typ, setTyp] = useState<"vara" | "tjänst">("tjänst");
-  const [rotRutMaterial, setRotRutMaterial] = useState(false);
+  // Använd nyArtikel från Zustand istället för lokala states
+  const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
 
-  // UI state (lokalt)
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<ToastState>({
-    message: "",
-    type: "error",
-    isVisible: false,
-  });
+  // ROT/RUT material state (lokal eftersom det är UI-specifik)
+  const [rotRutMaterial, setRotRutMaterial] = useState(false);
 
   // Store state destructuring
   const {
@@ -215,10 +211,10 @@ export function useProdukterTjanster() {
 
   // Automatisk beräkning av arbetskostnadExMoms och avdragBelopp
   useEffect(() => {
-    // Använd antal och prisPerEnhet från hooken istället för nyArtikel
+    // Använd antal och prisPerEnhet från nyArtikel
     if (formData.rotRutAktiverat && antal && prisPerEnhet) {
-      const antalTimmar = parseFloat(antal.toString());
-      const prisPerTimme = parseFloat(prisPerEnhet.toString());
+      const antalTimmar = parseFloat(antal);
+      const prisPerTimme = parseFloat(prisPerEnhet);
 
       // Kontrollera att vi har giltiga nummer
       if (isNaN(antalTimmar) || isNaN(prisPerTimme)) {
@@ -230,8 +226,8 @@ export function useProdukterTjanster() {
       // Beräkna avdragBelopp om procentsats finns
       let avdragBelopp: number | undefined = undefined;
       if (formData.avdragProcent !== undefined) {
-        // Hämta momssats från hooken eller använd 25% som standard
-        const momsSats = moms || 25;
+        // Hämta momssats från nyArtikel eller använd 25% som standard
+        const momsSats = parseFloat(moms) || 25;
 
         // Räkna ut arbetskostnad inkl moms
         const arbetskostnadInklMoms = arbetskostnadExMoms * (1 + momsSats / 100);
@@ -260,8 +256,8 @@ export function useProdukterTjanster() {
       let arbetskostnad: number | undefined = undefined;
 
       // Kontrollera om vi har aktuell artikel i formuläret
-      if (typ === "tjänst" && beskrivning && prisPerEnhet > 0) {
-        arbetskostnad = antal * prisPerEnhet;
+      if (typ === "tjänst" && beskrivning && parseFloat(prisPerEnhet) > 0) {
+        arbetskostnad = parseFloat(antal) * parseFloat(prisPerEnhet);
       } else {
         const tjänsteArtiklar = (formData.artiklar || []).filter((a) => a.typ === "tjänst");
         if (tjänsteArtiklar.length === 1) {
@@ -301,36 +297,27 @@ export function useProdukterTjanster() {
 
   // Reset form
   const handleResetForm = useCallback(() => {
-    setBeskrivning("");
-    setAntal(1);
-    setPrisPerEnhet(0);
-    setMoms(25);
-    setValuta("SEK");
-    setTyp("tjänst");
+    resetNyArtikel();
     setRotRutMaterial(false);
     setProdukterTjansterState({
       redigerarIndex: null,
       favoritArtikelVald: false,
       ursprungligFavoritId: null,
     });
-  }, [setProdukterTjansterState]);
+  }, [resetNyArtikel, setProdukterTjansterState]);
 
   // Lägg till artikel
   const handleAdd = useCallback(async () => {
     if (!beskrivning.trim()) {
-      setToast({
-        message: "Beskrivning krävs",
-        type: "error",
-        isVisible: true,
-      });
+      showError("Beskrivning krävs");
       return;
     }
 
     const nyArtikel: Artikel = {
       beskrivning: beskrivning.trim(),
-      antal,
-      prisPerEnhet,
-      moms,
+      antal: parseFloat(antal) || 1,
+      prisPerEnhet: parseFloat(prisPerEnhet) || 0,
+      moms: parseFloat(moms) || 25,
       valuta,
       typ,
       rotRutTyp: formData.rotRutAktiverat ? formData.rotRutTyp : undefined,
@@ -345,11 +332,7 @@ export function useProdukterTjanster() {
       updateFormField("artiklar", nyaArtiklar);
       setProdukterTjansterState({ redigerarIndex: null });
 
-      setToast({
-        message: "Artikel uppdaterad!",
-        type: "success",
-        isVisible: true,
-      });
+      showSuccess("Artikel uppdaterad!");
     } else {
       // Lägg till ny artikel
       const nyaArtiklar = [...(formData.artiklar || []), nyArtikel];
@@ -361,11 +344,7 @@ export function useProdukterTjanster() {
         setProdukterTjansterState({ blinkIndex: null });
       }, 2000);
 
-      setToast({
-        message: "Artikel tillagd!",
-        type: "success",
-        isVisible: true,
-      });
+      showSuccess("Artikel tillagd!");
     }
 
     handleResetForm();
@@ -382,6 +361,8 @@ export function useProdukterTjanster() {
     updateFormField,
     setProdukterTjansterState,
     handleResetForm,
+    showError,
+    showSuccess,
   ]);
 
   // Ta bort artikel
@@ -396,12 +377,14 @@ export function useProdukterTjanster() {
   // Redigera artikel
   const handleEdit = useCallback(
     (artikel: Artikel, index: number) => {
-      setBeskrivning(artikel.beskrivning);
-      setAntal(artikel.antal);
-      setPrisPerEnhet(artikel.prisPerEnhet);
-      setMoms(artikel.moms);
-      setValuta(artikel.valuta);
-      setTyp(artikel.typ);
+      updateArtikel({
+        beskrivning: artikel.beskrivning,
+        antal: artikel.antal.toString(),
+        prisPerEnhet: artikel.prisPerEnhet.toString(),
+        moms: artikel.moms.toString(),
+        valuta: artikel.valuta,
+        typ: artikel.typ,
+      });
       setRotRutMaterial(artikel.rotRutTyp === "ROT" || artikel.rotRutTyp === "RUT");
 
       setProdukterTjansterState({
@@ -410,7 +393,7 @@ export function useProdukterTjanster() {
         visaArtikelForm: true,
       });
     },
-    [setProdukterTjansterState]
+    [updateArtikel, setProdukterTjansterState]
   );
 
   // Välj favoritartikel - lägg till direkt i listan
@@ -483,22 +466,16 @@ export function useProdukterTjanster() {
   // Spara som favorit
   const handleSaveAsFavorite = useCallback(async () => {
     if (!beskrivning.trim()) {
-      setToast({
-        message: "Beskrivning krävs för att spara som favorit",
-        type: "error",
-        isVisible: true,
-      });
+      showError("Beskrivning krävs för att spara som favorit");
       return;
     }
 
     try {
-      setLoading(true);
-
       const favoritData = {
         beskrivning: beskrivning.trim(),
-        antal,
-        prisPerEnhet,
-        moms,
+        antal: parseFloat(antal) || 1,
+        prisPerEnhet: parseFloat(prisPerEnhet) || 0,
+        moms: parseFloat(moms) || 25,
         valuta,
         typ,
         rotRutTyp: formData.rotRutAktiverat ? formData.rotRutTyp : undefined,
@@ -508,11 +485,7 @@ export function useProdukterTjanster() {
       const result = await sparaFavoritArtikel(favoritData);
 
       if (result.success) {
-        setToast({
-          message: "Artikel sparad som favorit!",
-          type: "success",
-          isVisible: true,
-        });
+        showSuccess("Artikel sparad som favorit!");
 
         // Ladda om favoritlistan
         const artiklar = await hämtaSparadeArtiklar();
@@ -526,23 +499,24 @@ export function useProdukterTjanster() {
           setProdukterTjansterState({ artikelSparadSomFavorit: false });
         }, 3000);
       } else {
-        setToast({
-          message: "Kunde inte spara artikel som favorit",
-          type: "error",
-          isVisible: true,
-        });
+        showError("Kunde inte spara artikel som favorit");
       }
     } catch (error) {
       console.error("Fel vid sparande av favoritartikel:", error);
-      setToast({
-        message: "Kunde inte spara artikel som favorit",
-        type: "error",
-        isVisible: true,
-      });
-    } finally {
-      setLoading(false);
+      showError("Kunde inte spara artikel som favorit");
     }
-  }, [beskrivning, antal, prisPerEnhet, moms, valuta, typ, formData, setProdukterTjansterState]);
+  }, [
+    beskrivning,
+    antal,
+    prisPerEnhet,
+    moms,
+    valuta,
+    typ,
+    formData,
+    setProdukterTjansterState,
+    showSuccess,
+    showError,
+  ]);
 
   // Ta bort favoritartikel
   const handleDeleteFavorit = useCallback(
@@ -555,21 +529,13 @@ export function useProdukterTjanster() {
         setProdukterTjansterState({
           favoritArtiklar: (artiklar as FavoritArtikel[]) || [],
         });
-        setToast({
-          message: "Favoritartikel borttagen",
-          type: "success",
-          isVisible: true,
-        });
+        showSuccess("Favoritartikel borttagen");
       } catch (error) {
         console.error("Fel vid borttagning av favoritartikel:", error);
-        setToast({
-          message: "Kunde inte ta bort favoritartikel",
-          type: "error",
-          isVisible: true,
-        });
+        showError("Kunde inte ta bort favoritartikel");
       }
     },
-    [setProdukterTjansterState]
+    [setProdukterTjansterState, showSuccess, showError]
   );
 
   // Visa artikeldetaljer
@@ -623,8 +589,8 @@ export function useProdukterTjanster() {
 
   // Stäng toast
   const closeToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
-  }, []);
+    clearToast();
+  }, [clearToast]);
 
   return {
     // State från store
@@ -640,8 +606,10 @@ export function useProdukterTjanster() {
     ursprungligFavoritId,
     artikelSparadSomFavorit,
     valtArtikel,
+    toastState,
+    clearToast,
 
-    // Lokal state
+    // Artikel state från nyArtikel
     beskrivning,
     antal,
     prisPerEnhet,
@@ -649,16 +617,14 @@ export function useProdukterTjanster() {
     valuta,
     typ,
     rotRutMaterial,
-    loading,
-    toast,
 
-    // Setters för lokal state
-    setBeskrivning,
-    setAntal,
-    setPrisPerEnhet,
-    setMoms,
-    setValuta,
-    setTyp,
+    // Setters för artikel state (via updateArtikel)
+    setBeskrivning: (value: string) => updateArtikel({ beskrivning: value }),
+    setAntal: (value: number) => updateArtikel({ antal: value.toString() }),
+    setPrisPerEnhet: (value: number) => updateArtikel({ prisPerEnhet: value.toString() }),
+    setMoms: (value: number) => updateArtikel({ moms: value.toString() }),
+    setValuta: (value: string) => updateArtikel({ valuta: value }),
+    setTyp: (value: "vara" | "tjänst") => updateArtikel({ typ: value }),
     setRotRutMaterial,
 
     // Setters för store state

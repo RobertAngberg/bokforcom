@@ -1,32 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Modal from "../../_components/Modal";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
-import { type Leverantör } from "../actions";
-import { useLeverantorNavigation } from "../_hooks/useLeverantorNavigation";
 import { useLeverantörer } from "../_hooks/useLeverantorer";
+import { useValjLeverantorModal } from "../_hooks/useLeverantorer";
 import { VäljLeverantörModalProps } from "../_types/types";
 
 export default function ValjLeverantorModal({ isOpen, onClose }: VäljLeverantörModalProps) {
-  const [selectedLeverantör, setSelectedLeverantör] = useState<number | null>(null);
-  const { navigateToBokforing } = useLeverantorNavigation();
-  const { leverantörer, loading, refresh } = useLeverantörer();
-
-  useEffect(() => {
-    if (isOpen) {
-      refresh();
-    }
-  }, [isOpen, refresh]);
-
-  const handleContinue = () => {
-    if (selectedLeverantör) {
-      onClose();
-      // Navigera till bokföringssystemet med levfakt=true
-      navigateToBokforing({ leverantorId: selectedLeverantör });
-    }
-  };
+  const { leverantörer, loading } = useLeverantörer();
+  const { selectedLeverantör, setSelectedLeverantör, handleContinue } = useValjLeverantorModal({
+    isOpen,
+    onClose,
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Välj leverantör" maxWidth="lg">

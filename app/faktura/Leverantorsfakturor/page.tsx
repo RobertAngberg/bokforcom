@@ -1,14 +1,15 @@
 "use client";
-import { useRouter } from "next/navigation";
+
 import MainLayout from "../../_components/MainLayout";
 import TillbakaPil from "../../_components/TillbakaPil";
 import LeverantorFlik from "../Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
 import { useLeverantörer } from "../_hooks/useLeverantorer";
+import { useLeverantorNavigation } from "../_hooks/useLeverantorNavigation";
 
 export default function LeverantorsfakturorPage() {
-  const router = useRouter();
   const { refresh } = useLeverantörer();
+  const { navigateToFaktura } = useLeverantorNavigation();
 
   const handleLeverantörUpdated = () => {
     refresh();
@@ -17,7 +18,7 @@ export default function LeverantorsfakturorPage() {
   return (
     <MainLayout>
       <div className="relative mb-6">
-        <TillbakaPil onClick={() => router.push("/faktura")} />
+        <TillbakaPil onClick={navigateToFaktura} />
         <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
       </div>
 

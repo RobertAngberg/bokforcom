@@ -1,25 +1,10 @@
 "use client";
 
-import React from "react";
 import Modal from "../../_components/Modal";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+import Tabell from "../../_components/Tabell";
 import { formatSEK } from "../../_utils/format";
-
-type BokföringsPost = {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-};
-
-interface BetalningsbekräftelseModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  leverantör: string;
-  fakturanummer: string;
-  belopp: number;
-}
+import { BetalningsbekräftelseModalProps } from "../_types/types";
+import { useBetalningsbekraftelseModal } from "../_hooks/useBetalningsbekraftelseModal";
 
 export default function BetalningsbekräftelseModal({
   isOpen,
@@ -29,52 +14,11 @@ export default function BetalningsbekräftelseModal({
   fakturanummer,
   belopp,
 }: BetalningsbekräftelseModalProps) {
-  const poster: BokföringsPost[] = [
-    {
-      konto: "1930",
-      kontoNamn: "Företagskonto / affärskonto",
-      debet: 0,
-      kredit: belopp,
-    },
-    {
-      konto: "2440",
-      kontoNamn: "Leverantörsskulder",
-      debet: belopp,
-      kredit: 0,
-    },
-  ];
-
-  const columns: ColumnDefinition<BokföringsPost>[] = [
-    {
-      key: "konto",
-      label: "Konto",
-      render: (value, post) => (
-        <div>
-          <div className="font-medium text-white">{post.konto}</div>
-          <div className="text-sm text-gray-400">{post.kontoNamn}</div>
-        </div>
-      ),
-    },
-    {
-      key: "debet",
-      label: "Debet",
-      render: (value, post) => (
-        <div className="text-right text-white">{post.debet > 0 ? formatSEK(post.debet) : "-"}</div>
-      ),
-    },
-    {
-      key: "kredit",
-      label: "Kredit",
-      render: (value, post) => (
-        <div className="text-right text-white">
-          {post.kredit > 0 ? formatSEK(post.kredit) : "-"}
-        </div>
-      ),
-    },
-  ];
-
-  const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
-  const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
+  const { poster, columns, totalDebet, totalKredit } = useBetalningsbekraftelseModal({
+    leverantör,
+    fakturanummer,
+    belopp,
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="4xl">

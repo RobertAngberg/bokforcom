@@ -13,7 +13,7 @@ export default function KundUppgifter() {
     kundStatus,
     showSuccess,
     fadeOut,
-    toast,
+    toastState,
     handleChange,
     handleSave,
     handleSelectCustomer,
@@ -26,9 +26,9 @@ export default function KundUppgifter() {
   return (
     <div className="space-y-6 text-white">
       <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
+        message={toastState.message}
+        type={toastState.type}
+        isVisible={toastState.isVisible}
         onClose={closeToast}
       />
 

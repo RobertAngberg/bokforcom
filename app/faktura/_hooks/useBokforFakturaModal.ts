@@ -1,15 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useFakturaContext } from "../_components/FakturaProvider";
+import { useFakturaClient } from "./useFakturaClient";
 import { bokförFaktura, hämtaBokföringsmetod, hämtaFakturaStatus } from "../actions";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-import Modal from "../../_components/Modal";
-import Toast from "../../_components/Toast";
+import { BokforingsPost } from "../_types/types";
+import { ColumnDefinition } from "../../_components/Tabell";
 
-//#region Business Logic - Migrated from actions.ts
-// Validera bokföringspost (flyttad från actions.ts)
-function validateBokföringsPost(post: BokföringsPost): { isValid: boolean; error?: string } {
+// Validation functions - flyttad från komponenten
+function validateBokföringsPost(post: BokforingsPost): { isValid: boolean; error?: string } {
   if (!post.konto || !/^\d{4}$/.test(post.konto.toString())) {
     return { isValid: false, error: "Ogiltigt kontonummer (måste vara 4 siffror)" };
   }
@@ -25,8 +21,7 @@ function validateBokföringsPost(post: BokföringsPost): { isValid: boolean; err
   return { isValid: true };
 }
 
-// Validera bokföringens balans (flyttad från actions.ts)
-function validateBokföringsBalance(poster: BokföringsPost[]): { isValid: boolean; error?: string } {
+function validateBokföringsBalance(poster: BokforingsPost[]): { isValid: boolean; error?: string } {
   const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
   const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
 
@@ -40,7 +35,6 @@ function validateBokföringsBalance(poster: BokföringsPost[]): { isValid: boole
   return { isValid: true };
 }
 
-// Validera all bokföringsdata (flyttad från actions.ts)
 function validateBokföringsData(data: any): { isValid: boolean; error?: string } {
   if (!data.fakturanummer || data.fakturanummer.trim().length === 0) {
     return { isValid: false, error: "Fakturanummer krävs" };
@@ -75,48 +69,27 @@ function validateBokföringsData(data: any): { isValid: boolean; error?: string 
   return { isValid: true };
 }
 
-// Avgör om det är en betalningsregistrering (flyttad från actions.ts)
-function isPaymentRegistration(poster: BokföringsPost[]): boolean {
+function isPaymentRegistration(poster: BokforingsPost[]): boolean {
   const harBankKonto = poster.some((p) => p.konto === "1930" || p.konto === "1910");
   const harKundfordringar = poster.some((p) => p.konto === "1510");
   return harBankKonto && harKundfordringar && poster.length === 2;
 }
 
-// Avgör om det är kontantmetod (flyttad från actions.ts)
-function isKontantmetod(poster: BokföringsPost[]): boolean {
+function isKontantmetod(poster: BokforingsPost[]): boolean {
   const harBankKontantmetod = poster.some((p) => p.konto === "1930");
   const harIngenKundfordringar = !poster.some((p) => p.konto === "1510");
   return harBankKontantmetod && harIngenKundfordringar;
 }
-//#endregion
 
-interface BokförFakturaModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-interface BokföringsPost {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-  beskrivning: string;
-}
-
-export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaModalProps) {
-  const { formData } = useFakturaContext();
+export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
+  const { formData, toastState, setToast, clearToast, userSettings, setBokföringsmetod } =
+    useFakturaClient();
   const [loading, setLoading] = useState(false);
-  const [bokföringsmetod, setBokföringsmetod] = useState<string>("kontantmetoden");
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
     status_bokförd?: string;
   }>({});
   const [statusLoaded, setStatusLoaded] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Hämta användarens bokföringsmetod och fakturaSTATUS från databasen
   useEffect(() => {
@@ -137,32 +110,14 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
         setStatusLoaded(true);
       }
     }
-  }, [isOpen, formData.id]);
+  }, [isOpen, formData.id, setBokföringsmetod]);
 
-  if (!isOpen) return null;
-
-  // Wait for status to be loaded before rendering the modal content
-  if (!statusLoaded) {
-    return (
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={`📊 Bokför faktura ${formData.fakturanummer}`}
-        maxWidth="4xl"
-      >
-        <div className="text-center py-8">
-          <div className="text-white">⏳ Laddar fakturasstatus...</div>
-        </div>
-      </Modal>
-    );
-  }
-
-  const ärKontantmetod = bokföringsmetod === "kontantmetoden";
+  const ärKontantmetod = userSettings.bokföringsmetod === "kontantmetoden";
 
   // Analysera fakturan och föreslå bokföringsposter
-  const analyseraBokföring = (): { poster: BokföringsPost[]; varningar: string[] } => {
+  const analyseraBokföring = (): { poster: BokforingsPost[]; varningar: string[] } => {
     const varningar: string[] = [];
-    const poster: BokföringsPost[] = [];
+    const poster: BokforingsPost[] = [];
 
     // Validera grunddata
     if (!formData.artiklar || formData.artiklar.length === 0) {
@@ -320,10 +275,92 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     return { poster, varningar };
   };
 
-  const { poster, varningar } = analyseraBokföring();
+  const hanteraBokför = async () => {
+    setLoading(true);
+    try {
+      // KOLLA OM FAKTURAN ÄR SPARAD FÖRST
+      if (!formData.id) {
+        setToast({
+          message: "Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.",
+          type: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const totalInkMoms =
+        formData.artiklar?.reduce(
+          (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
+          0
+        ) || 0;
+
+      const { poster } = analyseraBokföring();
+
+      // Frontend-validering med migerade funktioner
+      const bokföringsData = {
+        fakturaId: formData.id ? parseInt(formData.id) : undefined,
+        fakturanummer: formData.fakturanummer,
+        kundnamn: formData.kundnamn,
+        totaltBelopp: totalInkMoms,
+        poster: poster,
+        kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
+      };
+
+      const validation = validateBokföringsData(bokföringsData);
+      if (!validation.isValid) {
+        setToast({
+          message: validation.error || "Valideringsfel",
+          type: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const result = await bokförFaktura(bokföringsData);
+
+      console.log("🔥 BOKFÖR DATA:", {
+        fakturaId: formData.id ? parseInt(formData.id) : undefined,
+        formDataId: formData.id,
+        fakturanummer: formData.fakturanummer,
+      });
+
+      if (result.success) {
+        setToast({
+          message: result.message || "Bokföring genomförd",
+          type: "success",
+        });
+        // Skicka event för att uppdatera fakturaslistan
+        window.dispatchEvent(new Event("reloadFakturor"));
+        onClose();
+      } else {
+        setToast({
+          message: `Bokföringsfel: ${result.error}`,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Bokföringsfel:", error);
+      setToast({
+        message: "Fel vid bokföring",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Beräkna totalbelopp
+  const beräknaTotalbelopp = (): number => {
+    return (
+      formData.artiklar?.reduce(
+        (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
+        0
+      ) || 0
+    );
+  };
 
   // Kolumn-definitioner för tabellen
-  const columns: ColumnDefinition<BokföringsPost>[] = [
+  const getTableColumns = (): ColumnDefinition<BokforingsPost>[] => [
     {
       key: "konto",
       label: "Konto",
@@ -348,215 +385,28 @@ export default function BokförFakturaModal({ isOpen, onClose }: BokförFakturaM
     },
   ];
 
-  // Använd poster direkt utan summa-rad
-  const posterMedSumma = poster;
-  const hanteraBokför = async () => {
-    setLoading(true);
-    try {
-      // KOLLA OM FAKTURAN ÄR SPARAD FÖRST
-      if (!formData.id) {
-        setToast({
-          message: "Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.",
-          type: "error",
-          isVisible: true,
-        });
-        setLoading(false);
-        return;
-      }
+  // Beräkna data för komponenten
+  const bokföringsData = analyseraBokföring();
+  const poster = bokföringsData.poster;
+  const varningar = bokföringsData.varningar;
+  const columns = getTableColumns();
 
-      const totalInkMoms =
-        formData.artiklar?.reduce(
-          (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
-          0
-        ) || 0;
+  return {
+    // State
+    loading,
+    bokföringsmetod: userSettings.bokföringsmetod,
+    fakturaStatus,
+    statusLoaded,
+    toast: toastState,
+    ärKontantmetod,
+    formData,
+    poster,
+    varningar,
+    columns,
 
-      // Frontend-validering med migerade funktioner
-      const bokföringsData = {
-        fakturaId: formData.id ? parseInt(formData.id) : undefined,
-        fakturanummer: formData.fakturanummer,
-        kundnamn: formData.kundnamn,
-        totaltBelopp: totalInkMoms,
-        poster: poster,
-        kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
-      };
-
-      const validation = validateBokföringsData(bokföringsData);
-      if (!validation.isValid) {
-        setToast({
-          message: validation.error || "Valideringsfel",
-          type: "error",
-          isVisible: true,
-        });
-        setLoading(false);
-        return;
-      }
-
-      const result = await bokförFaktura(bokföringsData);
-
-      console.log("🔥 BOKFÖR DATA:", {
-        fakturaId: formData.id ? parseInt(formData.id) : undefined,
-        formDataId: formData.id,
-        fakturanummer: formData.fakturanummer,
-      });
-
-      if (result.success) {
-        setToast({
-          message: result.message || "Bokföring genomförd",
-          type: "success",
-          isVisible: true,
-        });
-        // Skicka event för att uppdatera fakturaslistan
-        window.dispatchEvent(new Event("reloadFakturor"));
-        onClose();
-      } else {
-        setToast({
-          message: `Bokföringsfel: ${result.error}`,
-          type: "error",
-          isVisible: true,
-        });
-      }
-    } catch (error) {
-      console.error("Bokföringsfel:", error);
-      setToast({
-        message: "Fel vid bokföring",
-        type: "error",
-        isVisible: true,
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Actions
+    setToast,
+    hanteraBokför,
+    beräknaTotalbelopp,
   };
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`📊 Bokför faktura ${formData.fakturanummer}`}
-      maxWidth="4xl"
-    >
-      {/* Information */}
-      {varningar.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/50 rounded">
-          <h3 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
-            💡 Information:
-          </h3>
-          <ul className="text-blue-200 space-y-1">
-            {varningar.map((varning, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-blue-400 mt-0.5">•</span>
-                <div>
-                  {varning
-                    .replace(/^⚠️\s*/, "")
-                    .split("\n")
-                    .map((line, lineIndex) => (
-                      <div key={lineIndex}>{line}</div>
-                    ))}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Faktura-info */}
-      <div className="mb-6 p-4 bg-slate-700 rounded">
-        <h3 className="text-white font-semibold mb-2">Fakturanuppgifter:</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-400">Kund:</span>
-            <span className="text-white ml-2">{formData.kundnamn}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Fakturanummer:</span>
-            <span className="text-white ml-2">{formData.fakturanummer}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Antal artiklar:</span>
-            <span className="text-white ml-2">{formData.artiklar?.length || 0}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Totalt inkl. moms:</span>
-            <span className="text-white ml-2">
-              {formData.artiklar
-                ?.reduce(
-                  (sum, artikel) =>
-                    sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
-                  0
-                )
-                .toFixed(2)}{" "}
-              kr
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Bokföringsposter */}
-      {poster.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-white font-semibold mb-4">Föreslagna bokföringsposter:</h3>
-
-          <Tabell
-            data={posterMedSumma}
-            columns={columns}
-            getRowId={(item) => `${item.konto}-${item.beskrivning}`}
-          />
-        </div>
-      )}
-
-      {/* Knappar */}
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-          Avbryt
-        </button>
-        <button
-          onClick={hanteraBokför}
-          disabled={loading || poster.length === 0}
-          className="px-6 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {loading ? (
-            <>⏳ Bokför...</>
-          ) : fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd" ? (
-            <>💰 Registrera betalning</>
-          ) : ärKontantmetod ? (
-            <>📚 Bokför betalning till Bank/Kassa</>
-          ) : (
-            <>📚 Bokför faktura till Kundfordringar</>
-          )}
-        </button>
-      </div>
-
-      {/* Info längst ner */}
-      <div className="mt-4 text-xs text-slate-400 space-y-1">
-        <div>
-          Bokföringsmetod:{" "}
-          <span className="text-white">
-            {ärKontantmetod ? "💰 Kontantmetod" : "📄 Fakturametoden"}
-          </span>
-        </div>
-        <div>
-          {/* Visa olika text beroende på vad som händer */}
-          {fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd"
-            ? // Betalningsregistrering - fakturan är redan bokförd
-              "💰 Intäkten är redan registrerad, nu registreras betalningen."
-            : ärKontantmetod
-              ? // Kontantmetod - intäkt och betalning samtidigt
-                "💡 Intäkten och betalningen registreras samtidigt till Bank/Kassa."
-              : // Fakturametoden - intäkt först, betalning senare
-                "💡 Intäkten registreras nu, betalning bokförs senare."}
-        </div>
-      </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
-    </Modal>
-  );
 }
