@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { hämtaAllaLönekörningar } from "../_actions/lonekorningActions";
-import { Lönekörning } from "../_types/types";
-
-interface LonekorningListaProps {
-  onValjLonekorning: (lonekorning: Lönekörning) => void;
-  valdLonekorning?: Lönekörning | null;
-  refreshTrigger?: number; // För att trigga refresh från parent
-}
+import { Lönekörning, LonekorningListaProps } from "../_types/types";
 
 export default function LonekorningLista({
   onValjLonekorning,

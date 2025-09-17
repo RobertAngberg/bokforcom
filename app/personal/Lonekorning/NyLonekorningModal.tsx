@@ -10,12 +10,7 @@ import {
   skapaLönespecifikationerFörLönekörning,
 } from "../_actions/lonekorningActions";
 import { hämtaAllaAnställda } from "../_actions/anstalldaActions";
-
-interface NyLonekorningModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onLonekorningCreated: (lonekorning: any) => void; // Skicka med den skapade lönekörningen
-}
+import { NyLonekorningModalProps } from "../_types/types";
 
 export default function NyLonekorningModal({
   isOpen,

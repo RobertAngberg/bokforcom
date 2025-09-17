@@ -4,19 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-
-interface SkatteBokforingModalProps {
-  skatteModalOpen: boolean;
-  setSkatteModalOpen: (open: boolean) => void;
-  valdaSpecar: any[];
-  skatteData: any;
-  utbetalningsdatum: string | null;
-  skatteDatum: Date | null;
-  setSkatteDatum: (date: Date | null) => void;
-  hanteraBokförSkatter: () => void;
-  skatteBokförPågår: boolean;
-  onHämtaBankgiro?: () => void; // Ny prop för bankgiro
-}
+import { SkatteBokforingModalProps } from "../_types/types";
 
 export default function SkatteBokforingModal({
   skatteModalOpen,

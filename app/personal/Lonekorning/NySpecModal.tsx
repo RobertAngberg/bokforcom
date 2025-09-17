@@ -5,15 +5,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../_components/Modal";
 import Toast from "../../_components/Toast";
-
-interface NySpecModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  nySpecDatum: Date | null;
-  setNySpecDatum: (date: Date | null) => void;
-  anstallda: Array<{ id: string; [key: string]: any }>;
-  onSpecCreated: () => void;
-}
+import { NySpecModalProps } from "../_types/types";
 
 export default function NySpecModal({
   isOpen,

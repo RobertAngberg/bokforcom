@@ -1,17 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-interface LonespecManagerProps {
-  valdaSpecar: any[];
-  setValdaSpecar: (value: any[] | ((prev: any[]) => any[])) => void;
-  specarPerDatum: any;
-  setSpecarPerDatum: (value: any | ((prev: any) => any)) => void;
-  datumLista: string[];
-  setDatumLista: (value: string[] | ((prev: string[]) => string[])) => void;
-  utbetalningsdatum: string | null;
-  setUtbetalningsdatum: (value: string | null) => void;
-}
+import { LonespecManagerProps } from "../_types/types";
 
 export default function LonespecManager({
   valdaSpecar,

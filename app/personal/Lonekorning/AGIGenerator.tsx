@@ -3,17 +3,9 @@
 import { useState } from "react";
 import { klassificeraExtrarader } from "../Lonespecar/loneberakningar";
 import { RAD_KONFIGURATIONER } from "../Lonespecar/Extrarader/extraradDefinitioner";
+import { AGIGeneratorProps } from "../_types/types";
 
-interface AGIGeneratorProps {
-  valdaSpecar: any[];
-  anstallda: any[];
-  beräknadeVärden: any;
-  extrarader: any;
-  utbetalningsdatum: string | null;
-  session: any;
-  hämtaFöretagsprofil: (userId: string) => Promise<any>;
-  onAGIComplete?: () => void; // Callback för när AGI är genererad
-}
+// Props-typ flyttad till delade typer
 
 export default function AGIGenerator({
   valdaSpecar,

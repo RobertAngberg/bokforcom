@@ -3,21 +3,7 @@
 import React, { useState } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
 import Knapp from "../../_components/Knapp";
-
-interface LonespecListaProps {
-  valdaSpecar: any[];
-  anstallda: any[];
-  utlaggMap: Record<number, any[]>;
-  lönekörning?: any; // Lägg till lönekörning-objektet
-  onTaBortSpec: (specId: number) => Promise<void>;
-  onHämtaBankgiro: () => void;
-  onMailaSpecar: () => void;
-  onBokför: () => void;
-  onGenereraAGI: () => void;
-  onBokförSkatter: () => void;
-  onRefreshData?: () => Promise<void>; // Ny callback för att refresha data
-  period?: string; // Lägg till period för lönekörning
-}
+import { LonespecListaProps } from "../_types/types";
 
 export default function LonespecLista({
   valdaSpecar,

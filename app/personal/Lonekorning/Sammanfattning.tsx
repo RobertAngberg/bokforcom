@@ -1,8 +1,5 @@
 "use client";
-
-interface SammanfattningProps {
-  anställda: any[];
-}
+import { SammanfattningProps } from "../_types/types";
 
 export default function Sammanfattning({ anställda }: SammanfattningProps) {
   const totalBrutto = anställda.reduce((sum, a) => sum + parseFloat(a.kompensation || 0), 0);

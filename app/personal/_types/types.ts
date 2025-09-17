@@ -350,3 +350,139 @@ export interface AGIDebugModalProps {
   setVisaDebug: (show: boolean) => void;
   agiDebugData: any;
 }
+
+export interface AGIGeneratorProps {
+  valdaSpecar: any[];
+  anstallda: any[];
+  beräknadeVärden: any;
+  extrarader: any;
+  utbetalningsdatum: string | null;
+  session: any;
+  hämtaFöretagsprofil: (userId: string) => Promise<any>;
+  onAGIComplete?: () => void; // Callback för när AGI är genererad
+}
+
+export interface BankgiroExportProps {
+  anställda: any[];
+  utbetalningsdatum: Date | null;
+  lönespecar: Record<string, any>;
+  open?: boolean;
+  onClose?: () => void;
+  onExportComplete?: () => void; // Callback när export är klar
+  showButton?: boolean; // Om knappen ska visas
+  direktNedladdning?: boolean; // Om nedladdning ska ske direkt
+}
+
+export interface BokförProps {
+  anställda: any[];
+  utbetalningsdatum?: Date | null;
+  lönespecar: Record<string, any>;
+}
+
+export interface LöneKnapparProps {
+  lönespec: any;
+  anställd: any;
+  företagsprofil: any;
+  extrarader: any[];
+  beräknadeVärden: any;
+  onForhandsgranskning: (id: string) => void;
+  onTaBortLönespec: () => void;
+  taBortLoading: boolean;
+}
+
+export interface LöneBatchKnapparProps {
+  lönespecar: any[];
+  anställda: any[];
+  företagsprofil: any;
+  extrarader: any[];
+  beräknadeVärden: any;
+  onMaila: () => void;
+  onBankgiroClick: () => void;
+  onBokförClick: () => void;
+}
+
+export interface LönedatumProps {
+  utbetalningsdatum: Date | null;
+  setUtbetalningsdatum: (date: Date | null) => void;
+}
+
+export interface LonekorningListaProps {
+  onValjLonekorning: (lonekorning: Lönekörning) => void;
+  valdLonekorning?: Lönekörning | null;
+  refreshTrigger?: number;
+}
+
+export interface LonespecListaProps {
+  valdaSpecar: any[];
+  anstallda: any[];
+  utlaggMap: Record<number, any[]>;
+  lönekörning?: any;
+  onTaBortSpec: (specId: number) => Promise<void>;
+  onHämtaBankgiro: () => void;
+  onMailaSpecar: () => void;
+  onBokför: () => void;
+  onGenereraAGI: () => void;
+  onBokförSkatter: () => void;
+  onRefreshData?: () => Promise<void>;
+  period?: string;
+}
+
+export interface LonespecManagerProps {
+  valdaSpecar: any[];
+  setValdaSpecar: (value: any[] | ((prev: any[]) => any[])) => void;
+  specarPerDatum: any;
+  setSpecarPerDatum: (value: any | ((prev: any) => any)) => void;
+  datumLista: string[];
+  setDatumLista: (value: string[] | ((prev: string[]) => string[])) => void;
+  utbetalningsdatum: string | null;
+  setUtbetalningsdatum: (value: string | null) => void;
+}
+
+export interface NyLonekorningModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onLonekorningCreated: (lonekorning: any) => void;
+}
+
+export interface NySpecModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  nySpecDatum: Date | null;
+  setNySpecDatum: (date: Date | null) => void;
+  anstallda: Array<{ id: string; [key: string]: any }>;
+  onSpecCreated: () => void;
+}
+
+export interface SammanfattningProps {
+  anställda: any[];
+}
+
+export interface UtbetalningsdatumValjareProps {
+  datumLista: string[];
+  utbetalningsdatum: string | null;
+  setUtbetalningsdatum: (datum: string) => void;
+  specarPerDatum: Record<string, any[]>;
+}
+
+export interface SkatteBokforingModalProps {
+  skatteModalOpen: boolean;
+  setSkatteModalOpen: (open: boolean) => void;
+  valdaSpecar: any[];
+  skatteData: any;
+  utbetalningsdatum: string | null;
+  skatteDatum: Date | null;
+  setSkatteDatum: (date: Date | null) => void;
+  hanteraBokförSkatter: () => void;
+  skatteBokförPågår: boolean;
+  onHämtaBankgiro?: () => void;
+}
+
+export interface SkatteManagerProps {
+  valdaSpecar: any[];
+  beräknadeVärden: any;
+  skatteDatum: Date | null;
+  setSkatteBokförPågår: (loading: boolean) => void;
+  setSkatteModalOpen: (open: boolean) => void;
+  bokförLöneskatter: (data: any) => Promise<any>;
+  onSkatteComplete?: () => void;
+}

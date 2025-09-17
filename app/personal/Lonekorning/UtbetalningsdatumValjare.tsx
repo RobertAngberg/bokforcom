@@ -1,11 +1,5 @@
 "use client";
-
-interface UtbetalningsdatumValjareProps {
-  datumLista: string[];
-  utbetalningsdatum: string | null;
-  setUtbetalningsdatum: (datum: string) => void;
-  specarPerDatum: Record<string, any[]>;
-}
+import { UtbetalningsdatumValjareProps } from "../_types/types";
 
 export default function UtbetalningsdatumValjare({
   datumLista,

@@ -1,16 +1,6 @@
 import Knapp from "../../_components/Knapp";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
-
-interface LöneKnapparProps {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden: any;
-  onForhandsgranskning: (id: string) => void;
-  onTaBortLönespec: () => void;
-  taBortLoading: boolean;
-}
+import { LöneKnapparProps, LöneBatchKnapparProps } from "../_types/types";
 
 export default function LöneKnappar({
   lönespec,
@@ -45,16 +35,7 @@ export function LöneBatchKnappar({
   onMaila,
   onBankgiroClick,
   onBokförClick,
-}: {
-  lönespecar: any[];
-  anställda: any[];
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden: any;
-  onMaila: () => void;
-  onBankgiroClick: () => void;
-  onBokförClick: () => void;
-}) {
+}: LöneBatchKnapparProps) {
   return (
     <div className="flex flex-wrap justify-center gap-4 pt-4 border-t border-gray-700">
       <Knapp text="✉️ Maila lönespecar" onClick={onMaila} />

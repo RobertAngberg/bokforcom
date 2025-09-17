@@ -2,17 +2,7 @@
 
 import { useState } from "react";
 import Knapp from "../../_components/Knapp";
-
-interface BankgiroExportProps {
-  anställda: any[];
-  utbetalningsdatum: Date | null;
-  lönespecar: Record<string, any>;
-  open?: boolean;
-  onClose?: () => void;
-  onExportComplete?: () => void; // Ny callback för när export är klar
-  showButton?: boolean; // Ny prop för att styra om knappen ska visas
-  direktNedladdning?: boolean; // Ny prop för direkt nedladdning
-}
+import { BankgiroExportProps } from "../_types/types";
 
 export default function BankgiroExport({
   anställda,

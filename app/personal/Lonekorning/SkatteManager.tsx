@@ -2,16 +2,7 @@
 
 import { useState } from "react";
 import Toast from "../../_components/Toast";
-
-interface SkatteManagerProps {
-  valdaSpecar: any[];
-  beräknadeVärden: any;
-  skatteDatum: Date | null;
-  setSkatteBokförPågår: (loading: boolean) => void;
-  setSkatteModalOpen: (open: boolean) => void;
-  bokförLöneskatter: (data: any) => Promise<any>;
-  onSkatteComplete?: () => void; // Ny callback för när skatter är bokförda
-}
+import { SkatteManagerProps } from "../_types/types";
 
 export default function SkatteManager({
   valdaSpecar,
