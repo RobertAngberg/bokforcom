@@ -1,18 +1,10 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Lonespecar from "../Lonespecar/Lonespecar";
-import {
-  skapaNyLönespec,
-  taBortLönespec,
-  hämtaLönespecifikationer,
-} from "../_actions/lonespecarActions";
-import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import MailaLonespec from "../Lonespecar/MailaLonespec";
+import { useLonekorning } from "../_hooks/useLonekorning";
 
 export default function AnställdaLista({
   anställda,
@@ -25,168 +17,8 @@ export default function AnställdaLista({
   utbetalningsdatum: Date | null;
   onLonespecarChange?: (specar: Record<string, any>) => void;
 }) {
-  const { setLonespecar } = useLonespecContext();
-  const [sparar, setSparar] = useState<Record<string, boolean>>({});
-  const [taBort, setTaBort] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
-  const [befintligaLönespecar, setBefintligaLönespecar] = useState<Record<string, any>>({});
-  const [nyaLönespecar, setNyaLönespecar] = useState<Record<string, any>>({});
-  const [laddaLönespecar, setLaddaLönespecar] = useState(false);
-  const [förhandsgranskaId, setFörhandsgranskaId] = useState<string | null>(null);
-  const [förhandsgranskaData, setFörhandsgranskaData] = useState<any | null>(null);
-  const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
-  const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
-
-  // Beräkna månad/år från utbetalningsdatum
-  const getLöneperiod = useCallback(() => {
-    if (!utbetalningsdatum) return null;
-
-    const utbetalning = new Date(utbetalningsdatum);
-    const månad = utbetalning.getMonth() + 1; // 1-12
-    const år = utbetalning.getFullYear();
-
-    // Använd samma månad som valt datum
-    return { månad: månad, år: år };
-  }, [utbetalningsdatum]);
-
-  // Ladda befintliga lönespecar för vald period
-  useEffect(() => {
-    const laddaBefintligaLönespecar = async () => {
-      if (!utbetalningsdatum || anställda.length === 0) return;
-
-      const löneperiod = getLöneperiod();
-      if (!löneperiod) return;
-
-      try {
-        setLaddaLönespecar(true);
-        const befintliga: Record<string, any> = {};
-
-        for (const anställd of anställda) {
-          const lönespecar = await hämtaLönespecifikationer(anställd.id);
-          const befintligLönespec = lönespecar.find(
-            (spec: any) => spec.månad === löneperiod.månad && spec.år === löneperiod.år
-          );
-
-          if (befintligLönespec) {
-            befintliga[anställd.id] = befintligLönespec;
-          }
-        }
-
-        setBefintligaLönespecar(befintliga);
-        setLonespecar(Object.values(befintliga));
-        onLonespecarChange?.(befintliga);
-      } catch (error) {
-        console.error("❌ Fel vid laddning av lönespecar:", error);
-      } finally {
-        setLaddaLönespecar(false);
-      }
-    };
-
-    laddaBefintligaLönespecar();
-  }, [anställda, utbetalningsdatum, getLöneperiod, setLonespecar, onLonespecarChange]);
-
-  const handleSkapaNyLönespec = async (anställd: any) => {
-    if (!utbetalningsdatum) return;
-
-    const löneperiod = getLöneperiod();
-    if (!löneperiod) return;
-
-    try {
-      setSparar((prev) => ({ ...prev, [anställd.id]: true }));
-
-      const periodStart = new Date(löneperiod.år, löneperiod.månad - 1, 1);
-      const periodSlut = new Date(löneperiod.år, löneperiod.månad, 0);
-
-      const nyLönespec = await skapaNyLönespec({
-        anställd_id: anställd.id,
-        utbetalningsdatum: periodSlut.toISOString().split("T")[0], // Använd period_slut som utbetalningsdatum
-      });
-
-      setNyaLönespecar((prev) => ({
-        ...prev,
-        [anställd.id]: nyLönespec,
-      }));
-
-      // 🏖️ Visa semesterinformation om det lades till
-      if (nyLönespec.semesterInfo?.success && nyLönespec.semesterInfo?.dagar > 0) {
-        setToast({
-          type: "success",
-          message: `Lönespec skapad!\n🏖️ Semester: ${nyLönespec.semesterInfo.message}`,
-        });
-      } else {
-        setToast({ type: "success", message: "Lönespec skapad!" });
-      }
-    } catch (error) {
-      console.error("Fel vid skapande av lönespec:", error);
-      setToast({ type: "error", message: "Kunde inte skapa lönespec" });
-    } finally {
-      setSparar((prev) => ({ ...prev, [anställd.id]: false }));
-    }
-  };
-
-  const handleTaBortLönespec = async (anställd: any) => {
-    const lönespec = nyaLönespecar[anställd.id] || befintligaLönespecar[anställd.id];
-    if (!lönespec) return;
-
-    if (!confirm("Är du säker på att du vill ta bort denna lönespec?")) {
-      return;
-    }
-
-    try {
-      setTaBort((prev) => ({ ...prev, [anställd.id]: true }));
-
-      await taBortLönespec(lönespec.id);
-
-      setNyaLönespecar((prev) => {
-        const nya = { ...prev };
-        delete nya[anställd.id];
-        return nya;
-      });
-
-      setBefintligaLönespecar((prev) => {
-        const nya = { ...prev };
-        delete nya[anställd.id];
-        return nya;
-      });
-    } catch (error) {
-      console.error("Fel vid borttagning av lönespec:", error);
-      setToast({ type: "error", message: "Kunde inte ta bort lönespec" });
-    } finally {
-      setTaBort((prev) => ({ ...prev, [anställd.id]: false }));
-    }
-  };
-
-  const harLönespec = (anställdId: string) => {
-    return !!befintligaLönespecar[anställdId] || !!nyaLönespecar[anställdId];
-  };
-
-  const getLönespec = (anställdId: string) => {
-    return nyaLönespecar[anställdId] || befintligaLönespecar[anställdId];
-  };
-
-  const löneperiod = getLöneperiod();
-
-  // Helper to build batch data for modal
-  const batchLönespecList = Object.values({ ...befintligaLönespecar, ...nyaLönespecar })
-    .map((lönespec: any) => {
-      const anst = anställda.find(
-        (a) =>
-          a.id === lönespec.anställd_id ||
-          a.id === lönespec.anstalld_id ||
-          a.id === lönespec.anställd?.id
-      );
-      return {
-        lönespec,
-        anställd: anst,
-        företagsprofil: {},
-        extrarader: [],
-        beräknadeVärden: {},
-      };
-    })
-    .filter((item) => item.lönespec && item.anställd);
+  // Hook-API för logik och UI-state (hooken initierar internt)
+  const lonekorning = useLonekorning({ anställda, utbetalningsdatum, onLonespecarChange });
 
   return (
     <>
@@ -197,7 +29,7 @@ export default function AnställdaLista({
         </h5>
         {/* Batch action buttons removed from header area to avoid duplication */}
       </div>
-      {loading || laddaLönespecar ? (
+      {loading || lonekorning.laddaLönespecar ? (
         <div className="text-gray-300 text-center py-4">Laddar anställda och lönespecar...</div>
       ) : anställda.length === 0 ? (
         <div className="text-gray-300 text-center py-4">Inga anställda hittades</div>
@@ -211,33 +43,24 @@ export default function AnställdaLista({
                 visaSummaDirekt={`${parseFloat(anställd.kompensation || 0).toLocaleString("sv-SE")} kr`}
               >
                 <div className="space-y-4">
-                  {harLönespec(anställd.id) ? (
+                  {lonekorning.harLönespec(anställd.id) ? (
                     <>
                       <Lonespecar
                         anställd={anställd}
-                        specificLönespec={getLönespec(anställd.id)}
+                        specificLönespec={lonekorning.getLönespec(anställd.id)}
                         ingenAnimering={true}
                         visaExtraRader={true}
                       />
                       <div className="flex gap-2 mt-2 justify-between items-center">
                         <Knapp
                           text="👁️ Förhandsgranska/PDF"
-                          onClick={() => {
-                            setFörhandsgranskaId(anställd.id);
-                            setFörhandsgranskaData({
-                              lönespec: getLönespec(anställd.id),
-                              anställd,
-                              företagsprofil: {},
-                              extrarader: [],
-                              beräknadeVärden: {},
-                            });
-                          }}
+                          onClick={() => lonekorning.openFörhandsgranskning(anställd)}
                         />
                         <div className="flex-1" />
                         <Knapp
                           text="🗑️ Ta bort lönespec"
-                          loading={taBort[anställd.id]}
-                          onClick={() => handleTaBortLönespec(anställd)}
+                          loading={lonekorning.taBort[anställd.id]}
+                          onClick={() => lonekorning.taBortLönespec(anställd)}
                         />
                       </div>
                     </>
@@ -246,14 +69,16 @@ export default function AnställdaLista({
                       <div className="flex justify-end">
                         <Knapp
                           text="✚ Skapa ny lönespec"
-                          loading={sparar[anställd.id]}
+                          loading={lonekorning.sparar[anställd.id]}
                           loadingText="⏳ Skapar..."
-                          onClick={() => handleSkapaNyLönespec(anställd)}
+                          onClick={() => lonekorning.skapaNyLönespec(anställd)}
                         />
                       </div>
                       <div className="text-gray-400 text-center py-4">
                         Ingen lönespec för{" "}
-                        {löneperiod ? `${löneperiod.månad}/${löneperiod.år}` : ""}
+                        {lonekorning.löneperiod
+                          ? `${lonekorning.löneperiod.månad}/${lonekorning.löneperiod.år}`
+                          : ""}
                       </div>
                     </div>
                   )}
@@ -264,34 +89,34 @@ export default function AnställdaLista({
         </div>
       )}
       {/* Förhandsgranskning-modal */}
-      {förhandsgranskaId && förhandsgranskaData && (
+      {lonekorning.förhandsgranskaId && lonekorning.förhandsgranskaData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
             <button
               className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-              onClick={() => setFörhandsgranskaId(null)}
+              onClick={() => lonekorning.closeFörhandsgranskning()}
               aria-label="Stäng"
             >
               ×
             </button>
             <Forhandsgranskning
-              lönespec={förhandsgranskaData.lönespec}
-              anställd={förhandsgranskaData.anställd}
-              företagsprofil={förhandsgranskaData.företagsprofil}
-              extrarader={förhandsgranskaData.extrarader}
-              beräknadeVärden={förhandsgranskaData.beräknadeVärden}
-              onStäng={() => setFörhandsgranskaId(null)}
+              lönespec={lonekorning.förhandsgranskaData.lönespec}
+              anställd={lonekorning.förhandsgranskaData.anställd}
+              företagsprofil={lonekorning.förhandsgranskaData.företagsprofil}
+              extrarader={lonekorning.förhandsgranskaData.extrarader}
+              beräknadeVärden={lonekorning.förhandsgranskaData.beräknadeVärden}
+              onStäng={() => lonekorning.closeFörhandsgranskning()}
             />
           </div>
         </div>
       )}
       {/* Batch-knappar under listan borttagna! */}
-      {toast && (
+      {lonekorning.toast && (
         <Toast
-          type={toast.type}
-          message={toast.message}
+          type={lonekorning.toast.type}
+          message={lonekorning.toast.message}
           isVisible={true}
-          onClose={() => setToast(null)}
+          onClose={lonekorning.clearToast}
         />
       )}
     </>
