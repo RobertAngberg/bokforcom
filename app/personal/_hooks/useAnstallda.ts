@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePersonalStore } from "../_stores/personalStore";
 import {
   hämtaAllaAnställda,
@@ -40,6 +40,118 @@ export function useAnstallda() {
     utläggLoading,
     showToast,
   } = usePersonalStore();
+
+  // ===========================================
+  // PERSONALINFORMATION - Lokal edit-state i hook
+  // ===========================================
+
+  type PersonalEditData = {
+    förnamn: string;
+    efternamn: string;
+    personnummer: string;
+    jobbtitel: string;
+    clearingnummer: string;
+    bankkonto: string;
+    mail: string;
+    adress: string;
+    postnummer: string;
+    ort: string;
+  };
+
+  const buildPersonalEditData = (a: Partial<AnställdData> | any): PersonalEditData => ({
+    förnamn: a?.förnamn || "",
+    efternamn: a?.efternamn || "",
+    personnummer: a?.personnummer?.toString?.() || "",
+    jobbtitel: a?.jobbtitel || "",
+    clearingnummer: a?.clearingnummer?.toString?.() || "",
+    bankkonto: a?.bankkonto?.toString?.() || "",
+    mail: a?.mail || "",
+    adress: a?.adress || "",
+    postnummer: a?.postnummer?.toString?.() || "",
+    ort: a?.ort || "",
+  });
+
+  const [personalIsEditing, setPersonalIsEditing] = useState(false);
+  const [personalEditData, setPersonalEditData] = useState<PersonalEditData>(
+    buildPersonalEditData({})
+  );
+  const [personalOriginalData, setPersonalOriginalData] = useState<PersonalEditData>(
+    buildPersonalEditData({})
+  );
+  const [personalHasChanges, setPersonalHasChanges] = useState(false);
+  const [personalErrorMessage, setPersonalErrorMessage] = useState<string | null>(null);
+
+  // Initiera personalEditData från valdAnställd när inte i edit-läge
+  useEffect(() => {
+    if (!valdAnställd || personalIsEditing) return;
+    const data = buildPersonalEditData(valdAnställd);
+    setPersonalEditData(data);
+    setPersonalOriginalData(data);
+    setPersonalHasChanges(false);
+    setPersonalErrorMessage(null);
+  }, [valdAnställd, personalIsEditing]);
+
+  const personalOnEdit = useCallback(() => {
+    if (!valdAnställd) return;
+    setPersonalIsEditing(true);
+    const data = buildPersonalEditData(valdAnställd);
+    setPersonalEditData(data);
+    setPersonalOriginalData(data);
+    setPersonalHasChanges(false);
+    setPersonalErrorMessage(null);
+  }, [valdAnställd]);
+
+  const personalOnChange = useCallback(
+    (name: keyof PersonalEditData | string, value: any) => {
+      const next = { ...personalEditData, [name]: value } as PersonalEditData;
+      setPersonalEditData(next);
+      setPersonalHasChanges(JSON.stringify(next) !== JSON.stringify(personalOriginalData));
+      if (personalErrorMessage) setPersonalErrorMessage(null);
+    },
+    [personalEditData, personalOriginalData, personalErrorMessage]
+  );
+
+  const personalOnSave = useCallback(async () => {
+    if (!valdAnställd || !personalHasChanges) return;
+    try {
+      const payload: AnställdData = {
+        ...valdAnställd,
+        förnamn: personalEditData.förnamn,
+        efternamn: personalEditData.efternamn,
+        personnummer: personalEditData.personnummer,
+        jobbtitel: personalEditData.jobbtitel,
+        mail: personalEditData.mail,
+        clearingnummer: personalEditData.clearingnummer,
+        bankkonto: personalEditData.bankkonto,
+        adress: personalEditData.adress,
+        postnummer: personalEditData.postnummer,
+        ort: personalEditData.ort,
+      } as AnställdData;
+
+      const result = await sparaAnställd(payload, (valdAnställd as any).id);
+      if (result?.success) {
+        setValdAnställd(payload);
+        setPersonalOriginalData(personalEditData);
+        setPersonalHasChanges(false);
+        setPersonalIsEditing(false);
+        setPersonalErrorMessage(null);
+        showToast("Personalinformation sparad", "success");
+      } else {
+        setPersonalErrorMessage(result?.error || "Kunde inte spara");
+        showToast(result?.error || "Kunde inte spara", "error");
+      }
+    } catch (e) {
+      setPersonalErrorMessage("Ett fel uppstod vid sparande");
+      showToast("Ett fel uppstod vid sparande", "error");
+    }
+  }, [valdAnställd, personalHasChanges, personalEditData, setValdAnställd, showToast]);
+
+  const personalOnCancel = useCallback(() => {
+    setPersonalEditData(personalOriginalData);
+    setPersonalIsEditing(false);
+    setPersonalHasChanges(false);
+    setPersonalErrorMessage(null);
+  }, [personalOriginalData]);
 
   // ===========================================
   // ANSTÄLLDA LISTA - För Anstallda.tsx & AnstalldaLista.tsx
@@ -349,6 +461,13 @@ export function useAnstallda() {
       anställdaError,
       visaNyAnställdFormulär,
       harAnställda: anställda.length > 0,
+
+      // Personalinformation edit state
+      personalIsEditing,
+      personalEditData,
+      personalOriginalData,
+      personalHasChanges,
+      personalErrorMessage,
     },
 
     // Actions
@@ -374,6 +493,12 @@ export function useAnstallda() {
       // För AnställdaRad komponenter
       hanteraTaBortMedKonfirmation,
       hanteraRadKlick,
+
+      // Personalinformation handlers
+      personalOnEdit,
+      personalOnChange,
+      personalOnSave,
+      personalOnCancel,
     },
 
     // Specialized hooks

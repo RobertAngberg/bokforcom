@@ -2,33 +2,17 @@
 "use client";
 
 import Dropdown from "../../_components/Dropdown";
+import { AnställningstypProps } from "../_types/types";
+import { useKontrakt } from "../_hooks/useKontrakt";
 
-interface AnställningstypProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
 // #endregion
 
-export default function Anställningstyp({
-  editData,
-  handleChange,
-  anställd,
-  viewMode,
-}: AnställningstypProps) {
-  // #region Dropdown Options
-  const dropdownOptions = {
-    anställningstyp: [
-      { value: "", label: "Välj anställningstyp" },
-      { value: "Tillsvidare", label: "Tillsvidare" },
-      { value: "Visstid", label: "Visstid" },
-      { value: "Provanställning", label: "Provanställning" },
-      { value: "Säsongsanställning", label: "Säsongsanställning" },
-      { value: "Månadslön", label: "Månadslön" },
-    ],
-  };
-  // #endregion
+export default function Anställningstyp({ viewMode }: AnställningstypProps) {
+  const { state, handlers } = useKontrakt();
+  // Får inte bort nedan....
+  if (!state.valdAnställd) {
+    return null;
+  }
 
   if (viewMode) {
     return (
@@ -37,7 +21,7 @@ export default function Anställningstyp({
         <div className="space-y-3">
           <div>
             <span className="text-gray-400">Anställningstyp:</span>
-            <div className="text-white">{anställd.anställningstyp || "Ej angiven"}</div>
+            <div className="text-white">{state.valdAnställd.anställningstyp || "Ej angiven"}</div>
           </div>
         </div>
       </div>
@@ -50,9 +34,9 @@ export default function Anställningstyp({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Dropdown
           label="Anställningstyp"
-          value={editData.anställningstyp || ""}
-          onChange={(value) => handleChange?.("anställningstyp", value)}
-          options={dropdownOptions.anställningstyp}
+          value={state.valdAnställd.anställningstyp || ""}
+          onChange={(value) => console.log("TODO: Add handler")}
+          options={state.anställningstypOptions}
         />
       </div>
     </div>

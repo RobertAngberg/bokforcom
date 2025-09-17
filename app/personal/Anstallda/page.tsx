@@ -3,7 +3,7 @@ import Anställda from "./Anstallda";
 import MainLayout from "../../_components/MainLayout";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import UtlaggFlik from "./UtlaggFlik";
-import Personalinformation from "./NyAnstalld/Personalinformation";
+import Personalinformation from "./Personalinformation";
 import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Semester from "../Semester/Semester";

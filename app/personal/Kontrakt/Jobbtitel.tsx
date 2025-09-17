@@ -2,13 +2,8 @@
 "use client";
 
 import TextFalt from "../../_components/TextFalt";
+import { JobbtitelProps } from "../_types/types";
 
-interface JobbtitelProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
 // #endregion
 
 export default function Jobbtitel({ editData, handleChange, anställd, viewMode }: JobbtitelProps) {

@@ -248,3 +248,66 @@ export interface PersonalinformationProps {
   anställd?: any;
   onRedigera?: () => void;
 }
+
+export interface AnställningstypProps {
+  viewMode?: boolean;
+}
+
+export interface ArbetsbelastningProps {
+  viewMode?: boolean;
+}
+
+export interface JobbtitelProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
+  viewMode?: boolean;
+}
+
+export interface KontraktProps {
+  anställd?: any;
+  onRedigera?: () => void;
+}
+
+export interface EditData {
+  anställningstyp: string;
+  startdatum: Date;
+  slutdatum: Date;
+  månadslön: string;
+  betalningssätt: string;
+  kompensation: string;
+  ersättningPer: string;
+  arbetsbelastning: string;
+  arbetsveckaTimmar: string;
+  deltidProcent: string;
+  skattetabell: string;
+  skattekolumn: string;
+  jobbtitel: string;
+  semesterdagarPerÅr: string;
+  tjänsteställeAdress: string;
+  tjänsteställeOrt: string;
+}
+
+export interface KontraktProps {
+  anställd?: any;
+  onRedigera?: () => void;
+}
+
+export interface EditData {
+  anställningstyp: string;
+  startdatum: Date;
+  slutdatum: Date;
+  månadslön: string;
+  betalningssätt: string;
+  kompensation: string;
+  ersättningPer: string;
+  arbetsbelastning: string;
+  arbetsveckaTimmar: string;
+  deltidProcent: string;
+  skattetabell: string;
+  skattekolumn: string;
+  jobbtitel: string;
+  semesterdagarPerÅr: string;
+  tjänsteställeAdress: string;
+  tjänsteställeOrt: string;
+}

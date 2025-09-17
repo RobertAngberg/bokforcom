@@ -3,30 +3,18 @@
 
 import TextFalt from "../../_components/TextFalt";
 import Dropdown from "../../_components/Dropdown";
+import { ArbetsbelastningProps } from "../_types/types";
+import { useKontrakt } from "../_hooks/useKontrakt";
 
-interface ArbetsbelastningProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
 // #endregion
 
-export default function Arbetsbelastning({
-  editData,
-  handleChange,
-  anställd,
-  viewMode,
-}: ArbetsbelastningProps) {
-  // #region Dropdown Options
-  const dropdownOptions = {
-    arbetsbelastning: [
-      { value: "", label: "Välj arbetsbelastning" },
-      { value: "Heltidsanställd", label: "Heltidsanställd" },
-      { value: "Deltidsanställd", label: "Deltidsanställd" },
-    ],
-  };
-  // #endregion
+export default function Arbetsbelastning({ viewMode }: ArbetsbelastningProps) {
+  const { state } = useKontrakt();
+
+  // Får inte bort nedan...
+  if (!state.valdAnställd) {
+    return null;
+  }
 
   if (viewMode) {
     return (
@@ -36,11 +24,12 @@ export default function Arbetsbelastning({
           {[
             [
               "Arbetsbelastning",
-              anställd.arbetsbelastning === "Deltidsanställd" && anställd.deltid_procent
-                ? `${anställd.arbetsbelastning} (${anställd.deltid_procent}%)`
-                : anställd.arbetsbelastning,
+              state.valdAnställd.arbetsbelastning === "Deltidsanställd" &&
+              state.valdAnställd.deltidProcent
+                ? `${state.valdAnställd.arbetsbelastning} (${state.valdAnställd.deltidProcent}%)`
+                : state.valdAnställd.arbetsbelastning,
             ],
-            ["Arbetsvecka", `${anställd.arbetsvecka_timmar || "Ej angiven"} timmar`],
+            ["Arbetsvecka", `${state.valdAnställd.arbetsvecka || "Ej angiven"} timmar`],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>
@@ -58,24 +47,24 @@ export default function Arbetsbelastning({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Dropdown
           label="Arbetsbelastning"
-          value={editData.arbetsbelastning || ""}
-          onChange={(value) => handleChange?.("arbetsbelastning", value)}
-          options={dropdownOptions.arbetsbelastning}
+          value={state.valdAnställd.arbetsbelastning || ""}
+          onChange={(value) => console.log("TODO: Add handler")}
+          options={state.arbetsbelastningOptions}
         />
         <TextFalt
           label="Arbetsvecka (timmar)"
           name="arbetsveckaTimmar"
           type="number"
-          value={editData.arbetsveckaTimmar || ""}
-          onChange={(e) => handleChange?.("arbetsveckaTimmar", e.target.value)}
+          value={state.valdAnställd.arbetsvecka || ""}
+          onChange={(e) => console.log("TODO: Add handler")}
         />
-        {editData.arbetsbelastning === "Deltidsanställd" && (
+        {state.valdAnställd.arbetsbelastning === "Deltidsanställd" && (
           <TextFalt
             label="Deltid (%)"
             name="deltidProcent"
             type="number"
-            value={editData.deltidProcent || ""}
-            onChange={(e) => handleChange?.("deltidProcent", e.target.value)}
+            value={state.valdAnställd.deltidProcent || ""}
+            onChange={(e) => console.log("TODO: Add handler")}
           />
         )}
       </div>
