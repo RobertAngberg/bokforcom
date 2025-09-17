@@ -1,368 +1,51 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Tabell from "../_components/Tabell";
 import { ColumnDefinition } from "../_components/TabellRad";
 import MainLayout from "../_components/MainLayout";
-import {
-  fetchTransaktioner,
-  fetchTransactionDetails,
-  exporteraTransaktionerMedPoster,
-  findUnbalancedVerifications,
-  deleteTransaction,
-} from "./actions";
+import { HistoryItem, TransactionDetail } from "./types";
+import { useHistorik } from "./useHistorik";
 import Dropdown from "../_components/Dropdown";
 import Knapp from "../_components/Knapp";
 import Modal from "../_components/Modal";
 import Toast from "../_components/Toast";
 
-// Business Logic - Migrated from actions.ts
-function sanitizeHistorikInput(text: string): string {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-    .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 100); // Begränsa längd
-}
-
-function validateYearInput(year: string): boolean {
-  if (!year || typeof year !== "string") return false;
-  const yearNum = parseInt(year);
-  return !isNaN(yearNum) && yearNum >= 2020 && yearNum <= 2030;
-}
-
-function filterTransactionsBySearch(items: HistoryItem[], searchTerm: string): HistoryItem[] {
-  if (!searchTerm) return items;
-
-  const sanitizedSearch = sanitizeHistorikInput(searchTerm).toLowerCase();
-  if (!sanitizedSearch) return items;
-
-  return items.filter((item) => {
-    const matchesVerifikat = sanitizeHistorikInput(item.kontobeskrivning)
-      .toLowerCase()
-      .includes(sanitizedSearch);
-    const matchesComment = sanitizeHistorikInput(item.kommentar || "")
-      .toLowerCase()
-      .includes(sanitizedSearch);
-    const matchesId = item.transaktions_id.toString().includes(sanitizedSearch);
-
-    return matchesVerifikat || matchesComment || matchesId;
-  });
-}
-
-function calculatePeriodTotals(items: HistoryItem[]): {
-  totalDebet: number;
-  totalKredit: number;
-  count: number;
-} {
-  return items.reduce(
-    (acc, item) => ({
-      totalDebet: acc.totalDebet + (item.belopp > 0 ? item.belopp : 0),
-      totalKredit: acc.totalKredit + (item.belopp < 0 ? Math.abs(item.belopp) : 0),
-      count: acc.count + 1,
-    }),
-    { totalDebet: 0, totalKredit: 0, count: 0 }
-  );
-}
-
-function isValidDateRange(year: string, month: string): boolean {
-  if (!validateYearInput(year)) return false;
-  if (month && (!/^\d{2}$/.test(month) || parseInt(month) < 1 || parseInt(month) > 12)) {
-    return false;
-  }
-  return true;
-}
-
-export interface HistoryItem {
-  transaktions_id: number;
-  transaktionsdatum: string;
-  kontobeskrivning: string;
-  belopp: number;
-  kommentar?: string;
-  fil?: string;
-  blob_url?: string;
-}
-
-export interface TransactionDetail {
-  transaktionspost_id: number;
-  kontonummer: string;
-  beskrivning: string;
-  debet: number;
-  kredit: number;
-}
-
 export default function Page() {
-  const [year, setYear] = useState("2025");
-  const [month, setMonth] = useState(""); // Tom sträng = alla månader
-  const [searchTerm, setSearchTerm] = useState(""); // Nytt sökfält
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
-  const [activeIds, setActiveIds] = useState<number[]>([]);
-  const [showOnlyUnbalanced, setShowOnlyUnbalanced] = useState(false);
-  const [showUnbalancedModal, setShowUnbalancedModal] = useState(false);
-  const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
-  const [unbalancedResults, setUnbalancedResults] = useState<
-    Array<{
-      item: HistoryItem;
-      totalDebet: number;
-      totalKredit: number;
-      skillnad: number;
-    }>
-  >([]);
-  const [deletingIds, setDeletingIds] = useState<number[]>([]);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
+  const {
+    // State
+    year,
+    month,
+    searchTerm,
+    validationError,
+    loading,
+    activeIds,
+    showOnlyUnbalanced,
+    showUnbalancedModal,
+    isCheckingUnbalanced,
+    unbalancedResults,
+    deletingIds,
+    toast,
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const result = await fetchTransaktioner();
+    // Computed values
+    filteredData,
+    periodTotals,
+    detailsMap,
+    columns,
 
-        const formattedData =
-          result.success && Array.isArray(result.data)
-            ? result.data.map((item: any) => ({
-                transaktions_id: item.id,
-                transaktionsdatum: new Date(item.transaktionsdatum).toISOString().slice(0, 10),
-                kontobeskrivning: item.kontobeskrivning || "",
-                belopp: item.belopp ?? 0,
-                kommentar: item.kommentar ?? "",
-                fil: item.fil ?? "",
-                blob_url: item.blob_url ?? "",
-              }))
-            : [];
+    // Handlers
+    handleYearChange,
+    handleMonthChange,
+    handleSearchChange,
+    handleRowClick,
+    handleUnbalancedCheck,
+    handleExport,
+    handleDelete,
 
-        const sortedData = [...formattedData].sort((a, b) => {
-          // Sortera efter datum DESC, sedan ID DESC
-          const dateCompare =
-            new Date(b.transaktionsdatum).getTime() - new Date(a.transaktionsdatum).getTime();
-          if (dateCompare !== 0) return dateCompare;
-          return b.transaktions_id - a.transaktions_id;
-        });
-
-        setHistoryData(sortedData);
-      } catch (error) {
-        // Fel vid laddning av data
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Validera inputs och visa fel i realtid
-  const validateInputs = (yearValue: string, monthValue: string): string | null => {
-    if (!isValidDateRange(yearValue, monthValue)) {
-      if (!validateYearInput(yearValue)) {
-        return "Ogiltigt år (måste vara mellan 2020-2030)";
-      }
-      if (
-        monthValue &&
-        (!/^\d{2}$/.test(monthValue) || parseInt(monthValue) < 1 || parseInt(monthValue) > 12)
-      ) {
-        return "Ogiltig månad (måste vara 01-12)";
-      }
-    }
-    return null;
-  };
-
-  // Förbättrad filtrering med migerade funktioner
-  const getFilteredData = (): HistoryItem[] => {
-    // Först filtrera på datum
-    let dateFiltered = historyData.filter((item) => {
-      const itemYear = item.transaktionsdatum.slice(0, 4);
-      const itemMonth = item.transaktionsdatum.slice(5, 7);
-
-      if (itemYear !== year) return false;
-      if (month && itemMonth !== month) return false;
-      return true;
-    });
-
-    // Sedan filtrera på sökning med sanitering
-    let searchFiltered = filterTransactionsBySearch(dateFiltered, searchTerm);
-
-    // Om vi bara ska visa obalanserade, filtrera på det
-    if (showOnlyUnbalanced) {
-      searchFiltered = searchFiltered.filter((item) => {
-        const details = detailsMap[item.transaktions_id];
-        if (!details) return false;
-
-        const totalDebet = details.reduce((sum, d) => sum + (d.debet || 0), 0);
-        const totalKredit = details.reduce((sum, d) => sum + (d.kredit || 0), 0);
-        const skillnad = Math.abs(totalDebet - totalKredit);
-
-        return skillnad > 0.01;
-      });
-    }
-
-    return searchFiltered;
-  };
-
-  const filteredData = getFilteredData();
-  const periodTotals = calculatePeriodTotals(filteredData);
-
-  // Event handlers med validering
-  const handleYearChange = (newYear: string) => {
-    const error = validateInputs(newYear, month);
-    setValidationError(error);
-    if (!error) {
-      setYear(newYear);
-    }
-  };
-
-  const handleMonthChange = (newMonth: string) => {
-    const error = validateInputs(year, newMonth);
-    setValidationError(error);
-    if (!error) {
-      setMonth(newMonth);
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const sanitizedSearch = sanitizeHistorikInput(e.target.value);
-    setSearchTerm(sanitizedSearch);
-  };
-
-  const handleRowClick = (id: string | number) => {
-    const numericId = typeof id === "string" ? parseInt(id) : id;
-
-    void (async () => {
-      if (activeIds.includes(numericId)) {
-        // Stäng denna rad (ta bort från array)
-        setActiveIds((prev) => prev.filter((id) => id !== numericId));
-      } else {
-        // Öppna denna rad (lägg till i array)
-        setActiveIds((prev) => [...prev, numericId]);
-        if (!detailsMap[numericId]) {
-          const detailResult = await fetchTransactionDetails(numericId);
-          setDetailsMap((prev) => ({ ...prev, [numericId]: detailResult }));
-        }
-      }
-    })();
-  };
-
-  const handleUnbalancedCheck = async () => {
-    if (showOnlyUnbalanced) {
-      setShowOnlyUnbalanced(false);
-      return;
-    }
-
-    setIsCheckingUnbalanced(true);
-
-    try {
-      // 🚀 EN ENDA DATABASFÖRFRÅGAN istället för hundratals!
-      const result = await findUnbalancedVerifications();
-
-      if (!result.success) {
-        setToast({
-          message: "Fel vid kontroll: " + result.error,
-          type: "error",
-          isVisible: true,
-        });
-        return;
-      }
-
-      if (!result.unbalanced || result.unbalanced.length === 0) {
-        setToast({
-          message: "Alla verifikationer är balanserade! ✅",
-          type: "success",
-          isVisible: true,
-        });
-        return;
-      }
-
-      // Konvertera till vårt format
-      const unbalancedItems = result.unbalanced.map((item) => ({
-        item: {
-          transaktions_id: item.transaktions_id,
-          transaktionsdatum: item.transaktionsdatum,
-          kontobeskrivning: item.kontobeskrivning,
-          kommentar: item.kommentar,
-          belopp: item.totalDebet, // Placeholder
-        } as HistoryItem,
-        totalDebet: item.totalDebet,
-        totalKredit: item.totalKredit,
-        skillnad: item.skillnad,
-      }));
-
-      setUnbalancedResults(unbalancedItems);
-      setShowUnbalancedModal(true);
-    } catch (error) {
-      setToast({
-        message: "Ett fel uppstod vid kontrollen",
-        type: "error",
-        isVisible: true,
-      });
-    } finally {
-      setIsCheckingUnbalanced(false);
-    }
-  };
-
-  const handleExport = async () => {
-    const exportData = await exporteraTransaktionerMedPoster(year);
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `transaktioner_${year}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDelete = async (transactionId: number) => {
-    if (!confirm("Är du säker på att du vill ta bort denna transaktion? Detta kan inte ångras.")) {
-      return;
-    }
-
-    setDeletingIds((prev) => [...prev, transactionId]);
-
-    try {
-      const result = await deleteTransaction(transactionId);
-
-      if (result.success) {
-        // Ta bort från lokal state
-        setHistoryData((prev) => prev.filter((item) => item.transaktions_id !== transactionId));
-        setDetailsMap((prev) => {
-          const newMap = { ...prev };
-          delete newMap[transactionId];
-          return newMap;
-        });
-        setActiveIds((prev) => prev.filter((id) => id !== transactionId));
-
-        setToast({
-          message: result.message || "Transaktion borttagen",
-          type: "success",
-          isVisible: true,
-        });
-      } else {
-        setToast({
-          message: result.error || "Kunde inte ta bort transaktion",
-          type: "error",
-          isVisible: true,
-        });
-      }
-    } catch (error) {
-      setToast({
-        message: "Ett fel uppstod när transaktionen skulle tas bort",
-        type: "error",
-        isVisible: true,
-      });
-    } finally {
-      setDeletingIds((prev) => prev.filter((id) => id !== transactionId));
-    }
-  };
+    // Setters
+    setShowUnbalancedModal,
+    setToast,
+  } = useHistorik();
 
   if (loading) {
     return (
@@ -374,29 +57,6 @@ export default function Page() {
       </MainLayout>
     );
   }
-
-  const columns: ColumnDefinition<HistoryItem>[] = [
-    { key: "transaktions_id", label: "ID" },
-    { key: "transaktionsdatum", label: "Datum" },
-    { key: "kontobeskrivning", label: "Verifikat" },
-    {
-      key: "belopp",
-      label: "Belopp",
-      render: (_: number, item: HistoryItem) => {
-        // Summera debet från detailsMap om finns, annars visa originalvärde
-        const details = detailsMap[item.transaktions_id];
-        let debetSum = item.belopp;
-        if (details && details.length > 0) {
-          debetSum = details.reduce((sum, d) => sum + (d.debet || 0), 0);
-        }
-        return debetSum.toLocaleString("sv-SE", {
-          style: "currency",
-          currency: "SEK",
-        });
-      },
-    },
-    { key: "kommentar", label: "Kommentar", hiddenOnMobile: true },
-  ];
 
   return (
     <MainLayout>

@@ -4,24 +4,7 @@ import { pool } from "../_lib/db";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
 import { withFormRateLimit } from "../_utils/rateLimit";
 import { validateYear, sanitizeInput } from "../_utils/validationUtils";
-
-interface TransactionDetail {
-  transaktionspost_id: number;
-  kontonummer: string;
-  beskrivning: string;
-  debet: number;
-  kredit: number;
-}
-
-interface UnbalancedVerification {
-  transaktions_id: number;
-  transaktionsdatum: string;
-  kontobeskrivning: string;
-  kommentar?: string;
-  totalDebet: number;
-  totalKredit: number;
-  skillnad: number;
-}
+import { TransactionDetail, UnbalancedVerification } from "./types";
 
 // 🚀 OPTIMERAD FUNKTION: Hitta obalanserade direkt i databasen
 export async function findUnbalancedVerifications(): Promise<{
