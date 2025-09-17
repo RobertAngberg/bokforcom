@@ -7,40 +7,32 @@ import {
   TransaktionspostMedMeta,
 } from "../_utils/transaktioner/hamtaTransaktionsposter";
 import { withFormRateLimit } from "../_utils/rateLimit";
-import { validateKontonummer } from "../_utils/validationUtils";
+import {
+  validateKontonummer,
+  validateAmount,
+  sanitizeInput,
+  sanitizeExportInput,
+} from "../_utils/validationUtils";
 import { validateEmail } from "../login/sakerhet/loginValidation";
 import { getUserId, logSecurityEvent } from "../_utils/authUtils";
+import { withDatabase, withTransaction } from "../_utils/dbUtils";
+import { dateTillÅÅÅÅMMDD, stringTillDate } from "../_utils/datum";
+import { safeAsync, logError, createError } from "../_utils/errorUtils";
 
-// Säker input-sanitization för faktura-modulen
-function sanitizeFakturaInput(text: string): string {
-  if (!text || typeof text !== "string") return "";
-
-  return text
-    .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-    .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 1000); // Begränsa längd för fakturatext
-}
-
-// Validera numeriska värden för fakturor
-function validateNumericFakturaInput(value: number): boolean {
-  return !isNaN(value) && isFinite(value) && value >= 0 && value < 100000000;
-}
-
-// Säker JSON-parsing med validering
+// Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
 function safeParseFakturaJSON(jsonString: string): any[] {
   try {
     if (!jsonString || typeof jsonString !== "string") return [];
     const parsed = JSON.parse(jsonString);
     if (!Array.isArray(parsed)) return [];
 
-    // Validera varje artikel i arrayen
+    // Validera varje artikel i arrayen med centraliserad sanitisering
     return parsed.filter(
       (artikel) =>
         artikel &&
         typeof artikel === "object" &&
         typeof artikel.beskrivning === "string" &&
-        artikel.beskrivning.length <= 500
+        sanitizeInput(artikel.beskrivning, 500).length > 0
     );
   } catch {
     return [];
@@ -104,32 +96,32 @@ async function saveInvoiceInternal(formData: FormData) {
 
   // SÄKERHETSVALIDERING: Validera alla artiklar
   for (const artikel of artiklar) {
-    if (!artikel.beskrivning || sanitizeFakturaInput(artikel.beskrivning).length < 2) {
+    if (!artikel.beskrivning || sanitizeInput(artikel.beskrivning).length < 2) {
       return { success: false, error: "Alla artiklar måste ha en giltig beskrivning" };
     }
 
-    if (!validateNumericFakturaInput(artikel.antal) || artikel.antal <= 0) {
+    if (!validateAmount(artikel.antal) || artikel.antal <= 0) {
       return { success: false, error: "Ogiltigt antal i artikel" };
     }
 
-    if (!validateNumericFakturaInput(artikel.prisPerEnhet) || artikel.prisPerEnhet < 0) {
+    if (!validateAmount(artikel.prisPerEnhet) || artikel.prisPerEnhet < 0) {
       return { success: false, error: "Ogiltigt pris i artikel" };
     }
 
-    if (!validateNumericFakturaInput(artikel.moms) || artikel.moms < 0 || artikel.moms > 100) {
+    if (!validateAmount(artikel.moms) || artikel.moms < 0 || artikel.moms > 100) {
       return { success: false, error: "Ogiltig moms i artikel" };
     }
   }
 
   // SÄKERHETSVALIDERING: Validera fakturauppgifter
   const fakturaNummerRaw = formData.get("fakturanummer")?.toString();
-  const fakturanummer = sanitizeFakturaInput(fakturaNummerRaw || "");
+  const fakturanummer = sanitizeInput(fakturaNummerRaw || "");
   if (!fakturanummer || fakturanummer.length < 1) {
     return { success: false, error: "Fakturanummer krävs" };
   }
 
   // SÄKERHETSVALIDERING: Validera kunduppgifter
-  const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+  const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
   const kundEmail = formData.get("kundemail")?.toString() || "";
 
   if (!kundnamn || kundnamn.length < 2) {
@@ -144,20 +136,13 @@ async function saveInvoiceInternal(formData: FormData) {
     return { success: false, error: "Fakturan måste ha minst en artikel" };
   }
 
-  const client = await pool.connect();
-
-  const formatDate = (str: string | null) => {
-    if (!str) return null;
-    const d = new Date(str);
-    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
-      .getDate()
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  try {
-    const fakturadatum = formatDate(formData.get("fakturadatum")?.toString() ?? null);
-    const forfallodatum = formatDate(formData.get("forfallodatum")?.toString() ?? null);
+  // Använd utils istället för manuell databas och datum-hantering
+  return withDatabase(async (client) => {
+    // Använd utils för säker datum-hantering
+    const fakturadatum = dateTillÅÅÅÅMMDD(stringTillDate(formData.get("fakturadatum")?.toString()));
+    const forfallodatum = dateTillÅÅÅÅMMDD(
+      stringTillDate(formData.get("forfallodatum")?.toString())
+    );
     const fakturaIdRaw = formData.get("id");
     const isUpdate = !!fakturaIdRaw;
     const fakturaId = isUpdate ? parseInt(fakturaIdRaw!.toString(), 10) : undefined;
@@ -165,7 +150,7 @@ async function saveInvoiceInternal(formData: FormData) {
     // För nya fakturor: sätt dagens datum som default om inget fakturadatum anges
     const fakturaDateString = isUpdate
       ? fakturadatum
-      : fakturadatum || new Date().toISOString().split("T")[0];
+      : fakturadatum || dateTillÅÅÅÅMMDD(new Date());
 
     // För nya fakturor: sätt 30 dagar från idag som default för förfallodatum om inget anges
     const forfalloDatumsString = isUpdate
@@ -174,7 +159,7 @@ async function saveInvoiceInternal(formData: FormData) {
         (() => {
           const d = new Date();
           d.setDate(d.getDate() + 30);
-          return d.toISOString().split("T")[0];
+          return dateTillÅÅÅÅMMDD(d);
         })();
 
     if (isUpdate && fakturaId) {
@@ -322,92 +307,83 @@ async function saveInvoiceInternal(formData: FormData) {
 
       return { success: true, id: newId };
     }
-  } catch (err) {
-    console.error("❌ saveInvoice error:", err);
-    return {
-      success: false,
-      error: `Databasfel: ${err instanceof Error ? err.message : "Okänt fel"}`,
-    };
-  } finally {
-    client.release();
-  }
+  });
 }
 
 export async function deleteFaktura(id: number) {
-  try {
-    // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const userId = await getUserId();
-    if (!userId) {
-      console.error("❌ Säkerhetsvarning: Ogiltig session vid radering av faktura");
-      return { success: false, error: "Säkerhetsvalidering misslyckades" };
-    }
-
-    // SÄKERHETSEVENT: Logga raderingsförsök
-    console.log(`🔒 Säker fakturaradering initierad för user ${userId}, faktura ${id}`);
-
-    // SÄKERHETSVALIDERING: Validera faktura-ID
-    if (isNaN(id) || id <= 0) {
-      console.error("❌ Säkerhetsvarning: Ogiltigt faktura-ID vid radering");
-      return { success: false, error: "Ogiltigt faktura-ID" };
-    }
-
-    const client = await pool.connect();
-    try {
-      // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
-      const verifyRes = await client.query(
-        `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
-        [id, userId]
-      );
-
-      if (verifyRes.rows.length === 0) {
-        console.error(
-          `❌ Säkerhetsvarning: User ${userId} försökte radera faktura ${id} som de inte äger`
-        );
-        return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
-      }
-
-      const transaktionsId = verifyRes.rows[0]?.transaktions_id;
-
-      // Radera i rätt ordning (child tables först)
-      // 1. Radera transaktionsposter (om det finns en transaktion)
-      if (transaktionsId) {
-        await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [
-          transaktionsId,
-        ]);
-
-        // 2. Radera transaktionen
-        await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
-      }
-
-      // 3. Radera faktura_artiklar (inklusive ROT/RUT data)
-      await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
-
-      // 4. Radera fakturan själv (med dubbel validering av ägarskap)
-      const deleteRes = await client.query(
-        `DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`,
-        [id, userId]
-      );
-
-      if (deleteRes.rowCount === 0) {
-        throw new Error("Fakturan kunde inte raderas - ägarskapsvalidering misslyckades");
-      }
-
-      console.log(`✅ Säkert raderade faktura ${id} för user ${userId}`);
-      if (transaktionsId) {
-        console.log(`✅ Raderade transaktion ${transaktionsId} och dess poster`);
-      }
-
-      return { success: true };
-    } catch (err) {
-      console.error("❌ Databasfel vid radering av faktura:", err);
-      return { success: false, error: "Kunde inte radera faktura säkert" };
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    console.error("❌ Säkerhetsfel vid radering av faktura:", err);
-    return { success: false, error: "Kunde inte radera faktura säkert" };
+  // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
+  const userId = await getUserId();
+  if (!userId) {
+    console.error("Ogiltig session vid radering av faktura", { userId });
+    return { success: false, error: "Säkerhetsvalidering misslyckades" };
   }
+
+  // SÄKERHETSVALIDERING: Validera faktura-ID
+  if (!validateAmount(id) || id <= 0) {
+    logError(
+      createError("Ogiltigt faktura-ID vid radering", {
+        userId,
+        context: { fakturaId: id },
+      }),
+      "deleteFaktura"
+    );
+    return { success: false, error: "Ogiltigt faktura-ID" };
+  }
+
+  // SÄKERHETSEVENT: Logga raderingsförsök
+  logSecurityEvent("invalid_access", userId, `delete_faktura_${id}`);
+
+  return withTransaction(async (client) => {
+    // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
+    const verifyRes = await client.query(
+      `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+      [id, userId]
+    );
+
+    if (verifyRes.rows.length === 0) {
+      logError(
+        createError("Försök att radera faktura som inte ägs", {
+          userId,
+          context: { fakturaId: id },
+        }),
+        "deleteFaktura"
+      );
+      return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
+    }
+
+    const transaktionsId = verifyRes.rows[0]?.transaktions_id;
+
+    // Radera i rätt ordning (child tables först)
+    // 1. Radera transaktionsposter (om det finns en transaktion)
+    if (transaktionsId) {
+      await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [
+        transaktionsId,
+      ]);
+
+      // 2. Radera transaktionen
+      await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
+    }
+
+    // 3. Radera faktura_artiklar (inklusive ROT/RUT data)
+    await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
+
+    // 4. Radera fakturan själv (med dubbel validering av ägarskap)
+    const deleteRes = await client.query(`DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`, [
+      id,
+      userId,
+    ]);
+
+    if (deleteRes.rowCount === 0) {
+      throw new Error("Fakturan kunde inte raderas - ägarskapsvalidering misslyckades");
+    }
+
+    console.log(`✅ Säkert raderade faktura ${id} för user ${userId}`);
+    if (transaktionsId) {
+      console.log(`✅ Raderade transaktion ${transaktionsId} och dess poster`);
+    }
+
+    return { success: true };
+  });
 }
 
 export async function deleteKund(id: number) {
@@ -428,8 +404,7 @@ export async function deleteKund(id: number) {
       return { success: false, error: "Ogiltigt kund-ID" };
     }
 
-    const client = await pool.connect();
-    try {
+    return withDatabase(async (client) => {
       // SÄKERHETSVALIDERING: Verifiera att kunden tillhör denna användare
       const verifyRes = await client.query(
         `SELECT id FROM kunder WHERE id = $1 AND "user_id" = $2`,
@@ -455,12 +430,7 @@ export async function deleteKund(id: number) {
 
       console.log(`✅ Säkert raderade kund ${id} för user ${userId}`);
       return { success: true };
-    } catch (err) {
-      console.error("❌ Databasfel vid radering av kund:", err);
-      return { success: false, error: "Kunde inte radera kund säkert" };
-    } finally {
-      client.release();
-    }
+    });
   } catch (err) {
     console.error("❌ Säkerhetsfel vid radering av kund:", err);
     return { success: false, error: "Kunde inte radera kund säkert" };
@@ -579,9 +549,8 @@ export async function getAllInvoices() {
   const userId = await getUserId();
   if (!userId) return { success: false, invoices: [] };
   // userId already a number from getUserId()
-  const client = await pool.connect();
 
-  try {
+  return withDatabase(async (client) => {
     const res = await client.query(`SELECT * FROM fakturor WHERE "user_id" = $1 ORDER BY id DESC`, [
       userId,
     ]);
@@ -589,19 +558,14 @@ export async function getAllInvoices() {
 
     for (const f of fakturor) {
       const r = await client.query(`SELECT * FROM faktura_artiklar WHERE faktura_id = $1`, [f.id]);
-      f.artiklar = r.rows.map((rad) => ({
+      f.artiklar = r.rows.map((rad: { pris_per_enhet: any }) => ({
         ...rad,
         prisPerEnhet: Number(rad.pris_per_enhet),
       }));
     }
 
     return { success: true, invoices: fakturor };
-  } catch (err) {
-    console.error("❌ getAllInvoices error:", err);
-    return { success: false, invoices: [] };
-  } finally {
-    client.release();
-  }
+  });
 }
 
 export async function sparaNyKund(formData: FormData) {
@@ -620,7 +584,7 @@ export async function sparaNyKund(formData: FormData) {
   }
 
   // SÄKERHETSVALIDERING: Sanitera och validera all kundinformation
-  const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+  const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
   const kundEmail = formData.get("kundemail")?.toString() || "";
   const orgNummer = formData.get("kundorgnummer")?.toString() || "";
   const personnummer = formData.get("personnummer")?.toString() || "";
@@ -640,9 +604,7 @@ export async function sparaNyKund(formData: FormData) {
     return { success: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
   }
 
-  const client = await pool.connect();
-
-  try {
+  return withDatabase(async (client) => {
     // Säker parametriserad query med saniterade värden
     const res = await client.query(
       `INSERT INTO kunder (
@@ -653,22 +615,17 @@ export async function sparaNyKund(formData: FormData) {
       [
         userId,
         kundnamn,
-        sanitizeFakturaInput(orgNummer),
-        sanitizeFakturaInput(formData.get("kundnummer")?.toString() || ""),
-        sanitizeFakturaInput(formData.get("kundmomsnummer")?.toString() || ""),
-        sanitizeFakturaInput(formData.get("kundadress1")?.toString() || ""),
-        sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
-        sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
+        sanitizeInput(orgNummer),
+        sanitizeInput(formData.get("kundnummer")?.toString() || ""),
+        sanitizeInput(formData.get("kundmomsnummer")?.toString() || ""),
+        sanitizeInput(formData.get("kundadress1")?.toString() || ""),
+        sanitizeInput(formData.get("kundpostnummer")?.toString() || ""),
+        sanitizeInput(formData.get("kundstad")?.toString() || ""),
         kundEmail,
       ]
     );
     return { success: true, id: res.rows[0].id };
-  } catch (err) {
-    console.error("❌ Säkerhetsfel vid sparande av kund:", err);
-    return { success: false, error: "Kunde inte spara kund säkert" };
-  } finally {
-    client.release();
-  }
+  });
 }
 
 export async function uppdateraKund(id: number, formData: FormData) {
@@ -690,7 +647,7 @@ export async function uppdateraKund(id: number, formData: FormData) {
     }
 
     // SÄKERHETSVALIDERING: Sanitera alla input-värden
-    const kundnamn = sanitizeFakturaInput(formData.get("kundnamn")?.toString() || "");
+    const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
     const kundEmail = formData.get("kundemail")?.toString() || "";
     const orgNummer = formData.get("kundorgnummer")?.toString() || "";
     const personnummer = formData.get("personnummer")?.toString() || "";
@@ -737,12 +694,12 @@ export async function uppdateraKund(id: number, formData: FormData) {
         `,
         [
           kundnamn,
-          sanitizeFakturaInput(formData.get("kundnummer")?.toString() || ""),
-          sanitizeFakturaInput(orgNummer),
-          sanitizeFakturaInput(formData.get("kundmomsnummer")?.toString() || ""),
-          sanitizeFakturaInput(formData.get("kundadress1")?.toString() || ""),
-          sanitizeFakturaInput(formData.get("kundpostnummer")?.toString() || ""),
-          sanitizeFakturaInput(formData.get("kundstad")?.toString() || ""),
+          sanitizeInput(formData.get("kundnummer")?.toString() || ""),
+          sanitizeInput(orgNummer),
+          sanitizeInput(formData.get("kundmomsnummer")?.toString() || ""),
+          sanitizeInput(formData.get("kundadress1")?.toString() || ""),
+          sanitizeInput(formData.get("kundpostnummer")?.toString() || ""),
+          sanitizeInput(formData.get("kundstad")?.toString() || ""),
           kundEmail,
           id,
           userId,
@@ -1294,9 +1251,9 @@ export async function bokförFaktura(data: BokförFakturaData) {
     }
 
     // SÄKERHETSVALIDERING: Sanitera text-inputs
-    const sanitizedFakturanummer = sanitizeFakturaInput(data.fakturanummer);
-    const sanitizedKundnamn = sanitizeFakturaInput(data.kundnamn);
-    const sanitizedKommentar = data.kommentar ? sanitizeFakturaInput(data.kommentar) : "";
+    const sanitizedFakturanummer = sanitizeInput(data.fakturanummer);
+    const sanitizedKundnamn = sanitizeInput(data.kundnamn);
+    const sanitizedKommentar = data.kommentar ? sanitizeInput(data.kommentar) : "";
 
     // SÄKERHETSVALIDERING: Validera bokföringsposter
     for (const post of data.poster) {
@@ -1901,14 +1858,14 @@ export async function saveLeverantör(formData: FormData) {
   // userId already a number from getUserId()
 
   // SÄKERHETSVALIDERING: Sanitera och validera all input
-  const namn = sanitizeFakturaInput(formData.get("namn")?.toString() || "");
-  const organisationsnummer = sanitizeFakturaInput(
+  const namn = sanitizeInput(formData.get("namn")?.toString() || "");
+  const organisationsnummer = sanitizeInput(
     formData.get("organisationsnummer")?.toString() || formData.get("vatnummer")?.toString() || ""
   );
-  const adress = sanitizeFakturaInput(formData.get("adress")?.toString() || "");
-  const postnummer = sanitizeFakturaInput(formData.get("postnummer")?.toString() || "");
-  const ort = sanitizeFakturaInput(formData.get("ort")?.toString() || "");
-  const telefon = sanitizeFakturaInput(formData.get("telefon")?.toString() || "");
+  const adress = sanitizeInput(formData.get("adress")?.toString() || "");
+  const postnummer = sanitizeInput(formData.get("postnummer")?.toString() || "");
+  const ort = sanitizeInput(formData.get("ort")?.toString() || "");
+  const telefon = sanitizeInput(formData.get("telefon")?.toString() || "");
   const email = formData.get("email")?.toString() || "";
 
   // Validera obligatoriska fält

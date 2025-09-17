@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import TextFalt from "../../_components/TextFalt";
-import { getProxyImageUrl } from "../_utils/imageProxy";
+import { getProxyImageUrl } from "../../_utils/imageProxy";
 import { useAvsandare } from "../_hooks/useAvsandare";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";

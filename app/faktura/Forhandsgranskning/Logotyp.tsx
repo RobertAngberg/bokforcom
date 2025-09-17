@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { getProxyImageUrl } from "../_utils/imageProxy";
+import { getProxyImageUrl } from "../../_utils/imageProxy";
 import { LogotypProps } from "../_types/types";
 
 export default function Logotyp({
