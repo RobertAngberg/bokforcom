@@ -257,13 +257,25 @@ export function useNyFaktura(initialData: ServerData) {
   }, [initialData.foretagsprofil, fakturaClient.loadForetagsprofil]);
 
   useEffect(() => {
-    fakturaClient.initializeForNewFaktura();
+    // Bara initialisera för ny faktura om ingen data redan finns i store
+    if (!fakturaClient.formData.id && !fakturaClient.formData.fakturanummer) {
+      console.log("🆕 Initialiserar för ny faktura");
+      fakturaClient.initializeForNewFaktura();
+    } else {
+      console.log("📝 Befintlig faktura data finns, hoppar över initialisering");
+    }
   }, [fakturaClient.initializeForNewFaktura]);
 
   // Hämta nästa fakturanummer när det är en ny faktura (dvs ingen id och inget fakturanummer)
   useEffect(() => {
+    console.log("🔄 useNyFaktura effect kör. formData:", {
+      id: fakturaClient.formData.id,
+      fakturanummer: fakturaClient.formData.fakturanummer,
+    });
     if (!fakturaClient.formData.id && !fakturaClient.formData.fakturanummer) {
+      console.log("📊 Hämtar nästa fakturanummer för ny faktura");
       hämtaNästaFakturanummer().then((nummer) => {
+        console.log("✨ Sätt nytt fakturanummer:", nummer);
         fakturaClient.setFormData({
           fakturanummer: nummer.toString(),
         });

@@ -418,18 +418,20 @@ export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
 
 // Hook för Sparade fakturor (simplified for list view only)
 export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorReturn {
-  const { setFormData, showError } = useFakturaClient();
+  const { setFormData, setKundStatus, showError } = useFakturaClient();
   const router = useRouter();
 
   // Funktion för att hantera när en faktura väljs
   const hanteraValdFaktura = useCallback(
     async (fakturaId: number) => {
+      console.log("🔍 Väljer faktura med ID:", fakturaId);
       const data = await hämtaFakturaMedRader(fakturaId);
       if (!data || !data.faktura) {
         showError("Kunde inte hämta faktura");
         return;
       }
       const { faktura, artiklar, rotRut } = data;
+      console.log("📄 Hämtad faktura:", { id: faktura.id, fakturanummer: faktura.fakturanummer });
 
       setFormData({
         id: faktura.id,
@@ -534,10 +536,18 @@ export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorRe
           "",
       });
 
+      console.log("✅ setFormData anropad med fakturanummer:", faktura.fakturanummer);
+
+      // Sätt kundStatus till "loaded" så att kunduppgifterna visas
+      if (faktura.kundnamn) {
+        setKundStatus("loaded");
+        console.log("👤 Sätt kundStatus till loaded");
+      }
+
       // Navigera till NyFaktura istället för att visa flikar här
       router.push("/faktura/NyFaktura");
     },
-    [setFormData, router]
+    [setFormData, setKundStatus, router]
   );
 
   return {
