@@ -1,28 +1,18 @@
 "use client";
 
 import Dropdown from "../../../_components/Dropdown";
+import { usePersonalStore } from "../../_stores/personalStore";
 
-interface SkattProps {
-  skattetabell: string;
-  setSkattetabell: (value: string) => void;
-  skattekolumn: string;
-  setSkattekolumn: (value: string) => void;
-}
-
-export default function Skatt({
-  skattetabell,
-  setSkattetabell,
-  skattekolumn,
-  setSkattekolumn,
-}: SkattProps) {
+export default function Skatt() {
+  const { nyAnställdFormulär, updateNyAnställdFormulär } = usePersonalStore();
   return (
     <div className="bg-slate-800 p-6 rounded-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Skatt</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Dropdown
           label="Skattetabell"
-          value={skattetabell}
-          onChange={setSkattetabell}
+          value={nyAnställdFormulär.skattetabell || ""}
+          onChange={(value) => updateNyAnställdFormulär({ skattetabell: value })}
           options={[
             { value: "", label: "Välj skattetabell" },
             ...Array.from({ length: 14 }, (_, i) => {
@@ -34,8 +24,8 @@ export default function Skatt({
 
         <Dropdown
           label="Skattekolumn"
-          value={skattekolumn}
-          onChange={setSkattekolumn}
+          value={nyAnställdFormulär.skattekolumn || ""}
+          onChange={(value) => updateNyAnställdFormulär({ skattekolumn: value })}
           options={[
             { value: "", label: "Välj skattekolumn" },
             ...Array.from({ length: 6 }, (_, i) => {

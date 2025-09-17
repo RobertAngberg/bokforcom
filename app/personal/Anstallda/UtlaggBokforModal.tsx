@@ -1,37 +1,28 @@
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
+"use client";
+
+import Tabell from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
+import { useAnstallda } from "../_hooks/useAnstallda";
 
-export default function UtlaggBokforModal({
-  previewRows,
-  utlägg,
-  onClose,
-  onBokför,
-}: {
-  utlägg: any;
-  previewRows: any[];
-  onClose: () => void;
-  onBokför: () => void;
-}) {
-  const columns: ColumnDefinition<any>[] = [
-    { key: "kontonummer", label: "Konto" },
-    { key: "beskrivning", label: "Beskrivning" },
-    { key: "debet", label: "Debet", render: (v) => (v ? v + " kr" : "") },
-    { key: "kredit", label: "Kredit", render: (v) => (v ? v + " kr" : "") },
-  ];
-
-  // previewRows skickas nu in från UtlaggFlik.tsx
+export default function UtlaggBokforModal() {
+  const { utlaggModalData } = useAnstallda();
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Bokför utlägg" maxWidth="lg">
+    <Modal
+      isOpen={utlaggModalData().isOpen}
+      onClose={utlaggModalData().onClose}
+      title="Bokför utlägg"
+      maxWidth="lg"
+    >
       <Tabell
-        data={previewRows}
-        columns={columns}
+        data={utlaggModalData().previewRows}
+        columns={utlaggModalData().columns}
         getRowId={(row) => row.kontonummer + "-" + row.debet + "-" + row.kredit}
       />
       <div className="flex gap-4 mt-8 justify-end">
-        <Knapp text="Avbryt" onClick={onClose} />
-        {!utlägg.transaktion_id && <Knapp text="Bokför" onClick={onBokför} />}
+        <Knapp text="Avbryt" onClick={utlaggModalData().onClose} />
+        <Knapp text="Bokför" onClick={utlaggModalData().onClose} />
       </div>
     </Modal>
   );

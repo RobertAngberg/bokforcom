@@ -1,6 +1,3 @@
-// Centraliserade types för personal-modulen
-
-// Extrarad-relaterade types
 export interface ExtraradData {
   lönespecifikation_id: number;
   typ: string;
@@ -16,7 +13,6 @@ export interface ExtraradResult {
   error?: string;
 }
 
-// Utläggs-relaterade types
 export interface UtläggData {
   id: number;
   beskrivning: string;
@@ -25,10 +21,9 @@ export interface UtläggData {
   datum: string;
 }
 
-// Lönekörnings-relaterade types
 export interface Lönekörning {
   id: number;
-  period: string; // "2024-08"
+  period: string;
   status: "pågående" | "avslutad" | "pausad" | "avbruten";
   startad_av: number;
   startad_datum: Date;
@@ -46,10 +41,9 @@ export interface Lönekörning {
   kommentar?: string;
   skapad: Date;
   uppdaterad: Date;
-  aktuellt_steg: number; // 1=maila, 2=bokför, 3=agi, 4=skatter, 5=komplett
+  aktuellt_steg: number;
 }
 
-// Lönespecifikation med lönekörning
 export interface LönespecifikationMedLönekörning {
   id: number;
   anställd_id: number;
@@ -73,11 +67,11 @@ export interface LönespecifikationMedLönekörning {
   agi_genererad_datum?: Date;
   skatter_bokförda: boolean;
   skatter_bokförda_datum?: Date;
-  lönekorning_id?: number; // Koppling till lönekörning
+  lönekorning_id?: number;
 }
 
-// Anställd-relaterade types
 export type AnställdData = {
+  id?: number;
   förnamn: string;
   efternamn: string;
   personnummer: string;
@@ -94,6 +88,8 @@ export type AnställdData = {
   löneperiod: string;
   ersättningPer: string;
   kompensation: string;
+  anställningsdatum?: string;
+  tjänstegrad?: number;
   arbetsvecka: string;
   arbetsbelastning: string;
   deltidProcent: string;
@@ -103,7 +99,132 @@ export type AnställdData = {
   skattekolumn: string;
 };
 
-// Bokförings-relaterade types
+export interface AnställdListItem {
+  id: number;
+  namn: string;
+  epost: string;
+  roll?: string;
+}
+
+export interface AnställdaListaProps {
+  anställda: AnställdListItem[];
+  onRedigera?: (id: number) => void;
+  onTaBort?: (id: number) => void;
+  loadingAnställdId?: number | null;
+}
+
+export interface AnställdaRadProps {
+  anställd: AnställdListItem;
+}
+
+export interface UtlaggBokforModalProps {
+  utlägg: UtläggData;
+  previewRows: UtlaggBokföringsRad[];
+  onClose: () => void;
+  onBokför: () => void;
+}
+
+export interface UtlaggFlikProps {
+  anställd: AnställdData;
+}
+
+export interface NyAnställdFormular {
+  förnamn: string;
+  efternamn: string;
+  personnummer: string;
+  jobbtitel: string;
+  clearingnummer: string;
+  bankkonto: string;
+  mail: string;
+  adress: string;
+  postnummer: string;
+  ort: string;
+  startdatum: Date;
+  slutdatum: Date;
+  anställningstyp: string;
+  löneperiod: string;
+  ersättningPer: string;
+  kompensation: string;
+  arbetsvecka: string;
+  arbetsbelastning: string;
+  deltidProcent: string;
+  tjänsteställeAdress: string;
+  tjänsteställeOrt: string;
+  skattetabell: string;
+  skattekolumn: string;
+  växaStöd: boolean;
+}
+
+export interface ToastTillstand {
+  message: string;
+  type: "success" | "error" | "info";
+  isVisible: boolean;
+}
+
+export interface UtlaggBokföringsRad {
+  kontonummer: string;
+  beskrivning: string;
+  debet: number;
+  kredit: number;
+}
+
+export interface UtläggBokföringModalState {
+  isOpen: boolean;
+  utlägg: UtläggData | null;
+  previewRows: UtlaggBokföringsRad[];
+  loading: boolean;
+}
+
+export interface PersonalStoreState {
+  anställda: AnställdListItem[];
+  valdAnställd: AnställdData | null;
+  anställdaLoading: boolean;
+  anställdLoading: boolean;
+  anställdLoadingId: number | null;
+  anställdaError: string | null;
+  nyAnställdFormulär: NyAnställdFormular;
+  nyAnställdLoading: boolean;
+  visaNyAnställdFormulär: boolean;
+  toast: ToastTillstand;
+  utlägg: UtläggData[];
+  utläggLoading: boolean;
+  utläggBokföringModal: UtläggBokföringModalState;
+  setAnställda: (anställda: AnställdListItem[]) => void;
+  setValdAnställd: (anställd: AnställdData | null) => void;
+  setAnställdaLoading: (loading: boolean) => void;
+  setAnställdLoading: (loading: boolean) => void;
+  setAnställdLoadingId: (id: number | null) => void;
+  setAnställdaError: (error: string | null) => void;
+  addAnställd: (anställd: AnställdListItem) => void;
+  removeAnställd: (id: number) => void;
+  updateAnställd: (id: number, updatedData: Partial<AnställdListItem>) => void;
+  setNyAnställdFormulär: (formulär: NyAnställdFormular) => void;
+  updateNyAnställdFormulär: (updates: Partial<NyAnställdFormular>) => void;
+  handleSanitizedChange: (e: any) => void;
+  resetNyAnställdFormulär: () => void;
+  setNyAnställdLoading: (loading: boolean) => void;
+  setVisaNyAnställdFormulär: (visa: boolean) => void;
+  setToast: (toast: ToastTillstand) => void;
+  showToast: (message: string, type?: "success" | "error" | "info") => void;
+  hideToast: () => void;
+  setUtlägg: (utlägg: UtläggData[]) => void;
+  setUtläggLoading: (loading: boolean) => void;
+  openUtläggBokföringModal: (utlägg: UtläggData, previewRows: UtlaggBokföringsRad[]) => void;
+  closeUtläggBokföringModal: () => void;
+  setUtläggBokföringLoading: (loading: boolean) => void;
+  initStore: (data: {
+    anställda?: AnställdListItem[];
+    valdAnställd?: AnställdData | null;
+    utlägg?: UtläggData[];
+  }) => void;
+}
+
+export interface StoreInitProps {
+  anställda?: AnställdListItem[];
+  valdAnställd?: AnställdData | null;
+  utlägg?: UtläggData[];
+}
+
 export interface BokföringsPost {
   konto: string;
   kontoNamn: string;
@@ -121,4 +242,9 @@ export interface BokförLöneUtbetalningData {
   utbetalningsdatum: string;
   kommentar?: string;
   bokföringsPoster?: BokföringsPost[];
+}
+
+export interface PersonalinformationProps {
+  anställd?: any;
+  onRedigera?: () => void;
 }

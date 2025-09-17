@@ -1,25 +1,11 @@
-export type Anställd = {
-  id: number;
-  namn: string;
-  epost: string;
-  roll?: string;
-};
+"use client";
 
 import AnställdaRad from "./AnstalldaRad";
+import { useAnstallda } from "../_hooks/useAnstallda";
 
-type AnställdaListaProps = {
-  anställda: Anställd[];
-  onRedigera?: (id: number) => void;
-  onTaBort?: (id: number) => void;
-  loadingAnställdId?: number | null;
-};
+export default function AnställdaLista() {
+  const { state } = useAnstallda();
 
-export default function AnställdaLista({
-  anställda,
-  onRedigera,
-  onTaBort,
-  loadingAnställdId,
-}: AnställdaListaProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -33,14 +19,8 @@ export default function AnställdaLista({
           </tr>
         </thead>
         <tbody>
-          {anställda.map((anställd) => (
-            <AnställdaRad
-              key={anställd.id}
-              anställd={anställd}
-              onRedigera={onRedigera}
-              onTaBort={onTaBort}
-              loading={loadingAnställdId === anställd.id}
-            />
+          {state.anställda.map((anställd) => (
+            <AnställdaRad key={anställd.id} anställd={anställd} />
           ))}
         </tbody>
       </table>

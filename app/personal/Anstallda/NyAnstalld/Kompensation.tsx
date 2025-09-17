@@ -4,48 +4,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import TextFalt from "../../../_components/TextFalt";
 import Dropdown from "../../../_components/Dropdown";
+import { usePersonalStore } from "../../_stores/personalStore";
 
-interface KompensationProps {
-  startdatum: Date;
-  setStartdatum: (date: Date) => void;
-  slutdatum: Date;
-  setSlutdatum: (date: Date) => void;
-  anställningstyp: string;
-  setAnställningstyp: (value: string) => void;
-  löneperiod: string;
-  setLöneperiod: (value: string) => void;
-  ersättningPer: string;
-  setErsättningPer: (value: string) => void;
-  kompensation: string;
-  setKompensation: (value: string) => void;
-  arbetsvecka: string;
-  setArbetsvecka: (value: string) => void;
-  arbetsbelastning: string;
-  setArbetsbelastning: (value: string) => void;
-  deltidProcent: string;
-  SetDeltidProcent: (value: string) => void;
-}
-
-export default function Kompensation({
-  startdatum,
-  setStartdatum,
-  slutdatum,
-  setSlutdatum,
-  anställningstyp,
-  setAnställningstyp,
-  löneperiod,
-  setLöneperiod,
-  ersättningPer,
-  setErsättningPer,
-  kompensation,
-  setKompensation,
-  arbetsvecka,
-  setArbetsvecka,
-  arbetsbelastning,
-  setArbetsbelastning,
-  deltidProcent,
-  SetDeltidProcent,
-}: KompensationProps) {
+export default function Kompensation() {
+  const { nyAnställdFormulär, updateNyAnställdFormulär } = usePersonalStore();
   return (
     <div className="bg-slate-800 p-6 rounded-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Kompensation</h3>
@@ -53,8 +15,8 @@ export default function Kompensation({
         <div>
           <label className="block text-sm font-medium text-white mb-2">Startdatum</label>
           <DatePicker
-            selected={startdatum}
-            onChange={(date) => date && setStartdatum(date)}
+            selected={nyAnställdFormulär.startdatum}
+            onChange={(date) => updateNyAnställdFormulär({ startdatum: date || undefined })}
             dateFormat="yyyy-MM-dd"
             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           />
@@ -63,8 +25,8 @@ export default function Kompensation({
         <div>
           <label className="block text-sm font-medium text-white mb-2">Förnya kontrakt</label>
           <DatePicker
-            selected={slutdatum}
-            onChange={(date) => date && setSlutdatum(date)}
+            selected={nyAnställdFormulär.slutdatum}
+            onChange={(date) => updateNyAnställdFormulär({ slutdatum: date || undefined })}
             dateFormat="yyyy-MM-dd"
             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           />
@@ -72,8 +34,8 @@ export default function Kompensation({
 
         <Dropdown
           label="Anställningstyp"
-          value={anställningstyp}
-          onChange={setAnställningstyp}
+          value={nyAnställdFormulär.anställningstyp}
+          onChange={(value) => updateNyAnställdFormulär({ anställningstyp: value })}
           options={[
             { value: "", label: "Välj anställningstyp" },
             { value: "Tillsvidare", label: "Tillsvidare" },
@@ -86,8 +48,8 @@ export default function Kompensation({
 
         <Dropdown
           label="Löneperiod"
-          value={löneperiod}
-          onChange={setLöneperiod}
+          value={nyAnställdFormulär.löneperiod}
+          onChange={(value) => updateNyAnställdFormulär({ löneperiod: value })}
           options={[
             { value: "", label: "Välj löneperiod" },
             { value: "Månadsvis", label: "Månadsvis" },
@@ -98,8 +60,8 @@ export default function Kompensation({
 
         <Dropdown
           label="Ersättning per"
-          value={ersättningPer}
-          onChange={setErsättningPer}
+          value={nyAnställdFormulär.ersättningPer}
+          onChange={(value) => updateNyAnställdFormulär({ ersättningPer: value })}
           options={[
             { value: "", label: "Välj period" },
             { value: "Månad", label: "Månad" },
@@ -114,22 +76,22 @@ export default function Kompensation({
           label="Kompensation (kr)"
           name="kompensation"
           type="number"
-          value={kompensation}
-          onChange={(e) => setKompensation(e.target.value)}
+          value={nyAnställdFormulär.kompensation}
+          onChange={(e) => updateNyAnställdFormulär({ kompensation: e.target.value })}
         />
 
         <TextFalt
           label="Arbetsvecka (timmar)"
           name="arbetsvecka"
           type="number"
-          value={arbetsvecka}
-          onChange={(e) => setArbetsvecka(e.target.value)}
+          value={nyAnställdFormulär.arbetsvecka}
+          onChange={(e) => updateNyAnställdFormulär({ arbetsvecka: e.target.value })}
         />
 
         <Dropdown
           label="Arbetsbelastning"
-          value={arbetsbelastning}
-          onChange={setArbetsbelastning}
+          value={nyAnställdFormulär.arbetsbelastning}
+          onChange={(value) => updateNyAnställdFormulär({ arbetsbelastning: value })}
           options={[
             { value: "", label: "Välj arbetsbelastning" },
             { value: "Heltid", label: "Heltid" },
@@ -138,13 +100,13 @@ export default function Kompensation({
         />
 
         {/* Visa Deltid (%) endast om Deltid är valt */}
-        {arbetsbelastning === "Deltid" && (
+        {nyAnställdFormulär.arbetsbelastning === "Deltid" && (
           <TextFalt
             label="Deltid (%)"
             name="deltidProcent"
             type="number"
-            value={deltidProcent}
-            onChange={(e) => SetDeltidProcent(e.target.value)}
+            value={nyAnställdFormulär.deltidProcent}
+            onChange={(e) => updateNyAnställdFormulär({ deltidProcent: e.target.value })}
           />
         )}
       </div>
