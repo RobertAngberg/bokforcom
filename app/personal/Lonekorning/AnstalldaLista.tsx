@@ -5,7 +5,11 @@ import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Lonespecar from "../Lonespecar/Lonespecar";
-import { skapaNyLönespec, taBortLönespec, hämtaLönespecifikationer } from "../actions";
+import {
+  skapaNyLönespec,
+  taBortLönespec,
+  hämtaLönespecifikationer,
+} from "../_actions/lonespecarActions";
 import { useLonespecContext } from "../Lonespecar/LonespecContext";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import MailaLonespec from "../Lonespecar/MailaLonespec";

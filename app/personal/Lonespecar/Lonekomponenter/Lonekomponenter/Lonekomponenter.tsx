@@ -1,8 +1,11 @@
 //#region Huvud
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { hämtaExtrarader, taBortExtrarad } from "../../../actions";
+import { useState, useEffect, useMemo } from "react";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import { formatCurrency } from "../../../../_utils/format";
+import { hämtaExtrarader, taBortExtrarad } from "../../../_actions/lonespecarActions";
 import ExtraRader from "../../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../loneberakningar";

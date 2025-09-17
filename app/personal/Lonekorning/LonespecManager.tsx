@@ -30,7 +30,7 @@ export default function LonespecManager({
 
   const hanteraTaBortSpec = async (specId: number) => {
     // Importera taBortLönespec från actions om det behövs
-    const { taBortLönespec } = await import("../actions");
+    const { taBortLönespec } = await import("../_actions/lonespecarActions");
     const resultat = await taBortLönespec(specId);
     if (resultat.success) {
       setToast({ type: "success", message: "Lönespecifikation borttagen!" });

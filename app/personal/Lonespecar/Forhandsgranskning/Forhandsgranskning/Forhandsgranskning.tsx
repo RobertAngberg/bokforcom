@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { hämtaFöretagsprofil } from "../../../actions";
+import { hämtaFöretagsprofil } from "../../../_actions/anstalldaActions";
 import Toast from "../../../../_components/Toast";
 import Huvudinfo from "./Huvudinfo";
 import Lonetabell from "./Lonetabell";

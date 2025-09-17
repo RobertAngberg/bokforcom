@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { hämtaAllaAnställda } from "../../personal/actions";
+import { hämtaAllaAnställda } from "../../personal/_actions/anstalldaActions";
 import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../_utils/datum";

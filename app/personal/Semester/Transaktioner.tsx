@@ -6,7 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Dropdown from "../../_components/Dropdown";
 import InfoTooltip from "../../_components/InfoTooltip";
-import { hämtaSemesterTransaktioner } from "../actions";
+import { hämtaSemesterTransaktioner } from "../_actions/semesterActions";
 
 interface TransaktionerProps {
   anställd?: any;

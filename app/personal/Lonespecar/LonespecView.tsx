@@ -10,7 +10,7 @@ import Toast from "../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
 import { useLonespecContext } from "./LonespecContext";
-import { uppdateraLönespec } from "../actions";
+import { uppdateraLönespec } from "../_actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 
 interface LönespecViewProps {

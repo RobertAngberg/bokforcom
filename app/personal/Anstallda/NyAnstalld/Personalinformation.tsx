@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import TextFalt from "../../../_components/TextFalt";
 import Knapp from "../../../_components/Knapp";
-import { sparaAnställd } from "../../actions";
+import { sparaAnställd } from "../../_actions/anstalldaActions";
 
 //#region Business Logic - Migrated from actions.ts
 // Säker input-sanitering för HR-data (flyttad från actions.ts)

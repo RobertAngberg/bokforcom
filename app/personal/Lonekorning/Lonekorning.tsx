@@ -8,20 +8,21 @@ import "react-datepicker/dist/react-datepicker.css";
 import Toast from "../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
-  hämtaAllaAnställda,
-  hämtaUtlägg,
-  hämtaFöretagsprofil,
-  bokförLöneskatter,
-  bokförLöneutbetalning,
   markeraBankgiroExporterad,
   markeraMailad,
   markeraBokförd,
   markeraAGIGenererad,
   markeraSkatternaBokförda,
+} from "../_actions/lonespecarActions";
+import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../_actions/anstalldaActions";
+import { hämtaUtlägg } from "../_actions/utlaggActions";
+import { bokförLöneskatter, bokförLöneutbetalning } from "../_actions/bokforingActions";
+import { Lönekörning } from "../_types/types";
+import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
   taBortLönekörning,
-} from "../actions";
+} from "../_actions/lonekorningActions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
@@ -44,7 +45,7 @@ export default function Lonekorning() {
   const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
-  const [valdLonekorning, setValdLonekorning] = useState<any>(null);
+  const [valdLonekorning, setValdLonekorning] = useState<Lönekörning | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
   const [taBortLoading, setTaBortLoading] = useState(false);
@@ -317,7 +318,7 @@ export default function Lonekorning() {
       {/* Lönekörnings-lista - bara när ingen är vald */}
       {!valdLonekorning && (
         <LonekorningLista
-          onValjLonekorning={setValdLonekorning}
+          onValjLonekorning={(lonekorning: Lönekörning) => setValdLonekorning(lonekorning)}
           valdLonekorning={valdLonekorning}
           refreshTrigger={refreshTrigger}
         />
@@ -403,11 +404,15 @@ export default function Lonekorning() {
 
                 // Uppdatera UI FÖRST för smidig UX
                 if (valdLonekorning?.id) {
-                  setValdLonekorning((prev) => ({
-                    ...prev,
-                    aktuellt_steg: 2,
-                    mailade_datum: new Date(),
-                  }));
+                  setValdLonekorning((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          aktuellt_steg: 2,
+                          mailade_datum: new Date(),
+                        }
+                      : prev
+                  );
 
                   // Spara till DB i bakgrunden
                   uppdateraLönekörningSteg(valdLonekorning.id, 2).then((result) => {
@@ -416,11 +421,15 @@ export default function Lonekorning() {
                     } else {
                       console.error("❌ Fel vid uppdatering:", result.error);
                       // Återställ vid fel
-                      setValdLonekorning((prev) => ({
-                        ...prev,
-                        aktuellt_steg: 1,
-                        mailade_datum: undefined,
-                      }));
+                      setValdLonekorning((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              aktuellt_steg: 1,
+                              mailade_datum: undefined,
+                            }
+                          : prev
+                      );
                     }
                   });
                 }
@@ -432,11 +441,15 @@ export default function Lonekorning() {
 
                 // Uppdatera UI FÖRST för smidig UX
                 if (valdLonekorning?.id) {
-                  setValdLonekorning((prev) => ({
-                    ...prev,
-                    aktuellt_steg: 3,
-                    bokford_datum: new Date(),
-                  }));
+                  setValdLonekorning((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          aktuellt_steg: 3,
+                          bokford_datum: new Date(),
+                        }
+                      : prev
+                  );
 
                   // Spara till DB i bakgrunden
                   uppdateraLönekörningSteg(valdLonekorning.id, 3).then((result) => {
@@ -445,11 +458,15 @@ export default function Lonekorning() {
                     } else {
                       console.error("❌ Fel vid uppdatering:", result.error);
                       // Återställ vid fel
-                      setValdLonekorning((prev) => ({
-                        ...prev,
-                        aktuellt_steg: 2,
-                        bokford_datum: undefined,
-                      }));
+                      setValdLonekorning((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              aktuellt_steg: 2,
+                              bokford_datum: undefined,
+                            }
+                          : prev
+                      );
                     }
                   });
                 }
@@ -461,11 +478,15 @@ export default function Lonekorning() {
 
                 // Uppdatera UI FÖRST för smidig UX
                 if (valdLonekorning?.id) {
-                  setValdLonekorning((prev) => ({
-                    ...prev,
-                    aktuellt_steg: 4,
-                    agi_genererad_datum: new Date(),
-                  }));
+                  setValdLonekorning((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          aktuellt_steg: 4,
+                          agi_genererad_datum: new Date(),
+                        }
+                      : prev
+                  );
 
                   // Kör AGI i bakgrunden
                   agiGenerator.hanteraAGI();
@@ -477,11 +498,15 @@ export default function Lonekorning() {
                     } else {
                       console.error("❌ Fel vid uppdatering:", result.error);
                       // Återställ vid fel
-                      setValdLonekorning((prev) => ({
-                        ...prev,
-                        aktuellt_steg: 3,
-                        agi_genererad_datum: undefined,
-                      }));
+                      setValdLonekorning((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              aktuellt_steg: 3,
+                              agi_genererad_datum: undefined,
+                            }
+                          : prev
+                      );
                     }
                   });
                 }
@@ -491,13 +516,17 @@ export default function Lonekorning() {
 
                 // Uppdatera UI FÖRST för smidig UX
                 if (valdLonekorning?.id) {
-                  setValdLonekorning((prev) => ({
-                    ...prev,
-                    aktuellt_steg: 5,
-                    skatter_bokforda_datum: new Date(),
-                    status: "avslutad",
-                    avslutad_datum: new Date(),
-                  }));
+                  setValdLonekorning((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          aktuellt_steg: 5,
+                          skatter_bokforda_datum: new Date(),
+                          status: "avslutad" as const,
+                          avslutad_datum: new Date(),
+                        }
+                      : prev
+                  );
 
                   // Spara till DB i bakgrunden
                   uppdateraLönekörningSteg(valdLonekorning.id, 5).then((result) => {
@@ -506,13 +535,17 @@ export default function Lonekorning() {
                     } else {
                       console.error("❌ Fel vid uppdatering:", result.error);
                       // Återställ vid fel
-                      setValdLonekorning((prev) => ({
-                        ...prev,
-                        aktuellt_steg: 4,
-                        skatter_bokforda_datum: undefined,
-                        status: "pågående",
-                        avslutad_datum: undefined,
-                      }));
+                      setValdLonekorning((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              aktuellt_steg: 4,
+                              skatter_bokforda_datum: undefined,
+                              status: "pågående" as const,
+                              avslutad_datum: undefined,
+                            }
+                          : prev
+                      );
                     }
                   });
                 }

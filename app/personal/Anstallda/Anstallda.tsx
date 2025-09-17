@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import Knapp from "../../_components/Knapp";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista";
-import { hämtaAllaAnställda, hämtaAnställd, taBortAnställd } from "../actions";
+import { hämtaAllaAnställda, hämtaAnställd, taBortAnställd } from "../_actions/anstalldaActions";
 //#endregion
 
 //#region Props

@@ -8,8 +8,8 @@ import Knapp from "../../_components/Knapp";
 import {
   skapaLönekörning,
   skapaLönespecifikationerFörLönekörning,
-  hämtaAllaAnställda,
-} from "../actions";
+} from "../_actions/lonekorningActions";
+import { hämtaAllaAnställda } from "../_actions/anstalldaActions";
 
 interface NyLonekorningModalProps {
   isOpen: boolean;

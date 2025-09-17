@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { hämtaLönespecifikationer, hämtaUtlägg } from "../actions";
+import { hämtaLönespecifikationer } from "../_actions/lonespecarActions";
+import { hämtaUtlägg } from "../_actions/utlaggActions";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useLonespecContext } from "./LonespecContext";

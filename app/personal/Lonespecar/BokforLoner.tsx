@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
-import { bokförLöneutbetalning } from "../actions";
+import { bokförLöneutbetalning } from "../_actions/bokforingActions";
 import Toast from "../../_components/Toast";
 
 interface BokföringsPost {

@@ -2,7 +2,7 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { taBortLönespec } from "../actions";
+import { taBortLönespec } from "../_actions/lonespecarActions";
 import { useState } from "react";
 import { useLonespecContext } from "./LonespecContext";
 import Toast from "../../_components/Toast";

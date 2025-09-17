@@ -1,16 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { hämtaAllaLönekörningar } from "../actions";
-
-interface Lönekörning {
-  id: number;
-  period: string;
-  status: string;
-  startad_datum: Date;
-  antal_anstallda?: number;
-  total_bruttolön?: number;
-}
+import { hämtaAllaLönekörningar } from "../_actions/lonekorningActions";
+import { Lönekörning } from "../_types/types";
 
 interface LonekorningListaProps {
   onValjLonekorning: (lonekorning: Lönekörning) => void;

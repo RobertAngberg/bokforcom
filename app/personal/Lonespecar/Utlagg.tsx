@@ -1,5 +1,6 @@
 //#region Huvud
-import { läggTillUtläggSomExtrarad, uppdateraUtläggStatus } from "../actions";
+import { läggTillUtläggSomExtrarad } from "../_actions/lonespecarActions";
+import { uppdateraUtläggStatus } from "../_actions/utlaggActions";
 import { useEffect, useState } from "react";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";

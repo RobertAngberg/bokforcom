@@ -7,7 +7,7 @@ import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../_components/Knapp";
 import Toast from "../../../_components/Toast";
-import { sparaAnställd } from "../../actions";
+import { sparaAnställd } from "../../_actions/anstalldaActions";
 
 export default function NyAnställd({
   onSparad,

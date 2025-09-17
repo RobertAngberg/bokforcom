@@ -6,7 +6,7 @@ import Modal from "../../_components/Modal";
 import Toast from "../../_components/Toast";
 import { genereraBokföringsrader } from "../Bokforing/bokforingsLogik";
 import { valideraBokföring, formateraBeloppKronor } from "../Bokforing/bokforingsUtils";
-import { hämtaExtrarader } from "../actions";
+import { hämtaExtrarader } from "../_actions/lonespecarActions";
 
 interface BokförProps {
   anställda: any[];

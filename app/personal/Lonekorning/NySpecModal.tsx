@@ -58,7 +58,7 @@ export default function NySpecModal({
       setToast({ type: "error", message: "Fel: utbetalningsdatum saknas eller är ogiltigt!" });
       return;
     }
-    const res = await import("../actions").then((mod) =>
+    const res = await import("../_actions/lonespecarActions").then((mod) =>
       mod.skapaNyLönespec({
         anställd_id: parseInt(valdAnställd),
         utbetalningsdatum,

@@ -10,7 +10,7 @@ import {
   hämtaSemesterTransaktioner,
   sparaSemesterTransaktion,
   uppdateraSemesterdata,
-} from "../actions";
+} from "../_actions/semesterActions";
 import BokforModal from "./BokforModal";
 
 type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
@@ -206,7 +206,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
         belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
       }));
       const res = await (
-        await import("../actions")
+        await import("../_actions/semesterActions")
       ).bokförSemester({
         userId,
         rader,
