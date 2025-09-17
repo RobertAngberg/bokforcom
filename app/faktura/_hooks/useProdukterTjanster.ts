@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { sparaFavoritArtikel, hämtaSparadeArtiklar, deleteFavoritArtikel } from "../actions";
+import {
+  sparaFavoritArtikel,
+  hämtaSparadeArtiklar,
+  deleteFavoritArtikel,
+} from "../_actions/artikelActions";
 import { useFakturaClient } from "./useFakturaClient";
 import type { Artikel, FavoritArtikel } from "../_types/types";
 

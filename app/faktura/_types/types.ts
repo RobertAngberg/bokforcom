@@ -1,3 +1,16 @@
+export type Leverantör = {
+  id?: number;
+  namn: string;
+  organisationsnummer?: string;
+  adress?: string;
+  postnummer?: string;
+  ort?: string;
+  telefon?: string;
+  email?: string;
+  skapad?: string;
+  uppdaterad?: string;
+};
+
 export type FakturaFormData = {
   id: string;
   fakturanummer: string;
@@ -592,4 +605,22 @@ export interface ExporteraPDFKnappProps {
   disabled?: boolean;
   text?: string;
   className?: string;
+}
+
+// Bokföring types
+export interface BokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
+export interface BokförFakturaData {
+  fakturaId?: number;
+  fakturanummer: string;
+  kundnamn: string;
+  totaltBelopp: number;
+  poster: BokföringsPost[];
+  kommentar?: string;
 }

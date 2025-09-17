@@ -6,14 +6,13 @@ import {
   deleteLeverantör,
   saveLeverantör,
   updateLeverantör,
-  type Leverantör,
-  hamtaBokfordaFakturor,
-  hämtaFakturaMedRader,
-  hämtaSparadeFakturor,
-  hämtaFöretagsprofil,
-  hämtaSparadeKunder,
-  hämtaSparadeArtiklar,
-} from "../actions";
+} from "../_actions/leverantorActions";
+import { Leverantör } from "../_types/types";
+import { hamtaBokfordaFakturor } from "../_actions/bokforingActions";
+import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../_actions/fakturaActions";
+import { hämtaFöretagsprofil } from "../_actions/foretagActions";
+import { hämtaSparadeKunder } from "../_actions/kundActions";
+import { hämtaSparadeArtiklar } from "../_actions/artikelActions";
 import { safeAsync, logError, createError } from "../../_utils/errorUtils";
 import {
   UseLeverantorFlikReturn,

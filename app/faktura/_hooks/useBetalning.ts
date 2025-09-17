@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useFakturaClient } from "../_stores/fakturaStore";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
-import { hämtaSenasteBetalningsmetod } from "../actions";
+import { hämtaSenasteBetalningsmetod } from "../_actions/alternativActions";
 import { useSession } from "next-auth/react";
 
 export function useBetalning() {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteFaktura } from "../actions";
+import { deleteFaktura } from "../_actions/fakturaActions";
 import { useFakturaClient } from "./useFakturaClient";
 
 export function useSparadeFakturor(onSelectInvoice?: (fakturaId: number) => void) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { formatSEK } from "../../_utils/format";
-import { hamtaTransaktionsposter } from "../actions";
+import { hamtaTransaktionsposter } from "../_actions/bokforingActions";
 import { TransaktionsPost, UseVerifikatModalProps } from "../_types/types";
 
 export function useVerifikatModal({

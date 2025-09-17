@@ -6,9 +6,11 @@ import { stringTillDate } from "../../_utils/datum";
 import {
   hamtaBokfordaFakturor,
   hamtaTransaktionsposter,
+} from "../_actions/bokforingActions";
+import {
   betalaOchBokförLeverantörsfaktura,
   taBortLeverantörsfaktura,
-} from "../actions";
+} from "../_actions/levfaktActions";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { BokfordFaktura } from "../_types/types";
 import { useFakturaClient } from "./useFakturaClient";

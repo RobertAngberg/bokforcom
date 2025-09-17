@@ -13,30 +13,7 @@ import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { safeAsync, logError, createError } from "../../_utils/errorUtils";
 import { withFormRateLimit } from "../../_utils/rateLimit";
-
-export type Artikel = {
-  id?: number;
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  moms: number;
-  valuta: string;
-  typ: "vara" | "tjänst";
-  rotRutTyp?: "ROT" | "RUT";
-  rotRutKategori?: string;
-  avdragProcent?: number;
-  arbetskostnadExMoms?: number;
-  rotRutBeskrivning?: string;
-  rotRutStartdatum?: string;
-  rotRutSlutdatum?: string;
-  rotRutPersonnummer?: string;
-  rotRutFastighetsbeteckning?: string;
-  rotRutBoendeTyp?: string;
-  rotRutBrfOrg?: string;
-  rotRutBrfLagenhet?: string;
-  // För att hålla reda på om artikeln kommer från en favoritartikel
-  ursprungligFavoritId?: number;
-};
+import { Artikel } from "../_types/types";
 
 // Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
 function safeParseFakturaJSON(jsonString: string): any[] {

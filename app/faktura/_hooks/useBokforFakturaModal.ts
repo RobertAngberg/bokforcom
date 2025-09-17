@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useFakturaClient } from "./useFakturaClient";
-import { bokförFaktura, hämtaBokföringsmetod, hämtaFakturaStatus } from "../actions";
+import {
+  bokförFaktura,
+  hämtaBokföringsmetod,
+  hämtaFakturaStatus,
+} from "../_actions/bokforingActions";
 import { BokforingsPost } from "../_types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 

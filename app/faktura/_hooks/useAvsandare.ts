@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { hämtaFöretagsprofil, sparaFöretagsprofil, uploadLogoAction } from "../actions";
+import {
+  hämtaFöretagsprofil,
+  sparaFöretagsprofil,
+  uploadLogoAction,
+} from "../_actions/foretagActions";
 import { useFakturaClient } from "./useFakturaClient";
 
 export function useAvsandare() {

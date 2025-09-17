@@ -1,4 +1,4 @@
-import type { Leverantör } from "../../faktura/actions";
+import type { Leverantör } from "../../faktura/_types/types";
 
 // ===== INITIAL DATA INTERFACES =====
 export interface InitialData {

@@ -10,7 +10,6 @@ export async function saveLeverantör(formData: FormData) {
   if (!userId) return { success: false };
   // userId already a number from getUserId()
 
-  // SÄKERHETSVALIDERING: Sanitera och validera all input
   const namn = sanitizeInput(formData.get("namn")?.toString() || "");
   const organisationsnummer = sanitizeInput(
     formData.get("organisationsnummer")?.toString() || formData.get("vatnummer")?.toString() || ""

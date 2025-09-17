@@ -3,12 +3,16 @@ import { useFakturaClient } from "./useFakturaClient";
 import {
   saveInvoice,
   hämtaSparadeFakturor,
+} from "../_actions/fakturaActions";
+import {
   hämtaFakturaStatus,
   bokförFaktura,
   hämtaBokföringsmetod,
+} from "../_actions/bokforingActions";
+import {
   uppdateraRotRutStatus,
   registreraRotRutBetalning,
-} from "../actions";
+} from "../_actions/betalningActions";
 import { laddaNerHUSFil } from "../Alternativ/husFilGenerator";
 import { BokforingsPost } from "../_types/types";
 

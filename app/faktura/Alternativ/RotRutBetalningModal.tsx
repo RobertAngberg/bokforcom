@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Modal from "../../_components/Modal";
-import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../actions";
+import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../_actions/betalningActions";
 import Toast from "../../_components/Toast";
 
 interface RotRutBetalningModalProps {

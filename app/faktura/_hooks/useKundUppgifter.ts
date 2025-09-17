@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions";
+import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../_actions/kundActions";
 import { useFakturaClient } from "./useFakturaClient";
 import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";

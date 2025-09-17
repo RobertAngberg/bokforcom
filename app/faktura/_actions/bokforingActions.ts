@@ -7,23 +7,7 @@ import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
 } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-
-interface BokföringsPost {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-  beskrivning: string;
-}
-
-interface BokförFakturaData {
-  fakturaId?: number;
-  fakturanummer: string;
-  kundnamn: string;
-  totaltBelopp: number;
-  poster: BokföringsPost[];
-  kommentar?: string;
-}
+import { BokföringsPost, BokförFakturaData } from "../_types/types";
 
 export async function hämtaBokföringsmetod() {
   const userId = await getUserId();

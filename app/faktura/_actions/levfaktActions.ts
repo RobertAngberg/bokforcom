@@ -2,19 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-
-export type Leverantör = {
-  id?: number;
-  namn: string;
-  organisationsnummer?: string;
-  adress?: string;
-  postnummer?: string;
-  ort?: string;
-  telefon?: string;
-  email?: string;
-  skapad?: string;
-  uppdaterad?: string;
-};
+import { Leverantör } from "../_types/types";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const userId = await getUserId();

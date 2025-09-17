@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useFakturaStore } from "../_stores/fakturaStore";
-import { hämtaNästaFakturanummer } from "../actions";
+import { hämtaNästaFakturanummer } from "../_actions/fakturaActions";
 import type { FakturaFormData, NyArtikel, KundStatus, ServerData } from "../_types/types";
 
 export function useFakturaClient() {
