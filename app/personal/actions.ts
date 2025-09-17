@@ -1547,7 +1547,7 @@ export async function sparaUtlägg({
     ];
     const result = await client.query(query, values);
     client.release();
-    revalidatePath("/personal/utlagg");
+    revalidatePath("/personal/Utlagg");
     return { success: true, id: result.rows[0].id };
   } catch (error) {
     console.error("❌ sparaUtlägg error:", error);

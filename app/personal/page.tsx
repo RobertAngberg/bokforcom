@@ -1,5 +1,3 @@
-"use client";
-
 import MainLayout from "../_components/MainLayout";
 
 export default function PersonalPage() {
@@ -33,7 +31,7 @@ export default function PersonalPage() {
             </p>
           </a>
           <a
-            href="/personal/utlagg"
+            href="/personal/Utlagg"
             className="block p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition w-full"
           >
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
