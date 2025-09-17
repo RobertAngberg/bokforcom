@@ -3,29 +3,10 @@
 
 import TextFalt from "../../_components/TextFalt";
 import Dropdown from "../../_components/Dropdown";
-
-interface LönProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
+import type { LönProps } from "../_types/types";
 // #endregion
 
-export default function Lön({ editData, handleChange, anställd, viewMode }: LönProps) {
-  // #region Dropdown Options
-  const dropdownOptions = {
-    ersättningPer: [
-      { value: "", label: "Välj period" },
-      { value: "Månad", label: "Månad" },
-      { value: "Timme", label: "Timme" },
-      { value: "Dag", label: "Dag" },
-      { value: "Vecka", label: "Vecka" },
-      { value: "År", label: "År" },
-    ],
-  };
-  // #endregion
-
+export default function Lön({ editData, handleChange, anställd, viewMode, options }: LönProps) {
   if (viewMode) {
     return (
       <div className="bg-slate-800 p-6 rounded-lg">
@@ -60,7 +41,7 @@ export default function Lön({ editData, handleChange, anställd, viewMode }: L�
           label="Ersättning per"
           value={editData.ersättningPer || ""}
           onChange={(value) => handleChange?.("ersättningPer", value)}
-          options={dropdownOptions.ersättningPer}
+          options={options?.ersättningPer || []}
         />
       </div>
     </div>

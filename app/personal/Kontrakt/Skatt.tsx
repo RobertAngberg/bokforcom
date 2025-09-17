@@ -2,35 +2,10 @@
 "use client";
 
 import Dropdown from "../../_components/Dropdown";
-
-interface SkattProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
+import type { SkattProps } from "../_types/types";
 // #endregion
 
-export default function Skatt({ editData, handleChange, anställd, viewMode }: SkattProps) {
-  // #region Dropdown Options
-  const dropdownOptions = {
-    skattetabell: [
-      { value: "", label: "Välj skattetabell" },
-      ...Array.from({ length: 14 }, (_, i) => ({
-        value: (29 + i).toString(),
-        label: `Tabell ${29 + i}`,
-      })),
-    ],
-    skattekolumn: [
-      { value: "", label: "Välj skattekolumn" },
-      ...Array.from({ length: 6 }, (_, i) => ({
-        value: (1 + i).toString(),
-        label: `Kolumn ${1 + i}`,
-      })),
-    ],
-  };
-  // #endregion
-
+export default function Skatt({ editData, handleChange, anställd, viewMode, options }: SkattProps) {
   if (viewMode) {
     return (
       <div className="bg-slate-800 p-6 rounded-lg">
@@ -58,13 +33,13 @@ export default function Skatt({ editData, handleChange, anställd, viewMode }: S
           label="Skattetabell"
           value={editData.skattetabell || ""}
           onChange={(value) => handleChange?.("skattetabell", value)}
-          options={dropdownOptions.skattetabell}
+          options={options?.skattetabell || []}
         />
         <Dropdown
           label="Skattekolumn"
           value={editData.skattekolumn || ""}
           onChange={(value) => handleChange?.("skattekolumn", value)}
-          options={dropdownOptions.skattekolumn}
+          options={options?.skattekolumn || []}
         />
       </div>
     </div>

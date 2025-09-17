@@ -3,13 +3,7 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-interface KontraktPeriodProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
+import type { KontraktPeriodProps } from "../_types/types";
 // #endregion
 
 export default function KontraktPeriod({

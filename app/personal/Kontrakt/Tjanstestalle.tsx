@@ -2,13 +2,7 @@
 "use client";
 
 import TextFalt from "../../_components/TextFalt";
-
-interface TjänsteställeProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
+import type { TjänsteställeProps } from "../_types/types";
 // #endregion
 
 export default function Tjänsteställe({

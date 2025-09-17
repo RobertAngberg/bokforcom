@@ -1,12 +1,7 @@
 "use client";
 
 import Modal from "../../_components/Modal";
-
-interface AGIDebugModalProps {
-  visaDebug: boolean;
-  setVisaDebug: (show: boolean) => void;
-  agiDebugData: any;
-}
+import type { AGIDebugModalProps } from "../_types/types";
 
 export default function AGIDebugModal({
   visaDebug,

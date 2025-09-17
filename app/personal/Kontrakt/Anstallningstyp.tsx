@@ -3,17 +3,16 @@
 
 import Dropdown from "../../_components/Dropdown";
 import { AnställningstypProps } from "../_types/types";
-import { useKontrakt } from "../_hooks/useKontrakt";
 
 // #endregion
 
-export default function Anställningstyp({ viewMode }: AnställningstypProps) {
-  const { state, handlers } = useKontrakt();
-  // Får inte bort nedan....
-  if (!state.valdAnställd) {
-    return null;
-  }
-
+export default function Anställningstyp({
+  editData,
+  handleChange,
+  anställd,
+  viewMode,
+  options,
+}: AnställningstypProps) {
   if (viewMode) {
     return (
       <div className="bg-slate-800 p-6 rounded-lg">
@@ -21,7 +20,7 @@ export default function Anställningstyp({ viewMode }: AnställningstypProps) {
         <div className="space-y-3">
           <div>
             <span className="text-gray-400">Anställningstyp:</span>
-            <div className="text-white">{state.valdAnställd.anställningstyp || "Ej angiven"}</div>
+            <div className="text-white">{anställd?.anställningstyp || "Ej angiven"}</div>
           </div>
         </div>
       </div>
@@ -34,9 +33,9 @@ export default function Anställningstyp({ viewMode }: AnställningstypProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Dropdown
           label="Anställningstyp"
-          value={state.valdAnställd.anställningstyp || ""}
-          onChange={(value) => console.log("TODO: Add handler")}
-          options={state.anställningstypOptions}
+          value={editData?.anställningstyp || ""}
+          onChange={(value) => handleChange?.("anställningstyp", value)}
+          options={options || []}
         />
       </div>
     </div>

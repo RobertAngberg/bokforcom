@@ -2,13 +2,7 @@
 "use client";
 
 import TextFalt from "../../_components/TextFalt";
-
-interface SemesterProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
-  viewMode?: boolean;
-}
+import type { SemesterProps } from "../_types/types";
 // #endregion
 
 export default function Semester({ editData, handleChange, anställd, viewMode }: SemesterProps) {

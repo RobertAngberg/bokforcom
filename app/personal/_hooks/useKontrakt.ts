@@ -64,6 +64,34 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
     { value: "Deltidsanställd", label: "Deltidsanställd" },
   ];
 
+  const lonOptions = {
+    ersättningPer: [
+      { value: "", label: "Välj period" },
+      { value: "Månad", label: "Månad" },
+      { value: "Timme", label: "Timme" },
+      { value: "Dag", label: "Dag" },
+      { value: "Vecka", label: "Vecka" },
+      { value: "År", label: "År" },
+    ],
+  };
+
+  const skattOptions = {
+    skattetabell: [
+      { value: "", label: "Välj skattetabell" },
+      ...Array.from({ length: 14 }, (_, i) => ({
+        value: (29 + i).toString(),
+        label: `Tabell ${29 + i}`,
+      })),
+    ],
+    skattekolumn: [
+      { value: "", label: "Välj skattekolumn" },
+      ...Array.from({ length: 6 }, (_, i) => ({
+        value: (1 + i).toString(),
+        label: `Kolumn ${1 + i}`,
+      })),
+    ],
+  };
+
   // Bygg EditData från en vald anställd
   const buildEditData = (a: Partial<AnställdData> | any): EditData => ({
     anställningstyp: a?.anställningstyp || "",
@@ -198,6 +226,18 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
       originalData,
       anställningstypOptions,
       arbetsbelastningOptions,
+      lonOptions,
+      skattOptions,
+      // Derived display for view mode (to keep components UI-only)
+      arbetsbelastningDisplay: (() => {
+        const bel = (visningsAnställd as any)?.arbetsbelastning;
+        const deltid = (visningsAnställd as any)?.deltidProcent;
+        const arbetsvecka = (visningsAnställd as any)?.arbetsvecka;
+        const arbetsbelastningText =
+          bel === "Deltidsanställd" && deltid ? `${bel} (${deltid}%)` : bel || "";
+        const arbetsveckaText = arbetsvecka ? `${arbetsvecka} timmar` : "";
+        return { arbetsbelastningText, arbetsveckaText };
+      })(),
     },
     handlers: {
       setIsEditing,
@@ -213,3 +253,5 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
     },
   };
 }
+
+// Context to be avoided per project conventions (Zustand + hook + props)

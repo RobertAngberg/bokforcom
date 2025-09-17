@@ -10,7 +10,7 @@ import Skatt from "./Skatt";
 import Jobbtitel from "./Jobbtitel";
 import Semester from "./Semester";
 import Tjänsteställe from "./Tjanstestalle";
-import type { KontraktProps } from "./_types/types";
+import type { KontraktProps } from "../_types/types";
 import { useKontrakt } from "../_hooks/useKontrakt";
 // #endregion
 
@@ -47,11 +47,27 @@ export default function Kontrakt({ anställd }: KontraktProps) {
 
       {state.isEditing ? (
         <div className="space-y-8">
-          <Anställningstyp />
+          <Anställningstyp
+            editData={state.editData}
+            handleChange={handlers.onChange}
+            options={state.anställningstypOptions}
+          />
           <KontraktPeriod editData={state.editData} handleChange={handlers.onChange} />
-          <Lön editData={state.editData} handleChange={handlers.onChange} />
-          <Arbetsbelastning />
-          <Skatt editData={state.editData} handleChange={handlers.onChange} />
+          <Lön
+            editData={state.editData}
+            handleChange={handlers.onChange}
+            options={state.lonOptions}
+          />
+          <Arbetsbelastning
+            editData={state.editData}
+            handleChange={handlers.onChange}
+            options={state.arbetsbelastningOptions}
+          />
+          <Skatt
+            editData={state.editData}
+            handleChange={handlers.onChange}
+            options={state.skattOptions}
+          />
           <Jobbtitel editData={state.editData} handleChange={handlers.onChange} />
           <Semester editData={state.editData} handleChange={handlers.onChange} />
           <Tjänsteställe editData={state.editData} handleChange={handlers.onChange} />
@@ -62,7 +78,11 @@ export default function Kontrakt({ anställd }: KontraktProps) {
           <div className="space-y-6">
             <KontraktPeriod anställd={anstalld} viewMode />
             <Lön anställd={anstalld} viewMode />
-            <Arbetsbelastning viewMode />
+            <Arbetsbelastning
+              anställd={anstalld}
+              viewMode
+              display={state.arbetsbelastningDisplay}
+            />
           </div>
 
           {/* Höger kolumn */}

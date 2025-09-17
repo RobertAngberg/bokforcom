@@ -250,11 +250,23 @@ export interface PersonalinformationProps {
 }
 
 export interface AnställningstypProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
   viewMode?: boolean;
+  options?: { value: string; label: string }[];
 }
 
 export interface ArbetsbelastningProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
   viewMode?: boolean;
+  options?: { value: string; label: string }[];
+  display?: {
+    arbetsbelastningText: string;
+    arbetsveckaText: string;
+  };
 }
 
 export interface JobbtitelProps {
@@ -269,28 +281,46 @@ export interface KontraktProps {
   onRedigera?: () => void;
 }
 
-export interface EditData {
-  anställningstyp: string;
-  startdatum: Date;
-  slutdatum: Date;
-  månadslön: string;
-  betalningssätt: string;
-  kompensation: string;
-  ersättningPer: string;
-  arbetsbelastning: string;
-  arbetsveckaTimmar: string;
-  deltidProcent: string;
-  skattetabell: string;
-  skattekolumn: string;
-  jobbtitel: string;
-  semesterdagarPerÅr: string;
-  tjänsteställeAdress: string;
-  tjänsteställeOrt: string;
-}
-
-export interface KontraktProps {
+export interface KontraktPeriodProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
   anställd?: any;
-  onRedigera?: () => void;
+  viewMode?: boolean;
+}
+
+export interface LönProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
+  viewMode?: boolean;
+  options?: {
+    ersättningPer: { value: string; label: string }[];
+  };
+}
+
+export interface SemesterProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
+  viewMode?: boolean;
+}
+
+export interface SkattProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
+  viewMode?: boolean;
+  options?: {
+    skattetabell: { value: string; label: string }[];
+    skattekolumn: { value: string; label: string }[];
+  };
+}
+
+export interface TjänsteställeProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  anställd?: any;
+  viewMode?: boolean;
 }
 
 export interface EditData {
@@ -310,4 +340,13 @@ export interface EditData {
   semesterdagarPerÅr: string;
   tjänsteställeAdress: string;
   tjänsteställeOrt: string;
+}
+
+// ===============================
+// Lönekörning: komponent-props
+// ===============================
+export interface AGIDebugModalProps {
+  visaDebug: boolean;
+  setVisaDebug: (show: boolean) => void;
+  agiDebugData: any;
 }
