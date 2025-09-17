@@ -6,7 +6,8 @@ import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-import { hämtaAllaAnställda, hämtaUtlägg, taBortUtlägg } from "../actions";
+import { hämtaAllaAnställda } from "../_actions/anstalldaActions";
+import { hämtaUtlägg, taBortUtlägg } from "../_actions/utlaggActions";
 
 interface Utlägg {
   id: number;
