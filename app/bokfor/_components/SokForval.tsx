@@ -5,50 +5,40 @@ import TextFalt from "../../_components/TextFalt";
 import { useSokForval } from "../_hooks/useSokForval";
 
 export default function SokForval() {
-  const {
-    currentStep,
-    searchText,
-    results,
-    highlightedIndex,
-    loading,
-    handleKeyDown,
-    handleSearchChange,
-    väljFörval,
-    getTitle,
-  } = useSokForval();
+  const { state, handlers } = useSokForval();
 
   // Visa bara på steg 1
-  if (currentStep !== 1) return null;
+  if (state.currentStep !== 1) return null;
   return (
     <div className="w-full">
-      <h1 className="mb-8 text-3xl text-center text-white">{getTitle()}</h1>
+      <h1 className="mb-8 text-3xl text-center text-white">{handlers.getTitle()}</h1>
 
-      <div onKeyDown={handleKeyDown}>
+      <div onKeyDown={handlers.handleKeyDown}>
         <TextFalt
           label=""
           name="forval-search"
           type="text"
-          value={searchText}
-          onChange={handleSearchChange}
+          value={state.searchText}
+          onChange={handlers.handleSearchChange}
           placeholder="Sök förval..."
           required={false}
           autoFocus
         />
 
-        {loading && (
+        {state.loading && (
           <div className="text-center text-white">
             <span>Söker...</span>
           </div>
         )}
 
-        {results.length > 0 && (
+        {state.results.length > 0 && (
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {results.map((förval, index) => (
+            {state.results.map((förval, index) => (
               <FörvalKort
                 key={förval.id}
                 förval={förval}
-                isHighlighted={index === highlightedIndex}
-                onClick={() => väljFörval(förval)}
+                isHighlighted={index === state.highlightedIndex}
+                onClick={() => handlers.väljFörval(förval)}
               />
             ))}
           </div>

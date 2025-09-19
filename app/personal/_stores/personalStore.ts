@@ -88,6 +88,20 @@ export const usePersonalStore = create<PersonalStoreState>((set, get) => ({
     previewRows: [],
     loading: false,
   },
+  utbetalningsdatum: null as Date | null,
+
+  // ===================
+  // LÖNEKÖRNING / LÖNESPEC STATE
+  // ===================
+  laddaLönespecar: false as boolean,
+  löneperiod: null as { månad: number; år: number } | null,
+  lönespecar: {} as Record<string | number, any>,
+  sparar: {} as Record<string | number, boolean>,
+  taBort: {} as Record<string | number, boolean>,
+  förhandsgranskaId: null as string | number | null,
+  förhandsgranskaData: null as any,
+  agiDebugData: null as any,
+  visaAGIDebug: false as boolean,
 
   // ===================
   // ANSTÄLLDA ACTIONS
@@ -241,6 +255,66 @@ export const usePersonalStore = create<PersonalStoreState>((set, get) => ({
     })),
 
   // ===================
+  // LÖNEKÖRNING / LÖNESPEC ACTIONS
+  // ===================
+  setLaddaLönespecar: (loading: boolean) => set({ laddaLönespecar: loading }),
+  setLöneperiod: (period: { månad: number; år: number } | null) => set({ löneperiod: period }),
+  setLönespecar: (map: Record<string | number, any>) => set({ lönespecar: map }),
+  setSparar: (id: string | number, value: boolean) =>
+    set((state) => ({ sparar: { ...state.sparar, [id]: value } })),
+  setTaBort: (id: string | number, value: boolean) =>
+    set((state) => ({ taBort: { ...state.taBort, [id]: value } })),
+  skapaNyLönespec: async (anställd: any) => {
+    // Placeholder: riktig implementation ersätter denna
+    const { showToast, lönespecar } = get();
+    set({ sparar: { ...get().sparar, [anställd.id]: true } });
+    try {
+      // Simulera skapad lönespec
+      const ny = { id: Date.now(), anställdId: anställd.id, grundlön: 0 };
+      set({ lönespecar: { ...lönespecar, [anställd.id]: ny } });
+      showToast("Lönespec skapad", "success");
+    } catch (e: any) {
+      showToast("Misslyckades skapa lönespec", "error");
+    } finally {
+      set((state) => ({ sparar: { ...state.sparar, [anställd.id]: false } }));
+    }
+  },
+  taBortLönespec: async (anställd: any) => {
+    const { showToast, lönespecar } = get();
+    set({ taBort: { ...get().taBort, [anställd.id]: true } });
+    try {
+      const copy = { ...lönespecar };
+      delete copy[anställd.id];
+      set({ lönespecar: copy });
+      showToast("Lönespec borttagen", "success");
+    } catch (e: any) {
+      showToast("Misslyckades ta bort lönespec", "error");
+    } finally {
+      set((state) => ({ taBort: { ...state.taBort, [anställd.id]: false } }));
+    }
+  },
+  openFörhandsgranskning: (anställd: any) => {
+    const { lönespecar } = get();
+    const spec = lönespecar[anställd.id];
+    set({ förhandsgranskaId: anställd.id, förhandsgranskaData: spec || null });
+  },
+  closeFörhandsgranskning: () => set({ förhandsgranskaId: null, förhandsgranskaData: null }),
+  setAgiDebugData: (data: any) => set({ agiDebugData: data }),
+  openAGIDebug: (data?: any) =>
+    set({ agiDebugData: data ?? get().agiDebugData, visaAGIDebug: true }),
+  closeAGIDebug: () => set({ visaAGIDebug: false }),
+  clearToast: () => get().hideToast(),
+  generateAGI: async (_args: any) => {
+    // Placeholder: här skulle AGI beräkning ske server-side
+    set({
+      agiDebugData: { ...(get().agiDebugData || {}), generatedXML: "<xml />" },
+      visaAGIDebug: true,
+    });
+    if (_args?.onAGIComplete) _args.onAGIComplete();
+  },
+  setUtbetalningsdatum: (datum: Date | null) => set({ utbetalningsdatum: datum }),
+
+  // ===================
   // INIT FUNCTION
   // ===================
   initStore: (data) =>
@@ -248,5 +322,6 @@ export const usePersonalStore = create<PersonalStoreState>((set, get) => ({
       anställda: data.anställda || [],
       valdAnställd: data.valdAnställd || null,
       utlägg: data.utlägg || [],
+      utbetalningsdatum: data.utbetalningsdatum || null,
     }),
 }));

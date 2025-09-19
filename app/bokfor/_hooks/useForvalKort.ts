@@ -15,10 +15,14 @@ export function useForvalKort({ förval, isHighlighted, onClick }: UseForvalKort
   };
 
   return {
-    cardClassName,
-    onClick,
-    formatKontoValue,
-    kontonSökord: förval.sökord.join(", "),
-    showEnterHint: isHighlighted,
+    state: {
+      cardClassName,
+      kontonSökord: förval.sökord.join(", "),
+      showEnterHint: isHighlighted,
+    },
+    handlers: {
+      onClick,
+      formatKontoValue,
+    },
   };
 }

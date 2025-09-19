@@ -6,6 +6,9 @@ export function useSteg4() {
   };
 
   return {
-    handleNewBokforing,
+    state: {},
+    handlers: {
+      handleNewBokforing,
+    },
   };
 }

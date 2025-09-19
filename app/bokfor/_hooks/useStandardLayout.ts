@@ -20,27 +20,25 @@ export function useStandardLayout(onSubmit?: () => void, title?: string) {
 
   // Grundläggande validering för standard layout
   const isValid = belopp && belopp > 0 && transaktionsdatum && fil;
+
   return {
-    // State values
-    belopp,
-    transaktionsdatum,
-    kommentar,
-    fil,
-    pdfUrl,
-
-    // Actions
-    setBelopp,
-    setTransaktionsdatum,
-    setKommentar,
-    setFil,
-    setPdfUrl,
-    setCurrentStep,
-
-    // Layout
-    title: title || "Standard bokföring",
-    onSubmit: onSubmit || (() => {}),
-
-    // Validering
-    isValid,
+    state: {
+      belopp,
+      transaktionsdatum,
+      kommentar,
+      fil,
+      pdfUrl,
+      isValid,
+      title: title || "Standard bokföring",
+    },
+    handlers: {
+      setBelopp,
+      setTransaktionsdatum,
+      setKommentar,
+      setFil,
+      setPdfUrl,
+      setCurrentStep,
+      onSubmit: onSubmit || (() => {}),
+    },
   };
 }

@@ -297,14 +297,18 @@ export function useLaddaUppFil({
   };
 
   return {
-    recognizedText,
-    isLoading,
-    timeoutTriggered,
-    toast,
-    setToast,
-    handleFileChange,
-    clearFile,
-    validateFile,
-    sanitizeFilename,
+    state: {
+      recognizedText,
+      isLoading,
+      timeoutTriggered,
+      toast,
+    },
+    handlers: {
+      setToast,
+      handleFileChange,
+      clearFile,
+      validateFile,
+      sanitizeFilename,
+    },
   };
 }

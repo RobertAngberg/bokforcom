@@ -207,14 +207,22 @@ export function useSokForval() {
   };
 
   return {
-    currentStep,
-    searchText,
-    results,
-    highlightedIndex,
-    loading,
-    handleKeyDown,
-    handleSearchChange,
-    väljFörval,
-    getTitle,
+    state: {
+      currentStep,
+      searchText,
+      results,
+      highlightedIndex,
+      loading,
+      favoritFörval,
+      allaFörval,
+      levfaktMode,
+      utlaggMode,
+    },
+    handlers: {
+      handleKeyDown,
+      handleSearchChange,
+      väljFörval,
+      getTitle,
+    },
   };
 }

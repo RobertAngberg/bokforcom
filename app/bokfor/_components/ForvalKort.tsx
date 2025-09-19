@@ -1,17 +1,13 @@
 "use client";
 
 import { ForvalKortProps } from "../_types/types";
+import { useForvalKort } from "../_hooks/useForvalKort";
 
 export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
+  const { state, handlers } = useForvalKort({ förval, isHighlighted, onClick });
+
   return (
-    <div
-      className={`relative rounded-xl p-4 transition-all duration-200 shadow-md cursor-pointer ${
-        isHighlighted
-          ? "border-2 border-dashed border-gray-500 bg-slate-800"
-          : "border border-gray-700 bg-slate-900"
-      }`}
-      onClick={onClick}
-    >
+    <div className={state.cardClassName} onClick={handlers.onClick}>
       <div className="text-xl font-semibold text-white mb-2">✓ {förval.namn}</div>
       <pre className="whitespace-pre-wrap text-sm italic text-gray-300 mb-2 font-sans">
         {förval.beskrivning}
@@ -23,7 +19,7 @@ export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalK
       </p>
 
       <p className="text-sm text-gray-500 mt-2 mb-4">
-        <strong>Sökord:</strong> {förval.sökord.join(", ")}
+        <strong>Sökord:</strong> {state.kontonSökord}
       </p>
 
       <table className="w-full border border-gray-700 text-sm text-gray-300">
@@ -41,17 +37,17 @@ export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalK
                 {konto.kontonummer} {konto.beskrivning}
               </td>
               <td className="border border-gray-700 px-2 py-1 text-center">
-                {konto.debet === true ? "✓" : (konto.debet ?? "")}
+                {handlers.formatKontoValue(konto.debet)}
               </td>
               <td className="border border-gray-700 px-2 py-1 text-center">
-                {konto.kredit === true ? "✓" : (konto.kredit ?? "")}
+                {handlers.formatKontoValue(konto.kredit)}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {isHighlighted && (
+      {state.showEnterHint && (
         <div className="mt-3 text-xs text-right text-gray-400">⏎ Tryck Enter för att välja</div>
       )}
     </div>

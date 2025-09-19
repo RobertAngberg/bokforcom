@@ -189,6 +189,18 @@ export interface PersonalStoreState {
   utlägg: UtläggData[];
   utläggLoading: boolean;
   utläggBokföringModal: UtläggBokföringModalState;
+  utbetalningsdatum?: Date | null;
+  // Lönekörning / Lönespec slice
+  laddaLönespecar: boolean;
+  löneperiod: { månad: number; år: number } | null;
+  lönespecar: Record<string | number, any>;
+  sparar: Record<string | number, boolean>;
+  taBort: Record<string | number, boolean>;
+  förhandsgranskaId: string | number | null;
+  förhandsgranskaData: any;
+  agiDebugData: any;
+  visaAGIDebug: boolean;
+  // Actions
   setAnställda: (anställda: AnställdListItem[]) => void;
   setValdAnställd: (anställd: AnställdData | null) => void;
   setAnställdaLoading: (loading: boolean) => void;
@@ -212,10 +224,26 @@ export interface PersonalStoreState {
   openUtläggBokföringModal: (utlägg: UtläggData, previewRows: UtlaggBokföringsRad[]) => void;
   closeUtläggBokföringModal: () => void;
   setUtläggBokföringLoading: (loading: boolean) => void;
+  setLaddaLönespecar: (loading: boolean) => void;
+  setLöneperiod: (period: { månad: number; år: number } | null) => void;
+  setLönespecar: (map: Record<string | number, any>) => void;
+  setSparar: (id: string | number, value: boolean) => void;
+  setTaBort: (id: string | number, value: boolean) => void;
+  skapaNyLönespec: (anställd: any) => Promise<void>;
+  taBortLönespec: (anställd: any) => Promise<void>;
+  openFörhandsgranskning: (anställd: any) => void;
+  closeFörhandsgranskning: () => void;
+  setAgiDebugData: (data: any) => void;
+  openAGIDebug: (data?: any) => void;
+  closeAGIDebug: () => void;
+  clearToast: () => void;
+  generateAGI: (args: any) => Promise<void>;
+  setUtbetalningsdatum?: (datum: Date | null) => void;
   initStore: (data: {
     anställda?: AnställdListItem[];
     valdAnställd?: AnställdData | null;
     utlägg?: UtläggData[];
+    utbetalningsdatum?: Date | null;
   }) => void;
 }
 
@@ -223,6 +251,7 @@ export interface StoreInitProps {
   anställda?: AnställdListItem[];
   valdAnställd?: AnställdData | null;
   utlägg?: UtläggData[];
+  utbetalningsdatum?: Date | null;
 }
 
 export interface BokföringsPost {
