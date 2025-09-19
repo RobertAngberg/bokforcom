@@ -7,7 +7,7 @@ import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Modal from "../../_components/Modal";
 import Tabell from "../../_components/Tabell";
-import { useBokfordaFakturor } from "../_hooks/useBokfordaFakturor";
+import { useBokfordaFakturor } from "../_hooks/useLeverantorer";
 
 export default function BokfordaFakturor() {
   const {

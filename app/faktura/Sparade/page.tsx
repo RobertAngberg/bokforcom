@@ -8,7 +8,7 @@ import MainLayout from "../../_components/MainLayout";
 import Link from "next/link";
 import Toast from "../../_components/Toast";
 import { useSparadeFakturor, useSparadeFakturorPage } from "../_hooks/useLeverantorer";
-import { useFakturaClient } from "../_hooks/useFakturaClient";
+import { useFakturaClient } from "../_hooks/useFaktura";
 import { FakturaProvider } from "../_context/FakturaContext";
 //#endregion
 

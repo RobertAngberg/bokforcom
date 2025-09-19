@@ -172,72 +172,11 @@ export interface NyFakturaClientProps {
   initialData: ServerData;
 }
 
-export interface FakturaStoreInitProps {
-  initialData: ServerData;
-}
-
 // Preview state type
 export type PreviewState = {
   showPreview: boolean;
   setShowPreview: (show: boolean) => void;
 };
-
-// Store interface
-export interface FakturaStoreState {
-  // State
-  formData: FakturaFormData;
-  kundStatus: KundStatus;
-  nyArtikel: NyArtikel;
-
-  // ProdukterTjanster state
-  produkterTjansterState: {
-    favoritArtiklar: FavoritArtikel[];
-    showFavoritArtiklar: boolean;
-    blinkIndex: number | null;
-    visaRotRutForm: boolean;
-    visaArtikelForm: boolean;
-    visaArtikelModal: boolean;
-    redigerarIndex: number | null;
-    favoritArtikelVald: boolean;
-    ursprungligFavoritId: number | null;
-    artikelSparadSomFavorit: boolean;
-    valtArtikel: FavoritArtikel | null;
-  };
-
-  // Toast state
-  toastState: {
-    message: string;
-    type: "success" | "error" | "info";
-    isVisible: boolean;
-  };
-
-  // User settings
-  userSettings: {
-    bokföringsmetod: "kontantmetoden" | "fakturametoden";
-  };
-
-  // Actions
-  setFormData: (data: Partial<FakturaFormData>) => void;
-  resetFormData: () => void;
-  setKundStatus: (status: KundStatus) => void;
-  resetKund: () => void;
-  setNyArtikel: (artikel: Partial<NyArtikel>) => void;
-  resetNyArtikel: () => void;
-
-  // ProdukterTjanster actions
-  setProdukterTjansterState: (state: Partial<FakturaStoreState["produkterTjansterState"]>) => void;
-  resetProdukterTjanster: () => void;
-
-  // Toast actions
-  setToast: (toast: { message: string; type: "success" | "error" | "info" }) => void;
-  clearToast: () => void;
-
-  // User settings actions
-  setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
-
-  // Init function för server data
-  initStore: (data: ServerData) => void;
-}
 
 // ProdukterTjanster Component Props Types
 export interface ArtikelFormProps {

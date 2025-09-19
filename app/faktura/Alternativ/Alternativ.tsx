@@ -52,7 +52,14 @@ export default function Alternativ({ onReload, onPreview }: AlternativProps) {
     <div className="space-y-6">
       <div className="flex flex-wrap gap-4">
         <Knapp
-          onClick={hanteraSpara}
+          onClick={() => {
+            console.log("🔍 Spara-knapp klickad!", {
+              kanSpara,
+              sparaLoading,
+              disabled: !kanSpara || sparaLoading,
+            });
+            hanteraSpara();
+          }}
           text={sparaKnappText}
           disabled={!kanSpara || sparaLoading}
           className="flex-1 min-w-40"

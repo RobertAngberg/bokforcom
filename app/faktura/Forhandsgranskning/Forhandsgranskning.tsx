@@ -3,6 +3,7 @@
 "use client";
 
 import { useFaktura } from "../_hooks/useFaktura";
+import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
 import { useSession } from "next-auth/react";
 import BetalningsInfo from "./BetalningsInfo";
 import RotRutInfo from "./RotRutInfo";
@@ -18,8 +19,8 @@ export default function Forhandsgranskning() {
   const { data: session } = useSession();
   const rows = formData.artiklar || [];
 
-  // Alla beräkningar från hooken
-  const forhandsgranskningCalcs = useFaktura().getForhandsgranskningCalculations();
+  // Alla beräkningar från useForhandsgranskning hooken
+  const forhandsgranskningCalcs = useForhandsgranskning().getForhandsgranskningCalculations();
   const {
     sumExkl,
     totalMoms,

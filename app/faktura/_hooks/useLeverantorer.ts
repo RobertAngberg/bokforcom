@@ -6,13 +6,23 @@ import {
   deleteLeverantör,
   saveLeverantör,
   updateLeverantör,
-} from "../_actions/leverantorActions";
+} from "../_actions/leverantorerActions";
 import { Leverantör } from "../_types/types";
-import { hamtaBokfordaFakturor } from "../_actions/bokforingActions";
-import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../_actions/fakturaActions";
-import { hämtaFöretagsprofil } from "../_actions/foretagActions";
-import { hämtaSparadeKunder } from "../_actions/kundActions";
-import { hämtaSparadeArtiklar } from "../_actions/artikelActions";
+import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../_actions/alternativActions";
+import {
+  hämtaFakturaMedRader,
+  hämtaSparadeFakturor,
+  hämtaFöretagsprofil,
+  hämtaSparadeKunder,
+  hämtaSparadeArtiklar,
+} from "../_actions/fakturaActions";
+import {
+  betalaOchBokförLeverantörsfaktura,
+  taBortLeverantörsfaktura,
+} from "../_actions/leverantorsfakturorActions";
+import { formatSEK } from "../../_utils/format";
+import { ColumnDefinition } from "../../_components/Tabell";
+import { stringTillDate } from "../../_utils/datum";
 import { safeAsync, logError, createError } from "../../_utils/errorUtils";
 import {
   UseLeverantorFlikReturn,
@@ -25,9 +35,9 @@ import {
   UseBokfordaFakturorFlikReturn,
   UseSparadeFakturorReturn,
   UseSparadeFakturorPageReturn,
+  BokfordFaktura,
 } from "../_types/types";
-import { useLeverantorNavigation } from "./useLeverantorNavigation";
-import { useFakturaClient } from "./useFakturaClient";
+import { useFakturaClient } from "./useFaktura";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -359,8 +369,8 @@ export function useValjLeverantorModal({
   isOpen,
   onClose,
 }: UseValjLeverantorModalParams): UseValjLeverantorModalReturn {
+  const router = useRouter();
   const [selectedLeverantör, setSelectedLeverantör] = useState<number | null>(null);
-  const { navigateToBokforing } = useLeverantorNavigation();
   const { refresh } = useLeverantörer();
 
   useEffect(() => {
@@ -373,7 +383,8 @@ export function useValjLeverantorModal({
     if (selectedLeverantör) {
       onClose();
       // Navigera till bokföringssystemet med levfakt=true
-      navigateToBokforing({ leverantorId: selectedLeverantör });
+      const url = `/bokfor?levfakt=true&leverantorId=${selectedLeverantör}`;
+      router.push(url);
     }
   };
 
@@ -394,8 +405,8 @@ export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
   const loadFakturorAntal = async () => {
     try {
       const result = await hamtaBokfordaFakturor();
-      if (result.success && result.fakturor) {
-        setFakturorAntal(result.fakturor.length);
+      if (result.success && result.data) {
+        setFakturorAntal(result.data.length);
       }
     } catch (error) {
       console.error("Fel vid hämtning av fakturor:", error);
@@ -423,125 +434,11 @@ export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorRe
   // Funktion för att hantera när en faktura väljs
   const hanteraValdFaktura = useCallback(
     async (fakturaId: number) => {
-      const data = await hämtaFakturaMedRader(fakturaId);
-      if (!data || !data.faktura) {
-        showError("Kunde inte hämta faktura");
-        return;
-      }
-      const { faktura, artiklar, rotRut } = data;
-
-      setFormData({
-        id: faktura.id,
-        fakturanummer: faktura.fakturanummer ?? "",
-        fakturadatum: faktura.fakturadatum?.toISOString
-          ? faktura.fakturadatum.toISOString().slice(0, 10)
-          : (faktura.fakturadatum ?? ""),
-        forfallodatum: faktura.forfallodatum?.toISOString
-          ? faktura.forfallodatum.toISOString().slice(0, 10)
-          : (faktura.forfallodatum ?? ""),
-        betalningsmetod: faktura.betalningsmetod ?? "",
-        betalningsvillkor: faktura.betalningsvillkor ?? "",
-        drojsmalsranta: faktura.drojsmalsranta ?? "",
-        kundId: faktura.kundId?.toString() ?? "",
-        nummer: faktura.nummer ?? "",
-        kundmomsnummer: faktura.kundmomsnummer ?? "",
-        kundnamn: faktura.kundnamn ?? "",
-        kundnummer: faktura.kundnummer ?? "",
-        kundorganisationsnummer: faktura.kundorganisationsnummer ?? "",
-        kundadress: faktura.kundadress ?? "",
-        kundpostnummer: faktura.kundpostnummer ?? "",
-        kundstad: faktura.kundstad ?? "",
-        kundemail: faktura.kundemail ?? "",
-        företagsnamn: faktura.företagsnamn ?? "",
-        epost: faktura.epost ?? "",
-        adress: faktura.adress ?? "",
-        postnummer: faktura.postnummer ?? "",
-        stad: faktura.stad ?? "",
-        organisationsnummer: faktura.organisationsnummer ?? "",
-        momsregistreringsnummer: faktura.momsregistreringsnummer ?? "",
-        telefonnummer: faktura.telefonnummer ?? "",
-        bankinfo: faktura.bankinfo ?? "",
-        webbplats: faktura.webbplats ?? "",
-        logo: faktura.logo ?? "",
-        logoWidth: faktura.logo_width ?? 200,
-        artiklar: artiklar.map((rad: any) => ({
-          beskrivning: rad.beskrivning,
-          antal: Number(rad.antal),
-          prisPerEnhet: Number(rad.prisPerEnhet),
-          moms: Number(rad.moms),
-          valuta: rad.valuta ?? "SEK",
-          typ: rad.typ === "tjänst" ? "tjänst" : "vara",
-          rotRutTyp: rad.rotRutTyp,
-          rotRutKategori: rad.rotRutKategori,
-          avdragProcent: rad.avdragProcent,
-          arbetskostnadExMoms: rad.arbetskostnadExMoms,
-          rotRutBeskrivning: rad.rotRutBeskrivning,
-          rotRutStartdatum: rad.rotRutStartdatum,
-          rotRutSlutdatum: rad.rotRutSlutdatum,
-          rotRutPersonnummer: rad.rotRutPersonnummer,
-          rotRutFastighetsbeteckning: rad.rotRutFastighetsbeteckning,
-          rotRutBoendeTyp: rad.rotRutBoendeTyp,
-          rotRutBrfOrg: rad.rotRutBrfOrg,
-          rotRutBrfLagenhet: rad.rotRutBrfLagenhet,
-        })),
-        // ROT/RUT-fält från rot_rut-tabellen eller första artikeln med ROT/RUT-data
-        rotRutAktiverat:
-          !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rotRutTyp),
-        rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rotRutTyp)?.rotRutTyp || undefined,
-        rotRutKategori:
-          (rotRut as any).rotRutKategori ||
-          artiklar.find((a: any) => a.rotRutKategori)?.rotRutKategori ||
-          undefined,
-        avdragProcent:
-          rotRut.avdrag_procent ||
-          artiklar.find((a: any) => a.avdragProcent)?.avdragProcent ||
-          undefined,
-        arbetskostnadExMoms:
-          rotRut.arbetskostnad_ex_moms ||
-          artiklar.find((a: any) => a.arbetskostnadExMoms)?.arbetskostnadExMoms ||
-          undefined,
-        avdragBelopp: rotRut.avdrag_belopp || undefined,
-        personnummer:
-          rotRut.personnummer ||
-          artiklar.find((a: any) => a.rotRutPersonnummer)?.rotRutPersonnummer ||
-          "",
-        fastighetsbeteckning:
-          rotRut.fastighetsbeteckning ||
-          artiklar.find((a: any) => a.rotRutFastighetsbeteckning)?.rotRutFastighetsbeteckning ||
-          "",
-        rotBoendeTyp: rotRut.rot_boende_typ || undefined,
-        brfOrganisationsnummer:
-          rotRut.brf_organisationsnummer ||
-          artiklar.find((a: any) => a.rotRutBrfOrg)?.rotRutBrfOrg ||
-          "",
-        brfLagenhetsnummer:
-          rotRut.brf_lagenhetsnummer ||
-          artiklar.find((a: any) => a.rotRutBrfLagenhet)?.rotRutBrfLagenhet ||
-          "",
-        // Nya ROT/RUT-fält från rot_rut-tabellen eller första artikeln
-        rotRutBeskrivning:
-          (rotRut as any).rotRutBeskrivning ||
-          artiklar.find((a: any) => a.rotRutBeskrivning)?.rotRutBeskrivning ||
-          "",
-        rotRutStartdatum:
-          (rotRut as any).rotRutStartdatum ||
-          artiklar.find((a: any) => a.rotRutStartdatum)?.rotRutStartdatum ||
-          "",
-        rotRutSlutdatum:
-          (rotRut as any).rotRutSlutdatum ||
-          artiklar.find((a: any) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
-          "",
-      });
-
-      // Sätt kundStatus till "loaded" så att kunduppgifterna visas
-      if (faktura.kundnamn) {
-        setKundStatus("loaded");
-      }
-
-      // Navigera till NyFaktura istället för att visa flikar här
-      router.push("/faktura/NyFaktura");
+      // Navigera till NyFaktura med faktura-ID som parameter
+      // Data kommer att laddas på NyFaktura-sidan baserat på detta ID
+      router.push(`/faktura/NyFaktura?edit=${fakturaId}`);
     },
-    [setFormData, setKundStatus, router]
+    [router]
   );
 
   return {
@@ -580,5 +477,358 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
     data,
     loading,
     loadData,
+  };
+}
+
+// =============================================================================
+// BOKFÖRDA FAKTUROR HOOK
+// =============================================================================
+
+/**
+ * Hook för hantering av bokförda leverantörsfakturor
+ * Flyttad från useBokfordaFakturor.tsx för konsolidering
+ */
+export function useBokfordaFakturor() {
+  const { toastState, setToast, clearToast } = useFakturaClient();
+
+  // State management
+  const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [verifikatModal, setVerifikatModal] = useState<{
+    isOpen: boolean;
+    transaktionId: number;
+    fakturanummer?: string;
+    leverantör?: string;
+  }>({
+    isOpen: false,
+    transaktionId: 0,
+  });
+  const [bekraftelseModal, setBekraftelseModal] = useState<{
+    isOpen: boolean;
+    faktura: BokfordFaktura | null;
+    transaktionsposter: any[];
+    loadingPoster: boolean;
+  }>({
+    isOpen: false,
+    faktura: null,
+    transaktionsposter: [],
+    loadingPoster: false,
+  });
+
+  // Hjälpfunktion för att säkert formatera datum
+  const formateraDatum = (datum: string | Date): string => {
+    if (typeof datum === "string") {
+      const dateObj = stringTillDate(datum);
+      return dateObj ? dateObj.toLocaleDateString("sv-SE") : datum;
+    }
+    return datum.toLocaleDateString("sv-SE");
+  };
+
+  // Kolumndefinitioner för transaktionsposter tabellen
+  const transaktionskolumner = [
+    {
+      key: "konto",
+      label: "Konto",
+      render: (_: any, post: any) => `${post.kontonummer} - ${post.kontobeskrivning}`,
+    },
+    {
+      key: "debet",
+      label: "Debet",
+      render: (_: any, post: any) => (post.debet > 0 ? formatSEK(post.debet) : "—"),
+      className: "text-right",
+    },
+    {
+      key: "kredit",
+      label: "Kredit",
+      render: (_: any, post: any) => (post.kredit > 0 ? formatSEK(post.kredit) : "—"),
+      className: "text-right",
+    },
+  ];
+
+  // Data fetching effect
+  useEffect(() => {
+    async function hamtaFakturor() {
+      try {
+        const result = await hamtaBokfordaFakturor();
+        if (result.success && result.data) {
+          setFakturor(result.data);
+        }
+      } catch (error) {
+        console.error("Fel vid hämtning av bokförda fakturor:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    hamtaFakturor();
+  }, []);
+
+  // Event handlers
+  const öppnaVerifikat = (faktura: BokfordFaktura) => {
+    setVerifikatModal({
+      isOpen: true,
+      transaktionId: faktura.transaktionId || faktura.id,
+      fakturanummer: faktura.fakturanummer,
+      leverantör: faktura.leverantör,
+    });
+  };
+
+  const stängVerifikat = () => {
+    setVerifikatModal({
+      isOpen: false,
+      transaktionId: 0,
+    });
+  };
+
+  const handleBetalaOchBokför = async (faktura: BokfordFaktura) => {
+    setBekraftelseModal({
+      isOpen: true,
+      faktura: faktura,
+      transaktionsposter: [],
+      loadingPoster: true,
+    });
+
+    // Hämta transaktionsposter för att visa debet/kredit
+    if (faktura.transaktionId) {
+      try {
+        const poster = await hamtaTransaktionsposter(faktura.transaktionId);
+        setBekraftelseModal((prev) => ({
+          ...prev,
+          transaktionsposter: Array.isArray(poster) ? poster : [],
+          loadingPoster: false,
+        }));
+      } catch (error) {
+        console.error("Fel vid hämtning av transaktionsposter:", error);
+        setBekraftelseModal((prev) => ({
+          ...prev,
+          loadingPoster: false,
+        }));
+      }
+    } else {
+      setBekraftelseModal((prev) => ({
+        ...prev,
+        loadingPoster: false,
+      }));
+    }
+  };
+
+  const stängBekraftelseModal = () => {
+    setBekraftelseModal({
+      isOpen: false,
+      faktura: null,
+      transaktionsposter: [],
+      loadingPoster: false,
+    });
+  };
+
+  const taBortFaktura = async (fakturaId: number) => {
+    if (confirm("Är du säker på att du vill ta bort denna leverantörsfaktura?")) {
+      try {
+        const result = await taBortLeverantörsfaktura(fakturaId);
+
+        if (result.success) {
+          // Ta bort från listan lokalt
+          setFakturor((prev) => prev.filter((f) => f.id !== fakturaId));
+
+          setToast({
+            message: "Leverantörsfaktura borttagen!",
+            type: "success",
+          });
+        } else {
+          setToast({
+            message: `Fel vid borttagning: ${result.error}`,
+            type: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Fel vid borttagning av faktura:", error);
+        setToast({
+          message: "Fel vid borttagning av faktura",
+          type: "error",
+        });
+      }
+    }
+  };
+
+  const utförBokföring = async (faktura: BokfordFaktura) => {
+    try {
+      const result = await betalaOchBokförLeverantörsfaktura(faktura.id, faktura.belopp);
+
+      if (result.success) {
+        setToast({
+          message: "Leverantörsfaktura bokförd!",
+          type: "success",
+        });
+        // Ladda om data för att visa uppdaterad status
+        const updatedData = await hamtaBokfordaFakturor();
+        if (updatedData.success) {
+          setFakturor(updatedData.data || []);
+        }
+      } else {
+        setToast({
+          message: `Fel vid bokföring: ${result.error}`,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Fel vid bokföring:", error);
+      setToast({
+        message: "Ett fel uppstod vid bokföring",
+        type: "error",
+      });
+    }
+    // Stäng modalen
+    stängBekraftelseModal();
+  };
+
+  const closeToast = () => {
+    clearToast();
+  };
+
+  return {
+    // State
+    fakturor,
+    loading,
+    verifikatModal,
+    toast: toastState,
+    bekraftelseModal,
+
+    // Computed data
+    transaktionskolumner,
+
+    // Actions
+    formateraDatum,
+    öppnaVerifikat,
+    stängVerifikat,
+    handleBetalaOchBokför,
+    stängBekraftelseModal,
+    taBortFaktura,
+    utförBokföring,
+    closeToast,
+  };
+}
+
+// =============================================================================
+// LEVERANTÖR NAVIGATION HOOK
+// =============================================================================
+
+/**
+ * Hook för navigation mellan leverantör-relaterade sidor
+ * Flyttad från useLeverantorNavigation.ts för konsolidering
+ */
+export function useLeverantorNavigation() {
+  const router = useRouter();
+
+  const navigateToLeverantorsfakturor = () => {
+    router.push("/faktura/Leverantorsfakturor");
+  };
+
+  const navigateToBokforing = ({
+    leverantorId,
+    levfakt = true,
+  }: {
+    leverantorId: number;
+    levfakt?: boolean;
+  }) => {
+    if (!leverantorId) {
+      console.error("leverantorId is required for navigation");
+      return;
+    }
+
+    const url = `/bokfor?levfakt=${levfakt}&leverantorId=${leverantorId}`;
+    router.push(url);
+  };
+
+  const navigateToFaktura = () => {
+    router.push("/faktura");
+  };
+
+  return {
+    navigateToLeverantorsfakturor,
+    navigateToBokforing,
+    navigateToFaktura,
+  };
+}
+
+export function useVerifikatModal({
+  isOpen,
+  transaktionId,
+  fakturanummer,
+  leverantör,
+}: {
+  isOpen: boolean;
+  transaktionId: number | null;
+  fakturanummer?: string;
+  leverantör?: string;
+}) {
+  // State management
+  const [poster, setPoster] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Data fetching effect
+  useEffect(() => {
+    if (isOpen && transaktionId) {
+      hämtaPoster();
+    }
+  }, [isOpen, transaktionId]);
+
+  const hämtaPoster = async () => {
+    if (!transaktionId) return;
+
+    setLoading(true);
+    console.log("🔍 Hämtar verifikat för transaktionId:", transaktionId);
+    try {
+      const result = await hamtaTransaktionsposter(transaktionId);
+      console.log("📝 Verifikat-resultat:", result);
+      if (Array.isArray(result)) {
+        setPoster(result as any);
+      }
+    } catch (error) {
+      console.error("Fel vid hämtning av transaktionsposter:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Column definitions for table (without JSX render functions)
+  const columns: ColumnDefinition<any>[] = [
+    {
+      key: "kontonummer",
+      label: "Konto",
+    },
+    {
+      key: "debet",
+      label: "Debet",
+    },
+    {
+      key: "kredit",
+      label: "Kredit",
+    },
+  ];
+
+  // Calculate totals
+  const totalDebet = poster.reduce((sum, post) => sum + post.debet, 0);
+  const totalKredit = poster.reduce((sum, post) => sum + post.kredit, 0);
+
+  // Modal title logic
+  const modalTitle = ""; // Tom titel så Modal.tsx inte visar den
+  const headerTitle = `Verifikat - ${leverantör || "Okänd leverantör"}${
+    fakturanummer ? ` (${fakturanummer})` : ""
+  }`;
+
+  return {
+    // State
+    poster,
+    loading,
+
+    // Computed data
+    columns,
+    totalDebet,
+    totalKredit,
+    modalTitle,
+    headerTitle,
+
+    // Actions
+    hämtaPoster,
   };
 }

@@ -13,44 +13,23 @@ import { useFakturaContext } from "../_context/FakturaContext";
 import {
   hämtaNästaFakturanummer,
   saveInvoice,
-  deleteFaktura,
   hämtaSparadeFakturor,
-} from "../_actions/fakturaActions";
-import { hämtaSenasteBetalningsmetod } from "../_actions/alternativActions";
-import {
   hämtaFöretagsprofil,
   sparaFöretagsprofil,
   uploadLogoAction,
-} from "../_actions/foretagActions";
-import {
   sparaNyKund,
   deleteKund,
   hämtaSparadeKunder,
   uppdateraKund,
-} from "../_actions/kundActions";
-import {
-  sparaFavoritArtikel,
-  hämtaSparadeArtiklar,
-  deleteFavoritArtikel,
-} from "../_actions/artikelActions";
+} from "../_actions/fakturaActions";
+import { hämtaSenasteBetalningsmetod } from "../_actions/alternativActions";
 
 // Utils
 import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";
-import { generatePDFFromElement, generatePDFAsBase64 } from "../Alternativ/pdfGenerator";
 
 // Types
-import type {
-  FakturaFormData,
-  NyArtikel,
-  KundStatus,
-  ServerData,
-  FavoritArtikel,
-  Artikel,
-  KundSaveResponse,
-  ForhandsgranskningCalculations,
-  SkickaEpostProps,
-} from "../_types/types";
+import type { FakturaFormData, NyArtikel, KundStatus, KundSaveResponse } from "../_types/types";
 
 /**
  * Huvudhook för alla faktura-relaterade funktioner
@@ -81,14 +60,9 @@ export function useFaktura() {
 
   // Local UI state
   const [showPreview, setShowPreview] = useState(false);
-  const [loadingInvoiceId, setLoadingInvoiceId] = useState<number | null>(null);
-  const [isSending, setIsSending] = useState(false);
-  const [mottagareEmail, setMottagareEmail] = useState("");
-  const [egetMeddelande, setEgetMeddelande] = useState("");
   const [kunder, setKunder] = useState<any[]>([]);
   const [kundSuccessVisible, setKundSuccessVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [rotRutMaterial, setRotRutMaterial] = useState(false);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null); // =============================================================================
@@ -148,13 +122,6 @@ export function useFaktura() {
       .slice(0, 10);
     setFormData({ forfallodatum: calc });
   }, [formData.fakturadatum, formData.betalningsvillkor, formData.forfallodatum]);
-
-  // Uppdatera mottagarens e-post när kundens e-post ändras
-  useEffect(() => {
-    if (formData.kundemail && formData.kundemail.trim()) {
-      setMottagareEmail(formData.kundemail);
-    }
-  }, [formData.kundemail]);
 
   // Ladda företagsprofil automatiskt när komponenten mountas
   useEffect(() => {
@@ -477,87 +444,10 @@ export function useFaktura() {
   ]);
 
   // =============================================================================
-  // PRODUKTER/TJÄNSTER FUNCTIONS
+  // BASIC ARTIKEL FUNCTIONS (för bakåtkompatibilitet)
   // =============================================================================
 
-  // ROT/RUT constants
-  const RUT_KATEGORIER = [
-    "Passa barn",
-    "Fiber- och it-tjänster",
-    "Flytta och packa",
-    "Transport till försäljning för återanvändning",
-    "Möblering",
-    "Ta hand om en person och ge omsorg",
-    "Reparera vitvaror",
-    "Skotta snö",
-    "Städa",
-    "Tvätta, laga och sy",
-    "Tvätt vid tvättinrättning",
-    "Trädgårdsarbete – fälla och beskära träd",
-    "Trädgårdsarbete – underhålla, klippa och gräva",
-    "Tillsyn",
-  ];
-
-  const ROT_KATEGORIER = [
-    "Bygg – reparera och underhålla",
-    "Bygg – bygga om och bygga till",
-    "El",
-    "Glas och plåt",
-    "Gräv- och markarbete",
-    "Murning och sotning",
-    "Målning och tapetsering",
-    "Rengöring",
-    "VVS",
-  ];
-
-  // ROT/RUT utility functions
-  const sanitizeRotRutInput = useCallback((text: string): string => {
-    if (!text || typeof text !== "string") return "";
-    return text
-      .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-      .replace(/\s+/g, " ") // Normalisera whitespace
-      .trim()
-      .substring(0, 500); // Begränsa längd
-  }, []);
-
-  const validateRotRutNumeric = useCallback((value: string): boolean => {
-    const num = parseFloat(value);
-    return !isNaN(num) && isFinite(num) && num >= 0 && num < 10000000;
-  }, []);
-
-  const validatePersonnummerRotRut = useCallback((personnummer: string): boolean => {
-    if (!personnummer) return false;
-    const clean = personnummer.replace(/[-\s]/g, "");
-    return /^\d{10}$/.test(clean) || /^\d{12}$/.test(clean);
-  }, []);
-
-  // Store state destructuring
-  const {
-    favoritArtiklar,
-    showFavoritArtiklar,
-    blinkIndex,
-    visaRotRutForm,
-    visaArtikelForm,
-    visaArtikelModal,
-    redigerarIndex,
-    favoritArtikelVald,
-    ursprungligFavoritId,
-    artikelSparadSomFavorit,
-    valtArtikel,
-  } = produkterTjansterState;
-
-  // Ladda sparade artiklar
-  const laddaSparadeArtiklar = useCallback(async () => {
-    try {
-      const artiklar = await hämtaSparadeArtiklar();
-      setProdukterTjansterState({ favoritArtiklar: artiklar || [] });
-    } catch (error) {
-      console.error("Fel vid laddning av artiklar:", error);
-      showError("Kunde inte ladda sparade artiklar");
-    }
-  }, [setProdukterTjansterState, showError]);
-
-  // Lägg till artikel
+  // Lägg till artikel (förenklad version)
   const läggTillArtikel = useCallback(() => {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
 
@@ -566,35 +456,20 @@ export function useFaktura() {
       return;
     }
 
-    const nyArtikelData: Artikel = {
+    const nyArtikelData = {
       beskrivning,
       antal: parseFloat(antal),
       prisPerEnhet: parseFloat(prisPerEnhet),
       moms: parseFloat(moms),
       valuta,
       typ,
-      ursprungligFavoritId: ursprungligFavoritId ?? undefined,
     };
 
     const uppdateradeArtiklar = [...formData.artiklar, nyArtikelData];
     setFormData({ artiklar: uppdateradeArtiklar });
     resetNyArtikel();
-    setProdukterTjansterState({
-      visaArtikelForm: false,
-      favoritArtikelVald: false,
-      ursprungligFavoritId: null,
-    });
     showSuccess("Artikel tillagd");
-  }, [
-    nyArtikel,
-    formData.artiklar,
-    ursprungligFavoritId,
-    setFormData,
-    resetNyArtikel,
-    setProdukterTjansterState,
-    showSuccess,
-    showError,
-  ]);
+  }, [nyArtikel, formData.artiklar, setFormData, resetNyArtikel, showSuccess, showError]);
 
   // Ta bort artikel
   const taBortArtikel = useCallback(
@@ -605,382 +480,6 @@ export function useFaktura() {
     },
     [formData.artiklar, setFormData, showSuccess]
   );
-
-  // =============================================================================
-  // ROT/RUT FUNCTIONS (från useProdukterTjanster)
-  // =============================================================================
-
-  // ROT/RUT event handlers
-  const handleRotRutChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      let finalValue: string | boolean = value;
-
-      if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
-        finalValue = e.target.checked;
-      } else if (typeof value === "string") {
-        // SÄKERHETSVALIDERING: Sanitera alla textvärden
-        if (name === "rotRutBeskrivning") {
-          finalValue = sanitizeRotRutInput(value);
-        } else if (name === "personnummer") {
-          // Tillåt bara siffror och bindestreck för personnummer
-          finalValue = value.replace(/[^\d-]/g, "").substring(0, 13);
-        } else if (
-          name === "fastighetsbeteckning" ||
-          name === "brfOrganisationsnummer" ||
-          name === "brfLagenhetsnummer"
-        ) {
-          finalValue = sanitizeRotRutInput(value);
-        } else if (typeof value === "string") {
-          finalValue = sanitizeRotRutInput(value);
-        }
-      }
-
-      if (name === "rotRutAktiverat" && finalValue === false) {
-        // Reset alla ROT/RUT fält när det inaktiveras
-        const fieldsToReset = {
-          rotRutAktiverat: false,
-          rotRutTyp: undefined,
-          rotRutKategori: undefined,
-          avdragProcent: undefined,
-          arbetskostnadExMoms: undefined,
-          avdragBelopp: undefined,
-          personnummer: undefined,
-          fastighetsbeteckning: undefined,
-          rotBoendeTyp: undefined,
-          brfOrganisationsnummer: undefined,
-          brfLagenhetsnummer: undefined,
-        };
-
-        Object.entries(fieldsToReset).forEach(([key, value]) => {
-          updateFormField(key as keyof FakturaFormData, value);
-        });
-        return;
-      }
-
-      if (name === "rotRutTyp") {
-        const procent = value === "ROT" ? 50 : value === "RUT" ? 50 : undefined;
-        const isActive = value === "ROT" || value === "RUT";
-
-        updateMultipleFields({
-          rotRutAktiverat: isActive,
-          rotRutTyp: isActive ? (value as "ROT" | "RUT") : undefined,
-          avdragProcent: procent,
-          rotRutKategori: undefined,
-        });
-        return;
-      }
-
-      // Vanlig uppdatering av enskilt fält
-      updateFormField(name as keyof FakturaFormData, finalValue);
-    },
-    [updateFormField, updateMultipleFields, sanitizeRotRutInput]
-  );
-
-  const handleRotRutBoendeTypChange = useCallback(
-    (typ: "fastighet" | "brf") => {
-      updateFormField("rotBoendeTyp", typ);
-    },
-    [updateFormField]
-  );
-
-  const handleRotRutDateChange = useCallback(
-    (field: string, date: Date | null) => {
-      if (date) {
-        const dateString = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-        updateFormField(field as keyof FakturaFormData, dateString);
-      }
-    },
-    [updateFormField]
-  );
-
-  // Produkter/Tjänster state setters
-  const setShowFavoritArtiklar = useCallback(
-    (value: boolean) => {
-      setProdukterTjansterState({ showFavoritArtiklar: value });
-    },
-    [setProdukterTjansterState]
-  );
-
-  const setVisaRotRutForm = useCallback(
-    (value: boolean) => {
-      setProdukterTjansterState({ visaRotRutForm: value });
-    },
-    [setProdukterTjansterState]
-  );
-
-  const setVisaArtikelForm = useCallback(
-    (value: boolean) => {
-      setProdukterTjansterState({ visaArtikelForm: value });
-    },
-    [setProdukterTjansterState]
-  );
-
-  // =============================================================================
-  // FÖRHANDSGRANSKNING FUNCTIONS
-  // =============================================================================
-
-  const [logoSliderValue, setLogoSliderValue] = useState(() => {
-    const initial = (((formData.logoWidth ?? 200) - 50) / 150) * 100;
-    return initial;
-  });
-
-  const handleLogoSliderChange = useCallback(
-    (value: number) => {
-      setLogoSliderValue(value);
-      const calculated = 50 + (value / 100) * 150;
-      setFormData({ logoWidth: calculated });
-      localStorage.setItem("company_logoWidth", calculated.toString());
-    },
-    [setFormData]
-  );
-
-  // Beräkningar för förhandsgranskning
-  const getForhandsgranskningCalculations = useCallback((): ForhandsgranskningCalculations => {
-    const rows = formData.artiklar || [];
-    const logoSize = formData.logoWidth ?? 200;
-
-    // Grundläggande summor
-    const sumExkl = rows.reduce(
-      (acc, rad) =>
-        acc + parseFloat(String(rad.antal) || "0") * parseFloat(String(rad.prisPerEnhet) || "0"),
-      0
-    );
-
-    const totalMoms = rows.reduce((acc, rad) => {
-      const antal = parseFloat(String(rad.antal) || "0");
-      const pris = parseFloat(String(rad.prisPerEnhet) || "0");
-      const moms = parseFloat(String(rad.moms) || "0");
-      return acc + antal * pris * (moms / 100);
-    }, 0);
-
-    // ROT/RUT-avdrag enligt Skatteverket: 50% av arbetskostnad inkl moms
-    // Kolla om ROT/RUT är aktiverat på formulärnivå ELLER om det finns ROT/RUT-artiklar
-    const harROTRUTArtiklar =
-      formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
-    const rotRutTyp =
-      formData.rotRutTyp ||
-      (harROTRUTArtiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
-
-    // Beräkna arbetskostnad bara för ROT/RUT-tjänster (inte material)
-    const rotRutTjänsterSumExkl =
-      formData.artiklar?.reduce((acc, rad: any) => {
-        if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
-          const antal = parseFloat(String(rad.antal) || "0");
-          const pris = parseFloat(String(rad.prisPerEnhet) || "0");
-          return acc + antal * pris;
-        }
-        return acc;
-      }, 0) || 0;
-
-    const rotRutTjänsterMoms =
-      formData.artiklar?.reduce((acc, rad: any) => {
-        if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
-          const antal = parseFloat(String(rad.antal) || "0");
-          const pris = parseFloat(String(rad.prisPerEnhet) || "0");
-          const moms = parseFloat(String(rad.moms) || "0");
-          return acc + antal * pris * (moms / 100);
-        }
-        return acc;
-      }, 0) || 0;
-
-    const rotRutTjänsterInklMoms = rotRutTjänsterSumExkl + rotRutTjänsterMoms;
-    const arbetskostnadInklMoms = sumExkl + totalMoms;
-
-    // Avdrag bara på tjänstekostnaden, inte material
-    const rotRutAvdrag =
-      (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "ROT"
-        ? 0.5 * rotRutTjänsterInklMoms
-        : (formData.rotRutAktiverat || harROTRUTArtiklar) && rotRutTyp === "RUT"
-          ? 0.5 * rotRutTjänsterInklMoms
-          : 0;
-
-    const totalSum = arbetskostnadInklMoms - rotRutAvdrag;
-    const summaAttBetala = Math.max(totalSum, 0);
-
-    // ROT/RUT display beräkningar
-    const rotRutPersonnummer =
-      formData.personnummer ||
-      (formData.artiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutPersonnummer)
-          ?.rotRutPersonnummer);
-
-    const shouldShowRotRut =
-      (formData.rotRutAktiverat || harROTRUTArtiklar) &&
-      rotRutTyp &&
-      (rotRutTyp === "ROT" || rotRutTyp === "RUT");
-
-    const rotRutArtiklar = formData.artiklar?.filter((a: any) => a.rotRutTyp) || [];
-    const rotRutTotalTimmar = rotRutArtiklar.reduce(
-      (sum: number, a: any) => sum + (a.antal || 0),
-      0
-    );
-    const rotRutGenomsnittsPris =
-      rotRutArtiklar.length > 0
-        ? rotRutArtiklar.reduce((sum: number, a: any) => sum + (a.prisPerEnhet || 0), 0) /
-          rotRutArtiklar.length
-        : 0;
-
-    const rotRutAvdragProcent = rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—";
-
-    // Legacy kompatibilitet
-    const sumMoms = totalMoms;
-    const sumInkl = sumExkl + totalMoms;
-
-    return {
-      rows,
-      logoSliderValue,
-      handleLogoSliderChange,
-      logoSize,
-      sumExkl,
-      sumMoms,
-      sumInkl,
-      totalMoms,
-      harROTRUTArtiklar,
-      rotRutTyp,
-      rotRutTjänsterSumExkl,
-      rotRutTjänsterMoms,
-      rotRutTjänsterInklMoms,
-      arbetskostnadInklMoms,
-      rotRutAvdrag,
-      rotRutPersonnummer,
-      rotRutTotalTimmar,
-      rotRutGenomsnittsPris,
-      rotRutAvdragProcent,
-      shouldShowRotRut,
-      totalSum,
-      summaAttBetala,
-    };
-  }, [
-    formData.artiklar,
-    formData.logoWidth,
-    formData.rotRutAktiverat,
-    formData.rotRutTyp,
-    formData.personnummer,
-    logoSliderValue,
-    handleLogoSliderChange,
-  ]);
-
-  // =============================================================================
-  // PDF & EMAIL FUNCTIONS
-  // =============================================================================
-
-  // Exportera PDF
-  const handleExportPDF = useCallback(async () => {
-    try {
-      const pdf = await generatePDFFromElement();
-      pdf.save("faktura.pdf");
-      showSuccess("PDF exporterad");
-    } catch (error) {
-      console.error("❌ Error exporting PDF:", error);
-      showError("Kunde inte exportera PDF");
-    }
-  }, [showSuccess, showError]);
-
-  // Validera e-postadress
-  const validateEmail = useCallback(
-    (email: string): boolean => {
-      if (!email.trim()) {
-        showError("Ange mottagarens e-postadress");
-        return false;
-      }
-
-      if (!email.includes("@")) {
-        showError("Ange en giltig e-postadress");
-        return false;
-      }
-
-      return true;
-    },
-    [showError]
-  );
-
-  // Skicka e-post (avancerad version från useSkickaEpost)
-  const skickaEpost = useCallback(
-    async (customProps?: Partial<SkickaEpostProps>) => {
-      // Validering
-      if (!validateEmail(mottagareEmail)) {
-        return;
-      }
-
-      if (!formData.id) {
-        showError("Spara fakturan först innan du skickar den");
-        return;
-      }
-
-      setIsSending(true);
-
-      try {
-        // Generera PDF med den delade funktionen
-        const pdfBase64 = await generatePDFAsBase64();
-
-        // Skapa fakturanummer med nollutfyllnad
-        const fakturaNr = formData.fakturanummer
-          ? formData.fakturanummer.toString().padStart(4, "0")
-          : "faktura";
-
-        // Skicka e-post med PDF-bilaga och eget meddelande
-        const response = await fetch("/api/send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            faktura: {
-              ...formData,
-              kundemail: mottagareEmail, // Använd det angivna e-postfältet
-            },
-            pdfAttachment: pdfBase64,
-            filename: `Faktura-${fakturaNr}.pdf`,
-            customMessage: egetMeddelande.trim(), // Skicka med det egna meddelandet
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Kunde inte skicka e-post");
-        }
-
-        showSuccess("Faktura skickad till kunden!");
-        customProps?.onSuccess?.();
-      } catch (error) {
-        console.error("❌ E-postfel:", error);
-        const errorMessage = error instanceof Error ? error.message : "Okänt fel";
-        showError(`Kunde inte skicka faktura: ${errorMessage}`);
-        customProps?.onError?.(errorMessage);
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [mottagareEmail, egetMeddelande, formData, showSuccess, showError, validateEmail]
-  );
-
-  // E-post hjälpfunktioner
-  const isEpostButtonDisabled = useCallback(() => {
-    return isSending || !formData.fakturanummer || !mottagareEmail.trim() || !formData.id;
-  }, [isSending, formData.fakturanummer, mottagareEmail, formData.id]);
-
-  const getEpostButtonText = useCallback(() => {
-    if (isSending) return "📤 Skickar...";
-    if (!formData.id) return "❌ Spara faktura först";
-    return "📧 Skicka faktura";
-  }, [isSending, formData.id]);
-
-  const getEpostStatusMessage = useCallback(() => {
-    if (!formData.id) {
-      return {
-        type: "warning" as const,
-        text: "Spara fakturan först innan du skickar den",
-      };
-    }
-
-    return {
-      type: "info" as const,
-      text: `E-posten skickas till ${mottagareEmail || "ingen e-post angiven"}`,
-    };
-  }, [formData.id, mottagareEmail]);
 
   // =============================================================================
   // KUND MANAGEMENT FUNCTIONS (från useKundUppgifter)
@@ -1098,40 +597,6 @@ export function useFaktura() {
   }, [setKundStatus]);
 
   // =============================================================================
-  // SPARADE FAKTUROR FUNCTIONS
-  // =============================================================================
-
-  const handleSelectInvoice = useCallback((fakturaId: number, onSelect?: (id: number) => void) => {
-    if (onSelect) {
-      onSelect(fakturaId);
-    }
-  }, []);
-
-  const handleDeleteInvoice = useCallback(
-    async (fakturaId: number) => {
-      if (!confirm("Är du säker på att du vill ta bort denna faktura?")) {
-        return;
-      }
-
-      try {
-        setLoadingInvoiceId(fakturaId);
-        const result = await deleteFaktura(fakturaId);
-        if (result.success) {
-          showSuccess("Faktura borttagen");
-          window.location.reload();
-        } else {
-          showError(result.error || "Fel vid borttagning av faktura");
-        }
-      } catch (error) {
-        showError("Fel vid borttagning av faktura");
-      } finally {
-        setLoadingInvoiceId(null);
-      }
-    },
-    [showSuccess, showError]
-  );
-
-  // =============================================================================
   // RETURN OBJECT
   // =============================================================================
 
@@ -1144,15 +609,9 @@ export function useFaktura() {
     toastState,
     userSettings,
     showPreview,
-    loadingInvoiceId,
-    isSending,
-    mottagareEmail,
-    egetMeddelande,
-    logoSliderValue,
     kunder,
     kundSuccessVisible,
     fadeOut,
-    rotRutMaterial,
 
     // Context actions
     setFormData,
@@ -1178,9 +637,6 @@ export function useFaktura() {
 
     // Local state setters
     setShowPreview,
-    setMottagareEmail,
-    setEgetMeddelande,
-    setLogoSliderValue,
 
     // Artikel setters för nyArtikel state
     setBeskrivning: (value: string) => updateArtikel({ beskrivning: value }),
@@ -1218,41 +674,9 @@ export function useFaktura() {
     handleDeleteCustomer,
     handleEditCustomer,
 
-    // Produkter/Tjänster functions
-    laddaSparadeArtiklar,
+    // Basic artikel functions (för bakåtkompatibilitet)
     läggTillArtikel,
     taBortArtikel,
-    setShowFavoritArtiklar,
-    setVisaRotRutForm,
-    setVisaArtikelForm,
-    setRotRutMaterial,
-
-    // ROT/RUT constants and functions
-    RUT_KATEGORIER,
-    ROT_KATEGORIER,
-    sanitizeRotRutInput,
-    validateRotRutNumeric,
-    validatePersonnummerRotRut,
-    handleRotRutChange,
-    handleRotRutBoendeTypChange,
-    handleRotRutDateChange,
-
-    // Förhandsgranskning functions
-    handleLogoSliderChange,
-    getForhandsgranskningCalculations,
-
-    // PDF & Email functions
-    handleExportPDF,
-    skickaEpost,
-    validateEmail,
-    isEpostButtonDisabled: isEpostButtonDisabled(),
-    epostButtonText: getEpostButtonText(),
-    epostStatusMessage: getEpostStatusMessage(),
-    hasCustomerEmail: !!(formData.kundemail && formData.kundemail.trim()),
-
-    // Sparade fakturor functions
-    handleSelectInvoice,
-    handleDeleteInvoice,
 
     // Refs
     fileInputRef,

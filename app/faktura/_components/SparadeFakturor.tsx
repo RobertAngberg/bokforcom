@@ -3,14 +3,15 @@
 import Toast from "../../_components/Toast";
 import { SparadeFakturorProps } from "../_types/types";
 import { useFaktura } from "../_hooks/useFaktura";
+import { useSparade } from "../_hooks/useSparade";
 
 export default function SparadeFakturor({
   fakturor,
   activeInvoiceId,
   onSelectInvoice,
 }: SparadeFakturorProps) {
-  const { toastState, clearToast, loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } =
-    useFaktura();
+  const { toastState, clearToast } = useFaktura();
+  const { loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } = useSparade();
 
   return (
     <>

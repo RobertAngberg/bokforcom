@@ -2,14 +2,13 @@
 "use client";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
+import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
 import { useFaktura } from "../_hooks/useFaktura";
 import { SkickaEpostProps } from "../_types/types";
 //#endregion
 
 export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
   const {
-    toastState,
-    clearToast,
     isSending,
     mottagareEmail,
     setMottagareEmail,
@@ -20,7 +19,9 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
     epostButtonText,
     epostStatusMessage,
     hasCustomerEmail,
-  } = useFaktura();
+  } = useForhandsgranskning();
+
+  const { toastState, clearToast } = useFaktura();
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow mt-4">

@@ -5,7 +5,7 @@ import Modal from "../../_components/Modal";
 import Tabell from "../../_components/Tabell";
 import { formatSEK } from "../../_utils/format";
 import { VerifikatModalProps } from "../_types/types";
-import { useVerifikatModal } from "../_hooks/useVerifikatModal";
+import { useVerifikatModal } from "../_hooks/useLeverantorer";
 
 export default function VerifikatModal({
   isOpen,
@@ -20,7 +20,7 @@ export default function VerifikatModal({
     loading,
 
     // Computed data
-    columns,
+    columns: baseColumns,
     totalDebet,
     totalKredit,
     modalTitle,
@@ -31,6 +31,36 @@ export default function VerifikatModal({
     fakturanummer,
     leverantör,
   });
+
+  // Enhanced columns with JSX render functions
+  const columns = [
+    {
+      key: "kontonummer",
+      label: "Konto",
+      render: (value: any, post: any) => (
+        <div>
+          <div className="font-medium text-white">{post.kontonummer}</div>
+          <div className="text-sm text-gray-400">{post.kontobeskrivning}</div>
+        </div>
+      ),
+    },
+    {
+      key: "debet",
+      label: "Debet",
+      render: (value: any, post: any) => (
+        <div className="text-right text-white">{post.debet > 0 ? formatSEK(post.debet) : "-"}</div>
+      ),
+    },
+    {
+      key: "kredit",
+      label: "Kredit",
+      render: (value: any, post: any) => (
+        <div className="text-right text-white">
+          {post.kredit > 0 ? formatSEK(post.kredit) : "-"}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="4xl" isLoading={loading}>

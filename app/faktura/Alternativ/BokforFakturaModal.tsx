@@ -3,8 +3,8 @@
 import Tabell from "../../_components/Tabell";
 import Modal from "../../_components/Modal";
 import Toast from "../../_components/Toast";
-import { useBokforFakturaModal } from "../_hooks/useBokforFakturaModal";
-import { useFakturaClient } from "../_hooks/useFakturaClient";
+import { useBokforFakturaModal } from "../_hooks/useAlternativ";
+import { useFakturaClient } from "../_hooks/useFaktura";
 import { BokforFakturaModalProps } from "../_types/types";
 
 export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaModalProps) {

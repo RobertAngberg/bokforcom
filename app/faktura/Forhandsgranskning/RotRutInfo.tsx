@@ -1,8 +1,9 @@
 import { useFaktura } from "../_hooks/useFaktura";
+import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
 import { RotRutInfoProps } from "../_types/types";
 
 export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoProps) {
-  const forhandsgranskningCalcs = useFaktura().getForhandsgranskningCalculations();
+  const forhandsgranskningCalcs = useForhandsgranskning().getForhandsgranskningCalculations();
   const {
     shouldShowRotRut,
     rotRutTyp,

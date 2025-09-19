@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useFaktura } from "../_hooks/useFaktura";
+import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
@@ -12,29 +13,31 @@ import Modal from "../../_components/Modal";
 
 export default function ProdukterTjanster() {
   const {
-    // State
+    // State från useFaktura
     formData,
     nyArtikel,
     produkterTjansterState,
     toastState,
-    rotRutMaterial,
 
-    // Setters
+    // Setters från useFaktura
     setBeskrivning,
     setAntal,
     setPrisPerEnhet,
     setMoms,
     setValuta,
     setTyp,
-    setRotRutMaterial,
-    setVisaRotRutForm,
-    setVisaArtikelForm,
 
-    // Handlers
+    // Handlers från useFaktura
     läggTillArtikel,
     updateFormField,
     clearToast,
   } = useFaktura();
+
+  const {
+    // ProdukterTjanster-specifika setters
+    setVisaRotRutForm,
+    setVisaArtikelForm,
+  } = useProdukterTjanster();
 
   // Destructure nested state
   const {
@@ -143,13 +146,11 @@ export default function ProdukterTjanster() {
               prisPerEnhet={parseFloat(prisPerEnhet) || 0}
               moms={parseFloat(moms) || 0}
               typ={typ}
-              rotRutMaterial={rotRutMaterial}
               onChangeBeskrivning={setBeskrivning}
               onChangeAntal={setAntal}
               onChangePrisPerEnhet={setPrisPerEnhet}
               onChangeMoms={setMoms}
               onChangeTyp={setTyp}
-              onChangeRotRutMaterial={setRotRutMaterial}
               disabled={favoritArtikelVald}
             />
 

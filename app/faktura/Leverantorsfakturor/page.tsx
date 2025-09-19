@@ -5,7 +5,7 @@ import TillbakaPil from "../../_components/TillbakaPil";
 import LeverantorFlik from "../Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
 import { useLeverantörer } from "../_hooks/useLeverantorer";
-import { useLeverantorNavigation } from "../_hooks/useLeverantorNavigation";
+import { useLeverantorNavigation } from "../_hooks/useLeverantorer";
 
 export default function LeverantorsfakturorPage() {
   const { refresh } = useLeverantörer();

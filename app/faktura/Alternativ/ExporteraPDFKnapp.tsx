@@ -4,13 +4,15 @@ import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import { ExporteraPDFKnappProps } from "../_types/types";
 import { useFaktura } from "../_hooks/useFaktura";
+import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
 
 export default function ExporteraPDFKnapp({
   disabled = false,
   text = "📤 Spara PDF",
   className = "",
 }: ExporteraPDFKnappProps) {
-  const { handleExportPDF, toastState, clearToast } = useFaktura();
+  const { handleExportPDF } = useForhandsgranskning();
+  const { toastState, clearToast } = useFaktura();
 
   return (
     <>
