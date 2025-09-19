@@ -568,3 +568,104 @@ export interface BokförFakturaData {
   poster: BokföringsPost[];
   kommentar?: string;
 }
+
+// === PDF GENERATION ===
+export interface PDFGenerationOptions {
+  elementId?: string;
+  scale?: number;
+  quality?: number;
+  backgroundColor?: string;
+}
+
+// === ROT/RUT BETALNING ===
+export interface RotRutBetalningModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  fakturaId: number;
+  fakturanummer: string;
+  kundnamn: string;
+  totalBelopp: number;
+  bokföringsmetod: string;
+  onSuccess: (nyStatus: { rot_rut_status: string; status_betalning: string }) => void;
+}
+
+// === HUS FIL GENERATION ===
+export interface HUSFilData {
+  fakturanummer: string;
+  kundPersonnummer: string;
+  betalningsdatum: string;
+  prisForArbete: number;
+  betaltBelopp: number;
+  begartBelopp: number;
+  rotRutTyp: "ROT" | "RUT";
+  rotRutKategori: string;
+  fastighetsbeteckning?: string;
+  lägenhetsNummer?: string;
+  brfOrgNummer?: string;
+  antalTimmar?: number;
+  materialKostnad?: number;
+}
+
+// === CONTEXT TYPES ===
+export interface FakturaState {
+  formData: FakturaFormData;
+  kundStatus: KundStatus;
+  nyArtikel: NyArtikel;
+  produkterTjansterState: {
+    favoritArtiklar: FavoritArtikel[];
+    showFavoritArtiklar: boolean;
+    blinkIndex: number | null;
+    visaRotRutForm: boolean;
+    visaArtikelForm: boolean;
+    visaArtikelModal: boolean;
+    redigerarIndex: number | null;
+    favoritArtikelVald: boolean;
+    ursprungligFavoritId: number | null;
+    artikelSparadSomFavorit: boolean;
+    valtArtikel: FavoritArtikel | null;
+  };
+  toastState: ToastState;
+  userSettings: {
+    bokföringsmetod: "kontantmetoden" | "fakturametoden";
+  };
+}
+
+export type FakturaAction =
+  | { type: "SET_FORM_DATA"; payload: Partial<FakturaFormData> }
+  | { type: "RESET_FORM_DATA" }
+  | { type: "SET_KUND_STATUS"; payload: KundStatus }
+  | { type: "RESET_KUND" }
+  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
+  | { type: "RESET_NY_ARTIKEL" }
+  | {
+      type: "SET_PRODUKTER_TJANSTER_STATE";
+      payload: Partial<FakturaState["produkterTjansterState"]>;
+    }
+  | { type: "RESET_PRODUKTER_TJANSTER" }
+  | { type: "SET_TOAST"; payload: { message: string; type: "success" | "error" | "info" } }
+  | { type: "CLEAR_TOAST" }
+  | { type: "SET_BOKFÖRINGSMETOD"; payload: "kontantmetoden" | "fakturametoden" }
+  | { type: "INIT_STORE"; payload: ServerData };
+
+export interface FakturaContextType {
+  state: FakturaState;
+  dispatch: React.Dispatch<FakturaAction>;
+  // Helper actions - samma API som Zustand store
+  setFormData: (data: Partial<FakturaFormData>) => void;
+  resetFormData: () => void;
+  setKundStatus: (status: KundStatus) => void;
+  resetKund: () => void;
+  setNyArtikel: (artikel: Partial<NyArtikel>) => void;
+  resetNyArtikel: () => void;
+  setProdukterTjansterState: (state: Partial<FakturaState["produkterTjansterState"]>) => void;
+  resetProdukterTjanster: () => void;
+  setToast: (toast: { message: string; type: "success" | "error" | "info" }) => void;
+  clearToast: () => void;
+  setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
+  initStore: (data: ServerData) => void;
+}
+
+export interface FakturaProviderProps {
+  children: React.ReactNode;
+  initialData?: ServerData;
+}

@@ -7,6 +7,11 @@ import type {
   KundStatus,
   ServerData,
   FavoritArtikel,
+  FakturaState,
+  FakturaAction,
+  FakturaContextType,
+  FakturaProviderProps,
+  ToastState,
 } from "../_types/types";
 
 // Default values - samma som i Zustand store
@@ -87,40 +92,15 @@ const defaultProdukterTjansterState = {
   valtArtikel: null as FavoritArtikel | null,
 };
 
-const defaultToastState = {
+const defaultToastState: ToastState = {
   message: "",
-  type: "error" as "success" | "error" | "info",
+  type: "error",
   isVisible: false,
 };
 
 const defaultUserSettings = {
   bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
 };
-
-// State interface
-interface FakturaState {
-  formData: FakturaFormData;
-  kundStatus: KundStatus;
-  nyArtikel: NyArtikel;
-  produkterTjansterState: typeof defaultProdukterTjansterState;
-  toastState: typeof defaultToastState;
-  userSettings: typeof defaultUserSettings;
-}
-
-// Action types
-type FakturaAction =
-  | { type: "SET_FORM_DATA"; payload: Partial<FakturaFormData> }
-  | { type: "RESET_FORM_DATA" }
-  | { type: "SET_KUND_STATUS"; payload: KundStatus }
-  | { type: "RESET_KUND" }
-  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
-  | { type: "RESET_NY_ARTIKEL" }
-  | { type: "SET_PRODUKTER_TJANSTER_STATE"; payload: Partial<typeof defaultProdukterTjansterState> }
-  | { type: "RESET_PRODUKTER_TJANSTER" }
-  | { type: "SET_TOAST"; payload: { message: string; type: "success" | "error" | "info" } }
-  | { type: "CLEAR_TOAST" }
-  | { type: "SET_BOKFORINGSMETOD"; payload: "kontantmetoden" | "fakturametoden" }
-  | { type: "INIT_STORE"; payload: ServerData };
 
 // Initial state
 const initialState: FakturaState = {
@@ -211,7 +191,7 @@ function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaStat
         toastState: defaultToastState,
       };
 
-    case "SET_BOKFORINGSMETOD":
+    case "SET_BOKFÖRINGSMETOD":
       return {
         ...state,
         userSettings: { ...state.userSettings, bokföringsmetod: action.payload },
@@ -244,34 +224,10 @@ function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaStat
   }
 }
 
-// Context interface
-interface FakturaContextType {
-  state: FakturaState;
-  dispatch: React.Dispatch<FakturaAction>;
-  // Helper actions - samma API som Zustand store
-  setFormData: (data: Partial<FakturaFormData>) => void;
-  resetFormData: () => void;
-  setKundStatus: (status: KundStatus) => void;
-  resetKund: () => void;
-  setNyArtikel: (artikel: Partial<NyArtikel>) => void;
-  resetNyArtikel: () => void;
-  setProdukterTjansterState: (state: Partial<typeof defaultProdukterTjansterState>) => void;
-  resetProdukterTjanster: () => void;
-  setToast: (toast: { message: string; type: "success" | "error" | "info" }) => void;
-  clearToast: () => void;
-  setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
-  initStore: (data: ServerData) => void;
-}
-
 // Create contexts
 const FakturaContext = createContext<FakturaContextType | undefined>(undefined);
 
 // Provider component
-interface FakturaProviderProps {
-  children: ReactNode;
-  initialData?: ServerData;
-}
-
 export function FakturaProvider({ children, initialData }: FakturaProviderProps) {
   const [state, dispatch] = useReducer(fakturaReducer, initialState);
 
@@ -297,7 +253,7 @@ export function FakturaProvider({ children, initialData }: FakturaProviderProps)
     resetProdukterTjanster: () => dispatch({ type: "RESET_PRODUKTER_TJANSTER" }),
     setToast: (toast) => dispatch({ type: "SET_TOAST", payload: toast }),
     clearToast: () => dispatch({ type: "CLEAR_TOAST" }),
-    setBokföringsmetod: (metod) => dispatch({ type: "SET_BOKFORINGSMETOD", payload: metod }),
+    setBokföringsmetod: (metod) => dispatch({ type: "SET_BOKFÖRINGSMETOD", payload: metod }),
     initStore: (data) => dispatch({ type: "INIT_STORE", payload: data }),
   };
 

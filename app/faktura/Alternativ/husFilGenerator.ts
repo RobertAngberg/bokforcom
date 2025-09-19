@@ -1,20 +1,5 @@
 // HUS-fil generator för ROT/RUT-ansökningar till Skatteverket
-
-interface HUSFilData {
-  fakturanummer: string;
-  kundPersonnummer: string;
-  betalningsdatum: string;
-  prisForArbete: number;
-  betaltBelopp: number;
-  begartBelopp: number;
-  rotRutTyp: "ROT" | "RUT";
-  rotRutKategori: string;
-  fastighetsbeteckning?: string;
-  lägenhetsNummer?: string;
-  brfOrgNummer?: string;
-  antalTimmar?: number; // Lägg till faktiska timmar
-  materialKostnad?: number; // Kostnad för ROT/RUT-material
-}
+import { HUSFilData } from "../_types/types";
 
 export function genereraHUSFil(data: HUSFilData): string {
   const idag = new Date().toISOString().split("T")[0].replace(/-/g, "");

@@ -4,17 +4,7 @@ import { useState } from "react";
 import Modal from "../../_components/Modal";
 import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../_actions/alternativActions";
 import Toast from "../../_components/Toast";
-
-interface RotRutBetalningModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fakturaId: number;
-  fakturanummer: string;
-  kundnamn: string;
-  totalBelopp: number;
-  bokföringsmetod: string;
-  onSuccess: (nyStatus: { rot_rut_status: string; status_betalning: string }) => void;
-}
+import { RotRutBetalningModalProps } from "../_types/types";
 
 export default function RotRutBetalningModal({
   isOpen,
