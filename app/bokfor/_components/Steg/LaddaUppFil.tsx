@@ -5,7 +5,9 @@ import { FileUploadProps } from "../../_types/types";
 import { useLaddaUppFil } from "../../_hooks/useLaddaUppFil";
 
 export default function LaddaUppFil(props: FileUploadProps) {
-  const { isLoading, timeoutTriggered, toast, setToast, handleFileChange } = useLaddaUppFil(props);
+  const { state, handlers } = useLaddaUppFil(props);
+  const { isLoading, timeoutTriggered, toast } = state;
+  const { setToast, handleFileChange } = handlers;
 
   // Determine if this is leverantörsfaktura mode
   const isLevfaktMode = !!(

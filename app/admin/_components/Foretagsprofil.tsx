@@ -2,10 +2,10 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import { useForetagsprofil } from "../_hooks/useForetagsprofil";
+import type { ForetagsprofilProps } from "../_types/types";
 
-export default function Foretagsprofil() {
-  const { state, handlers } = useForetagsprofil();
+export default function Foretagsprofil({ company }: ForetagsprofilProps) {
+  const { state, handlers } = company;
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">

@@ -31,15 +31,6 @@ export interface AnvandarRedigeringsFormular {
   email: string;
 }
 
-export interface AnvandarprofilComponentProps {
-  initialUser: AnvandarInfo | null;
-  session: Session | null;
-}
-
-export interface ForetagsprofilComponentProps {
-  initialForetag: ForetagsProfil | null;
-}
-
 export interface AktionsResultat<T = any> {
   success: boolean;
   data?: T;
@@ -52,25 +43,97 @@ export interface UppdateraAnvandarPayload {
   email: string;
 }
 
-// Store interfaces
-export interface AdminStoreState {
-  // User state
-  userInfo: AnvandarInfo | null;
-  setUserInfo: (user: AnvandarInfo | null) => void;
-
-  // Company state
-  foretagsInfo: ForetagsProfil | null;
-  setForetagsInfo: (foretag: ForetagsProfil | null) => void;
-
-  // Init function
-  initStore: (data: {
-    userInfo?: AnvandarInfo | null;
-    foretagsInfo?: ForetagsProfil | null;
-  }) => void;
+// Hook interfaces
+export interface UseAdminProps {
+  initialUser: AnvandarInfo | null;
+  initialForetagsInfo: ForetagsProfil | null;
 }
 
-// Component interfaces
-export interface AdminInitializerProps {
-  anvandarInfo: AnvandarInfo | null;
-  foretagsInfo: ForetagsProfil | null;
+// Hook return type sections
+export interface AdminUserSection {
+  state: {
+    userInfo: AnvandarInfo | null;
+    editForm: AnvandarRedigeringsFormular;
+    isEditing: boolean;
+    isSaving: boolean;
+    message: MeddelandeTillstand | null;
+  };
+  actions: {
+    setEditForm: (form: AnvandarRedigeringsFormular) => void;
+    setIsEditing: (editing: boolean) => void;
+    setIsSaving: (saving: boolean) => void;
+    setMessage: (message: MeddelandeTillstand | null) => void;
+  };
+  handlers: {
+    onEdit: () => void;
+    onCancel: () => void;
+    onSave: () => Promise<void>;
+    onChange: (field: keyof AnvandarRedigeringsFormular, value: string) => void;
+    clearMessage: () => void;
+  };
 }
+
+export interface AdminCompanySection {
+  state: {
+    foretagsProfil: ForetagsProfil;
+    isEditingCompany: boolean;
+    isSavingCompany: boolean;
+    companyMessage: MeddelandeTillstand | null;
+  };
+  actions: {
+    setForetagsProfil: (profil: ForetagsProfil) => void;
+    setIsEditingCompany: (editing: boolean) => void;
+    setIsSavingCompany: (saving: boolean) => void;
+    setCompanyMessage: (message: MeddelandeTillstand | null) => void;
+  };
+  handlers: {
+    onEditCompany: () => void;
+    onCancelCompany: () => void;
+    onSaveCompany: () => Promise<void>;
+    onChangeCompany: (field: keyof ForetagsProfil, value: string) => void;
+    clearCompanyMessage: () => void;
+  };
+}
+
+export interface AdminDangerZoneSection {
+  state: {
+    showDeleteConfirm: boolean;
+    isDeleting: boolean;
+  };
+  handlers: {
+    onConfirm: () => void;
+    onCancel: () => void;
+    onDeleteCompany: () => Promise<void>;
+  };
+}
+
+// Component prop interfaces
+export interface AnvandarprofilProps {
+  user: AdminUserSection;
+}
+
+export interface ForetagsprofilProps {
+  company: AdminCompanySection;
+}
+
+export interface FarozonProps {
+  dangerZone: AdminDangerZoneSection;
+}
+
+export interface AdminContentProps {
+  användarInfo: AnvandarInfo | null;
+  företagsInfo: ForetagsProfil | null;
+}
+
+// Constants
+export const TOM_FORETAG: ForetagsProfil = {
+  foretagsnamn: "",
+  adress: "",
+  postnummer: "",
+  stad: "",
+  organisationsnummer: "",
+  momsregistreringsnummer: "",
+  telefonnummer: "",
+  epost: "",
+  webbplats: "",
+};

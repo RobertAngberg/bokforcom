@@ -2,10 +2,10 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import { useAnvandarprofil } from "../_hooks/useAnvandarprofil";
+import type { AnvandarprofilProps } from "../_types/types";
 
-export default function Anvandarprofil() {
-  const { state, handlers } = useAnvandarprofil();
+export default function Anvandarprofil({ user }: AnvandarprofilProps) {
+  const { state, handlers } = user;
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">

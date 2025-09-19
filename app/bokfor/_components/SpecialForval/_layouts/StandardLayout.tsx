@@ -20,22 +20,19 @@ export default function StandardLayout({
   onSubmit,
   children,
 }: StandardLayoutProps & { children?: React.ReactNode }) {
+  const { state, handlers } = useStandardLayout(onSubmit, title);
+
+  const { belopp, transaktionsdatum, kommentar, fil, pdfUrl, isValid, title: hookTitle } = state;
+
   const {
-    belopp,
-    transaktionsdatum,
-    kommentar,
-    fil,
-    pdfUrl,
     setBelopp,
     setTransaktionsdatum,
     setKommentar,
     setFil,
     setPdfUrl,
     setCurrentStep,
-    title: hookTitle,
     onSubmit: hookOnSubmit,
-    isValid,
-  } = useStandardLayout(onSubmit, title);
+  } = handlers;
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
