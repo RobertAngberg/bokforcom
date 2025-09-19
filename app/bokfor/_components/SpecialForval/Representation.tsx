@@ -10,13 +10,7 @@ import LaddaUppFil from "../Steg/LaddaUppFil";
 import Forhandsgranskning from "../Steg/Forhandsgranskning";
 import { datePickerValue } from "../../../_utils/datum";
 import { useBokforContext } from "../BokforProvider";
-
-interface RepresentationProps {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-}
-
-type RepresentationsTypLocal = "maltid_alkohol" | "enklare_fortaring";
+import { RepresentationProps, RepresentationsTypLocal } from "../../_types/types";
 
 // Schablon beräkning enligt Skatteverket
 function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, totalBelopp: number) {

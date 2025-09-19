@@ -1347,10 +1347,9 @@ export function useBokfor() {
 }
 
 // ====================================================
-// INDIVIDUELLA HOOK EXPORTS (från separata filer)
+// INDIVIDUELLA HOOK EXPORTS
 // ====================================================
 
-// Från useInformation.ts
 export function useInformation() {
   const store = useBokfor();
   const { belopp, transaktionsdatum } = store.state;

@@ -1,6 +1,11 @@
 import type { Leverantör } from "../../faktura/_types/types";
+import type { ReactNode } from "react";
+import type { useBokfor } from "../_hooks/useBokfor";
 
-// ===== INITIAL DATA INTERFACES =====
+// ========================================
+// INITIAL DATA & STORE INTERFACES
+// ========================================
+
 export interface InitialData {
   favoritFörvalen: Förval[];
   currentStep: number;
@@ -9,97 +14,9 @@ export interface InitialData {
   leverantör: any;
 }
 
-export interface BokforStoreInitProps {
-  favoritFörval: Förval[];
-  allaFörval: Förval[];
-  anställda: UtlaggAnställd[];
-  bokföringsmetod: string;
-}
-
-// Store interface
-export interface BokforStore {
-  // Navigation state
-  currentStep: number;
-
-  // Data & UI state
-  favoritFörval: Förval[];
-  allaFörval: Förval[];
-  anställda: UtlaggAnställd[];
-  bokföringsmetod: string;
-  levfaktMode: boolean;
-  utlaggMode: boolean;
-
-  // Formulärfält
-  kontonummer: string;
-  kontobeskrivning: string | null;
-  belopp: number | null;
-  kommentar: string | null;
-  fil: File | null;
-  pdfUrl: string | null;
-  transaktionsdatum: string | null;
-  valtFörval: Förval | null;
-  extrafält: Record<string, { label: string; debet: number; kredit: number }>;
-
-  // Leverantörsfaktura-fält
-  leverantör: any | null;
-  fakturanummer: string | null;
-  fakturadatum: string | null;
-  förfallodatum: string | null;
-  betaldatum: string | null;
-  bokförSomFaktura: boolean;
-  kundfakturadatum: string | null;
-
-  // Navigation actions
-  setCurrentStep: (step: number) => void;
-  setFavoritFörvalen: (förvalen: Förval[]) => void;
-  setLevfaktMode: (mode: boolean) => void;
-  setUtlaggMode: (mode: boolean) => void;
-  handleSetCurrentStep: (
-    step: number,
-    router?: any,
-    setIsLevfaktMode?: (value: boolean) => void,
-    setLeverantör?: (value: any) => void
-  ) => void;
-
-  // Actions för alla formulärfält
-  setKontonummer: (value: string) => void;
-  setKontobeskrivning: (value: string | null) => void;
-  setBelopp: (value: number | null) => void;
-  setKommentar: (value: string | null) => void;
-  setFil: (value: File | null) => void;
-  setPdfUrl: (value: string | null) => void;
-  setTransaktionsdatum: (value: string | null) => void;
-  setValtFörval: (value: Förval | null) => void;
-  setExtrafält: (value: Record<string, { label: string; debet: number; kredit: number }>) => void;
-
-  // Leverantörsfaktura actions
-  setLeverantör: (value: any | null) => void;
-  setFakturanummer: (value: string | null) => void;
-  setFakturadatum: (value: string | null) => void;
-  setFörfallodatum: (value: string | null) => void;
-  setBetaldatum: (value: string | null) => void;
-  setBokförSomFaktura: (value: boolean) => void;
-  setKundfakturadatum: (value: string | null) => void;
-
-  // Utility för att återställa alla fält
-  resetAllFields: () => void;
-
-  // Business logic functions
-  exitLevfaktMode: (router?: any) => void;
-
-  // Initialisera store med server data
-  initStore: (data: {
-    favoritFörval: Förval[];
-    allaFörval: Förval[];
-    anställda: UtlaggAnställd[];
-    bokföringsmetod: string;
-    levfaktMode: boolean;
-    utlaggMode: boolean;
-    currentStep: number;
-  }) => void;
-}
-
-// ===== LAYOUT INTERFACES =====
+// ========================================
+// CORE BUSINESS INTERFACES
+// ========================================
 export interface StandardLayoutProps {
   title?: string;
   onSubmit?: () => void;
@@ -507,3 +424,48 @@ export interface UseLevfaktLayoutProps {
 export interface UseStandardLayoutProps {
   // Placeholder för eventuell logik i framtiden
 }
+
+// ========================================
+// COMPONENT PROPS INTERFACES
+// ========================================
+
+// BokforClient
+export interface BokforClientProps {
+  initialData: {
+    favoritFörval: any[];
+    allaFörval: any[];
+    bokföringsmetod: string;
+    anställda: any[];
+  };
+}
+
+// ========================================
+// CONTEXT & PROVIDER INTERFACES
+// ========================================
+
+// BokforProvider
+export interface BokforProviderProps {
+  children: ReactNode;
+}
+
+// BokforContext (för useContext type safety)
+export interface BokforContextType {
+  state: ReturnType<typeof useBokfor>["state"];
+  actions: ReturnType<typeof useBokfor>["actions"];
+  handlers: ReturnType<typeof useBokfor>["handlers"];
+  formatKontoValue: ReturnType<typeof useBokfor>["formatKontoValue"];
+  getCardClassName: ReturnType<typeof useBokfor>["getCardClassName"];
+  options: ReturnType<typeof useBokfor>["options"];
+}
+
+// SpecialForval components
+export interface RepresentationProps {
+  mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt";
+}
+
+// ========================================
+// TYPE UNIONS & LITERALS
+// ========================================
+
+export type RepresentationsTypLocal = "maltid_alkohol" | "enklare_fortaring";

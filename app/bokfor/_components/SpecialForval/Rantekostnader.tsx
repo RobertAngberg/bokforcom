@@ -10,11 +10,7 @@ import Steg3 from "../Steg/Steg3";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
 import { useBokforContext } from "../BokforProvider";
-
-interface RantekostnaderProps {
-  mode: "steg2" | "steg3";
-  renderMode?: "normal" | "levfakt";
-}
+import { RantekostnaderProps } from "../../_types/types";
 
 export default function Rantekostnader({ mode, renderMode }: RantekostnaderProps) {
   const { state, actions } = useBokforContext();

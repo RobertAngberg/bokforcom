@@ -18,6 +18,7 @@ registerLocale("sv", sv);
 
 export default function Steg2Levfakt() {
   const { state, actions, handlers } = useBokforContext();
+  const levfaktHelper = handlers.useSteg2LevfaktHelper();
 
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;
@@ -44,12 +45,12 @@ export default function Steg2Levfakt() {
           setExtrafält={actions.setExtrafält}
           leverantör={state.leverantör}
           setLeverantör={actions.setLeverantör}
-          fakturanummer={state.fakturanummer}
-          setFakturanummer={actions.setFakturanummer}
-          fakturadatum={state.fakturadatum}
-          setFakturadatum={actions.setFakturadatum}
-          förfallodatum={state.förfallodatum}
-          setFörfallodatum={actions.setFörfallodatum}
+          fakturanummer={levfaktHelper.state.fakturanummer}
+          setFakturanummer={levfaktHelper.actions.setFakturanummer}
+          fakturadatum={levfaktHelper.state.fakturadatum}
+          setFakturadatum={levfaktHelper.actions.setFakturadatum}
+          förfallodatum={levfaktHelper.state.förfallodatum}
+          setFörfallodatum={levfaktHelper.actions.setFörfallodatum}
         />
       );
     } catch (err) {
@@ -78,8 +79,8 @@ export default function Steg2Levfakt() {
               setTransaktionsdatum={actions.setTransaktionsdatum}
               setLeverantör={actions.setLeverantör}
               setFakturadatum={actions.setFakturadatum}
-              setFörfallodatum={actions.setFörfallodatum}
-              setFakturanummer={actions.setFakturanummer}
+              setFörfallodatum={levfaktHelper.actions.setFörfallodatum}
+              setFakturanummer={levfaktHelper.actions.setFakturanummer}
             />
             {state.leverantör && (
               <div className="mt-4 mb-4 rounded-lg border border-cyan-600/40 bg-cyan-900/20 p-3 text-sm flex items-center justify-between gap-4">
@@ -91,7 +92,8 @@ export default function Steg2Levfakt() {
                   type="button"
                   onClick={() => {
                     actions.setLeverantör(null);
-                    handlers.exitLevfaktMode && handlers.exitLevfaktMode();
+                    levfaktHelper.handlers.exitLevfaktMode &&
+                      levfaktHelper.handlers.exitLevfaktMode();
                   }}
                   className="text-[11px] px-2 py-1 rounded bg-red-700/40 hover:bg-red-700/60 border border-red-500/40"
                 >
@@ -122,7 +124,7 @@ export default function Steg2Levfakt() {
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={datePickerValue(state.förfallodatum) || new Date()}
                 onChange={(date) => {
-                  actions.setFörfallodatum(datePickerOnChange(date));
+                  levfaktHelper.actions.setFörfallodatum(datePickerOnChange(date));
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -136,8 +138,8 @@ export default function Steg2Levfakt() {
                 label="Fakturanummer"
                 name="fakturanummer"
                 type="text"
-                value={state.fakturanummer || ""}
-                onChange={(e) => actions.setFakturanummer(e.target.value)}
+                value={levfaktHelper.state.fakturanummer || ""}
+                onChange={(e) => levfaktHelper.actions.setFakturanummer(e.target.value)}
                 placeholder="Ange fakturanummer..."
               />
             </div>
@@ -168,7 +170,7 @@ export default function Steg2Levfakt() {
               onClick={() => actions.setCurrentStep(3)}
               disabled={
                 !state.belopp ||
-                !state.fakturanummer ||
+                !levfaktHelper.state.fakturanummer ||
                 !state.fakturadatum ||
                 !state.förfallodatum ||
                 !state.fil ||
