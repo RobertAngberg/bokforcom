@@ -10,7 +10,7 @@ import {
   hämtaAllaFörval,
   hämtaBokföringsmetod,
   hämtaAnställda,
-} from "./_lib/data";
+} from "./_actions/data";
 
 export default async function BokforPage() {
   // Hämta initial data på server-sidan

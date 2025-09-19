@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { registerLocale } from "react-datepicker";
+import { sv } from "date-fns/locale/sv";
 import { loggaFavoritförval } from "../_actions/actions";
-import { extractDataFromOCRKundfaktura } from "../_actions/ocrActions";
+import {
+  extractDataFromOCRKundfaktura,
+  extractDataFromOCR,
+  extractDataFromOCRLevFakt,
+} from "../_actions/ocrActions";
 import { hämtaAllaAnställda } from "../../personal/_actions/anstalldaActions";
 import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
@@ -17,72 +23,120 @@ import {
   UtlaggAnställd,
   UseForhandsgranskningProps,
 } from "../_types/types";
-import { useBokforStore, useBokforState, useBokforActions } from "../_stores/BokforStoreProvider";
 import { normalize } from "../../_utils/textUtils";
+
+registerLocale("sv", sv);
 
 export function useBokfor() {
   // ====================================================
-  // SOKFORVAL LOGIK (med nya Zustand Context pattern)
+  // STATE MANAGEMENT (ersätter Zustand med useState)
   // ====================================================
 
-  // Använd nya context-based hooks
-  const state = useBokforState();
-  const actions = useBokforActions();
+  // Navigation state
+  const [currentStep, setCurrentStep] = useState(1);
 
-  // Specifika state pieces som behövs
-  const {
-    favoritFörval,
-    allaFörval,
-    levfaktMode,
-    utlaggMode,
-    currentStep,
-    initialized,
-    kontonummer,
-    kontobeskrivning,
-    belopp,
-    kommentar,
-    fil,
-    pdfUrl,
-    transaktionsdatum,
-    valtFörval,
-    extrafält,
-    leverantör,
-    fakturanummer,
-    fakturadatum,
-    förfallodatum,
-    betaldatum,
-    bokförSomFaktura,
-    kundfakturadatum,
-    anställda,
-    bokföringsmetod,
-  } = state;
+  // Data & UI state
+  const [favoritFörval, setFavoritFörval] = useState<Förval[]>([]);
+  const [allaFörval, setAllaFörval] = useState<Förval[]>([]);
+  const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
+  const [bokföringsmetod, setBokföringsmetod] = useState("standard");
+  const [levfaktMode, setLevfaktMode] = useState(false);
+  const [utlaggMode, setUtlaggMode] = useState(false);
 
-  const {
-    setCurrentStep,
-    setValtFörval,
-    setKontonummer,
-    setKontobeskrivning,
-    setUtlaggMode,
-    setLevfaktMode,
-    setBelopp,
-    setKommentar,
-    setFil,
-    setPdfUrl,
-    setTransaktionsdatum,
-    setExtrafält,
-    setLeverantör,
-    setFakturanummer,
-    setFakturadatum,
-    setFörfallodatum,
-    setBetaldatum,
-    setBokförSomFaktura,
-    setKundfakturadatum,
-    setFavoritFörvalen,
-    resetAllFields,
-    exitLevfaktMode,
-  } = actions;
+  // Formulärfält
+  const [kontonummer, setKontonummer] = useState("");
+  const [kontobeskrivning, setKontobeskrivning] = useState<string | null>(null);
+  const [belopp, setBelopp] = useState<number | null>(null);
+  const [kommentar, setKommentar] = useState<string | null>(null);
+  const [fil, setFil] = useState<File | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [transaktionsdatum, setTransaktionsdatum] = useState<string | null>(null);
+  const [valtFörval, setValtFörval] = useState<Förval | null>(null);
+  const [extrafält, setExtrafält] = useState<
+    Record<string, { label: string; debet: number; kredit: number }>
+  >({});
+
+  // Leverantörsfaktura-fält
+  const [leverantör, setLeverantör] = useState<any | null>(null);
+  const [fakturanummer, setFakturanummer] = useState<string | null>(null);
+  const [fakturadatum, setFakturadatum] = useState<string | null>(null);
+  const [förfallodatum, setFörfallodatum] = useState<string | null>(null);
+  const [betaldatum, setBetaldatum] = useState<string | null>(null);
+  const [bokförSomFaktura, setBokförSomFaktura] = useState(false);
+  const [kundfakturadatum, setKundfakturadatum] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // ====================================================
+  // BUSINESS LOGIC FUNCTIONS
+  // ====================================================
+
+  const resetAllFields = useCallback(() => {
+    setCurrentStep(1);
+    setKontonummer("");
+    setKontobeskrivning(null);
+    setBelopp(null);
+    setKommentar(null);
+    setFil(null);
+    setPdfUrl(null);
+    setTransaktionsdatum(null);
+    setValtFörval(null);
+    setExtrafält({});
+    setLeverantör(null);
+    setFakturanummer(null);
+    setFakturadatum(null);
+    setFörfallodatum(null);
+    setBetaldatum(null);
+    setBokförSomFaktura(false);
+    setKundfakturadatum(null);
+    setLevfaktMode(false);
+    setUtlaggMode(false);
+  }, []);
+
+  const exitLevfaktMode = useCallback(
+    (routerInstance?: any) => {
+      setLevfaktMode(false);
+      setCurrentStep(1);
+
+      // Rensa leverantörsfaktura-specifika fält
+      setLeverantör(null);
+      setFakturanummer(null);
+      setFakturadatum(null);
+      setFörfallodatum(null);
+      setBetaldatum(null);
+      setBokförSomFaktura(false);
+
+      // Navigera till standard bokföring utan URL-parametrar
+      if (routerInstance) {
+        routerInstance.push("/bokfor");
+      } else if (router) {
+        router.push("/bokfor");
+      }
+    },
+    [router]
+  );
+
+  const setFavoritFörvalen = useCallback((förvalen: Förval[]) => {
+    setFavoritFörval(förvalen);
+  }, []);
+
+  // Läs URL-parametrar och sätt state vid mount
+  useEffect(() => {
+    const isUtlagg = searchParams.get("utlagg") === "true";
+    const isLevfakt = searchParams.get("levfakt") === "true";
+
+    if (isUtlagg !== utlaggMode) {
+      setUtlaggMode(isUtlagg);
+    }
+    if (isLevfakt !== levfaktMode) {
+      setLevfaktMode(isLevfakt);
+    }
+  }, [searchParams, utlaggMode, levfaktMode]);
+
+  // ====================================================
+  // SOKFORVAL LOGIK (från useSokForval)
+  // ====================================================
 
   // Lokal UI state för sök (från useSokForval)
   const [searchText, setSearchText] = useState("");
@@ -906,6 +960,9 @@ export function useBokfor() {
       leverantör,
       bokföringsmetod,
       fakturadatum,
+      förfallodatum,
+      betaldatum,
+      kundfakturadatum,
       visaLeverantorModal,
 
       // Steg3 state (nu direkt från denna hook)
@@ -930,6 +987,7 @@ export function useBokfor() {
       setTransaktionsdatum,
       setKommentar,
       setExtrafält,
+      setBokförSomFaktura,
       setFil,
       setPdfUrl,
       setLeverantör,
@@ -1022,10 +1080,7 @@ export function useBokfor() {
     initialValue?: boolean;
     onUtläggChange?: (isUtlägg: boolean, valdaAnställda: number[]) => void;
   }) {
-    const anställdaFromStore = useBokforStore((state) => state.anställda);
-
     const [isUtlägg, setIsUtlägg] = useState(initialValue);
-    const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
     const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -1034,11 +1089,9 @@ export function useBokfor() {
 
       if (checked) {
         setLoading(true);
-        // Använd anställda från store
-        setAnställda(anställdaFromStore || []);
+        // TODO: Hämta anställda från API när utlägg aktiveras
         setLoading(false);
       } else {
-        setAnställda([]);
         setValdaAnställda([]);
       }
 
@@ -1285,4 +1338,405 @@ export function useBokfor() {
       },
     };
   }
+}
+
+// ====================================================
+// INDIVIDUELLA HOOK EXPORTS (från separata filer)
+// ====================================================
+
+// Från useInformation.ts
+export function useInformation() {
+  const store = useBokfor();
+  const { belopp, transaktionsdatum } = store.state;
+  const { setBelopp, setTransaktionsdatum } = store.actions;
+
+  // Säker beloppvalidering
+  const handleBeloppChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const numValue = Number(value);
+
+      // Begränsa till rimliga värden
+      if (isNaN(numValue) || numValue < 0 || numValue > 999999999) {
+        return; // Ignorera ogiltiga värden
+      }
+
+      setBelopp(numValue);
+    },
+    [setBelopp]
+  );
+
+  // Datepicker setup
+  useEffect(() => {
+    const datePickerEl = document.querySelector(".react-datepicker-wrapper");
+    if (datePickerEl) {
+      (datePickerEl as HTMLElement).style.width = "100%";
+    }
+
+    const inputEl = document.querySelector(".react-datepicker__input-container input");
+    if (inputEl) {
+      (inputEl as HTMLElement).className =
+        "w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700";
+    }
+
+    if (!transaktionsdatum) {
+      // Default dagens datum
+      setTransaktionsdatum(new Date().toISOString());
+    }
+  }, [transaktionsdatum, setTransaktionsdatum]);
+
+  const handleTransaktionsdatumChange = useCallback(
+    (date: Date | null) => {
+      setTransaktionsdatum(date ? date.toISOString() : "");
+    },
+    [setTransaktionsdatum]
+  );
+
+  return {
+    belopp,
+    transaktionsdatum,
+    handleBeloppChange,
+    handleTransaktionsdatumChange,
+    transaktionsdatumDate: transaktionsdatum ? new Date(transaktionsdatum) : new Date(),
+  };
+}
+
+// Från useKommentar.ts
+export function useKommentar(options?: {
+  kommentar?: string | null;
+  setKommentar?: (value: string) => void;
+}) {
+  const store = useBokfor();
+  const { kommentar } = store.state;
+  const { setKommentar } = store.actions;
+
+  const finalKommentar = options?.kommentar ?? kommentar;
+  const finalSetKommentar = options?.setKommentar ?? setKommentar;
+
+  // Callback för att hantera ändringar
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      finalSetKommentar(e.target.value);
+    },
+    [finalSetKommentar]
+  );
+
+  return {
+    kommentar: finalKommentar,
+    handleChange,
+  };
+}
+
+// Från useSokForval.ts
+export function useSokForval() {
+  const store = useBokfor();
+  const {
+    currentStep,
+    searchText,
+    results,
+    highlightedIndex,
+    loading,
+    favoritFörval,
+    allaFörval,
+    levfaktMode,
+    utlaggMode,
+  } = store.state;
+
+  const { handleSearchChange, handleKeyDown, väljFörval, getTitle } = store.handlers;
+
+  return {
+    state: {
+      currentStep,
+      searchText,
+      results,
+      highlightedIndex,
+      loading,
+      favoritFörval,
+      allaFörval,
+      levfaktMode,
+      utlaggMode,
+    },
+    handlers: {
+      handleSearchChange,
+      handleKeyDown,
+      väljFörval,
+      getTitle,
+    },
+  };
+}
+
+// Från useSteg2.ts
+export function useSteg2() {
+  const store = useBokfor();
+  const {
+    currentStep,
+    belopp,
+    transaktionsdatum,
+    kommentar,
+    valtFörval,
+    extrafält,
+    levfaktMode,
+    bokförSomFaktura,
+    fakturadatum,
+    fil,
+    pdfUrl,
+    leverantör,
+    visaLeverantorModal,
+  } = store.state;
+
+  const {
+    setBelopp,
+    setTransaktionsdatum,
+    setKommentar,
+    setExtrafält,
+    setBokförSomFaktura,
+    setFakturadatum,
+    setFil,
+    setPdfUrl,
+    setLeverantör,
+    setCurrentStep,
+  } = store.actions;
+
+  const {
+    handleOcrTextChange,
+    handleReprocessTrigger,
+    handleCheckboxChange,
+    handleLeverantorCheckboxChange,
+    handleLeverantorRemove,
+    handleLeverantorSelected,
+    handleLeverantorModalClose,
+  } = store.handlers;
+
+  return {
+    state: {
+      currentStep,
+      belopp,
+      transaktionsdatum,
+      kommentar,
+      valtFörval,
+      extrafält,
+      levfaktMode,
+      bokförSomFaktura,
+      fakturadatum,
+      fil,
+      pdfUrl,
+      leverantör,
+      visaLeverantorModal,
+    },
+    actions: {
+      setBelopp,
+      setTransaktionsdatum,
+      setKommentar,
+      setExtrafält,
+      setBokförSomFaktura,
+      setFakturadatum,
+      setFil,
+      setPdfUrl,
+      setLeverantör,
+      setCurrentStep,
+    },
+    handlers: {
+      handleOcrTextChange,
+      handleReprocessTrigger,
+      handleCheckboxChange,
+      handleLeverantorCheckboxChange,
+      handleLeverantorRemove,
+      handleLeverantorSelected,
+      handleLeverantorModalClose,
+    },
+  };
+}
+
+// Från useSteg3.ts
+export function useSteg3() {
+  const store = useBokfor();
+  const {
+    currentStep,
+    belopp,
+    kommentar,
+    fil,
+    pdfUrl,
+    transaktionsdatum,
+    valtFörval,
+    extrafält,
+    bokföringsmetod,
+    anstallda,
+    anstalldId,
+    toast,
+    totalDebet,
+    totalKredit,
+    utlaggMode,
+  } = store.state;
+
+  const { setAnstallda, setAnstalldId, setCurrentStep } = store.actions;
+
+  const { showToast, hideToast, handleSubmit } = store.handlers;
+
+  return {
+    state: {
+      currentStep,
+      belopp,
+      kommentar,
+      fil,
+      pdfUrl,
+      transaktionsdatum,
+      valtFörval,
+      extrafält,
+      bokföringsmetod,
+      anstallda,
+      anstalldId,
+      toast,
+      totalDebet,
+      totalKredit,
+      utlaggMode,
+    },
+    actions: {
+      setAnstallda,
+      setAnstalldId,
+      setCurrentStep,
+    },
+    handlers: {
+      showToast,
+      hideToast,
+      handleSubmit,
+    },
+  };
+}
+
+// Från useSteg4.ts
+export function useSteg4() {
+  const handleNewBokforing = () => {
+    window.location.reload();
+  };
+
+  return {
+    state: {},
+    handlers: {
+      handleNewBokforing,
+    },
+  };
+}
+
+// Från useStandardLayout.ts
+export function useStandardLayout(onSubmit?: () => void, title?: string) {
+  const store = useBokfor();
+  const { belopp, transaktionsdatum, kommentar, fil, pdfUrl } = store.state;
+  const { setBelopp, setTransaktionsdatum, setKommentar, setFil, setPdfUrl, setCurrentStep } =
+    store.actions;
+
+  // Grundläggande validering för standard layout
+  const isValid = belopp && belopp > 0 && transaktionsdatum && fil;
+
+  const handleSubmit = useCallback(() => {
+    if (onSubmit) {
+      onSubmit();
+    }
+  }, [onSubmit]);
+
+  return {
+    state: {
+      belopp,
+      transaktionsdatum,
+      kommentar,
+      fil,
+      pdfUrl,
+      isValid,
+      title: title || "Standard bokföring",
+    },
+    actions: {
+      setBelopp,
+      setTransaktionsdatum,
+      setKommentar,
+      setFil,
+      setPdfUrl,
+      setCurrentStep,
+    },
+    handlers: {
+      onSubmit: handleSubmit,
+    },
+  };
+}
+
+// Från useLevfaktLayout.ts
+export function useLevfaktLayout() {
+  const store = useBokfor();
+  const {
+    belopp,
+    transaktionsdatum,
+    kommentar,
+    fil,
+    pdfUrl,
+    leverantör,
+    fakturadatum,
+    förfallodatum,
+    betaldatum,
+    levfaktMode,
+  } = store.state;
+
+  const {
+    setBelopp,
+    setTransaktionsdatum,
+    setKommentar,
+    setFil,
+    setPdfUrl,
+    setLeverantör,
+    setFakturadatum,
+    setCurrentStep,
+  } = store.actions;
+
+  const title = "Leverantörsfaktura";
+
+  const handleSubmit = useCallback(() => {
+    console.log("Leverantörsfaktura submit");
+  }, []);
+
+  // Validering för leverantörsfaktura
+  const leverantörIsValid =
+    leverantör &&
+    (typeof leverantör === "string"
+      ? leverantör.trim() !== ""
+      : typeof leverantör === "object" && leverantör.namn && leverantör.namn.trim() !== "");
+
+  const grundIsValid = belopp && belopp > 0 && transaktionsdatum && fil;
+  const fullIsValid = grundIsValid && leverantörIsValid;
+
+  const leverantörOptions = [
+    { label: "Välj leverantör...", value: "" },
+    { label: "Telia", value: "telia" },
+    { label: "Ellevio", value: "ellevio" },
+    { label: "ICA", value: "ica" },
+    { label: "Staples", value: "staples" },
+    { label: "Office Depot", value: "office_depot" },
+  ];
+
+  return {
+    state: {
+      belopp,
+      transaktionsdatum,
+      kommentar,
+      fil,
+      pdfUrl,
+      leverantör,
+      fakturadatum,
+      förfallodatum,
+      betaldatum,
+      leverantörIsValid,
+      fullIsValid,
+      title,
+      leverantörOptions,
+    },
+    actions: {
+      setBelopp,
+      setTransaktionsdatum,
+      setKommentar,
+      setFil,
+      setPdfUrl,
+      setLeverantör,
+      setFakturadatum,
+      setCurrentStep,
+    },
+    handlers: {
+      onSubmit: handleSubmit,
+    },
+  };
 }
