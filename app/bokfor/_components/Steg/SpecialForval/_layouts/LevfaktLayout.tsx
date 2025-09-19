@@ -31,7 +31,7 @@ import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 
 export default function LevfaktLayout({ children }: { children?: React.ReactNode }) {
-  const { state, actions, handlers } = useBokforContext();
+  const { handlers } = useBokforContext();
   const {
     belopp,
     transaktionsdatum,

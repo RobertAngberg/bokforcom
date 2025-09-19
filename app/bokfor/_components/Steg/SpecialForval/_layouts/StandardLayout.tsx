@@ -20,7 +20,7 @@ export default function StandardLayout({
   onSubmit,
   children,
 }: StandardLayoutProps & { children?: React.ReactNode }) {
-  const { state, actions, handlers } = useBokforContext();
+  const { handlers } = useBokforContext();
   const { state: layoutState, handlers: layoutHandlers } = handlers.useStandardLayoutHelper(
     onSubmit,
     title

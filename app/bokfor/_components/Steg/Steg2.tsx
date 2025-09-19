@@ -17,8 +17,40 @@ export default function Steg2() {
   if (state.currentStep !== 2 || state.levfaktMode) return null;
 
   if (state.valtFörval?.specialtyp) {
+    // Mapping från database specialtyp till komponentnamn
+    const specialtypMapping: { [key: string]: string } = {
+      AvgifterAvrakningsnotaMoms: "AvgifterAvrakningsnotaMoms",
+      AvrakningsnotaUtanMoms: "AvrakningsnotaUtanMoms",
+      Banklan: "Banklan",
+      Billeasing: "Billeasing",
+      Direktpension: "Direktpension",
+      DrojsmalsrantaLevFakt: "DrojsmalsrantaLevFakt",
+      EgetUttag: "EgetUttag",
+      Hyrbil: "Hyrbil",
+      ITtjansterEU: "ITtjansterEU",
+      ITtjansterUtanfEU: "ITtjansterUtanfEU",
+      Importmoms: "Importmoms",
+      InkopTjanstEU: "InkopTjanstEU",
+      InkopTjanstUtanfEU: "InkopTjanstUtanfEU",
+      InkopTjansterSverigeOmvand: "InkopTjansterSverigeOmvand",
+      InkopVarorEU25: "InkopVarorEU25",
+      InkopVarorUtanfEU: "InkopVarorUtanfEU",
+      MilersattningEnskildFirma: "MilersattningEnskildFirma",
+      Pensionsforsakring: "Pensionsforsakring",
+      Rantekostnader: "Rantekostnader",
+      Representation: "Representation",
+      UberAvgift: "UberAvgift",
+      AmorteringBanklan: "AmorteringBanklan",
+    };
+
+    const componentName = specialtypMapping[state.valtFörval.specialtyp];
+
+    if (!componentName) {
+      return <div>Okänd specialtyp: {state.valtFörval.specialtyp}</div>;
+    }
+
     try {
-      const SpecialComponent = require(`./SpecialForval/${state.valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`./SpecialForval/${componentName}`).default;
 
       return (
         <SpecialComponent
