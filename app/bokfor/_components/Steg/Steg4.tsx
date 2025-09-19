@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useBokforStore } from "../../_stores/bokforStore";
-import { useSteg4 } from "../../_hooks/useSteg4";
+import { useBokforContext } from "../BokforProvider";
 
 export default function Steg4() {
-  const { currentStep } = useBokforStore();
-  const { handlers } = useSteg4();
+  const { state, handlers } = useBokforContext();
 
   // Visa bara på steg 4
-  if (currentStep !== 4) return null;
+  if (state.currentStep !== 4) return null;
 
   return (
     <main className="flex flex-col items-center text-center">

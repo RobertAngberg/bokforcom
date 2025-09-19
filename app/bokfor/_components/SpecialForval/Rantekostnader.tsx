@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg/Steg3";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { useSteg2 } from "../../_hooks/useSteg2";
+import { useBokforContext } from "../BokforProvider";
 
 interface RantekostnaderProps {
   mode: "steg2" | "steg3";
@@ -17,7 +17,7 @@ interface RantekostnaderProps {
 }
 
 export default function Rantekostnader({ mode, renderMode }: RantekostnaderProps) {
-  const { state, actions } = useSteg2();
+  const { state, actions } = useBokforContext();
   const [amortering, setAmortering] = useState(0);
   const giltigt = !!state.belopp && !!state.transaktionsdatum;
 

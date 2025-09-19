@@ -7,7 +7,7 @@ import TextFalt from "../../../../_components/TextFalt";
 import Knapp from "../../../../_components/Knapp";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
-import { useStandardLayout } from "../../../_hooks/useStandardLayout";
+import { useBokforContext } from "../../BokforProvider";
 import type { StandardLayoutProps } from "../../../_types/types";
 
 /**
@@ -20,9 +20,21 @@ export default function StandardLayout({
   onSubmit,
   children,
 }: StandardLayoutProps & { children?: React.ReactNode }) {
-  const { state, handlers } = useStandardLayout(onSubmit, title);
+  const { state, actions, handlers } = useBokforContext();
+  const { state: layoutState, handlers: layoutHandlers } = handlers.useStandardLayoutHelper(
+    onSubmit,
+    title
+  );
 
-  const { belopp, transaktionsdatum, kommentar, fil, pdfUrl, isValid, title: hookTitle } = state;
+  const {
+    belopp,
+    transaktionsdatum,
+    kommentar,
+    fil,
+    pdfUrl,
+    isValid,
+    title: hookTitle,
+  } = layoutState;
 
   const {
     setBelopp,
@@ -32,7 +44,7 @@ export default function StandardLayout({
     setPdfUrl,
     setCurrentStep,
     onSubmit: hookOnSubmit,
-  } = handlers;
+  } = layoutHandlers;
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">

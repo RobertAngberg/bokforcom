@@ -1,6 +1,7 @@
 "use client";
 
-import { BokforStoreProvider } from "../_stores/BokforStoreProvider";
+import { useEffect } from "react";
+import { useBokforContext } from "./BokforProvider";
 import SökFörval from "./SokForval";
 import Steg2 from "./Steg/Steg2";
 import Steg2Levfakt from "./Steg/Steg2Levfakt";
@@ -17,13 +18,25 @@ interface BokforClientProps {
 }
 
 export default function BokforClient({ initialData }: BokforClientProps) {
+  const { actions } = useBokforContext();
+
+  // Initialisera data vid mount
+  useEffect(() => {
+    if (initialData) {
+      actions.setFavoritFörvalen(initialData.favoritFörval);
+      actions.setAllaFörval(initialData.allaFörval);
+      actions.setBokföringsmetod(initialData.bokföringsmetod);
+      actions.setAnställda(initialData.anställda);
+    }
+  }, [initialData, actions]);
+
   return (
-    <BokforStoreProvider initialData={initialData}>
+    <>
       <SökFörval />
       <Steg2 />
       <Steg2Levfakt />
       <Steg3 />
       <Steg4 />
-    </BokforStoreProvider>
+    </>
   );
 }

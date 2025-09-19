@@ -1,11 +1,12 @@
 "use client";
 
 import { UtläggProps } from "../../_types/types";
-import { useUtlagg } from "../../_hooks/useUtlagg";
+import { useBokforContext } from "../BokforProvider";
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
+  const { state, handlers } = useBokforContext();
   const { isUtlägg, anställda, valdaAnställda, loading, handleUtläggChange, handleAnställdChange } =
-    useUtlagg({ initialValue, onUtläggChange });
+    handlers.useUtlaggHelper({ initialValue, onUtläggChange });
 
   return (
     <div className="space-y-4">

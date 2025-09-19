@@ -1000,6 +1000,12 @@ export function useBokfor() {
       setAnstalldId,
       setLoading: setLoadingSteg3,
       setToast,
+
+      // Initial data setters
+      setFavoritFörvalen,
+      setAllaFörval,
+      setBokföringsmetod,
+      setAnställda,
     },
     handlers: {
       // SokForval handlers (nu direkt från denna hook)
@@ -1738,5 +1744,35 @@ export function useLevfaktLayout() {
     handlers: {
       onSubmit: handleSubmit,
     },
+  };
+}
+
+// Från useForhandsgranskning.ts
+export function useForhandsgranskning({ fil, pdfUrl }: UseForhandsgranskningProps) {
+  const store = useBokfor();
+  const helperResult = store.handlers.useForhandsgranskningHelper({ fil, pdfUrl });
+
+  return {
+    state: helperResult.state,
+    actions: helperResult.actions,
+    handlers: helperResult.handlers,
+    refs: helperResult.refs,
+  };
+}
+
+// Från useUtlagg.ts
+export function useUtlagg({
+  initialValue = false,
+  onUtläggChange,
+}: {
+  initialValue?: boolean;
+  onUtläggChange?: (isUtlägg: boolean, valdaAnställda: number[]) => void;
+}) {
+  const store = useBokfor();
+  const helperResult = store.handlers.useUtlaggHelper({ initialValue, onUtläggChange });
+
+  return {
+    ...helperResult,
+    anställda: store.state.anstallda, // Lägg till anställda från store
   };
 }

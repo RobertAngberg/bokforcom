@@ -12,12 +12,12 @@ import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
-import { useSteg2Levfakt } from "../../_hooks/useSteg2Levfakt";
+import { useBokforContext } from "../BokforProvider";
 
 registerLocale("sv", sv);
 
 export default function Steg2Levfakt() {
-  const { state, actions, handlers } = useSteg2Levfakt();
+  const { state, actions, handlers } = useBokforContext();
 
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;

@@ -2,10 +2,10 @@
 
 import FörvalKort from "./ForvalKort";
 import TextFalt from "../../_components/TextFalt";
-import { useSokForval } from "../_hooks/useSokForval";
+import { useBokforContext } from "./BokforProvider";
 
 export default function SokForval() {
-  const { state, handlers } = useSokForval();
+  const { state, handlers } = useBokforContext();
 
   // Visa bara på steg 1
   if (state.currentStep !== 1) return null;

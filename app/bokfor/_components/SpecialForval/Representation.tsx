@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import LaddaUppFil from "../Steg/LaddaUppFil";
 import Forhandsgranskning from "../Steg/Forhandsgranskning";
 import { datePickerValue } from "../../../_utils/datum";
-import { useSteg2 } from "../../_hooks/useSteg2";
+import { useBokforContext } from "../BokforProvider";
 
 interface RepresentationProps {
   mode: "steg2" | "steg3";
@@ -38,7 +38,7 @@ function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, t
 }
 
 export default function Representation({ mode, renderMode = "standard" }: RepresentationProps) {
-  const { state, actions } = useSteg2();
+  const { state, actions } = useBokforContext();
 
   const [antalPersoner, setAntalPersoner] = useState("");
   const [representationstyp, setRepresentationstyp] =

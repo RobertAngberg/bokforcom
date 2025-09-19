@@ -7,11 +7,11 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
-import { useSteg2 } from "../../_hooks/useSteg2";
+import { useBokforContext } from "../BokforProvider";
 
 export default function Steg2() {
-  // Tidigare: lång lista med destructuring, nu grupperat
-  const { state, actions, handlers } = useSteg2();
+  // Hämta all state och funktioner från useBokfor
+  const { state, actions, handlers } = useBokforContext();
 
   // Visa bara på steg 2 och inte i levfakt mode
   if (state.currentStep !== 2 || state.levfaktMode) return null;

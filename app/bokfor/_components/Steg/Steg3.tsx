@@ -8,11 +8,11 @@ import Toast from "../../../_components/Toast";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
-import { useSteg3 } from "../../_hooks/useSteg3";
+import { useBokforContext } from "../BokforProvider";
 import { Steg3Props } from "../../_types/types";
 
 export default function Steg3(props?: Steg3Props) {
-  const { state, actions, handlers } = useSteg3();
+  const { state, actions, handlers } = useBokforContext();
 
   // Visa bara på steg 3
   if (state.currentStep !== 3) return null;

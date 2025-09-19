@@ -1,13 +1,17 @@
 "use client";
 
 import { ForvalKortProps } from "../_types/types";
-import { useForvalKort } from "../_hooks/useForvalKort";
+import { useBokforContext } from "./BokforProvider";
 
 export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
-  const { state, handlers } = useForvalKort({ förval, isHighlighted, onClick });
+  const { getCardClassName, formatKontoValue } = useBokforContext();
+
+  // Skapa lokal state för denna komponent
+  const kontonSökord = förval.konton?.map((k: any) => k.kontonummer).join(", ") || "";
+  const showEnterHint = isHighlighted;
 
   return (
-    <div className={state.cardClassName} onClick={handlers.onClick}>
+    <div className={getCardClassName(isHighlighted)} onClick={onClick}>
       <div className="text-xl font-semibold text-white mb-2">✓ {förval.namn}</div>
       <pre className="whitespace-pre-wrap text-sm italic text-gray-300 mb-2 font-sans">
         {förval.beskrivning}
@@ -19,7 +23,7 @@ export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalK
       </p>
 
       <p className="text-sm text-gray-500 mt-2 mb-4">
-        <strong>Sökord:</strong> {state.kontonSökord}
+        <strong>Sökord:</strong> {kontonSökord}
       </p>
 
       <table className="w-full border border-gray-700 text-sm text-gray-300">
@@ -37,17 +41,17 @@ export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalK
                 {konto.kontonummer} {konto.beskrivning}
               </td>
               <td className="border border-gray-700 px-2 py-1 text-center">
-                {handlers.formatKontoValue(konto.debet)}
+                {formatKontoValue(konto.debet)}
               </td>
               <td className="border border-gray-700 px-2 py-1 text-center">
-                {handlers.formatKontoValue(konto.kredit)}
+                {formatKontoValue(konto.kredit)}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {state.showEnterHint && (
+      {showEnterHint && (
         <div className="mt-3 text-xs text-right text-gray-400">⏎ Tryck Enter för att välja</div>
       )}
     </div>

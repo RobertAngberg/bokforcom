@@ -24,13 +24,14 @@ import Forhandsgranskning from "../../Steg/Forhandsgranskning";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
-import { useLevfaktLayout } from "../../../_hooks/useLevfaktLayout";
+import { useBokforContext } from "../../BokforProvider";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 
 export default function LevfaktLayout({ children }: { children?: React.ReactNode }) {
+  const { state, actions, handlers } = useBokforContext();
   const {
     belopp,
     transaktionsdatum,
@@ -54,7 +55,7 @@ export default function LevfaktLayout({ children }: { children?: React.ReactNode
     title,
     onSubmit,
     fullIsValid,
-  } = useLevfaktLayout();
+  } = handlers.useLevfaktLayoutHelper();
 
   return (
     <>

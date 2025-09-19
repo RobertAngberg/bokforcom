@@ -7,15 +7,16 @@ import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { InformationProps } from "../../_types/types";
-import { useInformation } from "../../_hooks/useInformation";
+import { useBokforContext } from "../BokforProvider";
 
 export default function Information({
   visaFakturadatum = false,
   fakturadatum,
   setFakturadatum,
 }: InformationProps) {
+  const { state, actions, handlers } = useBokforContext();
   const { belopp, handleBeloppChange, handleTransaktionsdatumChange, transaktionsdatumDate } =
-    useInformation();
+    handlers.useInformationHelper();
 
   return (
     <div className="padder">

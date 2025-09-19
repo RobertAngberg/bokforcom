@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 import { ForhandsgranskningProps } from "../../_types/types";
-import { useForhandsgranskning } from "../../_hooks/useForhandsgranskning";
+import { useBokforContext } from "../BokforProvider";
 
 export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
-  const { state, actions, handlers } = useForhandsgranskning({ fil, pdfUrl });
+  const { handlers } = useBokforContext();
+  const {
+    state,
+    actions,
+    handlers: previewHandlers,
+  } = handlers.useForhandsgranskningHelper({ fil, pdfUrl });
 
   return (
     <>
@@ -40,7 +45,7 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
               <div className="p-4 text-center bg-gray-50 rounded border">
                 <p className="mb-2">PDF kan inte visas inline i denna webbläsare</p>
                 <button
-                  onClick={handlers.handlePdfOpenClick}
+                  onClick={previewHandlers.handlePdfOpenClick}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Öppna PDF i ny flik
@@ -62,10 +67,10 @@ export default function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningPr
 
         {state.hasFile && (
           <button
-            onClick={handlers.handleFileClick}
+            onClick={previewHandlers.handleFileClick}
             className="absolute top-2 right-2 px-4 py-2 text-sm font-medium text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition"
           >
-            {handlers.getButtonText()}
+            {previewHandlers.getButtonText()}
           </button>
         )}
       </div>
