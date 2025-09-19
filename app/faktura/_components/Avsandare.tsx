@@ -3,13 +3,20 @@
 import Image from "next/image";
 import TextFalt from "../../_components/TextFalt";
 import { getProxyImageUrl } from "../../_utils/imageProxy";
-import { useAvsandare } from "../_hooks/useAvsandare";
+import { useFaktura } from "../_hooks/useFaktura";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 
 export default function Avsandare() {
-  const { form, toast, fileInputRef, hanteraTangentNer, hanteraLoggaUpload, spara, closeToast } =
-    useAvsandare();
+  const {
+    formData: form,
+    toastState: toast,
+    fileInputRef,
+    hanteraTangentNer,
+    hanteraLoggaUpload,
+    sparaForetagsprofil: spara,
+    clearToast: closeToast,
+  } = useFaktura();
 
   return (
     <>

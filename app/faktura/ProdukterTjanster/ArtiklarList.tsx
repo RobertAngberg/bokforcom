@@ -1,8 +1,23 @@
-import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
+import { useFaktura } from "../_hooks/useFaktura";
 
 export default function ArtiklarList() {
-  const { formData, blinkIndex, handleRemove, handleEdit, handleShowArtikelDetaljer } =
-    useProdukterTjanster();
+  const { formData, produkterTjansterState, taBortArtikel } = useFaktura();
+  const { blinkIndex } = produkterTjansterState;
+
+  // Handler functions
+  const handleRemove = (index: number) => {
+    taBortArtikel(index);
+  };
+
+  const handleEdit = (artikel: any, index: number) => {
+    // TODO: Implement edit functionality
+    console.log("Edit artikel not implemented yet", artikel, index);
+  };
+
+  const handleShowArtikelDetaljer = (artikel: any) => {
+    // TODO: Implement show artikel detaljer functionality
+    console.log("Show artikel detaljer not implemented yet", artikel);
+  };
 
   const artiklar = formData.artiklar || [];
   if (artiklar.length === 0) return null;

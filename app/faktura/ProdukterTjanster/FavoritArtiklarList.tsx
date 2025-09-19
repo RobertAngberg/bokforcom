@@ -1,15 +1,21 @@
 import Knapp from "../../_components/Knapp";
-import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
+import { useFaktura } from "../_hooks/useFaktura";
 
 export default function FavoritArtiklarList() {
-  const {
-    favoritArtiklar,
-    showFavoritArtiklar,
-    setShowFavoritArtiklar,
-    handleSelectFavorit,
-    handleDeleteFavorit,
-    ursprungligFavoritId,
-  } = useProdukterTjanster();
+  const { produkterTjansterState, setShowFavoritArtiklar } = useFaktura();
+
+  const { favoritArtiklar, showFavoritArtiklar, ursprungligFavoritId } = produkterTjansterState;
+
+  // Handler functions
+  const handleSelectFavorit = (artikel: any) => {
+    // TODO: Implement select favorit functionality
+    console.log("Select favorit not implemented yet", artikel);
+  };
+
+  const handleDeleteFavorit = (id: number) => {
+    // TODO: Implement delete favorit functionality
+    console.log("Delete favorit not implemented yet", id);
+  };
 
   if (!favoritArtiklar || favoritArtiklar.length === 0) return null;
   return (
@@ -33,9 +39,10 @@ export default function FavoritArtiklarList() {
                 className="bg-slate-700 hover:bg-slate-600 cursor-pointer p-3 rounded border border-slate-500 flex flex-col justify-between relative"
               >
                 <button
-                  onClick={() => handleDeleteFavorit(a.id)}
+                  onClick={() => a.id && handleDeleteFavorit(a.id)}
                   className="absolute top-2 right-2 text-red-400 hover:text-red-600"
                   title="Ta bort favoritartikel"
+                  disabled={!a.id}
                 >
                   🗑️
                 </button>

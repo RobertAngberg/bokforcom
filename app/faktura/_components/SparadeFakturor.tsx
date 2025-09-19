@@ -2,18 +2,15 @@
 
 import Toast from "../../_components/Toast";
 import { SparadeFakturorProps } from "../_types/types";
-import { useSparadeFakturor } from "../_hooks/useSparadeFakturor";
-
-import { useFakturaClient } from "../_hooks/useFakturaClient";
+import { useFaktura } from "../_hooks/useFaktura";
 
 export default function SparadeFakturor({
   fakturor,
   activeInvoiceId,
   onSelectInvoice,
 }: SparadeFakturorProps) {
-  const { toastState, clearToast } = useFakturaClient();
-  const { loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } =
-    useSparadeFakturor(onSelectInvoice);
+  const { toastState, clearToast, loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } =
+    useFaktura();
 
   return (
     <>
@@ -76,7 +73,12 @@ export default function SparadeFakturor({
 
                   <div
                     className={`cursor-pointer ${isLoading ? "pointer-events-none" : ""} pr-8`}
-                    onClick={() => !isLoading && handleSelectInvoice(faktura.id)}
+                    onClick={() =>
+                      !isLoading &&
+                      (onSelectInvoice
+                        ? onSelectInvoice(faktura.id)
+                        : handleSelectInvoice(faktura.id))
+                    }
                   >
                     <div className="font-semibold text-base mb-3">
                       #{faktura.fakturanummer} – {faktura.kundnamn ?? "Okänd kund"}

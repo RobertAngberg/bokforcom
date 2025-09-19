@@ -1,4 +1,6 @@
-import { hämtaFöretagsprofil, hämtaSparadeKunder, hämtaSparadeArtiklar } from "../_lib/data";
+import { hämtaFöretagsprofil } from "../_actions/foretagActions";
+import { hämtaSparadeKunder } from "../_actions/kundActions";
+import { hämtaSparadeArtiklar } from "../_actions/artikelActions";
 import NyFakturaClient from "./NyFakturaClient";
 
 export default async function NyFakturaPage() {

@@ -2,26 +2,25 @@
 "use client";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-import { useSkickaEpost } from "../_hooks/useSkickaEpost";
-import { useFakturaClient } from "../_hooks/useFakturaClient";
+import { useFaktura } from "../_hooks/useFaktura";
 import { SkickaEpostProps } from "../_types/types";
 //#endregion
 
 export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
-  const { toastState, clearToast } = useFakturaClient();
   const {
+    toastState,
+    clearToast,
     isSending,
     mottagareEmail,
     setMottagareEmail,
     egetMeddelande,
     setEgetMeddelande,
-    skickaTestmail,
-    closeToast,
-    isButtonDisabled,
-    buttonText,
-    statusMessage,
+    skickaEpost,
+    isEpostButtonDisabled,
+    epostButtonText,
+    epostStatusMessage,
     hasCustomerEmail,
-  } = useSkickaEpost({ onSuccess, onError });
+  } = useFaktura();
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow mt-4">
@@ -76,8 +75,8 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
         <div className="flex justify-between items-center pt-4">
           <div className="flex-1">
             <p className="text-slate-400 text-sm">
-              {statusMessage.type === "warning" ? (
-                <span className="text-orange-400">⚠️ {statusMessage.text}</span>
+              {epostStatusMessage.type === "warning" ? (
+                <span className="text-orange-400">⚠️ {epostStatusMessage.text}</span>
               ) : (
                 <>
                   E-posten skickas till{" "}
@@ -89,7 +88,11 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
             </p>
           </div>
 
-          <Knapp onClick={skickaTestmail} text={buttonText} disabled={isButtonDisabled} />
+          <Knapp
+            onClick={() => skickaEpost({ onSuccess, onError })}
+            text={epostButtonText}
+            disabled={isEpostButtonDisabled}
+          />
         </div>
 
         {toastState.isVisible && (

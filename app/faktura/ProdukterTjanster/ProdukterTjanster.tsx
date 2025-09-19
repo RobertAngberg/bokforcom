@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
+import { useFaktura } from "../_hooks/useFaktura";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
@@ -14,21 +14,10 @@ export default function ProdukterTjanster() {
   const {
     // State
     formData,
-    visaRotRutForm,
-    visaArtikelForm,
-    visaArtikelModal,
-    redigerarIndex,
-    favoritArtikelVald,
-    artikelSparadSomFavorit,
-    valtArtikel,
-    beskrivning,
-    antal,
-    prisPerEnhet,
-    moms,
-    valuta,
-    typ,
-    rotRutMaterial,
+    nyArtikel,
+    produkterTjansterState,
     toastState,
+    rotRutMaterial,
 
     // Setters
     setBeskrivning,
@@ -42,15 +31,47 @@ export default function ProdukterTjanster() {
     setVisaArtikelForm,
 
     // Handlers
-    handleAdd,
-    handleSaveAsFavorite,
-    handleResetForm,
-    handleCloseArtikelModal,
-    handleToggleArtikelForm,
+    läggTillArtikel,
     updateFormField,
     clearToast,
-    closeToast,
-  } = useProdukterTjanster();
+  } = useFaktura();
+
+  // Destructure nested state
+  const {
+    visaRotRutForm,
+    visaArtikelForm,
+    visaArtikelModal,
+    redigerarIndex,
+    favoritArtikelVald,
+    artikelSparadSomFavorit,
+    valtArtikel,
+  } = produkterTjansterState;
+
+  const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
+
+  // Handler functions
+  const handleAdd = () => {
+    läggTillArtikel();
+  };
+
+  const handleToggleArtikelForm = () => {
+    setVisaArtikelForm(!visaArtikelForm);
+  };
+
+  const handleSaveAsFavorite = () => {
+    // TODO: Implement save as favorite functionality
+    console.log("Save as favorite not implemented yet");
+  };
+
+  const handleResetForm = () => {
+    // TODO: Implement reset form functionality
+    console.log("Reset form not implemented yet");
+  };
+
+  const handleCloseArtikelModal = () => {
+    // TODO: Implement close artikel modal functionality
+    console.log("Close artikel modal not implemented yet");
+  };
 
   return (
     <div className="space-y-4">
@@ -58,7 +79,7 @@ export default function ProdukterTjanster() {
         message={toastState.message}
         type={toastState.type}
         isVisible={toastState.isVisible}
-        onClose={closeToast}
+        onClose={clearToast}
       />
 
       <FavoritArtiklarList />

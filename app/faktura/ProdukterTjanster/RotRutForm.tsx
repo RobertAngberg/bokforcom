@@ -1,6 +1,6 @@
 "use client";
 
-import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
+import { useFaktura } from "../_hooks/useFaktura";
 import TextFalt from "../../_components/TextFalt";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
@@ -12,14 +12,15 @@ registerLocale("sv", sv);
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {
   const {
     formData,
-    antal,
-    prisPerEnhet,
+    nyArtikel,
     RUT_KATEGORIER,
     ROT_KATEGORIER,
     handleRotRutChange,
     handleRotRutBoendeTypChange,
     handleRotRutDateChange,
-  } = useProdukterTjanster();
+  } = useFaktura();
+
+  const { antal, prisPerEnhet } = nyArtikel;
 
   return (
     <div className="space-y-4 p-4 bg-slate-800 rounded-lg">

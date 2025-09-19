@@ -9,20 +9,19 @@ import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";
 import Betalning from "../_components/Betalning";
 import Avsandare from "../_components/Avsandare";
-import FakturaStoreInit from "../_components/FakturaStoreInit";
+import { FakturaProvider } from "../_context/FakturaContext";
 import { useNyFaktura } from "../_hooks/useFakturaClient";
 import type { NyFakturaClientProps } from "../_types/types";
 import TillbakaPil from "../../_components/TillbakaPil";
 import { useRouter } from "next/navigation";
 
-export default function NyFakturaClient({ initialData }: NyFakturaClientProps) {
+function NyFakturaContent({ initialData }: NyFakturaClientProps) {
   const router = useRouter();
   const { formData, showPreview, closePreview, openPreview, reloadFaktura } =
     useNyFaktura(initialData);
 
   return (
     <>
-      <FakturaStoreInit initialData={initialData} />
       <MainLayout>
         <div className="relative mb-8 flex items-center justify-center">
           <TillbakaPil onClick={() => router.push("/faktura")} />
@@ -75,5 +74,13 @@ export default function NyFakturaClient({ initialData }: NyFakturaClientProps) {
         </div>
       )}
     </>
+  );
+}
+
+export default function NyFakturaClient({ initialData }: NyFakturaClientProps) {
+  return (
+    <FakturaProvider initialData={initialData}>
+      <NyFakturaContent initialData={initialData} />
+    </FakturaProvider>
   );
 }

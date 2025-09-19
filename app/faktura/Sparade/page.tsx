@@ -9,10 +9,10 @@ import Link from "next/link";
 import Toast from "../../_components/Toast";
 import { useSparadeFakturor, useSparadeFakturorPage } from "../_hooks/useLeverantorer";
 import { useFakturaClient } from "../_hooks/useFakturaClient";
+import { FakturaProvider } from "../_context/FakturaContext";
 //#endregion
 
-export default function Sparade() {
-  const { data } = useSparadeFakturorPage();
+function SparadeContent({ data }: { data: any }) {
   const { toastState, clearToast } = useFakturaClient();
   const { hanteraValdFaktura } = useSparadeFakturor(data?.fakturor || []);
 
@@ -57,5 +57,15 @@ export default function Sparade() {
         />
       )}
     </>
+  );
+}
+
+export default function Sparade() {
+  const { data } = useSparadeFakturorPage();
+
+  return (
+    <FakturaProvider>
+      <SparadeContent data={data} />
+    </FakturaProvider>
   );
 }

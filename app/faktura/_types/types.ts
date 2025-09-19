@@ -116,7 +116,7 @@ export type FavoritArtikel = Omit<
   rotRutSlutdatum?: string | Date;
 };
 
-export type KundStatus = "none" | "loaded" | "editing";
+export type KundStatus = "none" | "loaded" | "editing" | "sparad";
 
 // Server data types
 export type ServerData = {
@@ -163,6 +163,8 @@ export type AvsandareForm = {
 export type KundSaveResponse = {
   success: boolean;
   id?: number;
+  kundId?: number;
+  error?: string;
 };
 
 // Component props types
@@ -386,8 +388,16 @@ export interface TotalerInfoProps {
 
 // Forhandsgranskning hook types
 export interface ForhandsgranskningCalculations {
+  // Data och logik
+  rows: Artikel[];
+  logoSliderValue: number;
+  handleLogoSliderChange: (value: number) => void;
+  logoSize: number;
+
   // Grundläggande summor
   sumExkl: number;
+  sumMoms: number; // Legacy kompatibilitet
+  sumInkl: number; // Legacy kompatibilitet
   totalMoms: number;
 
   // ROT/RUT-relaterat
@@ -409,11 +419,6 @@ export interface ForhandsgranskningCalculations {
   // Slutsummor
   totalSum: number;
   summaAttBetala: number;
-
-  // Logo-hantering
-  logoSize: number;
-  logoSliderValue: number;
-  handleLogoSliderChange: (value: number) => void;
 }
 
 // =============================================================================

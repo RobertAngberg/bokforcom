@@ -3,24 +3,24 @@
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import { ExporteraPDFKnappProps } from "../_types/types";
-import { useExporteraPDFKnapp } from "../_hooks/useExporteraPDFKnapp";
+import { useFaktura } from "../_hooks/useFaktura";
 
 export default function ExporteraPDFKnapp({
   disabled = false,
   text = "📤 Spara PDF",
   className = "",
 }: ExporteraPDFKnappProps) {
-  const { toast, handleExport, closeToast } = useExporteraPDFKnapp();
+  const { handleExportPDF, toastState, clearToast } = useFaktura();
 
   return (
     <>
-      <Knapp onClick={handleExport} text={text} disabled={disabled} className={className} />
-      {toast.isVisible && (
+      <Knapp onClick={handleExportPDF} text={text} disabled={disabled} className={className} />
+      {toastState.isVisible && (
         <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={closeToast}
+          message={toastState.message}
+          type={toastState.type}
+          isVisible={toastState.isVisible}
+          onClose={clearToast}
         />
       )}
     </>

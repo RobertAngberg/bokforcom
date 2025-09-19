@@ -4,24 +4,22 @@ import Knapp from "../../_components/Knapp";
 import Dropdown from "../../_components/Dropdown";
 import TextFalt from "../../_components/TextFalt";
 import Toast from "../../_components/Toast";
-import { useKundUppgifter } from "../_hooks/useKundUppgifter";
+import { useFaktura } from "../_hooks/useFaktura";
 
 export default function KundUppgifter() {
   const {
     formData,
     kunder,
     kundStatus,
-    showSuccess,
-    fadeOut,
     toastState,
-    handleChange,
-    handleSave,
+    handleKundChange: handleChange,
+    handleKundSave: handleSave,
     handleSelectCustomer,
     handleCreateNewCustomer,
     handleDeleteCustomer,
     handleEditCustomer,
-    closeToast,
-  } = useKundUppgifter();
+    clearToast: closeToast,
+  } = useFaktura();
 
   return (
     <div className="space-y-6 text-white">
@@ -146,13 +144,6 @@ export default function KundUppgifter() {
 
           <div className="pt-4 flex items-center gap-4">
             <Knapp onClick={handleSave} text="💾 Spara kund" />
-            {showSuccess && (
-              <span
-                className={`text-green-400 transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
-              >
-                ✅ Sparat!
-              </span>
-            )}
           </div>
         </>
       )}

@@ -2,8 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useFakturaStore } from "../_stores/fakturaStore";
-import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
+import { useFaktura } from "../_hooks/useFaktura";
 import { useSession } from "next-auth/react";
 import BetalningsInfo from "./BetalningsInfo";
 import RotRutInfo from "./RotRutInfo";
@@ -15,11 +14,12 @@ import TotalerInfo from "./TotalerInfo";
 //#endregion
 
 export default function Forhandsgranskning() {
-  const formData = useFakturaStore((state) => state.formData);
+  const { formData } = useFaktura();
   const { data: session } = useSession();
   const rows = formData.artiklar || [];
 
   // Alla beräkningar från hooken
+  const forhandsgranskningCalcs = useFaktura().getForhandsgranskningCalculations();
   const {
     sumExkl,
     totalMoms,
@@ -28,7 +28,7 @@ export default function Forhandsgranskning() {
     logoSize,
     logoSliderValue,
     handleLogoSliderChange,
-  } = useForhandsgranskning();
+  } = forhandsgranskningCalcs;
 
   return (
     <>
