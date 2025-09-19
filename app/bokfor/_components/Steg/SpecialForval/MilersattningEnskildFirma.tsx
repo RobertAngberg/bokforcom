@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
-import { formatSEK, parseNumber } from "../../../_utils/format";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
+import { formatSEK, parseNumber } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../_utils/datum";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { MilersattningEnskildFirmaProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { MilersattningEnskildFirmaProps } from "../../../_types/types";
 
 export default function MilersattningEnskildFirma({
   mode,

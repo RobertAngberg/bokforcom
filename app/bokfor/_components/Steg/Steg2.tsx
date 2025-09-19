@@ -18,7 +18,7 @@ export default function Steg2() {
 
   if (state.valtFörval?.specialtyp) {
     try {
-      const SpecialComponent = require(`../SpecialForval/${state.valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`./SpecialForval/${state.valtFörval.specialtyp}`).default;
 
       return (
         <SpecialComponent

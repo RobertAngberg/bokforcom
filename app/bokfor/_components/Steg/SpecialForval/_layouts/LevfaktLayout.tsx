@@ -17,14 +17,14 @@
 
 "use client";
 
-import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
-import LaddaUppFil from "../../Steg/LaddaUppFil";
-import Kommentar from "../../Steg/Kommentar";
-import Forhandsgranskning from "../../Steg/Forhandsgranskning";
-import TillbakaPil from "../../../../_components/TillbakaPil";
-import Knapp from "../../../../_components/Knapp";
-import TextFalt from "../../../../_components/TextFalt";
-import { useBokforContext } from "../../BokforProvider";
+import { datePickerValue, datePickerOnChange } from "../../../../../_utils/datum";
+import LaddaUppFil from "../../LaddaUppFil";
+import Kommentar from "../../Kommentar";
+import Forhandsgranskning from "../../Forhandsgranskning";
+import TillbakaPil from "../../../../../_components/TillbakaPil";
+import Knapp from "../../../../../_components/Knapp";
+import TextFalt from "../../../../../_components/TextFalt";
+import { useBokforContext } from "../../../BokforProvider";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";

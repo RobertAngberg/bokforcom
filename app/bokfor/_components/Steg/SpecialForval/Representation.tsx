@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import { datePickerValue } from "../../../_utils/datum";
-import { useBokforContext } from "../BokforProvider";
-import { RepresentationProps, RepresentationsTypLocal } from "../../_types/types";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import { datePickerValue } from "../../../../_utils/datum";
+import { useBokforContext } from "../../BokforProvider";
+import { RepresentationProps, RepresentationsTypLocal } from "../../../_types/types";
 
 // Schablon beräkning enligt Skatteverket
 function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, totalBelopp: number) {

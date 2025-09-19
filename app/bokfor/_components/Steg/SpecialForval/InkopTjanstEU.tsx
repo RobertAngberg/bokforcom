@@ -1,12 +1,12 @@
 "use client";
 
-import Steg3 from "../Steg/Steg3";
+import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { InkopVarorEU25Props } from "../../_types/types";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { InkopTjanstEUProps } from "../../../_types/types";
 
-export default function InkopVarorEU25({
+export default function InkopTjanstEU({
   mode,
   renderMode = "standard",
   belopp = null,
@@ -30,7 +30,7 @@ export default function InkopVarorEU25({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: InkopVarorEU25Props) {
+}: InkopTjanstEUProps) {
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
@@ -44,38 +44,42 @@ export default function InkopVarorEU25({
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
         "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
-        "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
+        "2614": {
+          label: "Utgående moms omvänd skattskyldighet tjänster från annat EU-land, 25 %",
+          debet: 0,
+          kredit: moms,
+        },
         "2645": {
           label: "Beräknad ingående moms på förvärv från utlandet",
           debet: moms,
           kredit: 0,
         },
-        "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4515": {
-          label: "Inköp av varor från annat EU-land, 25 %",
+        "4535": {
+          label: "Inköp av tjänster från annat EU-land",
           debet: belopp ?? 0,
           kredit: 0,
         },
-        "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
       };
       setExtrafält?.(extrafältObj);
     } else {
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
         "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-        "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
+        "2614": {
+          label: "Utgående moms omvänd skattskyldighet tjänster från annat EU-land, 25 %",
+          debet: 0,
+          kredit: moms,
+        },
         "2645": {
           label: "Beräknad ingående moms på förvärv från utlandet",
           debet: moms,
           kredit: 0,
         },
-        "4000": { label: "Inköp material och varor", debet: belopp ?? 0, kredit: 0 },
-        "4515": {
-          label: "Inköp av varor från annat EU-land, 25 %",
+        "4535": {
+          label: "Inköp av tjänster från annat EU-land",
           debet: belopp ?? 0,
           kredit: 0,
         },
-        "4598": { label: "Justering, omvänd moms", debet: 0, kredit: belopp ?? 0 },
       };
       setExtrafält?.(extrafältObj);
     }
@@ -109,9 +113,9 @@ export default function InkopVarorEU25({
         setFakturadatum={setFakturadatum}
         förfallodatum={förfallodatum}
         setFörfallodatum={setFörfallodatum}
-        title="Inköp varor inom EU 25%"
+        title="Inköp tjänst EU"
       >
-        {/* InkopVarorEU25-specifikt innehåll */}
+        {/* InkopTjanstEU-specifikt innehåll */}
       </Layout>
     );
   }
@@ -121,20 +125,20 @@ export default function InkopVarorEU25({
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
-          kontonummer="4515"
-          kontobeskrivning="Inköp varor inom EU 25%"
+          kontonummer="4535"
+          kontobeskrivning="Inköp tjänst EU"
           belopp={belopp ?? 0}
           transaktionsdatum={transaktionsdatum ?? ""}
           kommentar={kommentar ?? ""}
           valtFörval={{
             id: 0,
-            namn: "Inköp varor inom EU 25%",
+            namn: "Inköp tjänst EU",
             beskrivning: "",
             typ: "",
             kategori: "",
             konton: [],
             momssats: 0.25,
-            specialtyp: "InkopVarorEU25",
+            specialtyp: "InkopTjanstEU",
             sökord: [],
           }}
           setCurrentStep={setCurrentStep}

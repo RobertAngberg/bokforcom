@@ -1,11 +1,11 @@
 "use client";
 
-import Steg3 from "../Steg/Steg3";
-import { formatSEK } from "../../../_utils/format";
+import Steg3 from "../Steg3";
+import { formatSEK } from "../../../../_utils/format";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { HyrbilProps } from "../../_types/types";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { HyrbilProps } from "../../../_types/types";
 
 export default function Hyrbil({
   mode,

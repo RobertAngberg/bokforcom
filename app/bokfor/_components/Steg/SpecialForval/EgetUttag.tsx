@@ -1,14 +1,14 @@
 "use client";
 
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { EgetUttagProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { EgetUttagProps } from "../../../_types/types";
 
 export default function EgetUttag({
   mode,

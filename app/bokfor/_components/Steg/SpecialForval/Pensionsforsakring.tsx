@@ -1,39 +1,54 @@
 "use client";
 
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { AvrakningsnotaUtanMomsProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { PensionsforsakringProps } from "../../../_types/types";
 
-export default function AvrakningsnotaUtanMoms({
+export default function Pensionsforsakring({
   mode,
-  belopp = null,
+  belopp,
   setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
   setCurrentStep,
   fil,
   setFil,
   pdfUrl,
   setPdfUrl,
+  transaktionsdatum,
+  setTransaktionsdatum,
+  kommentar,
+  setKommentar,
   extrafält,
   setExtrafält,
-}: AvrakningsnotaUtanMomsProps) {
+}: PensionsforsakringProps) {
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
-    const total = belopp ?? 0;
+    const val = belopp ?? 0;
+    const loneskatt = val * 0.2425;
 
     const extrafältObj = {
-      "6570": { label: "Bankkostnader", debet: total, kredit: 0 },
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: val },
+      "2514": {
+        label: "Beräknad särskild löneskatt på pensionskostnader",
+        debet: 0,
+        kredit: loneskatt,
+      },
+      "7412": {
+        label: "Premier för individuella pensionsförsäkringar",
+        debet: val,
+        kredit: 0,
+      },
+      "7533": {
+        label: "Särskild löneskatt för pensionskostnader",
+        debet: loneskatt,
+        kredit: 0,
+      },
     };
 
     setExtrafält?.(extrafältObj);
@@ -46,23 +61,23 @@ export default function AvrakningsnotaUtanMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Avräkningsnota utan moms</h1>
-          <div className="flex flex-col-reverse justify-between md:flex-row">
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Pensionsförsäkring</h1>
+          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
                 setPdfUrl={setPdfUrl}
-                setBelopp={setBelopp}
                 setTransaktionsdatum={setTransaktionsdatum}
+                setBelopp={setBelopp}
               />
 
               <TextFalt
-                label="Belopp"
+                label="Totalt belopp"
                 name="belopp"
+                type="number"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
-                required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
@@ -107,20 +122,20 @@ export default function AvrakningsnotaUtanMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="6064"
-            kontobeskrivning="Avräkningsnota utan moms"
+            kontonummer="7412"
+            kontobeskrivning="Pensionsförsäkring"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Avräkningsnota utan moms",
+              namn: "Pensionsförsäkring",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0,
-              specialtyp: "avrakningsnotautanmoms",
+              specialtyp: "pensionsforsakring",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

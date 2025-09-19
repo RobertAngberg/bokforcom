@@ -1,16 +1,16 @@
 "use client";
 
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { BanklanProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { AvrakningsnotaUtanMomsProps } from "../../../_types/types";
 
-export default function Banklan({
+export default function AvrakningsnotaUtanMoms({
   mode,
   belopp = null,
   setBelopp,
@@ -25,23 +25,15 @@ export default function Banklan({
   setPdfUrl,
   extrafält,
   setExtrafält,
-}: BanklanProps) {
+}: AvrakningsnotaUtanMomsProps) {
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
 
     const extrafältObj = {
-      "1930": {
-        label: "Företagskonto / affärskonto",
-        debet: total,
-        kredit: 0,
-      },
-      "2350": {
-        label: "Lån från kreditinstitut",
-        debet: 0,
-        kredit: total,
-      },
+      "6570": { label: "Bankkostnader", debet: total, kredit: 0 },
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
     };
 
     setExtrafält?.(extrafältObj);
@@ -54,7 +46,7 @@ export default function Banklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Banklån</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Avräkningsnota utan moms</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -66,20 +58,20 @@ export default function Banklan({
               />
 
               <TextFalt
-                label="Totalt lånebelopp"
-                name="total"
+                label="Belopp"
+                name="belopp"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
                 required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
-                Utbetalningsdatum (ÅÅÅÅ‑MM‑DD)
+                Betaldatum (ÅÅÅÅ‑MM‑DD)
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={datePickerValue(transaktionsdatum)}
-                onChange={(date) => setTransaktionsdatum(datePickerOnChange(date))}
+                onChange={(d) => setTransaktionsdatum(datePickerOnChange(d))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -102,7 +94,7 @@ export default function Banklan({
               />
             </div>
 
-            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
           </div>
         </div>
       </>
@@ -115,20 +107,20 @@ export default function Banklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="2350"
-            kontobeskrivning="Banklån"
+            kontonummer="6064"
+            kontobeskrivning="Avräkningsnota utan moms"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Banklån",
+              namn: "Avräkningsnota utan moms",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
               momssats: 0,
-              specialtyp: "banklan",
+              specialtyp: "avrakningsnotautanmoms",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

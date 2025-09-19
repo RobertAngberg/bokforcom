@@ -1,14 +1,14 @@
 "use client";
 
 import DatePicker from "react-datepicker";
-import LaddaUppFil from "../../Steg/LaddaUppFil";
-import Forhandsgranskning from "../../Steg/Forhandsgranskning";
-import TextFalt from "../../../../_components/TextFalt";
-import Knapp from "../../../../_components/Knapp";
-import TillbakaPil from "../../../../_components/TillbakaPil";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
-import { useBokforContext } from "../../BokforProvider";
-import type { StandardLayoutProps } from "../../../_types/types";
+import LaddaUppFil from "../../LaddaUppFil";
+import Forhandsgranskning from "../../Forhandsgranskning";
+import TextFalt from "../../../../../_components/TextFalt";
+import Knapp from "../../../../../_components/Knapp";
+import TillbakaPil from "../../../../../_components/TillbakaPil";
+import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../../_utils/datum";
+import { useBokforContext } from "../../../BokforProvider";
+import type { StandardLayoutProps } from "../../../../_types/types";
 
 /**
  * Props behövs eftersom varje specialförval har:

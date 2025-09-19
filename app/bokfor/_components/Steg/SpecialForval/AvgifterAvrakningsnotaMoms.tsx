@@ -1,49 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import { AmorteringBanklanProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { AvgifterAvrakningsnotaMomsProps } from "../../../_types/types";
 
-export default function AmorteringBanklan({
+export default function AvgifterAvrakningsnotaMoms({
   mode,
-  belopp,
+  belopp = null,
   setBelopp,
+  transaktionsdatum = "",
+  setTransaktionsdatum,
+  kommentar = "",
+  setKommentar,
   setCurrentStep,
   fil,
   setFil,
   pdfUrl,
   setPdfUrl,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
   extrafält,
   setExtrafält,
-}: AmorteringBanklanProps) {
-  const [ränta, setRänta] = useState(0);
-
+}: AvgifterAvrakningsnotaMomsProps) {
+  const momsSats = 0.25;
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
-    const interest = ränta;
-    const amort = total - interest;
+    const moms = (total * momsSats) / (1 + momsSats);
+    const netto = total - moms;
 
     const extrafältObj = {
+      "6064": { label: "Factoringavgifter", debet: netto, kredit: 0 },
+      "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
-      "2350": {
-        label: "Andra långfristiga skulder till kreditinstitut",
-        debet: amort,
-        kredit: 0,
-      },
-      "8410": { label: "Räntekostnader för långfristiga skulder", debet: interest, kredit: 0 },
     };
 
     setExtrafält?.(extrafältObj);
@@ -56,29 +50,22 @@ export default function AmorteringBanklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Amortering av banklån</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Avgifter avräkningsnota 25% moms</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
                 setPdfUrl={setPdfUrl}
-                setTransaktionsdatum={setTransaktionsdatum}
                 setBelopp={setBelopp}
+                setTransaktionsdatum={setTransaktionsdatum}
               />
 
               <TextFalt
-                label="Amorteringsbelopp"
-                name="amortering"
-                value={belopp ?? 0}
+                label="Totalbelopp (inkl. moms)"
+                name="brutto"
+                value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
-              />
-
-              <TextFalt
-                label="Varav räntekostnad"
-                name="ränta"
-                value={ränta}
-                onChange={(e) => setRänta(Number(e.target.value))}
                 required
               />
 
@@ -124,20 +111,20 @@ export default function AmorteringBanklan({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="2350"
-            kontobeskrivning="Amortering av banklån"
+            kontonummer="6064"
+            kontobeskrivning="Avgifter avräkningsnota 25 % moms"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Amortering av banklån",
+              namn: "Avgifter avräkningsnota 25 % moms",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0,
-              specialtyp: "amorteringbanklan",
+              momssats: 0.25,
+              specialtyp: "avgifteravrakningsnota",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

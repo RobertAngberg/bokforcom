@@ -25,7 +25,7 @@ export default function Steg2Levfakt() {
 
   if (state.valtFörval?.specialtyp) {
     try {
-      const SpecialComponent = require(`../SpecialForval/${state.valtFörval.specialtyp}`).default;
+      const SpecialComponent = require(`./SpecialForval/${state.valtFörval.specialtyp}`).default;
       return (
         <SpecialComponent
           mode="steg2"

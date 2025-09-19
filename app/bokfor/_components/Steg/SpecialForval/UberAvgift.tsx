@@ -1,16 +1,17 @@
 "use client";
 
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import { useState } from "react";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { PensionsforsakringProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { UberAvgiftProps } from "../../../_types/types";
 
-export default function Pensionsforsakring({
+export default function UberAvgift({
   mode,
   belopp,
   setBelopp,
@@ -25,28 +26,31 @@ export default function Pensionsforsakring({
   setKommentar,
   extrafält,
   setExtrafält,
-}: PensionsforsakringProps) {
+}: UberAvgiftProps) {
+  const [moms, setMoms] = useState(0);
+
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
-    const val = belopp ?? 0;
-    const loneskatt = val * 0.2425;
+    const total = belopp ?? 0;
+    const moms = Number((total * 0.25).toFixed(2));
+    setMoms(moms);
 
     const extrafältObj = {
-      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: val },
-      "2514": {
-        label: "Beräknad särskild löneskatt på pensionskostnader",
+      "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "2614": {
+        label: "Utgående moms omvänd skattskyldighet, 25 %",
         debet: 0,
-        kredit: loneskatt,
+        kredit: moms,
       },
-      "7412": {
-        label: "Premier för individuella pensionsförsäkringar",
-        debet: val,
+      "2645": {
+        label: "Beräknad ingående moms på förvärv från utlandet",
+        debet: moms,
         kredit: 0,
       },
-      "7533": {
-        label: "Särskild löneskatt för pensionskostnader",
-        debet: loneskatt,
+      "4535": {
+        label: "Inköp av tjänster från annat EU-land, 25 %",
+        debet: total,
         kredit: 0,
       },
     };
@@ -61,7 +65,7 @@ export default function Pensionsforsakring({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Pensionsförsäkring</h1>
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Uberavgift</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
@@ -73,9 +77,8 @@ export default function Pensionsforsakring({
               />
 
               <TextFalt
-                label="Totalt belopp"
+                label="Summa Uber-avgift exkl moms"
                 name="belopp"
-                type="number"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
               />
@@ -122,20 +125,20 @@ export default function Pensionsforsakring({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="7412"
-            kontobeskrivning="Pensionsförsäkring"
+            kontonummer="4535"
+            kontobeskrivning="Uberavgift"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Pensionsförsäkring",
+              namn: "Uberavgift",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0,
-              specialtyp: "pensionsforsakring",
+              momssats: 0.25,
+              specialtyp: "uberavgift",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

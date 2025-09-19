@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Steg3 from "../Steg/Steg3";
+import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import TextFalt from "../../../_components/TextFalt";
-import { ImportmomsProps } from "../../_types/types";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import TextFalt from "../../../../_components/TextFalt";
+import { ImportmomsProps } from "../../../_types/types";
 
 export default function Importmoms({
   mode,

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { BokforProvider, useBokforContext } from "./BokforProvider";
-import { hämtaAllaAnställda } from "../../personal/_actions/anstalldaActions";
 import { BokforClientProps } from "../_types/types";
 
 // Importera alla steg-komponenter

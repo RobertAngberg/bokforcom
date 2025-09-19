@@ -1,16 +1,16 @@
 "use client";
 
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import Forhandsgranskning from "../Forhandsgranskning";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { AvgifterAvrakningsnotaMomsProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { DirektpensionProps } from "../../../_types/types";
 
-export default function AvgifterAvrakningsnotaMoms({
+export default function Direktpension({
   mode,
   belopp = null,
   setBelopp,
@@ -25,19 +25,21 @@ export default function AvgifterAvrakningsnotaMoms({
   setPdfUrl,
   extrafält,
   setExtrafält,
-}: AvgifterAvrakningsnotaMomsProps) {
-  const momsSats = 0.25;
+}: DirektpensionProps) {
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
-    const moms = (total * momsSats) / (1 + momsSats);
-    const netto = total - moms;
 
     const extrafältObj = {
-      "6064": { label: "Factoringavgifter", debet: netto, kredit: 0 },
-      "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
+      "1385": { label: "Värde av kapitalförsäkring", debet: total, kredit: 0 },
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
+      "2230": {
+        label: "Övriga avsättningar för pensioner och liknande förpliktelser",
+        debet: 0,
+        kredit: total,
+      },
+      "7421": { label: "Direktpension, ej avdragsgill", debet: total, kredit: 0 },
     };
 
     setExtrafält?.(extrafältObj);
@@ -50,32 +52,30 @@ export default function AvgifterAvrakningsnotaMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Avgifter avräkningsnota 25% moms</h1>
-          <div className="flex flex-col-reverse justify-between md:flex-row">
-            <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
+          <h1 className="mb-6 text-3xl text-center">Steg 2; Direktpension</h1>
+          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
+            <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
                 setFil={setFil}
                 setPdfUrl={setPdfUrl}
-                setBelopp={setBelopp}
                 setTransaktionsdatum={setTransaktionsdatum}
+                setBelopp={setBelopp}
               />
 
               <TextFalt
-                label="Totalbelopp (inkl. moms)"
-                name="brutto"
+                label="Totalt belopp"
+                name="belopp"
                 value={belopp ?? ""}
                 onChange={(e) => setBelopp(Number(e.target.value))}
                 required
               />
 
-              <label className="block text-sm font-medium text-white mb-2">
-                Betaldatum (ÅÅÅÅ‑MM‑DD)
-              </label>
+              <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
-                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(transaktionsdatum)}
-                onChange={(d) => setTransaktionsdatum(datePickerOnChange(d))}
+                className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
+                selected={ÅÅÅÅMMDDTillDate(transaktionsdatum ?? "")}
+                onChange={(date) => setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -89,16 +89,10 @@ export default function AvgifterAvrakningsnotaMoms({
                 required={false}
               />
 
-              <Knapp
-                fullWidth
-                text="Bokför"
-                type="button"
-                onClick={gåTillSteg3}
-                disabled={!giltigt}
-              />
+              <Knapp fullWidth text="Gå vidare" onClick={gåTillSteg3} disabled={!giltigt} />
             </div>
 
-            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
+            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
           </div>
         </div>
       </>
@@ -111,20 +105,20 @@ export default function AvgifterAvrakningsnotaMoms({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="6064"
-            kontobeskrivning="Avgifter avräkningsnota 25 % moms"
+            kontonummer="1385"
+            kontobeskrivning="Direktpension"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Avgifter avräkningsnota 25 % moms",
+              namn: "Direktpension",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0.25,
-              specialtyp: "avgifteravrakningsnota",
+              momssats: 0,
+              specialtyp: "direktpension",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

@@ -1,11 +1,11 @@
 "use client";
 
-import Steg3 from "../Steg/Steg3";
+import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import InfoTooltip from "../../../_components/InfoTooltip";
-import { ITtjansterEUProps } from "../../_types/types";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import InfoTooltip from "../../../../_components/InfoTooltip";
+import { ITtjansterEUProps } from "../../../_types/types";
 
 export default function ITtjansterEU({
   mode,

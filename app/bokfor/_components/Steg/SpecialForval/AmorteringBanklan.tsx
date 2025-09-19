@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import LaddaUppFil from "../Steg/LaddaUppFil";
-import Forhandsgranskning from "../Steg/Forhandsgranskning";
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import LaddaUppFil from "../LaddaUppFil";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
-import Steg3 from "../Steg/Steg3";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { datePickerValue, datePickerOnChange } from "../../../_utils/datum";
-import { UberAvgiftProps } from "../../_types/types";
+import Steg3 from "../Steg3";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import Forhandsgranskning from "../Forhandsgranskning";
+import { AmorteringBanklanProps } from "../../../_types/types";
 
-export default function UberAvgift({
+export default function AmorteringBanklan({
   mode,
   belopp,
   setBelopp,
@@ -26,33 +26,24 @@ export default function UberAvgift({
   setKommentar,
   extrafält,
   setExtrafält,
-}: UberAvgiftProps) {
-  const [moms, setMoms] = useState(0);
+}: AmorteringBanklanProps) {
+  const [ränta, setRänta] = useState(0);
 
   const giltigt = !!belopp && !!transaktionsdatum;
 
   function gåTillSteg3() {
     const total = belopp ?? 0;
-    const moms = Number((total * 0.25).toFixed(2));
-    setMoms(moms);
+    const interest = ränta;
+    const amort = total - interest;
 
     const extrafältObj = {
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
-      "2614": {
-        label: "Utgående moms omvänd skattskyldighet, 25 %",
-        debet: 0,
-        kredit: moms,
-      },
-      "2645": {
-        label: "Beräknad ingående moms på förvärv från utlandet",
-        debet: moms,
+      "2350": {
+        label: "Andra långfristiga skulder till kreditinstitut",
+        debet: amort,
         kredit: 0,
       },
-      "4535": {
-        label: "Inköp av tjänster från annat EU-land, 25 %",
-        debet: total,
-        kredit: 0,
-      },
+      "8410": { label: "Räntekostnader för långfristiga skulder", debet: interest, kredit: 0 },
     };
 
     setExtrafält?.(extrafältObj);
@@ -65,8 +56,8 @@ export default function UberAvgift({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(1)} />
 
-          <h1 className="mb-6 text-3xl text-center">Steg 2: Uberavgift</h1>
-          <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto md:flex-row px-4">
+          <h1 className="mb-6 text-3xl text-center">Steg 2: Amortering av banklån</h1>
+          <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
                 fil={fil}
@@ -77,10 +68,18 @@ export default function UberAvgift({
               />
 
               <TextFalt
-                label="Summa Uber-avgift exkl moms"
-                name="belopp"
-                value={belopp ?? ""}
+                label="Amorteringsbelopp"
+                name="amortering"
+                value={belopp ?? 0}
                 onChange={(e) => setBelopp(Number(e.target.value))}
+              />
+
+              <TextFalt
+                label="Varav räntekostnad"
+                name="ränta"
+                value={ränta}
+                onChange={(e) => setRänta(Number(e.target.value))}
+                required
               />
 
               <label className="block text-sm font-medium text-white mb-2">
@@ -125,20 +124,20 @@ export default function UberAvgift({
         <div className="max-w-5xl mx-auto px-4 relative">
           <TillbakaPil onClick={() => setCurrentStep?.(2)} />
           <Steg3
-            kontonummer="4535"
-            kontobeskrivning="Uberavgift"
+            kontonummer="2350"
+            kontobeskrivning="Amortering av banklån"
             belopp={belopp ?? 0}
             transaktionsdatum={transaktionsdatum ?? ""}
             kommentar={kommentar ?? ""}
             valtFörval={{
               id: 0,
-              namn: "Uberavgift",
+              namn: "Amortering av banklån",
               beskrivning: "",
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0.25,
-              specialtyp: "uberavgift",
+              momssats: 0,
+              specialtyp: "amorteringbanklan",
               sökord: [],
             }}
             setCurrentStep={setCurrentStep}

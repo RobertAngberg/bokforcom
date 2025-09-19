@@ -1,12 +1,12 @@
 "use client";
 
-import Steg3 from "../Steg/Steg3";
+import Steg3 from "../Steg3";
 import StandardLayout from "./_layouts/StandardLayout";
 import LevfaktLayout from "./_layouts/LevfaktLayout";
-import TillbakaPil from "../../../_components/TillbakaPil";
-import { InkopTjanstUtanfEUProps } from "../../_types/types";
+import TillbakaPil from "../../../../_components/TillbakaPil";
+import { InkopTjansterSverigeOmvandProps } from "../../../_types/types";
 
-export default function InkopTjanstUtanfEU({
+export default function InkopTjansterSverigeOmvand({
   mode,
   renderMode = "standard",
   belopp = null,
@@ -30,7 +30,7 @@ export default function InkopTjanstUtanfEU({
   setFakturadatum,
   förfallodatum,
   setFörfallodatum,
-}: InkopTjanstUtanfEUProps) {
+}: InkopTjansterSverigeOmvandProps) {
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
@@ -44,18 +44,28 @@ export default function InkopTjanstUtanfEU({
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
         "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
-        "2614": {
-          label: "Utgående moms omvänd skattskyldighet, 25 %",
+        "2617": {
+          label: "Utgående moms omvänd skattskyldighet varor och tjänster i Sverige, 25 %",
           debet: 0,
           kredit: moms,
         },
-        "2645": {
-          label: "Beräknad ingående moms på förvärv från utlandet",
+        "2647": {
+          label: "Ingående moms omvänd skattskyldighet varor och tjänster i Sverige",
           debet: moms,
           kredit: 0,
         },
-        "4531": {
-          label: "Import tjänster land utanför EU, 25% moms",
+        "4400": {
+          label: "Inköpta tjänster i Sverige, omvänd skattskyldighet",
+          debet: 0,
+          kredit: belopp ?? 0,
+        },
+        "4425": {
+          label: "Inköpta tjänster i Sverige, omvänd skattskyldighet, 25 %",
+          debet: belopp ?? 0,
+          kredit: 0,
+        },
+        "4600": {
+          label: "Legoarbeten och underentreprenader (gruppkonto)",
           debet: belopp ?? 0,
           kredit: 0,
         },
@@ -65,18 +75,28 @@ export default function InkopTjanstUtanfEU({
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
         "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
-        "2614": {
-          label: "Utgående moms omvänd skattskyldighet, 25 %",
+        "2617": {
+          label: "Utgående moms omvänd skattskyldighet varor och tjänster i Sverige, 25 %",
           debet: 0,
           kredit: moms,
         },
-        "2645": {
-          label: "Beräknad ingående moms på förvärv från utlandet",
+        "2647": {
+          label: "Ingående moms omvänd skattskyldighet varor och tjänster i Sverige",
           debet: moms,
           kredit: 0,
         },
-        "4531": {
-          label: "Import tjänster land utanför EU, 25% moms",
+        "4400": {
+          label: "Inköpta tjänster i Sverige, omvänd skattskyldighet",
+          debet: 0,
+          kredit: belopp ?? 0,
+        },
+        "4425": {
+          label: "Inköpta tjänster i Sverige, omvänd skattskyldighet, 25 %",
+          debet: belopp ?? 0,
+          kredit: 0,
+        },
+        "4600": {
+          label: "Legoarbeten och underentreprenader (gruppkonto)",
           debet: belopp ?? 0,
           kredit: 0,
         },
@@ -113,9 +133,9 @@ export default function InkopTjanstUtanfEU({
         setFakturadatum={setFakturadatum}
         förfallodatum={förfallodatum}
         setFörfallodatum={setFörfallodatum}
-        title="Inköp tjänst utanför EU"
+        title="Inköp tjänster Sverige (omvänd moms)"
       >
-        {/* InkopTjanstUtanfEU-specifikt innehåll */}
+        {/* InkopTjansterSverigeOmvand-specifikt innehåll */}
       </Layout>
     );
   }
@@ -125,20 +145,20 @@ export default function InkopTjanstUtanfEU({
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep?.(2)} />
         <Steg3
-          kontonummer="4531"
-          kontobeskrivning="Inköp tjänst utanför EU"
+          kontonummer="4400"
+          kontobeskrivning="Inköp tjänster Sverige (omvänd moms)"
           belopp={belopp ?? 0}
           transaktionsdatum={transaktionsdatum ?? ""}
           kommentar={kommentar ?? ""}
           valtFörval={{
             id: 0,
-            namn: "Inköp tjänst utanför EU",
+            namn: "Inköp tjänster Sverige (omvänd moms)",
             beskrivning: "",
             typ: "",
             kategori: "",
             konton: [],
             momssats: 0.25,
-            specialtyp: "InkopTjanstUtanfEU",
+            specialtyp: "InkopTjansterSverigeOmvand",
             sökord: [],
           }}
           setCurrentStep={setCurrentStep}
