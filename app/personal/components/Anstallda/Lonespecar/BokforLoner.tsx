@@ -526,7 +526,6 @@ export default function BokforLoner({
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}

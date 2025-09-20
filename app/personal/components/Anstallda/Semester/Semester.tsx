@@ -206,7 +206,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
         belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
       }));
       const res = await (
-        await import("../actions/semesterActions")
+        await import("../../../actions/semesterActions")
       ).bokförSemester({
         userId,
         rader,
@@ -499,14 +499,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
           onConfirm={handleConfirmBokfor}
         />
       </div>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

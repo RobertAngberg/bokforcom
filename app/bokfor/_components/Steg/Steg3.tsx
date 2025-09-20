@@ -19,12 +19,9 @@ export default function Steg3(props?: Steg3Props) {
 
   return (
     <div className="relative">
-      <Toast
-        message={state.toast.message}
-        type={state.toast.type}
-        isVisible={state.toast.isVisible}
-        onClose={handlers.hideToast}
-      />
+      {state.toast.isVisible && (
+        <Toast message={state.toast.message} type={state.toast.type} onClose={handlers.hideToast} />
+      )}
 
       <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
 

@@ -1,5 +1,5 @@
-import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { pool } from "../../../../_lib/db";
+import { getUserId } from "../../../../_utils/authUtils";
 
 interface SemesterBokföring {
   anställdId: number;

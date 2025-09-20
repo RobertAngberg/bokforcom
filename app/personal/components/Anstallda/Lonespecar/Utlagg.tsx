@@ -1,6 +1,6 @@
 //#region Huvud
 import { läggTillUtläggSomExtrarad } from "../../../actions/lonespecarActions";
-import { uppdateraUtläggStatus } from "../../../actions/utlaggActions";
+import { uppdateraUtläggStatus, hämtaUtlägg } from "../../../actions/utlaggActions";
 import { useEffect, useState } from "react";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
@@ -11,6 +11,7 @@ interface UtläggProps {
   lönespecId?: number;
   onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>; // Uppdaterad callback
   extrarader?: any[]; // Lägg till extrarader för synkronisering
+  anställdId?: number; // Lägg till anställd ID för att hämta alla utlägg
 }
 
 export default function Utlägg({
@@ -19,6 +20,7 @@ export default function Utlägg({
   lönespecId,
   onUtläggAdded,
   extrarader = [],
+  anställdId,
 }: UtläggProps) {
   //#endregion
 
@@ -64,6 +66,31 @@ export default function Utlägg({
       synkronisera();
     }
   }, [lönespecUtlägg, extrarader]);
+
+  // Hämta alla anställdens utlägg för att visa väntande utlägg
+  useEffect(() => {
+    const hämtaAllaUtlägg = async () => {
+      if (!anställdId) return;
+
+      try {
+        const allUtlägg = await hämtaUtlägg(anställdId);
+
+        // Kombinera lönespec-specifika utlägg med alla väntande utlägg
+        const kombineradeUtlägg = [
+          ...lönespecUtlägg,
+          ...allUtlägg.filter(
+            (u) => u.status === "Väntande" && !lönespecUtlägg.some((lu) => lu.id === u.id)
+          ),
+        ];
+
+        setSynkroniseradeUtlägg(kombineradeUtlägg);
+      } catch (error) {
+        console.error("Fel vid hämtning av utlägg:", error);
+      }
+    };
+
+    hämtaAllaUtlägg();
+  }, [anställdId, lönespecUtlägg]);
 
   const handleLäggTillUtlägg = async () => {
     if (!lönespecId) {
@@ -186,7 +213,6 @@ export default function Utlägg({
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}

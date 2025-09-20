@@ -1,4 +1,4 @@
-import { RAD_KONFIGURATIONER, RadKonfiguration } from "../../Extrarader/extraradDefinitioner";
+import { RAD_KONFIGURATIONER, RadKonfiguration } from "../Extrarader/extraradDefinitioner";
 
 interface LöneRadItemProps {
   benämning: string;

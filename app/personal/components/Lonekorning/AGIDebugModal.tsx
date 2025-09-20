@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "../../../_components/Modal";
-import type { AGIDebugModalProps } from "../../../types/types";
+import type { AGIDebugModalProps } from "../../types/types";
 
 export default function AGIDebugModal({
   visaDebug,

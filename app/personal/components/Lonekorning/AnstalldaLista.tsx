@@ -2,8 +2,8 @@
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import Knapp from "../../../_components/Knapp";
 import Toast from "../../../_components/Toast";
-import Lonespecar from "../Lonespecar/Lonespecar";
-import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import Lonespecar from "../Anstallda/Lonespecar/Lonespecar";
+import Forhandsgranskning from "../Anstallda/Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import { useLonekorning } from "../../hooks/useLonekorning";
 
 export default function AnställdaLista() {
@@ -105,7 +105,6 @@ export default function AnställdaLista() {
         <Toast
           type={state.toast.type}
           message={state.toast.message}
-          isVisible={true}
           onClose={handlers.clearToast}
         />
       )}

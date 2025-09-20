@@ -1,6 +1,6 @@
 import LöneRadItem from "./LoneRadItem";
-import { RAD_KONFIGURATIONER } from "../../Extrarader/extraradDefinitioner";
-import { beräknaSumma } from "../../Extrarader/extraraderUtils";
+import { RAD_KONFIGURATIONER } from "../Extrarader/extraradDefinitioner";
+import { beräknaSumma } from "../Extrarader/extraraderUtils";
 
 interface LöneTabellProps {
   beräknadeVärden: {

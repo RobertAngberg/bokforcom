@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LonespecManagerProps } from "../../../types/types";
+import { LonespecManagerProps } from "../../types/types";
 
 export default function LonespecManager({
   valdaSpecar,

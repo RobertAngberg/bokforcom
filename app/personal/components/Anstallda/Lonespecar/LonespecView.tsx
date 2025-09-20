@@ -1,14 +1,14 @@
 //#region Huvud
 import AnimeradFlik from "../../../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
-import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lonekomponenter";
+import Lonekomponenter from "./Lonekomponenter/Lonekomponenter";
 import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
 import Toast from "../../../../_components/Toast";
 import { useState, useMemo } from "react";
-import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import { useLonespec } from "../../../hooks/useLonespecar";
 import { uppdateraLönespec } from "../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
@@ -187,6 +187,7 @@ export default function LönespecView({
         lönespecId={lönespec?.id}
         onUtläggAdded={handleUtläggAdded}
         extrarader={extrarader[lönespec.id] || []}
+        anställdId={anställd?.id}
       />
 
       <Sammanfattning

@@ -2,11 +2,11 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { hämtaExtrarader, taBortExtrarad } from "../../../../../actions/lonespecarActions";
-import ExtraRader from "../../Extrarader/Extrarader";
+import { hämtaExtrarader, taBortExtrarad } from "../../../../actions/lonespecarActions";
+import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
-import { beräknaLonekomponenter } from "../../loneberakningar";
-import { useLonespec } from "../../../../../hooks/useLonespecar";
+import { beräknaLonekomponenter } from "../loneberakningar";
+import { useLonespec } from "../../../../hooks/useLonespecar";
 
 type LonekomponenterProps = {
   lönespec: any;

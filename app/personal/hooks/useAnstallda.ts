@@ -46,35 +46,6 @@ export function useAnstallda() {
     [anställda, setAnställda]
   );
 
-  // Spara ny anställd
-  const sparaNyAnställd = useCallback(async () => {
-    try {
-      setAnställdLoading(true);
-      const formData = nyAnstalldHook.state.nyAnställdFormulär;
-
-      // Här skulle vi normalt anropa API:et för att spara anställd
-      // För nu skapar vi bara en placeholder implementation
-      const newAnställd: AnställdListItem = {
-        id: Date.now(), // Temporary ID
-        namn: `${formData.förnamn} ${formData.efternamn}`,
-        epost: formData.mail || "", // Required field for AnställdListItem
-        roll: formData.jobbtitel,
-      };
-
-      addAnställd(newAnställd);
-      nyAnstalldHook.actions.rensaFormulär();
-      setVisaNyAnställdFormulär(false);
-    } catch (error) {
-    } finally {
-      setAnställdLoading(false);
-    }
-  }, [
-    nyAnstalldHook.state.nyAnställdFormulär,
-    nyAnstalldHook.actions,
-    addAnställd,
-    setVisaNyAnställdFormulär,
-  ]);
-
   // ===========================================
   // PERSONALINFORMATION - Lokal edit-state i hook
   // ===========================================
@@ -280,28 +251,6 @@ export function useAnstallda() {
     [laddaAnställd]
   );
 
-  // Wrapper för taBortAnställd som matchar AnställdaLista interface
-  const taBortAnställdFrånLista = useCallback(
-    (id: number) => {
-      const anställd = anställda.find((a) => a.id === id);
-      if (anställd) {
-        taBortAnställdMedKonfirmation(id, anställd.namn);
-      }
-    },
-    [anställda, taBortAnställdMedKonfirmation]
-  );
-
-  // Hantera anställd vald med parent callback
-  const hanteraAnställdValdMedCallback = useCallback(
-    async (anställdId: number, onAnställdVald?: (anställd: any) => void) => {
-      await hanteraAnställdKlick(anställdId);
-      if (valdAnställd && onAnställdVald) {
-        onAnställdVald(valdAnställd);
-      }
-    },
-    [hanteraAnställdKlick, valdAnställd]
-  );
-
   // ===========================================
   // NY ANSTÄLLD - För NyAnstalld.tsx
   // ===========================================
@@ -325,16 +274,6 @@ export function useAnstallda() {
   // ANSTÄLLD RAD - För AnställdaRad.tsx
   // ===========================================
 
-  // Hantera borttagning med konfirmation
-  const hanteraTaBortMedKonfirmation = useCallback(
-    (anställdId: number, anställdNamn: string) => {
-      if (window.confirm(`Är du säker på att du vill ta bort ${anställdNamn}?`)) {
-        taBortAnställdMedKonfirmation(anställdId, anställdNamn);
-      }
-    },
-    [taBortAnställdMedKonfirmation]
-  );
-
   // Hantera radklick (undvik klick på knappar)
   const hanteraRadKlick = useCallback(
     (e: React.MouseEvent, anställdId: number) => {
@@ -355,7 +294,7 @@ export function useAnstallda() {
       const loading = anställdLoadingId === anställd.id;
 
       const handleTaBort = () => {
-        hanteraTaBortMedKonfirmation(anställd.id, anställd.namn);
+        taBortAnställdMedKonfirmation(anställd.id, anställd.namn);
       };
 
       const handleRadKlick = (e: React.MouseEvent) => {
@@ -368,7 +307,7 @@ export function useAnstallda() {
         handleRadKlick,
       };
     },
-    [anställdLoadingId, hanteraTaBortMedKonfirmation, hanteraRadKlick]
+    [anställdLoadingId, taBortAnställdMedKonfirmation, hanteraRadKlick]
   );
 
   // ===========================================
@@ -413,19 +352,16 @@ export function useAnstallda() {
       removeAnställd,
       updateAnställd,
       rensaFel,
-      sparaNyAnställd,
     },
 
     // Handlers
     handlers: {
       hanteraAnställdKlick,
       taBortAnställd: taBortAnställdMedKonfirmation,
-      taBortAnställdFrånLista,
       visaNyAnställd,
       döljNyAnställd,
       hanteraNyAnställdSparad,
       // För AnställdaRad komponenter
-      hanteraTaBortMedKonfirmation,
       hanteraRadKlick,
 
       // Personalinformation handlers

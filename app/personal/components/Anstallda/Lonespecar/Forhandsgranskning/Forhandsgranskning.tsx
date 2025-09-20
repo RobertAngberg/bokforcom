@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { hämtaFöretagsprofil } from "../../../../../actions/anstalldaActions";
-import Toast from "../../../../../../_components/Toast";
+import { hämtaFöretagsprofil } from "../../../../actions/anstalldaActions";
+import Toast from "../../../../../_components/Toast";
 import Huvudinfo from "./Huvudinfo";
 import Lonetabell from "./Lonetabell";
 import Sammanfattning from "./Sammanfattning";
 import SemesterInfo from "./SemesterInfo";
 import SkatteInfo from "./SkatteInfo";
-import { beräknaSumma } from "../../Extrarader/extraraderUtils";
+import { beräknaSumma } from "../Extrarader/extraraderUtils";
 import Arssammanstollning from "./Arssammanstollning";
 import ArbetstidInfo from "./ArbetstidInfo";
 import Fotinfo from "./Fotinfo";

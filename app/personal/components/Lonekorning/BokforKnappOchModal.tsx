@@ -4,10 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
 import Toast from "../../../_components/Toast";
-import { genereraBokföringsrader } from "../Bokforing/bokforingsLogik";
-import { valideraBokföring, formateraBeloppKronor } from "../Bokforing/bokforingsUtils";
+import { genereraBokföringsrader } from "../../utils/bokforingsLogik";
+import { valideraBokföring, formateraBeloppKronor } from "../../utils/bokforingsUtils";
 import { hämtaExtrarader } from "../../actions/lonespecarActions";
-import { BokförProps } from "../../../types/types";
+import { BokförProps } from "../../types/types";
 
 export default function BokförKnappOchModal({
   anställda,
@@ -274,14 +274,7 @@ export default function BokförKnappOchModal({
           disabled={!bokföringsData?.kanBokföra}
         />
       </div>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </Modal>
   );
 }

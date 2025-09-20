@@ -173,14 +173,7 @@ export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFl
 
       <UtlaggBokforModal />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

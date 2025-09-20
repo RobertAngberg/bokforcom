@@ -300,7 +300,6 @@ export default function Page() {
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}

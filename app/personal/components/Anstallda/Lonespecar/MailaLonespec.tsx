@@ -2,7 +2,7 @@ import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
-import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
+import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
 
@@ -299,7 +299,6 @@ export default function MailaLonespec({
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}
