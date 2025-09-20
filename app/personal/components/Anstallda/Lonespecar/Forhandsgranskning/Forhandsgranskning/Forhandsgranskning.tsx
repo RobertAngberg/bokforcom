@@ -281,14 +281,7 @@ export default function Forhandsgranskning({
           <Fotinfo företag={företag} />
         </div>
       </div>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

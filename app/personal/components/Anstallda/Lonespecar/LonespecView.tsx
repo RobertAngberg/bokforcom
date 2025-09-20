@@ -253,14 +253,7 @@ export default function LönespecView({
         </div>
       )}
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          isVisible={true}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 
