@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import MainLayout from "../../_components/MainLayout";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import { hämtaAllaAnställda } from "../_actions/anstalldaActions";
-import { hämtaUtlägg, taBortUtlägg } from "../_actions/utlaggActions";
+import MainLayout from "../../../../_components/MainLayout";
+import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import { hämtaAllaAnställda } from "../../../actions/anstalldaActions";
+import { hämtaUtlägg, taBortUtlägg } from "../../../actions/utlaggActions";
 
 interface Utlägg {
   id: number;

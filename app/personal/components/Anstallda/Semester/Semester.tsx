@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import InfoTooltip from "../../_components/InfoTooltip";
-import Knapp from "../../_components/Knapp";
-import Tabell from "../../_components/Tabell";
-import Toast from "../../_components/Toast";
-import { ColumnDefinition } from "../../_components/TabellRad";
+import InfoTooltip from "../../../../_components/InfoTooltip";
+import Knapp from "../../../../_components/Knapp";
+import Tabell from "../../../../_components/Tabell";
+import Toast from "../../../../_components/Toast";
+import { ColumnDefinition } from "../../../../_components/TabellRad";
 import {
   hämtaSemesterTransaktioner,
   sparaSemesterTransaktion,
   uppdateraSemesterdata,
-} from "../_actions/semesterActions";
+} from "../../../actions/semesterActions";
 import BokforModal from "./BokforModal";
 
 type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
@@ -206,7 +206,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
         belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
       }));
       const res = await (
-        await import("../_actions/semesterActions")
+        await import("../actions/semesterActions")
       ).bokförSemester({
         userId,
         rader,

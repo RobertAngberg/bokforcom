@@ -2,11 +2,11 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { taBortLönespec } from "../_actions/lonespecarActions";
+import { taBortLönespec } from "../../../actions/lonespecarActions";
 import { useState } from "react";
-import { useLonespec } from "../_hooks/useLonespec";
-import Toast from "../../_components/Toast";
-import Knapp from "../../_components/Knapp";
+import { useLonespec } from "../../../hooks/useLonespec";
+import Toast from "../../../../_components/Toast";
+import Knapp from "../../../../_components/Knapp";
 
 interface LonespecListProps {
   anställd: any;

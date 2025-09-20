@@ -6,14 +6,14 @@ import {
   hämtaAnställd,
   taBortAnställd,
   sparaAnställd,
-} from "../_actions/anstalldaActions";
-import { hämtaUtlägg } from "../_actions/utlaggActions";
+} from "../actions/anstalldaActions";
+import { hämtaUtlägg } from "../actions/utlaggActions";
 import type {
   AnställdData,
   AnställdListItem,
   UtlaggBokföringsRad,
   PersonalEditData,
-} from "../_types/types";
+} from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { useNyAnstalld } from "./useNyAnstalld";
 

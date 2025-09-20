@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
+import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
+import Knapp from "../../../_components/Knapp";
+import Toast from "../../../_components/Toast";
 import UtlaggBokforModal from "./UtlaggBokforModal";
-import { taBortUtlägg } from "../_actions/utlaggActions";
+import { taBortUtlägg } from "../../actions/utlaggActions";
 
 interface Utlägg {
   id: number;

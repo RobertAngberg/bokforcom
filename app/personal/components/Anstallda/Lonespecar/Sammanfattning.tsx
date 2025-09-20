@@ -1,5 +1,5 @@
 //#region
-import InfoTooltip from "../../_components/InfoTooltip";
+import InfoTooltip from "../../../../_components/InfoTooltip";
 
 interface SammanfattningProps {
   utbetalningsDatum: Date;

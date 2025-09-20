@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { hämtaLönespecifikationer } from "../_actions/lonespecarActions";
-import { hämtaUtlägg } from "../_actions/utlaggActions";
+import { hämtaLönespecifikationer } from "../../../actions/lonespecarActions";
+import { hämtaUtlägg } from "../../../actions/utlaggActions";
 import LonespecList from "./LonespecList";
-import LoadingSpinner from "../../_components/LoadingSpinner";
-import { useLonespec } from "../_hooks/useLonespec";
+import LoadingSpinner from "../../../../_components/LoadingSpinner";
+import { useLonespec } from "../../../hooks/useLonespec";
 
 export default function Lonespecar({
   anställd,

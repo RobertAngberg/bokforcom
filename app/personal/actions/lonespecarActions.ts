@@ -5,7 +5,7 @@ import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
 import { uppdateraLönekörningStatus } from "./lonekorningActions";
-import type { ExtraradData, ExtraradResult, UtläggData } from "../_types/types";
+import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(

@@ -1,9 +1,9 @@
 //#region Huvud
-import { läggTillUtläggSomExtrarad } from "../_actions/lonespecarActions";
-import { uppdateraUtläggStatus } from "../_actions/utlaggActions";
+import { läggTillUtläggSomExtrarad } from "../../../actions/lonespecarActions";
+import { uppdateraUtläggStatus } from "../../../actions/utlaggActions";
 import { useEffect, useState } from "react";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
 
 interface UtläggProps {
   lönespecUtlägg: any[];

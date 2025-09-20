@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import LönespecView from "../Lonespecar/LonespecView";
-import Knapp from "../../_components/Knapp";
-import { LonespecListaProps } from "../_types/types";
+import Knapp from "../../../_components/Knapp";
+import { LonespecListaProps } from "../../../types/types";
 
 export default function LonespecLista({
   valdaSpecar,

@@ -4,10 +4,10 @@ import Personalinformation from "./Personalinformation";
 import Kompensation from "./Kompensation";
 import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
-import Knapp from "../../../_components/Knapp";
-import Toast from "../../../_components/Toast";
-import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
-import { useAnstallda } from "../../_hooks/useAnstallda";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
+import { useAnstallda } from "../../../hooks/useAnstallda";
 
 export default function NyAnställd() {
   const {

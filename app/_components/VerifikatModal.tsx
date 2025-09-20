@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import Modal from "../../_components/Modal";
-import Tabell from "../../_components/Tabell";
-import { formatSEK } from "../../_utils/format";
-import { VerifikatModalProps } from "../_types/types";
-import { useVerifikatModal } from "../_hooks/useLeverantorer";
+import Modal from "./Modal";
+import Tabell from "./Tabell";
+import { formatSEK } from "../_utils/format";
+import { VerifikatModalProps } from "../faktura/_types/types";
+import { useVerifikatModal } from "../faktura/_hooks/useLeverantorer";
 
 export default function VerifikatModal({
   isOpen,

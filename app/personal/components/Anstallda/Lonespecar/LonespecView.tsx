@@ -1,16 +1,16 @@
 //#region Huvud
-import AnimeradFlik from "../../_components/AnimeradFlik";
+import AnimeradFlik from "../../../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
 import Lonekomponenter from "./Lonekomponenter/Lonekomponenter/Lonekomponenter";
 import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
-import Knapp from "../../_components/Knapp";
+import Knapp from "../../../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import Toast from "../../_components/Toast";
+import Toast from "../../../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import { useLonespec } from "../_hooks/useLonespec";
-import { uppdateraLönespec } from "../_actions/lonespecarActions";
+import { useLonespec } from "../../../hooks/useLonespec";
+import { uppdateraLönespec } from "../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 
 interface LönespecViewProps {

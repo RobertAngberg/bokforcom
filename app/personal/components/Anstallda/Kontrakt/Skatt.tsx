@@ -1,8 +1,8 @@
 // #region Huvud
 "use client";
 
-import Dropdown from "../../_components/Dropdown";
-import type { SkattProps } from "../_types/types";
+import Dropdown from "../../../../_components/Dropdown";
+import type { SkattProps } from "../../../types/types";
 // #endregion
 
 export default function Skatt({ editData, handleChange, anställd, viewMode, options }: SkattProps) {

@@ -1,5 +1,5 @@
 "use client";
-import { UtbetalningsdatumValjareProps } from "../_types/types";
+import { UtbetalningsdatumValjareProps } from "../../../types/types";
 
 export default function UtbetalningsdatumValjare({
   datumLista,

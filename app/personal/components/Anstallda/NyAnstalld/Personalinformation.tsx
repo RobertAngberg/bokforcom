@@ -1,8 +1,8 @@
 // #region Imports och Types
 "use client";
 
-import TextFalt from "../../../_components/TextFalt";
-import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
+import TextFalt from "../../../../_components/TextFalt";
+import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
 
 export default function Personalinformation() {
   const {

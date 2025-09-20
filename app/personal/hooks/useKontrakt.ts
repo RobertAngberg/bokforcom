@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { EditData, AnställdData } from "../_types/types";
-import { sparaAnställd } from "../_actions/anstalldaActions";
+import type { EditData, AnställdData } from "../types/types";
+import { sparaAnställd } from "../actions/anstalldaActions";
 
 const initialEditData: EditData = {
   anställningstyp: "",

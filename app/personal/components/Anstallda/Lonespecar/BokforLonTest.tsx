@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Knapp from "../../_components/Knapp";
+import Knapp from "../../../../_components/Knapp";
 
 interface ExtraRad {
   id: string;

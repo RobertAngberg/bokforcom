@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Dropdown from "../../../_components/Dropdown";
-import Modal from "../../../_components/Modal";
-import { hämtaBetaldaSemesterdagar } from "../../_actions/semesterActions";
+import Dropdown from "../../../../../_components/Dropdown";
+import Modal from "../../../../../_components/Modal";
+import { hämtaBetaldaSemesterdagar } from "../../../../actions/semesterActions";
 
 interface Field {
   label: string;

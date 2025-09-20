@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SemesterBokförModal, SemesterData } from "../_types/types";
+import type { SemesterBokförModal, SemesterData } from "../types/types";
 
 export function useSemester() {
   const [semesterTransaktioner, setSemesterTransaktioner] = useState<any[]>([]);

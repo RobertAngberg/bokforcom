@@ -1,9 +1,9 @@
 "use client";
 
-import Tabell from "../../_components/Tabell";
-import Knapp from "../../_components/Knapp";
-import Modal from "../../_components/Modal";
-import { useAnstallda } from "../_hooks/useAnstallda";
+import Tabell from "../../../_components/Tabell";
+import Knapp from "../../../_components/Knapp";
+import Modal from "../../../_components/Modal";
+import { useAnstallda } from "../../hooks/useAnstallda";
 
 export default function UtlaggBokforModal() {
   const { utlaggModalData } = useAnstallda();

@@ -8,7 +8,7 @@ import type {
   LonekorningState,
   LonekorningHandlers,
   UseLonekorningReturn,
-} from "../_types/types";
+} from "../types/types";
 
 export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn {
   // Initial state values

@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
 import AnimeradFlik from "../_components/AnimeradFlik";
-import AnställdaRad from "./Anstallda/AnstalldaRad";
-import NyAnställd from "./Anstallda/NyAnstalld/NyAnstalld";
-import Personalinformation from "./Anstallda/Personalinformation";
-import UtlaggFlik from "./Anstallda/UtlaggFlik";
-import Kontrakt from "./Kontrakt/Kontrakt";
-import Lonespecar from "./Lonespecar/Lonespecar";
-import Semester from "./Semester/Semester";
-import { useAnstallda } from "./_hooks/useAnstallda";
+import AnställdaRad from "./components/Anstallda/AnstalldaRad";
+import NyAnställd from "./components/Anstallda/NyAnstalld/NyAnstalld";
+import Personalinformation from "./components/Anstallda/Personalinformation";
+import UtlaggFlik from "./components/Anstallda/UtlaggFlik";
+import Kontrakt from "./components/Anstallda/Kontrakt/Kontrakt";
+import Lonespecar from "./components/Anstallda/Lonespecar/Lonespecar";
+import Semester from "./components/Anstallda/Semester/Semester";
+import { useAnstallda } from "./hooks/useAnstallda";
 
 export default function PersonalPage() {
   const router = useRouter();

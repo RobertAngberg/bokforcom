@@ -2,9 +2,9 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import TextFalt from "../../../_components/TextFalt";
-import Dropdown from "../../../_components/Dropdown";
-import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
+import TextFalt from "../../../../_components/TextFalt";
+import Dropdown from "../../../../_components/Dropdown";
+import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
 
 export default function Kompensation() {
   const {

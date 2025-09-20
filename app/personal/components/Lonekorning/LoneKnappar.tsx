@@ -1,6 +1,6 @@
-import Knapp from "../../_components/Knapp";
+import Knapp from "../../../_components/Knapp";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
-import { LöneKnapparProps, LöneBatchKnapparProps } from "../_types/types";
+import { LöneKnapparProps, LöneBatchKnapparProps } from "../../../types/types";
 
 export default function LöneKnappar({
   lönespec,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Lönespec } from "../_types/types";
+import type { Lönespec } from "../types/types";
 
 export function useLonespec() {
   const [lönespecar, setLonespecar] = useState<Lönespec[]>([]);

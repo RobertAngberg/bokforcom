@@ -1,10 +1,10 @@
 "use client";
-import AnimeradFlik from "../../_components/AnimeradFlik";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
+import AnimeradFlik from "../../../_components/AnimeradFlik";
+import Knapp from "../../../_components/Knapp";
+import Toast from "../../../_components/Toast";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import { useLonekorning } from "../_hooks/useLonekorning";
+import { useLonekorning } from "../../hooks/useLonekorning";
 
 export default function AnställdaLista() {
   const { state, handlers } = useLonekorning();

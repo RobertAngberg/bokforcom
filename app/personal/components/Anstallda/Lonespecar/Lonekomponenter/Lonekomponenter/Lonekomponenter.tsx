@@ -2,14 +2,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
-import { formatCurrency } from "../../../../_utils/format";
-import { hämtaExtrarader, taBortExtrarad } from "../../../_actions/lonespecarActions";
+import Knapp from "../../../../../_components/Knapp";
+import Toast from "../../../../../_components/Toast";
+import { formatCurrency } from "../../../../../../_utils/format";
+import { hämtaExtrarader, taBortExtrarad } from "../../../../../actions/lonespecarActions";
 import ExtraRader from "../../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../loneberakningar";
-import { useLonespec } from "../../../_hooks/useLonespec";
+import { useLonespec } from "../../../../../hooks/useLonespec";
 
 type LonekomponenterProps = {
   lönespec: any;

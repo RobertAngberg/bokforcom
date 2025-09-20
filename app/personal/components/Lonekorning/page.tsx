@@ -1,6 +1,6 @@
 "use client";
-import MainLayout from "../../_components/MainLayout";
-import TillbakaPil from "../../_components/TillbakaPil";
+import MainLayout from "../../../_components/MainLayout";
+import TillbakaPil from "../../../_components/TillbakaPil";
 import Lonekorning from "./Lonekorning";
 import { useRouter } from "next/navigation";
 

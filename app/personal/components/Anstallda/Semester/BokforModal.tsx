@@ -1,7 +1,7 @@
 "use client";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-import Knapp from "../../_components/Knapp";
-import Modal from "../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
+import Knapp from "../../../../_components/Knapp";
+import Modal from "../../../../_components/Modal";
 import { useState } from "react";
 
 interface BokforModalProps {

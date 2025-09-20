@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { UtläggBokföringModal } from "../_types/types";
+import type { UtläggBokföringModal } from "../types/types";
 
 export function useUtlagg() {
   const [utlägg, setUtlägg] = useState<any[]>([]);

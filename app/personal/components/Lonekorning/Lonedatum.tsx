@@ -2,7 +2,7 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { LönedatumProps } from "../_types/types";
+import { LönedatumProps } from "../../../types/types";
 
 export default function Lönedatum({ utbetalningsdatum, setUtbetalningsdatum }: LönedatumProps) {
   return (

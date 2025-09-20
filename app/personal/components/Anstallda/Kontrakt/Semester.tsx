@@ -1,8 +1,8 @@
 // #region Huvud
 "use client";
 
-import TextFalt from "../../_components/TextFalt";
-import type { SemesterProps } from "../_types/types";
+import TextFalt from "../../../../_components/TextFalt";
+import type { SemesterProps } from "../../../types/types";
 // #endregion
 
 export default function Semester({ editData, handleChange, anställd, viewMode }: SemesterProps) {

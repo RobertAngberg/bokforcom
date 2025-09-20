@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
-import type { AnställdData } from "../_types/types";
+import type { AnställdData } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Knapp from "../../_components/Knapp";
-import Modal from "../../_components/Modal";
-import Toast from "../../_components/Toast";
+import Knapp from "../../../_components/Knapp";
+import Modal from "../../../_components/Modal";
+import Toast from "../../../_components/Toast";
 import { genereraBokföringsrader } from "../Bokforing/bokforingsLogik";
 import { valideraBokföring, formateraBeloppKronor } from "../Bokforing/bokforingsUtils";
-import { hämtaExtrarader } from "../_actions/lonespecarActions";
-import { BokförProps } from "../_types/types";
+import { hämtaExtrarader } from "../../actions/lonespecarActions";
+import { BokförProps } from "../../../types/types";
 
 export default function BokförKnappOchModal({
   anställda,

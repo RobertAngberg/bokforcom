@@ -3,7 +3,7 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { KontraktPeriodProps } from "../_types/types";
+import type { KontraktPeriodProps } from "../../../types/types";
 // #endregion
 
 export default function KontraktPeriod({

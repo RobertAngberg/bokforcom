@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import type { BokförLöneUtbetalningData, BokföringsPost } from "../_types/types";
+import type { BokförLöneUtbetalningData, BokföringsPost } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(

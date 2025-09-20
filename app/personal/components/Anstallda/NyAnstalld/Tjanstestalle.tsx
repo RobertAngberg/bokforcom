@@ -1,9 +1,9 @@
 // #region Imports och Types
 "use client";
 
-import TextFalt from "../../../_components/TextFalt";
-import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
-import { sanitizeFormInput } from "../../../_utils/validationUtils";
+import TextFalt from "../../../../_components/TextFalt";
+import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
+import { sanitizeFormInput } from "../../../../_utils/validationUtils";
 
 export default function Tjänsteställe() {
   const {

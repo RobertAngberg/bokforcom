@@ -1,8 +1,8 @@
 // #region Huvud
 "use client";
 
-import Dropdown from "../../_components/Dropdown";
-import { AnställningstypProps } from "../_types/types";
+import Dropdown from "../../../../_components/Dropdown";
+import { AnställningstypProps } from "../../../types/types";
 
 // #endregion
 

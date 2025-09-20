@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Toast from "../../_components/Toast";
+import Toast from "../../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
   markeraBankgiroExporterad,
@@ -14,23 +14,23 @@ import {
   markeraBokförd,
   markeraAGIGenererad,
   markeraSkatternaBokförda,
-} from "../_actions/lonespecarActions";
-import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../_actions/anstalldaActions";
-import { hämtaUtlägg } from "../_actions/utlaggActions";
-import { bokförLöneskatter, bokförLöneutbetalning } from "../_actions/bokforingActions";
-import { Lönekörning } from "../_types/types";
+} from "../../actions/lonespecarActions";
+import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../../actions/anstalldaActions";
+import { hämtaUtlägg } from "../../actions/utlaggActions";
+import { bokförLöneskatter, bokförLöneutbetalning } from "../../actions/bokforingActions";
+import { Lönekörning } from "../../../types/types";
 import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
   taBortLönekörning,
-} from "../_actions/lonekorningActions";
+} from "../../actions/lonekorningActions";
 import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
-import Knapp from "../../_components/Knapp";
-import TillbakaPil from "../../_components/TillbakaPil";
-import { useLonespec } from "../_hooks/useLonespec";
-import LoadingSpinner from "../../_components/LoadingSpinner";
+import Knapp from "../../../_components/Knapp";
+import TillbakaPil from "../../../_components/TillbakaPil";
+import { useLonespec } from "../../hooks/useLonespec";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
 import NySpecModal from "./NySpecModal";
 import NyLonekorningModal from "./NyLonekorningModal";

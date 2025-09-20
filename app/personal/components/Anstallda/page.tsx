@@ -1,17 +1,17 @@
 "use client";
 import Anställda from "./Anstallda";
-import MainLayout from "../../_components/MainLayout";
-import AnimeradFlik from "../../_components/AnimeradFlik";
+import MainLayout from "../../../_components/MainLayout";
+import AnimeradFlik from "../../../_components/AnimeradFlik";
 import UtlaggFlik from "./UtlaggFlik";
 import Personalinformation from "./Personalinformation";
 import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Semester from "../Semester/Semester";
-import TillbakaPil from "../../_components/TillbakaPil";
-import { useAnstallda } from "../_hooks/useAnstallda";
+import TillbakaPil from "../../../_components/TillbakaPil";
+import { useAnstallda } from "../../hooks/useAnstallda";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { AnställdData } from "../_types/types";
+import type { AnställdData } from "../../../types/types";
 
 export default function AnställdaPage() {
   const router = useRouter();

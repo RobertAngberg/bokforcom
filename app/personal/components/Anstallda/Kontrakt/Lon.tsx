@@ -1,9 +1,9 @@
 // #region Huvud
 "use client";
 
-import TextFalt from "../../_components/TextFalt";
-import Dropdown from "../../_components/Dropdown";
-import type { LönProps } from "../_types/types";
+import TextFalt from "../../../../_components/TextFalt";
+import Dropdown from "../../../../_components/Dropdown";
+import type { LönProps } from "../../../types/types";
 // #endregion
 
 export default function Lön({ editData, handleChange, anställd, viewMode, options }: LönProps) {

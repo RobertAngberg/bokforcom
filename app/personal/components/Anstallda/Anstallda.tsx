@@ -1,6 +1,6 @@
 "use client";
 
-import Knapp from "../../_components/Knapp";
+import Knapp from "../../../_components/Knapp";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista";
 

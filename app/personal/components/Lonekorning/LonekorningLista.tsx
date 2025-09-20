@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { hämtaAllaLönekörningar } from "../_actions/lonekorningActions";
-import { Lönekörning, LonekorningListaProps } from "../_types/types";
+import { hämtaAllaLönekörningar } from "../../actions/lonekorningActions";
+import { Lönekörning, LonekorningListaProps } from "../../../types/types";
 
 export default function LonekorningLista({
   onValjLonekorning,

@@ -1,9 +1,9 @@
 // #region Huvud
 "use client";
 
-import TextFalt from "../../_components/TextFalt";
-import Dropdown from "../../_components/Dropdown";
-import { ArbetsbelastningProps } from "../_types/types";
+import TextFalt from "../../../../_components/TextFalt";
+import Dropdown from "../../../../_components/Dropdown";
+import { ArbetsbelastningProps } from "../../../types/types";
 
 // #endregion
 

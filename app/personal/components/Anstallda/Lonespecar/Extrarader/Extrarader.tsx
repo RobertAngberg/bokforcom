@@ -1,10 +1,10 @@
 "use client";
 
-import AnimeradFlik from "../../../_components/AnimeradFlik";
+import AnimeradFlik from "../../../../../_components/AnimeradFlik";
 import ExtraraderModal from "./ExtraraderModal";
 import ExtraraderSökning from "./ExtraraderSokning";
 import ExtraraderGrid from "./ExtraraderGrid";
-import { sparaExtrarad, läggTillUtläggILönespec } from "../../_actions/lonespecarActions";
+import { sparaExtrarad, läggTillUtläggILönespec } from "../../../../actions/lonespecarActions";
 import {
   beräknaSumma,
   formatKolumn2Värde,

@@ -1,7 +1,7 @@
 // #region Huvud
 "use client";
 
-import Knapp from "../../_components/Knapp";
+import Knapp from "../../../../_components/Knapp";
 import Anställningstyp from "./Anstallningstyp";
 import KontraktPeriod from "./KontraktPeriod";
 import Lön from "./Lon";
@@ -10,8 +10,8 @@ import Skatt from "./Skatt";
 import Jobbtitel from "./Jobbtitel";
 import Semester from "./Semester";
 import Tjänsteställe from "./Tjanstestalle";
-import type { KontraktProps } from "../_types/types";
-import { useKontrakt } from "../_hooks/useKontrakt";
+import type { KontraktProps } from "../../../types/types";
+import { useKontrakt } from "../../../hooks/useKontrakt";
 // #endregion
 
 export default function Kontrakt({ anställd }: KontraktProps) {

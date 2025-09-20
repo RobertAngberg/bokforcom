@@ -10,7 +10,7 @@ import {
   extractDataFromOCR,
   extractDataFromOCRLevFakt,
 } from "../_actions/ocrActions";
-import { hämtaAllaAnställda } from "../../personal/_actions/anstalldaActions";
+import { hämtaAllaAnställda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../_actions/transactionActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate, datePickerOnChange } from "../../_utils/datum";

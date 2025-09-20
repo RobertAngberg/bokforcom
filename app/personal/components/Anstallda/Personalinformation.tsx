@@ -1,7 +1,7 @@
 "use client";
 
-import TextFalt from "../../_components/TextFalt";
-import Knapp from "../../_components/Knapp";
+import TextFalt from "../../../_components/TextFalt";
+import Knapp from "../../../_components/Knapp";
 
 interface PersonalinformationProps {
   state: any;

@@ -1,8 +1,8 @@
 // #region Huvud
 "use client";
 
-import TextFalt from "../../_components/TextFalt";
-import InfoTooltip from "../../_components/InfoTooltip";
+import TextFalt from "../../../../_components/TextFalt";
+import InfoTooltip from "../../../../_components/InfoTooltip";
 
 interface SemesterdataProps {
   editData?: any;

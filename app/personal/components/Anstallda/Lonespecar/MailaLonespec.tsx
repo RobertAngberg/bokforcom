@@ -3,8 +3,8 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import Forhandsgranskning from "../Lonespecar/Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
 
 interface SingleLönespec {
   lönespec: any;

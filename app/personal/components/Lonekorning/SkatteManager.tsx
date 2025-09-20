@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Toast from "../../_components/Toast";
-import { SkatteManagerProps } from "../_types/types";
+import Toast from "../../../_components/Toast";
+import { SkatteManagerProps } from "../../../types/types";
 
 export default function SkatteManager({
   valdaSpecar,

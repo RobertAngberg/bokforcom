@@ -1,7 +1,7 @@
 "use client";
 
-import Dropdown from "../../../_components/Dropdown";
-import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
+import Dropdown from "../../../../_components/Dropdown";
+import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
 
 export default function Skatt() {
   const {
