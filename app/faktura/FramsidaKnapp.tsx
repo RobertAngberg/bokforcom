@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FakturaKnappProps } from "../_types/types";
+import { FakturaKnappProps } from "./_types/types";
 
 export default function FakturaKnapp({ emoji, title, description, href }: FakturaKnappProps) {
   return (

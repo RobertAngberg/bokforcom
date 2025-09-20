@@ -8,6 +8,7 @@ import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Semester from "../Semester/Semester";
 import { usePersonalStore } from "../_stores/personalStore";
+import { KontraktProvider } from "../_context/KontraktContext";
 
 export default function AnställdaPage() {
   const { valdAnställd } = usePersonalStore();
@@ -22,7 +23,9 @@ export default function AnställdaPage() {
             <Personalinformation />
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">
-            <Kontrakt />
+            <KontraktProvider>
+              <Kontrakt />
+            </KontraktProvider>
           </AnimeradFlik>
           <AnimeradFlik title="Utlägg" icon="💳">
             <UtlaggFlik />

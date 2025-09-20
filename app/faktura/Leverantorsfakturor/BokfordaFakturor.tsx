@@ -2,7 +2,7 @@
 
 import React from "react";
 import { formatSEK } from "../../_utils/format";
-import VerifikatModal from "./VerifikatModal";
+import VerifikatModal from "../../_components/VerifikatModal";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Modal from "../../_components/Modal";

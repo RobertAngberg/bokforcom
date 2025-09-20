@@ -1,6 +1,6 @@
 "use client";
 
-import { usePersonalStore } from "../_stores/personalStore";
+import { usePersonalContext } from "../_context/PersonalContext";
 import { useCallback, useMemo } from "react";
 
 type GenerateAGIArgs = {
@@ -73,29 +73,92 @@ interface UseLonekorningReturn {
 }
 
 export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn {
-  // Selektorer för att minimera re-render
-  const laddaLönespecar = usePersonalStore((s) => s.laddaLönespecar);
-  const löneperiod = usePersonalStore((s) => s.löneperiod);
-  const lönespecar = usePersonalStore((s) => s.lönespecar);
-  const sparar = usePersonalStore((s) => s.sparar);
-  const taBort = usePersonalStore((s) => s.taBort);
-  const förhandsgranskaId = usePersonalStore((s) => s.förhandsgranskaId as string | null);
-  const förhandsgranskaData = usePersonalStore((s) => s.förhandsgranskaData);
-  const toastState = usePersonalStore((s) => s.toast);
-  const utbetalningsdatum = usePersonalStore((s) => (s as any).utbetalningsdatum as Date | null);
-  const setUtbetalningsdatum = usePersonalStore(
-    (s) => (s as any).setUtbetalningsdatum as (d: Date | null) => void
-  );
-  const anställda = usePersonalStore((s) => (s as any).anställda as any[]);
-  const anställdaLoading = usePersonalStore((s) => (s as any).anställdaLoading as boolean);
+  // Context state destructuring
+  const {
+    state: {
+      laddaLönespecar,
+      löneperiod,
+      lönespecar,
+      sparar,
+      taBort,
+      förhandsgranskaId,
+      toast: toastState,
+      utbetalningsdatum,
+      anställda,
+      anställdaLoading,
+    },
+    setLaddaLönespecar,
+    setLöneperiod,
+    setLönespecar,
+    setSparar,
+    setTaBort,
+    setFörhandsgranskaId,
+    setUtbetalningsdatum,
+    clearToast,
+    setToast,
+  } = usePersonalContext();
 
-  // Actions
-  const skapaNyLönespec = usePersonalStore((s) => s.skapaNyLönespec);
-  const taBortLönespec = usePersonalStore((s) => s.taBortLönespec);
-  const openFörhandsgranskning = usePersonalStore((s) => s.openFörhandsgranskning);
-  const closeFörhandsgranskning = usePersonalStore((s) => s.closeFörhandsgranskning);
-  const clearToast = usePersonalStore((s) => s.clearToast);
-  const generateAGI = usePersonalStore((s) => s.generateAGI);
+  // ===========================================
+  // HELPER FUNCTIONS - Migrate from store
+  // ===========================================
+  const skapaNyLönespec = useCallback(
+    async (anställdId: string | number) => {
+      try {
+        setSparar(anställdId, true);
+        // Placeholder - implement actual API call
+        const newSpec = { id: anställdId /* other data */ };
+        setLönespecar({ ...lönespecar, [anställdId]: newSpec });
+        setToast({ message: "Lönespec skapad", type: "success", isVisible: true });
+      } catch (error) {
+        setToast({ message: "Misslyckades skapa lönespec", type: "error", isVisible: true });
+      } finally {
+        setSparar(anställdId, false);
+      }
+    },
+    [lönespecar, setLönespecar, setSparar, setToast]
+  );
+
+  const taBortLönespec = useCallback(
+    async (anställdId: string | number) => {
+      try {
+        setTaBort(anställdId, true);
+        // Placeholder - implement actual API call
+        const { [anställdId]: removed, ...rest } = lönespecar;
+        setLönespecar(rest);
+        setToast({ message: "Lönespec borttagen", type: "success", isVisible: true });
+      } catch (error) {
+        setToast({ message: "Misslyckades ta bort lönespec", type: "error", isVisible: true });
+      } finally {
+        setTaBort(anställdId, false);
+      }
+    },
+    [lönespecar, setLönespecar, setTaBort, setToast]
+  );
+
+  const openFörhandsgranskning = useCallback(
+    (id: string) => {
+      setFörhandsgranskaId(id);
+    },
+    [setFörhandsgranskaId]
+  );
+
+  const closeFörhandsgranskning = useCallback(() => {
+    setFörhandsgranskaId(null);
+  }, [setFörhandsgranskaId]);
+
+  const generateAGI = useCallback(async (args: GenerateAGIArgs) => {
+    // Placeholder - implement actual AGI generation
+    console.log("Generating AGI with args:", args);
+    if (args.onAGIComplete) {
+      args.onAGIComplete();
+    }
+  }, []);
+
+  // Placeholder data for förhandsgranskaData
+  const förhandsgranskaData = useMemo(() => {
+    if (!förhandsgranskaId) return null;
+    return lönespecar[förhandsgranskaId] || null;
+  }, [förhandsgranskaId, lönespecar]);
 
   // Härledande getters
   const harLönespec = useCallback(

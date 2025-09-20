@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePersonalStore } from "../_stores/personalStore";
+import { usePersonalContext } from "../_context/PersonalContext";
 import {
   hämtaAllaAnställda,
   hämtaAnställd,
@@ -13,33 +13,63 @@ import { ColumnDefinition } from "../../_components/Tabell";
 
 export function useAnstallda() {
   // ===========================================
-  // STORE STATE - Hämta från personalStore
+  // CONTEXT STATE - Hämta från PersonalContext
   // ===========================================
   const {
-    anställda,
-    valdAnställd,
-    anställdaLoading,
-    anställdLoading,
-    anställdLoadingId,
-    anställdaError,
-    visaNyAnställdFormulär,
-    nyAnställdFormulär,
+    state: {
+      anställda,
+      valdAnställd,
+      anställdaLoading,
+      anställdLoading,
+      anställdLoadingId,
+      anställdaError,
+      visaNyAnställdFormulär,
+      nyAnställdFormulär,
+      utläggBokföringModal,
+      utlägg,
+      utläggLoading,
+    },
     setAnställda,
     setValdAnställd,
     setAnställdaLoading,
     setAnställdLoading,
     setAnställdLoadingId,
     setAnställdaError,
-    addAnställd,
-    removeAnställd,
-    updateAnställd,
     setVisaNyAnställdFormulär,
-    utläggBokföringModal,
     closeUtläggBokföringModal,
-    utlägg,
-    utläggLoading,
-    showToast,
-  } = usePersonalStore();
+    setToast,
+  } = usePersonalContext();
+
+  // ===========================================
+  // HELPER FUNCTIONS - Migrate from store
+  // ===========================================
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" | "info" = "success") => {
+      setToast({ message, type, isVisible: true });
+    },
+    [setToast]
+  );
+
+  const addAnställd = useCallback(
+    (anställd: AnställdListItem) => {
+      setAnställda([...anställda, anställd]);
+    },
+    [anställda, setAnställda]
+  );
+
+  const removeAnställd = useCallback(
+    (id: number) => {
+      setAnställda(anställda.filter((a) => a.id !== id));
+    },
+    [anställda, setAnställda]
+  );
+
+  const updateAnställd = useCallback(
+    (id: number, updatedData: Partial<AnställdListItem>) => {
+      setAnställda(anställda.map((a) => (a.id === id ? { ...a, ...updatedData } : a)));
+    },
+    [anställda, setAnställda]
+  );
 
   // ===========================================
   // PERSONALINFORMATION - Lokal edit-state i hook

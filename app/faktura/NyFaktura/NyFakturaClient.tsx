@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import KundUppgifter from "../_components/KundUppgifter";
+import KundUppgifter from "./KundUppgifter";
 import ProdukterTjanster from "../ProdukterTjanster/ProdukterTjanster";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import Knapp from "../../_components/Knapp";
 import MainLayout from "../../_components/MainLayout";
 import Alternativ from "../Alternativ/Alternativ";
-import Betalning from "../_components/Betalning";
-import Avsandare from "../_components/Avsandare";
+import Betalning from "./Betalning";
+import Avsandare from "./Avsandare";
 import { FakturaProvider } from "../_context/FakturaContext";
 import { useFaktura } from "../_hooks/useFaktura";
 import type { NyFakturaClientProps } from "../_types/types";

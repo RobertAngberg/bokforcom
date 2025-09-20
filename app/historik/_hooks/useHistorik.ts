@@ -5,9 +5,9 @@ import {
   exporteraTransaktionerMedPoster,
   findUnbalancedVerifications,
   deleteTransaction,
-} from "./actions";
-import { HistoryItem, TransactionDetail, ToastState, UnbalancedResult } from "./types";
-import { ColumnDefinition } from "../_components/TabellRad";
+} from "../_actions/actions";
+import { HistoryItem, TransactionDetail, ToastState, UnbalancedResult } from "../_types/types";
+import { ColumnDefinition } from "../../_components/TabellRad";
 
 // Business Logic - Migrated from page.tsx
 function sanitizeHistorikInput(text: string): string {

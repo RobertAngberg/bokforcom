@@ -1,7 +1,7 @@
 "use client";
 
 import AnimeradFlik from "../../_components/AnimeradFlik";
-import BokfordaFakturor from "../_components/BokfordaFakturor";
+import BokfordaFakturor from "./BokfordaFakturor";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useBokfordaFakturorFlik } from "../_hooks/useLeverantorer";
 

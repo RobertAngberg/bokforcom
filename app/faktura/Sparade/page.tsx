@@ -3,7 +3,7 @@
 //#region Import
 "use client";
 
-import SparadeFakturor from "../_components/SparadeFakturor";
+import SparadeFakturor from "./SparadeFakturor";
 import MainLayout from "../../_components/MainLayout";
 import Link from "next/link";
 import Toast from "../../_components/Toast";

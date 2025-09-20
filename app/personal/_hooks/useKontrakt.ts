@@ -1,35 +1,23 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { usePersonalStore } from "../_stores/personalStore";
+import { usePersonalContext } from "../_context/PersonalContext";
 import type { EditData, AnställdData } from "../_types/types";
 import { sparaAnställd } from "../_actions/anstalldaActions";
 
 export function useKontrakt(initial?: Partial<AnställdData> | any) {
-  const { valdAnställd, setValdAnställd } = usePersonalStore();
+  const {
+    state: { valdAnställd, kontraktIsEditing, kontraktEditData, kontraktHasChanges, kontraktError },
+    setValdAnställd,
+    setKontraktIsEditing,
+    setKontraktEditData,
+    updateKontraktEditData,
+    setKontraktHasChanges,
+    setKontraktError,
+    resetKontraktEditData,
+  } = usePersonalContext();
 
-  // Local editing state
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<EditData>({
-    anställningstyp: "",
-    startdatum: new Date(),
-    slutdatum: new Date(),
-    månadslön: "",
-    betalningssätt: "",
-    kompensation: "",
-    ersättningPer: "",
-    arbetsbelastning: "",
-    arbetsveckaTimmar: "",
-    deltidProcent: "",
-    skattetabell: "",
-    skattekolumn: "",
-    jobbtitel: "",
-    semesterdagarPerÅr: "",
-    tjänsteställeAdress: "",
-    tjänsteställeOrt: "",
-  });
-  const [hasChanges, setHasChanges] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Local state för originalData
   const [originalData, setOriginalData] = useState<EditData>({
     anställningstyp: "",
     startdatum: new Date(),
@@ -115,35 +103,45 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
 
   // Visnings-anställd: store valdAnställd i första hand, annars initial prop
   const visningsAnställd = useMemo(() => valdAnställd ?? initial ?? null, [valdAnställd, initial]);
+  // Hämta state från context
+  const {
+    isEditing,
+    editData,
+    error: errorMessage,
+  } = {
+    isEditing: kontraktIsEditing,
+    editData: kontraktEditData,
+    error: kontraktError,
+  };
 
   // Initiera formulärdata när vi får källa och inte redigerar
   useEffect(() => {
     const källa = visningsAnställd;
     if (!källa || isEditing) return;
     const data = buildEditData(källa);
-    setEditData(data);
+    setKontraktEditData(data);
     setOriginalData(data);
-    setHasChanges(false);
-    setErrorMessage(null);
-  }, [visningsAnställd, isEditing]);
+    setKontraktHasChanges(false);
+    setKontraktError(null);
+  }, [visningsAnställd, isEditing, setKontraktEditData, setKontraktError]);
 
   const onInit = (source?: Partial<AnställdData> | any) => {
     if (!source || isEditing) return;
     const data = buildEditData(source);
-    setEditData(data);
+    setKontraktEditData(data);
     setOriginalData(data);
-    setHasChanges(false);
-    setErrorMessage(null);
+    setKontraktHasChanges(false);
+    setKontraktError(null);
   };
 
   const onEdit = () => {
     if (!visningsAnställd) return;
-    setIsEditing(true);
+    setKontraktIsEditing(true);
     const data = buildEditData(visningsAnställd);
-    setEditData(data);
+    setKontraktEditData(data);
     setOriginalData(data);
-    setHasChanges(false);
-    setErrorMessage(null);
+    setKontraktHasChanges(false);
+    setKontraktError(null);
   };
 
   const onChange = (name: keyof EditData | string, value: any) => {
@@ -151,13 +149,13 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
     if (name === "arbetsbelastning" && value !== "Deltidsanställd") {
       next.deltidProcent = "";
     }
-    setEditData(next);
-    setHasChanges(JSON.stringify(next) !== JSON.stringify(originalData));
-    if (errorMessage) setErrorMessage(null);
+    setKontraktEditData(next);
+    setKontraktHasChanges(JSON.stringify(next) !== JSON.stringify(originalData));
+    if (errorMessage) setKontraktError(null);
   };
 
   const onSave = async () => {
-    if (!visningsAnställd || !hasChanges) return;
+    if (!visningsAnställd || !kontraktHasChanges) return;
     try {
       const payload: AnställdData = {
         ...visningsAnställd,
@@ -197,22 +195,22 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
         });
 
         setOriginalData(editData);
-        setHasChanges(false);
-        setIsEditing(false);
-        setErrorMessage(null);
+        setKontraktHasChanges(false);
+        setKontraktIsEditing(false);
+        setKontraktError(null);
       } else {
-        setErrorMessage(result?.error || "Kunde inte spara");
+        setKontraktError(result?.error || "Kunde inte spara");
       }
     } catch (e) {
-      setErrorMessage("Ett fel uppstod vid sparande");
+      setKontraktError("Ett fel uppstod vid sparande");
     }
   };
 
   const onCancel = () => {
-    setEditData(originalData);
-    setIsEditing(false);
-    setHasChanges(false);
-    setErrorMessage(null);
+    setKontraktEditData(originalData);
+    setKontraktIsEditing(false);
+    setKontraktHasChanges(false);
+    setKontraktError(null);
   };
 
   return {
@@ -221,7 +219,7 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
       visningsAnställd,
       isEditing,
       editData,
-      hasChanges,
+      hasChanges: kontraktHasChanges,
       errorMessage,
       originalData,
       anställningstypOptions,
@@ -240,10 +238,10 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
       })(),
     },
     handlers: {
-      setIsEditing,
-      setEditData,
-      setHasChanges,
-      setErrorMessage,
+      setIsEditing: setKontraktIsEditing,
+      setEditData: setKontraktEditData,
+      setHasChanges: setKontraktHasChanges,
+      setError: setKontraktError,
       setOriginalData,
       onInit,
       onEdit,

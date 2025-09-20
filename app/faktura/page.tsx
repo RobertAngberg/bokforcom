@@ -1,5 +1,5 @@
 import MainLayout from "../_components/MainLayout";
-import FakturaKnapp from "./_components/FramsidaKnapp";
+import FakturaKnapp from "./FramsidaKnapp";
 
 export default function FakturaPage() {
   return (
