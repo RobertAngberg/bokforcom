@@ -2,12 +2,11 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { taBortLönespec } from "../../_actions/lonespecarActions";
-import { kollaAktivLönespecFörAnställd } from "../../_actions/checkPagaendeLonespec";
-import { useState, useEffect } from "react";
-import { useLonespec } from "../../_hooks/useLonespec";
-import Toast from "../../../_components/Toast";
-import Knapp from "../../../_components/Knapp";
+import { taBortLönespec } from "../_actions/lonespecarActions";
+import { useState } from "react";
+import { useLonespec } from "../_hooks/useLonespec";
+import Toast from "../../_components/Toast";
+import Knapp from "../../_components/Knapp";
 
 interface LonespecListProps {
   anställd: any;
@@ -30,29 +29,11 @@ export default function LonespecList({
 }: LonespecListProps) {
   const { lönespecar } = useLonespec();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
-  const [aktivLönespecInfo, setAktivLönespecInfo] = useState<{
-    harAktivLönespec: boolean;
-    lönekörningPeriod?: string;
-    lönekörningStatus?: string;
-  } | null>(null);
   const [toast, setToast] = useState({
     message: "",
     type: "info" as "success" | "error" | "info",
     isVisible: false,
   });
-
-  // Kolla efter pågående lönespecar när komponenten laddas
-  useEffect(() => {
-    const kollaPågåendeLönespec = async () => {
-      if (anställd?.id) {
-        const result = await kollaAktivLönespecFörAnställd(anställd.id);
-        if (result.success && result.data) {
-          setAktivLönespecInfo(result.data);
-        }
-      }
-    };
-    kollaPågåendeLönespec();
-  }, [anställd?.id]);
 
   const handleTaBortLönespec = async (lönespecId: string) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
@@ -95,40 +76,21 @@ export default function LonespecList({
       {lönespecar.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           <div className="mb-4">
-            Inga historiska lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}
-            .
+            Inga slutförda lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
           </div>
-
-          {aktivLönespecInfo?.harAktivLönespec ? (
-            <div className="bg-slate-700 border border-slate-600 rounded-lg p-6 mb-4">
-              <div className="text-gray-300 mb-4">
-                Det finns en oavslutad lönespec för{" "}
-                <strong className="text-white">{anställd.förnamn}</strong> i lönekörning{" "}
-                <strong className="text-white">{aktivLönespecInfo.lönekörningPeriod}</strong>
-              </div>
-              <div className="flex justify-center">
-                <Knapp
-                  text="Gå till Lönekörningar"
-                  onClick={() => (window.location.href = "/personal/lonekorning")}
-                  className="bg-blue-600 hover:bg-blue-700"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-600 border border-slate-500 rounded-lg p-4">
-              <div className="text-gray-300 text-sm">
-                Skapa lönespecar under <strong className="text-white">"Lönekörning"</strong> när det
-                är dags för utbetalning.
-              </div>
-              <div className="mt-3 flex justify-center">
-                <Knapp
-                  text="Gå till Lönekörningar"
-                  onClick={() => (window.location.href = "/personal/lonekorning")}
-                  className="bg-slate-500 hover:bg-slate-400"
-                />
-              </div>
-            </div>
-          )}
+          <div className="text-sm text-gray-500 mb-4">
+            Lönespecifikationer kopplade till ej slutförda lönekörningar kan finnas.
+          </div>
+          <div className="flex justify-center">
+            <Knapp
+              text="Gå till Lönekörningar"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.href = "/personal/Lonekorning";
+                }
+              }}
+            />
+          </div>
         </div>
       ) : (
         lönespecar.map((lönespec) => (
@@ -149,6 +111,7 @@ export default function LonespecList({
         <Toast
           message={toast.message}
           type={toast.type}
+          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}
