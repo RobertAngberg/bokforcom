@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
 import AnimeradFlik from "../_components/AnimeradFlik";
@@ -11,12 +10,14 @@ import UtlaggFlik from "./components/Anstallda/UtlaggFlik";
 import Kontrakt from "./components/Anstallda/Kontrakt/Kontrakt";
 import Lonespecar from "./components/Anstallda/Lonespecar/Lonespecar";
 import Semester from "./components/Anstallda/Semester/Semester";
+import Lonekorning from "./components/Lonekorning/Lonekorning";
 import { useAnstallda } from "./hooks/useAnstallda";
+import { useUtlagg } from "./hooks/useUtlagg";
 
 export default function PersonalPage() {
-  const router = useRouter();
-  const { state, handlers, utlaggFlikData } = useAnstallda();
+  const { state, actions, handlers } = useAnstallda();
   const { valdAnställd } = state;
+  const { utlaggFlikData } = useUtlagg(valdAnställd?.id);
 
   return (
     <MainLayout>
@@ -110,20 +111,17 @@ export default function PersonalPage() {
           </div>
         )}
 
-        {/* Lönekörning sektion - längst ner */}
-        <div className="bg-slate-700 p-6 rounded-lg">
-          <a
-            href="/personal/Lonekorning"
-            className="block hover:bg-slate-600 transition p-4 rounded-lg"
-          >
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span>💰</span>
-              Lönekörning
-            </h2>
-            <p className="text-sm italic text-gray-400 mt-1">
-              Hantera utbetalning och bokföring av löner.
-            </p>
-          </a>
+        {/* Lönekörning sektion - alltid tillgänglig */}
+        <div className="mb-8">
+          <div className="bg-slate-700 p-6 rounded-lg">
+            <AnimeradFlik title="Lönekörning" icon="💰">
+              <Lonekorning
+                anställda={state.anställda}
+                anställdaLoading={state.anställdaLoading}
+                onAnställdaRefresh={actions.laddaAnställda}
+              />
+            </AnimeradFlik>
+          </div>
         </div>
       </div>
     </MainLayout>

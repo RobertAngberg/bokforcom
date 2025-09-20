@@ -7,20 +7,10 @@ import {
   taBortAnställd,
   sparaAnställd,
 } from "../actions/anstalldaActions";
-import { hämtaUtlägg } from "../actions/utlaggActions";
-import type {
-  AnställdData,
-  AnställdListItem,
-  UtlaggBokföringsRad,
-  PersonalEditData,
-} from "../types/types";
-import { ColumnDefinition } from "../../_components/Tabell";
+import type { AnställdData, AnställdListItem, PersonalEditData } from "../types/types";
 import { useNyAnstalld } from "./useNyAnstalld";
 
 export function useAnstallda() {
-  // ===========================================
-  // MIGRERAD STATE - Nu egen useState istället för PersonalContext
-  // ===========================================
   const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [anställdaLoading, setAnställdaLoading] = useState(false);
@@ -28,28 +18,11 @@ export function useAnstallda() {
   const [anställdLoadingId, setAnställdLoadingId] = useState<number | null>(null);
   const [anställdaError, setAnställdaError] = useState<string | null>(null);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
-  const [utläggBokföringModal, setUtläggBokföringModal] = useState({
-    isOpen: false,
-    utlägg: null,
-    previewRows: [],
-    loading: false,
-  });
-  const [utlägg, setUtlägg] = useState<any[]>([]);
-  const [utläggLoading, setUtläggLoading] = useState(false);
 
   const nyAnstalldHook = useNyAnstalld();
 
-  const closeUtläggBokföringModal = useCallback(() => {
-    setUtläggBokföringModal({
-      isOpen: false,
-      utlägg: null,
-      previewRows: [],
-      loading: false,
-    });
-  }, []);
-
   // ===========================================
-  // HELPER FUNCTIONS - Migrate from store
+  // HELPER FUNCTIONS
   // ===========================================
 
   const addAnställd = useCallback(
@@ -267,32 +240,6 @@ export function useAnstallda() {
     [anställda, setValdAnställd, setAnställdLoading, setAnställdLoadingId]
   );
 
-  // Ladda utlägg för vald anställd
-  const laddaUtläggFörAnställd = useCallback(
-    async (anställdId: number) => {
-      setUtläggLoading(true);
-      try {
-        const utläggData = await hämtaUtlägg(anställdId);
-        setUtlägg(utläggData || []);
-      } catch (error) {
-        console.error("Fel vid laddning av utlägg:", error);
-        setUtlägg([]);
-      } finally {
-        setUtläggLoading(false);
-      }
-    },
-    [setUtlägg, setUtläggLoading]
-  );
-
-  // Ladda utlägg när valdAnställd ändras
-  useEffect(() => {
-    if (valdAnställd && valdAnställd.id) {
-      laddaUtläggFörAnställd(valdAnställd.id);
-    } else {
-      setUtlägg([]);
-    }
-  }, [valdAnställd, laddaUtläggFörAnställd, setUtlägg]);
-
   // ===========================================
   // ANSTÄLLDA RAD - För AnstalldaRad.tsx
   // ===========================================
@@ -425,60 +372,6 @@ export function useAnstallda() {
   );
 
   // ===========================================
-  // UTLÄGG FLIK - För UtlaggFlik.tsx
-  // ===========================================
-
-  const utlaggFlikData = useCallback(() => {
-    const columns = [
-      {
-        key: "datum",
-        label: "Datum",
-        render: (value: string) => (value ? new Date(value).toLocaleDateString("sv-SE") : ""),
-      },
-      {
-        key: "belopp",
-        label: "Belopp",
-        render: (value: number) => `${value} kr`,
-      },
-      { key: "beskrivning", label: "Beskrivning" },
-      { key: "status", label: "Status" },
-      {
-        key: "åtgärd",
-        label: "Åtgärd",
-        render: (_: any, row: any) => (row.status === "Väntande" ? null : null), // Placeholder för nu
-      },
-    ];
-
-    return {
-      columns,
-      utlägg,
-      loading: utläggLoading,
-    };
-  }, [utlägg, utläggLoading]);
-
-  // ===========================================
-  // UTLÄGG BOKFÖRING MODAL - För UtlaggBokforModal.tsx
-  // ===========================================
-
-  // Modal data för bokföring
-  const utlaggModalData = useCallback(() => {
-    const columns: ColumnDefinition<UtlaggBokföringsRad>[] = [
-      { key: "kontonummer", label: "Konto" },
-      { key: "beskrivning", label: "Beskrivning" },
-      { key: "debet", label: "Debet", render: (v) => (v ? v + " kr" : "") },
-      { key: "kredit", label: "Kredit", render: (v) => (v ? v + " kr" : "") },
-    ];
-
-    return {
-      isOpen: utläggBokföringModal.isOpen && !!utläggBokföringModal.utlägg,
-      utlägg: utläggBokföringModal.utlägg,
-      previewRows: utläggBokföringModal.previewRows || [],
-      columns,
-      onClose: closeUtläggBokföringModal,
-    };
-  }, [utläggBokföringModal, closeUtläggBokföringModal]);
-
-  // ===========================================
   // ALLMÄNNA FUNKTIONER
   // ===========================================
 
@@ -544,7 +437,5 @@ export function useAnstallda() {
 
     // Specialized hooks
     useAnställdRad,
-    utlaggModalData,
-    utlaggFlikData,
   };
 }

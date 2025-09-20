@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Toast from "../../../_components/Toast";
@@ -18,18 +17,18 @@ import {
 import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../../actions/anstalldaActions";
 import { hämtaUtlägg } from "../../actions/utlaggActions";
 import { bokförLöneskatter, bokförLöneutbetalning } from "../../actions/bokforingActions";
-import { Lönekörning } from "../../../types/types";
+import { Lönekörning } from "../../types/types";
 import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
   taBortLönekörning,
 } from "../../actions/lonekorningActions";
 import BankgiroExport from "./BankgiroExport";
-import BokforLoner from "../Lonespecar/BokforLoner";
-import MailaLonespec from "../Lonespecar/MailaLonespec";
+import BokforLoner from "../Anstallda/Lonespecar/BokforLoner";
+import MailaLonespec from "../Anstallda/Lonespecar/MailaLonespec";
 import Knapp from "../../../_components/Knapp";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import { useLonespec } from "../../hooks/useLonespec";
+import { useLonespec } from "../../hooks/useLonespecar";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
 import NySpecModal from "./NySpecModal";
@@ -42,9 +41,20 @@ import SkatteManager from "./SkatteManager";
 import LonespecManager from "./LonespecManager";
 //#endregion
 
+//#region Types
+interface LonekorningProps {
+  anställda?: any[];
+  anställdaLoading?: boolean;
+  onAnställdaRefresh?: () => void;
+}
+//#endregion
+
 //#region Component
-export default function Lonekorning() {
-  const router = useRouter();
+export default function Lonekorning({
+  anställda: propsAnställda,
+  anställdaLoading: propsAnställdaLoading,
+  onAnställdaRefresh,
+}: LonekorningProps = {}) {
   const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
@@ -56,20 +66,24 @@ export default function Lonekorning() {
   //#endregion
 
   //#region State
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!propsAnställda); // Only start loading if no props
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<string | null>(null);
   const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [specarPerDatum, setSpecarPerDatum] = useState<Record<string, any[]>>({});
   const [datumLista, setDatumLista] = useState<string[]>([]);
   const [valdaSpecar, setValdaSpecar] = useState<any[]>([]);
-  const [anstallda, setAnstallda] = useState<any[]>([]);
+  const [localAnställda, setLocalAnställda] = useState<any[]>([]);
   const [utlaggMap, setUlaggMap] = useState<Record<number, any[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
   const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
+
+  // Use props anställda if available, otherwise fall back to local state
+  const anstallda = propsAnställda || localAnställda;
+  const anställdaLoading = propsAnställdaLoading || loading;
   //#endregion
 
   //#region Skatteberäkningar
@@ -109,56 +123,59 @@ export default function Lonekorning() {
 
   //#region Effects
   useEffect(() => {
-    // Hämta och gruppera alla lönespecar per utbetalningsdatum
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [specar, anstallda] = await Promise.all([
-          hämtaAllaLönespecarFörUser(),
-          hämtaAllaAnställda(),
-        ]);
-        setAnstallda(anstallda);
-        // Hämta utlägg för varje anställd parallellt
-        const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
-        const utlaggResults = await Promise.all(utlaggPromises);
-        const utlaggMap: Record<number, any[]> = {};
-        anstallda.forEach((a, idx) => {
-          utlaggMap[a.id] = utlaggResults[idx];
-        });
-        setUlaggMap(utlaggMap);
-        // Gruppera per utbetalningsdatum och ta bort tomma datum
-        const grupperat: Record<string, any[]> = {};
-        specar.forEach((spec) => {
-          if (spec.utbetalningsdatum) {
-            if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-            grupperat[spec.utbetalningsdatum].push(spec);
+    // Only fetch data if no props are provided (fallback behavior)
+    if (!propsAnställda) {
+      // Hämta och gruppera alla lönespecar per utbetalningsdatum
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          const [specar, anstallda] = await Promise.all([
+            hämtaAllaLönespecarFörUser(),
+            hämtaAllaAnställda(),
+          ]);
+          setLocalAnställda(anstallda);
+          // Hämta utlägg för varje anställd parallellt
+          const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+          const utlaggResults = await Promise.all(utlaggPromises);
+          const utlaggMap: Record<number, any[]> = {};
+          anstallda.forEach((a, idx) => {
+            utlaggMap[a.id] = utlaggResults[idx];
+          });
+          setUlaggMap(utlaggMap);
+          // Gruppera per utbetalningsdatum och ta bort tomma datum
+          const grupperat: Record<string, any[]> = {};
+          specar.forEach((spec) => {
+            if (spec.utbetalningsdatum) {
+              if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+              grupperat[spec.utbetalningsdatum].push(spec);
+            }
+          });
+          // Ta bort datum med 0 lönespecar
+          const grupperatUtanTomma = Object.fromEntries(
+            Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+          );
+          const datumSort = Object.keys(grupperatUtanTomma).sort(
+            (a, b) => new Date(b).getTime() - new Date(a).getTime()
+          );
+          setDatumLista(datumSort);
+          setSpecarPerDatum(grupperatUtanTomma);
+          // Förvalt: visa lönespecar för senaste datum
+          if (datumSort.length > 0) {
+            setUtbetalningsdatum(datumSort[0]);
+            setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+          } else {
+            setUtbetalningsdatum(null);
+            setValdaSpecar([]);
           }
-        });
-        // Ta bort datum med 0 lönespecar
-        const grupperatUtanTomma = Object.fromEntries(
-          Object.entries(grupperat).filter(([_, list]) => list.length > 0)
-        );
-        const datumSort = Object.keys(grupperatUtanTomma).sort(
-          (a, b) => new Date(b).getTime() - new Date(a).getTime()
-        );
-        setDatumLista(datumSort);
-        setSpecarPerDatum(grupperatUtanTomma);
-        // Förvalt: visa lönespecar för senaste datum
-        if (datumSort.length > 0) {
-          setUtbetalningsdatum(datumSort[0]);
-          setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-        } else {
-          setUtbetalningsdatum(null);
-          setValdaSpecar([]);
+        } catch (error) {
+          console.error("❌ Fel vid laddning av lönekörning:", error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("❌ Fel vid laddning av lönekörning:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+      };
+      fetchData();
+    }
+  }, [propsAnställda]);
 
   useEffect(() => {
     // Uppdatera valda lönespecar när datum ändras
@@ -227,12 +244,19 @@ export default function Lonekorning() {
 
   // Refresh-funktion för att ladda om data efter statusuppdateringar
   const refreshData = async () => {
+    // If props are provided, use the refresh callback
+    if (propsAnställda && onAnställdaRefresh) {
+      onAnställdaRefresh();
+      return;
+    }
+
+    // Otherwise, refresh local data
     try {
       const [specar, anstallda] = await Promise.all([
         hämtaAllaLönespecarFörUser(),
         hämtaAllaAnställda(),
       ]);
-      setAnstallda(anstallda);
+      setLocalAnställda(anstallda);
 
       // Hämta utlägg för varje anställd parallellt
       const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
@@ -326,7 +350,7 @@ export default function Lonekorning() {
       <NyLonekorningModal
         isOpen={nyLonekorningModalOpen}
         onClose={() => setNyLonekorningModalOpen(false)}
-        onLonekorningCreated={async (nyLonekorning) => {
+        onLonekorningCreated={async (nyLonekorning: any) => {
           setRefreshTrigger((prev) => prev + 1); // Trigga refresh
           setValdLonekorning(nyLonekorning); // Välj den nya lönekörningen automatiskt
           setNyLonekorningModalOpen(false);
@@ -347,41 +371,8 @@ export default function Lonekorning() {
             setNySpecDatum={setNySpecDatum}
             anstallda={anstallda}
             onSpecCreated={async () => {
-              // Refresh lönespecar
-              const [specar, anstallda] = await Promise.all([
-                hämtaAllaLönespecarFörUser(),
-                hämtaAllaAnställda(),
-              ]);
-              setAnstallda(anstallda);
-              const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
-              const utlaggResults = await Promise.all(utlaggPromises);
-              const utlaggMap: Record<number, any[]> = {};
-              anstallda.forEach((a, idx) => {
-                utlaggMap[a.id] = utlaggResults[idx];
-              });
-              setUlaggMap(utlaggMap);
-              const grupperat: Record<string, any[]> = {};
-              specar.forEach((spec) => {
-                if (spec.utbetalningsdatum) {
-                  if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-                  grupperat[spec.utbetalningsdatum].push(spec);
-                }
-              });
-              const grupperatUtanTomma = Object.fromEntries(
-                Object.entries(grupperat).filter(([_, list]) => list.length > 0)
-              );
-              const datumSort = Object.keys(grupperatUtanTomma).sort(
-                (a, b) => new Date(b).getTime() - new Date(a).getTime()
-              );
-              setDatumLista(datumSort);
-              setSpecarPerDatum(grupperatUtanTomma);
-              if (datumSort.length > 0) {
-                setUtbetalningsdatum(datumSort[0]);
-                setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-              } else {
-                setUtbetalningsdatum(null);
-                setValdaSpecar([]);
-              }
+              // Refresh data using the centralized function
+              await refreshData();
             }}
           />
 
@@ -809,7 +800,6 @@ export default function Lonekorning() {
         <Toast
           message={skatteManager.toast.message}
           type={skatteManager.toast.type}
-          isVisible={true}
           onClose={() => skatteManager.setToast(null)}
         />
       )}

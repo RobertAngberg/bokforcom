@@ -1,29 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import type { Lönespec } from "../types/types";
 
-export function useLonespecar() {
-  const [lönespecar, setLönespecar] = useState<Record<string, any>>({});
-  const [sparar, setSparar] = useState<Record<string, boolean>>({});
-  const [taBort, setTaBort] = useState<Record<string, boolean>>({});
-  const [förhandsgranskaId, setFörhandsgranskaId] = useState<string | null>(null);
+export function useLonespec() {
+  const [lönespecar, setLonespecar] = useState<Lönespec[]>([]);
+  const [extrarader, setExtraraderState] = useState<Record<string, any[]>>({});
+  const [beräknadeVärden, setBeräknadeVärdenState] = useState<Record<string, any>>({});
 
-  const updateSparar = (id: string, sparar: boolean) => {
-    setSparar((prev) => ({ ...prev, [id]: sparar }));
-  };
+  const setExtrarader = useCallback((id: string, extrarader: any[]) => {
+    setExtraraderState((prev) => ({ ...prev, [id]: extrarader }));
+  }, []);
 
-  const updateTaBort = (id: string, taBort: boolean) => {
-    setTaBort((prev) => ({ ...prev, [id]: taBort }));
-  };
+  const setBeräknadeVärden = useCallback((id: string, värden: any) => {
+    setBeräknadeVärdenState((prev) => ({ ...prev, [id]: värden }));
+  }, []);
 
   return {
     lönespecar,
-    sparar,
-    taBort,
-    förhandsgranskaId,
-    setLönespecar,
-    setSparar: updateSparar,
-    setTaBort: updateTaBort,
-    setFörhandsgranskaId,
+    setLonespecar,
+    extrarader,
+    setExtrarader,
+    beräknadeVärden,
+    setBeräknadeVärden,
   };
 }

@@ -6,7 +6,7 @@ import { hämtaExtrarader, taBortExtrarad } from "../../../../../actions/lonespe
 import ExtraRader from "../../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../loneberakningar";
-import { useLonespec } from "../../../../../hooks/useLonespec";
+import { useLonespec } from "../../../../../hooks/useLonespecar";
 
 type LonekomponenterProps = {
   lönespec: any;

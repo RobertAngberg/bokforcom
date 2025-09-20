@@ -9,7 +9,7 @@ import StatusBadge from "./StatusBadge";
 import Toast from "../../../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import { useLonespec } from "../../../hooks/useLonespec";
+import { useLonespec } from "../../../hooks/useLonespecar";
 import { uppdateraLönespec } from "../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 
@@ -119,22 +119,22 @@ export default function LönespecView({
 
   // Spara lönespec-ändringar till databas
   const handleSparaLönespec = async () => {
-    if (!aktuellBeräkning) {
-      setToast({
-        type: "error",
-        message: "Inga ändringar att spara",
-      });
-      return;
-    }
+    // Använd beräknade värden om de finns, annars originalvärdena från lönespec
+    const värdentAttSpara = aktuellBeräkning || {
+      bruttolön: lönespec.bruttolön,
+      skatt: lönespec.skatt,
+      socialaAvgifter: lönespec.socialaAvgifter,
+      nettolön: lönespec.nettolön,
+    };
 
     setSparar(true);
     try {
       const result = await uppdateraLönespec({
         lönespecId: lönespec.id,
-        bruttolön: aktuellBeräkning.bruttolön,
-        skatt: aktuellBeräkning.skatt,
-        socialaAvgifter: aktuellBeräkning.socialaAvgifter,
-        nettolön: aktuellBeräkning.nettolön,
+        bruttolön: värdentAttSpara.bruttolön,
+        skatt: värdentAttSpara.skatt,
+        socialaAvgifter: värdentAttSpara.socialaAvgifter,
+        nettolön: värdentAttSpara.nettolön,
       });
 
       if (result.success) {
@@ -218,7 +218,7 @@ export default function LönespecView({
             <Knapp
               text={sparar ? "💾 Sparar..." : "💾 Spara"}
               onClick={handleSparaLönespec}
-              disabled={sparar || !aktuellBeräkning}
+              disabled={sparar}
             />
             {onTaBortLönespec && (
               <Knapp

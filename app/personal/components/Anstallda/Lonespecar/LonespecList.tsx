@@ -4,7 +4,7 @@
 import LönespecView from "./LonespecView";
 import { taBortLönespec } from "../../../actions/lonespecarActions";
 import { useState } from "react";
-import { useLonespec } from "../../../hooks/useLonespec";
+import { useLonespec } from "../../../hooks/useLonespecar";
 import Toast from "../../../../_components/Toast";
 import Knapp from "../../../../_components/Knapp";
 

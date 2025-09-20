@@ -3,10 +3,10 @@
 import Tabell from "../../../_components/Tabell";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
-import { useAnstallda } from "../../hooks/useAnstallda";
+import { useUtlagg } from "../../hooks/useUtlagg";
 
 export default function UtlaggBokforModal() {
-  const { utlaggModalData } = useAnstallda();
+  const { utlaggModalData } = useUtlagg();
 
   return (
     <Modal

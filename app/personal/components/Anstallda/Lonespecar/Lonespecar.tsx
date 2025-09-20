@@ -5,7 +5,7 @@ import { hämtaLönespecifikationer } from "../../../actions/lonespecarActions";
 import { hämtaUtlägg } from "../../../actions/utlaggActions";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
-import { useLonespec } from "../../../hooks/useLonespec";
+import { useLonespec } from "../../../hooks/useLonespecar";
 
 export default function Lonespecar({
   anställd,
