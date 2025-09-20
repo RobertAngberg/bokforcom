@@ -6,7 +6,7 @@ import AnimeradFlik from "../_components/AnimeradFlik";
 import AnställdaRad from "./components/Anstallda/AnstalldaRad";
 import NyAnställd from "./components/Anstallda/NyAnstalld/NyAnstalld";
 import Personalinformation from "./components/Anstallda/Personalinformation";
-import UtlaggFlik from "./components/Anstallda/UtlaggFlik";
+import UtlaggFlik from "./components/Anstallda/Utlagg/UtlaggFlik";
 import Kontrakt from "./components/Anstallda/Kontrakt/Kontrakt";
 import Lonespecar from "./components/Anstallda/Lonespecar/Lonespecar";
 import Semester from "./components/Anstallda/Semester/Semester";

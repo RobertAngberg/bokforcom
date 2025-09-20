@@ -5,7 +5,7 @@ import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista";
 import MainLayout from "../../../_components/MainLayout";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
-import UtlaggFlik from "./UtlaggFlik";
+import UtlaggFlik from "./Utlagg/UtlaggFlik";
 import Personalinformation from "./Personalinformation";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";

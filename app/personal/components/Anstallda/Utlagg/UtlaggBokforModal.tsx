@@ -1,9 +1,9 @@
 "use client";
 
-import Tabell from "../../../_components/Tabell";
-import Knapp from "../../../_components/Knapp";
-import Modal from "../../../_components/Modal";
-import { useUtlagg } from "../../hooks/useUtlagg";
+import Tabell from "../../../../_components/Tabell";
+import Knapp from "../../../../_components/Knapp";
+import Modal from "../../../../_components/Modal";
+import { useUtlagg } from "../../../hooks/useUtlagg";
 
 export default function UtlaggBokforModal() {
   const { utlaggModalData } = useUtlagg();
