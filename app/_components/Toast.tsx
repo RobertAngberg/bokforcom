@@ -1,44 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface ToastProps {
   message: string;
-  type: "success" | "error" | "info";
-  isVisible: boolean;
-  onClose: () => void;
+  type?: "success" | "error" | "info";
   duration?: number;
+  onClose: () => void;
 }
 
-export default function Toast({ message, type, isVisible, onClose, duration = 3000 }: ToastProps) {
+export default function Toast({ message, type = "success", duration = 3000, onClose }: ToastProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    if (isVisible) {
-      setIsAnimating(true);
+    // Starta animation direkt
+    setIsAnimating(true);
 
-      // Auto-close efter duration
-      const timer = setTimeout(() => {
-        handleClose();
-      }, duration);
+    // Auto-close efter duration
+    const timer = setTimeout(() => {
+      handleClose();
+    }, duration);
 
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, duration]);
+    return () => clearTimeout(timer);
+  }, [duration]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsAnimating(false);
     // Vänta på fade-out animation innan vi kallar onClose
     setTimeout(() => {
       onClose();
     }, 300);
-  };
-
-  if (!isVisible) return null;
+  }, [onClose]);
 
   const getToastStyles = () => {
     const baseStyles =
-      "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow-2xl drop-shadow-lg transition-all duration-300";
+      "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow-2xl drop-shadow-lg transition-all duration-300 cursor-pointer";
 
     const typeStyles = {
       success: "bg-emerald-600 text-white border border-emerald-500",
@@ -89,7 +85,7 @@ export default function Toast({ message, type, isVisible, onClose, duration = 30
   };
 
   return (
-    <div className={getToastStyles()}>
+    <div className={getToastStyles()} onClick={handleClose}>
       <div className="flex items-center">
         {getIcon()}
         <span className="font-medium text-base">{message}</span>

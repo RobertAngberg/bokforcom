@@ -6,44 +6,38 @@ import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../_components/Knapp";
 import Toast from "../../../_components/Toast";
-import { useToast } from "../../_hooks/useToast";
+import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
 import { useAnstallda } from "../../_hooks/useAnstallda";
 
 export default function NyAnställd() {
-  const { toast, hideToast } = useToast();
   const {
-    state: { anställdLoading },
+    state: { toast, nyAnställdLoading },
     actions,
-    handlers,
-  } = useAnstallda();
+  } = useNyAnstalld();
+
+  const { actions: anställdaActions } = useAnstallda();
 
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-white">Ny anställd</h2>
 
       <Personalinformation />
-
       <Kompensation />
-
       <Tjänsteställe />
-
       <Skatt />
 
       {/* Toast Notification */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
-      />
+      {toast.isVisible && (
+        <Toast message={toast.message} type={toast.type} onClose={actions.hideToast} />
+      )}
 
       <div className="flex gap-4 pt-4">
         <Knapp
-          text={anställdLoading ? "Sparar..." : "Spara"}
-          onClick={actions.sparaNyAnställd}
-          disabled={anställdLoading}
+          text={nyAnställdLoading ? "Sparar..." : "Spara"}
+          onClick={() => actions.sparaNyAnställd(() => anställdaActions.laddaAnställda())}
+          disabled={nyAnställdLoading}
         />
-        <Knapp text="Avbryt" onClick={handlers.döljNyAnställd} />
+        <Knapp text="Avbryt" onClick={actions.döljNyAnställd} />
       </div>
     </div>
   );

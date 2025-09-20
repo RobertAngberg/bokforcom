@@ -15,7 +15,6 @@ import type {
   PersonalEditData,
 } from "../_types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
-import { useToast } from "./useToast";
 import { useNyAnstalld } from "./useNyAnstalld";
 
 export function useAnstallda() {
@@ -38,7 +37,6 @@ export function useAnstallda() {
   const [utlägg, setUtlägg] = useState<any[]>([]);
   const [utläggLoading, setUtläggLoading] = useState(false);
 
-  const { showToast } = useToast();
   const nyAnstalldHook = useNyAnstalld();
 
   const closeUtläggBokföringModal = useCallback(() => {
@@ -93,9 +91,7 @@ export function useAnstallda() {
       addAnställd(newAnställd);
       nyAnstalldHook.actions.rensaFormulär();
       setVisaNyAnställdFormulär(false);
-      showToast("Ny anställd sparad!", "success");
     } catch (error) {
-      showToast("Fel vid sparande av anställd", "error");
     } finally {
       setAnställdLoading(false);
     }
@@ -104,7 +100,6 @@ export function useAnstallda() {
     nyAnstalldHook.actions,
     addAnställd,
     setVisaNyAnställdFormulär,
-    showToast,
   ]);
 
   // ===========================================
@@ -188,16 +183,13 @@ export function useAnstallda() {
         setPersonalHasChanges(false);
         setPersonalIsEditing(false);
         setPersonalErrorMessage(null);
-        showToast("Personalinformation sparad", "success");
       } else {
         setPersonalErrorMessage(result?.error || "Kunde inte spara");
-        showToast(result?.error || "Kunde inte spara", "error");
       }
     } catch (e) {
       setPersonalErrorMessage("Ett fel uppstod vid sparande");
-      showToast("Ett fel uppstod vid sparande", "error");
     }
-  }, [valdAnställd, personalHasChanges, personalEditData, setValdAnställd, showToast]);
+  }, [valdAnställd, personalHasChanges, personalEditData, setValdAnställd]);
 
   const personalOnCancel = useCallback(() => {
     setPersonalEditData(personalOriginalData);
@@ -320,19 +312,17 @@ export function useAnstallda() {
           if (valdAnställd && "id" in valdAnställd && (valdAnställd as any).id === id) {
             setValdAnställd(null);
           }
-          showToast("Anställd borttagen", "success");
+
           setAnställdaError(null);
         } else {
           setAnställdaError(result.error || "Ett fel uppstod vid borttagning");
-          showToast(result.error || "Kunde inte ta bort anställd", "error");
         }
       } catch (error) {
         console.error("Fel vid borttagning:", error);
         setAnställdaError("Ett fel uppstod vid borttagning");
-        showToast("Ett fel uppstod vid borttagning", "error");
       }
     },
-    [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError, showToast]
+    [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError]
   );
 
   // Hantera klick på anställd (ladda full data och sätt som vald)
@@ -382,8 +372,7 @@ export function useAnstallda() {
   const hanteraNyAnställdSparad = useCallback(async () => {
     await laddaAnställda();
     setVisaNyAnställdFormulär(false);
-    showToast("Ny anställd sparad!", "success");
-  }, [laddaAnställda, setVisaNyAnställdFormulär, showToast]);
+  }, [laddaAnställda, setVisaNyAnställdFormulär]);
 
   // ===========================================
   // ANSTÄLLD RAD - För AnställdaRad.tsx

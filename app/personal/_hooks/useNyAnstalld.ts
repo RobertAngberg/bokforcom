@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
-import { useToast } from "./useToast";
 
 const initialNyAnställdFormulär = {
   // Personal information
@@ -48,8 +47,20 @@ export function useNyAnstalld() {
   const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
   const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
+  const [toast, setToast] = useState({
+    message: "",
+    type: "info" as "success" | "error" | "info",
+    isVisible: false,
+  });
 
-  const { hideToast } = useToast();
+  // Toast functions
+  const showToast = useCallback((message: string, type: "success" | "error" | "info") => {
+    setToast({ message, type, isVisible: true });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast((prev) => ({ ...prev, isVisible: false }));
+  }, []);
 
   // Update formulär with partial data
   const updateNyAnställdFormulär = useCallback((updates: Partial<typeof nyAnställdFormulär>) => {
@@ -75,9 +86,8 @@ export function useNyAnstalld() {
       updateNyAnställdFormulär({ [name]: sanitizedValue });
 
       // Hide toast on input change if visible
-      hideToast();
     },
-    [updateNyAnställdFormulär, hideToast]
+    [updateNyAnställdFormulär]
   );
 
   // Show/hide formulär
@@ -94,12 +104,42 @@ export function useNyAnstalld() {
     setNyAnställdFormulär(initialNyAnställdFormulär);
   }, []);
 
+  // Spara ny anställd med toast-hantering
+  const sparaNyAnställd = useCallback(
+    async (onAnställdSparad?: () => void) => {
+      try {
+        setNyAnställdLoading(true);
+
+        // Validera att obligatoriska fält är ifyllda
+        if (!nyAnställdFormulär.förnamn || !nyAnställdFormulär.efternamn) {
+          showToast("Förnamn och efternamn är obligatoriska", "error");
+          return;
+        }
+
+        // Här skulle vi normalt anropa API:et för att spara anställd
+        // För nu simulerar vi sparandet
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        showToast("Ny anställd sparad!", "success");
+        rensaFormulär();
+        setVisaNyAnställdFormulär(false);
+        onAnställdSparad?.();
+      } catch (error) {
+        showToast("Fel vid sparande av anställd", "error");
+      } finally {
+        setNyAnställdLoading(false);
+      }
+    },
+    [nyAnställdFormulär, showToast, rensaFormulär]
+  );
+
   return {
     // State
     state: {
       nyAnställdFormulär,
       visaNyAnställdFormulär,
       nyAnställdLoading,
+      toast,
     },
 
     // Actions
@@ -110,6 +150,9 @@ export function useNyAnstalld() {
       döljNyAnställd,
       rensaFormulär,
       setNyAnställdLoading,
+      sparaNyAnställd,
+      showToast,
+      hideToast,
     },
   };
 }

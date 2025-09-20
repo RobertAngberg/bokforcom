@@ -6,7 +6,6 @@ import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
-import TillbakaPil from "../../_components/TillbakaPil";
 import { hämtaAllaAnställda } from "../_actions/anstalldaActions";
 import { hämtaUtlägg, taBortUtlägg } from "../_actions/utlaggActions";
 
@@ -192,11 +191,8 @@ export default function UtlaggPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="mb-4">
-          <TillbakaPil onClick={() => router.push("/personal")}>Tillbaka till personal</TillbakaPil>
-        </div>
-        <h1 className="text-3xl text-white mb-6 text-center">Utlägg</h1>
-        <div className="flex justify-end items-center">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-white">🧾 Utlägg</h1>
           <Knapp text="+ Nytt utlägg" onClick={handleNyttUtlägg} />
         </div>
 
