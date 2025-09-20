@@ -4,10 +4,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import TextFalt from "../../../_components/TextFalt";
 import Dropdown from "../../../_components/Dropdown";
-import { usePersonalStore } from "../../_stores/personalStore";
+import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
 
 export default function Kompensation() {
-  const { nyAnställdFormulär, updateNyAnställdFormulär } = usePersonalStore();
+  const {
+    state: { nyAnställdFormulär },
+    actions: { updateNyAnställdFormulär },
+  } = useNyAnstalld();
+
   return (
     <div className="bg-slate-800 p-6 rounded-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Kompensation</h3>

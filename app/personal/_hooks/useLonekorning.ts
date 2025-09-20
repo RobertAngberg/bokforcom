@@ -1,102 +1,56 @@
 "use client";
 
-import { usePersonalContext } from "../_context/PersonalContext";
-import { useCallback, useMemo } from "react";
-
-type GenerateAGIArgs = {
-  valdaSpecar: any[];
-  anstallda: any[];
-  beräknadeVärden: any;
-  extrarader: any;
-  utbetalningsdatum: string | null;
-  session: any;
-  hämtaFöretagsprofil: (userId: string) => Promise<any>;
-  onAGIComplete?: () => void;
-};
-
-type UseLonekorningInit = {
-  anställda?: any[];
-  utbetalningsdatum?: Date | null;
-  onLonespecarChange?: (specar: Record<string, any>) => void;
-};
-
-type ToastType = "success" | "error" | "info";
-
-interface LonekorningState {
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | null;
-  förhandsgranskaData: any;
-  toast: { type: ToastType; message: string } | null;
-  utbetalningsdatum: Date | null;
-  anställda: any[];
-  anställdaLoading: boolean;
-  harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => any;
-}
-
-interface LonekorningHandlers {
-  setUtbetalningsdatum: (d: Date | null) => void;
-  skapaNyLönespec: (anställd: any) => Promise<void>;
-  taBortLönespec: (anställd: any) => Promise<void>;
-  openFörhandsgranskning: (anställd: any) => void;
-  closeFörhandsgranskning: () => void;
-  clearToast: () => void;
-  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
-}
-
-interface UseLonekorningReturn {
-  state: LonekorningState;
-  handlers: LonekorningHandlers;
-  // Deprecated: direkt-access (tillfällig bakåtkompabilitet)
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | null;
-  förhandsgranskaData: any;
-  toast: { type: ToastType; message: string } | null;
-  utbetalningsdatum: Date | null;
-  setUtbetalningsdatum: (d: Date | null) => void;
-  anställda: any[];
-  anställdaLoading: boolean;
-  harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => any;
-  skapaNyLönespec: (anställd: any) => Promise<void>;
-  taBortLönespec: (anställd: any) => Promise<void>;
-  openFörhandsgranskning: (anställd: any) => void;
-  closeFörhandsgranskning: () => void;
-  clearToast: () => void;
-  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
-}
+import { useCallback, useMemo, useState } from "react";
+import type {
+  GenerateAGIArgs,
+  UseLonekorningInit,
+  ToastType,
+  LonekorningState,
+  LonekorningHandlers,
+  UseLonekorningReturn,
+} from "../_types/types";
 
 export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn {
-  // Context state destructuring
-  const {
-    state: {
-      laddaLönespecar,
-      löneperiod,
-      lönespecar,
-      sparar,
-      taBort,
-      förhandsgranskaId,
-      toast: toastState,
-      utbetalningsdatum,
-      anställda,
-      anställdaLoading,
+  // Initial state values
+  const initialLönespecar: Record<string | number, any> = {};
+  const initialSparar: Record<string | number, boolean> = {};
+  const initialTaBort: Record<string | number, boolean> = {};
+
+  // Individual useState hooks to replace PersonalContext
+  const [laddaLönespecar, setLaddaLönespecar] = useState<boolean>(false);
+  const [löneperiod, setLöneperiod] = useState<{ månad: number; år: number } | null>(null);
+  const [lönespecar, setLönespecar] = useState<Record<string | number, any>>(initialLönespecar);
+  const [sparar, setSparar] = useState<Record<string | number, boolean>>(initialSparar);
+  const [taBort, setTaBort] = useState<Record<string | number, boolean>>(initialTaBort);
+  const [förhandsgranskaId, setFörhandsgranskaId] = useState<string | null>(null);
+  const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(null);
+  const [anställda, setAnställda] = useState<any[]>([]);
+  const [anställdaLoading, setAnställdaLoading] = useState<boolean>(false);
+  const [toast, setToastState] = useState<{
+    type: ToastType;
+    message: string;
+    isVisible: boolean;
+  } | null>(null);
+
+  // Helper functions for state updates
+  const updateSparar = useCallback((id: string | number, value: boolean) => {
+    setSparar((prev) => ({ ...prev, [id]: value }));
+  }, []);
+
+  const updateTaBort = useCallback((id: string | number, value: boolean) => {
+    setTaBort((prev) => ({ ...prev, [id]: value }));
+  }, []);
+
+  const setToast = useCallback(
+    (toastData: { message: string; type: ToastType; isVisible: boolean }) => {
+      setToastState(toastData);
     },
-    setLaddaLönespecar,
-    setLöneperiod,
-    setLönespecar,
-    setSparar,
-    setTaBort,
-    setFörhandsgranskaId,
-    setUtbetalningsdatum,
-    clearToast,
-    setToast,
-  } = usePersonalContext();
+    []
+  );
+
+  const clearToast = useCallback(() => {
+    setToastState(null);
+  }, []);
 
   // ===========================================
   // HELPER FUNCTIONS - Migrate from store
@@ -104,7 +58,7 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
   const skapaNyLönespec = useCallback(
     async (anställdId: string | number) => {
       try {
-        setSparar(anställdId, true);
+        updateSparar(anställdId, true);
         // Placeholder - implement actual API call
         const newSpec = { id: anställdId /* other data */ };
         setLönespecar({ ...lönespecar, [anställdId]: newSpec });
@@ -112,16 +66,16 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
       } catch (error) {
         setToast({ message: "Misslyckades skapa lönespec", type: "error", isVisible: true });
       } finally {
-        setSparar(anställdId, false);
+        updateSparar(anställdId, false);
       }
     },
-    [lönespecar, setLönespecar, setSparar, setToast]
+    [lönespecar, setLönespecar, updateSparar, setToast]
   );
 
   const taBortLönespec = useCallback(
     async (anställdId: string | number) => {
       try {
-        setTaBort(anställdId, true);
+        updateTaBort(anställdId, true);
         // Placeholder - implement actual API call
         const { [anställdId]: removed, ...rest } = lönespecar;
         setLönespecar(rest);
@@ -129,10 +83,10 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
       } catch (error) {
         setToast({ message: "Misslyckades ta bort lönespec", type: "error", isVisible: true });
       } finally {
-        setTaBort(anställdId, false);
+        updateTaBort(anställdId, false);
       }
     },
-    [lönespecar, setLönespecar, setTaBort, setToast]
+    [lönespecar, setLönespecar, updateTaBort, setToast]
   );
 
   const openFörhandsgranskning = useCallback(
@@ -171,10 +125,10 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
   );
 
   // Normaliserad toast (döljer isVisible internt, exponerar bara aktiv)
-  const toast = useMemo(() => {
-    if (!toastState.isVisible || !toastState.message) return null;
-    return { type: toastState.type as ToastType, message: toastState.message };
-  }, [toastState]);
+  const normalizedToast = useMemo(() => {
+    if (!toast?.isVisible || !toast?.message) return null;
+    return { type: toast.type as ToastType, message: toast.message };
+  }, [toast]);
 
   const state: LonekorningState = {
     laddaLönespecar,
@@ -183,7 +137,7 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
     taBort,
     förhandsgranskaId,
     förhandsgranskaData,
-    toast,
+    toast: normalizedToast,
     utbetalningsdatum,
     anställda,
     anställdaLoading,

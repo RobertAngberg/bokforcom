@@ -2,11 +2,14 @@
 "use client";
 
 import TextFalt from "../../../_components/TextFalt";
-import { usePersonalStore } from "../../_stores/personalStore";
+import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
 import { sanitizeFormInput } from "../../../_utils/validationUtils";
 
 export default function Tjänsteställe() {
-  const { nyAnställdFormulär, updateNyAnställdFormulär } = usePersonalStore();
+  const {
+    state: { nyAnställdFormulär },
+    actions: { updateNyAnställdFormulär },
+  } = useNyAnstalld();
   return (
     <div className="space-y-4">
       <h2 className="text-2xl text-white">Tjänsteställe</h2>

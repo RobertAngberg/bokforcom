@@ -17,7 +17,7 @@ export default function TillbakaPil({
     <button
       type="button"
       onClick={onClick}
-      className={`absolute left-0 top-0 flex items-center gap-2 text-white font-bold px-3 py-2 rounded hover:bg-gray-700 focus:outline-none ${className}`}
+      className={`flex items-center gap-2 text-white font-bold px-3 py-2 rounded hover:bg-gray-700 focus:outline-none ${className}`}
       aria-label={ariaLabel}
     >
       <svg

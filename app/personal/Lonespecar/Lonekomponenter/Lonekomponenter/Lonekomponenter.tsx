@@ -9,7 +9,7 @@ import { hämtaExtrarader, taBortExtrarad } from "../../../_actions/lonespecarAc
 import ExtraRader from "../../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../loneberakningar";
-import { useLonespecContext } from "../../LonespecContext";
+import { useLonespec } from "../../../_hooks/useLonespec";
 
 type LonekomponenterProps = {
   lönespec: any;
@@ -26,7 +26,7 @@ export default function Lonekomponenter({
   visaExtraRader = false,
   anstalldId,
 }: LonekomponenterProps) {
-  const { extrarader, setExtrarader, setBeräknadeVärden } = useLonespecContext();
+  const { extrarader, setExtrarader, setBeräknadeVärden } = useLonespec();
 
   //#region Effects
   // Hämta extrarader från context

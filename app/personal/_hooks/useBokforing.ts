@@ -1,14 +1,11 @@
 "use client";
 
-import { usePersonalContext } from "../_context/PersonalContext";
+import { useState } from "react";
 
 export function useBokforing() {
-  const {
-    state: { bokföringRegler, bokföringTransaktioner, bokföringLoading },
-    setBokföringRegler,
-    setBokföringTransaktioner,
-    setBokföringLoading,
-  } = usePersonalContext();
+  const [bokföringRegler, setBokföringRegler] = useState<any[]>([]);
+  const [bokföringTransaktioner, setBokföringTransaktioner] = useState<any[]>([]);
+  const [bokföringLoading, setBokföringLoading] = useState(false);
 
   return {
     bokföringRegler,

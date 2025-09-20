@@ -2,10 +2,13 @@
 "use client";
 
 import TextFalt from "../../../_components/TextFalt";
-import { usePersonalStore } from "../../_stores/personalStore";
+import { useNyAnstalld } from "../../_hooks/useNyAnstalld";
 
 export default function Personalinformation() {
-  const { nyAnställdFormulär, handleSanitizedChange } = usePersonalStore();
+  const {
+    state: { nyAnställdFormulär },
+    actions: { handleSanitizedChange },
+  } = useNyAnstalld();
 
   return (
     <div className="space-y-4">

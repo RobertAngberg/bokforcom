@@ -5,9 +5,11 @@ import Knapp from "../../_components/Knapp";
 import { useAnstallda } from "../_hooks/useAnstallda";
 
 export default function Personalinformation() {
-  const { state, handlers } = useAnstallda();
-  // Får inte bort nedan...
-  const visningsAnställd = state.valdAnställd;
+  const {
+    state: { valdAnställd: visningsAnställd, ...state },
+    handlers,
+  } = useAnstallda();
+
   if (!visningsAnställd) return null;
 
   return (

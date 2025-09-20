@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Toast from "../../_components/Toast";
@@ -27,7 +28,8 @@ import BankgiroExport from "./BankgiroExport";
 import BokforLoner from "../Lonespecar/BokforLoner";
 import MailaLonespec from "../Lonespecar/MailaLonespec";
 import Knapp from "../../_components/Knapp";
-import { useLonespecContext } from "../Lonespecar/LonespecContext";
+import TillbakaPil from "../../_components/TillbakaPil";
+import { useLonespec } from "../_hooks/useLonespec";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import SkatteBokforingModal from "./SkatteBokforingModal";
 import NySpecModal from "./NySpecModal";
@@ -42,6 +44,7 @@ import LonespecManager from "./LonespecManager";
 
 //#region Component
 export default function Lonekorning() {
+  const router = useRouter();
   const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
@@ -49,7 +52,7 @@ export default function Lonekorning() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
   const [taBortLoading, setTaBortLoading] = useState(false);
-  const { extrarader, beräknadeVärden } = useLonespecContext();
+  const { extrarader, beräknadeVärden } = useLonespec();
   //#endregion
 
   //#region State
@@ -295,12 +298,7 @@ export default function Lonekorning() {
   return (
     <div className="space-y-6">
       {/* Header med knappar */}
-      <div className="flex justify-between items-center">
-        <div>
-          {valdLonekorning && (
-            <Knapp text="← Tillbaka till lönekörningar" onClick={() => setValdLonekorning(null)} />
-          )}
-        </div>
+      <div className="flex justify-end items-center">
         <div className="flex gap-3">
           {!valdLonekorning && ( // Visa bara när ingen lönekörning är vald
             <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />

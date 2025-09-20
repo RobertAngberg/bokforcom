@@ -1,21 +1,43 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { usePersonalContext } from "../_context/PersonalContext";
 import type { EditData, AnställdData } from "../_types/types";
 import { sparaAnställd } from "../_actions/anstalldaActions";
 
+const initialEditData: EditData = {
+  anställningstyp: "",
+  startdatum: new Date(),
+  slutdatum: new Date(),
+  månadslön: "",
+  betalningssätt: "",
+  kompensation: "",
+  ersättningPer: "",
+  arbetsbelastning: "",
+  arbetsveckaTimmar: "",
+  deltidProcent: "",
+  skattetabell: "",
+  skattekolumn: "",
+  jobbtitel: "",
+  semesterdagarPerÅr: "",
+  tjänsteställeAdress: "",
+  tjänsteställeOrt: "",
+};
+
 export function useKontrakt(initial?: Partial<AnställdData> | any) {
-  const {
-    state: { valdAnställd, kontraktIsEditing, kontraktEditData, kontraktHasChanges, kontraktError },
-    setValdAnställd,
-    setKontraktIsEditing,
-    setKontraktEditData,
-    updateKontraktEditData,
-    setKontraktHasChanges,
-    setKontraktError,
-    resetKontraktEditData,
-  } = usePersonalContext();
+  // Egen state istället för PersonalContext
+  const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
+  const [kontraktIsEditing, setKontraktIsEditing] = useState(false);
+  const [kontraktEditData, setKontraktEditData] = useState<EditData>(initialEditData);
+  const [kontraktHasChanges, setKontraktHasChanges] = useState(false);
+  const [kontraktError, setKontraktError] = useState<string | null>(null);
+
+  const updateKontraktEditData = (field: string, value: any) => {
+    setKontraktEditData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetKontraktEditData = () => {
+    setKontraktEditData(initialEditData);
+  };
 
   // Local state för originalData
   const [originalData, setOriginalData] = useState<EditData>({

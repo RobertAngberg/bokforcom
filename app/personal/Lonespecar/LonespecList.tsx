@@ -4,7 +4,7 @@
 import LönespecView from "./LonespecView";
 import { taBortLönespec } from "../_actions/lonespecarActions";
 import { useState } from "react";
-import { useLonespecContext } from "./LonespecContext";
+import { useLonespec } from "../_hooks/useLonespec";
 import Toast from "../../_components/Toast";
 
 interface LonespecListProps {
@@ -26,7 +26,7 @@ export default function LonespecList({
   onLönespecUppdaterad,
   visaExtraRader = false,
 }: LonespecListProps) {
-  const { lönespecar } = useLonespecContext();
+  const { lönespecar } = useLonespec();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState({
     message: "",

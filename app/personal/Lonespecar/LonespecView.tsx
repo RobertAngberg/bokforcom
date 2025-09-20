@@ -9,7 +9,7 @@ import StatusBadge from "./StatusBadge";
 import Toast from "../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning/Forhandsgranskning";
-import { useLonespecContext } from "./LonespecContext";
+import { useLonespec } from "../_hooks/useLonespec";
 import { uppdateraLönespec } from "../_actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 
@@ -34,7 +34,7 @@ export default function LönespecView({
   företagsprofil,
   visaExtraRader = false,
 }: LönespecViewProps) {
-  const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespecContext();
+  const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespec();
 
   // Lokal state för utlägg så vi kan uppdatera UI direkt
   const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);

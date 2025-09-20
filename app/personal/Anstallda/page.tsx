@@ -7,15 +7,22 @@ import Personalinformation from "./Personalinformation";
 import Kontrakt from "../Kontrakt/Kontrakt";
 import Lonespecar from "../Lonespecar/Lonespecar";
 import Semester from "../Semester/Semester";
-import { usePersonalStore } from "../_stores/personalStore";
-import { KontraktProvider } from "../_context/KontraktContext";
+import TillbakaPil from "../../_components/TillbakaPil";
+import { useAnstallda } from "../_hooks/useAnstallda";
+import { useRouter } from "next/navigation";
 
 export default function AnställdaPage() {
-  const { valdAnställd } = usePersonalStore();
+  const router = useRouter();
+  const {
+    state: { valdAnställd },
+  } = useAnstallda();
 
   return (
     <MainLayout>
-      <h1 className="text-2xl font-bold text-white mb-6">Anställda</h1>
+      <div className="mb-4">
+        <TillbakaPil onClick={() => router.push("/personal")}>Tillbaka till personal</TillbakaPil>
+      </div>
+      <h1 className="text-3xl text-white mb-6 text-center">Anställda</h1>
       <Anställda />
       {valdAnställd && (
         <div className="mt-8">
@@ -23,9 +30,7 @@ export default function AnställdaPage() {
             <Personalinformation />
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">
-            <KontraktProvider>
-              <Kontrakt />
-            </KontraktProvider>
+            <Kontrakt anställd={valdAnställd} />
           </AnimeradFlik>
           <AnimeradFlik title="Utlägg" icon="💳">
             <UtlaggFlik />

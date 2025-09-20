@@ -516,130 +516,124 @@ export interface SkatteManagerProps {
   onSkatteComplete?: () => void;
 }
 
-// ===============================
-// PERSONAL CONTEXT TYPES
-// ===============================
-
-export interface PersonalState {
-  // ANSTÄLLDA STATE
-  anställda: AnställdListItem[];
-  valdAnställd: AnställdData | null;
-  anställdaLoading: boolean;
-  anställdLoading: boolean;
-  anställdLoadingId: number | null;
-  anställdaError: string | null;
-
-  // NY ANSTÄLLD FORMULÄR STATE
-  nyAnställdFormulär: NyAnställdFormular;
-  nyAnställdLoading: boolean;
-  visaNyAnställdFormulär: boolean;
-
-  // TOAST STATE
-  toast: ToastTillstand;
-
-  // UTLÄGG STATE
-  utlägg: UtläggData[];
-  utläggLoading: boolean;
-  utläggBokföringModal: {
-    isOpen: boolean;
-    utlägg: UtläggData | null;
-    previewRows: UtlaggBokföringsRad[];
-    loading: boolean;
-  };
-  utbetalningsdatum: Date | null;
-
-  // LÖNEKÖRNING / LÖNESPEC STATE
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  lönespecar: Record<string | number, any>;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | null;
-
-  // KONTRAKT STATE
-  kontraktIsEditing: boolean;
-  kontraktEditData: EditData;
-  kontraktHasChanges: boolean;
-  kontraktError: string | null;
-
-  // SEMESTER STATE
-  semesterTransaktioner: any[];
-  semesterLoading: boolean;
-  semesterBokförModal: {
-    isOpen: boolean;
-    loading: boolean;
-  };
-  semesterData: {
-    betalda_dagar: number;
-    sparade_dagar: number;
-    skuld: number;
-    komp_dagar: number;
-  };
-
-  // BOKFÖRING STATE
-  bokföringRegler: any[];
-  bokföringTransaktioner: any[];
-  bokföringLoading: boolean;
-}
-
 export interface PersonalAction {
   type: string;
   payload?: any;
 }
 
-export interface PersonalContextType {
-  state: PersonalState;
+// ===========================================
+// HOOK TYPES - Migrerade från individuella hooks
+// ===========================================
 
-  // ANSTÄLLDA ACTIONS
-  setAnställda: (anställda: AnställdListItem[]) => void;
-  setValdAnställd: (anställd: AnställdData | null) => void;
-  setAnställdaLoading: (loading: boolean) => void;
-  setAnställdLoading: (loading: boolean) => void;
-  setAnställdLoadingId: (id: number | null) => void;
-  setAnställdaError: (error: string | null) => void;
+// useToast types - redan definierad ovan som ToastTillstand ✅
 
-  // NY ANSTÄLLD ACTIONS
-  setNyAnställdFormulär: (formulär: Partial<NyAnställdFormular>) => void;
-  resetNyAnställdFormulär: () => void;
-  setNyAnställdLoading: (loading: boolean) => void;
-  setVisaNyAnställdFormulär: (visa: boolean) => void;
+// useUtlagg types
+export type UtläggBokföringModal = {
+  isOpen: boolean;
+  utlägg: any | null;
+  previewRows: any[];
+  loading: boolean;
+};
 
-  // TOAST ACTIONS
-  setToast: (toast: ToastTillstand) => void;
+// useSemester types
+export type SemesterBokförModal = {
+  isOpen: boolean;
+  loading: boolean;
+};
+
+export type SemesterData = {
+  betalda_dagar: number;
+  sparade_dagar: number;
+  skuld: number;
+  komp_dagar: number;
+};
+
+// useAnstallda types
+export type PersonalEditData = {
+  förnamn: string;
+  efternamn: string;
+  personnummer: string;
+  jobbtitel: string;
+  clearingnummer: string;
+  bankkonto: string;
+  mail: string;
+  adress: string;
+  postnummer: string;
+  ort: string;
+};
+
+// useLonespec types
+export interface Lönespec {
+  id: string;
+  [key: string]: any;
+}
+
+// useLonekorning types
+export type ToastType = "success" | "error" | "info";
+
+export type GenerateAGIArgs = {
+  valdaSpecar: any[];
+  anstallda: any[];
+  beräknadeVärden: any;
+  extrarader: any;
+  utbetalningsdatum: string | null;
+  session: any;
+  hämtaFöretagsprofil: (userId: string) => Promise<any>;
+  onAGIComplete?: () => void;
+};
+
+export type UseLonekorningInit = {
+  anställda?: any[];
+  utbetalningsdatum?: Date | null;
+  onLonespecarChange?: (specar: Record<string, any>) => void;
+};
+
+export interface LonekorningState {
+  laddaLönespecar: boolean;
+  löneperiod: { månad: number; år: number } | null;
+  sparar: Record<string | number, boolean>;
+  taBort: Record<string | number, boolean>;
+  förhandsgranskaId: string | null;
+  förhandsgranskaData: any;
+  toast: { type: ToastType; message: string } | null;
+  utbetalningsdatum: Date | null;
+  anställda: any[];
+  anställdaLoading: boolean;
+  harLönespec: (anställdId: string | number) => boolean;
+  getLönespec: (anställdId: string | number) => any;
+}
+
+export interface LonekorningHandlers {
+  setUtbetalningsdatum: (d: Date | null) => void;
+  skapaNyLönespec: (anställd: any) => Promise<void>;
+  taBortLönespec: (anställd: any) => Promise<void>;
+  openFörhandsgranskning: (anställd: any) => void;
+  closeFörhandsgranskning: () => void;
   clearToast: () => void;
+  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
+}
 
-  // UTLÄGG ACTIONS
-  setUtlägg: (utlägg: UtläggData[]) => void;
-  setUtläggLoading: (loading: boolean) => void;
-  openUtläggBokföringModal: (utlägg: UtläggData, previewRows: UtlaggBokföringsRad[]) => void;
-  closeUtläggBokföringModal: () => void;
-  setUtbetalningsdatum: (datum: Date | null) => void;
-
-  // LÖNEKÖRNING ACTIONS
-  setLaddaLönespecar: (ladda: boolean) => void;
-  setLöneperiod: (period: { månad: number; år: number } | null) => void;
-  setLönespecar: (specs: Record<string | number, any>) => void;
-  setSparar: (id: string | number, sparar: boolean) => void;
-  setTaBort: (id: string | number, taBort: boolean) => void;
-  setFörhandsgranskaId: (id: string | null) => void;
-
-  // KONTRAKT ACTIONS
-  setKontraktIsEditing: (editing: boolean) => void;
-  setKontraktEditData: (data: EditData) => void;
-  updateKontraktEditData: (field: keyof EditData, value: string | Date) => void;
-  setKontraktHasChanges: (hasChanges: boolean) => void;
-  setKontraktError: (error: string | null) => void;
-  resetKontraktEditData: () => void;
-
-  // SEMESTER ACTIONS
-  setSemesterTransaktioner: (transaktioner: any[]) => void;
-  setSemesterLoading: (loading: boolean) => void;
-  openSemesterBokförModal: () => void;
-  closeSemesterBokförModal: () => void;
-  setSemesterData: (data: any) => void;
-
-  // BOKFÖRING ACTIONS
-  setBokföringRegler: (regler: any[]) => void;
-  setBokföringTransaktioner: (transaktioner: any[]) => void;
-  setBokföringLoading: (loading: boolean) => void;
+export interface UseLonekorningReturn {
+  state: LonekorningState;
+  handlers: LonekorningHandlers;
+  // Deprecated: direkt-access (tillfällig bakåtkompabilitet)
+  laddaLönespecar: boolean;
+  löneperiod: { månad: number; år: number } | null;
+  sparar: Record<string | number, boolean>;
+  taBort: Record<string | number, boolean>;
+  förhandsgranskaId: string | null;
+  förhandsgranskaData: any;
+  toast: { type: ToastType; message: string } | null;
+  utbetalningsdatum: Date | null;
+  setUtbetalningsdatum: (d: Date | null) => void;
+  anställda: any[];
+  anställdaLoading: boolean;
+  harLönespec: (anställdId: string | number) => boolean;
+  getLönespec: (anställdId: string | number) => any;
+  skapaNyLönespec: (anställd: any) => Promise<void>;
+  taBortLönespec: (anställd: any) => Promise<void>;
+  openFörhandsgranskning: (anställd: any) => void;
+  closeFörhandsgranskning: () => void;
+  clearToast: () => void;
+  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
 }

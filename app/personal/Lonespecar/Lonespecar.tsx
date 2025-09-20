@@ -5,7 +5,7 @@ import { hämtaLönespecifikationer } from "../_actions/lonespecarActions";
 import { hämtaUtlägg } from "../_actions/utlaggActions";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../_components/LoadingSpinner";
-import { useLonespecContext } from "./LonespecContext";
+import { useLonespec } from "../_hooks/useLonespec";
 
 export default function Lonespecar({
   anställd,
@@ -29,7 +29,7 @@ export default function Lonespecar({
     setExtrarader,
     beräknadeVärden,
     setBeräknadeVärden,
-  } = useLonespecContext();
+  } = useLonespec();
   const [utlägg, setUtlägg] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

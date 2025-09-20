@@ -6,12 +6,16 @@ import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../_components/Knapp";
 import Toast from "../../../_components/Toast";
-import { usePersonalStore } from "../../_stores/personalStore";
+import { useToast } from "../../_hooks/useToast";
 import { useAnstallda } from "../../_hooks/useAnstallda";
 
 export default function NyAnställd() {
-  const { toast, hideToast, anställdLoading } = usePersonalStore();
-  const { actions, handlers } = useAnstallda();
+  const { toast, hideToast } = useToast();
+  const {
+    state: { anställdLoading },
+    actions,
+    handlers,
+  } = useAnstallda();
 
   return (
     <div className="space-y-8">
