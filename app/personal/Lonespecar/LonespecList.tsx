@@ -6,6 +6,7 @@ import { taBortLönespec } from "../_actions/lonespecarActions";
 import { useState } from "react";
 import { useLonespec } from "../_hooks/useLonespec";
 import Toast from "../../_components/Toast";
+import Knapp from "../../_components/Knapp";
 
 interface LonespecListProps {
   anställd: any;
@@ -74,11 +75,22 @@ export default function LonespecList({
     <div className="space-y-4 max-w-6xl mx-auto">
       {lönespecar.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
-          Inga lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
-          <br />
-          <span className="text-sm text-gray-500">
-            Skapa lönespecar under "Lönekörning" när det är dags för utbetalning.
-          </span>
+          <div className="mb-4">
+            Inga slutförda lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
+          </div>
+          <div className="text-sm text-gray-500 mb-4">
+            Lönespecifikationer kopplade till ej slutförda lönekörningar kan finnas.
+          </div>
+          <div className="flex justify-center">
+            <Knapp
+              text="Gå till Lönekörningar"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.href = "/personal/Lonekorning";
+                }
+              }}
+            />
+          </div>
         </div>
       ) : (
         lönespecar.map((lönespec) => (

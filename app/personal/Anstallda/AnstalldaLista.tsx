@@ -1,11 +1,13 @@
 "use client";
 
 import AnställdaRad from "./AnstalldaRad";
-import { useAnstallda } from "../_hooks/useAnstallda";
 
-export default function AnställdaLista() {
-  const { state } = useAnstallda();
+interface AnställdaListaProps {
+  state: any;
+  handlers: any;
+}
 
+export default function AnställdaLista({ state, handlers }: AnställdaListaProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -19,8 +21,8 @@ export default function AnställdaLista() {
           </tr>
         </thead>
         <tbody>
-          {state.anställda.map((anställd) => (
-            <AnställdaRad key={anställd.id} anställd={anställd} />
+          {state.anställda.map((anställd: any) => (
+            <AnställdaRad key={anställd.id} anställd={anställd} handlers={handlers} />
           ))}
         </tbody>
       </table>

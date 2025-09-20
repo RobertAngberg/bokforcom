@@ -3,11 +3,13 @@
 import Knapp from "../../_components/Knapp";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista";
-import { useAnstallda } from "../_hooks/useAnstallda";
 
-export default function Anstallda() {
-  const { state, handlers } = useAnstallda();
+interface AnställdaProps {
+  state: any;
+  handlers: any;
+}
 
+export default function Anstallda({ state, handlers }: AnställdaProps) {
   return (
     <div className="space-y-6">
       {!state.visaNyAnställdFormulär ? (
@@ -32,7 +34,7 @@ export default function Anstallda() {
           ) : !state.harAnställda ? (
             <p className="text-gray-400">Inga anställda sparade än.</p>
           ) : (
-            <AnställdaLista />
+            <AnställdaLista state={state} handlers={handlers} />
           )}
         </div>
       ) : (

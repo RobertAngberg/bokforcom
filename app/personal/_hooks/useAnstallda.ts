@@ -7,6 +7,7 @@ import {
   taBortAnställd,
   sparaAnställd,
 } from "../_actions/anstalldaActions";
+import { hämtaUtlägg } from "../_actions/utlaggActions";
 import type {
   AnställdData,
   AnställdListItem,
@@ -273,6 +274,32 @@ export function useAnstallda() {
     },
     [anställda, setValdAnställd, setAnställdLoading, setAnställdLoadingId]
   );
+
+  // Ladda utlägg för vald anställd
+  const laddaUtläggFörAnställd = useCallback(
+    async (anställdId: number) => {
+      setUtläggLoading(true);
+      try {
+        const utläggData = await hämtaUtlägg(anställdId);
+        setUtlägg(utläggData || []);
+      } catch (error) {
+        console.error("Fel vid laddning av utlägg:", error);
+        setUtlägg([]);
+      } finally {
+        setUtläggLoading(false);
+      }
+    },
+    [setUtlägg, setUtläggLoading]
+  );
+
+  // Ladda utlägg när valdAnställd ändras
+  useEffect(() => {
+    if (valdAnställd && valdAnställd.id) {
+      laddaUtläggFörAnställd(valdAnställd.id);
+    } else {
+      setUtlägg([]);
+    }
+  }, [valdAnställd, laddaUtläggFörAnställd, setUtlägg]);
 
   // ===========================================
   // ANSTÄLLDA RAD - För AnstalldaRad.tsx

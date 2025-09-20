@@ -1,12 +1,13 @@
 "use client";
 
 import Knapp from "../../_components/Knapp";
-import { useAnstallda } from "../_hooks/useAnstallda";
 import type { AnställdaRadProps } from "../_types/types";
 
-export default function AnställdaRad({ anställd }: AnställdaRadProps) {
-  const { handlers } = useAnstallda();
+interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
+  handlers: any;
+}
 
+export default function AnställdaRad({ anställd, handlers }: AnställdaRadPropsWithHandlers) {
   return (
     <tr
       className="border-b border-slate-600 hover:bg-slate-800 cursor-pointer"

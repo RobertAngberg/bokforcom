@@ -2,11 +2,15 @@
 
 import Tabell from "../../_components/Tabell";
 import UtlaggBokforModal from "./UtlaggBokforModal";
-import { useAnstallda } from "../_hooks/useAnstallda";
 
-export default function UtlaggFlik() {
-  const { utlaggFlikData } = useAnstallda();
-  // Ska nedan bort?
+interface UtlaggFlikProps {
+  state: any;
+  handlers: any;
+  utlaggFlikData: () => any;
+}
+
+export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFlikProps) {
+  // Använd den delade utlaggFlikData funktionen
   const { columns, utlägg, loading } = utlaggFlikData();
 
   return (
@@ -15,7 +19,7 @@ export default function UtlaggFlik() {
       {loading && <div>Laddar utlägg...</div>}
       {!loading && utlägg.length === 0 && <div>Inga utlägg hittades.</div>}
       {!loading && utlägg.length > 0 && (
-        <Tabell data={utlägg} columns={columns} getRowId={(row) => row.id} />
+        <Tabell data={utlägg} columns={columns} getRowId={(row: any) => row.id} />
       )}
       <UtlaggBokforModal />
     </div>

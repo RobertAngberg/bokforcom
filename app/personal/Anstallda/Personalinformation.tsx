@@ -2,13 +2,14 @@
 
 import TextFalt from "../../_components/TextFalt";
 import Knapp from "../../_components/Knapp";
-import { useAnstallda } from "../_hooks/useAnstallda";
 
-export default function Personalinformation() {
-  const {
-    state: { valdAnställd: visningsAnställd, ...state },
-    handlers,
-  } = useAnstallda();
+interface PersonalinformationProps {
+  state: any;
+  handlers: any;
+}
+
+export default function Personalinformation({ state, handlers }: PersonalinformationProps) {
+  const { valdAnställd: visningsAnställd } = state;
 
   if (!visningsAnställd) return null;
 
