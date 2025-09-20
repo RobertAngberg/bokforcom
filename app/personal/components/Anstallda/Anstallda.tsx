@@ -2,11 +2,11 @@
 
 import Knapp from "../../../_components/Knapp";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
-import AnställdaLista from "./AnstalldaLista";
+import AnställdaLista from "./AnstalldaLista/AnstalldaLista";
 import MainLayout from "../../../_components/MainLayout";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import UtlaggFlik from "./Utlagg/UtlaggFlik";
-import Personalinformation from "./Personalinformation";
+import Information from "./Information/Information";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import Semester from "./Semester/Semester";
@@ -56,7 +56,7 @@ export default function Anstallda() {
       {valdAnställd && (
         <div className="mt-8">
           <AnimeradFlik title="Personalinformation" icon="📋">
-            <Personalinformation state={state} handlers={handlers} />
+            <Information state={state} handlers={handlers} />
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">
             <Kontrakt anställd={valdAnställd} />

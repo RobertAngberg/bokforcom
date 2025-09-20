@@ -1,7 +1,7 @@
 "use client";
 
-import Knapp from "../../../_components/Knapp";
-import type { AnställdaRadProps } from "../../types/types";
+import Knapp from "../../../../_components/Knapp";
+import type { AnställdaRadProps } from "../../../types/types";
 
 interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
   handlers: any;

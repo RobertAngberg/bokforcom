@@ -1,14 +1,14 @@
 "use client";
 
-import TextFalt from "../../../_components/TextFalt";
-import Knapp from "../../../_components/Knapp";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 
-interface PersonalinformationProps {
+interface InformationProps {
   state: any;
   handlers: any;
 }
 
-export default function Personalinformation({ state, handlers }: PersonalinformationProps) {
+export default function Information({ state, handlers }: InformationProps) {
   const { valdAnställd: visningsAnställd } = state;
 
   if (!visningsAnställd) return null;

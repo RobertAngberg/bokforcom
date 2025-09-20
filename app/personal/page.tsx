@@ -3,9 +3,9 @@
 import MainLayout from "../_components/MainLayout";
 import Knapp from "../_components/Knapp";
 import AnimeradFlik from "../_components/AnimeradFlik";
-import AnställdaRad from "./components/Anstallda/AnstalldaRad";
+import AnställdaRad from "./components/Anstallda/AnstalldaLista/AnstalldaRad";
 import NyAnställd from "./components/Anstallda/NyAnstalld/NyAnstalld";
-import Personalinformation from "./components/Anstallda/Personalinformation";
+import Information from "./components/Anstallda/Information/Information";
 import UtlaggFlik from "./components/Anstallda/Utlagg/UtlaggFlik";
 import Kontrakt from "./components/Anstallda/Kontrakt/Kontrakt";
 import Lonespecar from "./components/Anstallda/Lonespecar/Lonespecar";
@@ -85,7 +85,7 @@ export default function PersonalPage() {
             </h2>
             <div className="space-y-4">
               <AnimeradFlik title="Personalinformation" icon="📋">
-                <Personalinformation state={state} handlers={handlers} />
+                <Information state={state} handlers={handlers} />
               </AnimeradFlik>
               <AnimeradFlik title="Utlägg" icon="💳">
                 <UtlaggFlik state={state} handlers={handlers} utlaggFlikData={utlaggFlikData} />
