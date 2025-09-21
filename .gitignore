@@ -55,3 +55,13 @@ pids
 
 # SWC
 .swc/
+
+# Backup files
+*.backup
+*.backup2
+
+# Test files (keep main config)
+test-*.js
+
+# Random temp files
+_random/
