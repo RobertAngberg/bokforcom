@@ -1,11 +1,7 @@
 "use client";
 
+import { AnställdaListaProps } from "../../../types/types";
 import AnställdaRad from "./AnstalldaRad";
-
-interface AnställdaListaProps {
-  state: any;
-  handlers: any;
-}
 
 export default function AnställdaLista({ state, handlers }: AnställdaListaProps) {
   return (

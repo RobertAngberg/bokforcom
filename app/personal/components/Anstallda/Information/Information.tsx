@@ -2,11 +2,7 @@
 
 import TextFalt from "../../../../_components/TextFalt";
 import Knapp from "../../../../_components/Knapp";
-
-interface InformationProps {
-  state: any;
-  handlers: any;
-}
+import type { InformationProps } from "../../../types/types";
 
 export default function Information({ state, handlers }: InformationProps) {
   const { valdAnställd: visningsAnställd } = state;

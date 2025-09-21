@@ -12,15 +12,7 @@ import { beräknaSumma } from "../../../../utils/extraraderUtils";
 import Arssammanstollning from "./Arssammanstollning";
 import ArbetstidInfo from "./ArbetstidInfo";
 import Fotinfo from "./Fotinfo";
-
-interface ForhandsgranskningProps {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden?: any;
-  onStäng: () => void;
-}
+import type { ForhandsgranskningProps } from "../../../../types/types";
 
 export default function Forhandsgranskning({
   lönespec,

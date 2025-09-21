@@ -7,24 +7,7 @@ import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
 import UtlaggBokforModal from "./UtlaggBokforModal";
 import { taBortUtlägg } from "../../../actions/utlaggActions";
-
-interface Utlägg {
-  id: number;
-  belopp: number;
-  beskrivning: string;
-  datum: string;
-  kategori?: string;
-  status: string;
-  anställd_namn?: string;
-  kvitto_fil?: string;
-  kvitto_url?: string;
-}
-
-interface UtlaggFlikProps {
-  state: any;
-  handlers: any;
-  utlaggFlikData: () => any;
-}
+import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
 
 export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFlikProps) {
   const router = useRouter();

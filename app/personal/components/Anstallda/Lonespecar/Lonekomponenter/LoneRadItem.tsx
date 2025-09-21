@@ -1,12 +1,5 @@
-import { RAD_KONFIGURATIONER, RadKonfiguration } from "../../../../utils/extraradDefinitioner";
-
-interface LöneRadItemProps {
-  benämning: string;
-  belopp: number;
-  typ: "total" | "extrarad" | "netto" | "varav";
-  onTaBort?: () => void;
-  kommentar?: string;
-}
+import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
+import type { LöneRadItemProps, RadKonfiguration } from "../../../../types/types";
 
 export default function LöneRadItem({
   benämning,

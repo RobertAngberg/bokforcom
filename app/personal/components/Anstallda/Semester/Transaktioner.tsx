@@ -7,24 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Dropdown from "../../../../_components/Dropdown";
 import InfoTooltip from "../../../../_components/InfoTooltip";
 import { hämtaSemesterTransaktioner } from "../../../actions/semesterActions";
-
-interface TransaktionerProps {
-  anställd?: any;
-}
-
-interface Transaktion {
-  id: string;
-  datum: string;
-  typ: string;
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespec_månad?: number;
-  lönespec_år?: number;
-  bokfört: boolean;
-}
-// #endregion
+import type { TransaktionerProps, Transaktion } from "../../../types/types";
 
 export default function Transaktioner({ anställd }: TransaktionerProps) {
   // #region State

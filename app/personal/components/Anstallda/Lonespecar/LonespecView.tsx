@@ -12,17 +12,7 @@ import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import { useLonespec } from "../../../hooks/useLonespecar";
 import { uppdateraLönespec } from "../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
-
-interface LönespecViewProps {
-  lönespec: any;
-  anställd: any;
-  utlägg: any[];
-  ingenAnimering?: boolean;
-  onTaBortLönespec?: () => void;
-  taBortLoading?: boolean;
-  företagsprofil?: any; // Lägg till denna om du vill skicka företagsprofil till MailaLonespec
-  visaExtraRader?: boolean; // NY PROP
-}
+import type { LönespecViewProps } from "../../../types/types";
 
 export default function LönespecView({
   lönespec,

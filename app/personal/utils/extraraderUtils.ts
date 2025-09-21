@@ -14,7 +14,7 @@
  * - Hur värden ska formateras och valideras
  */
 
-import { RAD_KONFIGURATIONER, RadKonfiguration } from "./extraradDefinitioner";
+import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 
 /**
  * FILTRERAR RADER BASERAT PÅ SÖKTERM

@@ -1,15 +1,7 @@
 import ExtraradRadOchDropdown from "./ExtraradRadOchDropdown";
 import { staticRows, dropdownRaderData } from "../../../../utils/extraraderData";
 import { filtreraRader } from "../../../../utils/extraraderUtils";
-
-interface Props {
-  sökterm: string;
-  state: Record<string, boolean>;
-  open: Record<string, boolean>;
-  toggleDropdown: (key: string) => void;
-  toggleCheckbox: (id: string, label: string) => void;
-  onRemoveRow?: (id: string) => void;
-}
+import type { ExtraraderGridProps } from "../../../../types/types";
 
 export default function ExtraraderGrid({
   sökterm,
@@ -18,7 +10,7 @@ export default function ExtraraderGrid({
   toggleDropdown,
   toggleCheckbox,
   onRemoveRow,
-}: Props) {
+}: ExtraraderGridProps) {
   const filtreradeStaticRows = filtreraRader(staticRows, sökterm);
 
   const mittenRows = filtreradeStaticRows.slice(0, Math.ceil(filtreradeStaticRows.length / 2));

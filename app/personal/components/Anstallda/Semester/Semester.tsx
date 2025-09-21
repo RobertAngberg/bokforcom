@@ -12,27 +12,11 @@ import {
   uppdateraSemesterdata,
 } from "../../../actions/semesterActions";
 import BokforModal from "./BokforModal";
-
-type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
-
-type SemesterBoxSummary = {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-};
-
-interface ModernSemesterProps {
-  anställd: {
-    id: number;
-    förnamn: string;
-    efternamn: string;
-    kompensation: number;
-    anställningsdatum: string;
-    tjänstegrad?: number;
-  };
-  userId: number;
-}
+import type {
+  SemesterBoxField,
+  SemesterBoxSummary,
+  ModernSemesterProps,
+} from "../../../types/types";
 
 export default function ModernSemester({ anställd, userId }: ModernSemesterProps) {
   // State för att styra om knappen ska visas

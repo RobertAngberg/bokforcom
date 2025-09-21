@@ -1,17 +1,6 @@
 //#region
 import InfoTooltip from "../../../../_components/InfoTooltip";
-
-interface SammanfattningProps {
-  utbetalningsDatum: Date;
-  nettolön: number;
-  lönespec: any;
-  anställd: any;
-  bruttolön: number;
-  skatt: number;
-  socialaAvgifter?: number;
-  lönekostnad?: number;
-  onVisaBeräkningar?: () => void;
-}
+import type { SammanfattningProps } from "../../../types/types";
 
 export default function Sammanfattning({
   utbetalningsDatum,

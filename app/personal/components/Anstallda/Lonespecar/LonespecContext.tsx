@@ -1,21 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-
-// Typdefinitioner
-export interface Lönespec {
-  id: string;
-  [key: string]: any;
-}
-
-export interface LonespecContextType {
-  lönespecar: Lönespec[];
-  setLonespecar: (lönespecar: Lönespec[]) => void;
-  extrarader: Record<string, any[]>;
-  setExtrarader: (id: string, extrarader: any[]) => void;
-  beräknadeVärden: Record<string, any>;
-  setBeräknadeVärden: (id: string, värden: any) => void;
-}
+import type { Lönespec, LonespecContextType } from "../../../types/types";
 
 const LonespecContext = createContext<LonespecContextType | undefined>(undefined);
 

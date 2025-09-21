@@ -5,21 +5,7 @@
 
 import { BOKIO_KONSTANTER } from "./loneberakningar";
 import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "./loneberakningar";
-
-export interface SemesterIntjäning {
-  intjänandeår: string; // "2024-2025"
-  intjänadeDagar: number;
-  intjänadPengaTillägg: number;
-  återstående: number;
-  uttagna: number;
-}
-
-export interface SemesterBeräkning {
-  månadslön: number;
-  anställningsdatum: Date;
-  heltid: boolean;
-  tjänstegrad: number; // 0-100%
-}
+import { SemesterIntjäning, SemesterBeräkning } from "../types/types";
 
 /**
  * Beräknar intjänade semesterdagar per månad

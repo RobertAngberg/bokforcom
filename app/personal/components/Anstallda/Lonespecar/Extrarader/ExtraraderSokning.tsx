@@ -1,9 +1,6 @@
-interface Props {
-  sökterm: string;
-  setSökterm: (term: string) => void;
-}
+import type { ExtraraderSokningProps } from "../../../../types/types";
 
-export default function ExtraraderSökning({ sökterm, setSökterm }: Props) {
+export default function ExtraraderSökning({ sökterm, setSökterm }: ExtraraderSokningProps) {
   return (
     <div className="mb-4">
       <input

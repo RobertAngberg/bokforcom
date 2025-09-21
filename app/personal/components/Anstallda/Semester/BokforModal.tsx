@@ -3,13 +3,7 @@ import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
 import { useState } from "react";
-
-interface BokforModalProps {
-  open: boolean;
-  onClose: () => void;
-  rows: { konto: string; namn: string; debet: number; kredit: number }[];
-  onConfirm?: (kommentar: string) => void;
-}
+import type { BokforModalProps } from "../../../types/types";
 
 export default function BokforModal({ open, onClose, rows, onConfirm }: BokforModalProps) {
   const [kommentar, setKommentar] = useState("");

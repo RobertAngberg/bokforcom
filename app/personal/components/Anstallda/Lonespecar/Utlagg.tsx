@@ -4,15 +4,7 @@ import { uppdateraUtläggStatus, hämtaUtlägg } from "../../../actions/utlaggAc
 import { useEffect, useState } from "react";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
-
-interface UtläggProps {
-  lönespecUtlägg: any[];
-  getStatusBadge: (status: string) => React.ReactElement;
-  lönespecId?: number;
-  onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>; // Uppdaterad callback
-  extrarader?: any[]; // Lägg till extrarader för synkronisering
-  anställdId?: number; // Lägg till anställd ID för att hämta alla utlägg
-}
+import type { UtläggProps } from "../../../types/types";
 
 export default function Utlägg({
   lönespecUtlägg,

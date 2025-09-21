@@ -5,29 +5,7 @@ import { createRoot } from "react-dom/client";
 import Forhandsgranskning from "../../Anstallda/Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
-
-interface SingleLönespec {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden?: any;
-}
-
-interface MailaLonespecProps {
-  // For single mode
-  lönespec?: any;
-  anställd?: any;
-  företagsprofil?: any;
-  extrarader?: any[];
-  beräknadeVärden?: any;
-  // For batch mode
-  batch?: SingleLönespec[];
-  batchMode?: boolean;
-  open?: boolean;
-  onClose?: () => void;
-  onMailComplete?: () => void; // Ny callback för när mailing är klar
-}
+import type { SingleLönespec, MailaLonespecProps } from "../../../types/types";
 
 export default function MailaLonespec({
   lönespec,

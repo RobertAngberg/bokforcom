@@ -10,26 +10,7 @@ import {
   beräknaSemesterersättning,
   beräknaSemesterlönPerDag,
 } from "./loneberakningar";
-
-export interface RadKonfiguration {
-  label: string;
-  enhet: string;
-  beräknaVärde?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
-  beräknaTotalt?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
-  negativtBelopp?: boolean;
-  skattepliktig?: boolean;
-  läggTillINettolön?: boolean;
-  läggTillIBruttolön?: boolean;
-  fält: {
-    antalLabel: string;
-    antalPlaceholder: string;
-    beloppPlaceholder?: string;
-    step?: string;
-    beräknaTotalsummaAutomatiskt?: boolean;
-    enhetDropdown?: string[];
-    skipKommentar?: boolean;
-  };
-}
+import { RadKonfiguration } from "../types/types";
 
 export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
   karensavdrag: {

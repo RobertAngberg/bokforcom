@@ -1,8 +1,5 @@
 //#region Huvud
-interface StatusBadgeProps {
-  status: string;
-  type: "lönespec" | "utlägg";
-}
+import type { StatusBadgeProps } from "../../../types/types";
 
 export default function StatusBadge({ status, type }: StatusBadgeProps) {
   //#endregion

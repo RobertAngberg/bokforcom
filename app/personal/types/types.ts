@@ -106,13 +106,6 @@ export interface AnställdListItem {
   roll?: string;
 }
 
-export interface AnställdaListaProps {
-  anställda: AnställdListItem[];
-  onRedigera?: (id: number) => void;
-  onTaBort?: (id: number) => void;
-  loadingAnställdId?: number | null;
-}
-
 export interface AnställdaRadProps {
   anställd: AnställdListItem;
 }
@@ -122,10 +115,6 @@ export interface UtlaggBokforModalProps {
   previewRows: UtlaggBokföringsRad[];
   onClose: () => void;
   onBokför: () => void;
-}
-
-export interface UtlaggFlikProps {
-  anställd: AnställdData;
 }
 
 export interface NyAnställdFormular {
@@ -482,10 +471,6 @@ export interface NySpecModalProps {
   onSpecCreated: () => void;
 }
 
-export interface SammanfattningProps {
-  anställda: any[];
-}
-
 export interface UtbetalningsdatumValjareProps {
   datumLista: string[];
   utbetalningsdatum: string | null;
@@ -658,4 +643,477 @@ export interface SemesterRecord {
   lönespecifikation_id?: number;
   bokfört: boolean;
   skapad_av: number;
+}
+
+export interface AnställdaListaProps {
+  state: any;
+  handlers: any;
+}
+
+export interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
+  handlers: any;
+}
+
+export interface InformationProps {
+  state: any;
+  handlers: any;
+}
+
+// Lonespecar interfaces
+export interface LonespecContextType {
+  lönespecar: Lönespec[];
+  setLonespecar: (lönespecar: Lönespec[]) => void;
+  extrarader: Record<string, any[]>;
+  setExtrarader: (id: string, extrarader: any[]) => void;
+  beräknadeVärden: Record<string, any>;
+  setBeräknadeVärden: (id: string, värden: any) => void;
+}
+
+export interface ExtraRad {
+  id: string;
+  typ: string;
+  antal: number;
+  belopp: number;
+  tillagd: boolean;
+}
+
+export interface SimpleBokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+}
+
+export interface LonespecListProps {
+  anställd: any;
+  utlägg: any[];
+  ingenAnimering?: boolean;
+  onTaBortLönespec?: () => void;
+  taBortLoading?: boolean;
+  onLönespecUppdaterad?: () => void;
+  visaExtraRader?: boolean;
+}
+
+export interface LönespecViewProps {
+  lönespec: any;
+  anställd: any;
+  utlägg: any[];
+  ingenAnimering?: boolean;
+  onTaBortLönespec?: () => void;
+  taBortLoading?: boolean;
+  företagsprofil?: any;
+  visaExtraRader?: boolean;
+}
+
+export interface SammanfattningProps {
+  utbetalningsDatum: Date;
+  nettolön: number;
+  lönespec: any;
+  anställd: any;
+  bruttolön: number;
+  skatt: number;
+  socialaAvgifter?: number;
+  lönekostnad?: number;
+  onVisaBeräkningar?: () => void;
+}
+
+export interface StatusBadgeProps {
+  status: string;
+  type: "lönespec" | "utlägg";
+}
+
+// Extrarader interfaces
+export interface ExtraraderGridProps {
+  sökterm: string;
+  state: Record<string, boolean>;
+  open: Record<string, boolean>;
+  toggleDropdown: (key: string) => void;
+  toggleCheckbox: (id: string, label: string) => void;
+  onRemoveRow?: (id: string) => void;
+}
+
+export interface ExtraraderField {
+  label: string;
+  name: string;
+  type: "text" | "number" | "select";
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  required?: boolean;
+  placeholder?: string;
+  step?: string;
+  min?: string;
+  hidden?: boolean;
+  options?: string[];
+}
+
+export interface ExtraraderModalProps {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  fields: ExtraraderField[];
+  onSubmit: (e: React.FormEvent) => void;
+  anstalldId?: number;
+}
+
+export interface ExtraraderSokningProps {
+  sökterm: string;
+  setSökterm: (term: string) => void;
+}
+
+export interface ExtraradRadOchDropdownProps {
+  label: string;
+  checked?: boolean;
+  toggle: () => void;
+  onRemove?: () => void;
+  isDropdown?: boolean;
+  open?: boolean;
+  onToggleDropdown?: () => void;
+  id?: string;
+}
+
+// Forhandsgranskning interfaces
+export interface ForhandsgranskningProps {
+  lönespec: any;
+  anställd: any;
+  företagsprofil: any;
+  extrarader: any[];
+  beräknadeVärden?: any;
+  onStäng: () => void;
+}
+
+export interface FormelVisningProps {
+  beräknadeVärden: any;
+  extrarader: any[];
+  lönespec: any;
+}
+
+export interface ToppInfoProps {
+  månadsNamn: string;
+  lönespec: any;
+  anställd: any;
+  getLönespecStatusBadge: (status: string) => React.ReactElement;
+}
+
+// Lonekomponenter interfaces
+export interface LöneRadItemProps {
+  benämning: string;
+  belopp: number;
+  typ: "total" | "extrarad" | "netto" | "varav";
+  onTaBort?: () => void;
+  kommentar?: string;
+}
+
+export interface LöneTabellProps {
+  beräknadeVärden: {
+    lönekostnad: number;
+    socialaAvgifter: number;
+    bruttolön: number;
+    skatt: number;
+    nettolön: number;
+    dagavdrag?: {
+      föräldraledighet?: number;
+      vårdAvSjuktBarn?: number;
+      sjukfrånvaro?: number;
+      totalt?: number;
+    };
+  };
+  grundlön: number | undefined;
+  extrarader: any[];
+  onTaBortExtrarad: (id: number) => void;
+}
+
+export type LonekomponenterProps = {
+  lönespec: any;
+  grundlön?: number;
+  övertid?: number;
+  visaExtraRader?: boolean;
+  anstalldId?: number;
+};
+
+// Semester interfaces
+export interface BokforModalProps {
+  open: boolean;
+  onClose: () => void;
+  rows: { konto: string; namn: string; debet: number; kredit: number }[];
+  onConfirm?: (kommentar: string) => void;
+}
+
+export type SemesterBoxField = "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
+
+export type SemesterBoxSummary = {
+  betalda_dagar: number;
+  sparade_dagar: number;
+  skuld: number;
+  komp_dagar: number;
+};
+
+export interface ModernSemesterProps {
+  anställd: {
+    id: number;
+    förnamn: string;
+    efternamn: string;
+    kompensation: number;
+    anställningsdatum: string;
+    tjänstegrad?: number;
+  };
+  userId: number;
+}
+
+export interface SemesterdataProps {
+  editData?: any;
+  handleChange?: (name: string, value: any) => void;
+  isEditing?: boolean;
+}
+
+export interface TransaktionerProps {
+  anställd?: any;
+}
+
+export interface Transaktion {
+  id: string;
+  datum: string;
+  typ: string;
+  antal: number;
+  från_datum?: string;
+  till_datum?: string;
+  beskrivning?: string;
+  lönespec_månad?: number;
+  lönespec_år?: number;
+  bokfört: boolean;
+}
+
+// Utlagg interfaces
+export interface Utlägg {
+  id: number;
+  belopp: number;
+  beskrivning: string;
+  datum: string;
+  kategori?: string;
+  status: string;
+  anställd_namn?: string;
+  kvitto_fil?: string;
+  kvitto_url?: string;
+}
+
+export interface UtlaggFlikProps {
+  state: any;
+  handlers: any;
+  utlaggFlikData: () => any;
+}
+
+export interface UtläggProps {
+  lönespecUtlägg: any[];
+  getStatusBadge: (status: string) => React.ReactElement;
+  lönespecId?: number;
+  onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>;
+  extrarader?: any[];
+  anställdId?: number;
+}
+
+// Lonekorning Wizard interfaces
+export interface WizardBokföringsPost {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+}
+
+export interface BokforLonerProps {
+  lönespec: any;
+  extrarader: any[];
+  beräknadeVärden: any;
+  anställdNamn: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onBokfört?: () => void;
+}
+
+export interface SingleLönespec {
+  lönespec: any;
+  anställd: any;
+  företagsprofil: any;
+  extrarader: any[];
+  beräknadeVärden?: any;
+}
+
+export interface MailaLonespecProps {
+  // For single mode
+  lönespec?: any;
+  anställd?: any;
+  företagsprofil?: any;
+  extrarader?: any[];
+  beräknadeVärden?: any;
+  // For batch mode
+  batch?: SingleLönespec[];
+  batchMode?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onMailComplete?: () => void;
+}
+
+// Utils interfaces
+export interface AGIData {
+  agRegistreradId: string;
+  redovisningsperiod: string;
+  organisationsnummer: string;
+  tekniskKontakt: {
+    namn: string;
+    telefon: string;
+    epost: string;
+  };
+  individuppgifter: Array<{
+    specifikationsnummer: number;
+    betalningsmottagareId?: string;
+    fodelsetid?: string;
+    annatId?: string;
+    fornamn?: string;
+    efternamn?: string;
+    gatuadress?: string;
+    postnummer?: string;
+    postort?: string;
+    kontantErsattningUlagAG?: number;
+    kontantErsattningEjUlagSA?: number;
+    skatteplBilformanUlagAG?: number;
+    skatteplOvrigaFormanerUlagAG?: number;
+    avrakningAvgiftsfriErs?: number;
+  }>;
+  franvarouppgifter: Array<{
+    franvaroDatum: string;
+    betalningsmottagareId: string;
+    specifikationsnummer: number;
+    franvaroTyp: string;
+    franvaroProcentTFP?: number;
+    franvaroTimmarTFP?: number;
+    franvaroProcentFP?: number;
+    franvaroTimmarFP?: number;
+    franvaroBorttag?: boolean;
+  }>;
+}
+
+export interface BokföringsRegel {
+  debet?: string;
+  kredit?: string;
+  namn: string;
+  beskrivning?: string;
+}
+
+export interface RadKonfiguration {
+  label: string;
+  enhet: string;
+  beräknaVärde?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
+  beräknaTotalt?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
+  negativtBelopp?: boolean;
+  skattepliktig?: boolean;
+  läggTillINettolön?: boolean;
+  läggTillIBruttolön?: boolean;
+  fält: {
+    antalLabel: string;
+    antalPlaceholder: string;
+    beloppPlaceholder?: string;
+    step?: string;
+    beräknaTotalsummaAutomatiskt?: boolean;
+    enhetDropdown?: string[];
+    skipKommentar?: boolean;
+    [key: string]: any;
+  };
+}
+
+export type RadKonfigurationType = RadKonfiguration;
+
+export interface SemesterRecord {
+  id?: number;
+  anställd_id: number;
+  datum: string;
+  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
+  antal: number;
+  från_datum?: string;
+  till_datum?: string;
+  beskrivning?: string;
+  lönespecifikation_id?: number;
+  bokfört: boolean;
+  skapad_av: number;
+}
+
+export interface SemesterSummary {
+  betalda_dagar: number;
+  sparade_dagar: number;
+  skuld: number;
+  komp_dagar: number;
+}
+
+export interface BokföringsRad {
+  konto: string;
+  kontoNamn: string;
+  debet: number;
+  kredit: number;
+  beskrivning: string;
+  anställdNamn?: string;
+}
+
+export interface BokföringsSummering {
+  rader: BokföringsRad[];
+  totalDebet: number;
+  totalKredit: number;
+  balanserar: boolean;
+}
+
+export interface UtilsSemesterBokföring {
+  anställdId: number;
+  anställdNamn: string;
+  typ: "uttag" | "avsättning" | "avstämning" | "uppsägning";
+  datum: string;
+  dagar: number;
+  månadslön: number;
+  kommentar?: string;
+}
+
+export interface LöneBeräkning {
+  grundlön: number;
+  tillägg: number;
+  avdrag: number;
+  bruttolön: number;
+  socialaAvgifter: number;
+  skatt: number;
+  nettolön: number;
+  totalLönekostnad: number;
+}
+
+export interface LöneKontrakt {
+  månadslön: number;
+  arbetstimmarPerVecka: number;
+  skattetabell: string;
+  skattekolumn: number;
+  kommunalSkatt: number;
+  socialaAvgifterSats: number;
+}
+
+export interface DagAvdrag {
+  föräldraledighet: number;
+  vårdAvSjuktBarn: number;
+  sjukfrånvaro: number;
+}
+
+export type BilTyp = "bensinDiesel" | "el";
+
+export interface UtilsExtrarad {
+  kolumn1: string;
+  kolumn2: string;
+  kolumn3: string;
+  kolumn4?: string;
+}
+
+export interface SemesterIntjäning {
+  intjänandeår: string;
+  intjänadeDagar: number;
+  intjänadPengaTillägg: number;
+  återstående: number;
+  uttagna: number;
+}
+
+export interface SemesterBeräkning {
+  månadslön: number;
+  anställningsdatum: Date;
+  heltid: boolean;
+  tjänstegrad: number;
 }

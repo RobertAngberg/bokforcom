@@ -1,10 +1,6 @@
 "use client";
 
-interface FormelVisningProps {
-  beräknadeVärden: any;
-  extrarader: any[];
-  lönespec: any;
-}
+import type { FormelVisningProps } from "../../../types/types";
 
 export default function FormelVisning({
   beräknadeVärden,

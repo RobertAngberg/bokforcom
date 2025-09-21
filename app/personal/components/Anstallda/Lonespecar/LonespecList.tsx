@@ -7,16 +7,7 @@ import { useState } from "react";
 import { useLonespec } from "../../../hooks/useLonespecar";
 import Toast from "../../../../_components/Toast";
 import Knapp from "../../../../_components/Knapp";
-
-interface LonespecListProps {
-  anställd: any;
-  utlägg: any[];
-  ingenAnimering?: boolean;
-  onTaBortLönespec?: () => void;
-  taBortLoading?: boolean;
-  onLönespecUppdaterad?: () => void;
-  visaExtraRader?: boolean;
-}
+import type { LonespecListProps } from "../../../types/types";
 
 export default function LonespecList({
   anställd,

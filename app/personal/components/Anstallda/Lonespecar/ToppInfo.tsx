@@ -1,9 +1,4 @@
-interface ToppInfoProps {
-  månadsNamn: string;
-  lönespec: any;
-  anställd: any;
-  getLönespecStatusBadge: (status: string) => React.ReactElement;
-}
+import type { ToppInfoProps } from "../../../types/types";
 
 export default function ToppInfo({
   månadsNamn,

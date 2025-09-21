@@ -7,14 +7,7 @@ import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../../../utils/loneberakningar";
 import { useLonespec } from "../../../../hooks/useLonespecar";
-
-type LonekomponenterProps = {
-  lönespec: any;
-  grundlön?: number;
-  övertid?: number;
-  visaExtraRader?: boolean; // NY PROP
-  anstalldId?: number;
-};
+import type { LonekomponenterProps } from "../../../../types/types";
 
 export default function Lonekomponenter({
   lönespec,

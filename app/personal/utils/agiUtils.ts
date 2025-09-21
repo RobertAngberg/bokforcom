@@ -3,43 +3,7 @@
  * Baserat på återställd kod från git commit ca21f31
  */
 
-interface AGIData {
-  agRegistreradId: string;
-  redovisningsperiod: string;
-  organisationsnummer: string;
-  tekniskKontakt: {
-    namn: string;
-    telefon: string;
-    epost: string;
-  };
-  individuppgifter: Array<{
-    specifikationsnummer: number;
-    betalningsmottagareId?: string;
-    fodelsetid?: string;
-    annatId?: string;
-    fornamn?: string;
-    efternamn?: string;
-    gatuadress?: string;
-    postnummer?: string;
-    postort?: string;
-    kontantErsattningUlagAG?: number;
-    kontantErsattningEjUlagSA?: number;
-    skatteplBilformanUlagAG?: number;
-    skatteplOvrigaFormanerUlagAG?: number;
-    avrakningAvgiftsfriErs?: number;
-  }>;
-  franvarouppgifter: Array<{
-    franvaroDatum: string;
-    betalningsmottagareId: string;
-    specifikationsnummer: number;
-    franvaroTyp: string;
-    franvaroProcentTFP?: number;
-    franvaroTimmarTFP?: number;
-    franvaroProcentFP?: number;
-    franvaroTimmarFP?: number;
-    franvaroBorttag?: boolean;
-  }>;
-}
+import { AGIData } from "../types/types";
 
 export function generateAGIXML(agiData: AGIData): string {
   const timestamp = new Date().toISOString();

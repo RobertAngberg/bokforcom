@@ -1,15 +1,6 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-
-interface SemesterBokföring {
-  anställdId: number;
-  anställdNamn: string;
-  typ: "uttag" | "avsättning" | "avstämning" | "uppsägning";
-  datum: string;
-  dagar: number;
-  månadslön: number;
-  kommentar?: string;
-}
+import { UtilsSemesterBokföring } from "../types/types";
 
 /**
  * Bokför semesteruttag
@@ -17,7 +8,7 @@ interface SemesterBokföring {
  * Kredit: 2920 Semesterskuld (minskning)
  * Kredit: 1930 Bank (utbetalning)
  */
-export async function bokförSemesteruttag(data: SemesterBokföring) {
+export async function bokförSemesteruttag(data: UtilsSemesterBokföring) {
   const client = await pool.connect();
 
   try {
@@ -92,7 +83,7 @@ export async function bokförSemesteruttag(data: SemesterBokföring) {
  * Debet: 7533 Semesterersättning
  * Kredit: 2920 Semesterskuld
  */
-export async function bokförSemesteravsättning(data: SemesterBokföring) {
+export async function bokförSemesteravsättning(data: UtilsSemesterBokföring) {
   const client = await pool.connect();
 
   try {
@@ -168,7 +159,7 @@ export async function bokförSemesteravsättning(data: SemesterBokföring) {
  * Kredit: 2920 Semesterskuld (minskning)
  * Kredit: 1930 Bank (utbetalning)
  */
-export async function bokförSemesteruppsägning(data: SemesterBokföring) {
+export async function bokförSemesteruppsägning(data: UtilsSemesterBokföring) {
   const client = await pool.connect();
 
   try {

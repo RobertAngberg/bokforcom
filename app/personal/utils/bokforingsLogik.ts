@@ -1,5 +1,6 @@
 // Synkad & kontrollerad 2025-07-15
-import { KONTO_MAPPNINGAR, hittaBokföringsregel, type BokföringsRegel } from "./bokforingsRegler";
+import { KONTO_MAPPNINGAR, hittaBokföringsregel } from "./bokforingsRegler";
+import { BokföringsRegel } from "../types/types";
 import {
   klassificeraExtrarader,
   beräknaSkattTabell34,
@@ -7,22 +8,7 @@ import {
   beräknaDaglön,
 } from "./loneberakningar";
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
-
-export interface BokföringsRad {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-  beskrivning: string;
-  anställdNamn?: string;
-}
-
-export interface BokföringsSummering {
-  rader: BokföringsRad[];
-  totalDebet: number;
-  totalKredit: number;
-  balanserar: boolean;
-}
+import { BokföringsRad, BokföringsSummering } from "../types/types";
 
 export function genereraBokföringsrader(
   lönespecar: Record<string, any>,

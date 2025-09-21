@@ -1,9 +1,4 @@
-export interface BokföringsRegel {
-  debet?: string;
-  kredit?: string;
-  namn: string;
-  beskrivning?: string;
-}
+import { BokföringsRegel } from "../types/types";
 
 export const KONTO_MAPPNINGAR: Record<string, BokföringsRegel> = {
   // === LÖNER ===

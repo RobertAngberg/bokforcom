@@ -1,25 +1,7 @@
 import LöneRadItem from "./LoneRadItem";
 import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
 import { beräknaSumma } from "../../../../utils/extraraderUtils";
-
-interface LöneTabellProps {
-  beräknadeVärden: {
-    lönekostnad: number;
-    socialaAvgifter: number;
-    bruttolön: number;
-    skatt: number;
-    nettolön: number;
-    dagavdrag?: {
-      föräldraledighet?: number;
-      vårdAvSjuktBarn?: number;
-      sjukfrånvaro?: number;
-      totalt?: number;
-    };
-  };
-  grundlön: number | undefined;
-  extrarader: any[];
-  onTaBortExtrarad: (id: number) => void;
-}
+import type { LöneTabellProps } from "../../../../types/types";
 
 export default function LöneTabell({
   beräknadeVärden,

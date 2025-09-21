@@ -1,20 +1,6 @@
 import { useState } from "react";
 import Knapp from "../../../../_components/Knapp";
-
-interface ExtraRad {
-  id: string;
-  typ: string;
-  antal: number;
-  belopp: number;
-  tillagd: boolean;
-}
-
-interface BokföringsPost {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-}
+import type { ExtraRad, SimpleBokföringsPost } from "../../../types/types";
 
 export default function BokförLönTest() {
   const [grundlön, setGrundlön] = useState(35000);
@@ -53,14 +39,14 @@ export default function BokförLönTest() {
     socialaAvgifter: number;
     skatt: number;
     nettolön: number;
-    poster: BokföringsPost[];
+    poster: SimpleBokföringsPost[];
   } => {
     let bruttolön = grundlön;
     let skattefriaTraktamenten = 0;
     let bilersättningar = 0;
     let skattadaFörmåner = 0;
     let semester = 0;
-    let poster: BokföringsPost[] = [];
+    let poster: SimpleBokföringsPost[] = [];
 
     // Bearbeta extrarader
     extrarader.forEach((rad) => {
@@ -195,7 +181,7 @@ export default function BokförLönTest() {
     const nettolön = bruttolön - skatt + skattefriaTraktamenten + bilersättningar;
 
     // Huvudposter
-    const huvudPoster: BokföringsPost[] = [
+    const huvudPoster: SimpleBokföringsPost[] = [
       {
         konto: "7210",
         kontoNamn: "Löner till tjänstemän",

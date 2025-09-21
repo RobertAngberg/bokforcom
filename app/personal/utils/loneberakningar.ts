@@ -1,5 +1,6 @@
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
+import { LöneBeräkning, LöneKontrakt, DagAvdrag, BilTyp, ExtraRad } from "../types/types";
 
 // Om semestertillägg – kortfattat:
 
@@ -20,42 +21,6 @@ let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, red
 // Ingen hårdkodning – det styrs helt av flaggan i konfigurationen.
 
 //#region Huvud
-
-export interface LöneBeräkning {
-  grundlön: number;
-  tillägg: number;
-  avdrag: number;
-  bruttolön: number;
-  socialaAvgifter: number;
-  skatt: number;
-  nettolön: number;
-  totalLönekostnad: number;
-}
-
-export interface LöneKontrakt {
-  månadslön: number;
-  arbetstimmarPerVecka: number;
-  skattetabell: string;
-  skattekolumn: number;
-  kommunalSkatt: number;
-  socialaAvgifterSats: number;
-}
-
-export interface DagAvdrag {
-  föräldraledighet: number;
-  vårdAvSjuktBarn: number;
-  sjukfrånvaro: number;
-}
-
-export type BilTyp = "bensinDiesel" | "el";
-
-export interface Extrarad {
-  kolumn1: string; // Benämning
-  kolumn2: string; // Antal
-  kolumn3: string; // Belopp
-  kolumn4?: string; // Kommentar
-}
-//#endregion
 
 // =====================================================================================
 // 🔢 KONSTANTER OCH SATSER

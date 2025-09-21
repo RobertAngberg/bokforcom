@@ -1,11 +1,7 @@
 "use client";
 
 import Knapp from "../../../../_components/Knapp";
-import type { AnställdaRadProps } from "../../../types/types";
-
-interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
-  handlers: any;
-}
+import type { AnställdaRadProps, AnställdaRadPropsWithHandlers } from "../../../types/types";
 
 export default function AnställdaRad({ anställd, handlers }: AnställdaRadPropsWithHandlers) {
   return (

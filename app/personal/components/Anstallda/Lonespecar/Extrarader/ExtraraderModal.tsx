@@ -6,29 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Dropdown from "../../../../../_components/Dropdown";
 import Modal from "../../../../../_components/Modal";
 import { hämtaBetaldaSemesterdagar } from "../../../../actions/semesterActions";
-
-interface Field {
-  label: string;
-  name: string;
-  type: "text" | "number" | "select";
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  required?: boolean;
-  placeholder?: string;
-  step?: string;
-  min?: string;
-  hidden?: boolean;
-  options?: string[]; // För dropdown
-}
-
-interface ExtraraderModalProps {
-  open: boolean;
-  onClose: () => void;
-  title?: string;
-  fields: Field[];
-  onSubmit: (e: React.FormEvent) => void;
-  anstalldId?: number;
-}
+import type { ExtraraderField, ExtraraderModalProps } from "../../../../types/types";
 
 export default function ExtraraderModal({
   open,

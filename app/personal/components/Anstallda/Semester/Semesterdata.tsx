@@ -3,12 +3,7 @@
 
 import TextFalt from "../../../../_components/TextFalt";
 import InfoTooltip from "../../../../_components/InfoTooltip";
-
-interface SemesterdataProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  isEditing?: boolean;
-}
+import type { SemesterdataProps } from "../../../types/types";
 // #endregion
 
 export default function Semesterdata({ editData, handleChange, isEditing }: SemesterdataProps) {

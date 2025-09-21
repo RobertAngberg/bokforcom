@@ -4,24 +4,7 @@ import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../../../utils/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../../../actions/bokforingActions";
 import Toast from "../../../../_components/Toast";
-
-interface BokföringsPost {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
-  beskrivning: string;
-}
-
-interface BokforLonerProps {
-  lönespec: any;
-  extrarader: any[];
-  beräknadeVärden: any;
-  anställdNamn: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onBokfört?: () => void;
-}
+import type { WizardBokföringsPost, BokforLonerProps } from "../../../types/types";
 
 // Mapping från extrarad-typ till bokföringskonto - SINGLE SOURCE OF TRUTH
 const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> = {
@@ -177,8 +160,8 @@ export default function BokforLoner({
   if (!isOpen) return null;
 
   // Analysera extrarader och mappa till konton
-  const analyseraBokföringsposter = (): BokföringsPost[] => {
-    const poster: BokföringsPost[] = [];
+  const analyseraBokföringsposter = (): WizardBokföringsPost[] => {
+    const poster: WizardBokföringsPost[] = [];
 
     // Använd ENDAST de redan beräknade värdena - SINGLE SOURCE OF TRUTH
     const bruttolön = beräknadeVärden.bruttolön || 0;

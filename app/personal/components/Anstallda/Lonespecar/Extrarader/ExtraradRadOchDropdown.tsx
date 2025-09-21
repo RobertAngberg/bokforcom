@@ -1,16 +1,6 @@
 import React from "react";
 import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
-
-interface ExtraradRadOchDropdownProps {
-  label: string;
-  checked?: boolean;
-  toggle: () => void;
-  onRemove?: () => void;
-  isDropdown?: boolean;
-  open?: boolean;
-  onToggleDropdown?: () => void;
-  id?: string;
-}
+import type { ExtraradRadOchDropdownProps } from "../../../../types/types";
 
 export default function ExtraradRadOchDropdown({
   label,
