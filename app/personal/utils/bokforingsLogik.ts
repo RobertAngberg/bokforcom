@@ -5,8 +5,8 @@ import {
   beräknaSkattTabell34,
   beräknaSocialaAvgifter,
   beräknaDaglön,
-} from "../components/Anstallda/Lonespecar/loneberakningar";
-import { RAD_KONFIGURATIONER } from "../components/Anstallda/Lonespecar/Extrarader/extraradDefinitioner";
+} from "./loneberakningar";
+import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 
 export interface BokföringsRad {
   konto: string;
@@ -99,9 +99,7 @@ export function genereraBokföringsrader(
     ];
     (lönespec.extrarader || []).forEach((rad: any) => {
       if (avdragsTyper.includes(rad.typ)) {
-        const belopp = Number(
-          require("../Lonespecar/Extrarader/extraraderUtils").beräknaSumma(rad.typ, rad, grundlön)
-        );
+        const belopp = Number(require("./extraraderUtils").beräknaSumma(rad.typ, rad, grundlön));
         if (belopp !== 0) {
           bokföringsrader.push({
             konto: "7281",
@@ -123,9 +121,7 @@ export function genereraBokföringsrader(
       if (!konfig) return;
       // Beräkna beloppet med samma logik som lönespecen (använder beräknaSumma)
       // Grundlön behövs för vissa automatiska rader
-      const belopp = Number(
-        require("../Lonespecar/Extrarader/extraraderUtils").beräknaSumma(rad.typ, rad, grundlön)
-      );
+      const belopp = Number(require("./extraraderUtils").beräknaSumma(rad.typ, rad, grundlön));
       // Visa alltid raden, även om beloppet är 0
 
       // Förmåner och traktamenten på egna konton

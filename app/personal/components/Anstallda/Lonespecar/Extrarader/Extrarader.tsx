@@ -10,7 +10,7 @@ import {
   formatKolumn2Värde,
   initializeModalFields,
   getFieldsForRow,
-} from "./extraraderUtils";
+} from "../../../../utils/extraraderUtils";
 import { useState } from "react";
 
 export default function ExtraRader({
@@ -117,7 +117,9 @@ export default function ExtraRader({
             kolumn2Value = match ? match[0] : "";
           }
           // Validera typ mot RAD_KONFIGURATIONER
-          const radKonfigKeys = Object.keys(require("./extraradDefinitioner").RAD_KONFIGURATIONER);
+          const radKonfigKeys = Object.keys(
+            require("../../../../utils/extraradDefinitioner").RAD_KONFIGURATIONER
+          );
           let typValue = modalRow?.id ?? "";
           if (!radKonfigKeys.includes(typValue)) {
             console.warn("⚠️ Felaktig typ vid sparande av extrarad:", typValue);

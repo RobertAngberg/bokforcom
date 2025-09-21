@@ -1,5 +1,5 @@
 import React from "react";
-import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
+import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
 
 interface ExtraradRadOchDropdownProps {
   label: string;

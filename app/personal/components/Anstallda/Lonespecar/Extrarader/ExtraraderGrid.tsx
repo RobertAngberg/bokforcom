@@ -1,6 +1,6 @@
 import ExtraradRadOchDropdown from "./ExtraradRadOchDropdown";
-import { staticRows, dropdownRaderData } from "./extraraderData";
-import { filtreraRader } from "./extraraderUtils";
+import { staticRows, dropdownRaderData } from "../../../../utils/extraraderData";
+import { filtreraRader } from "../../../../utils/extraraderUtils";
 
 interface Props {
   sökterm: string;

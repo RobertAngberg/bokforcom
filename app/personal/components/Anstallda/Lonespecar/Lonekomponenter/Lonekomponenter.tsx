@@ -5,7 +5,7 @@ import { useEffect, useMemo } from "react";
 import { hämtaExtrarader, taBortExtrarad } from "../../../../actions/lonespecarActions";
 import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
-import { beräknaLonekomponenter } from "../loneberakningar";
+import { beräknaLonekomponenter } from "../../../../utils/loneberakningar";
 import { useLonespec } from "../../../../hooks/useLonespecar";
 
 type LonekomponenterProps = {

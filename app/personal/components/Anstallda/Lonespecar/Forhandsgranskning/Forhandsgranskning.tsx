@@ -8,7 +8,7 @@ import Lonetabell from "./Lonetabell";
 import Sammanfattning from "./Sammanfattning";
 import SemesterInfo from "./SemesterInfo";
 import SkatteInfo from "./SkatteInfo";
-import { beräknaSumma } from "../Extrarader/extraraderUtils";
+import { beräknaSumma } from "../../../../utils/extraraderUtils";
 import Arssammanstollning from "./Arssammanstollning";
 import ArbetstidInfo from "./ArbetstidInfo";
 import Fotinfo from "./Fotinfo";

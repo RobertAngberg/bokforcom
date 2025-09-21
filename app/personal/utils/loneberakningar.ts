@@ -1,4 +1,4 @@
-import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
+import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
 
 // Om semestertillägg – kortfattat:
