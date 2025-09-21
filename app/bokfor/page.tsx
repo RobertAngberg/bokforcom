@@ -1,6 +1,6 @@
 import MainLayout from "../_components/MainLayout";
 import { BokforProvider } from "./components/BokforProvider";
-import BokforClient from "./components/BokforClient";
+import Bokfor from "./components/Bokfor";
 import {
   hämtaFavoritförval,
   hämtaAllaFörval,
@@ -20,7 +20,7 @@ export default async function BokforPage() {
   return (
     <MainLayout>
       <BokforProvider>
-        <BokforClient
+        <Bokfor
           initialData={{
             favoritFörval,
             allaFörval,

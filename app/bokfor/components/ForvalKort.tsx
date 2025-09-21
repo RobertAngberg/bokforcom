@@ -27,7 +27,7 @@ export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKo
 
   return (
     <div className={getCardClassName(isHighlighted)} onClick={onClick}>
-      <div className="text-xl font-semibold text-white mb-2">✓ {förval.namn}</div>
+      <div className="text-xl text-white mb-2">✓ {förval.namn}</div>
       <pre className="whitespace-pre-wrap text-sm italic text-gray-300 mb-2 font-sans">
         {förval.beskrivning}
       </pre>
