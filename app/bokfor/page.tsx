@@ -1,12 +1,12 @@
 import MainLayout from "../_components/MainLayout";
-import { BokforProvider } from "./_components/BokforProvider";
-import BokforClient from "./_components/BokforClient";
+import { BokforProvider } from "./components/BokforProvider";
+import BokforClient from "./components/BokforClient";
 import {
   hämtaFavoritförval,
   hämtaAllaFörval,
   hämtaBokföringsmetod,
   hämtaAnställda,
-} from "./_actions/data";
+} from "./actions/data";
 
 export default async function BokforPage() {
   // Hämta initial data på server-sidan

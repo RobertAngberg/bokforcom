@@ -1,0 +1,66 @@
+"use client";
+
+import { UtläggProps } from "../../types/types";
+import { useBokforContext } from "../BokforProvider";
+
+export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
+  const { state, handlers } = useBokforContext();
+  const { isUtlägg, anställda, valdaAnställda, loading, handleUtläggChange, handleAnställdChange } =
+    handlers.useUtlaggHelper({ initialValue, onUtläggChange });
+
+  return (
+    <div className="space-y-4">
+      {/* Huvudcheckbox */}
+      <div className="flex items-center gap-3 mb-6">
+        <input
+          type="checkbox"
+          id="utlägg-checkbox"
+          checked={isUtlägg}
+          onChange={(e) => handleUtläggChange(e.target.checked)}
+          className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+        />
+        <label
+          htmlFor="utlägg-checkbox"
+          className="text-gray-400 text-base font-medium cursor-pointer select-none"
+        >
+          Är ett utlägg åt en anställd
+        </label>
+      </div>
+
+      {/* Anställda lista */}
+      {isUtlägg && (
+        <div>
+          <h4 className="text-gray-400 font-semibold mb-3">Välj anställd:</h4>
+
+          {loading && <div className="text-gray-300">Laddar anställda...</div>}
+
+          {!loading && anställda.length === 0 && (
+            <div className="text-gray-400">Inga anställda hittades</div>
+          )}
+
+          {!loading && anställda.length > 0 && (
+            <div className="space-y-2">
+              {anställda.map((anställd) => (
+                <div key={anställd.id} className="flex items-center gap-3 mb-6">
+                  <input
+                    type="checkbox"
+                    id={`anställd-${anställd.id}`}
+                    checked={valdaAnställda.includes(anställd.id)}
+                    onChange={(e) => handleAnställdChange(anställd.id, e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label
+                    htmlFor={`anställd-${anställd.id}`}
+                    className="text-gray-300 cursor-pointer select-none"
+                  >
+                    {anställd.förnamn} {anställd.efternamn}
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
