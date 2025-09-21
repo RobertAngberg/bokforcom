@@ -449,13 +449,8 @@ export interface BokforProviderProps {
 }
 
 // BokforContext (för useContext type safety)
-export interface BokforContextType {
-  state: ReturnType<typeof useBokfor>["state"];
-  actions: ReturnType<typeof useBokfor>["actions"];
-  handlers: ReturnType<typeof useBokfor>["handlers"];
-  formatKontoValue: ReturnType<typeof useBokfor>["formatKontoValue"];
-  getCardClassName: ReturnType<typeof useBokfor>["getCardClassName"];
-  options: ReturnType<typeof useBokfor>["options"];
+export interface BokforContextType extends ReturnType<typeof useBokfor> {
+  // Alla properties från useBokfor är nu tillgängliga direkt
 }
 
 // SpecialForval components
