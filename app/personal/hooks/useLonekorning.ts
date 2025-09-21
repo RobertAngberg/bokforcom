@@ -1,211 +1,483 @@
-"use client";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import {
+  hämtaAllaLönespecarFörUser,
+  markeraBankgiroExporterad,
+  markeraMailad,
+  markeraBokförd,
+  markeraAGIGenererad,
+  markeraSkatternaBokförda,
+} from "../actions/lonespecarActions";
+import { hämtaAllaAnställda } from "../actions/anstalldaActions";
+import { hämtaUtlägg } from "../actions/utlaggActions";
+import { bokförLöneskatter } from "../actions/bokforingActions";
+import { Lönekörning } from "../types/types";
+import {
+  hämtaLönespecifikationerFörLönekörning,
+  uppdateraLönekörningSteg,
+  taBortLönekörning,
+} from "../actions/lonekorningActions";
 
-import { useCallback, useMemo, useState } from "react";
-import type {
-  GenerateAGIArgs,
-  UseLonekorningInit,
-  ToastType,
-  LonekorningState,
-  LonekorningHandlers,
-  UseLonekorningReturn,
-} from "../types/types";
-
-export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn {
-  // Initial state values
-  const initialLönespecar: Record<string | number, any> = {};
-  const initialSparar: Record<string | number, boolean> = {};
-  const initialTaBort: Record<string | number, boolean> = {};
-
-  // Individual useState hooks to replace PersonalContext
-  const [laddaLönespecar, setLaddaLönespecar] = useState<boolean>(false);
-  const [löneperiod, setLöneperiod] = useState<{ månad: number; år: number } | null>(null);
-  const [lönespecar, setLönespecar] = useState<Record<string | number, any>>(initialLönespecar);
-  const [sparar, setSparar] = useState<Record<string | number, boolean>>(initialSparar);
-  const [taBort, setTaBort] = useState<Record<string | number, boolean>>(initialTaBort);
-  const [förhandsgranskaId, setFörhandsgranskaId] = useState<string | null>(null);
-  const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(null);
-  const [anställda, setAnställda] = useState<any[]>([]);
-  const [anställdaLoading, setAnställdaLoading] = useState<boolean>(false);
-  const [toast, setToastState] = useState<{
-    type: ToastType;
-    message: string;
-    isVisible: boolean;
-  } | null>(null);
-
-  // Helper functions for state updates
-  const updateSparar = useCallback((id: string | number, value: boolean) => {
-    setSparar((prev) => ({ ...prev, [id]: value }));
-  }, []);
-
-  const updateTaBort = useCallback((id: string | number, value: boolean) => {
-    setTaBort((prev) => ({ ...prev, [id]: value }));
-  }, []);
-
-  const setToast = useCallback(
-    (toastData: { message: string; type: ToastType; isVisible: boolean }) => {
-      setToastState(toastData);
-    },
-    []
-  );
-
-  const clearToast = useCallback(() => {
-    setToastState(null);
-  }, []);
-
-  // ===========================================
-  // HELPER FUNCTIONS - Migrate from store
-  // ===========================================
-  const skapaNyLönespec = useCallback(
-    async (anställdId: string | number) => {
-      try {
-        updateSparar(anställdId, true);
-        // Placeholder - implement actual API call
-        const newSpec = { id: anställdId /* other data */ };
-        setLönespecar({ ...lönespecar, [anställdId]: newSpec });
-        setToast({ message: "Lönespec skapad", type: "success", isVisible: true });
-      } catch (error) {
-        setToast({ message: "Misslyckades skapa lönespec", type: "error", isVisible: true });
-      } finally {
-        updateSparar(anställdId, false);
-      }
-    },
-    [lönespecar, setLönespecar, updateSparar, setToast]
-  );
-
-  const taBortLönespec = useCallback(
-    async (anställdId: string | number) => {
-      try {
-        updateTaBort(anställdId, true);
-        // Placeholder - implement actual API call
-        const { [anställdId]: removed, ...rest } = lönespecar;
-        setLönespecar(rest);
-        setToast({ message: "Lönespec borttagen", type: "success", isVisible: true });
-      } catch (error) {
-        setToast({ message: "Misslyckades ta bort lönespec", type: "error", isVisible: true });
-      } finally {
-        updateTaBort(anställdId, false);
-      }
-    },
-    [lönespecar, setLönespecar, updateTaBort, setToast]
-  );
-
-  const openFörhandsgranskning = useCallback(
-    (id: string) => {
-      setFörhandsgranskaId(id);
-    },
-    [setFörhandsgranskaId]
-  );
-
-  const closeFörhandsgranskning = useCallback(() => {
-    setFörhandsgranskaId(null);
-  }, [setFörhandsgranskaId]);
-
-  const generateAGI = useCallback(async (args: GenerateAGIArgs) => {
-    try {
-      console.log("🚀 Startar AGI-generering...");
-
-      // Hämta userId från session
-      const userId = args.session?.user?.id;
-      if (!userId) {
-        console.error("❌ Ingen userId tillgänglig från session");
-        return;
-      }
-
-      // Hämta företagsdata
-      const företagsData = await args.hämtaFöretagsprofil(userId);
-      console.log("🏢 Företagsdata hämtad:", företagsData);
-
-      // Importera AGI-utilities
-      const { generateAGIXML, convertLonespecToAGI } = await import("../utils/agiUtils");
-
-      // Konvertera lönespec-data till AGI-format
-      const period = args.valdaSpecar[0]?.löneperiod || new Date().toISOString().slice(0, 7);
-      const agiData = convertLonespecToAGI(args.valdaSpecar, args.anstallda, företagsData, period);
-
-      console.log("📊 AGI-data förberedd:", agiData);
-
-      // Generera XML
-      const xml = generateAGIXML(agiData);
-      console.log("📄 XML genererad, längd:", xml.length);
-
-      // Ladda ner XML-fil
-      const blob = new Blob([xml], { type: "text/xml" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `arbetsgivardeklaration_${period}.xml`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      console.log("✅ AGI XML-fil nedladdad!");
-
-      // Anropa callback för att uppdatera UI
-      if (args.onAGIComplete) {
-        args.onAGIComplete();
-      }
-    } catch (error) {
-      console.error("❌ Fel vid AGI-generering:", error);
-      // Här kan vi lägga till toast-meddelande om fel
-    }
-  }, []);
-
-  // Placeholder data for förhandsgranskaData
-  const förhandsgranskaData = useMemo(() => {
-    if (!förhandsgranskaId) return null;
-    return lönespecar[förhandsgranskaId] || null;
-  }, [förhandsgranskaId, lönespecar]);
-
-  // Härledande getters
-  const harLönespec = useCallback(
-    (anställdId: string | number) => !!lönespecar[anställdId],
-    [lönespecar]
-  );
-  const getLönespec = useCallback(
-    (anställdId: string | number) => lönespecar[anställdId],
-    [lönespecar]
-  );
-
-  // Normaliserad toast (döljer isVisible internt, exponerar bara aktiv)
-  const normalizedToast = useMemo(() => {
-    if (!toast?.isVisible || !toast?.message) return null;
-    return { type: toast.type as ToastType, message: toast.message };
-  }, [toast]);
-
-  const state: LonekorningState = {
-    laddaLönespecar,
-    löneperiod,
-    sparar,
-    taBort,
-    förhandsgranskaId,
-    förhandsgranskaData,
-    toast: normalizedToast,
-    utbetalningsdatum,
-    anställda,
-    anställdaLoading,
-    harLönespec,
-    getLönespec,
-  };
-
-  const handlers: LonekorningHandlers = {
-    setUtbetalningsdatum,
-    skapaNyLönespec,
-    taBortLönespec,
-    openFörhandsgranskning,
-    closeFörhandsgranskning,
-    clearToast,
-    generateAGI,
-  };
-
-  // Spread för backward compat (kan tas bort senare)
-  return {
-    state,
-    handlers,
-    // deprecated flat API
-    ...state,
-    ...handlers,
-  };
+interface LonekorningHookProps {
+  anställda?: any[];
+  anställdaLoading?: boolean;
+  onAnställdaRefresh?: () => void;
+  extrarader?: any;
+  beräknadeVärden?: any;
 }
 
-export default useLonekorning;
+export const useLonekorning = ({
+  anställda: propsAnställda,
+  anställdaLoading: propsAnställdaLoading,
+  onAnställdaRefresh,
+  extrarader,
+  beräknadeVärden,
+}: LonekorningHookProps = {}) => {
+  const { data: session } = useSession();
+
+  // Main state
+  const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
+  const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
+  const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
+  const [valdLonekorning, setValdLonekorning] = useState<Lönekörning | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
+  const [taBortLoading, setTaBortLoading] = useState(false);
+  const [loading, setLoading] = useState(!propsAnställda);
+  const [utbetalningsdatum, setUtbetalningsdatum] = useState<string | null>(null);
+
+  // Modal states
+  const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
+  const [bokforModalOpen, setBokforModalOpen] = useState(false);
+  const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
+  const [skatteModalOpen, setSkatteModalOpen] = useState(false);
+
+  // Data states
+  const [specarPerDatum, setSpecarPerDatum] = useState<Record<string, any[]>>({});
+  const [datumLista, setDatumLista] = useState<string[]>([]);
+  const [valdaSpecar, setValdaSpecar] = useState<any[]>([]);
+  const [localAnställda, setLocalAnställda] = useState<any[]>([]);
+  const [utlaggMap, setUtlaggMap] = useState<Record<number, any[]>>({});
+  const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
+
+  // Skatte states
+  const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
+  const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
+
+  // Toast states
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [skatteToast, setSkatteToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+
+  // Computed values
+  const anstallda = propsAnställda || localAnställda;
+  const anställdaLoading = propsAnställdaLoading || loading;
+
+  // Business logic functions
+  const beräknaSkatteData = () => {
+    if (!lönekörningSpecar || lönekörningSpecar.length === 0) {
+      return {
+        socialaAvgifter: 0,
+        personalskatt: 0,
+        totaltSkatter: 0,
+      };
+    }
+
+    let totalSocialaAvgifter = 0;
+    let totalPersonalskatt = 0;
+
+    lönekörningSpecar.forEach((spec) => {
+      const beräkningar = beräknadeVärden?.[spec.id];
+      const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
+      const skatt = beräkningar?.skatt || spec.skatt || 0;
+
+      totalSocialaAvgifter += socialaAvgifter;
+      totalPersonalskatt += skatt;
+    });
+
+    return {
+      socialaAvgifter: Math.round(totalSocialaAvgifter * 100) / 100,
+      personalskatt: Math.round(totalPersonalskatt * 100) / 100,
+      totaltSkatter: Math.round((totalSocialaAvgifter + totalPersonalskatt) * 100) / 100,
+    };
+  };
+
+  const loadLönekörningSpecar = async () => {
+    if (!valdLonekorning) return;
+
+    try {
+      setLoading(true);
+      const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
+
+      if (result.success && result.data) {
+        setLönekörningSpecar(result.data);
+      } else {
+        console.error("❌ Fel vid laddning av lönespecar:", result.error);
+        setLönekörningSpecar([]);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid laddning av lönespecar:", error);
+      setLönekörningSpecar([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTaBortLönekörning = async () => {
+    if (!valdLonekorning) return;
+
+    const bekräfta = confirm(
+      `Är du säker på att du vill ta bort lönekörningen för ${valdLonekorning.period}?\n\nDetta kommer att:\n- Ta bort alla lönespecifikationer\n- Ta bort all workflow-data\n- Detta kan INTE ångras!`
+    );
+
+    if (!bekräfta) return;
+
+    try {
+      setTaBortLoading(true);
+      const result = await taBortLönekörning(valdLonekorning.id);
+
+      if (result.success) {
+        setValdLonekorning(null);
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        alert(`Fel vid borttagning: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid borttagning av lönekörning:", error);
+      alert("Ett oväntat fel uppstod vid borttagning");
+    } finally {
+      setTaBortLoading(false);
+    }
+  };
+
+  const hanteraTaBortSpec = async (specId: number) => {
+    try {
+      const response = await fetch("/api/lonespec/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: specId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete lönespec");
+      }
+
+      setValdaSpecar((prev) => prev.filter((spec) => spec.id !== specId));
+      setToast({ message: "Lönespec borttagen", type: "success" });
+    } catch (error) {
+      console.error("Error deleting lönespec:", error);
+      setToast({ message: "Kunde inte ta bort lönespec", type: "error" });
+    }
+  };
+
+  const refreshData = async () => {
+    if (propsAnställda && onAnställdaRefresh) {
+      onAnställdaRefresh();
+      return;
+    }
+
+    try {
+      const [specar, anstallda] = await Promise.all([
+        hämtaAllaLönespecarFörUser(),
+        hämtaAllaAnställda(),
+      ]);
+      setLocalAnställda(anstallda);
+
+      const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+      const utlaggResults = await Promise.all(utlaggPromises);
+      const utlaggMap: Record<number, any[]> = {};
+      anstallda.forEach((a, idx) => {
+        utlaggMap[a.id] = utlaggResults[idx];
+      });
+      setUtlaggMap(utlaggMap);
+
+      const grupperat: Record<string, any[]> = {};
+      specar.forEach((spec) => {
+        if (spec.utbetalningsdatum) {
+          if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+          grupperat[spec.utbetalningsdatum].push(spec);
+        }
+      });
+      const grupperatUtanTomma = Object.fromEntries(
+        Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+      );
+      const datumSort = Object.keys(grupperatUtanTomma).sort(
+        (a, b) => new Date(b).getTime() - new Date(a).getTime()
+      );
+      setDatumLista(datumSort);
+      setSpecarPerDatum(grupperatUtanTomma);
+
+      if (utbetalningsdatum && grupperatUtanTomma[utbetalningsdatum]) {
+        setValdaSpecar(grupperatUtanTomma[utbetalningsdatum]);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid refresh av data:", error);
+    }
+  };
+
+  const hanteraBokförSkatter = async () => {
+    const skatteData = beräknaSkatteData();
+
+    if (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0) {
+      setSkatteToast({ type: "info", message: "Inga skatter att bokföra!" });
+      return;
+    }
+
+    setSkatteBokförPågår(true);
+    try {
+      const datum = skatteDatum?.toISOString() || new Date().toISOString();
+      const result = await bokförLöneskatter({
+        socialaAvgifter: skatteData.socialaAvgifter,
+        personalskatt: skatteData.personalskatt,
+        datum,
+        kommentar: "Löneskatter från lönekörning",
+      });
+
+      if (result.success) {
+        setSkatteToast({ type: "success", message: "Löneskatter bokförda!" });
+
+        setTimeout(async () => {
+          setSkatteModalOpen(false);
+          for (const spec of lönekörningSpecar) {
+            if (!spec.skatter_bokförda) {
+              await markeraSkatternaBokförda(spec.id);
+            }
+          }
+          await loadLönekörningSpecar();
+        }, 2000);
+      } else {
+        setSkatteToast({
+          type: "error",
+          message: `Fel vid bokföring: ${result.error || "Okänt fel"}`,
+        });
+      }
+    } catch (error: any) {
+      console.error("❌ Fel vid bokföring av skatter:", error);
+      setSkatteToast({ type: "error", message: `Fel vid bokföring: ${error?.message || error}` });
+    } finally {
+      setSkatteBokförPågår(false);
+    }
+  };
+
+  // Workflow handlers
+  const handleMailaSpecar = async () => {
+    if (valdLonekorning?.id) {
+      setValdLonekorning((prev) =>
+        prev ? { ...prev, aktuellt_steg: 2, mailade_datum: new Date() } : prev
+      );
+      try {
+        await uppdateraLönekörningSteg(valdLonekorning.id, 2);
+      } catch (error) {
+        console.error("❌ Fel vid uppdatering av workflow:", error);
+      }
+    }
+    setBatchMailModalOpen(true);
+  };
+
+  const handleBokför = async () => {
+    if (valdLonekorning?.id) {
+      setValdLonekorning((prev) =>
+        prev ? { ...prev, aktuellt_steg: 3, bokford_datum: new Date() } : prev
+      );
+      try {
+        await uppdateraLönekörningSteg(valdLonekorning.id, 3);
+      } catch (error) {
+        console.error("❌ Fel vid uppdatering av workflow:", error);
+      }
+    }
+    setBokforModalOpen(true);
+  };
+
+  const handleGenereraAGI = async () => {
+    if (valdLonekorning?.id) {
+      setValdLonekorning((prev) =>
+        prev ? { ...prev, aktuellt_steg: 4, agi_genererad_datum: new Date() } : prev
+      );
+      try {
+        await uppdateraLönekörningSteg(valdLonekorning.id, 4);
+      } catch (error) {
+        console.error("❌ Fel vid uppdatering av workflow:", error);
+      }
+    }
+  };
+
+  const handleBokförSkatter = async () => {
+    if (valdLonekorning?.id) {
+      setValdLonekorning((prev) =>
+        prev
+          ? {
+              ...prev,
+              aktuellt_steg: 5,
+              skatter_bokforda_datum: new Date(),
+              status: "avslutad" as const,
+              avslutad_datum: new Date(),
+            }
+          : prev
+      );
+      try {
+        await uppdateraLönekörningSteg(valdLonekorning.id, 5);
+      } catch (error) {
+        console.error("❌ Fel vid uppdatering av workflow:", error);
+      }
+    }
+    setSkatteModalOpen(true);
+  };
+
+  const handleRefreshData = async () => {
+    await loadLönekörningSpecar();
+    setLoading(true);
+    setTimeout(() => setLoading(false), 10);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!propsAnställda) {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          const [specar, anstallda] = await Promise.all([
+            hämtaAllaLönespecarFörUser(),
+            hämtaAllaAnställda(),
+          ]);
+          setLocalAnställda(anstallda);
+
+          const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+          const utlaggResults = await Promise.all(utlaggPromises);
+          const utlaggMap: Record<number, any[]> = {};
+          anstallda.forEach((a, idx) => {
+            utlaggMap[a.id] = utlaggResults[idx];
+          });
+          setUtlaggMap(utlaggMap);
+
+          const grupperat: Record<string, any[]> = {};
+          specar.forEach((spec) => {
+            if (spec.utbetalningsdatum) {
+              if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
+              grupperat[spec.utbetalningsdatum].push(spec);
+            }
+          });
+          const grupperatUtanTomma = Object.fromEntries(
+            Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+          );
+          const datumSort = Object.keys(grupperatUtanTomma).sort(
+            (a, b) => new Date(b).getTime() - new Date(a).getTime()
+          );
+          setDatumLista(datumSort);
+          setSpecarPerDatum(grupperatUtanTomma);
+
+          if (datumSort.length > 0) {
+            setUtbetalningsdatum(datumSort[0]);
+            setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
+          } else {
+            setUtbetalningsdatum(null);
+            setValdaSpecar([]);
+          }
+        } catch (error) {
+          console.error("❌ Fel vid laddning av lönekörning:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [propsAnställda]);
+
+  useEffect(() => {
+    if (utbetalningsdatum && specarPerDatum[utbetalningsdatum]) {
+      setValdaSpecar(specarPerDatum[utbetalningsdatum]);
+    }
+  }, [utbetalningsdatum, specarPerDatum]);
+
+  useEffect(() => {
+    if (valdLonekorning) {
+      loadLönekörningSpecar();
+    }
+  }, [valdLonekorning]);
+
+  const skatteData = beräknaSkatteData();
+
+  // AGI Generator function
+  const hanteraAGI = async () => {
+    // Call the hook's AGI generation function
+    await handleGenereraAGI();
+
+    // Mark all specs as AGI generated
+    for (const spec of lönekörningSpecar) {
+      if (!spec.agi_genererad) {
+        await markeraAGIGenererad(spec.id);
+      }
+    }
+    // Refresh data to show updated buttons
+    await refreshData();
+  };
+
+  return {
+    // State
+    nySpecModalOpen,
+    setNySpecModalOpen,
+    nyLonekorningModalOpen,
+    setNyLonekorningModalOpen,
+    nySpecDatum,
+    setNySpecDatum,
+    valdLonekorning,
+    setValdLonekorning,
+    refreshTrigger,
+    setRefreshTrigger,
+    lönekörningSpecar,
+    setLönekörningSpecar,
+    taBortLoading,
+    setTaBortLoading,
+    loading,
+    setLoading,
+    utbetalningsdatum,
+    setUtbetalningsdatum,
+    batchMailModalOpen,
+    setBatchMailModalOpen,
+    bokforModalOpen,
+    setBokforModalOpen,
+    specarPerDatum,
+    setSpecarPerDatum,
+    datumLista,
+    setDatumLista,
+    valdaSpecar,
+    setValdaSpecar,
+    localAnställda,
+    setLocalAnställda,
+    utlaggMap,
+    setUtlaggMap,
+    taBortLaddning,
+    setTaBortLaddning,
+    bankgiroModalOpen,
+    setBankgiroModalOpen,
+    skatteModalOpen,
+    setSkatteModalOpen,
+    skatteDatum,
+    setSkatteDatum,
+    skatteBokförPågår,
+    setSkatteBokförPågår,
+    toast,
+    setToast,
+    skatteToast,
+    setSkatteToast,
+    // Computed
+    anstallda,
+    anställdaLoading,
+    skatteData,
+    session,
+    // Functions
+    beräknaSkatteData,
+    hanteraBokförSkatter,
+    hanteraTaBortSpec,
+    loadLönekörningSpecar,
+    handleTaBortLönekörning,
+    refreshData,
+    handleMailaSpecar,
+    handleBokför,
+    handleGenereraAGI,
+    handleBokförSkatter,
+    handleRefreshData,
+    hanteraAGI,
+  };
+};

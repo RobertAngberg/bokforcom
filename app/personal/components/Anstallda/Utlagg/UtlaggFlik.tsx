@@ -1,79 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
 import UtlaggBokforModal from "./UtlaggBokforModal";
-import { taBortUtlägg } from "../../../actions/utlaggActions";
+import { useUtlaggFlik } from "../../../hooks/useUtlaggFlik";
 import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
 
 export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFlikProps) {
-  const router = useRouter();
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
-
-  // Använd den delade utlaggFlikData funktionen
-  const { columns: basicColumns, utlägg, loading } = utlaggFlikData();
-
-  const handleNyttUtlägg = async () => {
-    router.push("/bokfor?utlagg=true");
-  };
-
-  const handleTaBortUtlägg = async (utläggId: number) => {
-    if (!confirm("Är du säker på att du vill ta bort detta utlägg?")) {
-      return;
-    }
-
-    try {
-      await taBortUtlägg(utläggId);
-
-      // Uppdatera listan genom att ladda om utlägg för vald anställd
-      if (handlers.laddaUtläggFörAnställd && state.valdAnställd) {
-        await handlers.laddaUtläggFörAnställd(state.valdAnställd.id);
-      }
-
-      setToast({ type: "success", message: "Utlägg borttaget!" });
-    } catch (error) {
-      console.error("Fel vid borttagning av utlägg:", error);
-      setToast({ type: "error", message: "Kunde inte ta bort utlägg" });
-    }
-  };
+  const {
+    toast,
+    setToast,
+    utlägg,
+    loading,
+    handleNyttUtlägg,
+    handleTaBortUtlägg,
+    formatDatum,
+    formatBelopp,
+    getStatusClass,
+    getStatusText,
+  } = useUtlaggFlik(state, handlers, utlaggFlikData);
 
   // Förbättrade kolumner med fler funktioner
   const enhancedColumns: ColumnDefinition<Utlägg>[] = [
     {
       key: "datum",
       label: "Datum",
-      render: (value, row) => {
-        return row?.datum ? new Date(row.datum).toLocaleDateString("sv-SE") : "-";
-      },
+      render: (value, row) => formatDatum(row),
     },
     {
       key: "beskrivning",
       label: "Beskrivning",
-      render: (value, row) => {
-        return row?.beskrivning || "-";
-      },
+      render: (value, row) => row?.beskrivning || "-",
     },
     {
       key: "belopp",
       label: "Belopp",
-      render: (value, row) => {
-        return row && row.belopp !== undefined && row.belopp !== null
-          ? `${row.belopp.toLocaleString("sv-SE")} kr`
-          : "-";
-      },
+      render: (value, row) => formatBelopp(row),
     },
     {
       key: "kategori",
       label: "Kategori",
-      render: (value, row) => {
-        return row?.kategori || "-";
-      },
+      render: (value, row) => row?.kategori || "-",
     },
     {
       key: "status",
@@ -82,16 +50,8 @@ export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFl
       render: (value, row) => {
         return (
           <div className="flex justify-center">
-            <span
-              className={`px-2 py-1 rounded text-xs ${
-                row?.status === "Inkluderat i lönespec"
-                  ? "bg-green-900 text-green-300"
-                  : row?.status === "Väntande"
-                    ? "bg-yellow-900 text-yellow-300"
-                    : "bg-gray-700 text-gray-300"
-              }`}
-            >
-              {row?.status === "Inkluderat i lönespec" ? "Inkluderat" : row?.status || "Okänd"}
+            <span className={`px-2 py-1 rounded text-xs ${getStatusClass(row?.status || "")}`}>
+              {getStatusText(row?.status || "")}
             </span>
           </div>
         );

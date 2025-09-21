@@ -1,218 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import InfoTooltip from "../../../../_components/InfoTooltip";
 import Knapp from "../../../../_components/Knapp";
 import Tabell from "../../../../_components/Tabell";
 import Toast from "../../../../_components/Toast";
 import { ColumnDefinition } from "../../../../_components/TabellRad";
-import {
-  hämtaSemesterTransaktioner,
-  sparaSemesterTransaktion,
-  uppdateraSemesterdata,
-} from "../../../actions/semesterActions";
 import BokforModal from "./BokforModal";
-import type {
-  SemesterBoxField,
-  SemesterBoxSummary,
-  ModernSemesterProps,
-} from "../../../types/types";
+import { useSemester } from "../../../hooks/useSemester";
+import type { ModernSemesterProps } from "../../../types/types";
 
 export default function ModernSemester({ anställd, userId }: ModernSemesterProps) {
-  // State för att styra om knappen ska visas
-  const [showBokforKnapp, setShowBokforKnapp] = useState(false);
-  const [summary, setSummary] = useState<SemesterBoxSummary>({
-    betalda_dagar: 0,
-    sparade_dagar: 0,
-    skuld: 0,
-    komp_dagar: 0,
+  const semesterHook = useSemester({
+    anställdId: anställd.id,
+    anställdKompensation: anställd.kompensation,
+    userId,
   });
-  const [prevSummary, setPrevSummary] = useState<SemesterBoxSummary | null>(null);
-  const [editingField, setEditingField] = useState<SemesterBoxField | null>(null);
-  const [editValue, setEditValue] = useState<string>("");
-  // Remove originalSummary, not needed
-  const [loading, setLoading] = useState(false);
-  const [bokforModalOpen, setBokforModalOpen] = useState(false);
-  const [bokforRows, setBokforRows] = useState<any[]>([]);
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
 
-  // Hämta data vid laddning
-  useEffect(() => {
-    hämtaData();
-  }, [anställd.id]);
-
-  // Hantera ESC-tangent för att avbryta redigering
-  useEffect(() => {
-    const handleEscKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && editingField) {
-        setEditingField(null);
-        setEditValue("");
-      }
-    };
-    document.addEventListener("keydown", handleEscKey);
-    return () => document.removeEventListener("keydown", handleEscKey);
-  }, [editingField]);
-
-  const hämtaData = async () => {
-    setLoading(true);
-    try {
-      const transaktioner = await hämtaSemesterTransaktioner(anställd.id);
-      // Förväntar oss EN rad per anställd
-      const t = transaktioner[0] || {};
-      const newSummary = {
-        betalda_dagar: Number(t.betalda_dagar) || 0,
-        sparade_dagar: Number(t.sparade_dagar) || 0,
-        skuld: Number(t.skuld) || 0,
-        komp_dagar: Number(t.komp_dagar) || 0,
-      };
-      setPrevSummary(summary); // Spara tidigare värde
-      setSummary(newSummary);
-      setShowBokforKnapp(t.bokförd === false);
-    } catch (error) {
-      console.error("Fel vid hämtning av semesterdata:", error);
-      setToast({ type: "error", message: "Kunde inte hämta semesterdata" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Hantera manuell redigering av semesterbox
-  const handleEditField = (fieldName: SemesterBoxField, currentValue: number) => {
-    setEditingField(fieldName);
-    setEditValue(currentValue.toString());
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingField || !editValue || !summary) return;
-    const newValue = parseFloat(editValue);
-    if (isNaN(newValue)) {
-      setToast({ type: "error", message: "Ogiltigt nummer" });
-      return;
-    }
-    setLoading(true);
-    try {
-      // Skicka kolumnnamn och nytt värde direkt
-      if (newValue !== summary[editingField]) {
-        await sparaSemesterTransaktion({
-          anställdId: anställd.id,
-          kolumn: editingField, // "betalda_dagar", "sparade_dagar", "skuld", "komp_dagar"
-          nyttVärde: newValue,
-        });
-      }
-      setEditingField(null);
-      setEditValue("");
-      await hämtaData(); // Hämta om data från servern
-    } catch (error) {
-      console.error("Fel vid sparande:", error);
-      setToast({ type: "error", message: "Kunde inte spara ändringen" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingField(null);
-    setEditValue("");
-  };
-
-  // Funktion för att räkna ut och visa bokföringsrader enligt Bokio
-  const handleOpenBokforModal = () => {
-    // Räkna ut delta (förändring) i dagar
-    const prevDagar = prevSummary ? prevSummary.betalda_dagar + prevSummary.sparade_dagar : 0;
-    const currDagar = summary.betalda_dagar + summary.sparade_dagar;
-    const deltaDagar = currDagar - prevDagar;
-    // Om ingen förändring, visa tomt
-    if (deltaDagar === 0) {
-      setBokforRows([
-        { konto: "2920", namn: "Upplupna semesterlöner", debet: 0, kredit: 0 },
-        {
-          konto: "2940",
-          namn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: 0,
-          kredit: 0,
-        },
-        { konto: "7290", namn: "Förändring av semesterlöneskuld", debet: 0, kredit: 0 },
-        {
-          konto: "7519",
-          namn: "Sociala avgifter för semester- och löneskulder",
-          debet: 0,
-          kredit: 0,
-        },
-      ]);
-      setBokforModalOpen(true);
-      return;
-    }
-    // Beräkna belopp baserat på delta
-    const dagslön = anställd.kompensation / 21;
-    const semesterlönPerDag = dagslön * 1.0545;
-    const semesterlön = deltaDagar * semesterlönPerDag;
-    const socialaAvgifter = semesterlön * 0.314;
-    // Om delta är negativt, vänd tecken på debet/kredit
-    const rows = [
-      {
-        konto: "2920",
-        namn: "Upplupna semesterlöner",
-        debet: semesterlön > 0 ? Math.round(semesterlön) : 0,
-        kredit: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
-      },
-      {
-        konto: "2940",
-        namn: "Upplupna lagstadgade sociala och andra avgifter",
-        debet: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
-        kredit: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
-      },
-      {
-        konto: "7290",
-        namn: "Förändring av semesterlöneskuld",
-        debet: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
-        kredit: semesterlön > 0 ? Math.round(semesterlön) : 0,
-      },
-      {
-        konto: "7519",
-        namn: "Sociala avgifter för semester- och löneskulder",
-        debet: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
-        kredit: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
-      },
-    ];
-    setBokforRows(rows);
-    setBokforModalOpen(true);
-  };
-
-  const handleConfirmBokfor = async (kommentar: string) => {
-    setLoading(true);
-    try {
-      // Mappa om bokforRows till rätt format för bokförSemester
-      const rader = bokforRows.map((row) => ({
-        kontobeskrivning: `${row.konto} ${row.namn}`,
-        belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
-      }));
-      const res = await (
-        await import("../../../actions/semesterActions")
-      ).bokförSemester({
-        userId,
-        rader,
-        kommentar,
-        datum: new Date().toISOString(),
-      });
-      setBokforModalOpen(false);
-      if (res?.success) {
-        setToast({ type: "success", message: "Bokföring sparad!" });
-        await hämtaData();
-      } else {
-        setToast({ type: "error", message: `Fel vid bokföring: ${res?.error || "Okänt fel"}` });
-      }
-    } catch (error) {
-      setToast({
-        type: "error",
-        message: `Fel vid bokföring: ${error instanceof Error ? error.message : error}`,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    showBokforKnapp,
+    summary,
+    editingField,
+    editValue,
+    loading,
+    bokforModalOpen,
+    bokforRows,
+    toast,
+    handleEditField,
+    handleSaveEdit,
+    handleCancelEdit,
+    handleOpenBokforModal,
+    handleConfirmBokfor,
+    setEditValue,
+    setBokforModalOpen,
+    clearToast,
+  } = semesterHook;
 
   if (loading) {
     return <div className="text-white">Laddar semesterdata...</div>;
@@ -483,7 +304,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
           onConfirm={handleConfirmBokfor}
         />
       </div>
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={clearToast} />}
     </div>
   );
 }

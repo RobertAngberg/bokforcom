@@ -2,9 +2,7 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { taBortLönespec } from "../../../actions/lonespecarActions";
-import { useState } from "react";
-import { useLonespec } from "../../../hooks/useLonespecar";
+import { useLonespecList } from "../../../hooks/useLonespecList";
 import Toast from "../../../../_components/Toast";
 import Knapp from "../../../../_components/Knapp";
 import type { LonespecListProps } from "../../../types/types";
@@ -18,47 +16,14 @@ export default function LonespecList({
   onLönespecUppdaterad,
   visaExtraRader = false,
 }: LonespecListProps) {
-  const { lönespecar } = useLonespec();
-  const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
-
-  const handleTaBortLönespec = async (lönespecId: string) => {
-    if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
-      return;
-    }
-
-    setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: true }));
-    try {
-      const resultat = await taBortLönespec(parseInt(lönespecId));
-      if (resultat.success) {
-        setToast({
-          message: "Lönespecifikation borttagen!",
-          type: "success",
-          isVisible: true,
-        });
-        onLönespecUppdaterad?.(); // Uppdatera listan
-      } else {
-        setToast({
-          message: `Kunde inte ta bort lönespec: ${resultat.message}`,
-          type: "error",
-          isVisible: true,
-        });
-      }
-    } catch (error) {
-      console.error("❌ Fel vid borttagning av lönespec:", error);
-      setToast({
-        message: "Kunde inte ta bort lönespec",
-        type: "error",
-        isVisible: true,
-      });
-    } finally {
-      setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: false }));
-    }
-  };
+  const {
+    lönespecar,
+    taBortLaddning,
+    toast,
+    setToast,
+    handleTaBortLönespec,
+    handleNavigateToLonekorning,
+  } = useLonespecList(onLönespecUppdaterad);
   //#endregion
 
   //#region Render
@@ -73,14 +38,7 @@ export default function LonespecList({
             Lönespecifikationer kopplade till ej slutförda lönekörningar kan finnas.
           </div>
           <div className="flex justify-center">
-            <Knapp
-              text="Gå till Lönekörningar"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.location.href = "/personal/Lonekorning";
-                }
-              }}
-            />
+            <Knapp text="Gå till Lönekörningar" onClick={handleNavigateToLonekorning} />
           </div>
         </div>
       ) : (
