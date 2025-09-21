@@ -1,11 +1,8 @@
-import { useState } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { createRoot } from "react-dom/client";
+import { useMailaLonespec } from "../../../hooks/useMailaLonespec";
 import Forhandsgranskning from "../../Anstallda/Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
-import type { SingleLönespec, MailaLonespecProps } from "../../../types/types";
+import type { MailaLonespecProps } from "../../../types/types";
 
 export default function MailaLonespec({
   lönespec,
@@ -19,189 +16,39 @@ export default function MailaLonespec({
   onClose,
   onMailComplete,
 }: MailaLonespecProps) {
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [visaModal, setVisaModal] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
+  const {
+    loading,
+    sent,
+    error,
+    visaModal,
+    toast,
+    setToast,
+    lönespecList,
+    handleBatchMaila,
+    handleMaila,
+    closeModal,
+    openModal,
+  } = useMailaLonespec({
+    lönespec,
+    anställd,
+    företagsprofil,
+    extrarader,
+    beräknadeVärden,
+    batch,
+    batchMode,
+    onMailComplete,
+    onClose,
   });
+
   const showModal = open !== undefined ? open : visaModal;
 
-  // Helper for single or batch
-  const lönespecList = batchMode
-    ? batch
-    : [{ lönespec, anställd, företagsprofil, extrarader, beräknadeVärden }];
-
-  // Batch mail logic
-  const handleBatchMaila = async () => {
-    setLoading(true);
-    setError(null);
-    let sentCount = 0;
-    try {
-      for (const item of lönespecList) {
-        let reactRoot: any = null;
-        const container = document.createElement("div");
-        container.style.position = "fixed";
-        container.style.left = "-9999px";
-        document.body.appendChild(container);
-        try {
-          const mail = item.anställd.mail || item.anställd.epost || item.anställd.email || "";
-          reactRoot = createRoot(container);
-          reactRoot.render(
-            <Forhandsgranskning
-              lönespec={item.lönespec}
-              anställd={item.anställd}
-              företagsprofil={item.företagsprofil}
-              extrarader={item.extrarader}
-              beräknadeVärden={item.beräknadeVärden}
-              onStäng={() => {}}
-            />
-          );
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          const element = container.querySelector("#lonespec-print-area") as HTMLElement;
-          if (!element) throw new Error("Kunde inte rendera PDF-innehåll.");
-          const canvas = await html2canvas(element, {
-            scale: 2, // Tillbaka till 2 för skarphet
-            useCORS: true,
-            backgroundColor: "#ffffff",
-          });
-          // Komprimera bilden till JPEG med bättre kvalitet
-          const imageData = canvas.toDataURL("image/jpeg", 0.85); // 85% kvalitet för bättre balans
-          const pdf = new jsPDF("portrait", "mm", "a4");
-          const pdfWidth = 210;
-          const imgWidth = pdfWidth - 15;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          pdf.addImage(imageData, "JPEG", 7.5, 5, imgWidth, imgHeight);
-
-          // Komprimera PDF ytterligare
-          const pdfBlob = pdf.output("blob");
-          console.log(
-            `PDF storlek före komprimering: ${(pdfBlob.size / 1024 / 1024).toFixed(2)}MB`
-          );
-
-          const formData = new FormData();
-          // Skapa en File med explicit MIME-typ
-          const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
-          formData.append("pdf", pdfFile);
-          formData.append("email", mail);
-          formData.append("namn", `${item.anställd.förnamn} ${item.anställd.efternamn}`);
-          const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
-          if (!res.ok) throw new Error("Kunde inte skicka e-post till " + mail);
-          sentCount++;
-        } finally {
-          if (reactRoot) reactRoot.unmount();
-          document.body.removeChild(container);
-        }
-      }
-      setSent(true);
-
-      // Visa success toast
-      setToast({
-        message: `${sentCount} lönespecar skickade!`,
-        type: "success",
-        isVisible: true,
-      });
-
-      // Vänta lite så användaren hinner se toast:en innan modalen stängs
-      setTimeout(() => {
-        // Anropa callback när mailing är klar
-        onMailComplete?.();
-        closeModal();
-      }, 2000); // Stäng efter 2 sekunder
-    } catch (err: any) {
-      setError(err.message || "Något gick fel vid utskick av lönespecar.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Single mail logic (unchanged)
-  const handleMaila = async () => {
-    setLoading(true);
-    setError(null);
-    let reactRoot: any = null;
-    const container = document.createElement("div");
-    container.style.position = "fixed";
-    container.style.left = "-9999px";
-    document.body.appendChild(container);
-    try {
-      const mail = anställd.mail || anställd.epost || anställd.email || "";
-      reactRoot = createRoot(container);
-      reactRoot.render(
-        <Forhandsgranskning
-          lönespec={lönespec}
-          anställd={anställd}
-          företagsprofil={företagsprofil}
-          extrarader={extrarader}
-          beräknadeVärden={beräknadeVärden}
-          onStäng={() => {}}
-        />
-      );
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const element = container.querySelector("#lonespec-print-area") as HTMLElement;
-      if (!element) throw new Error("Kunde inte rendera PDF-innehåll.");
-      const canvas = await html2canvas(element, {
-        scale: 2, // Tillbaka till 2 för skarphet
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-      // Komprimera bilden till JPEG med bättre kvalitet
-      const imageData = canvas.toDataURL("image/jpeg", 0.85); // 85% kvalitet för bättre balans
-      const pdf = new jsPDF("portrait", "mm", "a4");
-      const pdfWidth = 210;
-      const imgWidth = pdfWidth - 15;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imageData, "JPEG", 7.5, 5, imgWidth, imgHeight);
-
-      const pdfBlob = pdf.output("blob");
-      console.log(`PDF storlek: ${(pdfBlob.size / 1024 / 1024).toFixed(2)}MB`);
-
-      const formData = new FormData();
-      // Skapa en File med explicit MIME-typ
-      const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
-      formData.append("pdf", pdfFile);
-      formData.append("email", mail);
-      formData.append("namn", `${anställd.förnamn} ${anställd.efternamn}`);
-      const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Kunde inte skicka e-post.");
-      setSent(true);
-
-      // Visa success toast
-      setToast({
-        message: "Lönespec skickad!",
-        type: "success",
-        isVisible: true,
-      });
-
-      // Vänta lite så användaren hinner se toast:en innan modalen stängs
-      setTimeout(() => {
-        // Anropa callback när mailing är klar
-        onMailComplete?.();
-        closeModal();
-      }, 2000); // Stäng efter 2 sekunder
-    } catch (err: any) {
-      setError(err.message || "Något gick fel.");
-    } finally {
-      setLoading(false);
-      if (reactRoot) reactRoot.unmount();
-      document.body.removeChild(container);
-    }
-  };
-
-  // Modal rendering
-  const closeModal = () => {
-    setVisaModal(false);
-    onClose?.();
-  };
+  // Wrapper functions to pass Forhandsgranskning component
+  const handleBatchMailaWithComponent = () => handleBatchMaila(Forhandsgranskning);
+  const handleMailaWithComponent = () => handleMaila(Forhandsgranskning);
 
   return (
     <>
-      {!batchMode && (
-        <Knapp text="✉️ Maila lönespec" onClick={() => setVisaModal(true)} disabled={loading} />
-      )}
+      {!batchMode && <Knapp text="✉️ Maila lönespec" onClick={openModal} disabled={loading} />}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full p-6 relative border border-slate-700">
@@ -246,7 +93,7 @@ export default function MailaLonespec({
               {batchMode ? (
                 <Knapp
                   text="✉️ Maila lönespecar"
-                  onClick={handleBatchMaila}
+                  onClick={handleBatchMailaWithComponent}
                   disabled={loading || sent}
                   loading={loading}
                   loadingText="Skickar..."
@@ -254,7 +101,7 @@ export default function MailaLonespec({
               ) : (
                 <Knapp
                   text="✉️ Skicka lönespec"
-                  onClick={handleMaila}
+                  onClick={handleMailaWithComponent}
                   disabled={loading || sent}
                   loading={loading}
                   loadingText="Skickar..."

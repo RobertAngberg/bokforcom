@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { hämtaLönespecifikationer } from "../../../actions/lonespecarActions";
-import { hämtaUtlägg } from "../../../actions/utlaggActions";
+import React from "react";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
-import { useLonespec } from "../../../hooks/useLonespecar";
+import { useLonespecarComponent } from "../../../hooks/useLonespecarComponent";
 
 export default function Lonespecar({
   anställd,
@@ -22,36 +20,10 @@ export default function Lonespecar({
   taBortLoading?: boolean;
   visaExtraRader?: boolean;
 }) {
-  const { setLonespecar } = useLonespec();
-
-  const [utlägg, setUtlägg] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (specificLönespec) {
-      setLonespecar([specificLönespec]);
-      setLoading(false);
-      return;
-    }
-    loadData();
-  }, [anställd?.id, specificLönespec]);
-
-  const loadData = async () => {
-    if (!anställd?.id) return;
-    try {
-      setLoading(true);
-      const [lönespecarData, utläggData] = await Promise.all([
-        hämtaLönespecifikationer(anställd.id),
-        hämtaUtlägg(anställd.id),
-      ]);
-      setLonespecar(lönespecarData);
-      setUtlägg(utläggData);
-    } catch (error) {
-      console.error("Fel vid laddning av data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { utlägg, loading } = useLonespecarComponent({
+    anställd,
+    specificLönespec,
+  });
 
   if (loading) {
     return <LoadingSpinner />;

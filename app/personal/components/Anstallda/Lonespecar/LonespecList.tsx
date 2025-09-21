@@ -2,7 +2,7 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { useLonespecList } from "../../../hooks/useLonespecList";
+import { useAnstalldalonespecList } from "../../../hooks/useAnstalldalonespecList";
 import Toast from "../../../../_components/Toast";
 import Knapp from "../../../../_components/Knapp";
 import type { LonespecListProps } from "../../../types/types";
@@ -23,7 +23,7 @@ export default function LonespecList({
     setToast,
     handleTaBortLönespec,
     handleNavigateToLonekorning,
-  } = useLonespecList(onLönespecUppdaterad);
+  } = useAnstalldalonespecList(onLönespecUppdaterad);
   //#endregion
 
   //#region Render

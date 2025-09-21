@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import LönespecView from "../../Anstallda/Lonespecar/LonespecView";
 import Knapp from "../../../../_components/Knapp";
 import { LonespecListaProps } from "../../../types/types";
+import { useLonekorningSpecLista } from "../../../hooks/useLonekorningSpecLista";
 
 export default function LonespecLista({
   valdaSpecar,
@@ -19,70 +20,29 @@ export default function LonespecLista({
   onRefreshData,
   period,
 }: LonespecListaProps) {
-  const [taBortLaddning, setTaBortLaddning] = useState<Record<number, boolean>>({});
-
-  // Använd aktuellt_steg från databasen istället för lokal state
-  const currentStep = lönekörning?.aktuellt_steg || 0; // Börja med 0 istället för 1
-  const mailaEnabled = currentStep >= 1;
-  const bokförEnabled = currentStep >= 2;
-  const agiEnabled = currentStep >= 3;
-  const skatterEnabled = currentStep >= 4;
-
-  // Hämta lönekörning när komponenten laddas eller period ändras
-  // REMOVED - för enkelhet
+  const {
+    taBortLaddning,
+    hasIncompleteSpecs,
+    workflowSteps,
+    lönekörningKomplett,
+    handleTaBortLönespec,
+  } = useLonekorningSpecLista({
+    valdaSpecar,
+    lönekörning,
+    onTaBortSpec,
+    onHämtaBankgiro,
+    onMailaSpecar,
+    onBokför,
+    onGenereraAGI,
+    onBokförSkatter,
+  });
 
   if (valdaSpecar.length === 0) return null;
-
-  // Kontrollera om alla lönespecar har genomfört en viss åtgärd
-  const allaHarBankgiro = valdaSpecar.every((spec) => spec.bankgiro_exporterad);
-  const allaHarMailats = valdaSpecar.every((spec) => spec.mailad);
-  const allaHarBokförts = valdaSpecar.every((spec) => spec.bokförd);
-
-  // Kolla om lönekörningen är komplett (alla steg genomförda på lönekörning-nivå)
-  const lönekörningKomplett = !!(
-    lönekörning?.mailade_datum &&
-    lönekörning?.bokford_datum &&
-    lönekörning?.agi_genererad_datum &&
-    lönekörning?.skatter_bokforda_datum
-  );
-
-  const handleTaBortLönespec = async (spec: any) => {
-    if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
-    setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
-    try {
-      await onTaBortSpec(spec.id);
-    } catch (error) {
-      console.error("❌ Fel vid borttagning av lönespec:", error);
-      // REMOVED toast för enkelhet
-    } finally {
-      setTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
-    }
-  };
-
-  // SUPERENKLA wrapper-funktioner
-  const handleHämtaBankgiro = () => {
-    onHämtaBankgiro();
-  };
-
-  const handleBokför = () => {
-    console.log("🔥 handleBokför anropad!");
-    onBokför();
-    // Ta bort setAgiEnabled - steg uppdateras nu i databasen
-  };
-
-  const handleGenereraAGI = () => {
-    onGenereraAGI();
-    // Ta bort setSkatterEnabled - steg uppdateras nu i databasen
-  };
-
-  const handleBokförSkatter = () => {
-    onBokförSkatter();
-  };
 
   return (
     <div className="space-y-2">
       {/* Workflow validation warning */}
-      {valdaSpecar.some((spec) => !spec.bruttolön || !spec.nettolön) && (
+      {hasIncompleteSpecs && (
         <div className="bg-yellow-600 p-3 rounded text-white text-center mb-4">
           ⚠️ Kontrollera att alla lönespecar är kompletta innan du startar lönekörningen!
         </div>
@@ -116,44 +76,7 @@ export default function LonespecLista({
       <div className="bg-slate-700 rounded-lg p-6">
         {/* Progress Steps - Integrerad med knappar */}
         <div className="space-y-4 mb-6">
-          {[
-            {
-              id: "maila",
-              title: "Maila",
-              description: "Skicka lönespecar",
-              completed: !!lönekörning?.mailade_datum,
-              buttonText: "✉️ Maila lönespecar",
-              onClick: onMailaSpecar,
-              enabled: true, // Första steget är alltid enabled
-            },
-            {
-              id: "bokfor",
-              title: "Bokför",
-              description: "Registrera i bokföring",
-              completed: !!lönekörning?.bokford_datum,
-              buttonText: "📖 Bokför",
-              onClick: handleBokför,
-              enabled: !!lönekörning?.bokford_datum || !!lönekörning?.mailade_datum, // Enabled om klart ELLER om föregående steg är klart
-            },
-            {
-              id: "agi",
-              title: "AGI",
-              description: "Generera deklaration",
-              completed: !!lönekörning?.agi_genererad_datum,
-              buttonText: "📊 Generera AGI",
-              onClick: handleGenereraAGI,
-              enabled: !!lönekörning?.agi_genererad_datum || !!lönekörning?.bokford_datum, // Enabled om klart ELLER om föregående steg är klart
-            },
-            {
-              id: "skatter",
-              title: "Skatter",
-              description: "Bokför skatter",
-              completed: !!lönekörning?.skatter_bokforda_datum,
-              buttonText: "💰 Bokför skatter",
-              onClick: handleBokförSkatter,
-              enabled: !!lönekörning?.skatter_bokforda_datum || !!lönekörning?.agi_genererad_datum, // Enabled om klart ELLER om föregående steg är klart
-            },
-          ].map((step, index) => (
+          {workflowSteps.map((step, index) => (
             <div
               key={step.id}
               className="flex items-center justify-between bg-slate-600 rounded-lg p-4"
@@ -208,19 +131,6 @@ export default function LonespecLista({
           ))}
         </div>
       </div>
-
-      {/* Frivilliga åtgärder - REMOVED bankgiro, moved to skatte modal */}
-      {/* <div className="bg-slate-700 rounded-lg p-6">
-        <h5 className="text-white font-semibold mb-4 text-center">Frivilliga åtgärder</h5>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Knapp
-            text="🏦 Bankgirofil (Frivilligt)"
-            onClick={handleHämtaBankgiro}
-            className="bg-blue-600 hover:bg-blue-700"
-            disabled={false}
-          />
-        </div>
-      </div> */}
 
       {/* Completion status */}
       {lönekörningKomplett && (

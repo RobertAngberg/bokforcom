@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useBankgiroExport } from "../../../hooks/useBankgiroExport";
 import Knapp from "../../../../_components/Knapp";
 import { BankgiroExportProps } from "../../../types/types";
 
@@ -14,114 +14,27 @@ export default function BankgiroExport({
   showButton = true, // Default till true för bakåtkompatibilitet
   direktNedladdning = false, // Default till false
 }: BankgiroExportProps) {
-  const [visaModal, setVisaModal] = useState(false);
-  const [kundnummer, setKundnummer] = useState("123456");
-  const [bankgironummer, setBankgironummer] = useState("123-1234");
-
-  // Beräkna totaler
-  const anställdaMedLönespec = anställda.filter((a) => lönespecar[a.id]);
-  const totalBelopp = anställdaMedLönespec.reduce((sum, anställd) => {
-    const lönespec = lönespecar[anställd.id];
-    return sum + parseFloat(lönespec?.nettolön || 0);
-  }, 0);
-
-  const genereraBankgirofil = () => {
-    if (!utbetalningsdatum) return;
-
-    const datum = utbetalningsdatum.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
-    const bankgiroClean = bankgironummer.replace("-", "").padStart(10, "0");
-
-    let fil = "";
-
-    // Header (01-post)
-    const header = `01${datum}  LÖN${" ".repeat(46)}SEK${kundnummer.padStart(6, "0")}0001${bankgiroClean}  \n`;
-    fil += header;
-
-    // Betalningsposter (35-post) för varje anställd
-    anställdaMedLönespec.forEach((anställd) => {
-      const lönespec = lönespecar[anställd.id];
-      const nettolön = Math.round(parseFloat(lönespec?.nettolön || 0) * 100); // Öre
-      const clearingPadded = (anställd.clearingnummer || "0000").padStart(4, "0");
-      const kontoPadded = (anställd.bankkonto || "0").padStart(10, "0");
-      const beloppPadded = nettolön.toString().padStart(12, "0");
-      const namn = `Lön ${anställd.förnamn} ${anställd.efternamn}`.substring(0, 12);
-
-      const betalning = `35${datum}    ${clearingPadded}${kontoPadded}${beloppPadded}${" ".repeat(18)}${kontoPadded}${namn.padEnd(12, " ")}\n`;
-      fil += betalning;
-    });
-
-    // Slutpost (09-post)
-    const totalÖre = Math.round(totalBelopp * 100);
-    const antalPoster = anställdaMedLönespec.length.toString().padStart(8, "0");
-    const totalBeloppPadded = totalÖre.toString().padStart(12, "0");
-
-    const slutpost = `09${datum}${" ".repeat(20)}${totalBeloppPadded}${antalPoster}${" ".repeat(40)}\n`;
-    fil += slutpost;
-
-    // Ladda ner filen
-    const blob = new Blob([fil], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `loner_${datum}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    // Markera export som genomförd
-    onExportComplete?.();
-
-    setVisaModal(false);
-  };
-
-  // Direkt nedladdning utan modal
-  const laddarNerDirekt = () => {
-    if (!utbetalningsdatum) {
-      alert("Utbetalningsdatum saknas!");
-      return;
-    }
-
-    const datum = utbetalningsdatum.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
-
-    let fil = "";
-
-    // Header (01-post) - använd defaults för snabb nedladdning
-    const header = `01${datum}  LÖN${" ".repeat(46)}SEK1234560001123456789   \n`;
-    fil += header;
-
-    // Betalningsposter (35-post) för varje anställd
-    anställdaMedLönespec.forEach((anställd) => {
-      const lönespec = lönespecar[anställd.id];
-      const nettolön = Math.round(parseFloat(lönespec?.nettolön || 0) * 100); // Öre
-      const clearingPadded = (anställd.clearingnummer || "0000").padStart(4, "0");
-      const kontoPadded = (anställd.bankkonto || "0").padStart(10, "0");
-      const beloppPadded = nettolön.toString().padStart(12, "0");
-      const namn = `Lön ${anställd.förnamn} ${anställd.efternamn}`.substring(0, 12);
-
-      const betalning = `35${datum}    ${clearingPadded}${kontoPadded}${beloppPadded}${" ".repeat(18)}${kontoPadded}${namn.padEnd(12, " ")}\n`;
-      fil += betalning;
-    });
-
-    // Slutpost (09-post)
-    const totalÖre = Math.round(totalBelopp * 100);
-    const antalPoster = anställdaMedLönespec.length.toString().padStart(8, "0");
-    const totalBeloppPadded = totalÖre.toString().padStart(12, "0");
-
-    const slutpost = `09${datum}${" ".repeat(20)}${totalBeloppPadded}${antalPoster}${" ".repeat(40)}\n`;
-    fil += slutpost;
-
-    // Ladda ner filen
-    const blob = new Blob([fil], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `loner_${datum}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    // Markera export som genomförd
-    onExportComplete?.();
-    onClose?.();
-  };
+  const {
+    visaModal,
+    kundnummer,
+    setKundnummer,
+    bankgironummer,
+    setBankgironummer,
+    anställdaMedLönespec,
+    totalBelopp,
+    kanGenerera,
+    genereraBankgirofil,
+    laddarNerDirekt,
+    öppnaModal,
+    stängModal,
+  } = useBankgiroExport({
+    anställda,
+    utbetalningsdatum,
+    lönespecar,
+    onExportComplete,
+    onClose,
+    direktNedladdning,
+  });
 
   // Modal state: styrs av prop om satt, annars lokalt
   const showModal = open !== undefined ? open : visaModal;
@@ -132,13 +45,13 @@ export default function BankgiroExport({
     return null; // Visa inget UI
   }
 
-  if (anställdaMedLönespec.length === 0) {
-    return null; // Ingen knapp om inga lönespecar
+  if (!kanGenerera) {
+    return null; // Ingen knapp om inga lönespecar eller inget datum
   }
 
   return (
     <>
-      {showButton && <Knapp text="💳 Hämta Bankgirofil" onClick={() => setVisaModal(true)} />}
+      {showButton && <Knapp text="💳 Hämta Bankgirofil" onClick={öppnaModal} />}
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -238,13 +151,7 @@ export default function BankgiroExport({
 
               {/* Knappar */}
               <div className="flex gap-3 justify-end">
-                <Knapp
-                  text="Avbryt"
-                  onClick={() => {
-                    setVisaModal(false);
-                    onClose?.();
-                  }}
-                />
+                <Knapp text="Avbryt" onClick={stängModal} />
                 <Knapp text="💾 Skapa fil" onClick={genereraBankgirofil} />
               </div>
             </div>

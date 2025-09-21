@@ -2,7 +2,7 @@ import { useState } from "react";
 import { taBortLönespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
 
-export const useLonespecList = (onLönespecUppdaterad?: () => void) => {
+export const useAnstalldalonespecList = (onLönespecUppdaterad?: () => void) => {
   const { lönespecar } = useLonespec();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState({
