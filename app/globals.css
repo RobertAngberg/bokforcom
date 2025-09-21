@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+
+    html,
+    body {
+        @apply bg-slate-950 text-white;
+        height: 100%;
+    }
+
+    .animate-expand {
+        @apply overflow-hidden transition-[max-height] duration-300 ease-in-out;
+        max-height: 0;
+    }
+
+    details[open] .animate-expand {
+        max-height: 1000px;
+    }
+
+    .rotate-arrow {
+        @apply transition-transform duration-300;
+    }
+
+    details[open] .rotate-arrow {
+        @apply rotate-180;
+    }
+}
+
+/* 🖨 Print + Export styles */
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    html,
+    body {
+        background: white !important;
+        color: black !important;
+        width: 210mm;
+        height: 297mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    body>* {
+        visibility: hidden;
+    }
+
+    #print-area,
+    #print-area * {
+        visibility: visible;
+    }
+
+    #print-area,
+    #print-area-clone,
+    #print-area-clone * {
+        background: white !important;
+        color: black !important;
+        visibility: visible !important;
+        box-sizing: border-box !important;
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+    }
+
+    .text-white {
+        color: black !important;
+    }
+
+    .bg-white {
+        background-color: white !important;
+    }
+
+    .shadow,
+    .shadow-md,
+    .shadow-lg {
+        box-shadow: none !important;
+    }
+
+    .print\\:hidden {
+        display: none !important;
+    }
+}
+
+/* 💾 Exportera PDF cleanup även på klon */
+.no-bg .shadow,
+.no-bg .shadow-md,
+.no-bg .shadow-lg {
+    box-shadow: none !important;
+}
+
+.no-bg table th {
+    vertical-align: middle !important;
+    line-height: 1.5 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+/* 📅 react-datepicker dark mode */
+.react-datepicker {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+.react-datepicker__header {
+    background-color: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker__day {
+    color: #f8fafc !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+    background-color: #0e7490 !important;
+    color: #fff !important;
+}
+
+.react-datepicker__day--today {
+    border: 1px solid #0e7490 !important;
+}
+
+.react-datepicker__triangle {
+    display: none !important;
+}
+
+.react-datepicker__day:hover {
+    background-color: #155e75 !important;
+    color: #ffffff !important;
+}
+
+@keyframes backgroundPulse {
+    0% {
+        background-color: #1e293b;
+    }
+
+    50% {
+        background-color: #334155;
+    }
+
+    100% {
+        background-color: #1e293b;
+    }
+}
+
+.background-pulse {
+    animation: backgroundPulse 0.6s ease-out;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Animation delay utilities för loading spinner */
+.animation-delay-75 {
+    animation-delay: 75ms;
+}
+
+.animation-delay-100 {
+    animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+    animation-delay: 200ms;
+}
