@@ -1,6 +1,6 @@
 import { auth } from "../../_lib/auth";
 import { queryOne, query } from "../../_utils/dbUtils";
-import type { AnvandarInfo, ForetagsProfil } from "../_types/types";
+import type { AnvandarInfo, ForetagsProfil } from "../types/types";
 
 export async function hämtaAnvändarInfo(): Promise<AnvandarInfo | null> {
   try {

@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { uppdateraAnvändarInfo } from "../_actions/anvandarprofilActions";
-import { uppdateraFöretagsprofilAdmin } from "../_actions/foretagsprofilActions";
-import { raderaFöretag } from "../_actions/farozonActions";
-import { TOM_FORETAG } from "../_types/types";
+import { uppdateraAnvändarInfo } from "../actions/anvandarprofilActions";
+import { uppdateraFöretagsprofilAdmin } from "../actions/foretagsprofilActions";
+import { raderaFöretag } from "../actions/farozonActions";
+import { TOM_FORETAG } from "../types/types";
 import type {
   AnvandarInfo,
   ForetagsProfil,
   AnvandarRedigeringsFormular,
   MeddelandeTillstand,
   UseAdminProps,
-} from "../_types/types";
+} from "../types/types";
 
 export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   // User state

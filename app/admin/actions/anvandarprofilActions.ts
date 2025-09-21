@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserId } from "../../_utils/authUtils";
-import type { AnvandarInfo, AktionsResultat, UppdateraAnvandarPayload } from "../_types/types";
+import type { AnvandarInfo, AktionsResultat, UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";

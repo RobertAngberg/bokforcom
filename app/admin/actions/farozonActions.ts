@@ -3,7 +3,7 @@
 import { getUserId } from "../../_utils/authUtils";
 import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
-import type { AktionsResultat } from "../_types/types";
+import type { AktionsResultat } from "../types/types";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {

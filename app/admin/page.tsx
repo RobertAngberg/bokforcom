@@ -1,6 +1,6 @@
 import MainLayout from "../_components/MainLayout";
-import AdminContent from "./_components/AdminContent";
-import { hämtaAnvändarInfo, hämtaFöretagsprofil } from "./_actions/data";
+import Admin from "./components/Admin";
+import { hämtaAnvändarInfo, hämtaFöretagsprofil } from "./actions/data";
 
 export default async function AdminPage() {
   const [användarInfo, företagsInfo] = await Promise.all([
@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
   return (
     <MainLayout>
-      <AdminContent användarInfo={användarInfo} företagsInfo={företagsInfo} />
+      <Admin användarInfo={användarInfo} företagsInfo={företagsInfo} />
     </MainLayout>
   );
 }

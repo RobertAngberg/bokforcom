@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserId } from "../../_utils/authUtils";
-import type { ForetagsProfil, AktionsResultat } from "../_types/types";
+import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { query, queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";

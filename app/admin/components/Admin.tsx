@@ -4,8 +4,8 @@ import Anvandarprofil from "./Anvandarprofil";
 import Foretagsprofil from "./Foretagsprofil";
 import Farozon from "./Farozon";
 import SieExportKnapp from "./SieExportKnapp";
-import { useAdmin } from "../_hooks/useAdmin";
-import type { AdminContentProps } from "../_types/types";
+import { useAdmin } from "../hooks/useAdmin";
+import type { AdminContentProps } from "../types/types";
 
 export default function AdminContent({ användarInfo, företagsInfo }: AdminContentProps) {
   const admin = useAdmin({

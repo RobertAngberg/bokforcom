@@ -2,7 +2,7 @@
 
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
-import type { FarozonProps } from "../_types/types";
+import type { FarozonProps } from "../types/types";
 
 export default function Farozon({ dangerZone }: FarozonProps) {
   const { showDeleteConfirm, isDeleting } = dangerZone.state;

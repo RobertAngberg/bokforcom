@@ -2,7 +2,7 @@
 
 import Knapp from "../../_components/Knapp";
 import TextFalt from "../../_components/TextFalt";
-import type { ForetagsprofilProps } from "../_types/types";
+import type { ForetagsprofilProps } from "../types/types";
 
 export default function Foretagsprofil({ company }: ForetagsprofilProps) {
   const { state, handlers } = company;
