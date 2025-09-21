@@ -2,7 +2,7 @@ import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
-import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
+import Forhandsgranskning from "../../Anstallda/Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import Toast from "../../../../_components/Toast";
 

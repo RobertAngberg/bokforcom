@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { hämtaAllaLönekörningar } from "../../actions/lonekorningActions";
+import { hämtaAllaLönekörningar } from "../../../actions/lonekorningActions";
 import { Lönekörning, LonekorningListaProps } from "../../../types/types";
 
 export default function LonekorningLista({

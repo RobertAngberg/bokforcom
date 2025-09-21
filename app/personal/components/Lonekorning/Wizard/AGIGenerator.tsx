@@ -1,7 +1,7 @@
 "use client";
 
-import { AGIGeneratorProps } from "../../types/types";
-import { useLonekorning } from "../../hooks/useLonekorning";
+import { AGIGeneratorProps } from "../../../types/types";
+import { useLonekorning } from "../../../hooks/useLonekorning";
 
 // Minimal wrapper: delegating till hooken, ingen affärslogik här.
 export default function AGIGenerator(props: AGIGeneratorProps) {

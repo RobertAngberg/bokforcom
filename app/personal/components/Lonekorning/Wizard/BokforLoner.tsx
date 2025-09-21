@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
+import { RAD_KONFIGURATIONER } from "../../Anstallda/Lonespecar/Extrarader/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../../../actions/bokforingActions";
 import Toast from "../../../../_components/Toast";
 

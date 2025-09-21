@@ -101,10 +101,53 @@ export function useLonekorning(_init?: UseLonekorningInit): UseLonekorningReturn
   }, [setFörhandsgranskaId]);
 
   const generateAGI = useCallback(async (args: GenerateAGIArgs) => {
-    // Placeholder - implement actual AGI generation
-    console.log("Generating AGI with args:", args);
-    if (args.onAGIComplete) {
-      args.onAGIComplete();
+    try {
+      console.log("🚀 Startar AGI-generering...");
+
+      // Hämta userId från session
+      const userId = args.session?.user?.id;
+      if (!userId) {
+        console.error("❌ Ingen userId tillgänglig från session");
+        return;
+      }
+
+      // Hämta företagsdata
+      const företagsData = await args.hämtaFöretagsprofil(userId);
+      console.log("🏢 Företagsdata hämtad:", företagsData);
+
+      // Importera AGI-utilities
+      const { generateAGIXML, convertLonespecToAGI } = await import("../utils/agiUtils");
+
+      // Konvertera lönespec-data till AGI-format
+      const period = args.valdaSpecar[0]?.löneperiod || new Date().toISOString().slice(0, 7);
+      const agiData = convertLonespecToAGI(args.valdaSpecar, args.anstallda, företagsData, period);
+
+      console.log("📊 AGI-data förberedd:", agiData);
+
+      // Generera XML
+      const xml = generateAGIXML(agiData);
+      console.log("📄 XML genererad, längd:", xml.length);
+
+      // Ladda ner XML-fil
+      const blob = new Blob([xml], { type: "text/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `arbetsgivardeklaration_${period}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log("✅ AGI XML-fil nedladdad!");
+
+      // Anropa callback för att uppdatera UI
+      if (args.onAGIComplete) {
+        args.onAGIComplete();
+      }
+    } catch (error) {
+      console.error("❌ Fel vid AGI-generering:", error);
+      // Här kan vi lägga till toast-meddelande om fel
     }
   }, []);
 

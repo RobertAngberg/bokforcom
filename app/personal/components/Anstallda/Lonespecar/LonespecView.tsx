@@ -264,12 +264,16 @@ export default function LönespecView({
   }
 
   // Annars visa med AnimeradFlik som vanligt
-  const namn = anställd ? `${anställd.förnamn || ""} ${anställd.efternamn || ""}`.trim() : "Okänd";
+  const namn = anställd
+    ? `${anställd.förnamn || ""} ${anställd.efternamn || ""}`.trim() ||
+      anställd.namn ||
+      "Okänd anställd"
+    : "Okänd anställd";
   return (
     <AnimeradFlik
       key={lönespec.id}
-      title={namn}
-      icon=""
+      title={`👤 ${namn}`}
+      icon="💰"
       visaSummaDirekt={`Netto: ${visaNettolön.toLocaleString("sv-SE")} kr`}
     >
       {innehåll}

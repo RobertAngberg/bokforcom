@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Modal from "../../../_components/Modal";
-import Toast from "../../../_components/Toast";
-import { NySpecModalProps } from "../../types/types";
+import Modal from "../../../../_components/Modal";
+import Toast from "../../../../_components/Toast";
+import { NySpecModalProps } from "../../../types/types";
 
 export default function NySpecModal({
   isOpen,
@@ -50,7 +50,7 @@ export default function NySpecModal({
       setToast({ type: "error", message: "Fel: utbetalningsdatum saknas eller är ogiltigt!" });
       return;
     }
-    const res = await import("../../actions/lonespecarActions").then((mod) =>
+    const res = await import("../../../actions/lonespecarActions").then((mod) =>
       mod.skapaNyLönespec({
         anställd_id: parseInt(valdAnställd),
         utbetalningsdatum,

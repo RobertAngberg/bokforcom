@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Modal from "../../../_components/Modal";
-import Knapp from "../../../_components/Knapp";
+import Modal from "../../../../_components/Modal";
+import Knapp from "../../../../_components/Knapp";
 import {
   skapaLönekörning,
   skapaLönespecifikationerFörLönekörning,
-} from "../../actions/lonekorningActions";
-import { hämtaAllaAnställda } from "../../actions/anstalldaActions";
+} from "../../../actions/lonekorningActions";
+import { hämtaAllaAnställda } from "../../../actions/anstalldaActions";
 import { NyLonekorningModalProps } from "../../../types/types";
 
 export default function NyLonekorningModal({

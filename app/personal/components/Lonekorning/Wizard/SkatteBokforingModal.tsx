@@ -2,8 +2,8 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Modal from "../../../_components/Modal";
-import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
+import Modal from "../../../../_components/Modal";
+import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import { SkatteBokforingModalProps } from "../../../types/types";
 
 export default function SkatteBokforingModal({

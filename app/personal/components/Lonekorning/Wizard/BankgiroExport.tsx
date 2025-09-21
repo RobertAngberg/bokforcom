@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Knapp from "../../../_components/Knapp";
+import Knapp from "../../../../_components/Knapp";
 import { BankgiroExportProps } from "../../../types/types";
 
 export default function BankgiroExport({

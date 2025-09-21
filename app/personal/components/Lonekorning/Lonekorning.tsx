@@ -23,22 +23,21 @@ import {
   uppdateraLönekörningSteg,
   taBortLönekörning,
 } from "../../actions/lonekorningActions";
-import BankgiroExport from "./BankgiroExport";
-import BokforLoner from "../Anstallda/Lonespecar/BokforLoner";
-import MailaLonespec from "../Anstallda/Lonespecar/MailaLonespec";
+import BankgiroExport from "./Wizard/BankgiroExport";
+import BokforLoner from "./Wizard/BokforLoner";
+import MailaLonespec from "./Wizard/MailaLonespec";
 import Knapp from "../../../_components/Knapp";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { useLonespec } from "../../hooks/useLonespecar";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
-import SkatteBokforingModal from "./SkatteBokforingModal";
-import NySpecModal from "./NySpecModal";
-import NyLonekorningModal from "./NyLonekorningModal";
-import LonekorningLista from "./LonekorningLista";
-import UtbetalningsdatumValjare from "./UtbetalningsdatumValjare";
-import LonespecLista from "./LonespecLista";
-import AGIGenerator from "./AGIGenerator";
-import SkatteManager from "./SkatteManager";
-import LonespecManager from "./LonespecManager";
+import SkatteBokforingModal from "./Wizard/SkatteBokforingModal";
+import NySpecModal from "./SkapaNy/NySpecModal";
+import NyLonekorningModal from "./SkapaNy/NyLonekorningModal";
+import LonekorningLista from "./Listor/LonekorningLista";
+import UtbetalningsdatumValjare from "./SkapaNy/UtbetalningsdatumValjare";
+import LonespecLista from "./Listor/LonespecLista";
+import AGIGenerator from "./Wizard/AGIGenerator";
+
 //#endregion
 
 //#region Types
@@ -80,45 +79,137 @@ export default function Lonekorning({
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
   const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [skatteToast, setSkatteToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
   // Use props anställda if available, otherwise fall back to local state
   const anstallda = propsAnställda || localAnställda;
   const anställdaLoading = propsAnställdaLoading || loading;
   //#endregion
 
-  //#region Skatteberäkningar
-  const skatteManager = SkatteManager({
-    valdaSpecar: lönekörningSpecar, // Använd lönekörningSpecar
-    beräknadeVärden,
-    skatteDatum,
-    setSkatteBokförPågår,
-    setSkatteModalOpen,
-    bokförLöneskatter,
-    onSkatteComplete: async () => {
-      // Markera alla lönespecar som skatter-bokförda
-      for (const spec of lönekörningSpecar) {
-        // Använd lönekörningSpecar
-        if (!spec.skatter_bokförda) {
-          await markeraSkatternaBokförda(spec.id);
-        }
+  // Skatteberäkningar
+  const beräknaSkatteData = () => {
+    if (!lönekörningSpecar || lönekörningSpecar.length === 0) {
+      return {
+        socialaAvgifter: 0,
+        personalskatt: 0,
+        totaltSkatter: 0,
+      };
+    }
+
+    // Summera alla sociala avgifter och skatter från valda lönespecar
+    let totalSocialaAvgifter = 0;
+    let totalPersonalskatt = 0;
+
+    lönekörningSpecar.forEach((spec) => {
+      const beräkningar = beräknadeVärden[spec.id];
+      const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
+      const skatt = beräkningar?.skatt || spec.skatt || 0;
+
+      totalSocialaAvgifter += socialaAvgifter;
+      totalPersonalskatt += skatt;
+    });
+
+    return {
+      socialaAvgifter: Math.round(totalSocialaAvgifter * 100) / 100,
+      personalskatt: Math.round(totalPersonalskatt * 100) / 100,
+      totaltSkatter: Math.round((totalSocialaAvgifter + totalPersonalskatt) * 100) / 100,
+    };
+  };
+
+  const hanteraBokförSkatter = async () => {
+    const skatteData = beräknaSkatteData();
+
+    if (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0) {
+      setSkatteToast({ type: "info", message: "Inga skatter att bokföra!" });
+      return;
+    }
+
+    setSkatteBokförPågår(true);
+    try {
+      const datum = skatteDatum?.toISOString() || new Date().toISOString();
+      const result = await bokförLöneskatter({
+        socialaAvgifter: skatteData.socialaAvgifter,
+        personalskatt: skatteData.personalskatt,
+        datum,
+        kommentar: "Löneskatter från lönekörning",
+      });
+
+      if (result.success) {
+        setSkatteToast({ type: "success", message: "Löneskatter bokförda!" });
+
+        // Vänta lite så användaren hinner se toast:en innan modalen stängs
+        setTimeout(async () => {
+          setSkatteModalOpen(false);
+          // Markera alla lönespecar som skatter-bokförda
+          for (const spec of lönekörningSpecar) {
+            if (!spec.skatter_bokförda) {
+              await markeraSkatternaBokförda(spec.id);
+            }
+          }
+          // Refresha data för att visa uppdaterade knappar
+          await loadLönekörningSpecar();
+        }, 2000); // Stäng efter 2 sekunder
+      } else {
+        setSkatteToast({
+          type: "error",
+          message: `Fel vid bokföring: ${result.error || "Okänt fel"}`,
+        });
       }
-      // Refresha data för att visa uppdaterade knappar
-      await loadLönekörningSpecar(); // Ladda om lönekörningspecar istället
-    },
-  });
+    } catch (error: any) {
+      console.error("❌ Fel vid bokföring av skatter:", error);
+      setSkatteToast({ type: "error", message: `Fel vid bokföring: ${error?.message || error}` });
+    } finally {
+      setSkatteBokförPågår(false);
+    }
+  };
 
-  const lonespecManager = LonespecManager({
-    valdaSpecar,
-    setValdaSpecar,
-    specarPerDatum,
-    setSpecarPerDatum,
-    datumLista,
-    setDatumLista,
-    utbetalningsdatum,
-    setUtbetalningsdatum,
-  });
+  // Funktion för att ta bort lönespecs
+  const hanteraTaBortSpec = async (specId: number) => {
+    try {
+      const response = await fetch("/api/lonespec/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: specId }),
+      });
 
-  const skatteData = skatteManager.beräknaSkatteData();
+      if (!response.ok) {
+        throw new Error("Failed to delete lönespec");
+      }
+
+      // Uppdatera state för att ta bort spec från alla relevanta listor
+      setValdaSpecar((prev) => prev.filter((spec) => spec.id !== specId));
+
+      setSpecarPerDatum((prev) => {
+        const updatedSpecar = { ...prev };
+        Object.keys(updatedSpecar).forEach((datum) => {
+          updatedSpecar[datum] = updatedSpecar[datum].filter((spec) => spec.id !== specId);
+          if (updatedSpecar[datum].length === 0) {
+            delete updatedSpecar[datum];
+          }
+        });
+        return updatedSpecar;
+      });
+
+      // Uppdatera datumlistan om nödvändigt
+      setDatumLista((prev) => {
+        const newDatumLista = prev.filter(
+          (datum) => specarPerDatum[datum] && specarPerDatum[datum].length > 0
+        );
+        return newDatumLista;
+      });
+
+      setToast({ message: "Lönespec borttagen", type: "success" });
+    } catch (error) {
+      console.error("Error deleting lönespec:", error);
+      setToast({ message: "Kunde inte ta bort lönespec", type: "error" });
+    }
+  };
+
+  const skatteData = beräknaSkatteData();
   //#endregion
 
   //#region Effects
@@ -386,7 +477,7 @@ export default function Lonekorning({
               anstallda={anstallda}
               utlaggMap={utlaggMap}
               lönekörning={valdLonekorning} // Skicka hela lönekörning-objektet
-              onTaBortSpec={lonespecManager.hanteraTaBortSpec}
+              onTaBortSpec={hanteraTaBortSpec}
               onHämtaBankgiro={() => setBankgiroModalOpen(true)}
               onMailaSpecar={async () => {
                 console.log("📧 onMailaSpecar anropad!");
@@ -728,7 +819,7 @@ export default function Lonekorning({
             utbetalningsdatum={utbetalningsdatum}
             skatteDatum={skatteDatum}
             setSkatteDatum={setSkatteDatum}
-            hanteraBokförSkatter={skatteManager.hanteraBokförSkatter}
+            hanteraBokförSkatter={hanteraBokförSkatter}
             skatteBokförPågår={skatteBokförPågår}
             onHämtaBankgiro={() => {
               // Direkt nedladdning av bankgirofil
@@ -796,13 +887,15 @@ export default function Lonekorning({
       )}
 
       {/* Toast för skatte-bokföring */}
-      {skatteManager.toast && (
+      {skatteToast && (
         <Toast
-          message={skatteManager.toast.message}
-          type={skatteManager.toast.type}
-          onClose={() => skatteManager.setToast(null)}
+          message={skatteToast.message}
+          type={skatteToast.type}
+          onClose={() => setSkatteToast(null)}
         />
       )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }
