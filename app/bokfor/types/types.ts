@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { useBokfor } from "../hooks/useBokfor";
 
 // ========================================
-// INITIAL DATA & STORE INTERFACES
+// INITIAL DATA & INTERFACES
 // ========================================
 
 export interface InitialData {
@@ -164,18 +164,18 @@ export interface ForvalKortProps {
 }
 
 export interface InformationProps {
-  belopp?: number; // Nu valfri - kommer från Zustand store
-  setBelopp?: (value: number) => void; // Nu valfri - kommer från Zustand store
-  transaktionsdatum?: string | null; // Nu valfri - kommer från Zustand store
-  setTransaktionsdatum?: (value: string) => void; // Nu valfri - kommer från Zustand store
+  belopp?: number;
+  setBelopp?: (value: number) => void;
+  transaktionsdatum?: string | null;
+  setTransaktionsdatum?: (value: string) => void;
   visaFakturadatum?: boolean;
   fakturadatum?: string | null;
   setFakturadatum?: (value: string) => void;
 }
 
 export interface CommentProps {
-  kommentar?: string; // Nu valfri - kommer från Zustand store
-  setKommentar?: (value: string) => void; // Nu valfri - kommer från Zustand store
+  kommentar?: string;
+  setKommentar?: (value: string) => void;
 }
 
 export interface FileUploadProps {
@@ -199,42 +199,42 @@ export interface PageProps {
 }
 
 export interface Step2Props {
-  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
-  fil?: File | null; // Nu valfri - kommer från Zustand store
-  setFil?: (file: File | null) => void; // Nu valfri - kommer från Zustand store
-  pdfUrl?: string | null; // Nu valfri - kommer från Zustand store
-  setPdfUrl?: (url: string | null) => void; // Nu valfri - kommer från Zustand store
-  belopp?: number | null; // Nu valfri - kommer från Zustand store
-  setBelopp?: (amount: number | null) => void; // Nu valfri - kommer från Zustand store
-  transaktionsdatum?: string | null; // Nu valfri - kommer från Zustand store
-  setTransaktionsdatum?: (date: string | null) => void; // Nu valfri - kommer från Zustand store
-  kommentar?: string | null; // Nu valfri - kommer från Zustand store
-  setKommentar?: (comment: string | null) => void; // Nu valfri - kommer från Zustand store
-  valtFörval?: Förval | null; // Nu valfri - kommer från Zustand store
-  extrafält?: Record<string, { label: string; debet: number; kredit: number }>; // Nu valfri - kommer från Zustand store
-  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void; // Nu valfri - kommer från Zustand store
+  setCurrentStep?: (step: number) => void;
+  fil?: File | null;
+  setFil?: (file: File | null) => void;
+  pdfUrl?: string | null;
+  setPdfUrl?: (url: string | null) => void;
+  belopp?: number | null;
+  setBelopp?: (amount: number | null) => void;
+  transaktionsdatum?: string | null;
+  setTransaktionsdatum?: (date: string | null) => void;
+  kommentar?: string | null;
+  setKommentar?: (comment: string | null) => void;
+  valtFörval?: Förval | null;
+  extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
+  setExtrafält?: (fält: Record<string, { label: string; debet: number; kredit: number }>) => void;
   utlaggMode?: boolean;
-  bokförSomFaktura?: boolean; // Nu valfri - kommer från Zustand store
-  setBokförSomFaktura?: (value: boolean) => void; // Nu valfri - kommer från Zustand store
-  kundfakturadatum?: string | null; // Nu valfri - kommer från Zustand store
-  setKundfakturadatum?: (value: string | null) => void; // Nu valfri - kommer från Zustand store
+  bokförSomFaktura?: boolean;
+  setBokförSomFaktura?: (value: boolean) => void;
+  kundfakturadatum?: string | null;
+  setKundfakturadatum?: (value: string | null) => void;
 }
 
 export interface Step2LevfaktProps {
   favoritFörvalen?: Förval[]; // Nu valfri - kan hämtas från annan plats
-  setCurrentStep?: (step: number) => void; // Nu valfri - kommer från Zustand store
+  setCurrentStep?: (step: number) => void;
   exitLevfaktMode?: () => void; // Ny: för att lämna levfakt-läge och visa checkbox igen
-  setKontonummer?: (konto: string) => void; // Nu valfri - kommer från Zustand store
-  setKontobeskrivning?: (beskrivning: string) => void; // Nu valfri - kommer från Zustand store
-  setFil?: (fil: File | null) => void; // Nu valfri - kommer från Zustand store
-  setPdfUrl?: (url: string | null) => void; // Nu valfri - kommer från Zustand store
-  setBelopp?: (belopp: number | null) => void; // Nu valfri - kommer från Zustand store
-  setTransaktionsdatum?: (datum: string | null) => void; // Nu valfri - kommer från Zustand store
-  setKommentar?: (kommentar: string | null) => void; // Nu valfri - kommer från Zustand store
-  setValtFörval?: (förval: Förval | null) => void; // Nu valfri - kommer från Zustand store
+  setKontonummer?: (konto: string) => void;
+  setKontobeskrivning?: (beskrivning: string) => void;
+  setFil?: (fil: File | null) => void;
+  setPdfUrl?: (url: string | null) => void;
+  setBelopp?: (belopp: number | null) => void;
+  setTransaktionsdatum?: (datum: string | null) => void;
+  setKommentar?: (kommentar: string | null) => void;
+  setValtFörval?: (förval: Förval | null) => void;
   setExtrafält?: (
     extrafält: Record<string, { label: string; debet: number; kredit: number }>
-  ) => void; // Nu valfri - kommer från Zustand store
+  ) => void;
   utlaggMode?: boolean;
   // Aktuella states behövs för visning (alla nu valfria - kommer från store)
   fil?: File | null;
@@ -262,7 +262,7 @@ export interface Step3Props {
   kontobeskrivning?: string;
   fil?: File | null;
   belopp?: number;
-  transaktionsdatum?: string; // Nu valfri - kommer från Zustand store
+  transaktionsdatum?: string;
   kommentar?: string;
   valtFörval?: Förval | null;
   setCurrentStep?: (step: number) => void;
@@ -448,15 +448,68 @@ export interface BokforProviderProps {
   children: ReactNode;
 }
 
-// BokforContext (för useContext type safety)
-export interface BokforContextType extends ReturnType<typeof useBokfor> {
-  // Alla properties från useBokfor är nu tillgängliga direkt
-}
-
 // SpecialForval components
 export interface RepresentationProps {
   mode: "steg2" | "steg3";
   renderMode?: "standard" | "levfakt";
+}
+
+// ========================================
+// CONTEXT TYPES
+// ========================================
+
+export interface BokforContextType {
+  state: {
+    currentStep: number;
+    favoritFörval: any[];
+    allaFörval: any[];
+    anställda: any[];
+    bokföringsmetod: string;
+    levfaktMode: boolean;
+    utlaggMode: boolean;
+    kontonummer: string;
+    kontobeskrivning: string | null;
+    belopp: number | null;
+    kommentar: string | null;
+    fil: File | null;
+    pdfUrl: string | null;
+    transaktionsdatum: string | null;
+    valtFörval: any | null;
+    extrafält: Record<string, any>;
+    leverantör: any;
+    fakturanummer: string | null;
+    fakturadatum: string | null;
+    förfallodatum: string | null;
+    betaldatum: string | null;
+    bokförSomFaktura: boolean;
+    kundfakturadatum: string | null;
+    ocrText: string;
+    visaLeverantorModal: boolean;
+    anstallda: any[];
+    anstalldId: string;
+    loadingSteg3: boolean;
+    toast: any;
+    konto2890Beskrivning: string;
+    safeBelopp: number;
+    safeKommentar: string;
+    safeTransaktionsdatum: string;
+    momsSats: number;
+    moms: number;
+    beloppUtanMoms: number;
+    ärFörsäljning: boolean | undefined;
+    fallbackRows: any[];
+    searchText: string;
+    results: any[];
+    highlightedIndex: number;
+    loading: boolean;
+  };
+  actions: {
+    [key: string]: any;
+  };
+  handlers: {
+    [key: string]: any;
+    useSteg2LevfaktHelper: () => any;
+  };
 }
 
 // ========================================

@@ -26,7 +26,7 @@ export function useForvalSok({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Uppdatera results när favoritFörval kommer från store
+  // Uppdatera results när favoritFörval ändras
   useEffect(() => {
     if (searchText.length < 2 && favoritFörval.length > 0) {
       setResults(favoritFörval);
