@@ -510,6 +510,8 @@ export interface BokforContextType {
     [key: string]: any;
     useSteg2LevfaktHelper: () => any;
   };
+  getCardClassName: (isHighlighted: boolean) => string;
+  formatKontoValue: (value: number | boolean | null | undefined) => string;
 }
 
 // ========================================

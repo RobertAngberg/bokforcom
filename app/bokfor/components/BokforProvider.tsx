@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import React, { createContext, useContext } from "react";
 import { useBokfor } from "../hooks/useBokfor";
 import { BokforContextType, BokforProviderProps } from "../types/types";
 
@@ -75,6 +75,7 @@ export function BokforProvider({ children }: BokforProviderProps) {
       setFavoritFörvalen: bokforData.setFavoritFörvalen,
       setAllaFörval: bokforData.setAllaFörval,
       setAnstallda: bokforData.setAnstallda,
+      setAnställda: bokforData.setAnstallda, // Alias för bakåtkompatibilitet
       setAnstalldId: bokforData.setAnstalldId,
       showToast: bokforData.showToast,
       hideToast: bokforData.hideToast,
@@ -132,6 +133,90 @@ export function BokforProvider({ children }: BokforProviderProps) {
           exitLevfaktMode: bokforData.exitLevfaktMode,
         },
       }),
+      useInformationHelper: () => ({
+        belopp: bokforData.belopp,
+        handleBeloppChange: bokforData.handleBeloppChange,
+        handleTransaktionsdatumChange: bokforData.handleTransaktionsdatumChange,
+        transaktionsdatumDate: bokforData.transaktionsdatumDate,
+      }),
+      useKommentarHelper: (props?: {
+        kommentar?: string;
+        setKommentar?: (value: string) => void;
+      }) => ({
+        kommentar: props?.kommentar ?? bokforData.kommentar,
+        handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+          const value = e.target.value;
+          if (props?.setKommentar) {
+            props.setKommentar(value);
+          } else {
+            bokforData.setKommentar(value);
+          }
+        },
+      }),
+      useForhandsgranskningHelper: (props: { fil?: File | null; pdfUrl?: string | null }) => {
+        const [showModal, setShowModal] = React.useState(false);
+        const hasFile = !!(props.fil || props.pdfUrl);
+        const blobUrl = props.fil ? URL.createObjectURL(props.fil) : props.pdfUrl;
+
+        return {
+          state: {
+            hasFile,
+            blobUrl,
+            showModal,
+          },
+          actions: {},
+          handlers: {
+            handlePdfOpenClick: () => {
+              if (blobUrl) {
+                window.open(blobUrl, "_blank");
+              }
+            },
+            handleFileClick: () => {
+              setShowModal(!showModal);
+            },
+            getButtonText: () => {
+              return showModal ? "Stäng förhandsgranskning" : "Förhandsgranskning";
+            },
+          },
+        };
+      },
+      useStandardLayoutHelper: (onSubmit: () => void, title: string) => {
+        const isValid = !!(bokforData.belopp && bokforData.transaktionsdatum);
+
+        return {
+          state: {
+            belopp: bokforData.belopp,
+            transaktionsdatum: bokforData.transaktionsdatum,
+            kommentar: bokforData.kommentar,
+            fil: bokforData.fil,
+            pdfUrl: bokforData.pdfUrl,
+            isValid,
+            title,
+          },
+          handlers: {
+            setBelopp: bokforData.setBelopp,
+            setTransaktionsdatum: bokforData.setTransaktionsdatum,
+            setKommentar: bokforData.setKommentar,
+            setFil: bokforData.setFil,
+            setPdfUrl: bokforData.setPdfUrl,
+            setCurrentStep: bokforData.setCurrentStep,
+            onSubmit,
+          },
+        };
+      },
+    },
+    // Utility functions for ForvalKort
+    getCardClassName: (isHighlighted: boolean) => {
+      return `cursor-pointer p-6 mb-4 border-2 border-dashed rounded-lg transition-all duration-200 ${
+        isHighlighted
+          ? "border-blue-400 bg-blue-950/30 shadow-lg shadow-blue-500/20"
+          : "border-gray-600 bg-slate-800/50 hover:border-gray-500 hover:bg-slate-800/70"
+      }`;
+    },
+    formatKontoValue: (value: number | boolean | null | undefined) => {
+      if (!value || value === true) return "-";
+      if (typeof value === "number") return value.toLocaleString("sv-SE");
+      return "-";
     },
   };
 

@@ -3,8 +3,23 @@
 import { ForvalKortProps } from "../types/types";
 import { useBokforContext } from "./BokforProvider";
 
-export default function FörvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
-  const { getCardClassName, formatKontoValue } = useBokforContext();
+export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
+  const { state } = useBokforContext();
+
+  const getCardClassName = (isHighlighted: boolean) => {
+    return `cursor-pointer p-4 mb-4 border border-dashed rounded-lg transition-all duration-200 ${
+      isHighlighted
+        ? "border-gray-500 bg-slate-800"
+        : "border-gray-600 bg-slate-900 hover:border-gray-500 hover:bg-slate-800"
+    }`;
+  };
+
+  const formatKontoValue = (value: number | boolean | null | undefined) => {
+    if (value === true) return "✓";
+    if (value === false || value === null || value === undefined) return "-";
+    if (typeof value === "number") return value.toLocaleString("sv-SE");
+    return "-";
+  };
 
   // Skapa lokal state för denna komponent
   const kontonSökord = förval.konton?.map((k: any) => k.kontonummer).join(", ") || "";
