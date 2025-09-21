@@ -8,28 +8,15 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
+import { useBokforContext } from "../../BokforProvider";
 import { BanklanProps } from "../../../types/types";
 
-export default function Banklan({
-  mode,
-  belopp = null,
-  setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-}: BanklanProps) {
-  const giltigt = !!belopp && !!transaktionsdatum;
+export default function Banklan({ mode }: Pick<BanklanProps, "mode">) {
+  const { state, actions } = useBokforContext();
+  const giltigt = !!state.belopp && !!state.transaktionsdatum;
 
   function gåTillSteg3() {
-    const total = belopp ?? 0;
+    const total = state.belopp ?? 0;
 
     const extrafältObj = {
       "1930": {
@@ -44,32 +31,32 @@ export default function Banklan({
       },
     };
 
-    setExtrafält?.(extrafältObj);
-    setCurrentStep?.(3);
+    actions.setExtrafält?.(extrafältObj);
+    actions.setCurrentStep?.(3);
   }
 
   if (mode === "steg2") {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => actions.setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Banklån</h1>
           <div className="flex flex-col-reverse justify-between md:flex-row">
             <div className="w-full mb-10 md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
-                fil={fil}
-                setFil={setFil}
-                setPdfUrl={setPdfUrl}
-                setBelopp={setBelopp}
-                setTransaktionsdatum={setTransaktionsdatum}
+                fil={state.fil}
+                setFil={actions.setFil}
+                setPdfUrl={actions.setPdfUrl}
+                setBelopp={actions.setBelopp}
+                setTransaktionsdatum={actions.setTransaktionsdatum}
               />
 
               <TextFalt
                 label="Totalt lånebelopp"
                 name="total"
-                value={belopp ?? ""}
-                onChange={(e) => setBelopp(Number(e.target.value))}
+                value={state.belopp ?? ""}
+                onChange={(e) => actions.setBelopp(Number(e.target.value))}
                 required
               />
 
@@ -78,8 +65,8 @@ export default function Banklan({
               </label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(transaktionsdatum)}
-                onChange={(date) => setTransaktionsdatum(datePickerOnChange(date))}
+                selected={datePickerValue(state.transaktionsdatum)}
+                onChange={(date) => actions.setTransaktionsdatum(datePickerOnChange(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -88,8 +75,8 @@ export default function Banklan({
               <TextFalt
                 label="Kommentar"
                 name="kommentar"
-                value={kommentar ?? ""}
-                onChange={(e) => setKommentar?.(e.target.value)}
+                value={state.kommentar ?? ""}
+                onChange={(e) => actions.setKommentar?.(e.target.value)}
                 required={false}
               />
 
@@ -102,7 +89,7 @@ export default function Banklan({
               />
             </div>
 
-            <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />
+            <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
           </div>
         </div>
       </>
@@ -113,13 +100,13 @@ export default function Banklan({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
           <Steg3
             kontonummer="2350"
             kontobeskrivning="Banklån"
-            belopp={belopp ?? 0}
-            transaktionsdatum={transaktionsdatum ?? ""}
-            kommentar={kommentar ?? ""}
+            belopp={state.belopp ?? 0}
+            transaktionsdatum={state.transaktionsdatum ?? ""}
+            kommentar={state.kommentar ?? ""}
             valtFörval={{
               id: 0,
               namn: "Banklån",
@@ -131,8 +118,8 @@ export default function Banklan({
               specialtyp: "banklan",
               sökord: [],
             }}
-            setCurrentStep={setCurrentStep}
-            extrafält={extrafält}
+            setCurrentStep={actions.setCurrentStep}
+            extrafält={state.extrafält}
           />
         </div>
       </>

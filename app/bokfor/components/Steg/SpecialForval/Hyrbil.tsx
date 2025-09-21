@@ -5,35 +5,18 @@ import { formatSEK } from "../../../../_utils/format";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
 import TillbakaPil from "../../../../_components/TillbakaPil";
-import { HyrbilProps } from "../../../types/types";
+import { useBokforContext } from "../../BokforProvider";
 
 export default function Hyrbil({
   mode,
   renderMode = "standard",
-  belopp,
-  setBelopp,
-  transaktionsdatum,
-  setTransaktionsdatum,
-  kommentar,
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-  leverantör,
-  setLeverantör,
-  fakturanummer,
-  setFakturanummer,
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-}: HyrbilProps) {
+}: {
+  mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt";
+}) {
+  const { state, actions } = useBokforContext();
   // Beräkna korrekt för hyrbil: 50% av momsen är avdragsgill
-  const totalBelopp = Number(belopp ?? 0);
+  const totalBelopp = Number(state.belopp ?? 0);
   const fullMoms = (totalBelopp / 1.25) * 0.25; // Full moms (25%)
   const moms = +(fullMoms * 0.5).toFixed(2); // Endast 50% avdragsgill
   const netto = +(totalBelopp - moms).toFixed(2); // Resterande blir kostnad
@@ -41,26 +24,30 @@ export default function Hyrbil({
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-      : !!belopp && !!transaktionsdatum;
+      ? !!state.belopp &&
+        !!state.transaktionsdatum &&
+        !!state.leverantör &&
+        !!state.fakturanummer &&
+        !!state.fakturadatum
+      : !!state.belopp && !!state.transaktionsdatum;
 
   const gåTillSteg3 = () => {
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör
-      setExtrafält?.({
-        "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
+      actions.setExtrafält?.({
+        "2440": { label: "Leverantörsskulder", debet: 0, kredit: state.belopp ?? 0 },
         "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
         "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
       });
     } else {
       // Standard: Direkt betalning från företagskonto
-      setExtrafält?.({
-        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
+      actions.setExtrafält?.({
+        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: state.belopp ?? 0 },
         "5820": { label: "Hyrbilskostnader", debet: netto, kredit: 0 },
         "2640": { label: "Ingående moms", debet: moms, kredit: 0 },
       });
     }
-    setCurrentStep?.(3);
+    actions.setCurrentStep?.(3);
   };
 
   const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
@@ -68,27 +55,27 @@ export default function Hyrbil({
   if (mode === "steg2") {
     return (
       <Layout
-        belopp={belopp}
-        setBelopp={setBelopp}
-        transaktionsdatum={transaktionsdatum}
-        setTransaktionsdatum={setTransaktionsdatum}
-        kommentar={kommentar}
-        setKommentar={setKommentar}
-        fil={fil}
-        setFil={setFil}
-        pdfUrl={pdfUrl}
-        setPdfUrl={setPdfUrl}
+        belopp={state.belopp}
+        setBelopp={actions.setBelopp}
+        transaktionsdatum={state.transaktionsdatum}
+        setTransaktionsdatum={actions.setTransaktionsdatum}
+        kommentar={state.kommentar}
+        setKommentar={actions.setKommentar}
+        fil={state.fil}
+        setFil={actions.setFil}
+        pdfUrl={state.pdfUrl}
+        setPdfUrl={actions.setPdfUrl}
         isValid={giltigt}
         onSubmit={gåTillSteg3}
-        setCurrentStep={setCurrentStep}
-        leverantör={leverantör}
-        setLeverantör={setLeverantör}
-        fakturanummer={fakturanummer}
-        setFakturanummer={setFakturanummer}
-        fakturadatum={fakturadatum}
-        setFakturadatum={setFakturadatum}
-        förfallodatum={förfallodatum}
-        setFörfallodatum={setFörfallodatum}
+        setCurrentStep={actions.setCurrentStep}
+        leverantör={state.leverantör}
+        setLeverantör={actions.setLeverantör}
+        fakturanummer={state.fakturanummer || undefined}
+        setFakturanummer={actions.setFakturanummer}
+        fakturadatum={state.fakturadatum || undefined}
+        setFakturadatum={actions.setFakturadatum}
+        förfallodatum={state.förfallodatum || undefined}
+        setFörfallodatum={actions.setFörfallodatum}
         title="Hyrbil"
       ></Layout>
     );
@@ -98,13 +85,13 @@ export default function Hyrbil({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
           <Steg3
             kontonummer="5820"
             kontobeskrivning="Hyrbil"
-            belopp={belopp ?? 0}
-            transaktionsdatum={transaktionsdatum ?? ""}
-            kommentar={kommentar ?? ""}
+            belopp={state.belopp ?? 0}
+            transaktionsdatum={state.transaktionsdatum ?? ""}
+            kommentar={state.kommentar ?? ""}
             valtFörval={{
               id: 0,
               namn: "Hyrbil",
@@ -116,8 +103,8 @@ export default function Hyrbil({
               specialtyp: "hyrbil",
               sökord: [],
             }}
-            setCurrentStep={setCurrentStep}
-            extrafält={extrafält}
+            setCurrentStep={actions.setCurrentStep}
+            extrafält={state.extrafält}
           />
         </div>
       </>

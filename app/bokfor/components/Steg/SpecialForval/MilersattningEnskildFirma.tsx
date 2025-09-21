@@ -10,29 +10,17 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 import TillbakaPil from "../../../../_components/TillbakaPil";
+import { useBokforContext } from "../../BokforProvider";
 import { MilersattningEnskildFirmaProps } from "../../../types/types";
 
-export default function MilersattningEnskildFirma({
-  mode,
-  belopp = null,
-  setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-}: MilersattningEnskildFirmaProps) {
+export default function MilersattningEnskildFirma({ mode }: MilersattningEnskildFirmaProps) {
+  const { state, actions } = useBokforContext();
+
   const [mil, setMil] = useState("1");
   const [ersPerMil, setErsPerMil] = useState("25");
   const [biltyp, setBiltyp] = useState("Egen bil");
 
-  const giltigt = !!belopp && !!transaktionsdatum;
+  const giltigt = !!state.belopp && !!state.transaktionsdatum;
 
   function getSkattefriPerMil(biltyp: string): number {
     if (biltyp === "Egen bil") return 25;
@@ -70,26 +58,26 @@ export default function MilersattningEnskildFirma({
       },
     };
 
-    setExtrafält?.(extrafältData);
-    setBelopp(total);
-    setCurrentStep?.(3);
+    actions.setExtrafält?.(extrafältData);
+    actions.setBelopp(total);
+    actions.setCurrentStep?.(3);
   }
 
   if (mode === "steg2") {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => setCurrentStep?.(1)} />
+          <TillbakaPil onClick={() => actions.setCurrentStep?.(1)} />
 
           <h1 className="mb-6 text-3xl text-center">Steg 2: Milersättning</h1>
           <div className="flex flex-col-reverse justify-between max-w-5xl mx-auto px-4 md:flex-row">
             <div className="w-full md:w-[40%] bg-slate-900 border border-gray-700 rounded-xl p-6">
               <LaddaUppFil
-                fil={fil}
-                setFil={setFil}
-                setPdfUrl={setPdfUrl}
-                setTransaktionsdatum={setTransaktionsdatum}
-                setBelopp={setBelopp}
+                fil={state.fil}
+                setFil={actions.setFil}
+                setPdfUrl={actions.setPdfUrl}
+                setTransaktionsdatum={actions.setTransaktionsdatum}
+                setBelopp={actions.setBelopp}
               />
 
               <TextFalt
@@ -124,8 +112,8 @@ export default function MilersattningEnskildFirma({
               <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={ÅÅÅÅMMDDTillDate(transaktionsdatum ?? "")}
-                onChange={(date) => setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
+                selected={ÅÅÅÅMMDDTillDate(state.transaktionsdatum ?? "")}
+                onChange={(date) => actions.setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required
@@ -135,14 +123,14 @@ export default function MilersattningEnskildFirma({
                 name="kommentar"
                 label="Kommentar"
                 type="textarea"
-                value={kommentar ?? ""}
-                onChange={(e) => setKommentar?.(e.target.value)}
+                value={state.kommentar ?? ""}
+                onChange={(e) => actions.setKommentar?.(e.target.value)}
               />
 
               <Knapp fullWidth text="Bokför" onClick={gåTillSteg3} disabled={!giltigt} />
             </div>
 
-            <Forhandsgranskning fil={fil ?? null} pdfUrl={pdfUrl ?? null} />
+            <Forhandsgranskning fil={state.fil ?? null} pdfUrl={state.pdfUrl ?? null} />
           </div>
         </div>
       </>
@@ -153,13 +141,13 @@ export default function MilersattningEnskildFirma({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
           <Steg3
             kontonummer="7331"
             kontobeskrivning="Milersättning"
-            belopp={belopp ?? 0}
-            transaktionsdatum={transaktionsdatum ?? ""}
-            kommentar={kommentar ?? ""}
+            belopp={state.belopp ?? 0}
+            transaktionsdatum={state.transaktionsdatum ?? ""}
+            kommentar={state.kommentar ?? ""}
             valtFörval={{
               id: 0,
               namn: "Milersättning",
@@ -167,12 +155,8 @@ export default function MilersattningEnskildFirma({
               typ: "",
               kategori: "",
               konton: [],
-              momssats: 0,
-              specialtyp: "milersattningenskildfirma",
               sökord: [],
             }}
-            setCurrentStep={setCurrentStep}
-            extrafält={extrafält}
           />
         </div>
       </>

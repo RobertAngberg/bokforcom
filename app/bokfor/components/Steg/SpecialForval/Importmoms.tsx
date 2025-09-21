@@ -6,33 +6,16 @@ import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import TextFalt from "../../../../_components/TextFalt";
-import { ImportmomsProps } from "../../../types/types";
+import { useBokforContext } from "../../BokforProvider";
 
 export default function Importmoms({
   mode,
   renderMode = "standard",
-  belopp = null,
-  setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-  leverantör,
-  setLeverantör,
-  fakturanummer,
-  setFakturanummer,
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-}: ImportmomsProps) {
+}: {
+  mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt";
+}) {
+  const { state, actions } = useBokforContext();
   const [tull, setTull] = useState("");
   const [fiktiv, setFiktiv] = useState("");
   const [ovrigt, setOvrigt] = useState("");
@@ -40,14 +23,18 @@ export default function Importmoms({
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-      : !!belopp && !!transaktionsdatum;
+      ? !!state.belopp &&
+        !!state.transaktionsdatum &&
+        !!state.leverantör &&
+        !!state.fakturanummer &&
+        !!state.fakturadatum
+      : !!state.belopp && !!state.transaktionsdatum;
 
   function gåTillSteg3() {
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
-        "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
+        "2440": { label: "Leverantörsskulder", debet: 0, kredit: state.belopp ?? 0 },
         "2615": {
           label: "Utgående moms import av varor, 25%",
           debet: 0,
@@ -75,11 +62,11 @@ export default function Importmoms({
           kredit: 0,
         },
       };
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält?.(extrafältObj);
     } else {
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
-        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
+        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: state.belopp ?? 0 },
         "2615": {
           label: "Utgående moms import av varor, 25%",
           debet: 0,
@@ -107,10 +94,10 @@ export default function Importmoms({
           kredit: 0,
         },
       };
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält?.(extrafältObj);
     }
 
-    setCurrentStep?.(3);
+    actions.setCurrentStep?.(3);
   }
 
   const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
@@ -203,7 +190,7 @@ export default function Importmoms({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
         <Steg3 />
       </div>
     );

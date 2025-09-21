@@ -5,46 +5,33 @@ import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import InfoTooltip from "../../../../_components/InfoTooltip";
-import { ITtjansterEUProps } from "../../../types/types";
+import { useBokforContext } from "../../BokforProvider";
 
 export default function ITtjansterEU({
   mode,
   renderMode = "standard",
-  belopp = null,
-  setBelopp,
-  transaktionsdatum = "",
-  setTransaktionsdatum,
-  kommentar = "",
-  setKommentar,
-  setCurrentStep,
-  fil,
-  setFil,
-  pdfUrl,
-  setPdfUrl,
-  extrafält,
-  setExtrafält,
-  leverantör,
-  setLeverantör,
-  fakturanummer,
-  setFakturanummer,
-  fakturadatum,
-  setFakturadatum,
-  förfallodatum,
-  setFörfallodatum,
-}: ITtjansterEUProps) {
+}: {
+  mode: "steg2" | "steg3";
+  renderMode?: "standard" | "levfakt";
+}) {
+  const { state, actions } = useBokforContext();
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!belopp && !!transaktionsdatum && !!leverantör && !!fakturanummer && !!fakturadatum
-      : !!belopp && !!transaktionsdatum;
+      ? !!state.belopp &&
+        !!state.transaktionsdatum &&
+        !!state.leverantör &&
+        !!state.fakturanummer &&
+        !!state.fakturadatum
+      : !!state.belopp && !!state.transaktionsdatum;
 
   function gåTillSteg3() {
-    const moms = (belopp ?? 0) * 0.25;
+    const moms = (state.belopp ?? 0) * 0.25;
 
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör
       const extrafältObj = {
-        "2440": { label: "Leverantörsskulder", debet: 0, kredit: belopp ?? 0 },
+        "2440": { label: "Leverantörsskulder", debet: 0, kredit: state.belopp ?? 0 },
         "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
         "2645": {
           label: "Beräknad ingående moms på förvärv från utlandet",
@@ -53,25 +40,25 @@ export default function ITtjansterEU({
         },
         "4535": {
           label: "Inköp av tjänster från annat EU-land, 25 %",
-          debet: belopp ?? 0,
+          debet: state.belopp ?? 0,
           kredit: 0,
         },
         "4598": {
           label: "Justering, omvänd moms",
           debet: 0,
-          kredit: belopp ?? 0,
+          kredit: state.belopp ?? 0,
         },
         "6540": {
           label: "IT-tjänster",
-          debet: belopp ?? 0,
+          debet: state.belopp ?? 0,
           kredit: 0,
         },
       };
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält?.(extrafältObj);
     } else {
       // Standard: Direkt betalning från företagskonto
       const extrafältObj = {
-        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: belopp ?? 0 },
+        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: state.belopp ?? 0 },
         "2614": { label: "Utgående moms omvänd skattskyldighet, 25 %", debet: 0, kredit: moms },
         "2645": {
           label: "Beräknad ingående moms på förvärv från utlandet",
@@ -80,24 +67,24 @@ export default function ITtjansterEU({
         },
         "4535": {
           label: "Inköp av tjänster från annat EU-land, 25 %",
-          debet: belopp ?? 0,
+          debet: state.belopp ?? 0,
           kredit: 0,
         },
         "4598": {
           label: "Justering, omvänd moms",
           debet: 0,
-          kredit: belopp ?? 0,
+          kredit: state.belopp ?? 0,
         },
         "6540": {
           label: "IT-tjänster",
-          debet: belopp ?? 0,
+          debet: state.belopp ?? 0,
           kredit: 0,
         },
       };
-      setExtrafält?.(extrafältObj);
+      actions.setExtrafält?.(extrafältObj);
     }
 
-    setCurrentStep?.(3);
+    actions.setCurrentStep?.(3);
   }
 
   const Layout = renderMode === "levfakt" ? LevfaktLayout : StandardLayout;
@@ -105,27 +92,27 @@ export default function ITtjansterEU({
   if (mode === "steg2") {
     return (
       <Layout
-        belopp={belopp}
-        setBelopp={setBelopp}
-        transaktionsdatum={transaktionsdatum}
-        setTransaktionsdatum={setTransaktionsdatum}
-        kommentar={kommentar}
-        setKommentar={setKommentar}
-        fil={fil}
-        setFil={setFil}
-        pdfUrl={pdfUrl}
-        setPdfUrl={setPdfUrl}
+        belopp={state.belopp}
+        setBelopp={actions.setBelopp}
+        transaktionsdatum={state.transaktionsdatum}
+        setTransaktionsdatum={actions.setTransaktionsdatum}
+        kommentar={state.kommentar}
+        setKommentar={actions.setKommentar}
+        fil={state.fil}
+        setFil={actions.setFil}
+        pdfUrl={state.pdfUrl}
+        setPdfUrl={actions.setPdfUrl}
         isValid={giltigt}
         onSubmit={gåTillSteg3}
-        setCurrentStep={setCurrentStep}
-        leverantör={leverantör}
-        setLeverantör={setLeverantör}
-        fakturanummer={fakturanummer}
-        setFakturanummer={setFakturanummer}
-        fakturadatum={fakturadatum}
-        setFakturadatum={setFakturadatum}
-        förfallodatum={förfallodatum}
-        setFörfallodatum={setFörfallodatum}
+        setCurrentStep={actions.setCurrentStep}
+        leverantör={state.leverantör}
+        setLeverantör={actions.setLeverantör}
+        fakturanummer={state.fakturanummer || undefined}
+        setFakturanummer={actions.setFakturanummer}
+        fakturadatum={state.fakturadatum || undefined}
+        setFakturadatum={actions.setFakturadatum}
+        förfallodatum={state.förfallodatum || undefined}
+        setFörfallodatum={actions.setFörfallodatum}
         title="IT-tjänster EU"
       >
         {/* ITtjansterEU-specifikt innehåll */}
@@ -150,13 +137,13 @@ export default function ITtjansterEU({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
+        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
         <Steg3
           kontonummer="6540"
           kontobeskrivning="IT-tjänster EU"
-          belopp={belopp ?? 0}
-          transaktionsdatum={transaktionsdatum ?? ""}
-          kommentar={kommentar ?? ""}
+          belopp={state.belopp ?? 0}
+          transaktionsdatum={state.transaktionsdatum ?? ""}
+          kommentar={state.kommentar ?? ""}
           valtFörval={{
             id: 0,
             namn: "IT-tjänster EU",
@@ -168,8 +155,8 @@ export default function ITtjansterEU({
             specialtyp: "ITtjansterEU",
             sökord: [],
           }}
-          setCurrentStep={setCurrentStep}
-          extrafält={extrafält}
+          setCurrentStep={actions.setCurrentStep}
+          extrafält={state.extrafält}
         />
       </div>
     );
