@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { hämtaLönespecifikationer } from "../../../actions/lonespecarActions";
 import { hämtaUtlägg } from "../../../actions/utlaggActions";
 import LonespecList from "./LonespecList";
@@ -22,14 +22,8 @@ export default function Lonespecar({
   taBortLoading?: boolean;
   visaExtraRader?: boolean;
 }) {
-  const {
-    lönespecar,
-    setLonespecar,
-    extrarader,
-    setExtrarader,
-    beräknadeVärden,
-    setBeräknadeVärden,
-  } = useLonespec();
+  const { setLonespecar } = useLonespec();
+
   const [utlägg, setUtlägg] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,13 +52,6 @@ export default function Lonespecar({
       setLoading(false);
     }
   };
-
-  const handleBeräkningarUppdaterade = useCallback(
-    (lönespecId: string, beräkningar: any) => {
-      setBeräknadeVärden(lönespecId, beräkningar);
-    },
-    [setBeräknadeVärden]
-  );
 
   if (loading) {
     return <LoadingSpinner />;
