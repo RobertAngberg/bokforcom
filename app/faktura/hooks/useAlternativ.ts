@@ -90,7 +90,7 @@ function isKontantmetod(poster: BokforingsPost[]): boolean {
 }
 
 export function useAlternativ() {
-  const { formData, updateFormField } = useFakturaClient();
+  const { formData, updateFormField, setToast, toastState } = useFakturaClient();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
@@ -102,11 +102,6 @@ export function useAlternativ() {
     status_bokförd?: string;
     rot_rut_status?: string;
   }>({});
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Hämta användarens bokföringsmetod när komponenten laddas
   useEffect(() => {
@@ -161,7 +156,6 @@ export function useAlternativ() {
         setToast({
           message: "Faktura sparad!",
           type: "success",
-          isVisible: true,
         });
 
         // UPPDATERA FORMDATA MED NYTT ID!
@@ -176,7 +170,6 @@ export function useAlternativ() {
         setToast({
           message: "Kunde inte spara fakturan.",
           type: "error",
-          isVisible: true,
         });
       }
     } catch (error) {
@@ -184,7 +177,6 @@ export function useAlternativ() {
       setToast({
         message: "Kunde inte konvertera artiklar",
         type: "error",
-        isVisible: true,
       });
     } finally {
       console.log("🔍 hanteraSpara avslutar, sätter sparaLoading till false");
@@ -220,7 +212,6 @@ export function useAlternativ() {
             setToast({
               message: "Kunde inte spara fakturan innan bokföring.",
               type: "error",
-              isVisible: true,
             });
             return;
           }
@@ -228,7 +219,6 @@ export function useAlternativ() {
           setToast({
             message: "Kunde inte spara fakturan innan bokföring.",
             type: "error",
-            isVisible: true,
           });
           return;
         }
@@ -340,7 +330,6 @@ export function useAlternativ() {
         setToast({
           message: `Fakturan har sparats och bokförts!\n\n${message}`,
           type: "success",
-          isVisible: true,
         });
         // Uppdatera fakturasstatus
         const status = await hämtaFakturaStatus(parseInt(fakturaId));
@@ -350,7 +339,6 @@ export function useAlternativ() {
         setToast({
           message: `Bokföringsfel: ${error}`,
           type: "error",
-          isVisible: true,
         });
       }
     } catch (error) {
@@ -358,7 +346,6 @@ export function useAlternativ() {
       setToast({
         message: "Fel vid automatisk bokföring",
         type: "error",
-        isVisible: true,
       });
     }
   };
@@ -408,7 +395,6 @@ export function useAlternativ() {
       setToast({
         message: "Fakturanummer och personnummer krävs för HUS-fil",
         type: "error",
-        isVisible: true,
       });
       return;
     }
@@ -492,7 +478,6 @@ export function useAlternativ() {
       setToast({
         message: "Kunde inte uppdatera status",
         type: "error",
-        isVisible: true,
       });
     }
   };
@@ -575,7 +560,7 @@ export function useAlternativ() {
     bokförLoading,
     bokföringsmetod,
     fakturaStatus,
-    toast,
+    toast: toastState,
     formData,
 
     // Computed values

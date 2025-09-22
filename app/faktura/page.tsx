@@ -1,11 +1,9 @@
 import { FakturaProvider } from "./context/FakturaContext";
 import FakturaNavigation from "./components/FakturaNavigation";
-import {
-  hämtaFöretagsprofil,
-  hämtaSparadeKunder,
-  hämtaSparadeArtiklar,
-  hämtaSparadeFakturor,
-} from "./actions/fakturaActions";
+import { hämtaFöretagsprofil } from "./actions/foretagActions";
+import { hämtaSparadeKunder } from "./actions/kundActions";
+import { hämtaSparadeArtiklar } from "./actions/artikelActions";
+import { hämtaSparadeFakturor } from "./actions/fakturaActions";
 
 export default async function FakturaPage() {
   const [foretagsprofil, kunder, artiklar, sparadeFakturor] = await Promise.all([

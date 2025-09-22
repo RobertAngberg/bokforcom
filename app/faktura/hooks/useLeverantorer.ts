@@ -9,13 +9,10 @@ import {
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
 import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../actions/alternativActions";
-import {
-  hämtaFakturaMedRader,
-  hämtaSparadeFakturor,
-  hämtaFöretagsprofil,
-  hämtaSparadeKunder,
-  hämtaSparadeArtiklar,
-} from "../actions/fakturaActions";
+import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../actions/fakturaActions";
+import { hämtaFöretagsprofil } from "../actions/foretagActions";
+import { hämtaSparadeKunder } from "../actions/kundActions";
+import { hämtaSparadeArtiklar } from "../actions/artikelActions";
 import {
   betalaOchBokförLeverantörsfaktura,
   taBortLeverantörsfaktura,

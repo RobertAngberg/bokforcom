@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect } from "react";
 import { useFakturaContext } from "../context/FakturaContext";
-import { hämtaSparadeArtiklar, deleteFavoritArtikel } from "../actions/fakturaActions";
-import { sparaFavoritArtikel } from "../actions/artikelActions";
+import {
+  hämtaSparadeArtiklar,
+  deleteFavoritArtikel,
+  sparaFavoritArtikel,
+} from "../actions/artikelActions";
 
 // Types
 import type { FakturaFormData, NyArtikel, Artikel } from "../types/types";
@@ -251,22 +254,20 @@ export function useProdukterTjanster() {
   // Ladda favoritartikel till formuläret
   const laddaFavoritArtikel = useCallback(
     (artikel: any) => {
-      // Fyll i nyArtikel formuläret med data från favoritartikeln
-      setNyArtikel({
+      // Skapa artikel direkt och lägg till i fakturaraderna
+      const nyArtikelData: Artikel = {
         beskrivning: artikel.beskrivning || "",
-        antal: artikel.antal?.toString() || "1",
-        prisPerEnhet: artikel.prisPerEnhet?.toString() || "",
-        moms: artikel.moms?.toString() || "25",
+        antal: artikel.antal || 1,
+        prisPerEnhet: artikel.prisPerEnhet || 0,
+        moms: artikel.moms || 25,
         valuta: artikel.valuta || "SEK",
         typ: artikel.typ || "vara",
-      });
-
-      // Sätt state för att visa att en favoritartikel är vald
-      setProdukterTjansterState({
-        favoritArtikelVald: true,
         ursprungligFavoritId: artikel.id,
-        visaArtikelForm: true, // Visa formuläret så användaren kan se/redigera
-      });
+      };
+
+      // Lägg till artikeln direkt i fakturaraderna
+      const uppdateradeArtiklar = [...formData.artiklar, nyArtikelData];
+      setFormData({ artiklar: uppdateradeArtiklar });
 
       // Uppdatera också ROT/RUT data om det finns
       if (artikel.rotRutTyp) {
@@ -280,11 +281,11 @@ export function useProdukterTjanster() {
       }
 
       setToast({
-        message: `Favoritartikel "${artikel.beskrivning}" inladdad! 📌`,
+        message: `Favoritartikel "${artikel.beskrivning}" tillagd! 📌`,
         type: "success",
       });
     },
-    [setNyArtikel, setProdukterTjansterState, setFormData, setToast]
+    [formData.artiklar, setFormData, setToast]
   );
 
   // =============================================================================

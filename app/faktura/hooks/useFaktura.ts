@@ -14,15 +14,14 @@ import {
   hämtaNästaFakturanummer,
   saveInvoice,
   hämtaSparadeFakturor,
+  hämtaFakturaMedRader,
+} from "../actions/fakturaActions";
+import {
   hämtaFöretagsprofil,
   sparaFöretagsprofil,
   uploadLogoAction,
-  sparaNyKund,
-  deleteKund,
-  hämtaSparadeKunder,
-  uppdateraKund,
-  hämtaFakturaMedRader,
-} from "../actions/fakturaActions";
+} from "../actions/foretagActions";
+import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
 import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
 
 // Utils
