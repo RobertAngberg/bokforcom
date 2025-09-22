@@ -1,10 +1,10 @@
 //#region Huvud
 "use client";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
-import { useFaktura } from "../_hooks/useFaktura";
-import { SkickaEpostProps } from "../_types/types";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import { useForhandsgranskning } from "../../hooks/useForhandsgranskning";
+import { useFaktura } from "../../hooks/useFaktura";
+import { SkickaEpostProps } from "../types/types";
 //#endregion
 
 export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {

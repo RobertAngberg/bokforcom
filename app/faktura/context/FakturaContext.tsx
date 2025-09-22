@@ -12,7 +12,7 @@ import type {
   FakturaContextType,
   FakturaProviderProps,
   ToastState,
-} from "../_types/types";
+} from "../types/types";
 
 // Default values - samma som i Zustand store
 const defaultFormData: FakturaFormData = {

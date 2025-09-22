@@ -13,7 +13,7 @@ import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { safeAsync, logError, createError } from "../../_utils/errorUtils";
 import { withFormRateLimit } from "../../_utils/rateLimit";
-import { Artikel } from "../_types/types";
+import { Artikel } from "../types/types";
 
 // Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
 function safeParseFakturaJSON(jsonString: string): any[] {

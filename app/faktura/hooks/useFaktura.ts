@@ -7,7 +7,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
 
 // Context
-import { useFakturaContext } from "../_context/FakturaContext";
+import { useFakturaContext } from "../context/FakturaContext";
 
 // Actions
 import {
@@ -21,15 +21,15 @@ import {
   deleteKund,
   hämtaSparadeKunder,
   uppdateraKund,
-} from "../_actions/fakturaActions";
-import { hämtaSenasteBetalningsmetod } from "../_actions/alternativActions";
+} from "../actions/fakturaActions";
+import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
 
 // Utils
 import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";
 
 // Types
-import type { FakturaFormData, NyArtikel, KundStatus, KundSaveResponse } from "../_types/types";
+import type { FakturaFormData, NyArtikel, KundStatus, KundSaveResponse } from "../types/types";
 
 /**
  * Huvudhook för alla faktura-relaterade funktioner

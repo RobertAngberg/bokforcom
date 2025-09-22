@@ -6,20 +6,20 @@ import {
   deleteLeverantör,
   saveLeverantör,
   updateLeverantör,
-} from "../_actions/leverantorerActions";
-import { Leverantör } from "../_types/types";
-import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../_actions/alternativActions";
+} from "../actions/leverantorerActions";
+import { Leverantör } from "../types/types";
+import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../actions/alternativActions";
 import {
   hämtaFakturaMedRader,
   hämtaSparadeFakturor,
   hämtaFöretagsprofil,
   hämtaSparadeKunder,
   hämtaSparadeArtiklar,
-} from "../_actions/fakturaActions";
+} from "../actions/fakturaActions";
 import {
   betalaOchBokförLeverantörsfaktura,
   taBortLeverantörsfaktura,
-} from "../_actions/leverantorsfakturorActions";
+} from "../actions/leverantorsfakturorActions";
 import { formatSEK } from "../../_utils/format";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { stringTillDate } from "../../_utils/datum";
@@ -36,7 +36,7 @@ import {
   UseSparadeFakturorReturn,
   UseSparadeFakturorPageReturn,
   BokfordFaktura,
-} from "../_types/types";
+} from "../types/types";
 import { useFakturaClient } from "./useFaktura";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";

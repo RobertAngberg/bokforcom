@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "../../_components/Modal";
-import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../_actions/alternativActions";
-import Toast from "../../_components/Toast";
-import { RotRutBetalningModalProps } from "../_types/types";
+import Modal from "../../../../_components/Modal";
+import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../actions/alternativActions";
+import Toast from "../../../../_components/Toast";
+import { RotRutBetalningModalProps } from "../types/types";
 
 export default function RotRutBetalningModal({
   isOpen,

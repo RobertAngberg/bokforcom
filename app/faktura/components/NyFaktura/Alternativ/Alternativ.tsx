@@ -1,14 +1,14 @@
 //#region Huvud
 "use client";
 
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
 import ExporteraPDFKnapp from "./ExporteraPDFKnapp";
 import SkickaEpost from "./SkickaEpost";
 import BokforFakturaModal from "./BokforFakturaModal";
 import RotRutBetalningModal from "./RotRutBetalningModal";
-import { useAlternativ } from "../_hooks/useAlternativ";
-import { AlternativProps } from "../_types/types";
+import { useAlternativ } from "../../hooks/useAlternativ";
+import { AlternativProps } from "../types/types";
 
 export default function Alternativ({ onReload, onPreview }: AlternativProps) {
   const {

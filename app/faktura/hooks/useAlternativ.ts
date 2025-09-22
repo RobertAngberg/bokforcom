@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useFakturaClient } from "./useFaktura";
-import { saveInvoice, hämtaSparadeFakturor } from "../_actions/fakturaActions";
+import { saveInvoice, hämtaSparadeFakturor } from "../actions/fakturaActions";
 import {
   hämtaFakturaStatus,
   bokförFaktura,
   hämtaBokföringsmetod,
   uppdateraRotRutStatus,
   registreraRotRutBetalning,
-} from "../_actions/alternativActions";
+} from "../actions/alternativActions";
 import { laddaNerHUSFil } from "../Alternativ/husFilGenerator";
-import { BokforingsPost } from "../_types/types";
+import { BokforingsPost } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 
 // Validation functions - flyttad från useBokforFakturaModal

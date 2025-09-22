@@ -1,9 +1,9 @@
 "use client";
 
-import AnimeradFlik from "../../_components/AnimeradFlik";
+import AnimeradFlik from "../../../_components/AnimeradFlik";
 import BokfordaFakturor from "./BokfordaFakturor";
-import LoadingSpinner from "../../_components/LoadingSpinner";
-import { useBokfordaFakturorFlik } from "../_hooks/useLeverantorer";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
+import { useBokfordaFakturorFlik } from "../hooks/useLeverantorer";
 
 export default function BokfordaFakturorFlik() {
   const { fakturorAntal, loading } = useBokfordaFakturorFlik();

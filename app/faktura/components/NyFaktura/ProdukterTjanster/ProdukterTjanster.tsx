@@ -7,9 +7,9 @@ import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
 import RotRutForm from "./RotRutForm";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import Modal from "../../_components/Modal";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import Modal from "../../../../_components/Modal";
 
 export default function ProdukterTjanster() {
   const {

@@ -1,9 +1,9 @@
 "use client";
 
-import Toast from "../../_components/Toast";
-import { SparadeFakturorProps } from "../_types/types";
-import { useFaktura } from "../_hooks/useFaktura";
-import { useSparade } from "../_hooks/useSparade";
+import Toast from "../../../_components/Toast";
+import { SparadeFakturorProps } from "../types/types";
+import { useFaktura } from "../hooks/useFaktura";
+import { useSparade } from "../hooks/useSparade";
 
 export default function SparadeFakturor({
   fakturor,

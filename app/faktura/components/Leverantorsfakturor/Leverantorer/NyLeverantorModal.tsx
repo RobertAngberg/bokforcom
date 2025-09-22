@@ -1,10 +1,10 @@
 "use client";
 
-import Modal from "../../_components/Modal";
-import Knapp from "../../_components/Knapp";
-import TextFalt from "../../_components/TextFalt";
-import { NyLeverantorModalProps } from "../_types/types";
-import { useNyLeverantorModal } from "../_hooks/useLeverantorer";
+import Modal from "../../../../_components/Modal";
+import Knapp from "../../../../_components/Knapp";
+import TextFalt from "../../../../_components/TextFalt";
+import { NyLeverantorModalProps } from "../types/types";
+import { useNyLeverantorModal } from "../hooks/useLeverantorer";
 
 export default function NyLeverantorModal({
   isOpen,

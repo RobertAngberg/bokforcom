@@ -3,11 +3,11 @@
 import React from "react";
 import { formatSEK } from "../../_utils/format";
 import VerifikatModal from "./VerifikatModal";
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import Modal from "../../_components/Modal";
-import Tabell from "../../_components/Tabell";
-import { useBokfordaFakturor } from "../_hooks/useBokfordaFakturor";
+import Knapp from "../../../_components/Knapp";
+import Toast from "../../../_components/Toast";
+import Modal from "../../../_components/Modal";
+import Tabell from "../../../_components/Tabell";
+import { useBokfordaFakturor } from "../hooks/useBokfordaFakturor";
 
 export default function BokfordaFakturor() {
   const {

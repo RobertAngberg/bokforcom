@@ -7,7 +7,7 @@ import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
 } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-import { BokföringsPost, BokförFakturaData } from "../_types/types";
+import { BokföringsPost, BokförFakturaData } from "../types/types";
 
 export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   status_betalning?: string;

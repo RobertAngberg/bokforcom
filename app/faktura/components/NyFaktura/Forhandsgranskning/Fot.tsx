@@ -1,7 +1,7 @@
 //#region Huvud
 "use client";
 
-import { FotProps } from "../_types/types";
+import { FotProps } from "../types/types";
 //#endregion
 
 export default function Fot({ formData, session }: FotProps) {

@@ -1,10 +1,10 @@
 "use client";
 
-import Knapp from "../../_components/Knapp";
-import Dropdown from "../../_components/Dropdown";
-import TextFalt from "../../_components/TextFalt";
-import Toast from "../../_components/Toast";
-import { useKundUppgifter } from "../_hooks/useKundUppgifter";
+import Knapp from "../../../_components/Knapp";
+import Dropdown from "../../../_components/Dropdown";
+import TextFalt from "../../../_components/TextFalt";
+import Toast from "../../../_components/Toast";
+import { useKundUppgifter } from "../../hooks/useKundUppgifter";
 
 export default function KundUppgifter() {
   const {

@@ -1,8 +1,8 @@
 "use client";
 
-import Modal from "../../_components/Modal";
-import Knapp from "../../_components/Knapp";
-import { BekraftaBorttagnngModalProps } from "../_types/types";
+import Modal from "../../../../_components/Modal";
+import Knapp from "../../../../_components/Knapp";
+import { BekraftaBorttagnngModalProps } from "../types/types";
 
 export default function BekraftaBorttagnngModal({
   isOpen,

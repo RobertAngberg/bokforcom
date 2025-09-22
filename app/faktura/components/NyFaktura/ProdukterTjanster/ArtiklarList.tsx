@@ -1,4 +1,4 @@
-import { useFaktura } from "../_hooks/useFaktura";
+import { useFaktura } from "../../hooks/useFaktura";
 
 export default function ArtiklarList() {
   const { formData, produkterTjansterState, taBortArtikel } = useFaktura();

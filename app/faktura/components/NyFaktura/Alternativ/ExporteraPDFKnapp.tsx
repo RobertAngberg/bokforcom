@@ -1,10 +1,10 @@
 "use client";
 
-import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
-import { ExporteraPDFKnappProps } from "../_types/types";
-import { useFaktura } from "../_hooks/useFaktura";
-import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
+import Knapp from "../../../../_components/Knapp";
+import Toast from "../../../../_components/Toast";
+import { ExporteraPDFKnappProps } from "../types/types";
+import { useFaktura } from "../../hooks/useFaktura";
+import { useForhandsgranskning } from "../../hooks/useForhandsgranskning";
 
 export default function ExporteraPDFKnapp({
   disabled = false,

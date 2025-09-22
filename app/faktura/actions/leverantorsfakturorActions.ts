@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-import { Leverantör } from "../_types/types";
+import { Leverantör } from "../types/types";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const userId = await getUserId();

@@ -1,5 +1,5 @@
-import Knapp from "../../_components/Knapp";
-import { useFaktura } from "../_hooks/useFaktura";
+import Knapp from "../../../../_components/Knapp";
+import { useFaktura } from "../../hooks/useFaktura";
 
 export default function FavoritArtiklarList() {
   const { produkterTjansterState, setShowFavoritArtiklar } = useFaktura();

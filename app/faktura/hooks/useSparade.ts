@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { deleteFaktura } from "../_actions/fakturaActions";
+import { deleteFaktura } from "../actions/fakturaActions";
 
 /**
  * Hook för hantering av sparade fakturor

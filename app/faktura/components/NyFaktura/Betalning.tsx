@@ -3,8 +3,8 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useBetalning } from "../_hooks/useBetalning";
-import { BetalningProps } from "../_types/types";
+import { useBetalning } from "../../hooks/useBetalning";
+import { BetalningProps } from "../types/types";
 //#endregion
 
 export default function Betalning({}: BetalningProps) {

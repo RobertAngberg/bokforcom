@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useFakturaContext } from "../_context/FakturaContext";
+import { useFakturaContext } from "../context/FakturaContext";
 import { generatePDFFromElement, generatePDFAsBase64 } from "../Alternativ/pdfGenerator";
 
 // Types
-import type { ForhandsgranskningCalculations, SkickaEpostProps } from "../_types/types";
+import type { ForhandsgranskningCalculations, SkickaEpostProps } from "../types/types";
 
 /**
  * Hook för förhandsgranskning, beräkningar och PDF/email funktionalitet

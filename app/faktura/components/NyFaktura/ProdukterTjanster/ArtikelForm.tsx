@@ -1,5 +1,5 @@
-import TextFalt from "../../_components/TextFalt";
-import type { ArtikelFormProps } from "../_types/types";
+import TextFalt from "../../../../_components/TextFalt";
+import type { ArtikelFormProps } from "../types/types";
 
 export default function ArtikelForm({
   beskrivning,

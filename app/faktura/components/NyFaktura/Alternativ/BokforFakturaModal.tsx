@@ -1,11 +1,11 @@
 "use client";
 
-import Tabell from "../../_components/Tabell";
-import Modal from "../../_components/Modal";
-import Toast from "../../_components/Toast";
-import { useBokforFakturaModal } from "../_hooks/useAlternativ";
-import { useFakturaClient } from "../_hooks/useFaktura";
-import { BokforFakturaModalProps } from "../_types/types";
+import Tabell from "../../../../_components/Tabell";
+import Modal from "../../../../_components/Modal";
+import Toast from "../../../../_components/Toast";
+import { useBokforFakturaModal } from "../../hooks/useAlternativ";
+import { useFakturaClient } from "../../hooks/useFaktura";
+import { BokforFakturaModalProps } from "../types/types";
 
 export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaModalProps) {
   const { clearToast } = useFakturaClient();

@@ -1,12 +1,12 @@
 "use client";
 
-import MainLayout from "../../_components/MainLayout";
-import TillbakaPil from "../../_components/TillbakaPil";
+import MainLayout from "../../../_components/MainLayout";
+import TillbakaPil from "../../../_components/TillbakaPil";
 import LeverantorFlik from "../Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
-import { useLeverantörer } from "../_hooks/useLeverantorer";
-import { useLeverantorNavigation } from "../_hooks/useLeverantorer";
-import { FakturaProvider } from "../_context/FakturaContext";
+import { useLeverantörer } from "../hooks/useLeverantorer";
+import { useLeverantorNavigation } from "../hooks/useLeverantorer";
+import { FakturaProvider } from "../context/FakturaContext";
 
 export default function LeverantorsfakturorPage() {
   const { refresh } = useLeverantörer();

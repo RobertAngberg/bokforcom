@@ -1,12 +1,12 @@
 "use client";
 
-import { useFaktura } from "../_hooks/useFaktura";
-import TextFalt from "../../_components/TextFalt";
+import { useFaktura } from "../../hooks/useFaktura";
+import TextFalt from "../../../../_components/TextFalt";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import type { RotRutFormProps } from "../_types/types";
+import type { RotRutFormProps } from "../types/types";
 registerLocale("sv", sv);
 
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {

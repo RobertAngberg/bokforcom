@@ -2,8 +2,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useFaktura } from "../_hooks/useFaktura";
-import { useForhandsgranskning } from "../_hooks/useForhandsgranskning";
+import { useFaktura } from "../../hooks/useFaktura";
+import { useForhandsgranskning } from "../../hooks/useForhandsgranskning";
 import { useSession } from "next-auth/react";
 import BetalningsInfo from "./BetalningsInfo";
 import RotRutInfo from "./RotRutInfo";

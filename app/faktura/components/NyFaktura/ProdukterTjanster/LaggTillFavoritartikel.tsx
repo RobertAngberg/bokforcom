@@ -1,4 +1,4 @@
-import type { LäggTillFavoritartikelProps } from "../_types/types";
+import type { LäggTillFavoritartikelProps } from "../types/types";
 
 export default function LäggTillFavoritartikel({
   checked,

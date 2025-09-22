@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-import { Artikel } from "../_types/types";
+import { Artikel } from "../types/types";
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
   const userId = await getUserId();
