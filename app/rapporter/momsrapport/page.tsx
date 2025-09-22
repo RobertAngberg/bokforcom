@@ -1,194 +1,111 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useSession } from "next-auth/react";
 import MainLayout from "../../_components/MainLayout";
 import Tabell, { ColumnDefinition } from "../../_components/Tabell";
 import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
-import { getMomsrapport, fetchFöretagsprofil } from "./actions";
-
-type MomsRad = {
-  fält: string;
-  beskrivning: string;
-  belopp: number;
-};
+import { useMomsrapport, type MomsRad } from "../hooks/useMomsrapport";
 
 export default function Page() {
-  //#region State
-  const [initialData, setInitialData] = useState<MomsRad[]>([]);
-  const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
-  const [företagsnamn, setFöretagsnamn] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const { data: sessionData, status: sessionStatus } = useSession();
 
-  const [år, setÅr] = useState("2025");
-  const [activeId, setActiveId] = useState<string | number | null>(null);
-  //#endregion
+  // Använd hook för all state management
+  const {
+    loading,
+    error,
+    år,
+    setÅr,
+    årLista,
+    exportMessage,
+    isExportingPDF,
+    isExportingCSV,
+    isExportingXML,
+    exportXML,
+    exportPDF,
+    exportCSV,
+    fullData,
+    ärKorrekt,
+    momsAttBetalaEllerFaTillbaka,
+    ruta49,
+  } = useMomsrapport();
 
-  //#region Constants
-  const årLista = ["2023", "2024", "2025"];
-  //#endregion
-
-  // Ladda data när komponenten mountas
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [momsData, profilData] = await Promise.all([
-          getMomsrapport("2025"),
-          fetchFöretagsprofil(),
-        ]);
-
-        setInitialData(momsData || []);
-        setOrganisationsnummer(profilData?.organisationsnummer ?? "");
-        setFöretagsnamn(profilData?.företagsnamn ?? "");
-      } catch (error) {
-        console.error("Fel vid laddning av momsdata:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Om data fortfarande laddas
-  if (loading) {
+  // Session loading
+  if (sessionStatus === "loading") {
     return (
       <MainLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-white">Laddar momsrapport...</div>
+        <div className="mx-auto max-w-7xl px-4 text-white">
+          <h1 className="mb-6 text-3xl font-bold">Momsrapport</h1>
+          <div className="flex h-40 items-center justify-center">
+            <p>Verifierar session...</p>
+          </div>
         </div>
       </MainLayout>
     );
   }
 
-  //#region Helper Functions
-  const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
-  const sum = (...fält: string[]) => fält.reduce((acc, f) => acc + get(f), 0);
+  // Session check
+  if (!sessionData?.user) {
+    return (
+      <MainLayout>
+        <div className="mx-auto max-w-7xl px-4 text-white">
+          <h1 className="mb-6 text-3xl font-bold">Momsrapport</h1>
+          <div className="flex h-40 items-center justify-center">
+            <p>Du måste vara inloggad för att se denna sida</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
-  const generateXML = () => {
-    // Mapping från fält till XML-taggar enligt Skatteverkets specifikation
-    const fieldMapping: { [key: string]: string } = {
-      "05": "ForsMomsEjAnnan",
-      "06": "UttagMoms",
-      "07": "UlagMargbesk",
-      "08": "HyrinkomstFriv",
-      "10": "MomsUtgHog",
-      "11": "MomsUtgMedel",
-      "12": "MomsUtgLag",
-      "20": "InkopVaruAnnatEg",
-      "21": "InkopTjanstAnnatEg",
-      "22": "InkopTjanstUtomEg",
-      "23": "InkopVaruSverige",
-      "24": "InkopTjanstSverige",
-      "30": "MomsInkopUtgHog",
-      "31": "MomsInkopUtgMedel",
-      "32": "MomsInkopUtgLag",
-      "35": "ForsVaruAnnatEg",
-      "36": "ForsVaruUtomEg",
-      "37": "InkopVaruMellan3p",
-      "38": "ForsVaruMellan3p",
-      "39": "ForsTjSkskAnnatEg",
-      "40": "ForsTjOvrUtomEg",
-      "41": "ForsKopareSkskSverige",
-      "42": "ForsOvrigt",
-      "48": "MomsIngAvdr",
-      "49": "MomsBetala",
-      "50": "MomsUlagImport",
-      "60": "MomsImportUtgHog",
-      "61": "MomsImportUtgMedel",
-      "62": "MomsImportUtgLag",
-    };
+  // Error handling
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="mx-auto max-w-7xl px-4 text-white">
+          <h1 className="mb-6 text-3xl font-bold">Momsrapport</h1>
+          <div className="flex h-40 items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-400 mb-2">Fel vid laddning av data</p>
+              <p className="text-sm text-gray-300">{error}</p>
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
-    // Formatera period för hela året
-    const period = `${år}12`; // Hela året = sista månaden
+  // Data loading
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="mx-auto max-w-7xl px-4 text-white">
+          <h1 className="mb-6 text-3xl font-bold">Momsrapport</h1>
+          <div className="flex h-40 items-center justify-center">
+            <p>Laddar momsrapport...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
-    // Bygg XML-struktur med Bokio's format
-    let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-    xml +=
-      '<!DOCTYPE eSKDUpload PUBLIC "-//Skatteverket, Sweden//DTD Skatteverket eSKDUpload-DTD Version 6.0//SV" "https://www.skatteverket.se/download/18.3f4496fd14864cc5ac99cb1/1415022101213/eSKDUpload_6p0.dtd">\n';
-    xml += '<eSKDUpload Version="6.0">\n';
-    xml += `  <OrgNr>${organisationsnummer || "XXXXXX-XXXX"}</OrgNr>\n`;
-    xml += "  <Moms>\n";
-    xml += `    <Period>${period}</Period>\n`;
-
-    // Lägg till alla fält som har värden != 0 med proper indentation
-    Object.entries(fieldMapping).forEach(([fältNr, xmlTag]) => {
-      const värde = get(fältNr);
-      if (värde !== 0) {
-        // Formatera som heltal enligt Skatteverkets krav
-        const belopp = Math.round(värde);
-        xml += `    <${xmlTag}>${belopp}</${xmlTag}>\n`;
-      }
-    });
-
-    xml += "  </Moms>\n";
-    xml += "</eSKDUpload>";
-
-    return xml;
-  };
-
-  const exportXML = () => {
-    const xmlContent = generateXML();
-    const blob = new Blob([xmlContent], { type: "application/xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `momsdeklaration_${år}.xml`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-  //#endregion
-
-  //#region Calculations
-  const ruta49 = get("49");
-  const utgåendeMoms = sum("10", "11", "12", "30", "31", "32", "60", "61", "62");
-  const ingåendeMoms = get("48");
-  const momsAttBetalaEllerFaTillbaka = utgåendeMoms - ingåendeMoms;
-  const diff = Math.abs(momsAttBetalaEllerFaTillbaka - ruta49);
-  const ärKorrekt = diff < 1;
-  //#endregion
-
-  //#region Data Configuration
-  const fullData: MomsRad[] = [
-    { fält: "05", beskrivning: "Momspliktig försäljning", belopp: get("05") },
-    { fält: "06", beskrivning: "Momspliktiga uttag", belopp: get("06") },
-    { fält: "07", beskrivning: "Vinstmarginalbeskattning", belopp: get("07") },
-    { fält: "08", beskrivning: "Hyresinkomster med frivillig moms", belopp: get("08") },
-    { fält: "10", beskrivning: "Utgående moms 25%", belopp: get("10") },
-    { fält: "11", beskrivning: "Utgående moms 12%", belopp: get("11") },
-    { fält: "12", beskrivning: "Utgående moms 6%", belopp: get("12") },
-    { fält: "20", beskrivning: "Inköp varor från annat EU-land", belopp: get("20") },
-    { fält: "21", beskrivning: "Inköp tjänster från EU-land", belopp: get("21") },
-    { fält: "22", beskrivning: "Inköp tjänster från utanför EU", belopp: get("22") },
-    { fält: "23", beskrivning: "Inköp varor i Sverige (omv moms)", belopp: get("23") },
-    { fält: "24", beskrivning: "Inköp tjänster i Sverige (omv moms)", belopp: get("24") },
-    { fält: "30", beskrivning: "Utgående moms 25% (omv moms)", belopp: get("30") },
-    { fält: "31", beskrivning: "Utgående moms 12% (omv moms)", belopp: get("31") },
-    { fält: "32", beskrivning: "Utgående moms 6% (omv moms)", belopp: get("32") },
-    { fält: "50", beskrivning: "Beskattningsunderlag import", belopp: get("50") },
-    { fält: "60", beskrivning: "Utgående moms 25% (import)", belopp: get("60") },
-    { fält: "61", beskrivning: "Utgående moms 12% (import)", belopp: get("61") },
-    { fält: "62", beskrivning: "Utgående moms 6% (import)", belopp: get("62") },
-    { fält: "35", beskrivning: "Varuförsäljning till EU-land", belopp: get("35") },
-    { fält: "36", beskrivning: "Export varor utanför EU", belopp: get("36") },
-    { fält: "37", beskrivning: "3-partshandel inköp", belopp: get("37") },
-    { fält: "38", beskrivning: "3-partshandel försäljning", belopp: get("38") },
-    { fält: "39", beskrivning: "Tjänst till EU (huvudregel)", belopp: get("39") },
-    { fält: "40", beskrivning: "Tjänst till utanför EU", belopp: get("40") },
-    { fält: "41", beskrivning: "Försäljning med omv moms", belopp: get("41") },
-    { fält: "42", beskrivning: "Övrigt momsundantaget", belopp: get("42") },
-    { fält: "48", beskrivning: "Ingående moms att dra av", belopp: get("48") },
-    { fält: "49", beskrivning: "Moms att betala eller få tillbaka", belopp: ruta49 },
-  ];
-
+  // Columns definition for table
   const columns: ColumnDefinition<MomsRad>[] = [
-    { key: "fält", label: "Fält" },
-    { key: "beskrivning", label: "Beskrivning" },
+    {
+      key: "fält",
+      label: "Fält",
+      className: "w-16 text-center",
+    },
+    {
+      key: "beskrivning",
+      label: "Beskrivning",
+      className: "min-w-0",
+    },
     {
       key: "belopp",
       label: "Belopp",
+      className: "w-32 text-right",
       render: (_val, row) => {
         const ärRuta49 = row.fält === "49";
         const klass = ärRuta49
@@ -199,98 +116,249 @@ export default function Page() {
               : "text-green-600 font-bold"
           : "";
 
-        const beloppAbsolut = Math.abs(row.belopp);
-
-        return row.belopp === 0 ? (
-          <span className="text-gray-400">–</span>
-        ) : (
-          <div className={klass}>
-            <span>{beloppAbsolut.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</span>
-            {ärRuta49 && (
-              <div className="text-sm text-gray-400 mt-1">
-                {row.belopp < 0 ? "Du får tillbaka moms" : "Du ska betala moms"}
-              </div>
-            )}
-          </div>
+        return (
+          <span className={klass}>
+            {new Intl.NumberFormat("sv-SE", {
+              style: "currency",
+              currency: "SEK",
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }).format(row.belopp)}
+          </span>
         );
       },
     },
   ];
 
-  const spawnaBlock = (titel: string, fält: string[]) => (
-    <div className="min-w-[49%] px-2">
-      <h2 className="font-bold mb-2 text-white">{titel}</h2>
-      <Tabell
-        data={fullData.filter((rad) => fält.includes(rad.fält))}
-        columns={columns}
-        getRowId={(rad) => rad.fält}
-        activeId={activeId}
-        handleRowClick={(id) => setActiveId(id)}
-      />
-    </div>
-  );
-  //#endregion
+  // Block generator helper function
+  const spawnaBlock = (titel: string, fält: string[]) => {
+    const data = fullData.filter((rad) => fält.includes(rad.fält));
+
+    return (
+      <div className="w-full md:w-1/2 px-2">
+        <h3 className="text-lg font-semibold text-white mb-3">{titel}</h3>
+
+        {/* Custom table for better control */}
+        <div className="overflow-hidden border border-slate-700 rounded-lg">
+          <table className="w-full text-sm border-collapse table-fixed">
+            <thead className="bg-slate-800">
+              <tr>
+                <th className="w-16 px-4 py-3 text-center text-left">Fält</th>
+                <th className="px-4 py-3 text-left">Beskrivning</th>
+                <th className="w-32 px-4 py-3 text-right">Belopp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((rad, index) => {
+                const ärRuta49 = rad.fält === "49";
+                const klass = ärRuta49
+                  ? !ärKorrekt
+                    ? "text-orange-500 font-bold"
+                    : momsAttBetalaEllerFaTillbaka > 0
+                      ? "text-orange-500 font-bold"
+                      : "text-green-600 font-bold"
+                  : "";
+
+                const rowColorClass = index % 2 === 0 ? "bg-gray-950" : "bg-gray-900";
+
+                return (
+                  <tr key={rad.fält} className={rowColorClass}>
+                    <td className="px-4 py-3 text-center">{rad.fält}</td>
+                    <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
+                    <td className={`px-4 py-3 text-right ${klass}`}>
+                      {new Intl.NumberFormat("sv-SE", {
+                        style: "currency",
+                        currency: "SEK",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(rad.belopp)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <MainLayout>
-      <div className="px-4">
-        {!ärKorrekt && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded">
-            ⚠️ Momsrapporten stämmer inte! <br />
-            Beräknat belopp:{" "}
-            {momsAttBetalaEllerFaTillbaka.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
-            <br />
-            Ruta 49 innehåller: {ruta49.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+      <div className="mx-auto max-w-7xl px-4 text-white">
+        {/* Header Section */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-4">Momsrapport</h1>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Dropdown
+                value={år}
+                onChange={(value) => setÅr(value)}
+                options={årLista.map((year) => ({ value: year, label: year }))}
+                className="w-24"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Knapp
+                text={isExportingXML ? "Exporterar..." : "Exportera XML"}
+                onClick={exportXML}
+                disabled={isExportingXML}
+              />
+
+              <Knapp
+                text={isExportingPDF ? "Exporterar..." : "Exportera PDF"}
+                onClick={exportPDF}
+                disabled={isExportingPDF}
+              />
+
+              <Knapp
+                text={isExportingCSV ? "Exporterar..." : "Exportera CSV"}
+                onClick={exportCSV}
+                disabled={isExportingCSV}
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Export Message */}
+        {exportMessage && (
+          <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
         )}
 
-        <h1 className="text-2xl font-bold text-center mb-8">Momsrapport för {år}</h1>
+        {/* Main Content */}
+        <div id="momsrapport-print-area" className="space-y-6">
+          {/* Validation Message */}
+          {!ärKorrekt && (
+            <div className="mb-4 rounded bg-orange-600 p-3 text-white">
+              ⚠️ Avvikelse upptäckt: Ruta 49 ({ruta49.toLocaleString("sv-SE")}) stämmer inte överens
+              med beräkningen ({momsAttBetalaEllerFaTillbaka.toLocaleString("sv-SE")})
+            </div>
+          )}
 
-        <div className="flex justify-between items-center mb-8">
-          <Dropdown
-            value={år}
-            onChange={setÅr}
-            placeholder="Välj år"
-            options={årLista.map((y) => ({ label: y, value: y }))}
-            className="w-32"
-          />
-
-          <div className="flex gap-3">
-            <Knapp text="Exportera XML" onClick={exportXML} />
+          {/* Content Blocks */}
+          <div className="flex flex-col md:flex-row gap-6 mb-10">
+            {spawnaBlock("A. Momspliktig försäljning eller uttag exkl. moms", [
+              "05",
+              "06",
+              "07",
+              "08",
+            ])}
+            {spawnaBlock("B. Utgående moms på försäljning", ["10", "11", "12"])}
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-6 mb-10">
-          {spawnaBlock("A. Momspliktig försäljning eller uttag exkl. moms", [
-            "05",
-            "06",
-            "07",
-            "08",
-          ])}
-          {spawnaBlock("B. Utgående moms på försäljning", ["10", "11", "12"])}
-        </div>
-        <div className="flex flex-col md:flex-row gap-6 mb-10">
-          {spawnaBlock("C. Inkomster med omvänd moms", ["20", "21", "22", "23", "24"])}
-          {spawnaBlock("D. Utgående moms omvänd", ["30", "31", "32"])}
-        </div>
-        <div className="flex flex-col md:flex-row gap-6 mb-10">
-          {spawnaBlock("H. Import", ["50"])}
-          {spawnaBlock("I. Utgående moms import", ["60", "61", "62"])}
-        </div>
-        <div className="flex flex-col md:flex-row gap-6 mb-10">
-          {spawnaBlock("E. Momsfri försäljning och export", [
-            "35",
-            "36",
-            "37",
-            "38",
-            "39",
-            "40",
-            "41",
-            "42",
-          ])}
-          <div className="w-full md:w-1/2 px-2 flex flex-col gap-6">
-            {spawnaBlock("F. Ingående moms", ["48"])}
-            {spawnaBlock("G. Moms att betala eller få tillbaka", ["49"])}
+          <div className="flex flex-col md:flex-row gap-6 mb-10">
+            {spawnaBlock("C. Inkomster med omvänd moms", ["20", "21", "22", "23", "24"])}
+            {spawnaBlock("D. Utgående moms omvänd", ["30", "31", "32"])}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6 mb-10">
+            {spawnaBlock("H. Import", ["50"])}
+            {spawnaBlock("I. Utgående moms import", ["60", "61", "62"])}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6 mb-10">
+            {spawnaBlock("E. Momsfri försäljning och export", [
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40",
+              "41",
+              "42",
+            ])}
+            <div className="w-full md:w-1/2 flex flex-col gap-6">
+              <div className="px-2">
+                <h3 className="text-lg font-semibold text-white mb-3">F. Ingående moms</h3>
+
+                {/* Custom table for F section */}
+                <div className="overflow-hidden border border-slate-700 rounded-lg">
+                  <table className="w-full text-sm border-collapse table-fixed">
+                    <thead className="bg-slate-800">
+                      <tr>
+                        <th className="w-16 px-4 py-3 text-center">Fält</th>
+                        <th className="px-4 py-3 text-left">Beskrivning</th>
+                        <th className="w-32 px-4 py-3 text-right">Belopp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fullData
+                        .filter((rad) => ["48"].includes(rad.fält))
+                        .map((rad, index) => {
+                          const rowColorClass = index % 2 === 0 ? "bg-gray-950" : "bg-gray-900";
+
+                          return (
+                            <tr key={rad.fält} className={rowColorClass}>
+                              <td className="px-4 py-3 text-center">{rad.fält}</td>
+                              <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
+                              <td className="px-4 py-3 text-right">
+                                {new Intl.NumberFormat("sv-SE", {
+                                  style: "currency",
+                                  currency: "SEK",
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                }).format(rad.belopp)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="px-2">
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  G. Moms att betala eller få tillbaka
+                </h3>
+
+                {/* Custom table for G section */}
+                <div className="overflow-hidden border border-slate-700 rounded-lg">
+                  <table className="w-full text-sm border-collapse table-fixed">
+                    <thead className="bg-slate-800">
+                      <tr>
+                        <th className="w-16 px-4 py-3 text-center">Fält</th>
+                        <th className="px-4 py-3 text-left">Beskrivning</th>
+                        <th className="w-32 px-4 py-3 text-right">Belopp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fullData
+                        .filter((rad) => ["49"].includes(rad.fält))
+                        .map((rad, index) => {
+                          const ärRuta49 = rad.fält === "49";
+                          const klass = ärRuta49
+                            ? !ärKorrekt
+                              ? "text-orange-500 font-bold"
+                              : momsAttBetalaEllerFaTillbaka > 0
+                                ? "text-orange-500 font-bold"
+                                : "text-green-600 font-bold"
+                            : "";
+
+                          const rowColorClass = index % 2 === 0 ? "bg-gray-950" : "bg-gray-900";
+
+                          return (
+                            <tr key={rad.fält} className={rowColorClass}>
+                              <td className="px-4 py-3 text-center">{rad.fält}</td>
+                              <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
+                              <td className={`px-4 py-3 text-right ${klass}`}>
+                                {new Intl.NumberFormat("sv-SE", {
+                                  style: "currency",
+                                  currency: "SEK",
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                }).format(rad.belopp)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
