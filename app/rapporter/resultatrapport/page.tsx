@@ -12,42 +12,22 @@ import Modal from "../../_components/Modal";
 import { formatSEK } from "../../_utils/format";
 import jsPDF from "jspdf";
 import { hamtaResultatrapport, fetchFöretagsprofil } from "./actions";
-
-type Konto = {
-  kontonummer: string;
-  beskrivning: string;
-  transaktioner?: Array<{
-    id: string;
-    datum: string;
-    belopp: number;
-    beskrivning: string;
-    transaktion_id: number;
-    verifikatNummer: string;
-  }>;
-  [year: string]: number | string | undefined | Array<any>;
-};
-
-type KontoRad = {
-  namn: string;
-  konton: Konto[];
-  summering: { [year: string]: number };
-};
-
-type ResultatData = {
-  intakter: KontoRad[];
-  rorelsensKostnader: KontoRad[];
-  finansiellaIntakter?: KontoRad[];
-  finansiellaKostnader: KontoRad[];
-  ar: string[];
-};
+import { useResultatrapport, type ResultatData, type KontoRad, type Konto } from "../hooks/useResultatrapport";
 
 export default function Page() {
-  //#region State & Variables
-  const [initialData, setInitialData] = useState<ResultatData | null>(null);
-  const [företagsnamn, setFöretagsnamn] = useState<string>("");
-  const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  // Använd hook för grundläggande state
+  const {
+    initialData,
+    setInitialData,
+    företagsnamn,
+    setFöretagsnamn,
+    organisationsnummer,
+    setOrganisationsnummer,
+    loading,
+    setLoading,
+  } = useResultatrapport();
 
+  //#region State & Variables
   // Filter state
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>("all"); // "Alla månader" som default

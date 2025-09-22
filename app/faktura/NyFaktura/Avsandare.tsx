@@ -1,0 +1,139 @@
+"use client";
+
+import Image from "next/image";
+import TextFalt from "../../_components/TextFalt";
+import { getProxyImageUrl } from "../../_utils/imageProxy";
+import { useFaktura } from "../_hooks/useFaktura";
+import Knapp from "../../_components/Knapp";
+import Toast from "../../_components/Toast";
+
+export default function Avsandare() {
+  const {
+    formData: form,
+    toastState: toast,
+    fileInputRef,
+    hanteraTangentNer,
+    hanteraLoggaUpload,
+    sparaForetagsprofil: spara,
+    clearToast: closeToast,
+  } = useFaktura();
+
+  return (
+    <>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={closeToast}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <TextFalt
+          label="Företagsnamn"
+          name="företagsnamn"
+          value={form.företagsnamn}
+          onChange={hanteraTangentNer}
+          placeholder="Ange företagsnamn"
+        />
+
+        <TextFalt
+          label="Organisationsnummer"
+          name="organisationsnummer"
+          value={form.organisationsnummer}
+          onChange={hanteraTangentNer}
+          placeholder="123456-7890"
+        />
+
+        <TextFalt
+          label="Adress"
+          name="adress"
+          value={form.adress}
+          onChange={hanteraTangentNer}
+          placeholder="Gatunamn 123"
+        />
+
+        <TextFalt
+          label="Postnummer"
+          name="postnummer"
+          value={form.postnummer}
+          onChange={hanteraTangentNer}
+          placeholder="12345"
+        />
+
+        <TextFalt
+          label="Stad"
+          name="stad"
+          value={form.stad}
+          onChange={hanteraTangentNer}
+          placeholder="Stockholm"
+        />
+
+        <TextFalt
+          label="Telefonnummer"
+          name="telefonnummer"
+          value={form.telefonnummer}
+          onChange={hanteraTangentNer}
+          placeholder="08-123 456 78"
+        />
+
+        <TextFalt
+          label="E-post"
+          name="epost"
+          value={form.epost}
+          onChange={hanteraTangentNer}
+          placeholder="info@företag.se"
+        />
+
+        <TextFalt
+          label="Webbplats"
+          name="webbplats"
+          value={form.webbplats}
+          onChange={hanteraTangentNer}
+          placeholder="www.företag.se"
+        />
+
+        <TextFalt
+          label="Momsregistreringsnummer"
+          name="momsregistreringsnummer"
+          value={form.momsregistreringsnummer}
+          onChange={hanteraTangentNer}
+          placeholder="SE556123123401"
+        />
+      </div>
+
+      {/* Logosektion */}
+      <div className="mt-4 p-4 rounded-lg">
+        <h3 className="text-lg font-medium text-white mb-4">Företagslogga</h3>
+        <div className="flex items-center space-x-4">
+          {form.logo && (
+            <div className="shrink-0">
+              <Image
+                src={getProxyImageUrl(form.logo)}
+                alt="Företagslogga"
+                width={form.logoWidth}
+                height={100}
+                className="object-contain rounded"
+                style={{ height: "auto", maxHeight: "100px" }}
+              />
+            </div>
+          )}
+          <div className="flex-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={hanteraLoggaUpload}
+              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-cyan-600 file:text-white hover:file:bg-cyan-700"
+            />
+            <p className="text-sm text-gray-500 mt-1">PNG, JPG, GIF eller WebP. Max 5MB.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sparaknappar */}
+      <div className="flex justify-end space-x-3 mt-6 pt-4">
+        <Knapp text="Spara avsändare" onClick={spara} />
+      </div>
+    </>
+  );
+}
