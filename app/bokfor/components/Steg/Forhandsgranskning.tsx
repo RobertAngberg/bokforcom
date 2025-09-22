@@ -142,5 +142,5 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
 }
 
 // React.memo förhindrar re-rendering när props (fil, pdfUrl) inte har ändrats.
-// Viktigt för prestanda eftersom parent-komponenter re-renderar vid varje Context-uppdatering.
+// Behövs fortfarande trots useMemo-fix i BokforProvider för optimal prestanda.
 export default React.memo(Forhandsgranskning);
