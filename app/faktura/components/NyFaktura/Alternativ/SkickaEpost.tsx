@@ -1,7 +1,6 @@
 //#region Huvud
 "use client";
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
 import { useFaktura } from "../../../hooks/useFaktura";
 import { SkickaEpostProps } from "../../../types/types";
@@ -95,10 +94,6 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
             disabled={isEpostButtonDisabled}
           />
         </div>
-
-        {toastState.isVisible && (
-          <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
-        )}
       </div>
     </div>
   );

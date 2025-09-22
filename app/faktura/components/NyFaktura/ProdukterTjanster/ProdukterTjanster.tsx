@@ -7,7 +7,6 @@ import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
 import RotRutForm from "./RotRutForm";
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import Modal from "../../../../_components/Modal";
 
 export default function ProdukterTjanster() {
@@ -36,6 +35,7 @@ export default function ProdukterTjanster() {
     // ProdukterTjanster-specifika setters
     setVisaRotRutForm,
     setVisaArtikelForm,
+    sparaArtikelSomFavorit,
   } = useProdukterTjanster();
 
   // Destructure nested state
@@ -61,8 +61,7 @@ export default function ProdukterTjanster() {
   };
 
   const handleSaveAsFavorite = () => {
-    // TODO: Implement save as favorite functionality
-    console.log("Save as favorite not implemented yet");
+    sparaArtikelSomFavorit();
   };
 
   const handleResetForm = () => {
@@ -77,10 +76,6 @@ export default function ProdukterTjanster() {
 
   return (
     <div className="space-y-4">
-      {toastState.isVisible && (
-        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
-      )}
-
       <FavoritArtiklarList />
 
       {/* ROT/RUT infobox - visas under favoriter men innan ny artikel */}

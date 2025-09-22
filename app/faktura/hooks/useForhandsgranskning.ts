@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useFakturaContext } from "../context/FakturaContext";
-import { generatePDFFromElement, generatePDFAsBase64 } from "../Alternativ/pdfGenerator";
+import { generatePDFFromElement, generatePDFAsBase64 } from "../utils/pdfGenerator";
 
 // Types
 import type { ForhandsgranskningCalculations, SkickaEpostProps } from "../types/types";

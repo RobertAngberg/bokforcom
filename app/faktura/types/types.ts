@@ -686,3 +686,8 @@ export interface FakturaProviderProps {
   children: React.ReactNode;
   initialData?: ServerData;
 }
+
+export interface NyFakturaProps {
+  onBackToMenu: () => void;
+  editFakturaId?: number;
+}

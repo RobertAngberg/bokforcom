@@ -6,7 +6,7 @@ import {
   deleteLeverantör,
   saveLeverantör,
   updateLeverantör,
-} from "../actions/leverantorerActions";
+} from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
 import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../actions/alternativActions";
 import {

@@ -1,12 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useFakturaContext } from "../context/FakturaContext";
-import {
-  hämtaSparadeArtiklar,
-  sparaFavoritArtikel,
-  deleteFavoritArtikel,
-} from "../actions/fakturaActions";
+import { hämtaSparadeArtiklar, deleteFavoritArtikel } from "../actions/fakturaActions";
+import { sparaFavoritArtikel } from "../actions/artikelActions";
 
 // Types
 import type { FakturaFormData, NyArtikel, Artikel } from "../types/types";
@@ -117,6 +114,17 @@ export function useProdukterTjanster() {
     }
   }, [setProdukterTjansterState, setToast]);
 
+  // =============================================================================
+  // INITIALIZATION
+  // =============================================================================
+
+  // Ladda favoritartiklar när komponenten mountas
+  useEffect(() => {
+    if (favoritArtiklar.length === 0) {
+      laddaSparadeArtiklar();
+    }
+  }, [laddaSparadeArtiklar]);
+
   // Lägg till artikel
   const läggTillArtikel = useCallback(() => {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
@@ -163,6 +171,120 @@ export function useProdukterTjanster() {
       setToast({ message: "Artikel borttagen", type: "success" });
     },
     [formData.artiklar, setFormData, setToast]
+  );
+
+  // Spara artikel som favorit
+  const sparaArtikelSomFavorit = useCallback(async () => {
+    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
+
+    if (!beskrivning.trim() || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
+      setToast({ message: "Fyll i alla obligatoriska fält", type: "error" });
+      return;
+    }
+
+    const artikelData = {
+      beskrivning: beskrivning.trim(),
+      antal: Number(antal),
+      prisPerEnhet: Number(prisPerEnhet),
+      moms: Number(moms),
+      valuta,
+      typ,
+      // Lägg till ROT/RUT data om det finns
+      rotRutTyp: formData.rotRutTyp || undefined,
+      rotRutKategori: formData.rotRutKategori || undefined,
+      avdragProcent: formData.avdragProcent || undefined,
+      arbetskostnadExMoms: Number(formData.arbetskostnadExMoms) || undefined,
+    };
+
+    try {
+      const result = await sparaFavoritArtikel(artikelData);
+      if (result.success) {
+        if (result.alreadyExists) {
+          setToast({ message: "Artikeln finns redan som favorit! 📌", type: "info" });
+        } else {
+          setToast({ message: "Artikel sparad som favorit! 📌", type: "success" });
+        }
+        setProdukterTjansterState({ artikelSparadSomFavorit: true });
+        // Ladda om favoriter för att visa den nya
+        await laddaSparadeArtiklar();
+      } else {
+        setToast({ message: "Kunde inte spara som favorit", type: "error" });
+      }
+    } catch (error) {
+      setToast({ message: "Fel vid sparande av favorit", type: "error" });
+    }
+  }, [
+    nyArtikel,
+    formData.rotRutTyp,
+    formData.rotRutKategori,
+    formData.avdragProcent,
+    formData.arbetskostnadExMoms,
+    sparaFavoritArtikel,
+    setToast,
+    setProdukterTjansterState,
+    laddaSparadeArtiklar,
+  ]);
+
+  // Ta bort favoritartikel
+  const taBortFavoritArtikel = useCallback(
+    async (id: number) => {
+      if (!confirm("Är du säker på att du vill ta bort denna favoritartikel?")) {
+        return;
+      }
+
+      try {
+        const result = await deleteFavoritArtikel(id);
+        if (result.success) {
+          setToast({ message: "Favoritartikel borttagen! 🗑️", type: "success" });
+          // Ladda om favoriter för att uppdatera listan
+          await laddaSparadeArtiklar();
+        } else {
+          setToast({ message: "Kunde inte ta bort favoritartikel", type: "error" });
+        }
+      } catch (error) {
+        setToast({ message: "Fel vid borttagning av favoritartikel", type: "error" });
+      }
+    },
+    [deleteFavoritArtikel, setToast, laddaSparadeArtiklar]
+  );
+
+  // Ladda favoritartikel till formuläret
+  const laddaFavoritArtikel = useCallback(
+    (artikel: any) => {
+      // Fyll i nyArtikel formuläret med data från favoritartikeln
+      setNyArtikel({
+        beskrivning: artikel.beskrivning || "",
+        antal: artikel.antal?.toString() || "1",
+        prisPerEnhet: artikel.prisPerEnhet?.toString() || "",
+        moms: artikel.moms?.toString() || "25",
+        valuta: artikel.valuta || "SEK",
+        typ: artikel.typ || "vara",
+      });
+
+      // Sätt state för att visa att en favoritartikel är vald
+      setProdukterTjansterState({
+        favoritArtikelVald: true,
+        ursprungligFavoritId: artikel.id,
+        visaArtikelForm: true, // Visa formuläret så användaren kan se/redigera
+      });
+
+      // Uppdatera också ROT/RUT data om det finns
+      if (artikel.rotRutTyp) {
+        setFormData({
+          rotRutAktiverat: true,
+          rotRutTyp: artikel.rotRutTyp,
+          rotRutKategori: artikel.rotRutKategori,
+          avdragProcent: artikel.avdragProcent,
+          arbetskostnadExMoms: artikel.arbetskostnadExMoms,
+        });
+      }
+
+      setToast({
+        message: `Favoritartikel "${artikel.beskrivning}" inladdad! 📌`,
+        type: "success",
+      });
+    },
+    [setNyArtikel, setProdukterTjansterState, setFormData, setToast]
   );
 
   // =============================================================================
@@ -397,6 +519,9 @@ export function useProdukterTjanster() {
     laddaSparadeArtiklar,
     läggTillArtikel,
     taBortArtikel,
+    sparaArtikelSomFavorit,
+    taBortFavoritArtikel,
+    laddaFavoritArtikel,
 
     // ROT/RUT event handlers
     handleRotRutChange,

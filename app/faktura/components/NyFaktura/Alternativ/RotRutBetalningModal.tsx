@@ -6,7 +6,6 @@ import {
   registreraRotRutBetalning,
   uppdateraRotRutStatus,
 } from "../../../actions/alternativActions";
-import Toast from "../../../../_components/Toast";
 import { RotRutBetalningModalProps } from "../../../types/types";
 
 export default function RotRutBetalningModal({
@@ -189,14 +188,6 @@ export default function RotRutBetalningModal({
           </button>
         </div>
       </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
     </Modal>
   );
 }

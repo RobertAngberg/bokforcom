@@ -1,5 +1,5 @@
 // HUS-fil generator för ROT/RUT-ansökningar till Skatteverket
-import { HUSFilData } from "../../../types/types";
+import { HUSFilData } from "../types/types";
 
 export function genereraHUSFil(data: HUSFilData): string {
   const idag = new Date().toISOString().split("T")[0].replace(/-/g, "");

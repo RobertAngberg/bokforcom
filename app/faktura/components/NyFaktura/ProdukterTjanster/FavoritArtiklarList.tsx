@@ -2,18 +2,22 @@ import Knapp from "../../../../_components/Knapp";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 
 export default function FavoritArtiklarList() {
-  const { favoritArtiklar, showFavoritArtiklar, ursprungligFavoritId, setShowFavoritArtiklar } =
-    useProdukterTjanster();
+  const {
+    favoritArtiklar,
+    showFavoritArtiklar,
+    ursprungligFavoritId,
+    setShowFavoritArtiklar,
+    taBortFavoritArtikel,
+    laddaFavoritArtikel,
+  } = useProdukterTjanster();
 
   // Handler functions
   const handleSelectFavorit = (artikel: any) => {
-    // TODO: Implement select favorit functionality
-    console.log("Select favorit not implemented yet", artikel);
+    laddaFavoritArtikel(artikel);
   };
 
   const handleDeleteFavorit = (id: number) => {
-    // TODO: Implement delete favorit functionality
-    console.log("Delete favorit not implemented yet", id);
+    taBortFavoritArtikel(id);
   };
 
   if (!favoritArtiklar || favoritArtiklar.length === 0) return null;

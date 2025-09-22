@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import Knapp from "./Knapp";
 import LoadingSpinner from "./LoadingSpinner";
-import { getLeverantörer } from "../faktura/_actions/leverantorerActions";
-import { type Leverantör } from "../faktura/_types/types";
+import { getLeverantörer } from "../faktura/actions/leverantorActions";
+import { type Leverantör } from "../faktura/types/types";
 
 interface VäljLeverantörModalProps {
   isOpen: boolean;

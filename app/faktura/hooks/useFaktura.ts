@@ -21,6 +21,7 @@ import {
   deleteKund,
   hämtaSparadeKunder,
   uppdateraKund,
+  hämtaFakturaMedRader,
 } from "../actions/fakturaActions";
 import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
 
@@ -60,6 +61,7 @@ export function useFaktura() {
 
   // Local UI state
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoadingFaktura, setIsLoadingFaktura] = useState(false);
   const [kunder, setKunder] = useState<any[]>([]);
   const [kundSuccessVisible, setKundSuccessVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
@@ -186,6 +188,169 @@ export function useFaktura() {
       setToast({ message, type: "info" });
     },
     [setToast]
+  );
+
+  // =============================================================================
+  // UI HELPER FUNCTIONS
+  // =============================================================================
+
+  // Preview functions
+  const openPreview = useCallback(() => setShowPreview(true), []);
+  const closePreview = useCallback(() => setShowPreview(false), []);
+
+  // Reload function
+  const reloadFaktura = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  // =============================================================================
+  // DATA LOADING FUNCTIONS
+  // =============================================================================
+
+  /**
+   * Laddar fakturedata för redigering eller som mall för ny faktura
+   */
+  const laddaFakturaData = useCallback(
+    async (fakturaId: number): Promise<boolean> => {
+      try {
+        const data = await hämtaFakturaMedRader(fakturaId);
+
+        if (!data || !data.faktura) {
+          showError("Kunde inte hämta faktura");
+          return false;
+        }
+
+        const { faktura, artiklar, rotRut } = data;
+
+        setFormData({
+          id: faktura.id,
+          fakturanummer: faktura.fakturanummer ?? "",
+          fakturadatum: faktura.fakturadatum?.toISOString
+            ? faktura.fakturadatum.toISOString().slice(0, 10)
+            : (faktura.fakturadatum ?? ""),
+          forfallodatum: faktura.forfallodatum?.toISOString
+            ? faktura.forfallodatum.toISOString().slice(0, 10)
+            : (faktura.forfallodatum ?? ""),
+          betalningsmetod: faktura.betalningsmetod ?? "",
+          betalningsvillkor: faktura.betalningsvillkor ?? "",
+          drojsmalsranta: faktura.drojsmalsranta ?? "",
+          kundId: faktura.kundId?.toString() ?? "",
+          nummer: faktura.nummer ?? "",
+          kundmomsnummer: faktura.kundmomsnummer ?? "",
+          kundnamn: faktura.kundnamn ?? "",
+          kundnummer: faktura.kundnummer ?? "",
+          kundorganisationsnummer: faktura.kundorganisationsnummer ?? "",
+          kundadress: faktura.kundadress ?? "",
+          kundpostnummer: faktura.kundpostnummer ?? "",
+          kundstad: faktura.kundstad ?? "",
+          kundemail: faktura.kundemail ?? "",
+          företagsnamn: faktura.företagsnamn ?? "",
+          epost: faktura.epost ?? "",
+          adress: faktura.adress ?? "",
+          postnummer: faktura.postnummer ?? "",
+          stad: faktura.stad ?? "",
+          organisationsnummer: faktura.organisationsnummer ?? "",
+          momsregistreringsnummer: faktura.momsregistreringsnummer ?? "",
+          telefonnummer: faktura.telefonnummer ?? "",
+          bankinfo: faktura.bankinfo ?? "",
+          webbplats: faktura.webbplats ?? "",
+          logo: faktura.logo ?? "",
+          logoWidth: faktura.logo_width ?? 200,
+          artiklar: artiklar.map((rad: any) => ({
+            beskrivning: rad.beskrivning,
+            antal: Number(rad.antal),
+            prisPerEnhet: Number(rad.prisPerEnhet),
+            moms: Number(rad.moms),
+            valuta: rad.valuta ?? "SEK",
+            typ: rad.typ === "tjänst" ? "tjänst" : "vara",
+            rotRutTyp: rad.rotRutTyp,
+            rotRutKategori: rad.rotRutKategori,
+            avdragProcent: rad.avdragProcent,
+            arbetskostnadExMoms: rad.arbetskostnadExMoms,
+            rotRutBeskrivning: rad.rotRutBeskrivning,
+            rotRutStartdatum: rad.rotRutStartdatum,
+            rotRutSlutdatum: rad.rotRutSlutdatum,
+            rotRutPersonnummer: rad.rotRutPersonnummer,
+            rotRutFastighetsbeteckning: rad.rotRutFastighetsbeteckning,
+            rotRutBoendeTyp: rad.rotRutBoendeTyp,
+            rotRutBrfOrg: rad.rotRutBrfOrg,
+            rotRutBrfLagenhet: rad.rotRutBrfLagenhet,
+          })),
+          // ROT/RUT-fält från rot_rut-tabellen eller första artikeln med ROT/RUT-data
+          rotRutAktiverat:
+            !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rotRutTyp),
+          rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rotRutTyp)?.rotRutTyp || undefined,
+          rotRutKategori:
+            (rotRut as any).rotRutKategori ||
+            artiklar.find((a: any) => a.rotRutKategori)?.rotRutKategori ||
+            undefined,
+          avdragProcent:
+            rotRut.avdrag_procent ||
+            artiklar.find((a: any) => a.avdragProcent)?.avdragProcent ||
+            undefined,
+          arbetskostnadExMoms:
+            rotRut.arbetskostnad_ex_moms ||
+            artiklar.find((a: any) => a.arbetskostnadExMoms)?.arbetskostnadExMoms ||
+            undefined,
+          avdragBelopp: rotRut.avdrag_belopp || undefined,
+          personnummer:
+            rotRut.personnummer ||
+            artiklar.find((a: any) => a.rotRutPersonnummer)?.rotRutPersonnummer ||
+            "",
+          fastighetsbeteckning:
+            rotRut.fastighetsbeteckning ||
+            artiklar.find((a: any) => a.rotRutFastighetsbeteckning)?.rotRutFastighetsbeteckning ||
+            "",
+          rotBoendeTyp: rotRut.rot_boende_typ || undefined,
+          brfOrganisationsnummer:
+            rotRut.brf_organisationsnummer ||
+            artiklar.find((a: any) => a.rotRutBrfOrg)?.rotRutBrfOrg ||
+            "",
+          brfLagenhetsnummer:
+            rotRut.brf_lagenhetsnummer ||
+            artiklar.find((a: any) => a.rotRutBrfLagenhet)?.rotRutBrfLagenhet ||
+            "",
+          rotRutBeskrivning:
+            (rotRut as any).rotRutBeskrivning ||
+            artiklar.find((a: any) => a.rotRutBeskrivning)?.rotRutBeskrivning ||
+            "",
+          rotRutStartdatum:
+            (rotRut as any).rotRutStartdatum ||
+            artiklar.find((a: any) => a.rotRutStartdatum)?.rotRutStartdatum ||
+            "",
+          rotRutSlutdatum:
+            (rotRut as any).rotRutSlutdatum ||
+            artiklar.find((a: any) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
+            "",
+        });
+
+        // Uppdatera kundstatus för att indikera att en kund är vald
+        if (faktura.kundId) {
+          setKundStatus("loaded");
+        }
+
+        return true;
+      } catch (error: any) {
+        console.error("❌ Fel vid laddning av fakturedata:", error);
+        showError("Kunde inte ladda fakturedata");
+        return false;
+      }
+    },
+    [setFormData, setKundStatus, showError]
+  );
+
+  // Fakturedata loading med loading state
+  const laddaFakturaDataMedLoading = useCallback(
+    async (fakturaId: number): Promise<boolean> => {
+      setIsLoadingFaktura(true);
+      try {
+        const result = await laddaFakturaData(fakturaId);
+        return result;
+      } finally {
+        setIsLoadingFaktura(false);
+      }
+    },
+    [laddaFakturaData]
   );
 
   // =============================================================================
@@ -634,6 +799,16 @@ export function useFaktura() {
     showSuccess,
     showError,
     showInfo,
+
+    // Data loading functions
+    laddaFakturaData,
+    laddaFakturaDataMedLoading,
+
+    // UI helper functions
+    openPreview,
+    closePreview,
+    reloadFaktura,
+    isLoadingFaktura,
 
     // Local state setters
     setShowPreview,

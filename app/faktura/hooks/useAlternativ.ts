@@ -8,7 +8,7 @@ import {
   uppdateraRotRutStatus,
   registreraRotRutBetalning,
 } from "../actions/alternativActions";
-import { laddaNerHUSFil } from "../Alternativ/husFilGenerator";
+import { laddaNerHUSFil } from "../utils/husFilGenerator";
 import { BokforingsPost } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 

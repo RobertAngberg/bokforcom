@@ -3,7 +3,6 @@
 import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import TextFalt from "../../../_components/TextFalt";
-import Toast from "../../../_components/Toast";
 import { useFaktura } from "../../hooks/useFaktura";
 
 export default function KundUppgifter() {
@@ -25,10 +24,6 @@ export default function KundUppgifter() {
 
   return (
     <div className="space-y-6 text-white">
-      {toastState.isVisible && (
-        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
-      )}
-
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <Dropdown
           value={formData.kundId ?? ""}

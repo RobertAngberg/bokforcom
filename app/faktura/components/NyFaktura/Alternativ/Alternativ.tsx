@@ -2,7 +2,6 @@
 "use client";
 
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import ExporteraPDFKnapp from "./ExporteraPDFKnapp";
 import SkickaEpost from "./SkickaEpost";
 import BokforFakturaModal from "./BokforFakturaModal";
@@ -172,14 +171,6 @@ export default function Alternativ({ onReload, onPreview }: AlternativProps) {
         bokföringsmetod={bokföringsmetod}
         onSuccess={hanteraRotRutSuccess}
       />
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
     </div>
   );
 }

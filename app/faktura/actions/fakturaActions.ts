@@ -831,30 +831,6 @@ export async function hämtaSparadeArtiklar(): Promise<any[]> {
   }
 }
 
-// Lägg till andra artikelfunktioner vid behov...
-export async function sparaFavoritArtikel(artikel: any) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-
-  return withDatabase(async (client) => {
-    await client.query(
-      `INSERT INTO faktura_favoritartiklar (
-        user_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        userId,
-        artikel.beskrivning,
-        artikel.antal,
-        artikel.prisPerEnhet,
-        artikel.moms,
-        artikel.valuta,
-        artikel.typ,
-      ]
-    );
-    return { success: true };
-  });
-}
-
 export async function deleteFavoritArtikel(id: number) {
   const userId = await getUserId();
   if (!userId) return { success: false };

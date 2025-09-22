@@ -1,6 +1,6 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { PDFGenerationOptions } from "../../../types/types";
+import { PDFGenerationOptions } from "../types/types";
 
 export async function generatePDFFromElement(options: PDFGenerationOptions = {}): Promise<jsPDF> {
   const {

@@ -5,7 +5,6 @@ import TextFalt from "../../../_components/TextFalt";
 import { getProxyImageUrl } from "../../../_utils/imageProxy";
 import { useFaktura } from "../../hooks/useFaktura";
 import Knapp from "../../../_components/Knapp";
-import Toast from "../../../_components/Toast";
 
 export default function Avsandare() {
   const {
@@ -20,10 +19,6 @@ export default function Avsandare() {
 
   return (
     <>
-      {toastState.isVisible && (
-        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <TextFalt
           label="Företagsnamn"
