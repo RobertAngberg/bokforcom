@@ -26,12 +26,42 @@ export function useForvalSok({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  // Hjälpfunktion för att filtrera förval baserat på mode
+  const filterByMode = useCallback(
+    (förval: Förval[]) => {
+      let filtered = förval;
+
+      if (levfaktMode) {
+        filtered = filtered.filter((f) => {
+          const harKostnadskonto = f.konton.some((k: KontoRad) => {
+            const kontonummer = k.kontonummer || "";
+            return /^[456]/.test(kontonummer);
+          });
+          return harKostnadskonto;
+        });
+      }
+
+      if (utlaggMode) {
+        filtered = filtered.filter((f) => {
+          const harKostnadskonto = f.konton.some((k: KontoRad) => {
+            const kontonummer = k.kontonummer || "";
+            return /^[45678]/.test(kontonummer);
+          });
+          return harKostnadskonto;
+        });
+      }
+
+      return filtered;
+    },
+    [levfaktMode, utlaggMode]
+  );
+
   // Uppdatera results när favoritFörval ändras
   useEffect(() => {
     if (searchText.length < 2 && favoritFörval.length > 0) {
-      setResults(favoritFörval);
+      setResults(filterByMode(favoritFörval));
     }
-  }, [favoritFörval, searchText]);
+  }, [favoritFörval, searchText, filterByMode]);
 
   // Sökfunktion
   const performSearch = useCallback(
@@ -39,7 +69,7 @@ export function useForvalSok({
       const input = normalize(inputText);
 
       if (input.length < 2) {
-        setResults(favoritFörval);
+        setResults(filterByMode(favoritFörval));
         setHighlightedIndex(0);
         setLoading(false);
         return;
@@ -98,25 +128,7 @@ export function useForvalSok({
           .map((x) => x.förval);
 
         // Filtrera baserat på mode
-        if (levfaktMode) {
-          träffar = träffar.filter((f) => {
-            const harKostnadskonto = f.konton.some((k: KontoRad) => {
-              const kontonummer = k.kontonummer || "";
-              return /^[456]/.test(kontonummer);
-            });
-            return harKostnadskonto;
-          });
-        }
-
-        if (utlaggMode) {
-          träffar = träffar.filter((f) => {
-            const harKostnadskonto = f.konton.some((k: KontoRad) => {
-              const kontonummer = k.kontonummer || "";
-              return /^[45678]/.test(kontonummer);
-            });
-            return harKostnadskonto;
-          });
-        }
+        träffar = filterByMode(träffar);
 
         setResults(träffar);
         setHighlightedIndex(0);
@@ -183,9 +195,9 @@ export function useForvalSok({
 
   const clearSearch = useCallback(() => {
     setSearchText("");
-    setResults(favoritFörval);
+    setResults(filterByMode(favoritFörval));
     setHighlightedIndex(0);
-  }, [favoritFörval]);
+  }, [favoritFörval, filterByMode]);
 
   return {
     // State

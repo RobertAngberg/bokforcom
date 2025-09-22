@@ -17,7 +17,7 @@ import { useUtlagg } from "./hooks/useUtlagg";
 export default function PersonalPage() {
   const { state, actions, handlers } = useAnstallda();
   const { valdAnställd } = state;
-  const { utlaggFlikData } = useUtlagg(valdAnställd?.id);
+  const { utlaggFlikData, laddaUtläggFörAnställd } = useUtlagg(valdAnställd?.id);
 
   return (
     <MainLayout>
@@ -88,7 +88,11 @@ export default function PersonalPage() {
                 <Information state={state} handlers={handlers} />
               </AnimeradFlik>
               <AnimeradFlik title="Utlägg" icon="💳">
-                <UtlaggFlik state={state} handlers={handlers} utlaggFlikData={utlaggFlikData} />
+                <UtlaggFlik
+                  state={state}
+                  handlers={{ ...handlers, laddaUtläggFörAnställd }}
+                  utlaggFlikData={utlaggFlikData}
+                />
               </AnimeradFlik>
               <AnimeradFlik title="Kontrakt" icon="📄">
                 <Kontrakt anställd={valdAnställd} />

@@ -293,6 +293,19 @@ export function useBokfor() {
       const poster = beräknaTransaktionsposter();
       formData.set("transaktionsposter", JSON.stringify(poster));
 
+      // Lägg till transaktionsdatum från state
+      if (transaktionsdatum) {
+        formData.set("transaktionsdatum", transaktionsdatum);
+      }
+
+      // Lägg till andra fält från state
+      if (kommentar) formData.set("kommentar", kommentar);
+      if (belopp) formData.set("belopp", belopp.toString());
+      if (valtFörval) formData.set("valtFörval", JSON.stringify(valtFörval));
+      if (utlaggMode) formData.set("utlaggMode", "true");
+      if (levfaktMode) formData.set("levfaktMode", "true");
+      if (anstalldId) formData.set("anstalldId", anstalldId.toString());
+
       // Lägg till kundfaktura-specifika fält
       if (bokförSomFaktura) {
         formData.set("bokförSomFaktura", "true");

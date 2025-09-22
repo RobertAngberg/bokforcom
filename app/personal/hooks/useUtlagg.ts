@@ -117,6 +117,7 @@ export function useUtlagg(anställdId?: number | null) {
     utbetalningsdatum,
     setUtlägg,
     setUtläggLoading,
+    laddaUtläggFörAnställd,
     openUtläggBokföringModal,
     closeUtläggBokföringModal,
     setUtbetalningsdatum,
