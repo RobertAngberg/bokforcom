@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Modal from "../../../../_components/Modal";
-import { registreraRotRutBetalning, uppdateraRotRutStatus } from "../actions/alternativActions";
+import {
+  registreraRotRutBetalning,
+  uppdateraRotRutStatus,
+} from "../../../actions/alternativActions";
 import Toast from "../../../../_components/Toast";
-import { RotRutBetalningModalProps } from "../types/types";
+import { RotRutBetalningModalProps } from "../../../types/types";
 
 export default function RotRutBetalningModal({
   isOpen,
@@ -191,7 +194,6 @@ export default function RotRutBetalningModal({
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}

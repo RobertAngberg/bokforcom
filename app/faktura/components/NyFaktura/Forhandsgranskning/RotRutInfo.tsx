@@ -1,6 +1,5 @@
-import { useFaktura } from "../../hooks/useFaktura";
-import { useForhandsgranskning } from "../../hooks/useForhandsgranskning";
-import { RotRutInfoProps } from "../types/types";
+import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
+import { RotRutInfoProps } from "../../../types/types";
 
 export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoProps) {
   const forhandsgranskningCalcs = useForhandsgranskning().getForhandsgranskningCalculations();

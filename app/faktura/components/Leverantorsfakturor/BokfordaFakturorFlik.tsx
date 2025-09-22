@@ -3,7 +3,7 @@
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import BokfordaFakturor from "./BokfordaFakturor";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
-import { useBokfordaFakturorFlik } from "../hooks/useLeverantorer";
+import { useBokfordaFakturorFlik } from "../../hooks/useLeverantorer";
 
 export default function BokfordaFakturorFlik() {
   const { fakturorAntal, loading } = useBokfordaFakturorFlik();

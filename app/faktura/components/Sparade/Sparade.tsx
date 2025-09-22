@@ -7,9 +7,9 @@ import SparadeFakturor from "./SparadeFakturor";
 import MainLayout from "../../../_components/MainLayout";
 import Link from "next/link";
 import Toast from "../../../_components/Toast";
-import { useSparadeFakturor, useSparadeFakturorPage } from "../_hooks/useLeverantorer";
-import { useFakturaClient } from "../_hooks/useFaktura";
-import { FakturaProvider } from "../_context/FakturaContext";
+import { useSparadeFakturor, useSparadeFakturorPage } from "../../hooks/useLeverantorer";
+import { useFakturaClient } from "../../hooks/useFaktura";
+import { FakturaProvider } from "../../context/FakturaContext";
 //#endregion
 
 function SparadeContent({ data }: { data: any }) {
@@ -49,12 +49,7 @@ function SparadeContent({ data }: { data: any }) {
       </MainLayout>
 
       {toastState.isVisible && (
-        <Toast
-          message={toastState.message}
-          type={toastState.type}
-          isVisible={toastState.isVisible}
-          onClose={clearToast}
-        />
+        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
       )}
     </>
   );

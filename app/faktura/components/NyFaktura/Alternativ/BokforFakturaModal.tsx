@@ -3,9 +3,9 @@
 import Tabell from "../../../../_components/Tabell";
 import Modal from "../../../../_components/Modal";
 import Toast from "../../../../_components/Toast";
-import { useBokforFakturaModal } from "../../hooks/useAlternativ";
-import { useFakturaClient } from "../../hooks/useFaktura";
-import { BokforFakturaModalProps } from "../types/types";
+import { useBokforFakturaModal } from "../../../hooks/useAlternativ";
+import { useFakturaClient } from "../../../hooks/useFaktura";
+import { BokforFakturaModalProps } from "../../../types/types";
 
 export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaModalProps) {
   const { clearToast } = useFakturaClient();
@@ -154,14 +154,7 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
         </div>
       </div>
 
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={clearToast}
-        />
-      )}
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
     </Modal>
   );
 }

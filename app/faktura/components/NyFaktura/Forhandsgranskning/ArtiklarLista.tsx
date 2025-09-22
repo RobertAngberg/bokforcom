@@ -1,4 +1,4 @@
-import { ArtiklarListaProps } from "../types/types";
+import { ArtiklarListaProps } from "../../../types/types";
 
 export default function ArtiklarLista({ rows }: ArtiklarListaProps) {
   return (

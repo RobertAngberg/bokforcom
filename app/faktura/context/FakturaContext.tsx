@@ -12,6 +12,8 @@ import type {
   FakturaContextType,
   FakturaProviderProps,
   ToastState,
+  ViewType,
+  NavigationState,
 } from "../types/types";
 
 // Default values - samma som i Zustand store
@@ -102,10 +104,15 @@ const defaultUserSettings = {
   bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
 };
 
+const defaultNavigationState = {
+  currentView: "menu" as ViewType,
+};
+
 // Initial state
 const initialState: FakturaState = {
   formData: defaultFormData,
   kundStatus: "none",
+  navigationState: defaultNavigationState,
   nyArtikel: defaultNyArtikel,
   produkterTjansterState: defaultProdukterTjansterState,
   toastState: defaultToastState,
@@ -150,6 +157,33 @@ function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaStat
           kundemail: "",
         },
         kundStatus: "none",
+      };
+
+    case "SET_NAVIGATION":
+      return {
+        ...state,
+        navigationState: { ...state.navigationState, ...action.payload },
+      };
+
+    case "NAVIGATE_TO_VIEW":
+      return {
+        ...state,
+        navigationState: { currentView: action.payload },
+      };
+
+    case "NAVIGATE_TO_EDIT":
+      return {
+        ...state,
+        navigationState: {
+          currentView: action.payload.view,
+          editFakturaId: action.payload.fakturaId,
+        },
+      };
+
+    case "NAVIGATE_BACK":
+      return {
+        ...state,
+        navigationState: { currentView: "menu" },
       };
 
     case "SET_NY_ARTIKEL":
@@ -246,6 +280,11 @@ export function FakturaProvider({ children, initialData }: FakturaProviderProps)
     resetFormData: () => dispatch({ type: "RESET_FORM_DATA" }),
     setKundStatus: (status) => dispatch({ type: "SET_KUND_STATUS", payload: status }),
     resetKund: () => dispatch({ type: "RESET_KUND" }),
+    setNavigation: (navigation) => dispatch({ type: "SET_NAVIGATION", payload: navigation }),
+    navigateToView: (view) => dispatch({ type: "NAVIGATE_TO_VIEW", payload: view }),
+    navigateToEdit: (view, fakturaId) =>
+      dispatch({ type: "NAVIGATE_TO_EDIT", payload: { view, fakturaId } }),
+    navigateBack: () => dispatch({ type: "NAVIGATE_BACK" }),
     setNyArtikel: (artikel) => dispatch({ type: "SET_NY_ARTIKEL", payload: artikel }),
     resetNyArtikel: () => dispatch({ type: "RESET_NY_ARTIKEL" }),
     setProdukterTjansterState: (state) =>

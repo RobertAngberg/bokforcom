@@ -2,29 +2,33 @@
 
 import Image from "next/image";
 import TextFalt from "../../../_components/TextFalt";
-import { getProxyImageUrl } from "../../_utils/imageProxy";
-import { useAvsandare } from "../../hooks/useAvsandare";
+import { getProxyImageUrl } from "../../../_utils/imageProxy";
+import { useFaktura } from "../../hooks/useFaktura";
 import Knapp from "../../../_components/Knapp";
 import Toast from "../../../_components/Toast";
 
 export default function Avsandare() {
-  const { form, toast, fileInputRef, hanteraTangentNer, hanteraLoggaUpload, spara, closeToast } =
-    useAvsandare();
+  const {
+    formData,
+    toastState,
+    fileInputRef,
+    hanteraTangentNer,
+    hanteraLoggaUpload,
+    sparaForetagsprofil,
+    clearToast,
+  } = useFaktura();
 
   return (
     <>
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
+      {toastState.isVisible && (
+        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <TextFalt
           label="Företagsnamn"
           name="företagsnamn"
-          value={form.företagsnamn}
+          value={formData.företagsnamn || ""}
           onChange={hanteraTangentNer}
           placeholder="Ange företagsnamn"
         />
@@ -32,7 +36,7 @@ export default function Avsandare() {
         <TextFalt
           label="Organisationsnummer"
           name="organisationsnummer"
-          value={form.organisationsnummer}
+          value={formData.organisationsnummer || ""}
           onChange={hanteraTangentNer}
           placeholder="123456-7890"
         />
@@ -40,7 +44,7 @@ export default function Avsandare() {
         <TextFalt
           label="Adress"
           name="adress"
-          value={form.adress}
+          value={formData.adress || ""}
           onChange={hanteraTangentNer}
           placeholder="Gatunamn 123"
         />
@@ -48,7 +52,7 @@ export default function Avsandare() {
         <TextFalt
           label="Postnummer"
           name="postnummer"
-          value={form.postnummer}
+          value={formData.postnummer || ""}
           onChange={hanteraTangentNer}
           placeholder="12345"
         />
@@ -56,7 +60,7 @@ export default function Avsandare() {
         <TextFalt
           label="Stad"
           name="stad"
-          value={form.stad}
+          value={formData.stad || ""}
           onChange={hanteraTangentNer}
           placeholder="Stockholm"
         />
@@ -64,7 +68,7 @@ export default function Avsandare() {
         <TextFalt
           label="Telefonnummer"
           name="telefonnummer"
-          value={form.telefonnummer}
+          value={formData.telefonnummer || ""}
           onChange={hanteraTangentNer}
           placeholder="08-123 456 78"
         />
@@ -72,7 +76,7 @@ export default function Avsandare() {
         <TextFalt
           label="E-post"
           name="epost"
-          value={form.epost}
+          value={formData.epost || ""}
           onChange={hanteraTangentNer}
           placeholder="info@företag.se"
         />
@@ -80,7 +84,7 @@ export default function Avsandare() {
         <TextFalt
           label="Webbplats"
           name="webbplats"
-          value={form.webbplats}
+          value={formData.webbplats || ""}
           onChange={hanteraTangentNer}
           placeholder="www.företag.se"
         />
@@ -88,7 +92,7 @@ export default function Avsandare() {
         <TextFalt
           label="Momsregistreringsnummer"
           name="momsregistreringsnummer"
-          value={form.momsregistreringsnummer}
+          value={formData.momsregistreringsnummer || ""}
           onChange={hanteraTangentNer}
           placeholder="SE556123123401"
         />
@@ -98,12 +102,12 @@ export default function Avsandare() {
       <div className="mt-4 p-4 rounded-lg">
         <h3 className="text-lg font-medium text-white mb-4">Företagslogga</h3>
         <div className="flex items-center space-x-4">
-          {form.logo && (
+          {formData.logo && (
             <div className="shrink-0">
               <Image
-                src={getProxyImageUrl(form.logo)}
+                src={getProxyImageUrl(formData.logo)}
                 alt="Företagslogga"
-                width={form.logoWidth}
+                width={formData.logoWidth || 100}
                 height={100}
                 className="object-contain rounded"
                 style={{ height: "auto", maxHeight: "100px" }}
@@ -125,7 +129,7 @@ export default function Avsandare() {
 
       {/* Sparaknappar */}
       <div className="flex justify-end space-x-3 mt-6 pt-4">
-        <Knapp text="Spara avsändare" onClick={spara} />
+        <Knapp text="Spara avsändare" onClick={sparaForetagsprofil} />
       </div>
     </>
   );

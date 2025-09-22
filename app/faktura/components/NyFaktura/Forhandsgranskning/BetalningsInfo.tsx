@@ -1,4 +1,4 @@
-import { BetalningsInfoProps } from "../types/types";
+import { BetalningsInfoProps } from "../../../types/types";
 
 export default function BetalningsInfo({ formData, summaAttBetala }: BetalningsInfoProps) {
   return (

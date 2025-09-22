@@ -4,40 +4,37 @@ import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import TextFalt from "../../../_components/TextFalt";
 import Toast from "../../../_components/Toast";
-import { useKundUppgifter } from "../../hooks/useKundUppgifter";
+import { useFaktura } from "../../hooks/useFaktura";
 
 export default function KundUppgifter() {
   const {
     formData,
     kunder,
     kundStatus,
-    showSuccess,
+    kundSuccessVisible,
     fadeOut,
     toastState,
-    handleChange,
-    handleSave,
+    handleKundChange,
+    handleKundSave,
     handleSelectCustomer,
     handleCreateNewCustomer,
     handleDeleteCustomer,
     handleEditCustomer,
-    closeToast,
-  } = useKundUppgifter();
+    clearToast,
+  } = useFaktura();
 
   return (
     <div className="space-y-6 text-white">
-      <Toast
-        message={toastState.message}
-        type={toastState.type}
-        isVisible={toastState.isVisible}
-        onClose={closeToast}
-      />
+      {toastState.isVisible && (
+        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
+      )}
 
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <Dropdown
           value={formData.kundId ?? ""}
           onChange={handleSelectCustomer}
           placeholder="Välj existerande kund"
-          options={kunder.map((kund) => ({
+          options={kunder.map((kund: any) => ({
             label: kund.kundnamn,
             value: kund.id.toString(),
           }))}
@@ -91,62 +88,62 @@ export default function KundUppgifter() {
               label="Kundnamn"
               name="kundnamn"
               value={formData.kundnamn}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Organisationsnummer"
               name="kundorganisationsnummer"
               value={formData.kundorganisationsnummer}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Personnummer"
               name="personnummer"
               value={formData.personnummer || ""}
-              onChange={handleChange}
+              onChange={handleKundChange}
               placeholder="YYYYMMDD-XXXX (för ROT/RUT)"
             />
             <TextFalt
               label="Kundnummer"
               name="kundnummer"
               value={formData.kundnummer}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Momsnummer"
               name="kundmomsnummer"
               value={formData.kundmomsnummer}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="E‑post"
               name="kundemail"
               value={formData.kundemail}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Adress"
               name="kundadress"
               value={formData.kundadress}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Postnummer"
               name="kundpostnummer"
               value={formData.kundpostnummer}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
             <TextFalt
               label="Stad"
               name="kundstad"
               value={formData.kundstad}
-              onChange={handleChange}
+              onChange={handleKundChange}
             />
           </div>
 
           <div className="pt-4 flex items-center gap-4">
-            <Knapp onClick={handleSave} text="💾 Spara kund" />
-            {showSuccess && (
+            <Knapp onClick={handleKundSave} text="💾 Spara kund" />
+            {kundSuccessVisible && (
               <span
                 className={`text-green-400 transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
               >

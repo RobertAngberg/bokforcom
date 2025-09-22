@@ -1,24 +1,25 @@
 "use client";
 
-import { useFaktura } from "../../hooks/useFaktura";
+import { useFaktura } from "../../../hooks/useFaktura";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import TextFalt from "../../../../_components/TextFalt";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import type { RotRutFormProps } from "../types/types";
+import type { RotRutFormProps } from "../../../types/types";
 registerLocale("sv", sv);
 
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {
+  const { formData } = useFaktura();
   const {
-    formData,
     nyArtikel,
     RUT_KATEGORIER,
     ROT_KATEGORIER,
     handleRotRutChange,
     handleRotRutBoendeTypChange,
     handleRotRutDateChange,
-  } = useFaktura();
+  } = useProdukterTjanster();
 
   const { antal, prisPerEnhet } = nyArtikel;
 

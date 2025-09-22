@@ -2,7 +2,7 @@ import {
   hämtaFöretagsprofil,
   hämtaSparadeKunder,
   hämtaSparadeArtiklar,
-} from "../actions/fakturaActions";
+} from "../../actions/fakturaActions";
 import NyFakturaClient from "./NyFakturaClient";
 
 export default async function NyFakturaPage() {

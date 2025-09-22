@@ -1,9 +1,9 @@
 "use client";
 
 import Toast from "../../../_components/Toast";
-import { SparadeFakturorProps } from "../types/types";
-import { useFaktura } from "../hooks/useFaktura";
-import { useSparade } from "../hooks/useSparade";
+import { SparadeFakturorProps } from "../../types/types";
+import { useFaktura } from "../../hooks/useFaktura";
+import { useSparade } from "../../hooks/useSparade";
 
 export default function SparadeFakturor({
   fakturor,
@@ -15,12 +15,9 @@ export default function SparadeFakturor({
 
   return (
     <>
-      <Toast
-        message={toastState.message}
-        type={toastState.type}
-        isVisible={toastState.isVisible}
-        onClose={clearToast}
-      />
+      {toastState.isVisible && (
+        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
+      )}
 
       <div className="text-white">
         {fakturor.length === 0 ? (
@@ -46,39 +43,29 @@ export default function SparadeFakturor({
                 statusBadge = "✅ Betald";
                 statusColor = "text-green-400";
               } else if (faktura.status_bokförd && faktura.status_bokförd !== "Ej bokförd") {
-                statusBadge = "📚 Bokförd, ej betald";
+                statusBadge = "�� Bokförd, ej betald";
                 statusColor = "text-white";
               } else {
-                statusBadge = "❌ Ej bokförd";
-                statusColor = "text-white";
+                statusBadge = "⏳ Ej bokförd";
+                statusColor = "text-yellow-400";
               }
 
               return (
-                <div
-                  key={faktura.id}
-                  className={`bg-slate-900 border rounded px-4 py-3 hover:bg-slate-800 text-sm relative ${
-                    isActive ? "border-green-500" : "border-slate-700"
-                  } ${isLoading ? "opacity-75" : ""}`}
-                >
-                  {faktura.status_betalning !== "Betald" &&
-                    (!faktura.status_bokförd || faktura.status_bokförd === "Ej bokförd") && (
-                      <button
-                        onClick={() => handleDeleteInvoice(faktura.id)}
-                        className="absolute top-2 right-2 hover:text-red-500 text-lg z-10"
-                        title="Ta bort faktura"
-                        disabled={isLoading}
-                      >
-                        🗑️
-                      </button>
-                    )}
-
+                <div key={faktura.id} className="relative">
                   <div
-                    className={`cursor-pointer ${isLoading ? "pointer-events-none" : ""} pr-8`}
+                    className={`
+                      p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-lg
+                      ${
+                        isActive
+                          ? "bg-blue-600 border-blue-400 text-white"
+                          : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+                      }
+                      ${isLoading ? "opacity-50" : ""}
+                    `}
                     onClick={() =>
-                      !isLoading &&
-                      (onSelectInvoice
+                      onSelectInvoice
                         ? onSelectInvoice(faktura.id)
-                        : handleSelectInvoice(faktura.id))
+                        : handleSelectInvoice(faktura.id)
                     }
                   >
                     <div className="font-semibold text-base mb-3">

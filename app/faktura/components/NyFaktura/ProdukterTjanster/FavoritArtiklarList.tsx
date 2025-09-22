@@ -1,10 +1,9 @@
 import Knapp from "../../../../_components/Knapp";
-import { useFaktura } from "../../hooks/useFaktura";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 
 export default function FavoritArtiklarList() {
-  const { produkterTjansterState, setShowFavoritArtiklar } = useFaktura();
-
-  const { favoritArtiklar, showFavoritArtiklar, ursprungligFavoritId } = produkterTjansterState;
+  const { favoritArtiklar, showFavoritArtiklar, ursprungligFavoritId, setShowFavoritArtiklar } =
+    useProdukterTjanster();
 
   // Handler functions
   const handleSelectFavorit = (artikel: any) => {

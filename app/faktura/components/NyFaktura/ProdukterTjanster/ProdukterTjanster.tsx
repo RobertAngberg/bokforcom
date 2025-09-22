@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { useFaktura } from "../_hooks/useFaktura";
-import { useProdukterTjanster } from "../_hooks/useProdukterTjanster";
+import { useFaktura } from "../../../hooks/useFaktura";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
@@ -78,12 +77,9 @@ export default function ProdukterTjanster() {
 
   return (
     <div className="space-y-4">
-      <Toast
-        message={toastState.message}
-        type={toastState.type}
-        isVisible={toastState.isVisible}
-        onClose={clearToast}
-      />
+      {toastState.isVisible && (
+        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
+      )}
 
       <FavoritArtiklarList />
 

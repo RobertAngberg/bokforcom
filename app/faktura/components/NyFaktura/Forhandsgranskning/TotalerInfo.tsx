@@ -1,4 +1,4 @@
-import { TotalerInfoProps } from "../types/types";
+import { TotalerInfoProps } from "../../../types/types";
 
 export default function TotalerInfo({
   sumExkl,

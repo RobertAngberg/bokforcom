@@ -7,8 +7,8 @@ import ExporteraPDFKnapp from "./ExporteraPDFKnapp";
 import SkickaEpost from "./SkickaEpost";
 import BokforFakturaModal from "./BokforFakturaModal";
 import RotRutBetalningModal from "./RotRutBetalningModal";
-import { useAlternativ } from "../../hooks/useAlternativ";
-import { AlternativProps } from "../types/types";
+import { useAlternativ } from "../../../hooks/useAlternativ";
+import { AlternativProps } from "../../../types/types";
 
 export default function Alternativ({ onReload, onPreview }: AlternativProps) {
   const {
@@ -177,7 +177,6 @@ export default function Alternativ({ onReload, onPreview }: AlternativProps) {
         <Toast
           message={toast.message}
           type={toast.type}
-          isVisible={toast.isVisible}
           onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
         />
       )}

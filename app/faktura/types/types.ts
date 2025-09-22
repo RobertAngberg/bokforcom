@@ -136,6 +136,14 @@ export type ServerData = {
   artiklar?: FavoritArtikel[];
 };
 
+// Navigation types
+export type ViewType = "menu" | "sparade" | "leverantorsfakturor" | "ny";
+
+export type NavigationState = {
+  currentView: ViewType;
+  editFakturaId?: number;
+};
+
 // UI state types
 export type ToastType = "success" | "error" | "info";
 
@@ -610,6 +618,7 @@ export interface HUSFilData {
 export interface FakturaState {
   formData: FakturaFormData;
   kundStatus: KundStatus;
+  navigationState: NavigationState;
   nyArtikel: NyArtikel;
   produkterTjansterState: {
     favoritArtiklar: FavoritArtikel[];
@@ -635,6 +644,10 @@ export type FakturaAction =
   | { type: "RESET_FORM_DATA" }
   | { type: "SET_KUND_STATUS"; payload: KundStatus }
   | { type: "RESET_KUND" }
+  | { type: "SET_NAVIGATION"; payload: Partial<NavigationState> }
+  | { type: "NAVIGATE_TO_VIEW"; payload: ViewType }
+  | { type: "NAVIGATE_TO_EDIT"; payload: { view: ViewType; fakturaId?: number } }
+  | { type: "NAVIGATE_BACK" }
   | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
   | { type: "RESET_NY_ARTIKEL" }
   | {
@@ -655,6 +668,10 @@ export interface FakturaContextType {
   resetFormData: () => void;
   setKundStatus: (status: KundStatus) => void;
   resetKund: () => void;
+  setNavigation: (navigation: Partial<NavigationState>) => void;
+  navigateToView: (view: ViewType) => void;
+  navigateToEdit: (view: ViewType, fakturaId?: number) => void;
+  navigateBack: () => void;
   setNyArtikel: (artikel: Partial<NyArtikel>) => void;
   resetNyArtikel: () => void;
   setProdukterTjansterState: (state: Partial<FakturaState["produkterTjansterState"]>) => void;

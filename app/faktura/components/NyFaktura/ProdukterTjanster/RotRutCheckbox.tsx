@@ -1,4 +1,4 @@
-import type { RotRutCheckboxProps } from "../types/types";
+import type { RotRutCheckboxProps } from "../../../types/types";
 
 export default function RotRutCheckbox({
   checked,

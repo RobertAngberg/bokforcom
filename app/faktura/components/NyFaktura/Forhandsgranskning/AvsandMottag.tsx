@@ -1,7 +1,7 @@
 //#region Huvud
 "use client";
 
-import { AvsändMottagProps } from "../types/types";
+import { AvsändMottagProps } from "../../../types/types";
 //#endregion
 
 export default function AvsändMottag({ formData }: AvsändMottagProps) {

@@ -2,11 +2,11 @@
 
 import MainLayout from "../../../_components/MainLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import LeverantorFlik from "../Leverantorer/LeverantorFlik";
+import LeverantorFlik from "./Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
-import { useLeverantörer } from "../hooks/useLeverantorer";
-import { useLeverantorNavigation } from "../hooks/useLeverantorer";
-import { FakturaProvider } from "../context/FakturaContext";
+import { useLeverantörer } from "../../hooks/useLeverantorer";
+import { useLeverantorNavigation } from "../../hooks/useLeverantorer";
+import { FakturaProvider } from "../../context/FakturaContext";
 
 export default function LeverantorsfakturorPage() {
   const { refresh } = useLeverantörer();

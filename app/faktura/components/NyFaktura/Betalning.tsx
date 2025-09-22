@@ -3,8 +3,8 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useBetalning } from "../../hooks/useBetalning";
-import { BetalningProps } from "../types/types";
+import { useFaktura } from "../../hooks/useFaktura";
+import { BetalningProps } from "../../types/types";
 //#endregion
 
 export default function Betalning({}: BetalningProps) {
@@ -15,7 +15,7 @@ export default function Betalning({}: BetalningProps) {
     hanteraÄndraDatum,
     hanteraÄndradText,
     hanteraÄndradDropdown,
-  } = useBetalning();
+  } = useFaktura();
 
   return (
     <div className="space-y-6">

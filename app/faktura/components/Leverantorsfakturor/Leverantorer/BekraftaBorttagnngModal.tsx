@@ -2,7 +2,7 @@
 
 import Modal from "../../../../_components/Modal";
 import Knapp from "../../../../_components/Knapp";
-import { BekraftaBorttagnngModalProps } from "../types/types";
+import { BekraftaBorttagnngModalProps } from "../../../types/types";
 
 export default function BekraftaBorttagnngModal({
   isOpen,
