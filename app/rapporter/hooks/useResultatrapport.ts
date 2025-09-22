@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { formatSEK } from "../../_utils/format";
 import { hamtaResultatrapport, fetchFöretagsprofil } from "../resultatrapport/actions";
 
 // Types
@@ -151,14 +153,45 @@ export const useResultatrapport = () => {
     return isNegative ? `-${formatted}` : formatted;
   };
 
-  // Export functions (TODO: Move full implementation from component)
+  // Export functions
   const handleExportPDF = async () => {
     setIsExportingPDF(true);
     setExportMessage("");
 
     try {
-      // TODO: Implementera full PDF export här
-      setExportMessage("PDF export är inte implementerad än");
+      const element = document.getElementById("resultatrapport-print-area");
+      if (!element) {
+        throw new Error("Kunde inte hitta rapporten för export");
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        imageTimeout: 15000,
+        removeContainer: false,
+      });
+
+      const imageData = canvas.toDataURL("image/png");
+      if (
+        imageData ===
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+      ) {
+        throw new Error("Canvas är tom!");
+      }
+
+      const pdf = new jsPDF("portrait", "mm", "a4");
+      const pdfWidth = 210;
+      const imgWidth = pdfWidth - 15;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
+      pdf.save(`resultatrapport-${selectedYear}-${företagsnamn.replace(/\s+/g, "-")}.pdf`);
+
+      setExportMessage("PDF-rapporten har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);
     } catch (error) {
       console.error("PDF export error:", error);
@@ -174,8 +207,84 @@ export const useResultatrapport = () => {
     setExportMessage("");
 
     try {
-      // TODO: Implementera full CSV export här
-      setExportMessage("CSV export är inte implementerad än");
+      // Skapa CSV data
+      const csvRows = [];
+
+      // Header
+      csvRows.push(["Konto", "Benämning", previousYear, currentYear, "Förändring"]);
+
+      // Intäkter
+      if (data.intakter && data.intakter.length > 0) {
+        csvRows.push(["", "RÖRELSENS INTÄKTER", "", "", ""]);
+        data.intakter.forEach((grupp) => {
+          csvRows.push(["", grupp.namn, "", "", ""]);
+          grupp.konton.forEach((konto) => {
+            const prevValue = (konto as any).summering?.[previousYear] || 0;
+            const currValue = (konto as any).summering?.[currentYear] || 0;
+            const change = currValue - prevValue;
+            csvRows.push([
+              konto.kontonummer,
+              konto.beskrivning,
+              formatSEK(-prevValue),
+              formatSEK(-currValue),
+              formatSEK(-change),
+            ]);
+          });
+        });
+        csvRows.push([
+          "",
+          `Summa rörelsens intäkter`,
+          "",
+          formatSEK(intaktsSum[currentYear] || 0),
+          "",
+        ]);
+      }
+
+      // Kostnader
+      if (data.rorelsensKostnader && data.rorelsensKostnader.length > 0) {
+        csvRows.push(["", "RÖRELSENS KOSTNADER", "", "", ""]);
+        data.rorelsensKostnader.forEach((grupp) => {
+          csvRows.push(["", grupp.namn, "", "", ""]);
+          grupp.konton.forEach((konto) => {
+            const prevValue = (konto as any).summering?.[previousYear] || 0;
+            const currValue = (konto as any).summering?.[currentYear] || 0;
+            const change = currValue - prevValue;
+            csvRows.push([
+              konto.kontonummer,
+              konto.beskrivning,
+              formatSEK(prevValue),
+              formatSEK(currValue),
+              formatSEK(change),
+            ]);
+          });
+        });
+        csvRows.push([
+          "",
+          `Summa rörelsens kostnader`,
+          "",
+          formatSEK(rorelsensSum[currentYear] || 0),
+          "",
+        ]);
+      }
+
+      // Konvertera till CSV-sträng
+      const csvContent = csvRows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+
+      // Ladda ner filen
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `resultatrapport-${selectedYear}-${företagsnamn.replace(/\s+/g, "-")}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setExportMessage("CSV-filen har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);
     } catch (error) {
       console.error("CSV export error:", error);

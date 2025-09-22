@@ -398,7 +398,7 @@ export default function Page() {
           <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
         )}
 
-        <div className="space-y-6">
+        <div id="resultatrapport-print-area" className="space-y-6">
           {/* Intäkter */}
           {data.intakter && data.intakter.length > 0 && (
             <div>
