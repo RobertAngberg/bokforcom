@@ -7,7 +7,7 @@ import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import Modal from "../../_components/Modal";
 import Tabell from "../../_components/Tabell";
-import { useBokfordaFakturor } from "../_hooks/useBokfordaFakturor";
+import { useBokfordaFakturor } from "../_hooks/useLeverantorer";
 
 export default function BokfordaFakturor() {
   const {
@@ -51,13 +51,8 @@ export default function BokfordaFakturor() {
   }
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6">
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
+    <div className="p-6">
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
 
       <h2 className="text-xl font-semibold text-white mb-4">
         Leverantörsfakturor ({fakturor.length})
@@ -188,12 +183,7 @@ export default function BokfordaFakturor() {
       </Modal>
 
       {/* Toast meddelanden */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
+      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
     </div>
   );
 }

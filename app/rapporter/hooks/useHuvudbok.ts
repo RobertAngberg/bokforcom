@@ -130,7 +130,7 @@ export function useHuvudbok() {
   };
 
   // Modal handlers
-  const handleShowVerifikat = (transaktionsId: number) => {
+  const handleShowVerifikat = async (transaktionsId: number) => {
     console.log("🔍 Visar verifikat för transaktion:", transaktionsId);
     setSelectedTransaktionsId(transaktionsId);
     setShowVerifikatModal(true);

@@ -4,7 +4,6 @@ import React from "react";
 import AnstalldDropdown from "../AnstalldDropdown";
 import Knapp from "../../../_components/Knapp";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import Toast from "../../../_components/Toast";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
@@ -19,10 +18,6 @@ export default function Steg3(props?: Steg3Props) {
 
   return (
     <div className="relative">
-      {state.toast.isVisible && (
-        <Toast message={state.toast.message} type={state.toast.type} onClose={handlers.hideToast} />
-      )}
-
       <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
 
       <h1 className="text-3xl mb-4 text-center">

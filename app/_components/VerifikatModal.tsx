@@ -4,8 +4,15 @@ import React from "react";
 import Modal from "./Modal";
 import Tabell from "./Tabell";
 import { formatSEK } from "../_utils/format";
-import { VerifikatModalProps } from "../faktura/types/types";
-import { useVerifikatModal } from "../faktura/hooks/useLeverantorer";
+import { useVerifikatModal } from "../faktura/_hooks/useLeverantorer";
+
+interface VerifikatModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transaktionId?: number;
+  fakturanummer?: string;
+  leverantör?: string;
+}
 
 export default function VerifikatModal({
   isOpen,
@@ -20,47 +27,17 @@ export default function VerifikatModal({
     loading,
 
     // Computed data
-    columns: baseColumns,
+    columns,
     totalDebet,
     totalKredit,
     modalTitle,
     headerTitle,
   } = useVerifikatModal({
     isOpen,
-    transaktionId,
+    transaktionId: transaktionId || null,
     fakturanummer,
     leverantör,
   });
-
-  // Enhanced columns with JSX render functions
-  const columns = [
-    {
-      key: "kontonummer",
-      label: "Konto",
-      render: (value: any, post: any) => (
-        <div>
-          <div className="font-medium text-white">{post.kontonummer}</div>
-          <div className="text-sm text-gray-400">{post.kontobeskrivning}</div>
-        </div>
-      ),
-    },
-    {
-      key: "debet",
-      label: "Debet",
-      render: (value: any, post: any) => (
-        <div className="text-right text-white">{post.debet > 0 ? formatSEK(post.debet) : "-"}</div>
-      ),
-    },
-    {
-      key: "kredit",
-      label: "Kredit",
-      render: (value: any, post: any) => (
-        <div className="text-right text-white">
-          {post.kredit > 0 ? formatSEK(post.kredit) : "-"}
-        </div>
-      ),
-    },
-  ];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="4xl" isLoading={loading}>
@@ -91,7 +68,7 @@ export default function VerifikatModal({
         {/* Transaktionsposter */}
         {poster.length > 0 ? (
           <div>
-            <Tabell data={poster} columns={columns} getRowId={(post) => post.id} />
+            <Tabell data={poster} columns={columns} getRowId={(post: any) => post.id} />
 
             {/* Summor */}
             <div className="mt-4 bg-gray-800 rounded-lg p-4">

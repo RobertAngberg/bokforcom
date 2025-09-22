@@ -8,7 +8,8 @@ import {
   updateLeverantör,
 } from "../_actions/leverantorerActions";
 import { Leverantör } from "../_types/types";
-import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../_actions/alternativActions";
+import { hamtaBokfordaFakturor } from "../_actions/alternativActions";
+import { hamtaTransaktionsposter } from "../_actions/bokforingActions";
 import {
   hämtaFakturaMedRader,
   hämtaSparadeFakturor,

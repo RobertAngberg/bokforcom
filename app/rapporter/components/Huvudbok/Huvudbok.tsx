@@ -207,7 +207,7 @@ export default function Huvudbok() {
       {showVerifikatModal && selectedTransaktionsId && (
         <VerifikatModal
           isOpen={showVerifikatModal}
-          transaktionId={selectedTransaktionsId as number}
+          transaktionId={selectedTransaktionsId}
           onClose={handleCloseVerifikatModal}
         />
       )}
