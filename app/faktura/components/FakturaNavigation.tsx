@@ -6,7 +6,7 @@ import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import NyFaktura from "./NyFaktura/NyFaktura";
 import Sparade from "./Sparade/Sparade";
-import LeverantorsfakturorInline from "./LeverantorsfakturorInline";
+import Leverantorsfakturor from "./Leverantorsfakturor/Leverantorsfakturor";
 import { useFaktura } from "../hooks/useFaktura";
 
 type ActiveView = "overview" | "ny" | "sparade" | "leverantorer";
@@ -78,9 +78,7 @@ export default function FakturaNavigation() {
       {activeView === "sparade" && (
         <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}
-      {activeView === "leverantorer" && (
-        <LeverantorsfakturorInline onBackToMenu={handleBackToOverview} />
-      )}
+      {activeView === "leverantorer" && <Leverantorsfakturor />}
     </MainLayout>
   );
 }

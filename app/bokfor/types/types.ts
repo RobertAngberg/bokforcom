@@ -1,4 +1,4 @@
-import type { Leverantör } from "../../faktura/_types/types";
+import type { Leverantör } from "../../faktura/types/types";
 import type { ReactNode } from "react";
 import type { useBokfor } from "../hooks/useBokfor";
 
