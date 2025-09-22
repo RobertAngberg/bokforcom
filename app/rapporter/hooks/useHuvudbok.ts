@@ -1,31 +1,7 @@
 import { useState, useEffect } from "react";
-import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "../huvudbok/actions";
+import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "../actions/huvudbokActions";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
-
-export type TransaktionData = {
-  transaktion_id: number;
-  datum: string;
-  beskrivning: string;
-  debet: number | null;
-  kredit: number | null;
-  verifikatNummer: string;
-  belopp: number;
-  lopande_saldo: number;
-  sort_priority: number;
-};
-
-export type HuvudboksKontoMedTransaktioner = {
-  kontonummer: string;
-  beskrivning: string;
-  ingaendeBalans: number;
-  utgaendeBalans: number;
-  transaktioner: TransaktionData[];
-};
-
-export type ToastState = {
-  type: "success" | "error" | "info";
-  message: string;
-} | null;
+import { TransaktionData, HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
 
 export function useHuvudbok() {
   // State
@@ -49,8 +25,9 @@ export function useHuvudbok() {
   // Data fetching
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       try {
-        const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner();
+        const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner(selectedYear);
         setHuvudboksdata(huvudbokResult);
 
         // Försök ladda företagsprofil
@@ -76,11 +53,11 @@ export function useHuvudbok() {
     };
 
     loadData();
-  }, []);
+  }, [selectedYear]); // Lägg till selectedYear som dependency
 
-  // Year options från 2020 till nu
+  // Year options från nu till 2020 (högst till lägst)
   const yearOptions = Array.from({ length: currentYear - 2019 }, (_, i) => {
-    const year = 2020 + i;
+    const year = currentYear - i;
     return { value: year.toString(), label: year.toString() };
   });
 

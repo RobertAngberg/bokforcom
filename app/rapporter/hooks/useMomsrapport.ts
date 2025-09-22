@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getMomsrapport, fetchFöretagsprofil } from "../momsrapport/actions";
-
-// Types
-export type MomsRad = {
-  fält: string;
-  beskrivning: string;
-  belopp: number;
-};
+import { getMomsrapport, fetchFöretagsprofil } from "../actions/momsrapportActions";
+import { MomsRad } from "../types/types";
 
 export const useMomsrapport = () => {
   // State management

@@ -9,10 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export async function invalidateBokförCache() {
   revalidatePath("/historik");
-  revalidatePath("/rapporter/huvudbok");
-  revalidatePath("/rapporter/balansrapport");
-  revalidatePath("/rapporter/resultatrapport");
-  revalidatePath("/rapporter/momsrapport");
+  revalidatePath("/rapporter");
 }
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {

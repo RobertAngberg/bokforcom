@@ -2,23 +2,19 @@
 
 import React from "react";
 import { useSession } from "next-auth/react";
-import AnimeradFlik from "../../_components/AnimeradFlik";
-import MainLayout from "../../_components/MainLayout";
-import Totalrad from "../../_components/Totalrad";
-import Tabell, { ColumnDefinition } from "../../_components/Tabell";
-import Knapp from "../../_components/Knapp";
-import Dropdown from "../../_components/Dropdown";
-import VerifikatModal from "../../_components/VerifikatModal";
-import Modal from "../../_components/Modal";
-import { formatSEK } from "../../_utils/format";
-import {
-  useResultatrapport,
-  type ResultatData,
-  type KontoRad,
-  type Konto,
-} from "../hooks/useResultatrapport";
+import AnimeradFlik from "../../../_components/AnimeradFlik";
 
-export default function Page() {
+import Totalrad from "../../../_components/Totalrad";
+import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
+import Knapp from "../../../_components/Knapp";
+import Dropdown from "../../../_components/Dropdown";
+import VerifikatModal from "../../../_components/VerifikatModal";
+import Modal from "../../../_components/Modal";
+import { formatSEK } from "../../../_utils/format";
+import { useResultatrapport } from "../../hooks/useResultatrapport";
+import { ResultatData, KontoRad, ResultatKonto } from "../../types/types";
+
+export default function Resultatrapport() {
   const { data: sessionData, status: sessionStatus } = useSession();
 
   // Använd hook för all state management
@@ -62,56 +58,48 @@ export default function Page() {
   // Session loading
   if (sessionStatus === "loading") {
     return (
-      <MainLayout>
-        <div className="mx-auto max-w-7xl px-4 text-white">
-          <h1 className="mb-6 text-3xl font-bold">Resultatrapport</h1>
-          <div className="flex h-40 items-center justify-center">
-            <p>Verifierar session...</p>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 text-white">
+        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
+        <div className="flex h-40 items-center justify-center">
+          <p>Verifierar session...</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   // Session check
   if (!sessionData?.user) {
     return (
-      <MainLayout>
-        <div className="mx-auto max-w-7xl px-4 text-white">
-          <h1 className="mb-6 text-3xl font-bold">Resultatrapport</h1>
-          <div className="flex h-40 items-center justify-center">
-            <p>Du behöver vara inloggad för att se denna sida.</p>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 text-white">
+        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
+        <div className="flex h-40 items-center justify-center">
+          <p>Du behöver vara inloggad för att se denna sida.</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   // Data loading
   if (loading) {
     return (
-      <MainLayout>
-        <div className="mx-auto max-w-7xl px-4 text-white">
-          <h1 className="mb-6 text-3xl font-bold">Resultatrapport</h1>
-          <div className="flex h-40 items-center justify-center">
-            <p>Laddar data...</p>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 text-white">
+        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
+        <div className="flex h-40 items-center justify-center">
+          <p>Laddar data...</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   // No data check
   if (!initialData || !data || data.ar.length === 0) {
     return (
-      <MainLayout>
-        <div className="mx-auto max-w-7xl px-4 text-white">
-          <h1 className="mb-6 text-3xl font-bold">Resultatrapport</h1>
-          <div className="flex h-40 items-center justify-center">
-            <p>Ingen data tillgänglig</p>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 text-white">
+        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
+        <div className="flex h-40 items-center justify-center">
+          <p>Ingen data tillgänglig</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
@@ -340,161 +328,157 @@ export default function Page() {
   };
 
   return (
-    <MainLayout>
-      <div className="mx-auto px-4 text-white">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-4">Resultatrapport</h1>
+    <div className="mx-auto px-4 text-white">
+      <div className="mb-6">
+        <h1 className="text-3xl text-center mb-4">Resultatrapport</h1>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Dropdown
-                label="År"
-                value={selectedYear}
-                onChange={(value) => setSelectedYear(value)}
-                options={years.map((year) => ({ value: year, label: year }))}
-                className="w-24"
-              />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Dropdown
+              value={selectedYear}
+              onChange={(value) => setSelectedYear(value)}
+              options={years.map((year) => ({ value: year, label: year }))}
+              className="w-24"
+            />
 
-              <Dropdown
-                label="Månad"
-                value={selectedMonth}
-                onChange={(value) => setSelectedMonth(value)}
-                options={[
-                  { value: "all", label: "Alla månader" },
-                  { value: "01", label: "Januari" },
-                  { value: "02", label: "Februari" },
-                  { value: "03", label: "Mars" },
-                  { value: "04", label: "April" },
-                  { value: "05", label: "Maj" },
-                  { value: "06", label: "Juni" },
-                  { value: "07", label: "Juli" },
-                  { value: "08", label: "Augusti" },
-                  { value: "09", label: "September" },
-                  { value: "10", label: "Oktober" },
-                  { value: "11", label: "November" },
-                  { value: "12", label: "December" },
-                ]}
-                className="w-40"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Knapp
-                text={isExportingPDF ? "Exporterar..." : "Exportera PDF"}
-                onClick={handleExportPDF}
-                disabled={isExportingPDF}
-              />
-
-              <Knapp
-                text={isExportingCSV ? "Exporterar..." : "Exportera CSV"}
-                onClick={handleExportCSV}
-                disabled={isExportingCSV}
-              />
-            </div>
+            <Dropdown
+              value={selectedMonth}
+              onChange={(value) => setSelectedMonth(value)}
+              options={[
+                { value: "all", label: "Alla månader" },
+                { value: "01", label: "Januari" },
+                { value: "02", label: "Februari" },
+                { value: "03", label: "Mars" },
+                { value: "04", label: "April" },
+                { value: "05", label: "Maj" },
+                { value: "06", label: "Juni" },
+                { value: "07", label: "Juli" },
+                { value: "08", label: "Augusti" },
+                { value: "09", label: "September" },
+                { value: "10", label: "Oktober" },
+                { value: "11", label: "November" },
+                { value: "12", label: "December" },
+              ]}
+              className="w-40"
+            />
           </div>
-        </div>
 
-        {exportMessage && (
-          <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
-        )}
+          <div className="flex items-center gap-3">
+            <Knapp
+              text={isExportingPDF ? "Exporterar..." : "Exportera PDF"}
+              onClick={handleExportPDF}
+              disabled={isExportingPDF}
+            />
 
-        <div id="resultatrapport-print-area" className="space-y-6">
-          {/* Intäkter */}
-          {data.intakter && data.intakter.length > 0 && (
-            <div>
-              <h2 className="mb-4 text-xl font-semibold">Rörelsens intäkter</h2>
-              {renderTabell(data.intakter, true)}
-              <Totalrad
-                label="Summa rörelsens intäkter"
-                values={{ [currentYear]: intaktsSum[currentYear] ?? 0 }}
-              />
-            </div>
-          )}
-
-          {/* Kostnader */}
-          {data.rorelsensKostnader && data.rorelsensKostnader.length > 0 && (
-            <div>
-              <h2 className="mb-4 text-xl font-semibold">Rörelsens kostnader</h2>
-              {renderTabell(data.rorelsensKostnader)}
-              <Totalrad
-                label="Summa rörelsens kostnader"
-                values={{ [currentYear]: rorelsensSum[currentYear] ?? 0 }}
-              />
-            </div>
-          )}
-
-          {/* Rörelseresultat */}
-          <Totalrad
-            label="Rörelseresultat"
-            values={{ [currentYear]: rorelsensResultat[currentYear] ?? 0 }}
-          />
-
-          {/* Finansiella intäkter */}
-          {data.finansiellaIntakter && data.finansiellaIntakter.length > 0 && (
-            <div>
-              <h2 className="mb-4 text-xl font-semibold">Finansiella intäkter</h2>
-              {renderTabell(data.finansiellaIntakter)}
-              <Totalrad
-                label="Summa finansiella intäkter"
-                values={{ [currentYear]: finansiellaIntakterSum[currentYear] ?? 0 }}
-              />
-            </div>
-          )}
-
-          {/* Finansiella kostnader */}
-          {data.finansiellaKostnader && data.finansiellaKostnader.length > 0 && (
-            <div>
-              <h2 className="mb-4 text-xl font-semibold">Finansiella kostnader</h2>
-              {renderTabell(data.finansiellaKostnader)}
-              <Totalrad
-                label="Summa finansiella kostnader"
-                values={{ [currentYear]: finansiellaKostnaderSum[currentYear] ?? 0 }}
-              />
-            </div>
-          )}
-
-          {/* Resultat efter finansiella poster */}
-          <Totalrad
-            label="Resultat efter finansiella poster"
-            values={{ [currentYear]: resultatEfterFinansiella[currentYear] ?? 0 }}
-          />
-
-          {/* Årets resultat */}
-          <Totalrad
-            label="Årets resultat"
-            values={{ [currentYear]: aretsSummare[currentYear] ?? 0 }}
-          />
+            <Knapp
+              text={isExportingCSV ? "Exporterar..." : "Exportera CSV"}
+              onClick={handleExportCSV}
+              disabled={isExportingCSV}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Modals */}
-      {verifikatId && (
-        <VerifikatModal
-          isOpen={!!verifikatId}
-          transaktionId={verifikatId}
-          onClose={() => setVerifikatId(null)}
-        />
+      {exportMessage && (
+        <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
       )}
 
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={`Verifikationer för konto ${selectedKonto}`}
-      >
-        {loadingModal ? (
-          <p>Laddar verifikationer...</p>
-        ) : (
-          <Tabell
-            data={verifikationer}
-            columns={[
-              { label: "Datum", key: "datum" },
-              { label: "Beskrivning", key: "beskrivning" },
-              { label: "Belopp", key: "belopp", render: (row) => formatSEK(row.belopp) },
-            ]}
-            getRowId={(row) => row.id}
+      <div id="resultatrapport-print-area" className="space-y-6">
+        {/* Intäkter */}
+        {data.intakter && data.intakter.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-xl font-semibold">Rörelsens intäkter</h2>
+            {renderTabell(data.intakter, true)}
+            <Totalrad
+              label="Summa rörelsens intäkter"
+              values={{ [currentYear]: intaktsSum[currentYear] ?? 0 }}
+            />
+          </div>
+        )}
+
+        {/* Kostnader */}
+        {data.rorelsensKostnader && data.rorelsensKostnader.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-xl font-semibold">Rörelsens kostnader</h2>
+            {renderTabell(data.rorelsensKostnader)}
+            <Totalrad
+              label="Summa rörelsens kostnader"
+              values={{ [currentYear]: rorelsensSum[currentYear] ?? 0 }}
+            />
+          </div>
+        )}
+
+        {/* Rörelseresultat */}
+        <Totalrad
+          label="Rörelseresultat"
+          values={{ [currentYear]: rorelsensResultat[currentYear] ?? 0 }}
+        />
+
+        {/* Finansiella intäkter */}
+        {data.finansiellaIntakter && data.finansiellaIntakter.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-xl font-semibold">Finansiella intäkter</h2>
+            {renderTabell(data.finansiellaIntakter)}
+            <Totalrad
+              label="Summa finansiella intäkter"
+              values={{ [currentYear]: finansiellaIntakterSum[currentYear] ?? 0 }}
+            />
+          </div>
+        )}
+
+        {/* Finansiella kostnader */}
+        {data.finansiellaKostnader && data.finansiellaKostnader.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-xl font-semibold">Finansiella kostnader</h2>
+            {renderTabell(data.finansiellaKostnader)}
+            <Totalrad
+              label="Summa finansiella kostnader"
+              values={{ [currentYear]: finansiellaKostnaderSum[currentYear] ?? 0 }}
+            />
+          </div>
+        )}
+
+        {/* Resultat efter finansiella poster */}
+        <Totalrad
+          label="Resultat efter finansiella poster"
+          values={{ [currentYear]: resultatEfterFinansiella[currentYear] ?? 0 }}
+        />
+
+        {/* Årets resultat */}
+        <Totalrad
+          label="Årets resultat"
+          values={{ [currentYear]: aretsSummare[currentYear] ?? 0 }}
+        />
+
+        {/* Modals */}
+        {verifikatId && (
+          <VerifikatModal
+            isOpen={!!verifikatId}
+            transaktionId={verifikatId as number}
+            onClose={() => setVerifikatId(null)}
           />
         )}
-      </Modal>
-    </MainLayout>
+
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title={`Verifikationer för konto ${selectedKonto}`}
+        >
+          {loadingModal ? (
+            <p>Laddar verifikationer...</p>
+          ) : (
+            <Tabell
+              data={verifikationer}
+              columns={[
+                { label: "Datum", key: "datum" },
+                { label: "Beskrivning", key: "beskrivning" },
+                { label: "Belopp", key: "belopp", render: (row) => formatSEK(row.belopp) },
+              ]}
+              getRowId={(row) => row.id}
+            />
+          )}
+        </Modal>
+      </div>
+    </div>
   );
 }

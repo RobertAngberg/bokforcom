@@ -1,34 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { fetchBalansData, fetchFöretagsprofil } from "../balansrapport/actions";
+import { fetchBalansData, fetchFöretagsprofil } from "../actions/balansrapportActions";
 import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
-
-// Types
-export type Konto = {
-  kontonummer: string;
-  beskrivning: string;
-  ingaendeSaldo: number;
-  aretsResultat: number;
-  utgaendeSaldo: number;
-  transaktioner: any[];
-};
-
-export type BalansData = {
-  year: string;
-  ingaendeTillgangar: any[];
-  aretsTillgangar: any[];
-  utgaendeTillgangar: any[];
-  ingaendeSkulder: any[];
-  aretsSkulder: any[];
-  utgaendeSkulder: any[];
-  ingaendeResultat: number;
-  aretsResultat: number;
-  utgaendeResultat: number;
-};
-
-export type ExportMessage = {
-  type: "success" | "error";
-  text: string;
-} | null;
+import { Konto, BalansData, ExportMessage } from "../types/types";
 
 export function useBalansrapport() {
   // Step 1: Basic data state

@@ -2,36 +2,8 @@ import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { formatSEK } from "../../_utils/format";
-import { hamtaResultatrapport, fetchFöretagsprofil } from "../resultatrapport/actions";
-
-// Types
-type Konto = {
-  kontonummer: string;
-  beskrivning: string;
-  transaktioner?: Array<{
-    id: string;
-    datum: string;
-    belopp: number;
-    beskrivning: string;
-    transaktion_id: number;
-    verifikatNummer: string;
-  }>;
-  [year: string]: number | string | undefined | Array<any>;
-};
-
-type KontoRad = {
-  namn: string;
-  konton: Konto[];
-  summering: { [year: string]: number };
-};
-
-type ResultatData = {
-  intakter: KontoRad[];
-  rorelsensKostnader: KontoRad[];
-  finansiellaIntakter?: KontoRad[];
-  finansiellaKostnader: KontoRad[];
-  ar: string[];
-};
+import { hamtaResultatrapport, fetchFöretagsprofil } from "../actions/resultatrapportActions";
+import { ResultatKonto, KontoRad, ResultatData } from "../types/types";
 
 export const useResultatrapport = () => {
   // Filter state
@@ -348,4 +320,4 @@ export const useResultatrapport = () => {
   };
 };
 
-export type { ResultatData, KontoRad, Konto };
+export type { ResultatData, KontoRad, ResultatKonto };

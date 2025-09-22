@@ -260,7 +260,7 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
   }
 }
 
-export async function fetchHuvudbokMedAllaTransaktioner() {
+export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
   const userId = await getUserId();
 
   // SÄKERHETSVALIDERING: Rate limiting för huvudbok med alla transaktioner
@@ -269,10 +269,18 @@ export async function fetchHuvudbokMedAllaTransaktioner() {
     throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
   }
 
-  logLedgerDataEvent("access", userId, "Accessing full ledger with all transactions");
+  logLedgerDataEvent(
+    "access",
+    userId,
+    `Accessing full ledger with all transactions${year ? ` for year ${year}` : ""}`
+  );
 
   try {
     const client = await pool.connect();
+
+    // Lägg till WHERE-klausul för år om det är specificerat
+    const yearFilter = year ? `AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2` : "";
+    const queryParams = year ? [userId, parseInt(year)] : [userId];
 
     // Hämta alla transaktioner grupperade per konto, inklusive ingående balans
     const fullQuery = `
@@ -299,7 +307,7 @@ export async function fetchHuvudbokMedAllaTransaktioner() {
         FROM transaktioner t
         JOIN transaktionsposter tp ON tp.transaktions_id = t.id
         JOIN konton k ON k.id = tp.konto_id
-        WHERE t."user_id" = $1
+        WHERE t."user_id" = $1 ${yearFilter}
         ORDER BY k.kontonummer::int, sort_priority, t.transaktionsdatum, t.id
       ),
       konto_summary AS (
@@ -333,7 +341,7 @@ export async function fetchHuvudbokMedAllaTransaktioner() {
       ORDER BY kontonummer::int
     `;
 
-    const result = await client.query(fullQuery, [userId]);
+    const result = await client.query(fullQuery, queryParams);
     client.release();
 
     // Bearbeta resultatet för att beräkna löpande saldon
