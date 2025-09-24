@@ -3,7 +3,6 @@
 import Knapp from "../../../_components/Knapp";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista/AnstalldaLista";
-import MainLayout from "../../../_components/MainLayout";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import UtlaggFlik from "./Utlagg/UtlaggFlik";
 import Information from "./Information/Information";
@@ -19,7 +18,7 @@ export default function Anstallda() {
   const { utlaggFlikData } = useUtlagg(valdAnställd?.id);
 
   return (
-    <MainLayout>
+    <>
       <h1 className="text-3xl text-white mb-6 text-center">Anställda</h1>
 
       <div className="space-y-6">
@@ -80,6 +79,6 @@ export default function Anstallda() {
           </AnimeradFlik>
         </div>
       )}
-    </MainLayout>
+    </>
   );
 }

@@ -56,6 +56,18 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
 
               return (
                 <div key={faktura.id} className="relative">
+                  {/* Papperskorg-knapp */}
+                  <button
+                    className="absolute top-2 right-2 z-10 text-gray-400 hover:text-red-400 transition-colors duration-200 text-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteInvoice(faktura.id);
+                    }}
+                    title="Ta bort faktura"
+                  >
+                    🗑️
+                  </button>
+
                   <div
                     className={`
                       p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-lg

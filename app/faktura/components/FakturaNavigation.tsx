@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import MainLayout from "../../_components/MainLayout";
 import Knapp from "../../_components/Knapp";
 import Toast from "../../_components/Toast";
 import NyFaktura from "./NyFaktura/NyFaktura";
@@ -28,7 +27,7 @@ export default function FakturaNavigation() {
 
   if (activeView === "overview") {
     return (
-      <MainLayout>
+      <>
         <h1 className="text-3xl font-bold text-slate-100 mb-8">Faktura</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -61,13 +60,13 @@ export default function FakturaNavigation() {
             />
           </div>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   // Renderera specifika vyer
   return (
-    <MainLayout>
+    <>
       {toastState.isVisible && (
         <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
       )}
@@ -79,6 +78,6 @@ export default function FakturaNavigation() {
         <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}
       {activeView === "leverantorer" && <Leverantorsfakturor />}
-    </MainLayout>
+    </>
   );
 }

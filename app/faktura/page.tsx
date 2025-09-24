@@ -1,5 +1,6 @@
 import { FakturaProvider } from "./context/FakturaContext";
 import FakturaNavigation from "./components/FakturaNavigation";
+import MainLayout from "../_components/MainLayout";
 import { hämtaFöretagsprofil } from "./actions/foretagActions";
 import { hämtaSparadeKunder } from "./actions/kundActions";
 import { hämtaSparadeArtiklar } from "./actions/artikelActions";
@@ -21,8 +22,10 @@ export default async function FakturaPage() {
   };
 
   return (
-    <FakturaProvider initialData={initialData}>
-      <FakturaNavigation />
-    </FakturaProvider>
+    <MainLayout>
+      <FakturaProvider initialData={initialData}>
+        <FakturaNavigation />
+      </FakturaProvider>
+    </MainLayout>
   );
 }

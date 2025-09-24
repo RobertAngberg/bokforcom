@@ -1,6 +1,5 @@
 "use client";
 
-import MainLayout from "../../../_components/MainLayout";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import LeverantorFlik from "./Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
@@ -18,7 +17,7 @@ export default function LeverantorsfakturorPage() {
 
   return (
     <FakturaProvider>
-      <MainLayout>
+      <>
         <div className="relative mb-6">
           <TillbakaPil onClick={navigateToFaktura} />
           <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
@@ -31,7 +30,7 @@ export default function LeverantorsfakturorPage() {
         <div className="mb-8">
           <BokfordaFakturorFlik />
         </div>
-      </MainLayout>
+      </>
     </FakturaProvider>
   );
 }

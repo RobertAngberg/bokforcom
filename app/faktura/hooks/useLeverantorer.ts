@@ -8,7 +8,8 @@ import {
   updateLeverantör,
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
-import { hamtaBokfordaFakturor, hamtaTransaktionsposter } from "../actions/alternativActions";
+import { hamtaTransaktionsposter } from "../actions/alternativActions";
+import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
 import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../actions/fakturaActions";
 import { hämtaFöretagsprofil } from "../actions/foretagActions";
 import { hämtaSparadeKunder } from "../actions/kundActions";
@@ -402,8 +403,8 @@ export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
   const loadFakturorAntal = async () => {
     try {
       const result = await hamtaBokfordaFakturor();
-      if (result.success && result.data) {
-        setFakturorAntal(result.data.length);
+      if (result.success && result.fakturor) {
+        setFakturorAntal(result.fakturor.length);
       }
     } catch (error) {
       console.error("Fel vid hämtning av fakturor:", error);
@@ -547,8 +548,8 @@ export function useBokfordaFakturor() {
     async function hamtaFakturor() {
       try {
         const result = await hamtaBokfordaFakturor();
-        if (result.success && result.data) {
-          setFakturor(result.data);
+        if (result.success && result.fakturor) {
+          setFakturor(result.fakturor);
         }
       } catch (error) {
         console.error("Fel vid hämtning av bokförda fakturor:", error);
@@ -659,7 +660,7 @@ export function useBokfordaFakturor() {
         // Ladda om data för att visa uppdaterad status
         const updatedData = await hamtaBokfordaFakturor();
         if (updatedData.success) {
-          setFakturor(updatedData.data || []);
+          setFakturor(updatedData.fakturor || []);
         }
       } else {
         setToast({

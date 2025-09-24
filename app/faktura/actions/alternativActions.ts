@@ -347,8 +347,8 @@ export async function bokförFaktura(data: {
       await client.query(
         `UPDATE fakturor 
          SET 
-           status = 'bokförd',
-           bokförd_datum = CURRENT_DATE
+           status_bokförd = 'Bokförd',
+           uppdaterad = CURRENT_TIMESTAMP
          WHERE id = $1 AND user_id = $2`,
         [data.fakturaId, userId]
       );
@@ -390,8 +390,8 @@ export async function hamtaBokfordaFakturor() {
   return withDatabase(async (client) => {
     const result = await client.query(
       `SELECT * FROM fakturor 
-       WHERE user_id = $1 AND status = 'bokförd'
-       ORDER BY bokförd_datum DESC`,
+       WHERE user_id = $1 AND status_bokförd = 'Bokförd'
+       ORDER BY uppdaterad DESC`,
       [userId]
     );
     return { success: true, data: result.rows };
