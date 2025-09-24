@@ -5,13 +5,12 @@ import Kompensation from "./Kompensation";
 import Tjänsteställe from "./Tjanstestalle";
 import Skatt from "./Skatt";
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
 import { useAnstallda } from "../../../hooks/useAnstallda";
 
 export default function NyAnställd() {
   const {
-    state: { toast, nyAnställdLoading },
+    state: { nyAnställdLoading },
     actions,
   } = useNyAnstalld();
 
@@ -25,11 +24,6 @@ export default function NyAnställd() {
       <Kompensation />
       <Tjänsteställe />
       <Skatt />
-
-      {/* Toast Notification */}
-      {toast.isVisible && (
-        <Toast message={toast.message} type={toast.type} onClose={actions.hideToast} />
-      )}
 
       <div className="flex gap-4 pt-4">
         <Knapp

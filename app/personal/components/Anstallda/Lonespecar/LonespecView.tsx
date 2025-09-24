@@ -6,7 +6,7 @@ import Utlagg from "./Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import Toast from "../../../../_components/Toast";
+import { showToast } from "../../../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import { useLonespec } from "../../../hooks/useLonespecar";
@@ -29,10 +29,6 @@ export default function LönespecView({
   // Lokal state för utlägg så vi kan uppdatera UI direkt
   const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);
   const [sparar, setSparar] = useState(false);
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
 
   //#endregion
 
@@ -128,22 +124,13 @@ export default function LönespecView({
       });
 
       if (result.success) {
-        setToast({
-          type: "success",
-          message: "Lönespec sparad!",
-        });
+        showToast("Lönespec sparad!", "success");
       } else {
-        setToast({
-          type: "error",
-          message: result.error || "Kunde inte spara lönespec",
-        });
+        showToast(result.error || "Kunde inte spara lönespec", "error");
       }
     } catch (error) {
       console.error("❌ Fel vid sparning av lönespec:", error);
-      setToast({
-        type: "error",
-        message: "Kunde inte spara lönespec",
-      });
+      showToast("Kunde inte spara lönespec", "error");
     } finally {
       setSparar(false);
     }
@@ -243,8 +230,6 @@ export default function LönespecView({
           </div>
         </div>
       )}
-
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useBokföringslogik } from "../../../hooks/useBokföringslogik";
-import Toast from "../../../../_components/Toast";
 import type { BokforLonerProps } from "../../../types/types";
 
 export default function BokforLoner({
@@ -13,24 +12,15 @@ export default function BokforLoner({
   onClose,
   onBokfört,
 }: BokforLonerProps) {
-  const {
-    loading,
-    error,
-    toast,
-    setToast,
-    poster,
-    totalDebet,
-    totalKredit,
-    ärBalanserad,
-    handleBokför,
-  } = useBokföringslogik({
-    lönespec,
-    extrarader,
-    beräknadeVärden,
-    anställdNamn,
-    onBokfört,
-    onClose,
-  });
+  const { loading, error, poster, totalDebet, totalKredit, ärBalanserad, handleBokför } =
+    useBokföringslogik({
+      lönespec,
+      extrarader,
+      beräknadeVärden,
+      anställdNamn,
+      onBokfört,
+      onClose,
+    });
 
   if (!isOpen) return null;
 
@@ -143,14 +133,6 @@ export default function BokforLoner({
           </div>
         </div>
       </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
     </div>
   );
 }

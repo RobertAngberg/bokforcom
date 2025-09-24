@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { läggTillUtläggSomExtrarad } from "../actions/lonespecarActions";
 import { uppdateraUtläggStatus, hämtaUtlägg } from "../actions/utlaggActions";
+import { showToast } from "../../_components/Toast";
 
 export const useLonespecUtlagg = (
   lönespecUtlägg: any[],
@@ -11,11 +12,6 @@ export const useLonespecUtlagg = (
 ) => {
   const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<any[]>(lönespecUtlägg);
   const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Synkronisera utläggstatus med faktiska extrarader
   useEffect(() => {
@@ -79,22 +75,14 @@ export const useLonespecUtlagg = (
 
   const handleLäggTillUtlägg = async () => {
     if (!lönespecId) {
-      setToast({
-        message: "Fel: Ingen lönespec ID hittades",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Fel: Ingen lönespec ID hittades", "error");
       return;
     }
 
     const väntandeUtlägg = synkroniseradeUtlägg.filter((u) => u.status === "Väntande");
 
     if (väntandeUtlägg.length === 0) {
-      setToast({
-        message: "Inga väntande utlägg att lägga till",
-        type: "info",
-        isVisible: true,
-      });
+      showToast("Inga väntande utlägg att lägga till", "info");
       return;
     }
 
@@ -107,11 +95,7 @@ export const useLonespecUtlagg = (
         extraradResults.push(result);
         await uppdateraUtläggStatus(utlägg.id, "Inkluderat i lönespec");
       }
-      setToast({
-        message: `${väntandeUtlägg.length} utlägg tillagda!`,
-        type: "success",
-        isVisible: true,
-      });
+      showToast(`${väntandeUtlägg.length} utlägg tillagda!`, "success");
 
       // Uppdatera UI genom callback - skicka både utlägg och resultat
       if (onUtläggAdded) {
@@ -119,11 +103,7 @@ export const useLonespecUtlagg = (
       }
     } catch (error) {
       console.error("Fel:", error);
-      setToast({
-        message: "Något gick fel!",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Något gick fel!", "error");
     } finally {
       setLäggerTillUtlägg(false);
     }
@@ -139,8 +119,6 @@ export const useLonespecUtlagg = (
     // State
     synkroniseradeUtlägg,
     läggerTillUtlägg,
-    toast,
-    setToast,
     // Computed values
     väntandeUtlägg,
     inkluderadeUtlägg,

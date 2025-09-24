@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import type { SingleLönespec } from "../types/types";
+import { showToast } from "../../_components/Toast";
 
 interface UseMailaLonespecProps {
   // Single mode props
@@ -36,11 +37,6 @@ export function useMailaLonespec({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visaModal, setVisaModal] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Helper for single or batch
   const lönespecList = batchMode
@@ -138,11 +134,7 @@ export function useMailaLonespec({
       }
 
       setSent(true);
-      setToast({
-        message: `${sentCount} lönespecar skickade!`,
-        type: "success",
-        isVisible: true,
-      });
+      showToast(`${sentCount} lönespecar skickade!`, "success");
 
       // Close modal after showing toast
       setTimeout(() => {
@@ -167,11 +159,7 @@ export function useMailaLonespec({
       await sendEmail(singleItem, pdfBlob);
 
       setSent(true);
-      setToast({
-        message: "Lönespec skickad!",
-        type: "success",
-        isVisible: true,
-      });
+      showToast("Lönespec skickad!", "success");
 
       // Close modal after showing toast
       setTimeout(() => {
@@ -203,8 +191,6 @@ export function useMailaLonespec({
     sent,
     error,
     visaModal,
-    toast,
-    setToast,
 
     // Computed values
     lönespecList,

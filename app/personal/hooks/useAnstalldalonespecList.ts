@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { taBortLönespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
+import { showToast } from "../../_components/Toast";
 
 export const useAnstalldalonespecList = (onLönespecUppdaterad?: () => void) => {
   const { lönespecar } = useLonespec();
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   const handleTaBortLönespec = async (lönespecId: string) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
@@ -20,26 +16,14 @@ export const useAnstalldalonespecList = (onLönespecUppdaterad?: () => void) => 
     try {
       const resultat = await taBortLönespec(parseInt(lönespecId));
       if (resultat.success) {
-        setToast({
-          message: "Lönespecifikation borttagen!",
-          type: "success",
-          isVisible: true,
-        });
+        showToast("Lönespecifikation borttagen!", "success");
         onLönespecUppdaterad?.(); // Uppdatera listan
       } else {
-        setToast({
-          message: `Kunde inte ta bort lönespec: ${resultat.message}`,
-          type: "error",
-          isVisible: true,
-        });
+        showToast(`Kunde inte ta bort lönespec: ${resultat.message}`, "error");
       }
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönespec:", error);
-      setToast({
-        message: "Kunde inte ta bort lönespec",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Kunde inte ta bort lönespec", "error");
     } finally {
       setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: false }));
     }
@@ -55,8 +39,6 @@ export const useAnstalldalonespecList = (onLönespecUppdaterad?: () => void) => 
     // State
     lönespecar,
     taBortLaddning,
-    toast,
-    setToast,
     // Functions
     handleTaBortLönespec,
     handleNavigateToLonekorning,

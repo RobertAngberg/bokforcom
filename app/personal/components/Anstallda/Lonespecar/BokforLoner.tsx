@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../../../actions/bokforingActions";
-import Toast from "../../../../_components/Toast";
+import { showToast } from "../../../../_components/Toast";
 
 interface BokföringsPost {
   konto: string;
@@ -122,11 +122,6 @@ export default function BokforLoner({
 }: BokforLonerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Validera mappningen vid första rendering (endast i development)
   if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -155,17 +150,10 @@ export default function BokforLoner({
         utbetalningsdatum: new Date().toISOString().split("T")[0],
       });
 
-      setToast({
-        message: result.message || "Bokföring genomförd",
-        type: "success",
-        isVisible: true,
-      });
+      showToast(result.message || "Bokföring genomförd", "success");
 
-      // Vänta lite så användaren hinner se toast:en innan modalen stängs
-      setTimeout(() => {
-        onBokfört?.();
-        onClose();
-      }, 2000); // Stäng efter 2 sekunder
+      onBokfört?.();
+      onClose();
     } catch (error: any) {
       setError(error.message || "Ett fel inträffade vid bokföring");
       console.error("Bokföringsfel:", error);
@@ -521,14 +509,6 @@ export default function BokforLoner({
           </div>
         </div>
       </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
     </div>
   );
 }

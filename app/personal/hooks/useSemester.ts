@@ -7,6 +7,7 @@ import {
   bokförSemester,
 } from "../actions/semesterActions";
 import type { SemesterBoxField, SemesterBoxSummary } from "../types/types";
+import { showToast } from "../../_components/Toast";
 
 interface UseSemesterProps {
   anställdId: number;
@@ -24,7 +25,6 @@ interface UseSemesterReturn {
   loading: boolean;
   bokforModalOpen: boolean;
   bokforRows: any[];
-  toast: { type: "success" | "error" | "info"; message: string } | null;
 
   // Actions
   hämtaData: () => Promise<void>;
@@ -57,10 +57,6 @@ export function useSemester({
   const [loading, setLoading] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [bokforRows, setBokforRows] = useState<any[]>([]);
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
 
   // Hämta data vid laddning
   const hämtaData = useCallback(async () => {
@@ -80,7 +76,7 @@ export function useSemester({
       setShowBokforKnapp(t.bokförd === false);
     } catch (error) {
       console.error("Fel vid hämtning av semesterdata:", error);
-      setToast({ type: "error", message: "Kunde inte hämta semesterdata" });
+      showToast("Kunde inte hämta semesterdata", "error");
     } finally {
       setLoading(false);
     }
@@ -101,7 +97,7 @@ export function useSemester({
     if (!editingField || !editValue || !summary) return;
     const newValue = parseFloat(editValue);
     if (isNaN(newValue)) {
-      setToast({ type: "error", message: "Ogiltigt nummer" });
+      showToast("Ogiltigt nummer", "error");
       return;
     }
     setLoading(true);
@@ -119,7 +115,7 @@ export function useSemester({
       await hämtaData(); // Hämta om data från servern
     } catch (error) {
       console.error("Fel vid sparande:", error);
-      setToast({ type: "error", message: "Kunde inte spara ändringen" });
+      showToast("Kunde inte spara ändringen", "error");
     } finally {
       setLoading(false);
     }
@@ -231,16 +227,13 @@ export function useSemester({
 
         setBokforModalOpen(false);
         if (res?.success) {
-          setToast({ type: "success", message: "Bokföring sparad!" });
+          showToast("Bokföring sparad!", "success");
           await hämtaData();
         } else {
-          setToast({ type: "error", message: `Fel vid bokföring: ${res?.error || "Okänt fel"}` });
+          showToast(`Fel vid bokföring: ${res?.error || "Okänt fel"}`, "error");
         }
       } catch (error) {
-        setToast({
-          type: "error",
-          message: `Fel vid bokföring: ${error instanceof Error ? error.message : error}`,
-        });
+        showToast(`Fel vid bokföring: ${error instanceof Error ? error.message : error}`, "error");
       } finally {
         setLoading(false);
       }
@@ -249,7 +242,7 @@ export function useSemester({
   );
 
   const clearToast = useCallback(() => {
-    setToast(null);
+    // Toast clearing not needed with global showToast
   }, []);
 
   return {
@@ -262,7 +255,6 @@ export function useSemester({
     loading,
     bokforModalOpen,
     bokforRows,
-    toast,
 
     // Actions
     hämtaData,

@@ -1,4 +1,3 @@
-import Toast from "../../../../../_components/Toast";
 import Huvudinfo from "./Huvudinfo";
 import Lonetabell from "./Lonetabell";
 import Sammanfattning from "./Sammanfattning";
@@ -21,8 +20,6 @@ export default function Forhandsgranskning({
   const {
     isExporting,
     företag,
-    toast,
-    setToast,
     formatNoDecimals,
     extraraderMapped,
     bruttolön,
@@ -106,7 +103,6 @@ export default function Forhandsgranskning({
           <Fotinfo företag={företag} />
         </div>
       </div>
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

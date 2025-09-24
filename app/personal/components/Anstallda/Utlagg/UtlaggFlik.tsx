@@ -2,15 +2,12 @@
 
 import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import UtlaggBokforModal from "./UtlaggBokforModal";
 import { useUtlaggFlik } from "../../../hooks/useUtlaggFlik";
 import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
 
 export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFlikProps) {
   const {
-    toast,
-    setToast,
     utlägg,
     loading,
     handleNyttUtlägg,
@@ -115,8 +112,6 @@ export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFl
       </div>
 
       <UtlaggBokforModal />
-
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

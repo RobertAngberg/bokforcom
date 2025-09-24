@@ -3,7 +3,6 @@
 //#region Huvud
 import LönespecView from "./LonespecView";
 import { useAnstalldalonespecList } from "../../../hooks/useAnstalldalonespecList";
-import Toast from "../../../../_components/Toast";
 import Knapp from "../../../../_components/Knapp";
 import type { LonespecListProps } from "../../../types/types";
 
@@ -16,14 +15,8 @@ export default function LonespecList({
   onLönespecUppdaterad,
   visaExtraRader = false,
 }: LonespecListProps) {
-  const {
-    lönespecar,
-    taBortLaddning,
-    toast,
-    setToast,
-    handleTaBortLönespec,
-    handleNavigateToLonekorning,
-  } = useAnstalldalonespecList(onLönespecUppdaterad);
+  const { lönespecar, taBortLaddning, handleTaBortLönespec, handleNavigateToLonekorning } =
+    useAnstalldalonespecList(onLönespecUppdaterad);
   //#endregion
 
   //#region Render
@@ -54,14 +47,6 @@ export default function LonespecList({
             visaExtraRader={visaExtraRader}
           />
         ))
-      )}
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
       )}
     </div>
   );

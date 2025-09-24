@@ -1,7 +1,6 @@
 //#region Imports
 "use client";
 
-import Toast from "../../../_components/Toast";
 import Knapp from "../../../_components/Knapp";
 import { useLonespec } from "../../hooks/useLonespecar";
 import { useLonekorning } from "../../hooks/useLonekorning";
@@ -56,8 +55,6 @@ export default function Lonekorning({
     skatteDatum,
     setSkatteDatum,
     skatteBokförPågår,
-    toast,
-    setToast,
     skatteToast,
     setSkatteToast,
     // Computed
@@ -196,9 +193,6 @@ export default function Lonekorning({
       {bankgiroModalOpen && <div>TODO: BankgiroExport</div>}
 
       {skatteModalOpen && <div>TODO: SkatteBokforingModal</div>}
-
-      {/* Toast meddelanden */}
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

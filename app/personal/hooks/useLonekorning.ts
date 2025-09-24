@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { showToast } from "../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
   markeraBankgiroExporterad,
@@ -64,8 +65,7 @@ export const useLonekorning = ({
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
   const [skatteBokförPågår, setSkatteBokförPågår] = useState(false);
 
-  // Toast states
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  // Toast states - skatteToast kept for modal-specific usage
   const [skatteToast, setSkatteToast] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -165,10 +165,10 @@ export const useLonekorning = ({
       }
 
       setValdaSpecar((prev) => prev.filter((spec) => spec.id !== specId));
-      setToast({ message: "Lönespec borttagen", type: "success" });
+      showToast("Lönespec borttagen", "success");
     } catch (error) {
       console.error("Error deleting lönespec:", error);
-      setToast({ message: "Kunde inte ta bort lönespec", type: "error" });
+      showToast("Kunde inte ta bort lönespec", "error");
     }
   };
 
@@ -457,8 +457,6 @@ export const useLonekorning = ({
     setSkatteDatum,
     skatteBokförPågår,
     setSkatteBokförPågår,
-    toast,
-    setToast,
     skatteToast,
     setSkatteToast,
     // Computed

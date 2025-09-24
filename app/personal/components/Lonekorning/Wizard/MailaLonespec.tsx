@@ -1,7 +1,6 @@
 import { useMailaLonespec } from "../../../hooks/useMailaLonespec";
 import Forhandsgranskning from "../../Anstallda/Lonespecar/Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import type { MailaLonespecProps } from "../../../types/types";
 
 export default function MailaLonespec({
@@ -21,8 +20,6 @@ export default function MailaLonespec({
     sent,
     error,
     visaModal,
-    toast,
-    setToast,
     lönespecList,
     handleBatchMaila,
     handleMaila,
@@ -117,15 +114,6 @@ export default function MailaLonespec({
             )}
           </div>
         </div>
-      )}
-
-      {/* Toast för mail-bekräftelse */}
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
       )}
     </>
   );

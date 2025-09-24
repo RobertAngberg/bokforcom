@@ -3,7 +3,6 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../../../_components/Modal";
-import Toast from "../../../../_components/Toast";
 import { NySpecModalProps } from "../../../types/types";
 import { useNySpecModal } from "../../../hooks/useNySpecModal";
 
@@ -15,22 +14,15 @@ export default function NySpecModal({
   anstallda,
   onSpecCreated,
 }: NySpecModalProps) {
-  const {
-    toast,
-    valdAnställd,
-    canCreate,
-    handleCreateSpec,
-    handleAnställdChange,
-    handleDatumChange,
-    handleCloseToast,
-  } = useNySpecModal({
-    isOpen,
-    onClose,
-    nySpecDatum,
-    setNySpecDatum,
-    anstallda,
-    onSpecCreated,
-  });
+  const { valdAnställd, canCreate, handleCreateSpec, handleAnställdChange, handleDatumChange } =
+    useNySpecModal({
+      isOpen,
+      onClose,
+      nySpecDatum,
+      setNySpecDatum,
+      anstallda,
+      onSpecCreated,
+    });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Skapa ny lönespecifikation" maxWidth="sm">
@@ -80,7 +72,6 @@ export default function NySpecModal({
           Skapa
         </button>
       </div>
-      {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
     </Modal>
   );
 }

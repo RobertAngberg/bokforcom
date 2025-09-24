@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
+import { showToast } from "../../_components/Toast";
 
 const initialNyAnställdFormulär = {
   // Personal information
@@ -47,20 +48,6 @@ export function useNyAnstalld() {
   const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
   const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
-
-  // Toast functions
-  const showToast = useCallback((message: string, type: "success" | "error" | "info") => {
-    setToast({ message, type, isVisible: true });
-  }, []);
-
-  const hideToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
-  }, []);
 
   // Update formulär with partial data
   const updateNyAnställdFormulär = useCallback((updates: Partial<typeof nyAnställdFormulär>) => {
@@ -130,7 +117,7 @@ export function useNyAnstalld() {
         setNyAnställdLoading(false);
       }
     },
-    [nyAnställdFormulär, showToast, rensaFormulär]
+    [nyAnställdFormulär, rensaFormulär]
   );
 
   return {
@@ -139,7 +126,6 @@ export function useNyAnstalld() {
       nyAnställdFormulär,
       visaNyAnställdFormulär,
       nyAnställdLoading,
-      toast,
     },
 
     // Actions
@@ -151,8 +137,6 @@ export function useNyAnstalld() {
       rensaFormulär,
       setNyAnställdLoading,
       sparaNyAnställd,
-      showToast,
-      hideToast,
     },
   };
 }

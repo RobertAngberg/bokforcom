@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../actions/bokforingActions";
 import type { WizardBokföringsPost } from "../types/types";
+import { showToast } from "../../_components/Toast";
 
 // Mapping från extrarad-typ till bokföringskonto - SINGLE SOURCE OF TRUTH
 const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> = {
@@ -110,11 +111,6 @@ export function useBokföringslogik({
 }: UseBokföringslogikProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   // Validera mappningen vid första rendering (endast i development)
   if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -369,11 +365,7 @@ export function useBokföringslogik({
         utbetalningsdatum: new Date().toISOString().split("T")[0],
       });
 
-      setToast({
-        message: result.message || "Bokföring genomförd",
-        type: "success",
-        isVisible: true,
-      });
+      showToast(result.message || "Bokföring genomförd", "success");
 
       // Vänta lite så användaren hinner se toast:en innan modalen stängs
       setTimeout(() => {
@@ -398,8 +390,6 @@ export function useBokföringslogik({
     // State
     loading,
     error,
-    toast,
-    setToast,
 
     // Beräknade värden
     poster,

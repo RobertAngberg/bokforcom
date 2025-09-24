@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { skapaNyLönespec } from "../actions/lonespecarActions";
+import { showToast } from "../../_components/Toast";
 
 interface UseNySpecModalProps {
   isOpen: boolean;
@@ -19,32 +20,27 @@ export function useNySpecModal({
   onSpecCreated,
 }: UseNySpecModalProps) {
   // State
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
   const [valdAnställd, setValdAnställd] = useState<string>("");
 
   // Effects
   useEffect(() => {
     if (isOpen) {
       setValdAnställd("");
-      setToast(null);
     }
   }, [isOpen]);
 
   // Validation
   const validateInput = () => {
     if (!nySpecDatum) {
-      setToast({ type: "error", message: "Välj ett datum först!" });
+      showToast("Välj ett datum först!", "error");
       return false;
     }
     if (!valdAnställd) {
-      setToast({ type: "error", message: "Välj en anställd först!" });
+      showToast("Välj en anställd först!", "error");
       return false;
     }
     if (anstallda.length === 0) {
-      setToast({ type: "error", message: "Ingen anställd hittades." });
+      showToast("Ingen anställd hittades.", "error");
       return false;
     }
     return true;
@@ -63,7 +59,7 @@ export function useNySpecModal({
 
     const utbetalningsdatum = formatUtbetalningsdatum();
     if (!utbetalningsdatum) {
-      setToast({ type: "error", message: "Fel: utbetalningsdatum saknas eller är ogiltigt!" });
+      showToast("Fel: utbetalningsdatum saknas eller är ogiltigt!", "error");
       return;
     }
 
@@ -74,18 +70,15 @@ export function useNySpecModal({
       });
 
       if (res?.success === false) {
-        setToast({
-          type: "error",
-          message: `Fel: ${res.error || "Misslyckades att skapa lönespecifikation."}`,
-        });
+        showToast(`Fel: ${res.error || "Misslyckades att skapa lönespecifikation."}`, "error");
       } else {
-        setToast({ type: "success", message: "Ny lönespecifikation skapad!" });
+        showToast("Ny lönespecifikation skapad!", "success");
         onClose();
         onSpecCreated();
       }
     } catch (error) {
       console.error("❌ Fel vid skapande av lönespec:", error);
-      setToast({ type: "error", message: "Ett oväntat fel inträffade" });
+      showToast("Ett oväntat fel inträffade", "error");
     }
   };
 
@@ -97,13 +90,8 @@ export function useNySpecModal({
     setNySpecDatum(date);
   };
 
-  const handleCloseToast = () => {
-    setToast(null);
-  };
-
   return {
     // State
-    toast,
     valdAnställd,
 
     // Computed
@@ -113,6 +101,5 @@ export function useNySpecModal({
     handleCreateSpec,
     handleAnställdChange,
     handleDatumChange,
-    handleCloseToast,
   };
 }

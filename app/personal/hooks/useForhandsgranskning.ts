@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { hämtaFöretagsprofil } from "../actions/anstalldaActions";
 import { beräknaSumma } from "../utils/extraraderUtils";
+import { showToast } from "../../_components/Toast";
 
 export const useForhandsgranskning = (
   lönespec: any,
@@ -13,10 +14,6 @@ export const useForhandsgranskning = (
 ) => {
   const [isExporting, setIsExporting] = useState(false);
   const [företag, setFöretag] = useState<any>(företagsprofil);
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
 
   // Formatter utan decimaler
   const formatNoDecimals = (num: number) =>
@@ -185,9 +182,9 @@ export const useForhandsgranskning = (
     } catch (error) {
       console.error("❌ Error exporting PDF:", error);
       if (error instanceof Error) {
-        setToast({ type: "error", message: `Kunde inte exportera PDF: ${error.message}` });
+        showToast(`Kunde inte exportera PDF: ${error.message}`, "error");
       } else {
-        setToast({ type: "error", message: "Kunde inte exportera PDF: Okänt fel" });
+        showToast("Kunde inte exportera PDF: Okänt fel", "error");
       }
     } finally {
       setIsExporting(false);
@@ -198,8 +195,6 @@ export const useForhandsgranskning = (
     // State
     isExporting,
     företag,
-    toast,
-    setToast,
     // Computed values
     formatNoDecimals,
     extraraderMapped,

@@ -1,6 +1,5 @@
 //#region Huvud
 import Knapp from "../../../../_components/Knapp";
-import Toast from "../../../../_components/Toast";
 import { useLonespecUtlagg } from "../../../hooks/useLonespecUtlagg";
 import type { UtläggProps } from "../../../types/types";
 
@@ -17,8 +16,6 @@ export default function Utlägg({
   const {
     synkroniseradeUtlägg,
     läggerTillUtlägg,
-    toast,
-    setToast,
     väntandeUtlägg,
     inkluderadeUtlägg,
     handleLäggTillUtlägg,
@@ -83,14 +80,6 @@ export default function Utlägg({
           </div>
         ))}
       </div>
-
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-        />
-      )}
     </div>
   );
 }

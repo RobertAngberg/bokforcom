@@ -144,12 +144,6 @@ export interface NyAnställdFormular {
   växaStöd: boolean;
 }
 
-export interface ToastTillstand {
-  message: string;
-  type: "success" | "error" | "info";
-  isVisible: boolean;
-}
-
 export interface UtlaggBokföringsRad {
   kontonummer: string;
   beskrivning: string;
@@ -174,7 +168,6 @@ export interface PersonalStoreState {
   nyAnställdFormulär: NyAnställdFormular;
   nyAnställdLoading: boolean;
   visaNyAnställdFormulär: boolean;
-  toast: ToastTillstand;
   utlägg: UtläggData[];
   utläggLoading: boolean;
   utläggBokföringModal: UtläggBokföringModalState;
@@ -205,7 +198,6 @@ export interface PersonalStoreState {
   resetNyAnställdFormulär: () => void;
   setNyAnställdLoading: (loading: boolean) => void;
   setVisaNyAnställdFormulär: (visa: boolean) => void;
-  setToast: (toast: ToastTillstand) => void;
   showToast: (message: string, type?: "success" | "error" | "info") => void;
   hideToast: () => void;
   setUtlägg: (utlägg: UtläggData[]) => void;
@@ -510,7 +502,9 @@ export interface PersonalAction {
 // HOOK TYPES - Migrerade från individuella hooks
 // ===========================================
 
-// useToast types - redan definierad ovan som ToastTillstand ✅
+// useNySpecModal types - redan definierade ovan ✅
+
+// useUtlagg types
 
 // useUtlagg types
 export type UtläggBokföringModal = {

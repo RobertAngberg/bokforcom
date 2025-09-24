@@ -3,7 +3,6 @@
 import InfoTooltip from "../../../../_components/InfoTooltip";
 import Knapp from "../../../../_components/Knapp";
 import Tabell from "../../../../_components/Tabell";
-import Toast from "../../../../_components/Toast";
 import { ColumnDefinition } from "../../../../_components/TabellRad";
 import BokforModal from "./BokforModal";
 import { useSemester } from "../../../hooks/useSemester";
@@ -24,7 +23,6 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     loading,
     bokforModalOpen,
     bokforRows,
-    toast,
     handleEditField,
     handleSaveEdit,
     handleCancelEdit,
@@ -32,7 +30,6 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     handleConfirmBokfor,
     setEditValue,
     setBokforModalOpen,
-    clearToast,
   } = semesterHook;
 
   if (loading) {
@@ -304,7 +301,6 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
           onConfirm={handleConfirmBokfor}
         />
       </div>
-      {toast && <Toast type={toast.type} message={toast.message} onClose={clearToast} />}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { taBortUtlägg } from "../actions/utlaggActions";
 import type { Utlägg } from "../types/types";
+import { showToast } from "../../_components/Toast";
 
 export const useUtlaggFlik = (
   state: any,
@@ -9,10 +10,6 @@ export const useUtlaggFlik = (
   utlaggFlikData: () => { columns: any[]; utlägg: Utlägg[]; loading: boolean }
 ) => {
   const router = useRouter();
-  const [toast, setToast] = useState<{
-    type: "success" | "error" | "info";
-    message: string;
-  } | null>(null);
 
   // Använd den delade utlaggFlikData funktionen
   const { columns: basicColumns, utlägg, loading } = utlaggFlikData();
@@ -34,10 +31,10 @@ export const useUtlaggFlik = (
         await handlers.laddaUtläggFörAnställd(state.valdAnställd.id);
       }
 
-      setToast({ type: "success", message: "Utlägg borttaget!" });
+      showToast("Utlägg borttaget!", "success");
     } catch (error) {
       console.error("Fel vid borttagning av utlägg:", error);
-      setToast({ type: "error", message: "Kunde inte ta bort utlägg" });
+      showToast("Kunde inte ta bort utlägg", "error");
     }
   };
 
@@ -67,9 +64,6 @@ export const useUtlaggFlik = (
   };
 
   return {
-    // State
-    toast,
-    setToast,
     // Data
     utlägg,
     loading,
