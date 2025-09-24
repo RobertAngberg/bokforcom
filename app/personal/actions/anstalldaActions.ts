@@ -66,6 +66,62 @@ export async function hämtaAnställd(anställdId: number) {
   }
 }
 
+// React 19 Form Action - tar emot FormData direkt
+export async function sparaNyAnställdFormAction(prevState: any, formData: FormData) {
+  try {
+    // Endast förnamn och efternamn krävs!
+    const förnamn = formData.get("förnamn") as string;
+    const efternamn = formData.get("efternamn") as string;
+
+    if (!förnamn || !efternamn) {
+      return { success: false, message: "Förnamn och efternamn är obligatoriska" };
+    }
+
+    // Extrahera alla fält från FormData (med fallback till tomma strängar)
+    const data: AnställdData = {
+      förnamn,
+      efternamn,
+      personnummer: (formData.get("personnummer") as string) || "",
+      jobbtitel: (formData.get("jobbtitel") as string) || "",
+      mail: (formData.get("mail") as string) || "",
+      clearingnummer: (formData.get("clearingnummer") as string) || "",
+      bankkonto: (formData.get("bankkonto") as string) || "",
+      adress: (formData.get("adress") as string) || "",
+      postnummer: (formData.get("postnummer") as string) || "",
+      ort: (formData.get("ort") as string) || "",
+      startdatum: (formData.get("startdatum") as string) || new Date().toISOString().split("T")[0],
+      slutdatum:
+        (formData.get("slutdatum") as string) ||
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      anställningstyp: (formData.get("anställningstyp") as string) || "",
+      löneperiod: (formData.get("löneperiod") as string) || "",
+      ersättningPer: (formData.get("ersättningPer") as string) || "",
+      kompensation: (formData.get("kompensation") as string) || "",
+      arbetsvecka: (formData.get("arbetsvecka") as string) || "",
+      arbetsbelastning: (formData.get("arbetsbelastning") as string) || "",
+      deltidProcent: (formData.get("deltidProcent") as string) || "",
+      tjänsteställeAdress: (formData.get("tjänsteställeAdress") as string) || "",
+      tjänsteställeOrt: (formData.get("tjänsteställeOrt") as string) || "",
+      skattetabell: (formData.get("skattetabell") as string) || "",
+      skattekolumn: (formData.get("skattekolumn") as string) || "",
+    };
+
+    console.log("🚀 Form Action - Sparar med data:", { förnamn, efternamn, data });
+
+    // Anropa befintlig funktion
+    const result = await sparaAnställd(data);
+
+    if (result.success) {
+      return { success: true, message: "Ny anställd sparad!" };
+    } else {
+      return { success: false, message: result.message || "Fel vid sparande" };
+    }
+  } catch (error) {
+    console.error("❌ Form action error:", error);
+    return { success: false, message: "Okänt fel vid sparande" };
+  }
+}
+
 export async function sparaAnställd(data: AnställdData, anställdId?: number | null) {
   const userId = await getUserId();
   if (!userId) {

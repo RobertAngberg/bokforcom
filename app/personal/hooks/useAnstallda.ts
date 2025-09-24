@@ -8,7 +8,6 @@ import {
   sparaAnställd,
 } from "../actions/anstalldaActions";
 import type { AnställdData, AnställdListItem, PersonalEditData } from "../types/types";
-import { useNyAnstalld } from "./useNyAnstalld";
 
 export function useAnstallda() {
   const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
@@ -18,8 +17,6 @@ export function useAnstallda() {
   const [anställdLoadingId, setAnställdLoadingId] = useState<number | null>(null);
   const [anställdaError, setAnställdaError] = useState<string | null>(null);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
-
-  const nyAnstalldHook = useNyAnstalld();
 
   // ===========================================
   // HELPER FUNCTIONS

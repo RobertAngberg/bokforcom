@@ -144,6 +144,20 @@ export interface NyAnställdFormular {
   växaStöd: boolean;
 }
 
+export interface NyAnstalldHandlers {
+  döljNyAnställd: () => void;
+  hanteraNyAnställdSparad: () => Promise<void>;
+}
+
+export interface NyAnstalldProps {
+  handlers: NyAnstalldHandlers;
+}
+
+export interface UseNyAnstalldOptions {
+  onSaved?: () => void | Promise<void>;
+  onCancel?: () => void | Promise<void>;
+}
+
 export interface UtlaggBokföringsRad {
   kontonummer: string;
   beskrivning: string;

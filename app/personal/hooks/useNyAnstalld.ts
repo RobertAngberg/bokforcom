@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { sanitizeFormInput } from "../../_utils/validationUtils";
+import { useState, useCallback, useEffect, useActionState } from "react";
 import { showToast } from "../../_components/Toast";
+import { sparaNyAnställdFormAction } from "../actions/anstalldaActions";
+import type { UseNyAnstalldOptions } from "../types/types";
 
 const initialNyAnställdFormulär = {
   // Personal information
@@ -44,33 +45,46 @@ const initialNyAnställdFormulär = {
   växaStöd: false,
 };
 
-export function useNyAnstalld() {
+const initialActionResult = {
+  success: false,
+  message: "",
+};
+
+export function useNyAnstalld({ onSaved, onCancel }: UseNyAnstalldOptions = {}) {
   const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
   const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
 
+  const [actionState, formAction, isPending] = useActionState(
+    sparaNyAnställdFormAction,
+    initialActionResult
+  );
+
+  // Tillbaka till enkel state management - useActionState ska användas på form-nivå istället!
+
   // Update formulär with partial data
   const updateNyAnställdFormulär = useCallback((updates: Partial<typeof nyAnställdFormulär>) => {
-    setNyAnställdFormulär((prev) => ({ ...prev, ...updates }));
+    console.log("🔄 updateNyAnställdFormulär - updates:", updates);
+    setNyAnställdFormulär((prev) => {
+      const newState = { ...prev, ...updates };
+      console.log("🔄 updateNyAnställdFormulär - prev state:", prev);
+      console.log("🔄 updateNyAnställdFormulär - new state:", newState);
+      return newState;
+    });
   }, []);
 
-  // Handle sanitized input changes
+  // Handle input changes
   const handleSanitizedChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
 
-      const sanitizedValue = [
-        "förnamn",
-        "efternamn",
-        "jobbtitel",
-        "mail",
-        "adress",
-        "ort",
-      ].includes(name)
-        ? sanitizeFormInput(value)
-        : value;
+      console.log("🔍 handleSanitizedChange - input:", {
+        name,
+        value,
+        valueLength: value.length,
+      });
 
-      updateNyAnställdFormulär({ [name]: sanitizedValue });
+      updateNyAnställdFormulär({ [name]: value });
 
       // Hide toast on input change if visible
     },
@@ -91,34 +105,24 @@ export function useNyAnstalld() {
     setNyAnställdFormulär(initialNyAnställdFormulär);
   }, []);
 
-  // Spara ny anställd med toast-hantering
-  const sparaNyAnställd = useCallback(
-    async (onAnställdSparad?: () => void) => {
-      try {
-        setNyAnställdLoading(true);
+  const avbrytNyAnställd = useCallback(() => {
+    rensaFormulär();
+    döljNyAnställd();
+    void onCancel?.();
+  }, [döljNyAnställd, onCancel, rensaFormulär]);
 
-        // Validera att obligatoriska fält är ifyllda
-        if (!nyAnställdFormulär.förnamn || !nyAnställdFormulär.efternamn) {
-          showToast("Förnamn och efternamn är obligatoriska", "error");
-          return;
-        }
+  useEffect(() => {
+    if (!actionState) return;
 
-        // Här skulle vi normalt anropa API:et för att spara anställd
-        // För nu simulerar vi sparandet
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        showToast("Ny anställd sparad!", "success");
-        rensaFormulär();
-        setVisaNyAnställdFormulär(false);
-        onAnställdSparad?.();
-      } catch (error) {
-        showToast("Fel vid sparande av anställd", "error");
-      } finally {
-        setNyAnställdLoading(false);
-      }
-    },
-    [nyAnställdFormulär, rensaFormulär]
-  );
+    if (actionState.success) {
+      showToast(actionState.message || "Anställd sparad!", "success");
+      rensaFormulär();
+      döljNyAnställd();
+      void onSaved?.();
+    } else if (actionState.message) {
+      showToast(actionState.message, "error");
+    }
+  }, [actionState, döljNyAnställd, onSaved, rensaFormulär]);
 
   return {
     // State
@@ -136,7 +140,12 @@ export function useNyAnstalld() {
       döljNyAnställd,
       rensaFormulär,
       setNyAnställdLoading,
-      sparaNyAnställd,
+      avbrytNyAnställd,
+    },
+    form: {
+      actionState,
+      formAction,
+      isPending,
     },
   };
 }

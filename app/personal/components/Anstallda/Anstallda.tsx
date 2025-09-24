@@ -48,7 +48,7 @@ export default function Anstallda() {
             )}
           </div>
         ) : (
-          <NyAnställd />
+          <NyAnställd handlers={handlers} />
         )}
       </div>
 

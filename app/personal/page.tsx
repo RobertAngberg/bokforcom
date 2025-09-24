@@ -72,7 +72,7 @@ export default function PersonalPage() {
                 )}
               </>
             ) : (
-              <NyAnställd />
+              <NyAnställd handlers={handlers} />
             )}
           </div>
         </div>
