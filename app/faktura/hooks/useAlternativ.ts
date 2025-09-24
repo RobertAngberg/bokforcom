@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useFaktura } from "./useFaktura";
-import { saveInvoice, hämtaSparadeFakturor } from "../actions/fakturaActions";
+import { saveInvoice } from "../actions/fakturaActions";
 import { showToast } from "../../_components/Toast";
 import {
   hämtaFakturaStatus,
   bokförFaktura,
   hämtaBokföringsmetod,
   uppdateraRotRutStatus,
-  registreraRotRutBetalning,
 } from "../actions/alternativActions";
 import { laddaNerHUSFil } from "../utils/husFilGenerator";
 import { BokforingsPost } from "../types/types";
@@ -79,7 +78,7 @@ function validateBokföringsData(data: any): { isValid: boolean; error?: string 
 }
 
 export function useAlternativ() {
-  const { formData, updateFormField, setToast, toastState } = useFaktura();
+  const { formData, updateFormField } = useFaktura();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
@@ -142,10 +141,7 @@ export function useAlternativ() {
 
       if (res.success) {
         console.log("✅ Faktura sparad framgångsrikt!");
-        setToast({
-          message: "Faktura sparad!",
-          type: "success",
-        });
+        showToast("Faktura sparad!", "success");
 
         // UPPDATERA FORMDATA MED NYTT ID!
         if (res.id) {
@@ -522,7 +518,6 @@ export function useAlternativ() {
     bokförLoading,
     bokföringsmetod,
     fakturaStatus,
-    toast: toastState,
     formData,
 
     // Computed values
@@ -558,8 +553,7 @@ export function useAlternativ() {
 }
 
 export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
-  const { formData, toastState, setToast, clearToast, userSettings, setBokföringsmetod } =
-    useFaktura();
+  const { formData, userSettings, setBokföringsmetod } = useFaktura();
   const [loading, setLoading] = useState(false);
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
@@ -882,7 +876,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     bokföringsmetod: userSettings.bokföringsmetod,
     fakturaStatus,
     statusLoaded,
-    toast: toastState,
     ärKontantmetod,
     formData,
     poster,
@@ -890,7 +883,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     columns,
 
     // Actions
-    setToast,
     hanteraBokför: hanteraBokförModal,
     beräknaTotalbelopp,
   };

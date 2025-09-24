@@ -7,6 +7,7 @@ import {
   deleteFavoritArtikel,
   sparaFavoritArtikel,
 } from "../actions/artikelActions";
+import { showToast } from "../../_components/Toast";
 
 // Types
 import type { FakturaFormData, NyArtikel, Artikel } from "../types/types";
@@ -23,7 +24,6 @@ export function useProdukterTjanster() {
     setNyArtikel,
     resetNyArtikel,
     setProdukterTjansterState,
-    setToast,
   } = context;
 
   // =============================================================================
@@ -113,9 +113,9 @@ export function useProdukterTjanster() {
       setProdukterTjansterState({ favoritArtiklar: artiklar || [] });
     } catch (error) {
       console.error("Fel vid laddning av artiklar:", error);
-      setToast({ message: "Kunde inte ladda sparade artiklar", type: "error" });
+      showToast("Kunde inte ladda sparade artiklar", "error");
     }
-  }, [setProdukterTjansterState, setToast]);
+  }, [setProdukterTjansterState]);
 
   // =============================================================================
   // INITIALIZATION
@@ -133,7 +133,7 @@ export function useProdukterTjanster() {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
 
     if (!beskrivning || !antal || !prisPerEnhet) {
-      setToast({ message: "Fyll i alla obligatoriska fält", type: "error" });
+      showToast("Fyll i alla obligatoriska fält", "error");
       return;
     }
 
@@ -155,7 +155,7 @@ export function useProdukterTjanster() {
       favoritArtikelVald: false,
       ursprungligFavoritId: null,
     });
-    setToast({ message: "Artikel tillagd", type: "success" });
+    showToast("Artikel tillagd", "success");
   }, [
     nyArtikel,
     formData.artiklar,
@@ -163,7 +163,6 @@ export function useProdukterTjanster() {
     setFormData,
     resetNyArtikel,
     setProdukterTjansterState,
-    setToast,
   ]);
 
   // Ta bort artikel
@@ -171,9 +170,9 @@ export function useProdukterTjanster() {
     (index: number) => {
       const uppdateradeArtiklar = formData.artiklar.filter((_, i) => i !== index);
       setFormData({ artiklar: uppdateradeArtiklar });
-      setToast({ message: "Artikel borttagen", type: "success" });
+      showToast("Artikel borttagen", "success");
     },
-    [formData.artiklar, setFormData, setToast]
+    [formData.artiklar, setFormData]
   );
 
   // Spara artikel som favorit
@@ -181,7 +180,7 @@ export function useProdukterTjanster() {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
 
     if (!beskrivning.trim() || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
-      setToast({ message: "Fyll i alla obligatoriska fält", type: "error" });
+      showToast("Fyll i alla obligatoriska fält", "error");
       return;
     }
 
@@ -203,18 +202,18 @@ export function useProdukterTjanster() {
       const result = await sparaFavoritArtikel(artikelData);
       if (result.success) {
         if (result.alreadyExists) {
-          setToast({ message: "Artikeln finns redan som favorit! 📌", type: "info" });
+          showToast("Artikeln finns redan som favorit! 📌", "info");
         } else {
-          setToast({ message: "Artikel sparad som favorit! 📌", type: "success" });
+          showToast("Artikel sparad som favorit! 📌", "success");
         }
         setProdukterTjansterState({ artikelSparadSomFavorit: true });
         // Ladda om favoriter för att visa den nya
         await laddaSparadeArtiklar();
       } else {
-        setToast({ message: "Kunde inte spara som favorit", type: "error" });
+        showToast("Kunde inte spara som favorit", "error");
       }
     } catch (error) {
-      setToast({ message: "Fel vid sparande av favorit", type: "error" });
+      showToast("Fel vid sparande av favorit", "error");
     }
   }, [
     nyArtikel,
@@ -223,7 +222,6 @@ export function useProdukterTjanster() {
     formData.avdragProcent,
     formData.arbetskostnadExMoms,
     sparaFavoritArtikel,
-    setToast,
     setProdukterTjansterState,
     laddaSparadeArtiklar,
   ]);
@@ -238,17 +236,17 @@ export function useProdukterTjanster() {
       try {
         const result = await deleteFavoritArtikel(id);
         if (result.success) {
-          setToast({ message: "Favoritartikel borttagen! 🗑️", type: "success" });
+          showToast("Favoritartikel borttagen! 🗑️", "success");
           // Ladda om favoriter för att uppdatera listan
           await laddaSparadeArtiklar();
         } else {
-          setToast({ message: "Kunde inte ta bort favoritartikel", type: "error" });
+          showToast("Kunde inte ta bort favoritartikel", "error");
         }
       } catch (error) {
-        setToast({ message: "Fel vid borttagning av favoritartikel", type: "error" });
+        showToast("Fel vid borttagning av favoritartikel", "error");
       }
     },
-    [deleteFavoritArtikel, setToast, laddaSparadeArtiklar]
+    [deleteFavoritArtikel, laddaSparadeArtiklar]
   );
 
   // Ladda favoritartikel till formuläret
@@ -280,12 +278,9 @@ export function useProdukterTjanster() {
         });
       }
 
-      setToast({
-        message: `Favoritartikel "${artikel.beskrivning}" tillagd! 📌`,
-        type: "success",
-      });
+      showToast(`Favoritartikel "${artikel.beskrivning}" tillagd! 📌`, "success");
     },
-    [formData.artiklar, setFormData, setToast]
+    [formData.artiklar, setFormData]
   );
 
   // =============================================================================

@@ -8,6 +8,7 @@ import {
   updateLeverantör,
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
+import { showToast } from "../../_components/Toast";
 import { hamtaTransaktionsposter } from "../actions/alternativActions";
 import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
 import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../actions/fakturaActions";
@@ -487,7 +488,7 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
  * Flyttad från useBokfordaFakturor.tsx för konsolidering
  */
 export function useBokfordaFakturor() {
-  const { toastState, setToast, clearToast } = useFaktura();
+  const { clearToast } = useFaktura();
 
   // State management
   const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
@@ -628,22 +629,13 @@ export function useBokfordaFakturor() {
           // Ta bort från listan lokalt
           setFakturor((prev) => prev.filter((f) => f.id !== fakturaId));
 
-          setToast({
-            message: "Leverantörsfaktura borttagen!",
-            type: "success",
-          });
+          showToast("Leverantörsfaktura borttagen!", "success");
         } else {
-          setToast({
-            message: `Fel vid borttagning: ${result.error}`,
-            type: "error",
-          });
+          showToast(`Fel vid borttagning: ${result.error}`, "error");
         }
       } catch (error) {
         console.error("Fel vid borttagning av faktura:", error);
-        setToast({
-          message: "Fel vid borttagning av faktura",
-          type: "error",
-        });
+        showToast("Fel vid borttagning av faktura", "error");
       }
     }
   };
@@ -653,27 +645,18 @@ export function useBokfordaFakturor() {
       const result = await betalaOchBokförLeverantörsfaktura(faktura.id, faktura.belopp);
 
       if (result.success) {
-        setToast({
-          message: "Leverantörsfaktura bokförd!",
-          type: "success",
-        });
+        showToast("Leverantörsfaktura bokförd!", "success");
         // Ladda om data för att visa uppdaterad status
         const updatedData = await hamtaBokfordaFakturor();
         if (updatedData.success) {
           setFakturor(updatedData.fakturor || []);
         }
       } else {
-        setToast({
-          message: `Fel vid bokföring: ${result.error}`,
-          type: "error",
-        });
+        showToast(`Fel vid bokföring: ${result.error}`, "error");
       }
     } catch (error) {
       console.error("Fel vid bokföring:", error);
-      setToast({
-        message: "Ett fel uppstod vid bokföring",
-        type: "error",
-      });
+      showToast("Ett fel uppstod vid bokföring", "error");
     }
     // Stäng modalen
     stängBekraftelseModal();
@@ -688,7 +671,6 @@ export function useBokfordaFakturor() {
     fakturor,
     loading,
     verifikatModal,
-    toast: toastState,
     bekraftelseModal,
 
     // Computed data
