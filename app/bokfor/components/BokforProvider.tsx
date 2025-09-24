@@ -41,7 +41,6 @@ export function BokforProvider({ children }: BokforProviderProps) {
         anstallda: bokforData.anstallda,
         anstalldId: bokforData.anstalldId,
         loadingSteg3: bokforData.loadingSteg3,
-        toast: bokforData.toast,
         konto2890Beskrivning: bokforData.konto2890Beskrivning,
         safeBelopp: bokforData.safeBelopp,
         safeKommentar: bokforData.safeKommentar,
@@ -79,7 +78,6 @@ export function BokforProvider({ children }: BokforProviderProps) {
         setAnställda: bokforData.setAnstallda, // Alias för bakåtkompatibilitet
         setAnstalldId: bokforData.setAnstalldId,
         showToast: bokforData.showToast,
-        hideToast: bokforData.hideToast,
         setKonto2890Beskrivning: bokforData.setKonto2890Beskrivning,
       },
       handlers: {

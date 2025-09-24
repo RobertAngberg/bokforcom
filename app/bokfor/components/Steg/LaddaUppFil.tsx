@@ -1,13 +1,12 @@
 "use client";
 
-import Toast from "../../../_components/Toast";
 import { FileUploadProps } from "../../types/types";
 import { useLaddaUppFil } from "../../hooks/useLaddaUppFil";
 
 export default function LaddaUppFil(props: FileUploadProps) {
   const { state, handlers } = useLaddaUppFil(props);
-  const { isLoading, timeoutTriggered, toast } = state;
-  const { setToast, handleFileChange } = handlers;
+  const { isLoading, timeoutTriggered } = state;
+  const { handleFileChange } = handlers;
 
   // Determine if this is leverantörsfaktura mode
   const isLevfaktMode = !!(
@@ -19,14 +18,6 @@ export default function LaddaUppFil(props: FileUploadProps) {
 
   return (
     <>
-      {toast.isVisible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, isVisible: false })}
-        />
-      )}
-
       <input
         type="file"
         id="fileUpload"

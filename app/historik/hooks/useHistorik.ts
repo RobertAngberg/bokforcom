@@ -5,9 +5,10 @@ import {
   exporteraTransaktionerMedPoster,
   findUnbalancedVerifications,
   deleteTransaction,
-} from "../_actions/actions";
-import { HistoryItem, TransactionDetail, ToastState, UnbalancedResult } from "../_types/types";
+} from "../actions/actions";
+import { HistoryItem, TransactionDetail, UnbalancedResult } from "../types/types";
 import { ColumnDefinition } from "../../_components/TabellRad";
+import { showToast } from "../../_components/Toast";
 
 // Business Logic - Migrated from page.tsx
 function sanitizeHistorikInput(text: string): string {
@@ -81,11 +82,6 @@ export function useHistorik() {
   const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
   const [unbalancedResults, setUnbalancedResults] = useState<UnbalancedResult[]>([]);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
-  const [toast, setToast] = useState<ToastState>({
-    message: "",
-    type: "info",
-    isVisible: false,
-  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -252,20 +248,12 @@ export function useHistorik() {
       const result = await findUnbalancedVerifications();
 
       if (!result.success) {
-        setToast({
-          message: "Fel vid kontroll: " + result.error,
-          type: "error",
-          isVisible: true,
-        });
+        showToast("Fel vid kontroll: " + result.error, "error");
         return;
       }
 
       if (!result.unbalanced || result.unbalanced.length === 0) {
-        setToast({
-          message: "Alla verifikationer är balanserade! ✅",
-          type: "success",
-          isVisible: true,
-        });
+        showToast("Alla verifikationer är balanserade! ✅", "success");
         return;
       }
 
@@ -286,11 +274,7 @@ export function useHistorik() {
       setUnbalancedResults(unbalancedItems);
       setShowUnbalancedModal(true);
     } catch (error) {
-      setToast({
-        message: "Ett fel uppstod vid kontrollen",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Ett fel uppstod vid kontrollen", "error");
     } finally {
       setIsCheckingUnbalanced(false);
     }
@@ -333,24 +317,12 @@ export function useHistorik() {
         });
         setActiveIds((prev) => prev.filter((id) => id !== transactionId));
 
-        setToast({
-          message: result.message || "Transaktion borttagen",
-          type: "success",
-          isVisible: true,
-        });
+        showToast(result.message || "Transaktion borttagen", "success");
       } else {
-        setToast({
-          message: result.error || "Kunde inte ta bort transaktion",
-          type: "error",
-          isVisible: true,
-        });
+        showToast(result.error || "Kunde inte ta bort transaktion", "error");
       }
     } catch (error) {
-      setToast({
-        message: "Ett fel uppstod när transaktionen skulle tas bort",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Ett fel uppstod när transaktionen skulle tas bort", "error");
     } finally {
       setDeletingIds((prev) => prev.filter((id) => id !== transactionId));
     }
@@ -369,7 +341,6 @@ export function useHistorik() {
     isCheckingUnbalanced,
     unbalancedResults,
     deletingIds,
-    toast,
 
     // Computed values
     filteredData,
@@ -388,6 +359,5 @@ export function useHistorik() {
 
     // Setters for UI state
     setShowUnbalancedModal,
-    setToast,
   };
 }

@@ -26,12 +26,6 @@ export interface UnbalancedVerification {
   skillnad: number;
 }
 
-export interface ToastState {
-  message: string;
-  type: "success" | "error" | "info";
-  isVisible: boolean;
-}
-
 export interface UnbalancedResult {
   item: HistoryItem;
   totalDebet: number;

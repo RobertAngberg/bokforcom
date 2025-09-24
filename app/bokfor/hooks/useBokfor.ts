@@ -7,6 +7,7 @@ import { hämtaAllaAnställda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../actions/transactionActions";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate, datePickerOnChange } from "../../_utils/datum";
 import { formatCurrency, round } from "../../_utils/format";
+import { showToast } from "../../_components/Toast";
 import {
   KontoRad,
   Förval,
@@ -139,11 +140,6 @@ export function useBokfor() {
   const [anstallda, setAnstallda] = useState<Anstalld[]>([]);
   const [anstalldId, setAnstalldId] = useState<string>("");
   const [loadingSteg3, setLoadingSteg3] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "error" as "success" | "error" | "info",
-    isVisible: false,
-  });
   const [konto2890Beskrivning, setKonto2890Beskrivning] = useState<string>(
     "Övriga kortfristiga skulder"
   );
@@ -157,15 +153,6 @@ export function useBokfor() {
       });
     }
   }, [utlaggMode]);
-
-  // Toast handlers
-  const showToast = (message: string, type: "success" | "error" | "info" = "error") => {
-    setToast({ message, type, isVisible: true });
-  };
-
-  const hideToast = () => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
-  };
 
   // Moms- och beloppsberäkning
   const momsSats = valtFörval?.momssats ?? 0;
@@ -426,7 +413,6 @@ export function useBokfor() {
     anstallda,
     anstalldId,
     loadingSteg3,
-    toast,
     konto2890Beskrivning,
 
     // Computed values
@@ -468,7 +454,6 @@ export function useBokfor() {
     setAnstallda,
     setAnstalldId,
     showToast,
-    hideToast,
     setKonto2890Beskrivning,
 
     // Navigation

@@ -488,7 +488,6 @@ export interface BokforContextType {
     anstallda: any[];
     anstalldId: string;
     loadingSteg3: boolean;
-    toast: any;
     konto2890Beskrivning: string;
     safeBelopp: number;
     safeKommentar: string;
