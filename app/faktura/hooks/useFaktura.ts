@@ -856,6 +856,3 @@ export function useFaktura() {
     fileInputRef,
   };
 }
-
-// Legacy export för backward compatibility under migration
-export const useFakturaClient = useFaktura;

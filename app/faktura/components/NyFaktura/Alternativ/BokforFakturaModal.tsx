@@ -3,16 +3,15 @@
 import Tabell from "../../../../_components/Tabell";
 import Modal from "../../../../_components/Modal";
 import { useBokforFakturaModal } from "../../../hooks/useAlternativ";
-import { useFakturaClient } from "../../../hooks/useFaktura";
+import { useFaktura } from "../../../hooks/useFaktura";
 import { BokforFakturaModalProps } from "../../../types/types";
 
 export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaModalProps) {
-  const { clearToast } = useFakturaClient();
+  const { clearToast } = useFaktura();
   const {
     loading,
     fakturaStatus,
     statusLoaded,
-    toast,
     ärKontantmetod,
     formData,
     poster,

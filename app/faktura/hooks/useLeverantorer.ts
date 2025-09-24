@@ -35,7 +35,7 @@ import {
   UseSparadeFakturorPageReturn,
   BokfordFaktura,
 } from "../types/types";
-import { useFakturaClient } from "./useFaktura";
+import { useFaktura } from "./useFaktura";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -426,7 +426,7 @@ export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
 
 // Hook för Sparade fakturor (simplified for list view only)
 export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorReturn {
-  const { setFormData, setKundStatus, showError } = useFakturaClient();
+  const { setFormData, setKundStatus, showError } = useFaktura();
   const router = useRouter();
 
   // Funktion för att hantera när en faktura väljs
@@ -487,7 +487,7 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
  * Flyttad från useBokfordaFakturor.tsx för konsolidering
  */
 export function useBokfordaFakturor() {
-  const { toastState, setToast, clearToast } = useFakturaClient();
+  const { toastState, setToast, clearToast } = useFaktura();
 
   // State management
   const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);

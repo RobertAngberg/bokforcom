@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useFakturaClient } from "./useFaktura";
+import { useFaktura } from "./useFaktura";
 import { saveInvoice, hämtaSparadeFakturor } from "../actions/fakturaActions";
+import { showToast } from "../../_components/Toast";
 import {
   hämtaFakturaStatus,
   bokförFaktura,
@@ -77,20 +78,8 @@ function validateBokföringsData(data: any): { isValid: boolean; error?: string 
   return { isValid: true };
 }
 
-function isPaymentRegistration(poster: BokforingsPost[]): boolean {
-  const harBankKonto = poster.some((p) => p.konto === "1930" || p.konto === "1910");
-  const harKundfordringar = poster.some((p) => p.konto === "1510");
-  return harBankKonto && harKundfordringar && poster.length === 2;
-}
-
-function isKontantmetod(poster: BokforingsPost[]): boolean {
-  const harBankKontantmetod = poster.some((p) => p.konto === "1930");
-  const harIngenKundfordringar = !poster.some((p) => p.konto === "1510");
-  return harBankKontantmetod && harIngenKundfordringar;
-}
-
 export function useAlternativ() {
-  const { formData, updateFormField, setToast, toastState } = useFakturaClient();
+  const { formData, updateFormField, setToast, toastState } = useFaktura();
   const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
@@ -167,17 +156,11 @@ export function useAlternativ() {
         window.dispatchEvent(new Event("reloadFakturor"));
       } else {
         console.log("❌ saveInvoice misslyckades:", res);
-        setToast({
-          message: "Kunde inte spara fakturan.",
-          type: "error",
-        });
+        showToast("Kunde inte spara fakturan.", "error");
       }
     } catch (error) {
       console.log("❌ Fel i hanteraSpara:", error);
-      setToast({
-        message: "Kunde inte konvertera artiklar",
-        type: "error",
-      });
+      showToast("Kunde inte konvertera artiklar", "error");
     } finally {
       console.log("🔍 hanteraSpara avslutar, sätter sparaLoading till false");
       setSparaLoading(false);
@@ -209,17 +192,11 @@ export function useAlternativ() {
             // NU BOKFÖR AUTOMATISKT
             await genomförBokföring(res.id.toString());
           } else {
-            setToast({
-              message: "Kunde inte spara fakturan innan bokföring.",
-              type: "error",
-            });
+            showToast("Kunde inte spara fakturan innan bokföring.", "error");
             return;
           }
         } catch {
-          setToast({
-            message: "Kunde inte spara fakturan innan bokföring.",
-            type: "error",
-          });
+          showToast("Kunde inte spara fakturan innan bokföring.", "error");
           return;
         }
       } else {
@@ -327,26 +304,17 @@ export function useAlternativ() {
 
       if (result.success) {
         const message = "message" in result ? result.message : "Bokföring genomförd";
-        setToast({
-          message: `Fakturan har sparats och bokförts!\n\n${message}`,
-          type: "success",
-        });
+        showToast(`Fakturan har sparats och bokförts!\n\n${message}`, "success");
         // Uppdatera fakturasstatus
         const status = await hämtaFakturaStatus(parseInt(fakturaId));
         setFakturaStatus(status);
       } else {
         const error = "error" in result ? result.error : "Okänt fel";
-        setToast({
-          message: `Bokföringsfel: ${error}`,
-          type: "error",
-        });
+        showToast(`Bokföringsfel: ${error}`, "error");
       }
     } catch (error) {
       console.error("Fel vid automatisk bokföring:", error);
-      setToast({
-        message: "Fel vid automatisk bokföring",
-        type: "error",
-      });
+      showToast("Fel vid automatisk bokföring", "error");
     }
   };
 
@@ -392,10 +360,7 @@ export function useAlternativ() {
         rotRutTyp: rotRutTyp,
         harROTRUTArtiklar: harROTRUTArtiklar,
       });
-      setToast({
-        message: "Fakturanummer och personnummer krävs för HUS-fil",
-        type: "error",
-      });
+      showToast("Fakturanummer och personnummer krävs för HUS-fil", "error");
       return;
     }
 
@@ -475,10 +440,7 @@ export function useAlternativ() {
     if (result.success) {
       setFakturaStatus((prev) => ({ ...prev, rot_rut_status: nyStatus }));
     } else {
-      setToast({
-        message: "Kunde inte uppdatera status",
-        type: "error",
-      });
+      showToast("Kunde inte uppdatera status", "error");
     }
   };
 
@@ -585,7 +547,6 @@ export function useAlternativ() {
     // Actions
     setBokförModalOpen,
     setRotRutModalOpen,
-    setToast,
     hanteraSpara,
     hanteraBokför,
     hanteraHUSFil,
@@ -598,7 +559,7 @@ export function useAlternativ() {
 
 export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
   const { formData, toastState, setToast, clearToast, userSettings, setBokföringsmetod } =
-    useFakturaClient();
+    useFaktura();
   const [loading, setLoading] = useState(false);
   const [fakturaStatus, setFakturaStatus] = useState<{
     status_betalning?: string;
@@ -808,10 +769,10 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     try {
       // KOLLA OM FAKTURAN ÄR SPARAD FÖRST
       if (!formData.id) {
-        setToast({
-          message: "Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.",
-          type: "error",
-        });
+        showToast(
+          "Fakturan måste sparas innan den kan bokföras!\n\nKlicka 'Spara faktura' först.",
+          "error"
+        );
         setLoading(false);
         return;
       }
@@ -827,10 +788,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       // Frontend-validering med migerade funktioner
       const fakturaId = formData.id ? parseInt(formData.id) : null;
       if (!fakturaId) {
-        setToast({
-          message: "Kunde inte hitta faktura-ID för bokföring",
-          type: "error",
-        });
+        showToast("Kunde inte hitta faktura-ID för bokföring", "error");
         setLoading(false);
         return;
       }
@@ -846,10 +804,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
       const validation = validateBokföringsData(bokföringsData);
       if (!validation.isValid) {
-        setToast({
-          message: validation.error || "Valideringsfel",
-          type: "error",
-        });
+        showToast(validation.error || "Valideringsfel", "error");
         setLoading(false);
         return;
       }
@@ -864,25 +819,16 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
       if (result.success) {
         const message = "message" in result ? result.message : "Bokföring genomförd";
-        setToast({
-          message: message,
-          type: "success",
-        });
+        showToast(message, "success");
         // Skicka event för att uppdatera fakturaslistan
         window.dispatchEvent(new Event("reloadFakturor"));
         onClose();
       } else {
-        setToast({
-          message: `Bokföringsfel: ${result.error}`,
-          type: "error",
-        });
+        showToast(`Bokföringsfel: ${result.error}`, "error");
       }
     } catch (error) {
       console.error("Bokföringsfel:", error);
-      setToast({
-        message: "Fel vid bokföring",
-        type: "error",
-      });
+      showToast("Fel vid bokföring", "error");
     } finally {
       setLoading(false);
     }
