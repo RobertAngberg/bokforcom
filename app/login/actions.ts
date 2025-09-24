@@ -300,16 +300,33 @@ export async function resetPassword(formData: FormData) {
   }
 }
 
-// Server action för initial signup (email/password/name)
-export async function createAccount(formData: FormData) {
+// Server action för initial signup (React 19 useActionState format)
+export async function createAccount(
+  prevState: {
+    success: boolean;
+    error?: string;
+    message?: string;
+    user?: { id: number; email: string; name: string };
+  } | null,
+  formData: FormData
+) {
   try {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
+    const acceptTerms = formData.get("acceptTerms") === "on"; // Checkbox value
 
     // Validera input
     if (!email || !password || !name) {
       return { success: false, error: "Alla fält krävs" };
+    }
+
+    // Validera användarvillkor (server-side säkerhet)
+    if (!acceptTerms) {
+      return {
+        success: false,
+        error: "Du måste godkänna användarvillkoren för att registrera dig",
+      };
     }
 
     // Validera email

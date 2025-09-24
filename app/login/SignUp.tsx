@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Modal from "../_components/Modal";
 import { createAccount } from "./actions";
 
@@ -9,57 +9,21 @@ interface EmailSignupFormProps {
   onSwitchToLogin?: () => void;
 }
 
-export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailSignupFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
+export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormProps) {
+  // React 19 useActionState - all form state in one hook! 🚀
+  const [state, formAction, isPending] = useActionState(createAccount, null);
+
+  // Only keep modal state (not form-related)
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
-  const handleEmailSignup = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!acceptTerms) {
-      setError("Du måste godkänna användarvillkoren för att registrera dig");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
-      formData.append("name", name);
-
-      const result = await createAccount(formData);
-
-      if (result.success) {
-        setSuccess(true);
-        setError("");
-        // Anropa bara onSuccess om den finns (t.ex. vid modal-användning)
-        if (onSuccess) onSuccess();
-      } else {
-        setError(result.error || "Registrering misslyckades");
-      }
-    } catch (error) {
-      setError("Något gick fel. Prova igen.");
-    }
-    setLoading(false);
-  };
-
-  if (success) {
+  if (state?.success) {
     return (
       <div>
         <div className="text-center space-y-4">
           <div className="p-4 bg-green-900/50 border border-green-500 rounded-lg">
             <h3 className="text-green-300 font-semibold mb-2">✅ Registrering lyckades!</h3>
             <p className="text-green-200 text-sm">
-              Ett verifieringsmail har skickats till <strong>{email}</strong>.
+              Ett verifieringsmail har skickats till <strong>{state?.user?.email}</strong>.
               <br />
               Kontrollera din inkorg och klicka på länken för att verifiera ditt konto.
             </p>
@@ -82,13 +46,12 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
 
   return (
     <div>
-      <form onSubmit={handleEmailSignup} className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <div>
           <input
+            name="name"
             type="text"
             required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
             placeholder="Ditt namn"
             autoComplete="name"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -96,10 +59,9 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
         </div>
         <div>
           <input
+            name="email"
             type="email"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             placeholder="E-postadress"
             autoComplete="email"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -107,23 +69,22 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
         </div>
         <div>
           <input
+            name="password"
             type="password"
             required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             placeholder="Lösenord (minst 8 tecken)"
             autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
+        {state?.error && <div className="text-center text-sm text-red-400 mt-2">{state.error}</div>}
 
         <div className="flex items-start space-x-2 mb-6">
           <input
+            name="acceptTerms"
             type="checkbox"
             id="acceptTerms"
-            checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
+            required
             className="mt-0.5 h-4 w-4 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600"
           />
           <label htmlFor="acceptTerms" className="text-slate-400 text-xs">
@@ -140,12 +101,10 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
 
         <button
           type="submit"
-          disabled={loading || !acceptTerms}
-          className={`w-full px-6 py-3 font-semibold text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-            !acceptTerms ? "bg-slate-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          disabled={isPending}
+          className="w-full px-6 py-3 font-semibold text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Registrerar..." : "Registrera konto"}
+          {isPending ? "Registrerar..." : "Registrera konto"}
         </button>
       </form>
 
@@ -164,10 +123,11 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
                 1. Definitioner och tillämpningsområde asdf
               </h3>
               <p className="mb-3">
-                Detta användaravtal ("Avtalet") utgör en juridiskt bindande överenskommelse mellan
-                dig som användare ("Kund", "Du", "Användare") och Bokföringsapp ("Vi",
-                "Tjänsteleverantör", "Bolaget") avseende användning av den webbaserade
-                bokföringstjänsten Bokföringsapp.
+                Detta användaravtal (&ldquo;Avtalet&rdquo;) utgör en juridiskt bindande
+                överenskommelse mellan dig som användare (&ldquo;Kund&rdquo;, &ldquo;Du&rdquo;,
+                &ldquo;Användare&rdquo;) och Bokföringsapp (&ldquo;Vi&rdquo;,
+                &ldquo;Tjänsteleverantör&rdquo;, &ldquo;Bolaget&rdquo;) avseende användning av den
+                webbaserade bokföringstjänsten Bokföringsapp.
               </p>
               <p className="mb-2">
                 <strong>Definitioner:</strong>
@@ -317,9 +277,9 @@ export default function EpostRegistrering({ onSuccess, onSwitchToLogin }: EmailS
                 7. Ansvarsbegränsning och garantier
               </h3>
               <p className="mb-2 text-xs">
-                <strong>7.1 Ingen garanti:</strong> Tjänsten tillhandahålls "i befintligt skick"
-                utan garantier av något slag. Vi garanterar inte att Tjänsten är felfri, säker eller
-                tillgänglig utan avbrott.
+                <strong>7.1 Ingen garanti:</strong> Tjänsten tillhandahålls &ldquo;i befintligt
+                skick&rdquo; utan garantier av något slag. Vi garanterar inte att Tjänsten är
+                felfri, säker eller tillgänglig utan avbrott.
               </p>
               <p className="mb-2 text-xs">
                 <strong>7.2 Ansvarsbegränsning:</strong> Vårt sammanlagda ansvar begränsas till det
