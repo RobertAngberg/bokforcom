@@ -7,7 +7,11 @@ import { useLeverantörer } from "../../hooks/useLeverantorer";
 import { useLeverantorNavigation } from "../../hooks/useLeverantorer";
 import { FakturaProvider } from "../../context/FakturaContext";
 
-export default function LeverantorsfakturorPage() {
+interface LeverantorsfakturorPageProps {
+  onBackToMenu?: () => void;
+}
+
+export default function LeverantorsfakturorPage({ onBackToMenu }: LeverantorsfakturorPageProps) {
   const { refresh } = useLeverantörer();
   const { navigateToFaktura } = useLeverantorNavigation();
 
@@ -19,7 +23,7 @@ export default function LeverantorsfakturorPage() {
     <FakturaProvider>
       <>
         <div className="relative mb-6">
-          <TillbakaPil onClick={navigateToFaktura} />
+          <TillbakaPil onClick={onBackToMenu || navigateToFaktura} />
           <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
         </div>
 
