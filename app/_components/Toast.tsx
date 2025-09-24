@@ -1,6 +1,26 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createRoot } from "react-dom/client";
+
+export type ToastType = "success" | "error" | "info";
+
+// Simple global toast function
+export function showToast(message: string, type: ToastType = "success", duration: number = 3000) {
+  // Create container element
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  // Create React root and render Toast
+  const root = createRoot(container);
+
+  const cleanup = () => {
+    root.unmount();
+    container.remove();
+  };
+
+  root.render(<Toast message={message} type={type} duration={duration} onClose={cleanup} />);
+}
 
 interface ToastProps {
   message: string;
