@@ -1,12 +1,25 @@
 import { useState } from "react";
+import { showToast } from "../../_components/Toast";
+
+interface Anställd {
+  id: number;
+  namn: string;
+  förnamn?: string;
+  efternamn?: string;
+  bankkonto?: string;
+  clearingnummer?: string;
+}
+
+interface Lönespec {
+  nettolön: number;
+}
 
 interface UseBankgiroExportProps {
-  anställda: any[];
+  anställda: Anställd[];
   utbetalningsdatum: Date | null;
-  lönespecar: Record<string, any>;
+  lönespecar: Record<string, Lönespec>;
   onExportComplete?: () => void;
   onClose?: () => void;
-  direktNedladdning?: boolean;
 }
 
 export function useBankgiroExport({
@@ -15,7 +28,6 @@ export function useBankgiroExport({
   lönespecar,
   onExportComplete,
   onClose,
-  direktNedladdning = false,
 }: UseBankgiroExportProps) {
   const [visaModal, setVisaModal] = useState(false);
   const [kundnummer, setKundnummer] = useState("123456");
@@ -25,7 +37,7 @@ export function useBankgiroExport({
   const anställdaMedLönespec = anställda.filter((a) => lönespecar[a.id]);
   const totalBelopp = anställdaMedLönespec.reduce((sum, anställd) => {
     const lönespec = lönespecar[anställd.id];
-    return sum + parseFloat(lönespec?.nettolön || 0);
+    return sum + Number(lönespec?.nettolön || 0);
   }, 0);
 
   // Format datum till YYMMDD
@@ -58,7 +70,7 @@ export function useBankgiroExport({
     // Betalningsposter (35-post) för varje anställd
     anställdaMedLönespec.forEach((anställd) => {
       const lönespec = lönespecar[anställd.id];
-      const nettolön = Math.round(parseFloat(lönespec?.nettolön || 0) * 100); // Öre
+      const nettolön = Math.round(Number(lönespec?.nettolön || 0) * 100); // Öre
       const clearingPadded = (anställd.clearingnummer || "0000").padStart(4, "0");
       const kontoPadded = (anställd.bankkonto || "0").padStart(10, "0");
       const beloppPadded = nettolön.toString().padStart(12, "0");
@@ -108,7 +120,7 @@ export function useBankgiroExport({
   // Direkt nedladdning utan modal (med defaults)
   const laddarNerDirekt = () => {
     if (!utbetalningsdatum) {
-      alert("Utbetalningsdatum saknas!");
+      showToast("Utbetalningsdatum saknas!", "error");
       return;
     }
 

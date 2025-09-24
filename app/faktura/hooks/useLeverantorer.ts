@@ -511,6 +511,8 @@ export function useBokfordaFakturor() {
     transaktionsposter: [],
     loadingPoster: false,
   });
+  const [showDeleteFakturaModal, setShowDeleteFakturaModal] = useState(false);
+  const [deleteFakturaId, setDeleteFakturaId] = useState<number | null>(null);
 
   // Hjälpfunktion för att säkert formatera datum
   const formateraDatum = (datum: string | Date): string => {
@@ -619,22 +621,29 @@ export function useBokfordaFakturor() {
   };
 
   const taBortFaktura = async (fakturaId: number) => {
-    if (confirm("Är du säker på att du vill ta bort denna leverantörsfaktura?")) {
-      try {
-        const result = await taBortLeverantörsfaktura(fakturaId);
+    setDeleteFakturaId(fakturaId);
+    setShowDeleteFakturaModal(true);
+  };
 
-        if (result.success) {
-          // Ta bort från listan lokalt
-          setFakturor((prev) => prev.filter((f) => f.id !== fakturaId));
+  const confirmDeleteFaktura = async () => {
+    if (!deleteFakturaId) return;
 
-          showToast("Leverantörsfaktura borttagen!", "success");
-        } else {
-          showToast(`Fel vid borttagning: ${result.error}`, "error");
-        }
-      } catch (error) {
-        console.error("Fel vid borttagning av faktura:", error);
-        showToast("Fel vid borttagning av faktura", "error");
+    setShowDeleteFakturaModal(false);
+
+    try {
+      const result = await taBortLeverantörsfaktura(deleteFakturaId);
+
+      if (result.success) {
+        // Ta bort från listan lokalt
+        setFakturor((prev) => prev.filter((f) => f.id !== deleteFakturaId));
+
+        showToast("Leverantörsfaktura borttagen!", "success");
+      } else {
+        showToast(`Fel vid borttagning: ${result.error}`, "error");
       }
+    } catch (error) {
+      console.error("Fel vid borttagning av faktura:", error);
+      showToast("Fel vid borttagning av faktura", "error");
     }
   };
 
@@ -666,6 +675,9 @@ export function useBokfordaFakturor() {
     loading,
     verifikatModal,
     bekraftelseModal,
+    showDeleteFakturaModal,
+    setShowDeleteFakturaModal,
+    deleteFakturaId,
 
     // Computed data
     transaktionskolumner,
@@ -677,6 +689,7 @@ export function useBokfordaFakturor() {
     handleBetalaOchBokför,
     stängBekraftelseModal,
     taBortFaktura,
+    confirmDeleteFaktura,
     utförBokföring,
   };
 }

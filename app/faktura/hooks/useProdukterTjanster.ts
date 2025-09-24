@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFakturaContext } from "../context/FakturaContext";
 import {
   hämtaSparadeArtiklar,
@@ -25,6 +25,10 @@ export function useProdukterTjanster() {
     resetNyArtikel,
     setProdukterTjansterState,
   } = context;
+
+  // Modal states
+  const [showDeleteFavoritModal, setShowDeleteFavoritModal] = useState(false);
+  const [deleteFavoritId, setDeleteFavoritId] = useState<number | null>(null);
 
   // =============================================================================
   // ROT/RUT CONSTANTS
@@ -229,25 +233,30 @@ export function useProdukterTjanster() {
   // Ta bort favoritartikel
   const taBortFavoritArtikel = useCallback(
     async (id: number) => {
-      if (!confirm("Är du säker på att du vill ta bort denna favoritartikel?")) {
-        return;
-      }
-
-      try {
-        const result = await deleteFavoritArtikel(id);
-        if (result.success) {
-          showToast("Favoritartikel borttagen! 🗑️", "success");
-          // Ladda om favoriter för att uppdatera listan
-          await laddaSparadeArtiklar();
-        } else {
-          showToast("Kunde inte ta bort favoritartikel", "error");
-        }
-      } catch (error) {
-        showToast("Fel vid borttagning av favoritartikel", "error");
-      }
+      setDeleteFavoritId(id);
+      setShowDeleteFavoritModal(true);
     },
-    [deleteFavoritArtikel, laddaSparadeArtiklar]
+    [setDeleteFavoritId, setShowDeleteFavoritModal]
   );
+
+  const confirmDeleteFavorit = useCallback(async () => {
+    if (!deleteFavoritId) return;
+
+    setShowDeleteFavoritModal(false);
+
+    try {
+      const result = await deleteFavoritArtikel(deleteFavoritId);
+      if (result.success) {
+        showToast("Favoritartikel borttagen! 🗑️", "success");
+        // Ladda om favoriter för att uppdatera listan
+        await laddaSparadeArtiklar();
+      } else {
+        showToast("Kunde inte ta bort favoritartikel", "error");
+      }
+    } catch (error) {
+      showToast("Fel vid borttagning av favoritartikel", "error");
+    }
+  }, [deleteFavoritId, deleteFavoritArtikel, laddaSparadeArtiklar]);
 
   // Ladda favoritartikel till formuläret
   const laddaFavoritArtikel = useCallback(
@@ -517,7 +526,13 @@ export function useProdukterTjanster() {
     taBortArtikel,
     sparaArtikelSomFavorit,
     taBortFavoritArtikel,
+    confirmDeleteFavorit,
     laddaFavoritArtikel,
+
+    // Modal states
+    showDeleteFavoritModal,
+    setShowDeleteFavoritModal,
+    deleteFavoritId,
 
     // ROT/RUT event handlers
     handleRotRutChange,

@@ -98,6 +98,9 @@ export const useLonekorning = ({
   const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
+  const [showDeleteLönekorningModal, setShowDeleteLönekorningModal] = useState(false);
+  const [showDeleteLönespecModal, setShowDeleteLönespecModal] = useState(false);
+  const [deleteLönespecId, setDeleteLönespecId] = useState<number | null>(null);
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
 
   // Data states
@@ -175,11 +178,13 @@ export const useLonekorning = ({
   const handleTaBortLönekörning = async () => {
     if (!valdLonekorning) return;
 
-    const bekräfta = confirm(
-      `Är du säker på att du vill ta bort lönekörningen för ${valdLonekorning.period}?\n\nDetta kommer att:\n- Ta bort alla lönespecifikationer\n- Ta bort all workflow-data\n- Detta kan INTE ångras!`
-    );
+    setShowDeleteLönekorningModal(true);
+  };
 
-    if (!bekräfta) return;
+  const confirmDeleteLönekorning = async () => {
+    if (!valdLonekorning) return;
+
+    setShowDeleteLönekorningModal(false);
 
     try {
       setTaBortLoading(true);
@@ -189,11 +194,11 @@ export const useLonekorning = ({
         setValdLonekorning(null);
         setInternalRefreshTrigger((prev) => prev + 1);
       } else {
-        alert(`Fel vid borttagning: ${result.error}`);
+        showToast(`Fel vid borttagning: ${result.error}`, "error");
       }
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönekörning:", error);
-      alert("Ett oväntat fel uppstod vid borttagning");
+      showToast("Ett oväntat fel uppstod vid borttagning", "error");
     } finally {
       setTaBortLoading(false);
     }
@@ -536,15 +541,22 @@ export const useLonekorning = ({
       return;
     }
 
-    if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
+    setDeleteLönespecId(spec.id);
+    setShowDeleteLönespecModal(true);
+  };
 
-    setSpecListTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
+  const confirmDeleteLönespec = async () => {
+    if (!deleteLönespecId) return;
+
+    setShowDeleteLönespecModal(false);
+
+    setSpecListTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: true }));
     try {
-      await hanteraTaBortSpec(spec.id);
+      await hanteraTaBortSpec(deleteLönespecId);
     } catch (error) {
       console.error("❌ Fel vid borttagning av lönespec:", error);
     } finally {
-      setSpecListTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
+      setSpecListTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: false }));
     }
   };
 
@@ -642,7 +654,7 @@ export const useLonekorning = ({
     if (!enableNewLonekorningModal) return;
 
     if (!newLonekorningUtbetalningsdatum) {
-      alert("Du måste ange ett utbetalningsdatum!");
+      showToast("Du måste ange ett utbetalningsdatum!", "error");
       return;
     }
 
@@ -652,7 +664,7 @@ export const useLonekorning = ({
     }
 
     if (newLonekorningValdaAnstallda.length === 0) {
-      alert("Du måste välja minst en anställd!");
+      showToast("Du måste välja minst en anställd!", "error");
       return;
     }
 
@@ -663,7 +675,7 @@ export const useLonekorning = ({
       const lönekörningResult = await skapaLönekörning(period);
 
       if (!lönekörningResult.success) {
-        alert(lönekörningResult.error || "Kunde inte skapa lönekörning");
+        showToast(lönekörningResult.error || "Kunde inte skapa lönekörning", "error");
         return;
       }
 
@@ -675,7 +687,7 @@ export const useLonekorning = ({
       );
 
       if (!lönespecResult.success) {
-        alert(lönespecResult.error || "Kunde inte skapa lönespecifikationer");
+        showToast(lönespecResult.error || "Kunde inte skapa lönespecifikationer", "error");
         return;
       }
 
@@ -691,7 +703,7 @@ export const useLonekorning = ({
       }
     } catch (error) {
       console.error("❌ Fel vid skapande av lönekörning:", error);
-      alert("Kunde inte skapa lönekörning");
+      showToast("Kunde inte skapa lönekörning", "error");
     } finally {
       setNewLonekorningLoading(false);
     }
@@ -759,6 +771,11 @@ export const useLonekorning = ({
     setBankgiroModalOpen,
     skatteModalOpen,
     setSkatteModalOpen,
+    showDeleteLönekorningModal,
+    setShowDeleteLönekorningModal,
+    showDeleteLönespecModal,
+    setShowDeleteLönespecModal,
+    deleteLönespecId,
     skatteDatum,
     setSkatteDatum,
     skatteBokförPågår,
@@ -793,6 +810,8 @@ export const useLonekorning = ({
     hanteraTaBortSpec,
     loadLönekörningSpecar,
     handleTaBortLönekörning,
+    confirmDeleteLönekorning,
+    confirmDeleteLönespec,
     refreshData,
     handleMailaSpecar,
     handleBokför,

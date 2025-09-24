@@ -82,6 +82,8 @@ export function useHistorik() {
   const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
   const [unbalancedResults, setUnbalancedResults] = useState<UnbalancedResult[]>([]);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTransactionId, setDeleteTransactionId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -298,24 +300,30 @@ export function useHistorik() {
   };
 
   const handleDelete = async (transactionId: number) => {
-    if (!confirm("Är du säker på att du vill ta bort denna transaktion? Detta kan inte ångras.")) {
-      return;
-    }
+    setDeleteTransactionId(transactionId);
+    setShowDeleteModal(true);
+  };
 
-    setDeletingIds((prev) => [...prev, transactionId]);
+  const confirmDelete = async () => {
+    if (!deleteTransactionId) return;
+
+    setShowDeleteModal(false);
+    setDeletingIds((prev) => [...prev, deleteTransactionId]);
 
     try {
-      const result = await deleteTransaction(transactionId);
+      const result = await deleteTransaction(deleteTransactionId);
 
       if (result.success) {
         // Ta bort från lokal state
-        setHistoryData((prev) => prev.filter((item) => item.transaktions_id !== transactionId));
+        setHistoryData((prev) =>
+          prev.filter((item) => item.transaktions_id !== deleteTransactionId)
+        );
         setDetailsMap((prev) => {
           const newMap = { ...prev };
-          delete newMap[transactionId];
+          delete newMap[deleteTransactionId];
           return newMap;
         });
-        setActiveIds((prev) => prev.filter((id) => id !== transactionId));
+        setActiveIds((prev) => prev.filter((id) => id !== deleteTransactionId));
 
         showToast(result.message || "Transaktion borttagen", "success");
       } else {
@@ -324,7 +332,8 @@ export function useHistorik() {
     } catch (error) {
       showToast("Ett fel uppstod när transaktionen skulle tas bort", "error");
     } finally {
-      setDeletingIds((prev) => prev.filter((id) => id !== transactionId));
+      setDeletingIds((prev) => prev.filter((id) => id !== deleteTransactionId));
+      setDeleteTransactionId(null);
     }
   };
 
@@ -341,6 +350,8 @@ export function useHistorik() {
     isCheckingUnbalanced,
     unbalancedResults,
     deletingIds,
+    showDeleteModal,
+    deleteTransactionId,
 
     // Computed values
     filteredData,
@@ -356,8 +367,10 @@ export function useHistorik() {
     handleUnbalancedCheck,
     handleExport,
     handleDelete,
+    confirmDelete,
 
     // Setters for UI state
     setShowUnbalancedModal,
+    setShowDeleteModal,
   };
 }

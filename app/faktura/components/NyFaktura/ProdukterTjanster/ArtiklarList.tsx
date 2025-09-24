@@ -1,20 +1,50 @@
+import { useState } from "react";
 import { useFaktura } from "../../../hooks/useFaktura";
+import Modal from "../../../../_components/Modal";
+
+// Type for artikel based on usage in component
+type ArtikelType = {
+  beskrivning: string;
+  antal: number;
+  prisPerEnhet: number;
+  valuta: string;
+  moms: number;
+  typ: string;
+  rotRutMaterial?: boolean;
+  rotRutTyp?: string;
+};
 
 export default function ArtiklarList() {
   const { formData, produkterTjansterState, taBortArtikel } = useFaktura();
   const { blinkIndex } = produkterTjansterState;
 
+  // Modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteArtikelIndex, setDeleteArtikelIndex] = useState<number | null>(null);
+  const [deleteArtikelName, setDeleteArtikelName] = useState<string>("");
+
   // Handler functions
-  const handleRemove = (index: number) => {
-    taBortArtikel(index);
+  const handleRemove = (index: number, artikelName: string) => {
+    setDeleteArtikelIndex(index);
+    setDeleteArtikelName(artikelName);
+    setShowDeleteModal(true);
   };
 
-  const handleEdit = (artikel: any, index: number) => {
+  const confirmDelete = () => {
+    if (deleteArtikelIndex !== null) {
+      taBortArtikel(deleteArtikelIndex);
+    }
+    setShowDeleteModal(false);
+    setDeleteArtikelIndex(null);
+    setDeleteArtikelName("");
+  };
+
+  const handleEdit = (artikel: ArtikelType, index: number) => {
     // TODO: Implement edit functionality
     console.log("Edit artikel not implemented yet", artikel, index);
   };
 
-  const handleShowArtikelDetaljer = (artikel: any) => {
+  const handleShowArtikelDetaljer = (artikel: ArtikelType) => {
     // TODO: Implement show artikel detaljer functionality
     console.log("Show artikel detaljer not implemented yet", artikel);
   };
@@ -70,9 +100,7 @@ export default function ArtiklarList() {
               </button>
               <button
                 onClick={() => {
-                  if (confirm(`Ta bort "${a.beskrivning}"?`)) {
-                    handleRemove(idx);
-                  }
+                  handleRemove(idx, a.beskrivning);
                 }}
                 className="text-red-400 hover:text-red-600 p-1"
                 title="Ta bort artikel"
@@ -83,6 +111,31 @@ export default function ArtiklarList() {
           </div>
         ))}
       </div>
+
+      {/* Delete confirmation modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Bekräfta borttagning"
+      >
+        <p className="text-gray-300 mb-4">
+          Är du säker på att du vill ta bort artikeln &quot;{deleteArtikelName}&quot;?
+        </p>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => setShowDeleteModal(false)}
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
+          >
+            Avbryt
+          </button>
+          <button
+            onClick={confirmDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Ta bort
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

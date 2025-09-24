@@ -61,6 +61,7 @@ export function useFaktura() {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoadingFaktura, setIsLoadingFaktura] = useState(false);
   const [kunder, setKunder] = useState<any[]>([]);
+  const [showDeleteKundModal, setShowDeleteKundModal] = useState(false);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null); // =============================================================================
@@ -725,7 +726,13 @@ export function useFaktura() {
   // Radera kund
   const handleDeleteCustomer = useCallback(async () => {
     if (!formData.kundId) return;
-    if (!confirm("Är du säker på att du vill ta bort kunden?")) return;
+    setShowDeleteKundModal(true);
+  }, [formData.kundId, setShowDeleteKundModal]);
+
+  const confirmDeleteKund = useCallback(async () => {
+    if (!formData.kundId) return;
+
+    setShowDeleteKundModal(false);
 
     try {
       await deleteKund(parseInt(formData.kundId, 10));
@@ -758,6 +765,8 @@ export function useFaktura() {
     userSettings,
     showPreview,
     kunder,
+    showDeleteKundModal,
+    setShowDeleteKundModal,
 
     // Context actions
     setFormData,
@@ -826,6 +835,7 @@ export function useFaktura() {
     handleSelectCustomer,
     handleCreateNewCustomer,
     handleDeleteCustomer,
+    confirmDeleteKund,
     handleEditCustomer,
 
     // Basic artikel functions (för bakåtkompatibilitet)

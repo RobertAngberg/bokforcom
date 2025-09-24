@@ -87,6 +87,13 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   const [anställdaError, setAnställdaError] = useState<string | null>(null);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
 
+  // Delete modal states
+  const [showDeleteAnställdModal, setShowDeleteAnställdModal] = useState(false);
+  const [deleteAnställdId, setDeleteAnställdId] = useState<number | null>(null);
+  const [deleteAnställdNamn, setDeleteAnställdNamn] = useState<string>("");
+  const [showDeleteLönespecModal, setShowDeleteLönespecModal] = useState(false);
+  const [deleteLönespecId, setDeleteLönespecId] = useState<number | null>(null);
+
   // NY ANSTÄLLD state - only when enableNyAnstalldMode is true
   const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
   const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
@@ -299,32 +306,38 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // ===========================================
 
   // Ta bort anställd
-  const taBortAnställdMedKonfirmation = useCallback(
-    async (id: number, namn: string) => {
-      if (!confirm(`Är du säker på att du vill ta bort ${namn}?`)) {
-        return;
-      }
+  const taBortAnställdMedKonfirmation = useCallback(async (id: number, namn: string) => {
+    setDeleteAnställdId(id);
+    setDeleteAnställdNamn(namn);
+    setShowDeleteAnställdModal(true);
+  }, []);
 
-      try {
-        const result = await taBortAnställd(id);
-        if (result.success) {
-          removeAnställd(id);
-          // Om den borttagna anställda var vald, rensa valet
-          if (valdAnställd && "id" in valdAnställd && (valdAnställd as any).id === id) {
-            setValdAnställd(null);
-          }
+  const confirmDeleteAnställd = useCallback(async () => {
+    if (!deleteAnställdId) return;
 
-          setAnställdaError(null);
-        } else {
-          setAnställdaError(result.error || "Ett fel uppstod vid borttagning");
+    setShowDeleteAnställdModal(false);
+
+    try {
+      const result = await taBortAnställd(deleteAnställdId);
+      if (result.success) {
+        removeAnställd(deleteAnställdId);
+        // Om den borttagna anställda var vald, rensa valet
+        if (valdAnställd && "id" in valdAnställd && (valdAnställd as any).id === deleteAnställdId) {
+          setValdAnställd(null);
         }
-      } catch (error) {
-        console.error("Fel vid borttagning:", error);
-        setAnställdaError("Ett fel uppstod vid borttagning");
+
+        setAnställdaError(null);
+      } else {
+        setAnställdaError(result.error || "Ett fel uppstod vid borttagning");
       }
-    },
-    [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError]
-  );
+    } catch (error) {
+      console.error("Fel vid borttagning:", error);
+      setAnställdaError("Ett fel uppstod vid borttagning");
+    } finally {
+      setDeleteAnställdId(null);
+      setDeleteAnställdNamn("");
+    }
+  }, [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError]);
 
   // Hantera klick på anställd (ladda full data och sätt som vald)
   const hanteraAnställdKlick = useCallback(
@@ -338,32 +351,34 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // LÖNESPEC LISTA - För LonespecList.tsx (flyttad från useAnstalldalonespecList)
   // ===========================================
 
-  const handleTaBortLönespec = useCallback(
-    async (lönespecId: string) => {
-      if (!enableLonespecMode) return;
+  const handleTaBortLönespec = useCallback(async (lönespecId: string) => {
+    if (!enableLonespecMode) return;
 
-      if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
-        return;
-      }
+    setDeleteLönespecId(parseInt(lönespecId));
+    setShowDeleteLönespecModal(true);
+  }, []);
 
-      setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: true }));
-      try {
-        const resultat = await taBortLönespec(parseInt(lönespecId));
-        if (resultat.success) {
-          showToast("Lönespecifikation borttagen!", "success");
-          onLönespecUppdaterad?.(); // Uppdatera listan
-        } else {
-          showToast(`Kunde inte ta bort lönespec: ${resultat.message}`, "error");
-        }
-      } catch (error) {
-        console.error("❌ Fel vid borttagning av lönespec:", error);
-        showToast("Kunde inte ta bort lönespec", "error");
-      } finally {
-        setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: false }));
+  const confirmDeleteLönespec = useCallback(async () => {
+    if (!deleteLönespecId) return;
+
+    setShowDeleteLönespecModal(false);
+
+    setTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: true }));
+    try {
+      const resultat = await taBortLönespec(deleteLönespecId);
+      if (resultat.success) {
+        showToast("Lönespecifikation borttagen!", "success");
+        onLönespecUppdaterad?.(); // Uppdatera listan
+      } else {
+        showToast(`Kunde inte ta bort lönespec: ${resultat.message}`, "error");
       }
-    },
-    [enableLonespecMode, onLönespecUppdaterad]
-  );
+    } catch (error) {
+      console.error("❌ Fel vid borttagning av lönespec:", error);
+      showToast("Kunde inte ta bort lönespec", "error");
+    } finally {
+      setTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: false }));
+    }
+  }, [deleteLönespecId, onLönespecUppdaterad]);
 
   const handleNavigateToLonekorning = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -530,6 +545,12 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       // NY ANSTÄLLD state (när enableNyAnstalldMode)
       nyAnställdFormulär: enableNyAnstalldMode ? nyAnställdFormulär : initialNyAnställdFormulär,
       nyAnställdLoading: enableNyAnstalldMode ? nyAnställdLoading : false,
+
+      // Modal states
+      showDeleteAnställdModal,
+      deleteAnställdId,
+      showDeleteLönespecModal,
+      deleteLönespecId,
     },
 
     // Actions
@@ -568,6 +589,12 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       handleSanitizedChange: enableNyAnstalldMode ? handleSanitizedChange : () => {},
       rensaFormulär: enableNyAnstalldMode ? rensaFormulär : () => {},
       avbrytNyAnställd: enableNyAnstalldMode ? avbrytNyAnställd : () => {},
+
+      // Modal handlers
+      confirmDeleteAnställd,
+      confirmDeleteLönespec,
+      setShowDeleteAnställdModal,
+      setShowDeleteLönespecModal,
     },
 
     // Form actions (när enableNyAnstalldMode)

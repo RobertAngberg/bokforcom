@@ -26,6 +26,8 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
     loading: false,
   });
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteUtläggId, setDeleteUtläggId] = useState<number | null>(null);
 
   const openUtläggBokföringModal = (utlägg: Utlägg, previewRows: unknown[]) => {
     setUtläggBokföringModal({
@@ -99,12 +101,17 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
   };
 
   const handleTaBortUtlägg = async (utläggId: number) => {
-    if (!confirm("Är du säker på att du vill ta bort detta utlägg?")) {
-      return;
-    }
+    setDeleteUtläggId(utläggId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteUtläggId) return;
+
+    setShowDeleteModal(false);
 
     try {
-      await taBortUtlägg(utläggId);
+      await taBortUtlägg(deleteUtläggId);
 
       // Uppdatera listan genom att ladda om utlägg för vald anställd
       if (anställdId) {
@@ -115,6 +122,8 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
     } catch (error) {
       console.error("Fel vid borttagning av utlägg:", error);
       showToast("Kunde inte ta bort utlägg", "error");
+    } finally {
+      setDeleteUtläggId(null);
     }
   };
 
@@ -210,6 +219,12 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
     // Interaction functions (from useUtlaggFlik)
     handleNyttUtlägg,
     handleTaBortUtlägg,
+    confirmDelete,
+
+    // Modal state
+    showDeleteModal,
+    setShowDeleteModal,
+    deleteUtläggId,
 
     // Loading state for compatibility
     loading: utläggLoading,

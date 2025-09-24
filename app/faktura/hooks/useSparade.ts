@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { deleteFaktura } from "../actions/fakturaActions";
+import { showToast } from "../../_components/Toast";
 
 /**
  * Hook för hantering av sparade fakturor
@@ -9,6 +10,13 @@ import { deleteFaktura } from "../actions/fakturaActions";
 export function useSparade() {
   // Local state
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteFakturaId, setDeleteFakturaId] = useState<number | null>(null);
+  // Store callbacks for delete operation
+  const [deleteCallbacks, setDeleteCallbacks] = useState<{
+    onSuccess?: () => void;
+    onError?: (error: string) => void;
+  }>({});
 
   // =============================================================================
   // SPARADE FAKTUROR FUNCTIONS
@@ -22,41 +30,49 @@ export function useSparade() {
 
   const handleDeleteInvoice = useCallback(
     async (fakturaId: number, onSuccess?: () => void, onError?: (error: string) => void) => {
-      if (!confirm("Är du säker på att du vill ta bort denna faktura?")) {
-        return;
-      }
+      setDeleteFakturaId(fakturaId);
+      setDeleteCallbacks({ onSuccess, onError });
+      setShowDeleteModal(true);
+    },
+    [setDeleteFakturaId, setDeleteCallbacks, setShowDeleteModal]
+  );
 
-      try {
-        setLoadingInvoiceId(fakturaId);
-        const result = await deleteFaktura(fakturaId);
-        if (result.success) {
-          if (onSuccess) {
-            onSuccess();
-          } else {
-            // Fallback för när ingen callback ges
-            window.location.reload();
-          }
+  const confirmDeleteFaktura = useCallback(async () => {
+    if (!deleteFakturaId) return;
+
+    const { onSuccess, onError } = deleteCallbacks;
+
+    setShowDeleteModal(false);
+
+    try {
+      setLoadingInvoiceId(deleteFakturaId);
+      const result = await deleteFaktura(deleteFakturaId);
+      if (result.success) {
+        if (onSuccess) {
+          onSuccess();
         } else {
-          const errorMsg = result.error || "Fel vid borttagning av faktura";
-          if (onError) {
-            onError(errorMsg);
-          } else {
-            alert(errorMsg);
-          }
+          // Fallback för när ingen callback ges
+          window.location.reload();
         }
-      } catch (error) {
-        const errorMsg = "Fel vid borttagning av faktura";
+      } else {
+        const errorMsg = result.error || "Fel vid borttagning av faktura";
         if (onError) {
           onError(errorMsg);
         } else {
-          alert(errorMsg);
+          showToast(errorMsg, "error");
         }
-      } finally {
-        setLoadingInvoiceId(null);
       }
-    },
-    []
-  );
+    } catch (error) {
+      const errorMsg = "Fel vid borttagning av faktura";
+      if (onError) {
+        onError(errorMsg);
+      } else {
+        showToast(errorMsg, "error");
+      }
+    } finally {
+      setLoadingInvoiceId(null);
+    }
+  }, [deleteFakturaId, deleteCallbacks, setShowDeleteModal, setLoadingInvoiceId]);
 
   // =============================================================================
   // RETURN OBJECT
@@ -65,9 +81,13 @@ export function useSparade() {
   return {
     // State
     loadingInvoiceId,
+    showDeleteModal,
+    setShowDeleteModal,
+    deleteFakturaId,
 
     // Functions
     handleSelectInvoice,
     handleDeleteInvoice,
+    confirmDeleteFaktura,
   };
 }

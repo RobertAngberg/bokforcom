@@ -24,6 +24,8 @@ export default function Historik() {
     isCheckingUnbalanced,
     unbalancedResults,
     deletingIds,
+    showDeleteModal,
+    deleteTransactionId,
 
     // Computed values
     filteredData,
@@ -39,9 +41,11 @@ export default function Historik() {
     handleUnbalancedCheck,
     handleExport,
     handleDelete,
+    confirmDelete,
 
     // Setters
     setShowUnbalancedModal,
+    setShowDeleteModal,
   } = useHistorik();
 
   if (loading) {
@@ -289,6 +293,33 @@ export default function Historik() {
 
           <div className="flex justify-center mt-6">
             <Knapp text="Stäng" onClick={() => setShowUnbalancedModal(false)} />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="🗑️ Bekräfta borttagning"
+        maxWidth="md"
+      >
+        <div className="text-center space-y-4">
+          <p className="text-slate-300">Är du säker på att du vill ta bort denna transaktion?</p>
+          <p className="text-red-400 font-medium">Detta kan inte ångras!</p>
+          <div className="flex gap-3 justify-center mt-6">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+            >
+              🗑️ Ta bort
+            </button>
           </div>
         </div>
       </Modal>
