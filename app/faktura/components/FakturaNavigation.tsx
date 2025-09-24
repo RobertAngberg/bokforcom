@@ -2,18 +2,15 @@
 
 import { useState } from "react";
 import Knapp from "../../_components/Knapp";
-import Toast from "../../_components/Toast";
 import NyFaktura from "./NyFaktura/NyFaktura";
 import Sparade from "./Sparade/Sparade";
 import Leverantorsfakturor from "./Leverantorsfakturor/Leverantorsfakturor";
-import { useFaktura } from "../hooks/useFaktura";
 
 type ActiveView = "overview" | "ny" | "sparade" | "leverantorer";
 
 export default function FakturaNavigation() {
   const [activeView, setActiveView] = useState<ActiveView>("overview");
   const [editFakturaId, setEditFakturaId] = useState<number | undefined>(undefined);
-  const { toastState, clearToast } = useFaktura();
 
   const handleEditFaktura = (fakturaId: number) => {
     setEditFakturaId(fakturaId);
@@ -67,10 +64,6 @@ export default function FakturaNavigation() {
   // Renderera specifika vyer
   return (
     <>
-      {toastState.isVisible && (
-        <Toast message={toastState.message} type={toastState.type} onClose={clearToast} />
-      )}
-
       {activeView === "ny" && (
         <NyFaktura onBackToMenu={handleBackToOverview} editFakturaId={editFakturaId} />
       )}
