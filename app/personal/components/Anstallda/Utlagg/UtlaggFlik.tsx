@@ -3,10 +3,10 @@
 import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import Knapp from "../../../../_components/Knapp";
 import UtlaggBokforModal from "./UtlaggBokforModal";
-import { useUtlaggFlik } from "../../../hooks/useUtlaggFlik";
+import { useUtlagg } from "../../../hooks/useUtlagg";
 import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
 
-export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFlikProps) {
+export default function UtlaggFlik({ state, handlers }: Omit<UtlaggFlikProps, "utlaggFlikData">) {
   const {
     utlägg,
     loading,
@@ -16,9 +16,13 @@ export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFl
     formatBelopp,
     getStatusClass,
     getStatusText,
-  } = useUtlaggFlik(state, handlers, utlaggFlikData);
+    utlaggFlikData,
+  } = useUtlagg({
+    anställdId: state?.valdAnställd?.id,
+    enableFlikMode: true,
+  });
 
-  // Förbättrade kolumner med fler funktioner
+  // Enhanced columns with all formatting functions
   const enhancedColumns: ColumnDefinition<Utlägg>[] = [
     {
       key: "datum",
@@ -92,7 +96,7 @@ export default function UtlaggFlik({ state, handlers, utlaggFlikData }: UtlaggFl
             </p>
           </div>
         ) : (
-          <Tabell data={utlägg} columns={enhancedColumns} getRowId={(row: any) => row.id} />
+          <Tabell data={utlägg} columns={enhancedColumns} getRowId={(row: Utlägg) => row.id} />
         )}
       </div>
 

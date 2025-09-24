@@ -6,16 +6,24 @@ import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
 import Dropdown from "../../../../_components/Dropdown";
 import { sanitizeFormInput } from "../../../../_utils/validationUtils";
-import { useNyAnstalld } from "../../../hooks/useNyAnstalld";
+import { useAnstallda } from "../../../hooks/useAnstallda";
 import type { NyAnstalldProps } from "../../../types/types";
 
 export default function NyAnställd({ handlers }: NyAnstalldProps) {
   const { döljNyAnställd: stängNyAnställd, hanteraNyAnställdSparad } = handlers;
   const {
     state: { nyAnställdFormulär },
-    actions: { updateNyAnställdFormulär, handleSanitizedChange, avbrytNyAnställd },
-    form: { formAction, isPending },
-  } = useNyAnstalld({ onSaved: hanteraNyAnställdSparad, onCancel: stängNyAnställd });
+    handlers: { updateNyAnställdFormulär, handleSanitizedChange, avbrytNyAnställd },
+    form,
+  } = useAnstallda({
+    enableNyAnstalldMode: true,
+    onNyAnstalldSaved: hanteraNyAnställdSparad,
+    onNyAnstalldCancel: stängNyAnställd,
+  });
+
+  // Extract form actions safely
+  const formAction = typeof form.formAction === "function" ? form.formAction : undefined;
+  const isPending = typeof form.isPending === "boolean" ? form.isPending : false;
 
   return (
     <div className="space-y-8">

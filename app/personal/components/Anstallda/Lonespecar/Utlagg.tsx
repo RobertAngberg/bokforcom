@@ -1,6 +1,6 @@
 //#region Huvud
 import Knapp from "../../../../_components/Knapp";
-import { useLonespecUtlagg } from "../../../hooks/useLonespecUtlagg";
+import { useLonespec } from "../../../hooks/useLonespecar";
 import type { UtläggProps } from "../../../types/types";
 
 export default function Utlägg({
@@ -19,9 +19,15 @@ export default function Utlägg({
     väntandeUtlägg,
     inkluderadeUtlägg,
     handleLäggTillUtlägg,
-  } = useLonespecUtlagg(lönespecUtlägg, lönespecId, extrarader, anställdId, onUtläggAdded);
+  } = useLonespec({
+    enableUtlaggMode: true,
+    lönespecUtlägg,
+    lönespecId,
+    anställdId,
+    onUtläggAdded,
+  });
 
-  if (synkroniseradeUtlägg.length === 0) return null;
+  if (!synkroniseradeUtlägg || synkroniseradeUtlägg.length === 0) return null;
 
   // Visa komponenten om det finns utlägg (väntande eller inkluderade)
   return (
@@ -30,7 +36,7 @@ export default function Utlägg({
         💰 Väntande utlägg
       </h4>
       {/* Lägg till utlägg knapp i mitten */}
-      {väntandeUtlägg.length > 0 && (
+      {väntandeUtlägg && väntandeUtlägg.length > 0 && (
         <div className="flex justify-center mb-4">
           <Knapp
             text="💰 Lägg till väntande utlägg"
@@ -42,7 +48,7 @@ export default function Utlägg({
         </div>
       )}
       <div className="space-y-3">
-        {synkroniseradeUtlägg.map((utläggItem) => (
+        {synkroniseradeUtlägg?.map((utläggItem: any) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">
             <div className="flex justify-between items-start mb-2">
               <div>

@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../../../_components/Modal";
 import { NySpecModalProps } from "../../../types/types";
-import { useNySpecModal } from "../../../hooks/useNySpecModal";
+import { useLonespec } from "../../../hooks/useLonespecar";
 
 export default function NySpecModal({
   isOpen,
@@ -14,15 +14,20 @@ export default function NySpecModal({
   anstallda,
   onSpecCreated,
 }: NySpecModalProps) {
-  const { valdAnställd, canCreate, handleCreateSpec, handleAnställdChange, handleDatumChange } =
-    useNySpecModal({
-      isOpen,
-      onClose,
-      nySpecDatum,
-      setNySpecDatum,
-      anstallda,
-      onSpecCreated,
-    });
+  const {
+    valdAnställd,
+    canCreateSpec: canCreate,
+    handleCreateSpec,
+    handleAnställdChange,
+    handleDatumChange,
+  } = useLonespec({
+    enableNewSpecModal: true,
+    nySpecModalOpen: isOpen,
+    nySpecDatum,
+    setNySpecDatum,
+    anstallda,
+    onSpecCreated,
+  });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Skapa ny lönespecifikation" maxWidth="sm">
@@ -31,8 +36,8 @@ export default function NySpecModal({
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Välj anställd</label>
           <select
-            value={valdAnställd}
-            onChange={(e) => handleAnställdChange(e.target.value)}
+            value={valdAnställd || ""}
+            onChange={(e) => handleAnställdChange?.(e.target.value)}
             className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
           >
             <option value="">-- Välj anställd --</option>
@@ -49,7 +54,7 @@ export default function NySpecModal({
           <label className="block text-sm font-medium text-slate-300 mb-2">Utbetalningsdatum</label>
           <DatePicker
             selected={nySpecDatum}
-            onChange={handleDatumChange}
+            onChange={(date) => handleDatumChange?.(date)}
             dateFormat="yyyy-MM-dd"
             className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
             placeholderText="Välj datum"

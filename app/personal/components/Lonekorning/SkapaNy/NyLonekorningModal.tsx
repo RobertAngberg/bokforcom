@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../../../_components/Modal";
 import Knapp from "../../../../_components/Knapp";
 import { NyLonekorningModalProps } from "../../../types/types";
-import { useNyLonekorningModal } from "../../../hooks/useNyLonekorningModal";
+import { useLonekorning } from "../../../hooks/useLonekorning";
 
 export default function NyLonekorningModal({
   isOpen,
@@ -13,22 +13,26 @@ export default function NyLonekorningModal({
   onLonekorningCreated,
 }: NyLonekorningModalProps) {
   const {
-    utbetalningsdatum,
-    setUtbetalningsdatum,
-    loading,
-    anställda,
-    valdaAnställda,
-    steg,
-    canProceed,
-    handleCreate,
-    handleAnställdToggle,
-    handleBack,
-    handleClose,
-  } = useNyLonekorningModal({
-    isOpen,
-    onClose,
+    newLonekorningUtbetalningsdatum: utbetalningsdatum,
+    setNewLonekorningUtbetalningsdatum: setUtbetalningsdatum,
+    newLonekorningLoading: loading,
+    anstallda: anställda,
+    newLonekorningValdaAnstallda: valdaAnställda,
+    newLonekorningSteg: steg,
+    newLonekorningCanProceed: canProceed,
+    handleNewLonekorningCreate: handleCreate,
+    handleNewLonekorningAnstalldToggle: handleAnställdToggle,
+    handleNewLonekorningBack: handleBack,
+    setNyLonekorningModalOpen,
+  } = useLonekorning({
+    enableNewLonekorningModal: true,
     onLonekorningCreated,
   });
+
+  const handleClose = () => {
+    setNyLonekorningModalOpen(false);
+    onClose();
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Skapa ny lönekörning" maxWidth="md">

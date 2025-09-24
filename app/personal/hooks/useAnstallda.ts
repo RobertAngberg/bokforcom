@@ -1,15 +1,84 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useActionState } from "react";
 import {
   hämtaAllaAnställda,
   hämtaAnställd,
   taBortAnställd,
   sparaAnställd,
+  sparaNyAnställdFormAction,
 } from "../actions/anstalldaActions";
-import type { AnställdData, AnställdListItem, PersonalEditData } from "../types/types";
+import { taBortLönespec } from "../actions/lonespecarActions";
+import { useLonespec } from "./useLonespecar";
+import { showToast } from "../../_components/Toast";
+import type {
+  AnställdData,
+  AnställdListItem,
+  PersonalEditData,
+  UseNyAnstalldOptions,
+} from "../types/types";
 
-export function useAnstallda() {
+// Ny Anställd formulär initial data - flyttad från useNyAnstalld.ts
+const initialNyAnställdFormulär = {
+  // Personal information
+  förnamn: "",
+  efternamn: "",
+  personnummer: "",
+  jobbtitel: "",
+  clearingnummer: "",
+  bankkonto: "",
+  mail: "",
+  adress: "",
+  postnummer: "",
+  ort: "",
+
+  // Dates
+  startdatum: new Date(),
+  slutdatum: (() => {
+    const datum = new Date();
+    datum.setFullYear(datum.getFullYear() + 1);
+    return datum;
+  })(),
+
+  // Employment details
+  anställningstyp: "",
+  löneperiod: "",
+  ersättningPer: "",
+  kompensation: "",
+  arbetsvecka: "",
+  arbetsbelastning: "",
+  deltidProcent: "",
+
+  // Workplace
+  tjänsteställeAdress: "",
+  tjänsteställeOrt: "",
+
+  // Tax information
+  skattetabell: "",
+  skattekolumn: "",
+  växaStöd: false,
+};
+
+const initialActionResult = {
+  success: false,
+  message: "",
+};
+
+interface UseAnstalldaProps {
+  enableLonespecMode?: boolean;
+  onLönespecUppdaterad?: () => void;
+  enableNyAnstalldMode?: boolean;
+  onNyAnstalldSaved?: () => void;
+  onNyAnstalldCancel?: () => void;
+}
+
+export function useAnstallda(props?: UseAnstalldaProps) {
+  const enableLonespecMode = props?.enableLonespecMode || false;
+  const onLönespecUppdaterad = props?.onLönespecUppdaterad;
+  const enableNyAnstalldMode = props?.enableNyAnstalldMode || false;
+  const onNyAnstalldSaved = props?.onNyAnstalldSaved;
+  const onNyAnstalldCancel = props?.onNyAnstalldCancel;
+
   const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [anställdaLoading, setAnställdaLoading] = useState(false);
@@ -17,6 +86,23 @@ export function useAnstallda() {
   const [anställdLoadingId, setAnställdLoadingId] = useState<number | null>(null);
   const [anställdaError, setAnställdaError] = useState<string | null>(null);
   const [visaNyAnställdFormulär, setVisaNyAnställdFormulär] = useState(false);
+
+  // NY ANSTÄLLD state - only when enableNyAnstalldMode is true
+  const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
+  const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
+
+  // NY ANSTÄLLD form action - conditionally use useActionState
+  const nyAnstalldActionData = enableNyAnstalldMode
+    ? useActionState(sparaNyAnställdFormAction, initialActionResult)
+    : [null, () => {}, false];
+  const [actionState, formAction, isPending] = nyAnstalldActionData;
+
+  // Lönespec state - only when enableLonespecMode is true
+  const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
+
+  // Lönespec data - conditionally use useLonespec
+  const lonespecData = enableLonespecMode ? useLonespec() : { lönespecar: [] };
+  const { lönespecar } = lonespecData;
 
   // ===========================================
   // HELPER FUNCTIONS
@@ -249,6 +335,43 @@ export function useAnstallda() {
   );
 
   // ===========================================
+  // LÖNESPEC LISTA - För LonespecList.tsx (flyttad från useAnstalldalonespecList)
+  // ===========================================
+
+  const handleTaBortLönespec = useCallback(
+    async (lönespecId: string) => {
+      if (!enableLonespecMode) return;
+
+      if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) {
+        return;
+      }
+
+      setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: true }));
+      try {
+        const resultat = await taBortLönespec(parseInt(lönespecId));
+        if (resultat.success) {
+          showToast("Lönespecifikation borttagen!", "success");
+          onLönespecUppdaterad?.(); // Uppdatera listan
+        } else {
+          showToast(`Kunde inte ta bort lönespec: ${resultat.message}`, "error");
+        }
+      } catch (error) {
+        console.error("❌ Fel vid borttagning av lönespec:", error);
+        showToast("Kunde inte ta bort lönespec", "error");
+      } finally {
+        setTaBortLaddning((prev) => ({ ...prev, [lönespecId]: false }));
+      }
+    },
+    [enableLonespecMode, onLönespecUppdaterad]
+  );
+
+  const handleNavigateToLonekorning = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.location.href = "/personal/Lonekorning";
+    }
+  }, []);
+
+  // ===========================================
   // NY ANSTÄLLD - För NyAnstalld.tsx
   // ===========================================
 
@@ -266,6 +389,53 @@ export function useAnstallda() {
     await laddaAnställda();
     setVisaNyAnställdFormulär(false);
   }, [laddaAnställda, setVisaNyAnställdFormulär]);
+
+  // NY ANSTÄLLD FORMULÄR FUNKTIONER - flyttade från useNyAnstalld.ts
+
+  // Update formulär with partial data
+  const updateNyAnställdFormulär = useCallback(
+    (updates: Partial<typeof nyAnställdFormulär>) => {
+      if (!enableNyAnstalldMode) return;
+      console.log("🔄 updateNyAnställdFormulär - updates:", updates);
+      setNyAnställdFormulär((prev) => {
+        const newState = { ...prev, ...updates };
+        console.log("🔄 updateNyAnställdFormulär - prev state:", prev);
+        console.log("🔄 updateNyAnställdFormulär - new state:", newState);
+        return newState;
+      });
+    },
+    [enableNyAnstalldMode, nyAnställdFormulär]
+  );
+
+  // Handle input changes
+  const handleSanitizedChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      if (!enableNyAnstalldMode) return;
+      const { name, value } = e.target;
+
+      console.log("🔍 handleSanitizedChange - input:", {
+        name,
+        value,
+        valueLength: value.length,
+      });
+
+      updateNyAnställdFormulär({ [name]: value });
+    },
+    [enableNyAnstalldMode, updateNyAnställdFormulär]
+  );
+
+  // Reset formulär
+  const rensaFormulär = useCallback(() => {
+    if (!enableNyAnstalldMode) return;
+    setNyAnställdFormulär(initialNyAnställdFormulär);
+  }, [enableNyAnstalldMode]);
+
+  const avbrytNyAnställd = useCallback(() => {
+    if (!enableNyAnstalldMode) return;
+    rensaFormulär();
+    döljNyAnställd();
+    onNyAnstalldCancel?.();
+  }, [enableNyAnstalldMode, döljNyAnställd, onNyAnstalldCancel, rensaFormulär]);
 
   // ===========================================
   // ANSTÄLLD RAD - För AnställdaRad.tsx
@@ -316,6 +486,20 @@ export function useAnstallda() {
     setAnställdaError(null);
   }, [setAnställdaError]);
 
+  // NY ANSTÄLLD form action effect - flyttad från useNyAnstalld.ts
+  useEffect(() => {
+    if (!enableNyAnstalldMode || !actionState || typeof actionState !== "object") return;
+
+    if (actionState.success) {
+      showToast(actionState.message || "Anställd sparad!", "success");
+      rensaFormulär();
+      döljNyAnställd();
+      onNyAnstalldSaved?.();
+    } else if (actionState.message) {
+      showToast(actionState.message, "error");
+    }
+  }, [enableNyAnstalldMode, actionState, döljNyAnställd, onNyAnstalldSaved, rensaFormulär]);
+
   // ===========================================
   // RETURN - Grupperat per användningsområde
   // ===========================================
@@ -338,6 +522,14 @@ export function useAnstallda() {
       personalOriginalData,
       personalHasChanges,
       personalErrorMessage,
+
+      // Lönespec state (når enableLonespecMode)
+      lönespecar: enableLonespecMode ? lönespecar : [],
+      taBortLaddning: enableLonespecMode ? taBortLaddning : {},
+
+      // NY ANSTÄLLD state (när enableNyAnstalldMode)
+      nyAnställdFormulär: enableNyAnstalldMode ? nyAnställdFormulär : initialNyAnställdFormulär,
+      nyAnställdLoading: enableNyAnstalldMode ? nyAnställdLoading : false,
     },
 
     // Actions
@@ -366,7 +558,30 @@ export function useAnstallda() {
       personalOnChange,
       personalOnSave,
       personalOnCancel,
+
+      // Lönespec handlers (när enableLonespecMode)
+      handleTaBortLönespec: enableLonespecMode ? handleTaBortLönespec : () => {},
+      handleNavigateToLonekorning: enableLonespecMode ? handleNavigateToLonekorning : () => {},
+
+      // NY ANSTÄLLD handlers (när enableNyAnstalldMode)
+      updateNyAnställdFormulär: enableNyAnstalldMode ? updateNyAnställdFormulär : () => {},
+      handleSanitizedChange: enableNyAnstalldMode ? handleSanitizedChange : () => {},
+      rensaFormulär: enableNyAnstalldMode ? rensaFormulär : () => {},
+      avbrytNyAnställd: enableNyAnstalldMode ? avbrytNyAnställd : () => {},
     },
+
+    // Form actions (när enableNyAnstalldMode)
+    form: enableNyAnstalldMode
+      ? {
+          actionState,
+          formAction: formAction || (() => {}),
+          isPending: isPending || false,
+        }
+      : {
+          actionState: null,
+          formAction: () => {},
+          isPending: false,
+        },
 
     // Specialized hooks
     useAnställdRad,

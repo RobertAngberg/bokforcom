@@ -1,12 +1,23 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { UtläggBokföringModal, UtlaggBokföringsRad } from "../types/types";
+import { useRouter } from "next/navigation";
+import type { UtläggBokföringModal, UtlaggBokföringsRad, Utlägg } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
-import { hämtaUtlägg } from "../actions/utlaggActions";
+import { hämtaUtlägg, taBortUtlägg } from "../actions/utlaggActions";
+import { showToast } from "../../_components/Toast";
 
-export function useUtlagg(anställdId?: number | null) {
-  const [utlägg, setUtlägg] = useState<any[]>([]);
+interface UseUtlaggProps {
+  anställdId?: number | null;
+  enableFlikMode?: boolean;
+}
+
+// Use the shared Utlägg interface from types
+
+export function useUtlagg(props?: UseUtlaggProps | number | null) {
+  // Backwards compatibility: support both old signature and new object
+  const anställdId = typeof props === "object" && props !== null ? props.anställdId : props;
+  const [utlägg, setUtlägg] = useState<Utlägg[]>([]);
   const [utläggLoading, setUtläggLoading] = useState(false);
   const [utläggBokföringModal, setUtläggBokföringModal] = useState<UtläggBokföringModal>({
     isOpen: false,
@@ -16,7 +27,7 @@ export function useUtlagg(anställdId?: number | null) {
   });
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(null);
 
-  const openUtläggBokföringModal = (utlägg: any, previewRows: any[]) => {
+  const openUtläggBokföringModal = (utlägg: Utlägg, previewRows: unknown[]) => {
     setUtläggBokföringModal({
       isOpen: true,
       utlägg,
@@ -48,6 +59,65 @@ export function useUtlagg(anställdId?: number | null) {
     }
   }, []);
 
+  // ===========================================
+  // UI HELPER FUNCTIONS - Flyttade från useUtlaggFlik
+  // ===========================================
+
+  // Helper functions för kolumnrendering
+  const formatDatum = (row: Utlägg) => {
+    return row?.datum ? new Date(row.datum).toLocaleDateString("sv-SE") : "-";
+  };
+
+  const formatBelopp = (row: Utlägg) => {
+    return row && row.belopp !== undefined && row.belopp !== null
+      ? `${row.belopp.toLocaleString("sv-SE")} kr`
+      : "-";
+  };
+
+  const getStatusClass = (status: string) => {
+    if (status === "Inkluderat i lönespec") {
+      return "bg-green-900 text-green-300";
+    } else if (status === "Väntande") {
+      return "bg-yellow-900 text-yellow-300";
+    } else {
+      return "bg-gray-700 text-gray-300";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    return status === "Inkluderat i lönespec" ? "Inkluderat" : status || "Okänd";
+  };
+
+  // ===========================================
+  // INTERACTION FUNCTIONS - Flyttade från useUtlaggFlik
+  // ===========================================
+
+  const router = useRouter();
+
+  const handleNyttUtlägg = async () => {
+    router.push("/bokfor?utlagg=true");
+  };
+
+  const handleTaBortUtlägg = async (utläggId: number) => {
+    if (!confirm("Är du säker på att du vill ta bort detta utlägg?")) {
+      return;
+    }
+
+    try {
+      await taBortUtlägg(utläggId);
+
+      // Uppdatera listan genom att ladda om utlägg för vald anställd
+      if (anställdId) {
+        await laddaUtläggFörAnställd(anställdId);
+      }
+
+      showToast("Utlägg borttaget!", "success");
+    } catch (error) {
+      console.error("Fel vid borttagning av utlägg:", error);
+      showToast("Kunde inte ta bort utlägg", "error");
+    }
+  };
+
   // Ladda utlägg när anställdId ändras
   useEffect(() => {
     if (anställdId) {
@@ -66,19 +136,23 @@ export function useUtlagg(anställdId?: number | null) {
       {
         key: "datum",
         label: "Datum",
-        render: (value: string) => (value ? new Date(value).toLocaleDateString("sv-SE") : ""),
+        render: (value: string, row: Utlägg) => formatDatum(row),
       },
       {
         key: "belopp",
         label: "Belopp",
-        render: (value: number) => `${value} kr`,
+        render: (value: number, row: Utlägg) => formatBelopp(row),
       },
       { key: "beskrivning", label: "Beskrivning" },
-      { key: "status", label: "Status" },
+      {
+        key: "status",
+        label: "Status",
+        render: (value: string) => getStatusText(value),
+      },
       {
         key: "åtgärd",
         label: "Åtgärd",
-        render: (_: any, row: any) => (row.status === "Väntande" ? null : null), // Placeholder för nu
+        render: (_: unknown, row: Utlägg) => (row.status === "Väntande" ? null : null), // Placeholder för nu
       },
     ];
 
@@ -111,6 +185,7 @@ export function useUtlagg(anställdId?: number | null) {
   }, [utläggBokföringModal]);
 
   return {
+    // Core state
     utlägg,
     utläggLoading,
     utläggBokföringModal,
@@ -121,8 +196,22 @@ export function useUtlagg(anställdId?: number | null) {
     openUtläggBokföringModal,
     closeUtläggBokföringModal,
     setUtbetalningsdatum,
+
     // Specialized data functions
     utlaggFlikData,
     utlaggModalData,
+
+    // UI Helper functions (from useUtlaggFlik)
+    formatDatum,
+    formatBelopp,
+    getStatusClass,
+    getStatusText,
+
+    // Interaction functions (from useUtlaggFlik)
+    handleNyttUtlägg,
+    handleTaBortUtlägg,
+
+    // Loading state for compatibility
+    loading: utläggLoading,
   };
 }

@@ -473,7 +473,7 @@ export interface NySpecModalProps {
   onClose: () => void;
   nySpecDatum: Date | null;
   setNySpecDatum: (date: Date | null) => void;
-  anstallda: Array<{ id: string; [key: string]: any }>;
+  anstallda: AnställdData[];
   onSpecCreated: () => void;
 }
 

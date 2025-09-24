@@ -2,7 +2,7 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import { useAnstalldalonespecList } from "../../../hooks/useAnstalldalonespecList";
+import { useAnstallda } from "../../../hooks/useAnstallda";
 import Knapp from "../../../../_components/Knapp";
 import type { LonespecListProps } from "../../../types/types";
 
@@ -15,8 +15,13 @@ export default function LonespecList({
   onLönespecUppdaterad,
   visaExtraRader = false,
 }: LonespecListProps) {
-  const { lönespecar, taBortLaddning, handleTaBortLönespec, handleNavigateToLonekorning } =
-    useAnstalldalonespecList(onLönespecUppdaterad);
+  const { state, handlers } = useAnstallda({
+    enableLonespecMode: true,
+    onLönespecUppdaterad,
+  });
+
+  const { lönespecar, taBortLaddning } = state;
+  const { handleTaBortLönespec, handleNavigateToLonekorning } = handlers;
   //#endregion
 
   //#region Render

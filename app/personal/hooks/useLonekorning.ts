@@ -17,6 +17,9 @@ import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
   taBortLönekörning,
+  hämtaAllaLönekörningar,
+  skapaLönekörning,
+  skapaLönespecifikationerFörLönekörning,
 } from "../actions/lonekorningActions";
 
 interface LonekorningHookProps {
@@ -25,6 +28,23 @@ interface LonekorningHookProps {
   onAnställdaRefresh?: () => void;
   extrarader?: any;
   beräknadeVärden?: any;
+  // Lista mode props
+  enableListMode?: boolean;
+  refreshTrigger?: any;
+  // Spec lista mode props
+  enableSpecListMode?: boolean;
+  specListValdaSpecar?: any[];
+  specListLönekörning?: any;
+  // Spec lista callbacks (these override the internal functions)
+  onSpecListTaBortSpec?: (id: number) => Promise<void>;
+  onSpecListHämtaBankgiro?: () => void;
+  onSpecListMailaSpecar?: () => void;
+  onSpecListBokför?: () => void;
+  onSpecListGenereraAGI?: () => void;
+  onSpecListBokförSkatter?: () => void;
+  // New lönekörning modal props
+  enableNewLonekorningModal?: boolean;
+  onLonekorningCreated?: (lonekorning: any) => void;
 }
 
 export const useLonekorning = ({
@@ -33,6 +53,19 @@ export const useLonekorning = ({
   onAnställdaRefresh,
   extrarader,
   beräknadeVärden,
+  enableListMode = false,
+  refreshTrigger,
+  enableSpecListMode = false,
+  specListValdaSpecar = [],
+  specListLönekörning = null,
+  onSpecListTaBortSpec,
+  onSpecListHämtaBankgiro,
+  onSpecListMailaSpecar,
+  onSpecListBokför,
+  onSpecListGenereraAGI,
+  onSpecListBokförSkatter,
+  enableNewLonekorningModal = false,
+  onLonekorningCreated,
 }: LonekorningHookProps = {}) => {
   const { data: session } = useSession();
 
@@ -41,11 +74,25 @@ export const useLonekorning = ({
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
   const [valdLonekorning, setValdLonekorning] = useState<Lönekörning | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [internalRefreshTrigger, setInternalRefreshTrigger] = useState(0);
   const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
+
+  // Lista mode specific states
+  const [lonekorningar, setLonekorningar] = useState<Lönekörning[]>([]);
+  const [listLoading, setListLoading] = useState(enableListMode);
+
+  // Spec lista mode specific states
+  const [specListTaBortLaddning, setSpecListTaBortLaddning] = useState<Record<number, boolean>>({});
   const [taBortLoading, setTaBortLoading] = useState(false);
   const [loading, setLoading] = useState(!propsAnställda);
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<string | null>(null);
+
+  // New lönekörning modal states (only active when enableNewLonekorningModal is true)
+  const [newLonekorningUtbetalningsdatum, setNewLonekorningUtbetalningsdatum] =
+    useState<Date | null>(new Date());
+  const [newLonekorningLoading, setNewLonekorningLoading] = useState(false);
+  const [newLonekorningValdaAnstallda, setNewLonekorningValdaAnstallda] = useState<number[]>([]);
+  const [newLonekorningSteg, setNewLonekorningSteg] = useState<"datum" | "anställda">("datum");
 
   // Modal states
   const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
@@ -140,7 +187,7 @@ export const useLonekorning = ({
 
       if (result.success) {
         setValdLonekorning(null);
-        setRefreshTrigger((prev) => prev + 1);
+        setInternalRefreshTrigger((prev) => prev + 1);
       } else {
         alert(`Fel vid borttagning: ${result.error}`);
       }
@@ -396,7 +443,184 @@ export const useLonekorning = ({
     }
   }, [valdLonekorning]);
 
+  // Lista mode effect
+  useEffect(() => {
+    if (enableListMode) {
+      loadLonekorningar();
+    }
+  }, [enableListMode, refreshTrigger, internalRefreshTrigger]);
+
+  // New lönekörning modal effect
+  useEffect(() => {
+    if (enableNewLonekorningModal && nyLonekorningModalOpen) {
+      setNewLonekorningSteg("datum");
+      setNewLonekorningValdaAnstallda([]);
+    }
+  }, [enableNewLonekorningModal, nyLonekorningModalOpen]);
+
   const skatteData = beräknaSkatteData();
+
+  // Spec lista mode computed values
+  const specListCurrentStep = specListLönekörning?.aktuellt_steg || 0;
+  const specListAllaHarBankgiro = specListValdaSpecar.every((spec) => spec.bankgiro_exporterad);
+  const specListAllaHarMailats = specListValdaSpecar.every((spec) => spec.mailad);
+  const specListAllaHarBokförts = specListValdaSpecar.every((spec) => spec.bokförd);
+
+  const specListLönekörningKomplett = !!(
+    specListLönekörning?.mailade_datum &&
+    specListLönekörning?.bokford_datum &&
+    specListLönekörning?.agi_genererad_datum &&
+    specListLönekörning?.skatter_bokforda_datum
+  );
+
+  const specListHasIncompleteSpecs = specListValdaSpecar.some(
+    (spec) => !spec.bruttolön || !spec.nettolön
+  );
+
+  // Lista mode functions
+  const loadLonekorningar = async () => {
+    if (!enableListMode) return;
+
+    try {
+      setListLoading(true);
+      const result = await hämtaAllaLönekörningar();
+
+      if (result.success && result.data) {
+        setLonekorningar(result.data);
+      } else {
+        console.error("❌ Fel vid laddning av lönekörningar:", result.error);
+        setLonekorningar([]);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid laddning av lönekörningar:", error);
+      setLonekorningar([]);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const formatPeriodName = (period: string): string => {
+    const [år, månad] = period.split("-");
+    const månadsNamn = [
+      "Januari",
+      "Februari",
+      "Mars",
+      "April",
+      "Maj",
+      "Juni",
+      "Juli",
+      "Augusti",
+      "September",
+      "Oktober",
+      "November",
+      "December",
+    ];
+    return `${månadsNamn[parseInt(månad) - 1]} ${år}`;
+  };
+
+  const getItemClassName = (lonekorning: Lönekörning, valdLonekorningItem?: Lönekörning | null) => {
+    return `
+      p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-cyan-500
+      ${
+        valdLonekorningItem?.id === lonekorning.id
+          ? "border-cyan-500 bg-slate-700"
+          : "border-slate-600 bg-slate-800 hover:bg-slate-700"
+      }
+    `;
+  };
+
+  // Spec lista mode functions
+  const specListHandleTaBortLönespec = async (spec: any) => {
+    if (onSpecListTaBortSpec) {
+      await onSpecListTaBortSpec(spec.id);
+      return;
+    }
+
+    if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
+
+    setSpecListTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));
+    try {
+      await hanteraTaBortSpec(spec.id);
+    } catch (error) {
+      console.error("❌ Fel vid borttagning av lönespec:", error);
+    } finally {
+      setSpecListTaBortLaddning((prev) => ({ ...prev, [spec.id]: false }));
+    }
+  };
+
+  const specListHandleHämtaBankgiro = () => {
+    if (onSpecListHämtaBankgiro) {
+      onSpecListHämtaBankgiro();
+      return;
+    }
+    setBankgiroModalOpen(true);
+  };
+
+  const specListHandleBokför = () => {
+    if (onSpecListBokför) {
+      onSpecListBokför();
+      return;
+    }
+    console.log("🔥 specListHandleBokför anropad!");
+    handleBokför();
+  };
+
+  const specListHandleGenereraAGI = () => {
+    if (onSpecListGenereraAGI) {
+      onSpecListGenereraAGI();
+      return;
+    }
+    handleGenereraAGI();
+  };
+
+  const specListHandleBokförSkatter = () => {
+    if (onSpecListBokförSkatter) {
+      onSpecListBokförSkatter();
+      return;
+    }
+    handleBokförSkatter();
+  };
+
+  // Workflow steps configuration for spec lista mode
+  const specListWorkflowSteps = [
+    {
+      id: "maila",
+      title: "Maila",
+      description: "Skicka lönespecar",
+      completed: !!specListLönekörning?.mailade_datum,
+      buttonText: "✉️ Maila lönespecar",
+      onClick: onSpecListMailaSpecar || handleMailaSpecar,
+      enabled: true,
+    },
+    {
+      id: "bokfor",
+      title: "Bokför",
+      description: "Registrera i bokföring",
+      completed: !!specListLönekörning?.bokford_datum,
+      buttonText: "📖 Bokför",
+      onClick: specListHandleBokför,
+      enabled: !!specListLönekörning?.bokford_datum || !!specListLönekörning?.mailade_datum,
+    },
+    {
+      id: "agi",
+      title: "AGI",
+      description: "Generera deklaration",
+      completed: !!specListLönekörning?.agi_genererad_datum,
+      buttonText: "📊 Generera AGI",
+      onClick: specListHandleGenereraAGI,
+      enabled: !!specListLönekörning?.agi_genererad_datum || !!specListLönekörning?.bokford_datum,
+    },
+    {
+      id: "skatter",
+      title: "Skatter",
+      description: "Bokför skatter",
+      completed: !!specListLönekörning?.skatter_bokforda_datum,
+      buttonText: "💰 Bokför skatter",
+      onClick: specListHandleBokförSkatter,
+      enabled:
+        !!specListLönekörning?.skatter_bokforda_datum || !!specListLönekörning?.agi_genererad_datum,
+    },
+  ];
 
   // AGI Generator function
   const hanteraAGI = async () => {
@@ -413,6 +637,88 @@ export const useLonekorning = ({
     await refreshData();
   };
 
+  // New lönekörning modal functions (only active when enableNewLonekorningModal is true)
+  const handleNewLonekorningCreate = async () => {
+    if (!enableNewLonekorningModal) return;
+
+    if (!newLonekorningUtbetalningsdatum) {
+      alert("Du måste ange ett utbetalningsdatum!");
+      return;
+    }
+
+    if (newLonekorningSteg === "datum") {
+      setNewLonekorningSteg("anställda");
+      return;
+    }
+
+    if (newLonekorningValdaAnstallda.length === 0) {
+      alert("Du måste välja minst en anställd!");
+      return;
+    }
+
+    setNewLonekorningLoading(true);
+    try {
+      // Skapa lönekörning med period baserat på utbetalningsdatum
+      const period = newLonekorningUtbetalningsdatum.toISOString().substring(0, 7); // YYYY-MM
+      const lönekörningResult = await skapaLönekörning(period);
+
+      if (!lönekörningResult.success) {
+        alert(lönekörningResult.error || "Kunde inte skapa lönekörning");
+        return;
+      }
+
+      // Skapa lönespecifikationer för valda anställda
+      const lönespecResult = await skapaLönespecifikationerFörLönekörning(
+        lönekörningResult.data!.id,
+        newLonekorningUtbetalningsdatum,
+        newLonekorningValdaAnstallda
+      );
+
+      if (!lönespecResult.success) {
+        alert(lönespecResult.error || "Kunde inte skapa lönespecifikationer");
+        return;
+      }
+
+      onLonekorningCreated?.(lönekörningResult.data);
+      setNyLonekorningModalOpen(false);
+      setNewLonekorningUtbetalningsdatum(new Date());
+      setNewLonekorningSteg("datum");
+      setNewLonekorningValdaAnstallda([]);
+
+      // Refresh data if we're in list mode
+      if (enableListMode) {
+        setInternalRefreshTrigger((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("❌ Fel vid skapande av lönekörning:", error);
+      alert("Kunde inte skapa lönekörning");
+    } finally {
+      setNewLonekorningLoading(false);
+    }
+  };
+
+  const handleNewLonekorningAnstalldToggle = (anställdId: number) => {
+    if (!enableNewLonekorningModal) return;
+
+    setNewLonekorningValdaAnstallda((prev) =>
+      prev.includes(anställdId) ? prev.filter((id) => id !== anställdId) : [...prev, anställdId]
+    );
+  };
+
+  const handleNewLonekorningBack = () => {
+    if (!enableNewLonekorningModal) return;
+
+    if (newLonekorningSteg === "anställda") {
+      setNewLonekorningSteg("datum");
+    }
+  };
+
+  const handleNewLonekorningClose = () => {
+    if (!enableNewLonekorningModal) return;
+
+    setNyLonekorningModalOpen(false);
+  };
+
   return {
     // State
     nySpecModalOpen,
@@ -423,8 +729,8 @@ export const useLonekorning = ({
     setNySpecDatum,
     valdLonekorning,
     setValdLonekorning,
-    refreshTrigger,
-    setRefreshTrigger,
+    refreshTrigger: internalRefreshTrigger,
+    setRefreshTrigger: setInternalRefreshTrigger,
     lönekörningSpecar,
     setLönekörningSpecar,
     taBortLoading,
@@ -459,11 +765,28 @@ export const useLonekorning = ({
     setSkatteBokförPågår,
     skatteToast,
     setSkatteToast,
+    // Lista mode states
+    lonekorningar,
+    setLonekorningar,
+    listLoading,
+    setListLoading,
+    // Spec lista mode states
+    specListTaBortLaddning,
+    setSpecListTaBortLaddning,
+    // Spec lista computed values
+    specListCurrentStep,
+    specListAllaHarBankgiro,
+    specListAllaHarMailats,
+    specListAllaHarBokförts,
+    specListLönekörningKomplett,
+    specListHasIncompleteSpecs,
+    specListWorkflowSteps,
     // Computed
     anstallda,
     anställdaLoading,
     skatteData,
     session,
+    hasLonekorningar: lonekorningar.length > 0,
     // Functions
     beräknaSkatteData,
     hanteraBokförSkatter,
@@ -477,5 +800,32 @@ export const useLonekorning = ({
     handleBokförSkatter,
     handleRefreshData,
     hanteraAGI,
+    // Lista mode functions
+    loadLonekorningar,
+    formatPeriodName,
+    getItemClassName,
+    // Spec lista mode functions
+    specListHandleTaBortLönespec,
+    specListHandleHämtaBankgiro,
+    specListHandleBokför,
+    specListHandleGenereraAGI,
+    specListHandleBokförSkatter,
+    // New lönekörning modal state (only when enableNewLonekorningModal is true)
+    newLonekorningUtbetalningsdatum,
+    setNewLonekorningUtbetalningsdatum,
+    newLonekorningLoading,
+    newLonekorningValdaAnstallda,
+    newLonekorningSteg,
+    // New lönekörning modal computed
+    newLonekorningCanProceed: enableNewLonekorningModal
+      ? newLonekorningSteg === "datum"
+        ? !!newLonekorningUtbetalningsdatum
+        : newLonekorningValdaAnstallda.length > 0
+      : false,
+    // New lönekörning modal functions
+    handleNewLonekorningCreate,
+    handleNewLonekorningAnstalldToggle,
+    handleNewLonekorningBack,
+    handleNewLonekorningClose,
   };
 };

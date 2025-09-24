@@ -4,8 +4,22 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Dropdown from "../../../../../_components/Dropdown";
 import Modal from "../../../../../_components/Modal";
-import { useExtraraderModal } from "../../../../hooks/useExtraraderModal";
+import { useLonespec } from "../../../../hooks/useLonespecar";
 import type { ExtraraderModalProps } from "../../../../types/types";
+
+interface FormField {
+  name: string;
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  hidden?: boolean;
+  type?: string;
+  label?: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+  step?: string;
+  min?: string;
+}
 
 export default function ExtraraderModal({
   open,
@@ -25,11 +39,12 @@ export default function ExtraraderModal({
     createSyntheticEvent,
     getFilteredFields,
     isBetaldSemester,
-  } = useExtraraderModal({
-    open,
-    title,
-    anstalldId,
-    fields,
+  } = useLonespec({
+    enableExtraraderModal: true,
+    extraraderModalOpen: open,
+    extraraderModalTitle: title,
+    extraraderFields: fields,
+    anställdId: anstalldId,
   });
 
   if (!open) return null;
@@ -59,7 +74,7 @@ export default function ExtraraderModal({
               <label className="block text-sm font-medium text-slate-200 mb-1">Från datum *</label>
               <DatePicker
                 selected={startDate}
-                onChange={handleStartDateChange}
+                onChange={(date) => handleStartDateChange?.(date)}
                 selectsStart
                 startDate={startDate}
                 endDate={endDate}
@@ -74,7 +89,7 @@ export default function ExtraraderModal({
               <label className="block text-sm font-medium text-slate-200 mb-1">Till datum *</label>
               <DatePicker
                 selected={endDate}
-                onChange={handleEndDateChange}
+                onChange={(date) => handleEndDateChange?.(date)}
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
@@ -99,20 +114,22 @@ export default function ExtraraderModal({
             </div>
 
             {/* Visa övriga fält förutom "antal"-fältet */}
-            {getFilteredFields(false).map((field) => (
+            {getFilteredFields?.(false)?.map((field: FormField) => (
               <div key={field.name}>
                 {field.type === "select" ? (
                   <Dropdown
                     label={field.label + (field.required ? " *" : "")}
                     value={field.value}
                     options={
-                      field.options?.map((opt) => ({
+                      field.options?.map((opt: string) => ({
                         label: opt,
                         value: opt,
                       })) || []
                     }
                     onChange={(value) => {
-                      field.onChange(createSyntheticEvent(value));
+                      if (field.onChange && createSyntheticEvent) {
+                        field.onChange(createSyntheticEvent(value));
+                      }
                     }}
                   />
                 ) : (
@@ -145,20 +162,22 @@ export default function ExtraraderModal({
           </>
         ) : (
           // Vanlig hantering för alla andra extrarader
-          getFilteredFields().map((field) => (
+          getFilteredFields?.()?.map((field: FormField) => (
             <div key={field.name}>
               {field.type === "select" ? (
                 <Dropdown
                   label={field.label + (field.required ? " *" : "")}
                   value={field.value}
                   options={
-                    field.options?.map((opt) => ({
+                    field.options?.map((opt: string) => ({
                       label: opt,
                       value: opt,
                     })) || []
                   }
                   onChange={(value) => {
-                    field.onChange(createSyntheticEvent(value));
+                    if (field.onChange && createSyntheticEvent) {
+                      field.onChange(createSyntheticEvent(value));
+                    }
                   }}
                 />
               ) : (

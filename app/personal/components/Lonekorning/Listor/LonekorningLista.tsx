@@ -1,17 +1,17 @@
 "use client";
 
-import { Lönekörning, LonekorningListaProps } from "../../../types/types";
-import { useLonekorningLista } from "../../../hooks/useLonekorningLista";
+import { LonekorningListaProps } from "../../../types/types";
+import { useLonekorning } from "../../../hooks/useLonekorning";
 
 export default function LonekorningLista({
   onValjLonekorning,
   valdLonekorning,
   refreshTrigger,
 }: LonekorningListaProps) {
-  const { lonekorningar, loading, hasLonekorningar, formatPeriodName, getItemClassName } =
-    useLonekorningLista({ refreshTrigger });
+  const { lonekorningar, listLoading, hasLonekorningar, formatPeriodName, getItemClassName } =
+    useLonekorning({ enableListMode: true, refreshTrigger });
 
-  if (loading) {
+  if (listLoading) {
     return <div className="text-white">Laddar lönekörningar...</div>;
   }
 

@@ -1,19 +1,25 @@
 //#region Imports
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Knapp from "../../../_components/Knapp";
 import { useLonespec } from "../../hooks/useLonespecar";
 import { useLonekorning } from "../../hooks/useLonekorning";
+import { useAnstallda } from "../../hooks/useAnstallda";
+import type { AnställdData, ExtraradData } from "../../types/types";
+import { hämtaFöretagsprofil } from "../../actions/anstalldaActions";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
 import NyLonekorningModal from "./SkapaNy/NyLonekorningModal";
 import LonekorningLista from "./Listor/LonekorningLista";
 import LonespecLista from "./Listor/LonespecLista";
+import MailaLonespec from "./Wizard/MailaLonespec";
 
 //#endregion
 
 //#region Types
 interface LonekorningProps {
-  anställda?: any[];
+  anställda?: AnställdData[];
   anställdaLoading?: boolean;
   onAnställdaRefresh?: () => void;
 }
@@ -27,14 +33,30 @@ export default function Lonekorning({
 }: LonekorningProps = {}) {
   const { extrarader, beräknadeVärden } = useLonespec();
 
+  const { data: session } = useSession();
+  const [företagsprofil, setFöretagsprofil] = useState<any>(null);
+
+  // Get all employees to ensure we have complete data
+  const { state: anstalldaState } = useAnstallda();
+
+  useEffect(() => {
+    const loadFöretagsprofil = async () => {
+      try {
+        const profile = await hämtaFöretagsprofil(session?.user?.id || "");
+        setFöretagsprofil(profile);
+      } catch (error) {
+        console.error("Kunde inte ladda företagsprofil:", error);
+      }
+    };
+    if (session?.user?.id) {
+      loadFöretagsprofil();
+    }
+  }, [session?.user?.id]);
+
   const {
     // State
-    nySpecModalOpen,
-    setNySpecModalOpen,
     nyLonekorningModalOpen,
     setNyLonekorningModalOpen,
-    nySpecDatum,
-    setNySpecDatum,
     valdLonekorning,
     setValdLonekorning,
     refreshTrigger,
@@ -42,37 +64,18 @@ export default function Lonekorning({
     lönekörningSpecar,
     taBortLoading,
     loading,
-    utbetalningsdatum,
     batchMailModalOpen,
     setBatchMailModalOpen,
-    bokforModalOpen,
     setBokforModalOpen,
-    valdaSpecar,
-    bankgiroModalOpen,
     setBankgiroModalOpen,
-    skatteModalOpen,
     setSkatteModalOpen,
-    skatteDatum,
-    setSkatteDatum,
-    skatteBokförPågår,
-    skatteToast,
-    setSkatteToast,
     // Computed
     anstallda,
-    anställdaLoading,
-    skatteData,
     utlaggMap,
     // Functions
     hanteraTaBortSpec,
-    loadLönekörningSpecar,
     handleTaBortLönekörning,
     refreshData,
-    handleMailaSpecar,
-    handleBokför,
-    handleGenereraAGI,
-    handleBokförSkatter,
-    handleRefreshData,
-    hanteraBokförSkatter,
     hanteraAGI,
   } = useLonekorning({
     anställda: propsAnställda,
@@ -81,6 +84,39 @@ export default function Lonekorning({
     extrarader,
     beräknadeVärden,
   });
+
+  const allAnstallda = anstalldaState.anställda || anstallda;
+
+  // Prepare batch data for mailing
+  interface BatchDataItem {
+    lönespec: any;
+    anställd: AnställdData | any; // Using any for now due to mixed types in codebase
+    företagsprofil: any;
+    extrarader: ExtraradData[];
+    beräknadeVärden: any;
+  }
+
+  const batchData: BatchDataItem[] = lönekörningSpecar
+    .map((spec) => {
+      const anställd = allAnstallda.find((a) => a.id === spec.anställd_id);
+      if (!anställd) {
+        console.warn(
+          `Anställd med id ${spec.anställd_id} hittades inte för lönespec ${spec.id}. Tillgängliga anställda:`,
+          allAnstallda.map((a) => a.id)
+        );
+        return null; // Skip specs without valid employee
+      }
+      return {
+        lönespec: spec,
+        anställd,
+        företagsprofil,
+        extrarader: extrarader[spec.id] || [],
+        beräknadeVärden: beräknadeVärden[spec.id] || {},
+      };
+    })
+    .filter((item): item is BatchDataItem => item !== null); // Remove null entries with type guard
+
+  console.log("Batch data prepared:", batchData.length, "items");
 
   if (loading) {
     return <LoadingSpinner />;
@@ -91,10 +127,10 @@ export default function Lonekorning({
       {/* Header med knappar */}
       <div className="flex justify-end items-center">
         <div className="flex gap-3">
-          {!valdLonekorning && ( // Visa bara när ingen lönekörning är vald
+          {!valdLonekorning && (
             <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
           )}
-          {valdLonekorning && ( // Visa bara när en lönekörning är vald
+          {valdLonekorning && (
             <Knapp
               text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort lönekörning"}
               onClick={handleTaBortLönekörning}
@@ -113,7 +149,6 @@ export default function Lonekorning({
         />
       ) : (
         <div className="space-y-6">
-          {/* Tillbaka till lista */}
           <button
             onClick={() => setValdLonekorning(null)}
             className="text-blue-600 hover:text-blue-800"
@@ -121,13 +156,11 @@ export default function Lonekorning({
             ← Tillbaka till lönekörningar
           </button>
 
-          {/* Lönekörning header */}
           <h2 className="text-xl font-semibold">Lönekörning: {valdLonekorning.period}</h2>
 
-          {/* Lönespecar lista */}
           <LonespecLista
             valdaSpecar={lönekörningSpecar}
-            anstallda={anstallda}
+            anstallda={allAnstallda}
             utlaggMap={utlaggMap}
             lönekörning={valdLonekorning}
             onTaBortSpec={hanteraTaBortSpec}
@@ -136,63 +169,34 @@ export default function Lonekorning({
             onBokför={() => setBokforModalOpen(true)}
             onGenereraAGI={hanteraAGI}
             onBokförSkatter={() => setSkatteModalOpen(true)}
-            onRefreshData={refreshData}
-            period={valdLonekorning?.period}
           />
-
-          {/* Workflow knappar */}
-          <div className="flex gap-3 justify-center mt-6">
-            <Knapp
-              text="📧 Maila alla"
-              onClick={() => setBatchMailModalOpen(true)}
-              disabled={lönekörningSpecar.length === 0}
-            />
-            <Knapp
-              text="📊 Bokför löner"
-              onClick={() => setBokforModalOpen(true)}
-              disabled={lönekörningSpecar.length === 0}
-            />
-            <Knapp
-              text="🏦 Bankgiro export"
-              onClick={() => setBankgiroModalOpen(true)}
-              disabled={lönekörningSpecar.length === 0}
-            />
-            <Knapp
-              text="📋 AGI-export"
-              onClick={hanteraAGI}
-              disabled={lönekörningSpecar.length === 0}
-            />
-            <Knapp
-              text="💰 Bokför skatter"
-              onClick={() => setSkatteModalOpen(true)}
-              disabled={lönekörningSpecar.length === 0}
-            />
-          </div>
         </div>
       )}
 
       {/* Modaler */}
-      {/* TODO: Fix modal props to match component interfaces */}
-      {nySpecModalOpen && <div>TODO: NySpecModal</div>}
-
       {nyLonekorningModalOpen && (
         <NyLonekorningModal
           isOpen={nyLonekorningModalOpen}
           onClose={() => setNyLonekorningModalOpen(false)}
           onLonekorningCreated={(lonekorning) => {
             setValdLonekorning(lonekorning);
-            setRefreshTrigger((prev) => prev + 1);
+            setRefreshTrigger((prev: number) => prev + 1);
           }}
         />
       )}
 
-      {batchMailModalOpen && <div>TODO: MailaLonespec</div>}
-
-      {bokforModalOpen && <div>TODO: BokforLoner</div>}
-
-      {bankgiroModalOpen && <div>TODO: BankgiroExport</div>}
-
-      {skatteModalOpen && <div>TODO: SkatteBokforingModal</div>}
+      {batchMailModalOpen && batchData.length > 0 && (
+        <MailaLonespec
+          batchMode={true}
+          batch={batchData}
+          open={batchMailModalOpen}
+          onClose={() => setBatchMailModalOpen(false)}
+          onMailComplete={() => {
+            setBatchMailModalOpen(false);
+            refreshData();
+          }}
+        />
+      )}
     </div>
   );
 }

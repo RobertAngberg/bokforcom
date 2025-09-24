@@ -4,7 +4,7 @@ import React from "react";
 import LönespecView from "../../Anstallda/Lonespecar/LonespecView";
 import Knapp from "../../../../_components/Knapp";
 import { LonespecListaProps } from "../../../types/types";
-import { useLonekorningSpecLista } from "../../../hooks/useLonekorningSpecLista";
+import { useLonekorning } from "../../../hooks/useLonekorning";
 
 export default function LonespecLista({
   valdaSpecar,
@@ -17,24 +17,23 @@ export default function LonespecLista({
   onBokför,
   onGenereraAGI,
   onBokförSkatter,
-  onRefreshData,
-  period,
 }: LonespecListaProps) {
   const {
-    taBortLaddning,
-    hasIncompleteSpecs,
-    workflowSteps,
-    lönekörningKomplett,
-    handleTaBortLönespec,
-  } = useLonekorningSpecLista({
-    valdaSpecar,
-    lönekörning,
-    onTaBortSpec,
-    onHämtaBankgiro,
-    onMailaSpecar,
-    onBokför,
-    onGenereraAGI,
-    onBokförSkatter,
+    specListTaBortLaddning: taBortLaddning,
+    specListHasIncompleteSpecs: hasIncompleteSpecs,
+    specListWorkflowSteps: workflowSteps,
+    specListLönekörningKomplett: lönekörningKomplett,
+    specListHandleTaBortLönespec: handleTaBortLönespec,
+  } = useLonekorning({
+    enableSpecListMode: true,
+    specListValdaSpecar: valdaSpecar,
+    specListLönekörning: lönekörning,
+    onSpecListTaBortSpec: onTaBortSpec,
+    onSpecListHämtaBankgiro: onHämtaBankgiro,
+    onSpecListMailaSpecar: onMailaSpecar,
+    onSpecListBokför: onBokför,
+    onSpecListGenereraAGI: onGenereraAGI,
+    onSpecListBokförSkatter: onBokförSkatter,
   });
 
   if (valdaSpecar.length === 0) return null;

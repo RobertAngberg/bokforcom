@@ -17,7 +17,7 @@ import { useUtlagg } from "./hooks/useUtlagg";
 export default function PersonalPage() {
   const { state, actions, handlers } = useAnstallda();
   const { valdAnställd } = state;
-  const { utlaggFlikData, laddaUtläggFörAnställd } = useUtlagg(valdAnställd?.id);
+  const { laddaUtläggFörAnställd } = useUtlagg(valdAnställd?.id);
 
   return (
     <MainLayout>
@@ -63,7 +63,7 @@ export default function PersonalPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {state.anställda.map((anställd: any) => (
+                        {state.anställda.map((anställd) => (
                           <AnställdaRad key={anställd.id} anställd={anställd} handlers={handlers} />
                         ))}
                       </tbody>
@@ -88,17 +88,19 @@ export default function PersonalPage() {
                 <Information state={state} handlers={handlers} />
               </AnimeradFlik>
               <AnimeradFlik title="Utlägg" icon="💳">
-                <UtlaggFlik
-                  state={state}
-                  handlers={{ ...handlers, laddaUtläggFörAnställd }}
-                  utlaggFlikData={utlaggFlikData}
-                />
+                <UtlaggFlik state={state} handlers={{ ...handlers, laddaUtläggFörAnställd }} />
               </AnimeradFlik>
               <AnimeradFlik title="Kontrakt" icon="📄">
                 <Kontrakt anställd={valdAnställd} />
               </AnimeradFlik>
               <AnimeradFlik title="Lönespecar" icon="💰">
-                <Lonespecar anställd={valdAnställd} />
+                <Lonespecar
+                  anställd={{
+                    id: valdAnställd.id || 0,
+                    namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
+                    epost: valdAnställd.mail,
+                  }}
+                />
               </AnimeradFlik>
               <AnimeradFlik title="Semester" icon="🏖️">
                 <Semester
@@ -120,7 +122,6 @@ export default function PersonalPage() {
           <div className="bg-slate-700 p-6 rounded-lg">
             <AnimeradFlik title="Lönekörning" icon="💰">
               <Lonekorning
-                anställda={state.anställda}
                 anställdaLoading={state.anställdaLoading}
                 onAnställdaRefresh={actions.laddaAnställda}
               />

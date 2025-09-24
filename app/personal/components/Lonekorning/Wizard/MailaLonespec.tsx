@@ -19,7 +19,7 @@ export default function MailaLonespec({
     loading,
     sent,
     error,
-    visaModal,
+    showModal,
     lönespecList,
     handleBatchMaila,
     handleMaila,
@@ -35,13 +35,9 @@ export default function MailaLonespec({
     batchMode,
     onMailComplete,
     onClose,
+    ForhandsgranskningComponent: Forhandsgranskning,
+    open,
   });
-
-  const showModal = open !== undefined ? open : visaModal;
-
-  // Wrapper functions to pass Forhandsgranskning component
-  const handleBatchMailaWithComponent = () => handleBatchMaila(Forhandsgranskning);
-  const handleMailaWithComponent = () => handleMaila(Forhandsgranskning);
 
   return (
     <>
@@ -90,7 +86,7 @@ export default function MailaLonespec({
               {batchMode ? (
                 <Knapp
                   text="✉️ Maila lönespecar"
-                  onClick={handleBatchMailaWithComponent}
+                  onClick={handleBatchMaila}
                   disabled={loading || sent}
                   loading={loading}
                   loadingText="Skickar..."
@@ -98,7 +94,7 @@ export default function MailaLonespec({
               ) : (
                 <Knapp
                   text="✉️ Skicka lönespec"
-                  onClick={handleMailaWithComponent}
+                  onClick={handleMaila}
                   disabled={loading || sent}
                   loading={loading}
                   loadingText="Skickar..."

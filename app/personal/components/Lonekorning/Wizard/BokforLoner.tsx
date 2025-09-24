@@ -1,6 +1,6 @@
 "use client";
 
-import { useBokföringslogik } from "../../../hooks/useBokföringslogik";
+import { useBokforing } from "../../../hooks/useBokforing";
 import type { BokforLonerProps } from "../../../types/types";
 
 export default function BokforLoner({
@@ -13,7 +13,7 @@ export default function BokforLoner({
   onBokfört,
 }: BokforLonerProps) {
   const { loading, error, poster, totalDebet, totalKredit, ärBalanserad, handleBokför } =
-    useBokföringslogik({
+    useBokforing({
       lönespec,
       extrarader,
       beräknadeVärden,

@@ -20,6 +20,12 @@ interface UseMailaLonespecProps {
   // Callbacks
   onMailComplete?: () => void;
   onClose?: () => void;
+
+  // Component for PDF generation
+  ForhandsgranskningComponent?: any;
+
+  // Modal control
+  open?: boolean;
 }
 
 export function useMailaLonespec({
@@ -32,6 +38,8 @@ export function useMailaLonespec({
   batchMode = false,
   onMailComplete,
   onClose,
+  ForhandsgranskningComponent,
+  open,
 }: UseMailaLonespecProps) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -185,19 +193,30 @@ export function useMailaLonespec({
     setSent(false);
   };
 
+  // Ready-to-use handlers with component bound
+  const handleBatchMailaWithComponent = ForhandsgranskningComponent
+    ? () => handleBatchMaila(ForhandsgranskningComponent)
+    : () => {};
+
+  const handleMailaWithComponent = ForhandsgranskningComponent
+    ? () => handleMaila(ForhandsgranskningComponent)
+    : () => {};
+
+  const showModal = open !== undefined ? open : visaModal;
+
   return {
     // State
     loading,
     sent,
     error,
-    visaModal,
+    showModal,
 
     // Computed values
     lönespecList,
 
     // Actions
-    handleBatchMaila,
-    handleMaila,
+    handleBatchMaila: handleBatchMailaWithComponent,
+    handleMaila: handleMailaWithComponent,
     closeModal,
     openModal,
 

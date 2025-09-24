@@ -3,7 +3,8 @@
 import React from "react";
 import LonespecList from "./LonespecList";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
-import { useLonespecarComponent } from "../../../hooks/useLonespecarComponent";
+import { useLonespec } from "../../../hooks/useLonespecar";
+import type { AnställdListItem, Lönespec } from "../../../types/types";
 
 export default function Lonespecar({
   anställd,
@@ -13,15 +14,16 @@ export default function Lonespecar({
   taBortLoading,
   visaExtraRader = false,
 }: {
-  anställd: any;
-  specificLönespec?: any;
+  anställd: AnställdListItem;
+  specificLönespec?: Lönespec;
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
   visaExtraRader?: boolean;
 }) {
-  const { utlägg, loading } = useLonespecarComponent({
-    anställd,
+  const { utlägg, loading } = useLonespec({
+    enableComponentMode: true,
+    anställdId: anställd?.id,
     specificLönespec,
   });
 
@@ -32,7 +34,7 @@ export default function Lonespecar({
   return (
     <LonespecList
       anställd={anställd}
-      utlägg={utlägg}
+      utlägg={utlägg || []}
       ingenAnimering={ingenAnimering}
       onTaBortLönespec={onTaBortLönespec}
       taBortLoading={taBortLoading}
