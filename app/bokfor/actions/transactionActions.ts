@@ -24,8 +24,6 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
 }
 
 export async function taBortTransaktion(id: number) {
-  const userId = await getUserId();
-
   const client = await pool.connect();
   try {
     // Säkerhetskontroll: Kontrollera att transaktionen tillhör användaren
@@ -88,7 +86,6 @@ export async function saveTransaction(formData: FormData) {
   }>;
 
   const utlaggMode = formData.get("utlaggMode") === "true";
-  const levfaktMode = formData.get("levfaktMode") === "true";
 
   // Formatera transaktionsdatum för PostgreSQL
   let formattedDate = "";
@@ -142,7 +139,6 @@ export async function saveTransaction(formData: FormData) {
       [formattedDate, valtFörval.namn ?? "", belopp, filename, kommentar, userId, blobUrl]
     );
     const transaktionsId = rows[0].id;
-    const sparadBlobUrl = rows[0].blob_url;
 
     // Spara alla transaktionsposter som beräknats på frontend
     const insertPost = `
@@ -170,7 +166,7 @@ export async function saveTransaction(formData: FormData) {
     }
     // Skapa utlägg-rad om utläggs-mode och anstalldId finns
     if (utlaggMode && anstalldId) {
-      const res = await client.query(
+      await client.query(
         `INSERT INTO utlägg (user_id, transaktion_id, anställd_id) VALUES ($1, $2, $3) RETURNING *`,
         [userId, transaktionsId, anstalldId]
       );
@@ -194,7 +190,6 @@ export async function saveTransaction(formData: FormData) {
       const fakturanummer = formData.get("fakturanummer")?.toString() || null;
       const fakturadatum = formData.get("fakturadatum")?.toString() || null;
       const förfallodatum = formData.get("förfallodatum")?.toString() || null;
-      const betaldatum = formData.get("betaldatum")?.toString() || null;
 
       // Formatera datum korrekt för PostgreSQL
       const formatDate = (dateStr: string | null) => {
@@ -205,9 +200,8 @@ export async function saveTransaction(formData: FormData) {
 
       const formattedFakturadatum = formatDate(fakturadatum);
       const formattedFörfallodatum = formatDate(förfallodatum);
-      const formattedBetaldatum = formatDate(betaldatum);
 
-      const res = await client.query(
+      await client.query(
         `INSERT INTO leverantörsfakturor (
           "user_id", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
           fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
@@ -272,7 +266,9 @@ export async function bokförUtlägg(utläggId: number) {
     const kontoRes = await client.query(
       `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('2890','1930')`
     );
-    const kontoMap = Object.fromEntries(kontoRes.rows.map((r: any) => [r.kontonummer, r.id]));
+    const kontoMap = Object.fromEntries(
+      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
+    );
     if (!kontoMap["2890"] || !kontoMap["1930"]) throw new Error("Konto 2890 eller 1930 saknas");
 
     // Skapa transaktionsposter

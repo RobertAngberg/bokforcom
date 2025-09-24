@@ -1,7 +1,6 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
-import { hamtaTransaktionsposter } from "../../_utils/transaktioner";
 
 // Bokföringsmetod data
 export async function hämtaBokföringsmetod() {
@@ -26,7 +25,7 @@ export async function hämtaBokföringsmetod() {
 }
 
 // Favoritförval data
-export async function hämtaFavoritförval(): Promise<any[]> {
+export async function hämtaFavoritförval(): Promise<unknown[]> {
   const userId = await getUserId();
 
   try {
@@ -52,7 +51,7 @@ export async function hämtaFavoritförval(): Promise<any[]> {
 // Alla förval data
 export async function hämtaAllaFörval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   let query = "SELECT * FROM förval";
-  const values: any[] = [];
+  const values: (string | number)[] = [];
   const conditions: string[] = [];
 
   if (filters?.sök) {
