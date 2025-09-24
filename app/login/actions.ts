@@ -162,8 +162,11 @@ async function sendPasswordResetEmail(
   }
 }
 
-// Server action för att begära lösenordsåterställning
-export async function requestPasswordReset(formData: FormData) {
+// Server action för att begära lösenordsåterställning (React 19 useActionState format)
+export async function requestPasswordReset(
+  prevState: { success: boolean; error?: string; message?: string } | null,
+  formData: FormData
+) {
   try {
     const email = formData.get("email") as string;
 

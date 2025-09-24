@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { requestPasswordReset } from "../actions";
 
 interface ForgotPasswordProps {
@@ -8,42 +8,15 @@ interface ForgotPasswordProps {
 }
 
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  // React 19 useActionState - all form state in one hook!
+  const [state, formAction, isPending] = useActionState(requestPasswordReset, null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setMessage("");
-
-    try {
-      const formData = new FormData();
-      formData.append("email", email);
-
-      const result = await requestPasswordReset(formData);
-
-      if (result.success) {
-        setSuccess(true);
-        setMessage(result.message || "");
-      } else {
-        setError(result.error || "Något gick fel");
-      }
-    } catch (error) {
-      setError("Något gick fel. Försök igen.");
-    }
-    setLoading(false);
-  };
-
-  if (success) {
+  if (state?.success) {
     return (
       <div className="text-center space-y-4">
         <div className="p-4 bg-green-900/50 border border-green-500 rounded-lg">
           <h3 className="text-green-300 font-semibold mb-2">✅ Mail skickat!</h3>
-          <p className="text-green-200 text-sm">{message}</p>
+          <p className="text-green-200 text-sm">{state?.message}</p>
         </div>
         <button
           onClick={onBackToLogin}
@@ -57,30 +30,29 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <div>
           <p className="text-slate-300 text-sm mb-4">
             Ange din e-postadress så skickar vi dig en länk för att återställa ditt lösenord.
           </p>
           <input
+            name="email"
             type="email"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             placeholder="Din e-postadress"
             autoComplete="email"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
+        {state?.error && <div className="text-center text-sm text-red-400 mt-2">{state.error}</div>}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isPending}
           className="w-full px-6 py-3 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors disabled:opacity-50"
         >
-          {loading ? "Skickar..." : "Skicka återställningslänk"}
+          {isPending ? "Skickar..." : "Skicka återställningslänk"}
         </button>
       </form>
 
