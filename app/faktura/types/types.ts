@@ -147,12 +147,6 @@ export type NavigationState = {
 // UI state types
 export type ToastType = "success" | "error" | "info";
 
-export type ToastState = {
-  message: string;
-  type: ToastType;
-  isVisible: boolean;
-};
-
 // Form types
 export type AvsandareForm = {
   företagsnamn: string;
@@ -633,7 +627,6 @@ export interface FakturaState {
     artikelSparadSomFavorit: boolean;
     valtArtikel: FavoritArtikel | null;
   };
-  toastState: ToastState;
   userSettings: {
     bokföringsmetod: "kontantmetoden" | "fakturametoden";
   };
@@ -676,8 +669,6 @@ export interface FakturaContextType {
   resetNyArtikel: () => void;
   setProdukterTjansterState: (state: Partial<FakturaState["produkterTjansterState"]>) => void;
   resetProdukterTjanster: () => void;
-  setToast: (toast: { message: string; type: "success" | "error" | "info" }) => void;
-  clearToast: () => void;
   setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
   initStore: (data: ServerData) => void;
 }

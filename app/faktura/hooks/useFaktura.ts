@@ -27,6 +27,7 @@ import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
 // Utils
 import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";
+import { showToast } from "../../_components/Toast";
 
 // Types
 import type { FakturaFormData, NyArtikel, KundStatus, KundSaveResponse } from "../types/types";
@@ -39,7 +40,7 @@ export function useFaktura() {
   // Context state
   const context = useFakturaContext();
   const {
-    state: { formData, kundStatus, nyArtikel, produkterTjansterState, toastState, userSettings },
+    state: { formData, kundStatus, nyArtikel, produkterTjansterState, userSettings },
     setFormData,
     resetFormData,
     setKundStatus,
@@ -48,8 +49,6 @@ export function useFaktura() {
     resetNyArtikel,
     setProdukterTjansterState,
     resetProdukterTjanster,
-    setToast,
-    clearToast,
     setBokföringsmetod,
     initStore,
   } = context;
@@ -62,8 +61,6 @@ export function useFaktura() {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoadingFaktura, setIsLoadingFaktura] = useState(false);
   const [kunder, setKunder] = useState<any[]>([]);
-  const [kundSuccessVisible, setKundSuccessVisible] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null); // =============================================================================
@@ -168,26 +165,17 @@ export function useFaktura() {
   );
 
   // Toast helpers
-  const showSuccess = useCallback(
-    (message: string) => {
-      setToast({ message, type: "success" });
-    },
-    [setToast]
-  );
+  const showSuccess = useCallback((message: string) => {
+    showToast(message, "success");
+  }, []);
 
-  const showError = useCallback(
-    (message: string) => {
-      setToast({ message, type: "error" });
-    },
-    [setToast]
-  );
+  const showError = useCallback((message: string) => {
+    showToast(message, "error");
+  }, []);
 
-  const showInfo = useCallback(
-    (message: string) => {
-      setToast({ message, type: "info" });
-    },
-    [setToast]
-  );
+  const showInfo = useCallback((message: string) => {
+    showToast(message, "info");
+  }, []);
 
   // =============================================================================
   // UI HELPER FUNCTIONS
@@ -692,10 +680,7 @@ export function useFaktura() {
           updateFormField("kundId", res.id.toString());
         }
         setKundStatus("loaded");
-        setKundSuccessVisible(true);
-        setFadeOut(false);
-        setTimeout(() => setFadeOut(true), 1500);
-        setTimeout(() => setKundSuccessVisible(false), 3000);
+        showToast("Kund sparad! ✅", "success");
 
         // Ladda om kunder
         const sparade = await hämtaSparadeKunder();
@@ -770,12 +755,9 @@ export function useFaktura() {
     kundStatus,
     nyArtikel,
     produkterTjansterState,
-    toastState,
     userSettings,
     showPreview,
     kunder,
-    kundSuccessVisible,
-    fadeOut,
 
     // Context actions
     setFormData,
@@ -786,8 +768,6 @@ export function useFaktura() {
     resetNyArtikel,
     setProdukterTjansterState,
     resetProdukterTjanster,
-    setToast,
-    clearToast,
     setBokföringsmetod,
     initStore,
 

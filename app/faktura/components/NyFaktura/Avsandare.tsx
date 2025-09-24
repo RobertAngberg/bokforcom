@@ -7,15 +7,8 @@ import { useFaktura } from "../../hooks/useFaktura";
 import Knapp from "../../../_components/Knapp";
 
 export default function Avsandare() {
-  const {
-    formData,
-    toastState,
-    fileInputRef,
-    hanteraTangentNer,
-    hanteraLoggaUpload,
-    sparaForetagsprofil,
-    clearToast,
-  } = useFaktura();
+  const { formData, fileInputRef, hanteraTangentNer, hanteraLoggaUpload, sparaForetagsprofil } =
+    useFaktura();
 
   return (
     <>

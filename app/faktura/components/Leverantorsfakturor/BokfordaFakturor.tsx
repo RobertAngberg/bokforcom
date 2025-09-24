@@ -4,7 +4,6 @@ import React from "react";
 import { formatSEK } from "../../../_utils/format";
 import VerifikatModal from "../../../_components/VerifikatModal";
 import Knapp from "../../../_components/Knapp";
-import Toast from "../../../_components/Toast";
 import Modal from "../../../_components/Modal";
 import Tabell from "../../../_components/Tabell";
 import { useBokfordaFakturor } from "../../hooks/useLeverantorer";
@@ -15,7 +14,6 @@ export default function BokfordaFakturor() {
     fakturor,
     loading,
     verifikatModal,
-    toast,
     bekraftelseModal,
 
     // Computed data
@@ -29,7 +27,6 @@ export default function BokfordaFakturor() {
     stängBekraftelseModal,
     taBortFaktura,
     utförBokföring,
-    closeToast,
   } = useBokfordaFakturor();
 
   if (loading) {
@@ -52,8 +49,6 @@ export default function BokfordaFakturor() {
 
   return (
     <div className="bg-gray-900 rounded-lg p-6">
-      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
-
       <h2 className="text-xl font-semibold text-white mb-4">
         Leverantörsfakturor ({fakturor.length})
       </h2>
@@ -181,9 +176,6 @@ export default function BokfordaFakturor() {
           </div>
         )}
       </Modal>
-
-      {/* Toast meddelanden */}
-      {toast.isVisible && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
     </div>
   );
 }

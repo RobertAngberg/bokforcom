@@ -8,6 +8,7 @@ import FavoritArtiklarList from "./FavoritArtiklarList";
 import RotRutForm from "./RotRutForm";
 import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
+import { showToast } from "../../../../_components/Toast";
 
 export default function ProdukterTjanster() {
   const {
@@ -15,7 +16,6 @@ export default function ProdukterTjanster() {
     formData,
     nyArtikel,
     produkterTjansterState,
-    toastState,
 
     // Setters från useFaktura
     setBeskrivning,
@@ -28,7 +28,6 @@ export default function ProdukterTjanster() {
     // Handlers från useFaktura
     läggTillArtikel,
     updateFormField,
-    clearToast,
   } = useFaktura();
 
   const {
@@ -150,8 +149,10 @@ export default function ProdukterTjanster() {
               <Knapp
                 onClick={() => {
                   if (typ === "vara") {
-                    clearToast();
-                    // Visa error toast för vara + ROT/RUT
+                    showToast(
+                      "ROT/RUT-avdrag är endast tillåtet för tjänster, inte varor",
+                      "error"
+                    );
                     return;
                   }
 

@@ -11,7 +11,6 @@ import type {
   FakturaAction,
   FakturaContextType,
   FakturaProviderProps,
-  ToastState,
   ViewType,
   NavigationState,
 } from "../types/types";
@@ -94,12 +93,6 @@ const defaultProdukterTjansterState = {
   valtArtikel: null as FavoritArtikel | null,
 };
 
-const defaultToastState: ToastState = {
-  message: "",
-  type: "error",
-  isVisible: false,
-};
-
 const defaultUserSettings = {
   bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
 };
@@ -115,7 +108,6 @@ const initialState: FakturaState = {
   navigationState: defaultNavigationState,
   nyArtikel: defaultNyArtikel,
   produkterTjansterState: defaultProdukterTjansterState,
-  toastState: defaultToastState,
   userSettings: defaultUserSettings,
 };
 
@@ -210,21 +202,6 @@ function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaStat
         produkterTjansterState: defaultProdukterTjansterState,
       };
 
-    case "SET_TOAST":
-      return {
-        ...state,
-        toastState: {
-          ...action.payload,
-          isVisible: true,
-        },
-      };
-
-    case "CLEAR_TOAST":
-      return {
-        ...state,
-        toastState: defaultToastState,
-      };
-
     case "SET_BOKFÖRINGSMETOD":
       return {
         ...state,
@@ -290,8 +267,6 @@ export function FakturaProvider({ children, initialData }: FakturaProviderProps)
     setProdukterTjansterState: (state) =>
       dispatch({ type: "SET_PRODUKTER_TJANSTER_STATE", payload: state }),
     resetProdukterTjanster: () => dispatch({ type: "RESET_PRODUKTER_TJANSTER" }),
-    setToast: (toast) => dispatch({ type: "SET_TOAST", payload: toast }),
-    clearToast: () => dispatch({ type: "CLEAR_TOAST" }),
     setBokföringsmetod: (metod) => dispatch({ type: "SET_BOKFÖRINGSMETOD", payload: metod }),
     initStore: (data) => dispatch({ type: "INIT_STORE", payload: data }),
   };
@@ -317,7 +292,6 @@ export function useFakturaClient() {
     kundStatus: context.state.kundStatus,
     nyArtikel: context.state.nyArtikel,
     produkterTjansterState: context.state.produkterTjansterState,
-    toastState: context.state.toastState,
     userSettings: context.state.userSettings,
     setFormData: context.setFormData,
     resetFormData: context.resetFormData,
@@ -327,8 +301,6 @@ export function useFakturaClient() {
     resetNyArtikel: context.resetNyArtikel,
     setProdukterTjansterState: context.setProdukterTjansterState,
     resetProdukterTjanster: context.resetProdukterTjanster,
-    setToast: context.setToast,
-    clearToast: context.clearToast,
     setBokföringsmetod: context.setBokföringsmetod,
     initStore: context.initStore,
   };

@@ -10,16 +10,12 @@ export default function KundUppgifter() {
     formData,
     kunder,
     kundStatus,
-    kundSuccessVisible,
-    fadeOut,
-    toastState,
     handleKundChange,
     handleKundSave,
     handleSelectCustomer,
     handleCreateNewCustomer,
     handleDeleteCustomer,
     handleEditCustomer,
-    clearToast,
   } = useFaktura();
 
   return (
@@ -136,15 +132,8 @@ export default function KundUppgifter() {
             />
           </div>
 
-          <div className="pt-4 flex items-center gap-4">
+          <div className="pt-4">
             <Knapp onClick={handleKundSave} text="💾 Spara kund" />
-            {kundSuccessVisible && (
-              <span
-                className={`text-green-400 transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
-              >
-                ✅ Sparat!
-              </span>
-            )}
           </div>
         </>
       )}

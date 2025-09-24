@@ -17,7 +17,6 @@ export default function Alternativ({ onReload, onPreview }: AlternativProps) {
     sparaLoading,
     bokförLoading,
     bokföringsmetod,
-    toast,
     formData,
 
     // Computed values
@@ -37,7 +36,6 @@ export default function Alternativ({ onReload, onPreview }: AlternativProps) {
     // Actions
     setBokförModalOpen,
     setRotRutModalOpen,
-    setToast,
     hanteraSpara,
     hanteraBokför,
     hanteraHUSFil,

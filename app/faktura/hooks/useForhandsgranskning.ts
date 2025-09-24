@@ -6,7 +6,7 @@ import { generatePDFFromElement, generatePDFAsBase64 } from "../utils/pdfGenerat
 import { showToast } from "../../_components/Toast";
 
 // Types
-import type { ForhandsgranskningCalculations, SkickaEpostProps } from "../types/types";
+import type { ForhandsgranskningCalculations } from "../types/types";
 
 /**
  * Hook för förhandsgranskning, beräkningar och PDF/email funktionalitet
@@ -24,22 +24,6 @@ export function useForhandsgranskning() {
     const initial = (((formData.logoWidth ?? 200) - 50) / 150) * 100;
     return initial;
   });
-
-  // Email state
-  const [isSending, setIsSending] = useState(false);
-  const [mottagareEmail, setMottagareEmail] = useState("");
-  const [egetMeddelande, setEgetMeddelande] = useState("");
-
-  // =============================================================================
-  // EFFECTS
-  // =============================================================================
-
-  // Uppdatera mottagarens e-post när kundens e-post ändras
-  useEffect(() => {
-    if (formData.kundemail && formData.kundemail.trim()) {
-      setMottagareEmail(formData.kundemail);
-    }
-  }, [formData.kundemail]);
 
   // =============================================================================
   // LOGO FUNCTIONS
@@ -201,125 +185,15 @@ export function useForhandsgranskning() {
   }, []);
 
   // =============================================================================
-  // EMAIL FUNCTIONS
-  // =============================================================================
-
-  // Validera e-postadress
-  const validateEmail = useCallback((email: string): boolean => {
-    if (!email.trim()) {
-      showToast("Ange mottagarens e-postadress", "error");
-      return false;
-    }
-
-    if (!email.includes("@")) {
-      showToast("Ange en giltig e-postadress", "error");
-      return false;
-    }
-
-    return true;
-  }, []);
-
-  // Skicka e-post
-  const skickaEpost = useCallback(
-    async (customProps?: Partial<SkickaEpostProps>) => {
-      // Validering
-      if (!validateEmail(mottagareEmail)) {
-        return;
-      }
-
-      if (!formData.id) {
-        showToast("Spara fakturan först innan du skickar den", "error");
-        return;
-      }
-
-      setIsSending(true);
-
-      try {
-        // Generera PDF med den delade funktionen
-        const pdfBase64 = await generatePDFAsBase64();
-
-        // Skapa fakturanummer med nollutfyllnad
-        const fakturaNr = formData.fakturanummer
-          ? formData.fakturanummer.toString().padStart(4, "0")
-          : "faktura";
-
-        // Skicka e-post med PDF-bilaga och eget meddelande
-        const response = await fetch("/api/send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            faktura: {
-              ...formData,
-              kundemail: mottagareEmail, // Använd det angivna e-postfältet
-            },
-            pdfAttachment: pdfBase64,
-            filename: `Faktura-${fakturaNr}.pdf`,
-            customMessage: egetMeddelande.trim(), // Skicka med det egna meddelandet
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Kunde inte skicka e-post");
-        }
-
-        showToast("Faktura skickad till kunden!", "success");
-        customProps?.onSuccess?.();
-      } catch (error) {
-        console.error("❌ E-postfel:", error);
-        const errorMessage = error instanceof Error ? error.message : "Okänt fel";
-        showToast(`Kunde inte skicka faktura: ${errorMessage}`, "error");
-        customProps?.onError?.(errorMessage);
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [mottagareEmail, egetMeddelande, formData, validateEmail]
-  );
-
-  // E-post hjälpfunktioner
-  const isEpostButtonDisabled = useCallback(() => {
-    return isSending || !formData.fakturanummer || !mottagareEmail.trim() || !formData.id;
-  }, [isSending, formData.fakturanummer, mottagareEmail, formData.id]);
-
-  const getEpostButtonText = useCallback(() => {
-    if (isSending) return "📤 Skickar...";
-    if (!formData.id) return "❌ Spara faktura först";
-    return "📧 Skicka faktura";
-  }, [isSending, formData.id]);
-
-  const getEpostStatusMessage = useCallback(() => {
-    if (!formData.id) {
-      return {
-        type: "warning" as const,
-        text: "Spara fakturan först innan du skickar den",
-      };
-    }
-
-    return {
-      type: "info" as const,
-      text: `E-posten skickas till ${mottagareEmail || "ingen e-post angiven"}`,
-    };
-  }, [formData.id, mottagareEmail]);
-
-  // =============================================================================
   // RETURN OBJECT
   // =============================================================================
 
   return {
     // State
     logoSliderValue,
-    isSending,
-    mottagareEmail,
-    egetMeddelande,
 
     // State setters
     setLogoSliderValue,
-    setMottagareEmail,
-    setEgetMeddelande,
 
     // Logo functions
     handleLogoSliderChange,
@@ -329,13 +203,5 @@ export function useForhandsgranskning() {
 
     // PDF functions
     handleExportPDF,
-
-    // Email functions
-    validateEmail,
-    skickaEpost,
-    isEpostButtonDisabled: isEpostButtonDisabled(),
-    epostButtonText: getEpostButtonText(),
-    epostStatusMessage: getEpostStatusMessage(),
-    hasCustomerEmail: !!(formData.kundemail && formData.kundemail.trim()),
   };
 }

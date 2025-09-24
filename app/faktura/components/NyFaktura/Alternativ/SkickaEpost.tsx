@@ -1,8 +1,7 @@
 //#region Huvud
 "use client";
 import Knapp from "../../../../_components/Knapp";
-import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
-import { useFaktura } from "../../../hooks/useFaktura";
+import { useSkickaEpost } from "../../../hooks/useSkickaEpost";
 import { SkickaEpostProps } from "../../../types/types";
 //#endregion
 
@@ -18,9 +17,7 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
     epostButtonText,
     epostStatusMessage,
     hasCustomerEmail,
-  } = useForhandsgranskning();
-
-  const { toastState, clearToast } = useFaktura();
+  } = useSkickaEpost();
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow mt-4">

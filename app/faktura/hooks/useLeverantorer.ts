@@ -488,8 +488,6 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
  * Flyttad från useBokfordaFakturor.tsx för konsolidering
  */
 export function useBokfordaFakturor() {
-  const { clearToast } = useFaktura();
-
   // State management
   const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
   const [loading, setLoading] = useState(true);
@@ -662,10 +660,6 @@ export function useBokfordaFakturor() {
     stängBekraftelseModal();
   };
 
-  const closeToast = () => {
-    clearToast();
-  };
-
   return {
     // State
     fakturor,
@@ -684,7 +678,6 @@ export function useBokfordaFakturor() {
     stängBekraftelseModal,
     taBortFaktura,
     utförBokföring,
-    closeToast,
   };
 }
 

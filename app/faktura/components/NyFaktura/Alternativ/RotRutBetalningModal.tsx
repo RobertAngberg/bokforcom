@@ -7,6 +7,7 @@ import {
   uppdateraRotRutStatus,
 } from "../../../actions/alternativActions";
 import { RotRutBetalningModalProps } from "../../../types/types";
+import { showToast } from "../../../../_components/Toast";
 
 export default function RotRutBetalningModal({
   isOpen,
@@ -19,11 +20,6 @@ export default function RotRutBetalningModal({
   onSuccess,
 }: RotRutBetalningModalProps) {
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "info" as "success" | "error" | "info",
-    isVisible: false,
-  });
 
   if (!isOpen) return null;
 
@@ -47,27 +43,15 @@ export default function RotRutBetalningModal({
               ? `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nKunden betalade sin del vid fakturering.`
               : `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nFakturan är nu avslutad och klar.`;
 
-            setToast({
-              message: meddelande,
-              type: "success",
-              isVisible: true,
-            });
+            showToast(meddelande, "success");
           }, 100);
         }
       } else {
-        setToast({
-          message: result.error || "Kunde inte registrera betalning",
-          type: "error",
-          isVisible: true,
-        });
+        showToast(result.error || "Kunde inte registrera betalning", "error");
       }
     } catch (error) {
       console.error("Fel vid ROT/RUT-betalning:", error);
-      setToast({
-        message: "Ett oväntat fel uppstod",
-        type: "error",
-        isVisible: true,
-      });
+      showToast("Ett oväntat fel uppstod", "error");
     } finally {
       setLoading(false);
     }

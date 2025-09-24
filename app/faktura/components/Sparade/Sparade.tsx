@@ -1,6 +1,5 @@
 "use client";
 
-import { useFaktura } from "../../hooks/useFaktura";
 import { useSparade } from "../../hooks/useSparade";
 import { useSparadeFakturorPage } from "../../hooks/useLeverantorer";
 import TillbakaPil from "../../../_components/TillbakaPil";
@@ -12,7 +11,6 @@ interface SparadeProps {
 
 export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
   const { data } = useSparadeFakturorPage();
-  const { toastState, clearToast } = useFaktura();
   const { loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } = useSparade();
 
   const fakturor = data?.fakturor || [];
