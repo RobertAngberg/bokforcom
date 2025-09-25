@@ -9,10 +9,10 @@ import {
   markeraAGIGenererad,
   markeraSkatternaBokförda,
 } from "../actions/lonespecarActions";
-import { hämtaAllaAnställda } from "../actions/anstalldaActions";
+import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../actions/anstalldaActions";
 import { hämtaUtlägg } from "../actions/utlaggActions";
 import { bokförLöneskatter } from "../actions/bokforingActions";
-import { Lönekörning } from "../types/types";
+import { Lönekörning, LonekorningHookProps } from "../types/types";
 import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
@@ -22,31 +22,6 @@ import {
   skapaLönespecifikationerFörLönekörning,
 } from "../actions/lonekorningActions";
 
-interface LonekorningHookProps {
-  anställda?: any[];
-  anställdaLoading?: boolean;
-  onAnställdaRefresh?: () => void;
-  extrarader?: any;
-  beräknadeVärden?: any;
-  // Lista mode props
-  enableListMode?: boolean;
-  refreshTrigger?: any;
-  // Spec lista mode props
-  enableSpecListMode?: boolean;
-  specListValdaSpecar?: any[];
-  specListLönekörning?: any;
-  // Spec lista callbacks (these override the internal functions)
-  onSpecListTaBortSpec?: (id: number) => Promise<void>;
-  onSpecListHämtaBankgiro?: () => void;
-  onSpecListMailaSpecar?: () => void;
-  onSpecListBokför?: () => void;
-  onSpecListGenereraAGI?: () => void;
-  onSpecListBokförSkatter?: () => void;
-  // New lönekörning modal props
-  enableNewLonekorningModal?: boolean;
-  onLonekorningCreated?: (lonekorning: any) => void;
-}
-
 export const useLonekorning = ({
   anställda: propsAnställda,
   anställdaLoading: propsAnställdaLoading,
@@ -55,7 +30,6 @@ export const useLonekorning = ({
   beräknadeVärden,
   enableListMode = false,
   refreshTrigger,
-  enableSpecListMode = false,
   specListValdaSpecar = [],
   specListLönekörning = null,
   onSpecListTaBortSpec,
@@ -110,6 +84,7 @@ export const useLonekorning = ({
   const [localAnställda, setLocalAnställda] = useState<any[]>([]);
   const [utlaggMap, setUtlaggMap] = useState<Record<number, any[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
+  const [företagsprofil, setFöretagsprofil] = useState<unknown>(null);
 
   // Skatte states
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
@@ -463,7 +438,44 @@ export const useLonekorning = ({
     }
   }, [enableNewLonekorningModal, nyLonekorningModalOpen]);
 
+  // Load företagsprofil effect
+  useEffect(() => {
+    const loadFöretagsprofil = async () => {
+      try {
+        const profile = await hämtaFöretagsprofil(session?.user?.id || "");
+        setFöretagsprofil(profile);
+      } catch (error) {
+        console.error("Kunde inte ladda företagsprofil:", error);
+      }
+    };
+    if (session?.user?.id) {
+      loadFöretagsprofil();
+    }
+  }, [session?.user?.id]);
+
   const skatteData = beräknaSkatteData();
+
+  // Prepare batch data for mailing
+  const prepareBatchData = (specData: any[], allEmployees: any[]) => {
+    return specData
+      .map((spec) => {
+        const anställd = allEmployees.find((a) => a.id === spec.anställd_id);
+        if (!anställd) {
+          console.warn(
+            `Anställd med id ${spec.anställd_id} hittades inte för lönespec ${spec.id}.`
+          );
+          return null;
+        }
+        return {
+          lönespec: spec,
+          anställd,
+          företagsprofil,
+          extrarader: extrarader?.[spec.id] || [],
+          beräknadeVärden: beräknadeVärden?.[spec.id] || {},
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  };
 
   // Spec lista mode computed values
   const specListCurrentStep = specListLönekörning?.aktuellt_steg || 0;
@@ -767,6 +779,8 @@ export const useLonekorning = ({
     setUtlaggMap,
     taBortLaddning,
     setTaBortLaddning,
+    företagsprofil,
+    setFöretagsprofil,
     bankgiroModalOpen,
     setBankgiroModalOpen,
     skatteModalOpen,
@@ -813,6 +827,7 @@ export const useLonekorning = ({
     confirmDeleteLönekorning,
     confirmDeleteLönespec,
     refreshData,
+    prepareBatchData,
     handleMailaSpecar,
     handleBokför,
     handleGenereraAGI,

@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
-import type { AnställdData } from "../types/types";
+import type { AnställdData, FormActionState, Företagsprofil } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(
@@ -67,7 +67,10 @@ export async function hämtaAnställd(anställdId: number) {
 }
 
 // React 19 Form Action - tar emot FormData direkt
-export async function sparaNyAnställdFormAction(prevState: any, formData: FormData) {
+export async function sparaNyAnställdFormAction(
+  prevState: FormActionState,
+  formData: FormData
+): Promise<FormActionState> {
   try {
     // Endast förnamn och efternamn krävs!
     const förnamn = formData.get("förnamn") as string;
@@ -322,7 +325,7 @@ export async function taBortAnställd(anställdId: number) {
   }
 }
 
-export async function hämtaFöretagsprofil(userId: string): Promise<any | null> {
+export async function hämtaFöretagsprofil(userId: string): Promise<Företagsprofil | null> {
   try {
     const { rows } = await pool.query(
       `

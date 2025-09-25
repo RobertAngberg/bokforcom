@@ -249,7 +249,7 @@ export async function taBortExtrarad(extraradId: number) {
       WHERE id = $1
     `;
 
-    const result = await client.query(query, [extraradId]);
+    await client.query(query, [extraradId]);
 
     client.release();
 
@@ -400,7 +400,7 @@ export async function uppdateraLönespec(data: {
 
     // Bygg update query dynamiskt baserat på vilka fält som skickats
     const updateFields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean | null)[] = [];
     let paramIndex = 1;
 
     if (data.bruttolön !== undefined) {
@@ -693,7 +693,7 @@ export async function taBortLönespec(lönespecId: number) {
       WHERE id = $1
     `;
 
-    const result = await client.query(deleteQuery, [lönespecId]);
+    await client.query(deleteQuery, [lönespecId]);
 
     client.release();
     revalidatePath("/personal");

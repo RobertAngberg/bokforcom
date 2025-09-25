@@ -19,6 +19,48 @@ export interface UtläggData {
   belopp: number;
   kommentar?: string;
   datum: string;
+  anställd_id?: number;
+  user_id?: number;
+  status?: string;
+  skapad?: string | Date;
+  uppdaterad?: string | Date;
+  transaktion_id?: number | null;
+  kategori?: string;
+  kvitto_fil?: string | null;
+  kvitto_url?: string | null;
+  kvitto_filtyp?: string | null;
+}
+
+export interface UtläggQueryResult {
+  id: number;
+  anställd_id: number;
+  user_id: number;
+  status: string;
+  skapad: Date;
+  uppdaterad: Date;
+  transaktion_id: number | null;
+  belopp: number;
+  beskrivning: string;
+  datum: string;
+  kategori: string;
+  kvitto_fil: string | null;
+  kvitto_url: string | null;
+}
+
+export interface UtläggCreateParams {
+  belopp: number;
+  datum: string;
+  beskrivning: string;
+  kategori?: string;
+  anställd_id: number;
+  kvitto_fil?: string;
+  kvitto_filtyp?: string;
+}
+
+export interface UtläggActionResult {
+  success: boolean;
+  error?: string;
+  id?: number;
 }
 
 export interface Lönekörning {
@@ -1128,4 +1170,79 @@ export interface SemesterBeräkning {
   anställningsdatum: Date;
   heltid: boolean;
   tjänstegrad: number;
+}
+
+// Lonekorning component types
+export interface LonekorningProps {
+  anställda?: AnställdData[];
+  anställdaLoading?: boolean;
+  onAnställdaRefresh?: () => void;
+}
+
+export interface BatchDataItem {
+  lönespec: any;
+  anställd: AnställdData | any; // Using any for now due to mixed types in codebase
+  företagsprofil: any;
+  extrarader: ExtraradData[];
+  beräknadeVärden: any;
+}
+
+// useLonekorning hook types
+export interface LonekorningHookProps {
+  anställda?: any[];
+  anställdaLoading?: boolean;
+  onAnställdaRefresh?: () => void;
+  extrarader?: any;
+  beräknadeVärden?: any;
+  // Lista mode props
+  enableListMode?: boolean;
+  refreshTrigger?: any;
+  // Spec lista mode props
+  enableSpecListMode?: boolean;
+  specListValdaSpecar?: any[];
+  specListLönekörning?: any;
+  // Spec lista callbacks (these override the internal functions)
+  onSpecListTaBortSpec?: (id: number) => Promise<void>;
+  onSpecListHämtaBankgiro?: () => void;
+  onSpecListMailaSpecar?: () => void;
+  onSpecListBokför?: () => void;
+  onSpecListGenereraAGI?: () => void;
+  onSpecListBokförSkatter?: () => void;
+  // New lönekörning modal props
+  enableNewLonekorningModal?: boolean;
+  onLonekorningCreated?: (lonekorning: any) => void;
+}
+
+// Actions types
+export interface FormActionState {
+  success: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+export interface Företagsprofil {
+  företagsnamn: string;
+  adress: string;
+  postnummer: string;
+  stad: string;
+  organisationsnummer: string;
+  momsregistreringsnummer: string;
+  telefonnummer: string;
+  epost: string;
+  webbplats: string;
+}
+
+export interface LönespecData {
+  id: number;
+  anställd_id: number;
+  grundlön: number;
+  skatt: number;
+  [key: string]: any; // För andra dynamiska fält
+}
+
+export interface BeräknadeVärden {
+  kontantlön?: number;
+  skatt?: number;
+  nettolön?: number;
+  [key: string]: any; // För andra beräknade värden
 }

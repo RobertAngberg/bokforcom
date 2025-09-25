@@ -20,8 +20,7 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
 
       {/* Anställda sektion */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-xl text-white font-semibold flex items-center gap-2">Anställda</h2>
+        <div className="flex justify-end items-center mb-6">
           <Knapp text="+ Lägg till anställd" onClick={handlers.visaNyAnställd} />
         </div>
 

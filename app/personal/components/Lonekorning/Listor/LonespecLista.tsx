@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import LönespecView from "../../Anstallda/Lonespecar/LonespecView";
 import Knapp from "../../../../_components/Knapp";
 import { LonespecListaProps } from "../../../types/types";
@@ -72,63 +71,58 @@ export default function LonespecLista({
       <div className="h-4"></div>
 
       {/* Lönekörnings-workflow */}
-      <div className="bg-slate-700 rounded-lg p-6">
-        {/* Progress Steps - Integrerad med knappar */}
-        <div className="space-y-4 mb-6">
-          {workflowSteps.map((step, index) => (
-            <div
-              key={step.id}
-              className="flex items-center justify-between bg-slate-600 rounded-lg p-4"
-            >
-              {/* Vänster sida: Status och info */}
-              <div className="flex items-center">
+      <div className="space-y-4 mb-6">
+        {workflowSteps.map((step, index) => (
+          <div
+            key={step.id}
+            className="flex items-center justify-between bg-slate-800 rounded-lg p-4"
+          >
+            {/* Vänster sida: Status och info */}
+            <div className="flex items-center">
+              <div
+                className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
+                  step.completed ? "bg-green-600 text-white" : "bg-slate-500 text-gray-300"
+                }`}
+              >
+                {step.completed ? "✓" : index + 1}
+              </div>
+              <div>
                 <div
-                  className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
-                    step.completed ? "bg-green-600 text-white" : "bg-slate-500 text-gray-300"
+                  className={`text-sm font-medium ${
+                    step.completed ? "text-green-400" : "text-white"
                   }`}
                 >
-                  {step.completed ? "✓" : index + 1}
+                  {step.title}
                 </div>
-                <div>
-                  <div
-                    className={`text-sm font-medium ${
-                      step.completed ? "text-green-400" : "text-white"
-                    }`}
-                  >
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-gray-400 flex items-center gap-2">
-                    {step.description}
-                    {step.id === "agi" && (
-                      <a
-                        href="https://www.skatteverket.se/foretagochorganisationer/arbetsgivare/nyttlamnaarbetsgivardeklarationpaindividniva.4.41f1c61d16193087d7fcaeb.html"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 underline ml-2"
-                      >
-                        Länk till Skatteverket
-                      </a>
-                    )}
-                  </div>
+                <div className="text-xs text-gray-400 flex items-center gap-2">
+                  {step.description}
+                  {step.id === "agi" && (
+                    <a
+                      href="https://www.skatteverket.se/foretagochorganisationer/arbetsgivare/nyttlamnaarbetsgivardeklarationpaindividniva.4.41f1c61d16193087d7fcaeb.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline ml-2"
+                    >
+                      Länk till Skatteverket
+                    </a>
+                  )}
                 </div>
-              </div>
-
-              {/* Höger sida: Knapp */}
-              <div>
-                <Knapp
-                  text={step.buttonText}
-                  onClick={step.onClick}
-                  className={
-                    step.enabled
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-gray-500 cursor-not-allowed"
-                  }
-                  disabled={!step.enabled}
-                />
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Höger sida: Knapp */}
+            <div>
+              <Knapp
+                text={step.buttonText}
+                onClick={step.onClick}
+                className={
+                  step.enabled ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
+                }
+                disabled={!step.enabled}
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Completion status */}

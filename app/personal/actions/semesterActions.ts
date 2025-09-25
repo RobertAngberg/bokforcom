@@ -3,21 +3,6 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
-
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
 
 export async function hämtaSemesterTransaktioner(anställdId: number) {
   const userId = await getUserId();
@@ -245,7 +230,6 @@ export async function uppdateraSemesterdata(
 }
 
 export async function bokförSemester({
-  userId,
   rader,
   kommentar,
   datum,

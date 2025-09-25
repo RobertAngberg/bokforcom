@@ -3,8 +3,7 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
-import type { Lönekörning, LönespecifikationMedLönekörning } from "../types/types";
+import type { Lönekörning, LönespecData } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(
@@ -399,7 +398,7 @@ export async function hämtaAllaLönekörningar(): Promise<{
 
 export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id: number): Promise<{
   success: boolean;
-  data?: any[];
+  data?: LönespecData[];
   error?: string;
 }> {
   try {
@@ -559,7 +558,7 @@ export async function skapaLönespecifikationerFörLönekörning(
   anställdaIds: number[]
 ): Promise<{
   success: boolean;
-  data?: any[];
+  data?: LönespecData[];
   error?: string;
 }> {
   try {
@@ -568,7 +567,7 @@ export async function skapaLönespecifikationerFörLönekörning(
       return { success: false, error: "Användare inte inloggad" };
     }
 
-    const skapadeSpecar: any[] = [];
+    const skapadeSpecar: LönespecData[] = [];
 
     for (const anställdId of anställdaIds) {
       // Hämta anställd info för att få grundlön/kompensation

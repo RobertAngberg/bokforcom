@@ -3,23 +3,9 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
+import type { UtläggQueryResult, UtläggCreateParams, UtläggActionResult } from "../types/types";
 
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
-
-export async function hämtaUtlägg(anställdId: number) {
+export async function hämtaUtlägg(anställdId: number): Promise<UtläggQueryResult[]> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");
@@ -75,7 +61,10 @@ export async function hämtaUtlägg(anställdId: number) {
   }
 }
 
-export async function uppdateraUtläggStatus(utläggId: number, status: string) {
+export async function uppdateraUtläggStatus(
+  utläggId: number,
+  status: string
+): Promise<UtläggActionResult> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");
@@ -102,23 +91,8 @@ export async function uppdateraUtläggStatus(utläggId: number, status: string) 
   }
 }
 
-export async function sparaUtlägg({
-  belopp,
-  datum,
-  beskrivning,
-  kategori,
-  anställd_id,
-  kvitto_fil,
-  kvitto_filtyp,
-}: {
-  belopp: number;
-  datum: string;
-  beskrivning: string;
-  kategori?: string;
-  anställd_id: number;
-  kvitto_fil?: string;
-  kvitto_filtyp?: string;
-}) {
+export async function sparaUtlägg(params: UtläggCreateParams): Promise<UtläggActionResult> {
+  const { belopp, datum, beskrivning, kategori, anställd_id, kvitto_fil, kvitto_filtyp } = params;
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");
@@ -153,7 +127,7 @@ export async function sparaUtlägg({
   }
 }
 
-export async function taBortUtlägg(utläggId: number) {
+export async function taBortUtlägg(utläggId: number): Promise<UtläggActionResult> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");

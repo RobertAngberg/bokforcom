@@ -4,21 +4,13 @@ import { pool } from "../../_lib/db";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import type { BokförLöneUtbetalningData, BokföringsPost } from "../types/types";
-
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
+import type {
+  BokförLöneUtbetalningData,
+  BokföringsPost,
+  LönespecData,
+  ExtraradData,
+  BeräknadeVärden,
+} from "../types/types";
 
 export async function hamtaTransaktionsposter(transaktionsId: number) {
   return await hamtaTransaktionsposterCore(transaktionsId);
@@ -268,9 +260,9 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
 }
 
 function genereraBokföringsPoster(
-  lönespec: any,
-  extrarader: any[],
-  beräknadeVärden: any,
+  lönespec: LönespecData,
+  extrarader: ExtraradData[],
+  beräknadeVärden: BeräknadeVärden,
   anställdNamn: string
 ): BokföringsPost[] {
   const poster: BokföringsPost[] = [];
