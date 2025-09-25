@@ -11,12 +11,7 @@ import {
 import { taBortLönespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
 import { showToast } from "../../_components/Toast";
-import type {
-  AnställdData,
-  AnställdListItem,
-  PersonalEditData,
-  UseNyAnstalldOptions,
-} from "../types/types";
+import type { AnställdData, AnställdListItem, PersonalEditData } from "../types/types";
 
 // Ny Anställd formulär initial data - flyttad från useNyAnstalld.ts
 const initialNyAnställdFormulär = {
@@ -90,26 +85,27 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // Delete modal states
   const [showDeleteAnställdModal, setShowDeleteAnställdModal] = useState(false);
   const [deleteAnställdId, setDeleteAnställdId] = useState<number | null>(null);
-  const [deleteAnställdNamn, setDeleteAnställdNamn] = useState<string>("");
   const [showDeleteLönespecModal, setShowDeleteLönespecModal] = useState(false);
   const [deleteLönespecId, setDeleteLönespecId] = useState<number | null>(null);
 
   // NY ANSTÄLLD state - only when enableNyAnstalldMode is true
   const [nyAnställdFormulär, setNyAnställdFormulär] = useState(initialNyAnställdFormulär);
-  const [nyAnställdLoading, setNyAnställdLoading] = useState(false);
 
-  // NY ANSTÄLLD form action - conditionally use useActionState
-  const nyAnstalldActionData = enableNyAnstalldMode
-    ? useActionState(sparaNyAnställdFormAction, initialActionResult)
-    : [null, () => {}, false];
-  const [actionState, formAction, isPending] = nyAnstalldActionData;
+  // NY ANSTÄLLD form action - always call hook, use result conditionally
+  const [actionState, formAction, isPending] = useActionState(
+    sparaNyAnställdFormAction,
+    initialActionResult
+  );
+
+  // Use isPending from useActionState for loading state
+  const nyAnställdLoading = isPending;
 
   // Lönespec state - only when enableLonespecMode is true
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
 
-  // Lönespec data - conditionally use useLonespec
-  const lonespecData = enableLonespecMode ? useLonespec() : { lönespecar: [] };
-  const { lönespecar } = lonespecData;
+  // Lönespec data - always call hook, use result conditionally
+  const lonespecData = useLonespec();
+  const lönespecar = enableLonespecMode ? lonespecData.lönespecar : [];
 
   // ===========================================
   // HELPER FUNCTIONS
@@ -140,7 +136,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // PERSONALINFORMATION - Lokal edit-state i hook
   // ===========================================
 
-  const buildPersonalEditData = (a: Partial<AnställdData> | any): PersonalEditData => ({
+  const buildPersonalEditData = (a: Partial<AnställdData>): PersonalEditData => ({
     förnamn: a?.förnamn || "",
     efternamn: a?.efternamn || "",
     personnummer: a?.personnummer?.toString?.() || "",
@@ -184,7 +180,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   }, [valdAnställd]);
 
   const personalOnChange = useCallback(
-    (name: keyof PersonalEditData | string, value: any) => {
+    (name: keyof PersonalEditData | string, value: string | number | boolean) => {
       const next = { ...personalEditData, [name]: value } as PersonalEditData;
       setPersonalEditData(next);
       setPersonalHasChanges(JSON.stringify(next) !== JSON.stringify(personalOriginalData));
@@ -210,7 +206,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
         ort: personalEditData.ort,
       } as AnställdData;
 
-      const result = await sparaAnställd(payload, (valdAnställd as any).id);
+      const result = await sparaAnställd(payload, valdAnställd.id);
       if (result?.success) {
         setValdAnställd(payload);
         setPersonalOriginalData(personalEditData);
@@ -243,12 +239,14 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     try {
       const anställdaData = await hämtaAllaAnställda();
       // Konvertera till AnställdListItem format
-      const anställdaLista: AnställdListItem[] = anställdaData.map((a: any) => ({
-        id: a.id,
-        namn: `${a.förnamn} ${a.efternamn}`,
-        epost: a.mail || "",
-        roll: a.jobbtitel || "",
-      }));
+      const anställdaLista: AnställdListItem[] = anställdaData
+        .filter((a: AnställdData) => a.id !== undefined)
+        .map((a: AnställdData) => ({
+          id: a.id!,
+          namn: `${a.förnamn} ${a.efternamn}`,
+          epost: a.mail || "",
+          roll: a.jobbtitel || "",
+        }));
       setAnställda(anställdaLista);
     } catch (error) {
       console.error("Fel vid laddning av anställda:", error);
@@ -306,9 +304,8 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // ===========================================
 
   // Ta bort anställd
-  const taBortAnställdMedKonfirmation = useCallback(async (id: number, namn: string) => {
+  const taBortAnställdMedKonfirmation = useCallback(async (id: number) => {
     setDeleteAnställdId(id);
-    setDeleteAnställdNamn(namn);
     setShowDeleteAnställdModal(true);
   }, []);
 
@@ -322,7 +319,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       if (result.success) {
         removeAnställd(deleteAnställdId);
         // Om den borttagna anställda var vald, rensa valet
-        if (valdAnställd && "id" in valdAnställd && (valdAnställd as any).id === deleteAnställdId) {
+        if (valdAnställd && "id" in valdAnställd && valdAnställd.id === deleteAnställdId) {
           setValdAnställd(null);
         }
 
@@ -335,9 +332,8 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       setAnställdaError("Ett fel uppstod vid borttagning");
     } finally {
       setDeleteAnställdId(null);
-      setDeleteAnställdNamn("");
     }
-  }, [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError]);
+  }, [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError, deleteAnställdId]);
 
   // Hantera klick på anställd (ladda full data och sätt som vald)
   const hanteraAnställdKlick = useCallback(
@@ -351,12 +347,15 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // LÖNESPEC LISTA - För LonespecList.tsx (flyttad från useAnstalldalonespecList)
   // ===========================================
 
-  const handleTaBortLönespec = useCallback(async (lönespecId: string) => {
-    if (!enableLonespecMode) return;
+  const handleTaBortLönespec = useCallback(
+    async (lönespecId: string) => {
+      if (!enableLonespecMode) return;
 
-    setDeleteLönespecId(parseInt(lönespecId));
-    setShowDeleteLönespecModal(true);
-  }, []);
+      setDeleteLönespecId(parseInt(lönespecId));
+      setShowDeleteLönespecModal(true);
+    },
+    [enableLonespecMode]
+  );
 
   const confirmDeleteLönespec = useCallback(async () => {
     if (!deleteLönespecId) return;
@@ -419,7 +418,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
         return newState;
       });
     },
-    [enableNyAnstalldMode, nyAnställdFormulär]
+    [enableNyAnstalldMode]
   );
 
   // Handle input changes
@@ -476,7 +475,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       const loading = anställdLoadingId === anställd.id;
 
       const handleTaBort = () => {
-        taBortAnställdMedKonfirmation(anställd.id, anställd.namn);
+        taBortAnställdMedKonfirmation(anställd.id);
       };
 
       const handleRadKlick = (e: React.MouseEvent) => {

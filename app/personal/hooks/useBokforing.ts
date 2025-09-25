@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../actions/bokforingActions";
-import type { WizardBokföringsPost } from "../types/types";
+import type {
+  WizardBokföringsPost,
+  LönespecData,
+  ExtraradData,
+  BeräknadeVärden,
+} from "../types/types";
 import { showToast } from "../../_components/Toast";
 
 // Mapping från extrarad-typ till bokföringskonto - SINGLE SOURCE OF TRUTH
@@ -95,9 +100,9 @@ const validateExtraradMapping = () => {
 };
 
 interface UseBokforingProps {
-  lönespec: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  lönespec: LönespecData;
+  extrarader: ExtraradData[];
+  beräknadeVärden: BeräknadeVärden;
   anställdNamn: string;
   onBokfört?: () => void;
   onClose: () => void;
@@ -115,8 +120,8 @@ export function useBokforing({
   const [error, setError] = useState<string | null>(null);
 
   // Additional state from the old useBokforing.ts
-  const [bokföringRegler, setBokföringRegler] = useState<any[]>([]);
-  const [bokföringTransaktioner, setBokföringTransaktioner] = useState<any[]>([]);
+  const [bokföringRegler, setBokföringRegler] = useState<WizardBokföringsPost[]>([]);
+  const [bokföringTransaktioner, setBokföringTransaktioner] = useState<WizardBokföringsPost[]>([]);
   const [bokföringLoading, setBokföringLoading] = useState(false);
 
   // Validera mappningen vid första rendering (endast i development)
@@ -130,18 +135,16 @@ export function useBokforing({
 
     // Använd ENDAST de redan beräknade värdena - SINGLE SOURCE OF TRUTH
     const bruttolön = beräknadeVärden.bruttolön || 0;
-    const totalSocialaAvgifter = beräknadeVärden.socialaAvgifter || 0;
     const totalSkatt = beräknadeVärden.skatt || 0;
     const totalNettolön = beräknadeVärden.nettolön || 0;
 
     // Analysera extrarader för specifika konton baserat på typ
     let reraFörmåner = 0; // Endast förmåner som behöver motkonto (7385, 7381-7389 utom 7399)
-    let skattefriaErsättningar = 0;
     const kontoSummor: Record<string, { kontoNamn: string; belopp: number }> = {};
 
     extrarader.forEach((rad) => {
       const typ = rad.typ; // Detta är nyckeln från RAD_KONFIGURATIONER
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
 
       if (belopp === 0) return;
 
@@ -162,8 +165,6 @@ export function useBokforing({
           if (kontoNummer >= "7381" && kontoNummer <= "7389") {
             reraFörmåner += Math.abs(belopp);
           }
-        } else {
-          skattefriaErsättningar += Math.abs(belopp);
         }
       }
     });
@@ -185,7 +186,7 @@ export function useBokforing({
     let semestertillägBelopp = 0;
     extrarader.forEach((rad) => {
       const typ = rad.typ;
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
       if (typ === "semestertillagg" && belopp > 0) {
         semestertillägBelopp += belopp;
       }
@@ -266,7 +267,6 @@ export function useBokforing({
     }
 
     // Analysera förmåner för 7512 vs 7515
-    let förmånerFör7512 = 0; // Specifika förmåner som får 7512
     let förmånerFör7515 = 0; // Andra skattepliktiga förmåner som får 7515
 
     // Dela upp förmånerna baserat på konto
@@ -379,8 +379,8 @@ export function useBokforing({
         onBokfört?.();
         onClose();
       }, 2000); // Stäng efter 2 sekunder
-    } catch (error: any) {
-      setError(error.message || "Ett fel inträffade vid bokföring");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Ett fel inträffade vid bokföring");
       console.error("Bokföringsfel:", error);
     } finally {
       setLoading(false);

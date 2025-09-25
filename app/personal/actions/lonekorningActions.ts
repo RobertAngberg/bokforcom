@@ -5,20 +5,6 @@ import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
 import type { Lönekörning, LönespecData } from "../types/types";
 
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
-
 export async function skapaLönekörning(period: string): Promise<{
   success: boolean;
   data?: Lönekörning;
@@ -60,8 +46,6 @@ export async function skapaLönekörning(period: string): Promise<{
 
     const result = await pool.query(query, [period, "pågående", userId]);
     const lönekörning = result.rows[0];
-
-    logPersonalDataEvent("modify", userId, `Skapade lönekörning för period ${period}`);
 
     return {
       success: true,
@@ -167,12 +151,6 @@ export async function uppdateraLönekörningStatus(
 
     const lönekörning = result.rows[0];
 
-    logPersonalDataEvent(
-      "modify",
-      userId,
-      `Uppdaterade lönekörning ${lönekörningId} - ${statusTyp}`
-    );
-
     return {
       success: true,
       data: {
@@ -259,12 +237,6 @@ export async function uppdateraLönekörningSteg(
 
     const lönekörning = result.rows[0];
 
-    logPersonalDataEvent(
-      "modify",
-      userId,
-      `Uppdaterade lönekörning ${lönekörningId} till steg ${nyttSteg}`
-    );
-
     return {
       success: true,
       data: {
@@ -319,14 +291,17 @@ export async function markeraStegFärdigt(lönekörningId: number): Promise<{
     const nuvarandeSteg = parseInt(hämtaResult.rows[0].aktivt_steg) || 1;
     const nyttSteg = Math.min(nuvarandeSteg + 1, 5); // Max 5 (steg 5 = helt färdig)
 
-    // Uppdatera aktivt_steg
-    const uppdateraQuery = `
+    // Uppdatera aktivt_steg och status (avsluta om steg 5)
+    let uppdateraQuery = `
       UPDATE lönekörningar 
       SET aktivt_steg = $2,
-          uppdaterad = CURRENT_TIMESTAMP
-      WHERE id = $1 AND startad_av = $3
-      RETURNING *
-    `;
+          uppdaterad = CURRENT_TIMESTAMP`;
+
+    if (nyttSteg === 5) {
+      uppdateraQuery += `, status = 'avslutad', avslutad_datum = CURRENT_TIMESTAMP`;
+    }
+
+    uppdateraQuery += ` WHERE id = $1 AND startad_av = $3 RETURNING *`;
 
     const result = await pool.query(uppdateraQuery, [lönekörningId, nyttSteg, userId]);
 
@@ -335,12 +310,6 @@ export async function markeraStegFärdigt(lönekörningId: number): Promise<{
     }
 
     const lönekörning = result.rows[0];
-
-    logPersonalDataEvent(
-      "modify",
-      userId,
-      `Markerade steg ${nuvarandeSteg} som färdigt, flyttade till steg ${nyttSteg} för lönekörning ${lönekörningId}`
-    );
 
     revalidatePath("/personal");
 
@@ -419,8 +388,6 @@ export async function uppdateraLönekörningTotaler(lönekörningId: number): Pr
       parseFloat(totaler.total_sociala_avgifter),
       parseFloat(totaler.total_nettolön),
     ]);
-
-    logPersonalDataEvent("modify", userId, `Uppdaterade totaler för lönekörning ${lönekörningId}`);
 
     return { success: true };
   } catch (error) {
@@ -530,12 +497,6 @@ export async function koppLaLönespecTillLönekörning(
     // Uppdatera totaler för lönekörningen
     await uppdateraLönekörningTotaler(lönekörningId);
 
-    logPersonalDataEvent(
-      "modify",
-      userId,
-      `Kopplade lönespec ${lönespecId} till lönekörning ${lönekörningId}`
-    );
-
     return { success: true };
   } catch (error) {
     console.error("❌ Fel vid koppling av lönespec till lönekörning:", error);
@@ -621,7 +582,6 @@ export async function markeraLönekörningSteg(
     // Uppdatera totaler
     await uppdateraLönekörningTotaler(lönekörning.id);
 
-    logPersonalDataEvent("modify", userId, `Markerade ${statusTyp} för lönekörning ${period}`);
     revalidatePath("/personal");
 
     return { success: true };
@@ -703,11 +663,6 @@ export async function skapaLönespecifikationerFörLönekörning(
     // Uppdatera totaler för lönekörningen
     await uppdateraLönekörningTotaler(lönekörningId);
 
-    logPersonalDataEvent(
-      "modify",
-      userId,
-      `Skapade ${skapadeSpecar.length} lönespecifikationer för lönekörning ${lönekörningId}`
-    );
     revalidatePath("/personal");
 
     return {
@@ -751,7 +706,6 @@ export async function taBortLönekörning(lönekörningId: number): Promise<{
     `;
     await pool.query(deleteQuery, [lönekörningId, userId]);
 
-    logPersonalDataEvent("delete", userId, `Tog bort lönekörning ${lönekörningId}`);
     revalidatePath("/personal");
 
     return { success: true };

@@ -72,7 +72,7 @@ export function useWizard({
       {
         id: "skatter",
         title: "Skatter",
-        description: "Bokför skatter",
+        description: "Bokför skatter först efter att dragningen syns på ditt konto",
         buttonText: "💰 Bokför skatter",
         completed: aktivtSteg > 4, // Färdigt om lönekörningen är helt klar
         enabled: aktivtSteg >= 4,

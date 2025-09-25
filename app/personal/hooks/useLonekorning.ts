@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { showToast } from "../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
-  markeraBankgiroExporterad,
-  markeraMailad,
-  markeraBokförd,
   markeraAGIGenererad,
   markeraSkatternaBokförda,
 } from "../actions/lonespecarActions";
 import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../actions/anstalldaActions";
 import { hämtaUtlägg } from "../actions/utlaggActions";
 import { bokförLöneskatter } from "../actions/bokforingActions";
-import { Lönekörning, LonekorningHookProps } from "../types/types";
+import {
+  Lönekörning,
+  LonekorningHookProps,
+  LönespecData,
+  AnställdListItem,
+  UtläggData,
+} from "../types/types";
 import {
   hämtaLönespecifikationerFörLönekörning,
   uppdateraLönekörningSteg,
@@ -49,7 +52,7 @@ export const useLonekorning = ({
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
   const [valdLonekorning, setValdLonekorning] = useState<Lönekörning | null>(null);
   const [internalRefreshTrigger, setInternalRefreshTrigger] = useState(0);
-  const [lönekörningSpecar, setLönekörningSpecar] = useState<any[]>([]);
+  const [lönekörningSpecar, setLönekörningSpecar] = useState<LönespecData[]>([]);
 
   // Lista mode specific states
   const [lonekorningar, setLonekorningar] = useState<Lönekörning[]>([]);
@@ -78,11 +81,11 @@ export const useLonekorning = ({
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
 
   // Data states
-  const [specarPerDatum, setSpecarPerDatum] = useState<Record<string, any[]>>({});
+  const [specarPerDatum, setSpecarPerDatum] = useState<Record<string, LönespecData[]>>({});
   const [datumLista, setDatumLista] = useState<string[]>([]);
-  const [valdaSpecar, setValdaSpecar] = useState<any[]>([]);
-  const [localAnställda, setLocalAnställda] = useState<any[]>([]);
-  const [utlaggMap, setUtlaggMap] = useState<Record<number, any[]>>({});
+  const [valdaSpecar, setValdaSpecar] = useState<LönespecData[]>([]);
+  const [localAnställda, setLocalAnställda] = useState<AnställdListItem[]>([]);
+  const [utlaggMap, setUtlaggMap] = useState<Record<number, UtläggData[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
   const [företagsprofil, setFöretagsprofil] = useState<unknown>(null);
 
@@ -129,7 +132,7 @@ export const useLonekorning = ({
     };
   };
 
-  const loadLönekörningSpecar = async () => {
+  const loadLönekörningSpecar = useCallback(async () => {
     if (!valdLonekorning) return;
 
     try {
@@ -148,7 +151,7 @@ export const useLonekorning = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [valdLonekorning]);
 
   const handleTaBortLönekörning = async () => {
     if (!valdLonekorning) return;
@@ -214,13 +217,13 @@ export const useLonekorning = ({
 
       const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
       const utlaggResults = await Promise.all(utlaggPromises);
-      const utlaggMap: Record<number, any[]> = {};
+      const utlaggMap: Record<number, UtläggData[]> = {};
       anstallda.forEach((a, idx) => {
         utlaggMap[a.id] = utlaggResults[idx];
       });
       setUtlaggMap(utlaggMap);
 
-      const grupperat: Record<string, any[]> = {};
+      const grupperat: Record<string, LönespecData[]> = {};
       specar.forEach((spec) => {
         if (spec.utbetalningsdatum) {
           if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
@@ -228,7 +231,7 @@ export const useLonekorning = ({
         }
       });
       const grupperatUtanTomma = Object.fromEntries(
-        Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+        Object.entries(grupperat).filter(([, list]) => list.length > 0)
       );
       const datumSort = Object.keys(grupperatUtanTomma).sort(
         (a, b) => new Date(b).getTime() - new Date(a).getTime()
@@ -280,9 +283,12 @@ export const useLonekorning = ({
           message: `Fel vid bokföring: ${result.error || "Okänt fel"}`,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Fel vid bokföring av skatter:", error);
-      setSkatteToast({ type: "error", message: `Fel vid bokföring: ${error?.message || error}` });
+      setSkatteToast({
+        type: "error",
+        message: `Fel vid bokföring: ${error instanceof Error ? error.message : String(error)}`,
+      });
     } finally {
       setSkatteBokförPågår(false);
     }
@@ -372,13 +378,13 @@ export const useLonekorning = ({
 
           const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
           const utlaggResults = await Promise.all(utlaggPromises);
-          const utlaggMap: Record<number, any[]> = {};
+          const utlaggMap: Record<number, UtläggData[]> = {};
           anstallda.forEach((a, idx) => {
             utlaggMap[a.id] = utlaggResults[idx];
           });
           setUtlaggMap(utlaggMap);
 
-          const grupperat: Record<string, any[]> = {};
+          const grupperat: Record<string, LönespecData[]> = {};
           specar.forEach((spec) => {
             if (spec.utbetalningsdatum) {
               if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
@@ -386,7 +392,7 @@ export const useLonekorning = ({
             }
           });
           const grupperatUtanTomma = Object.fromEntries(
-            Object.entries(grupperat).filter(([_, list]) => list.length > 0)
+            Object.entries(grupperat).filter(([, list]) => list.length > 0)
           );
           const datumSort = Object.keys(grupperatUtanTomma).sort(
             (a, b) => new Date(b).getTime() - new Date(a).getTime()
@@ -421,13 +427,14 @@ export const useLonekorning = ({
     if (valdLonekorning) {
       loadLönekörningSpecar();
     }
-  }, [valdLonekorning]);
+  }, [valdLonekorning, loadLönekörningSpecar]);
 
   // Lista mode effect
   useEffect(() => {
     if (enableListMode) {
       loadLonekorningar();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableListMode, refreshTrigger, internalRefreshTrigger]);
 
   // New lönekörning modal effect
@@ -456,7 +463,7 @@ export const useLonekorning = ({
   const skatteData = beräknaSkatteData();
 
   // Prepare batch data for mailing
-  const prepareBatchData = (specData: any[], allEmployees: any[]) => {
+  const prepareBatchData = (specData: LönespecData[], allEmployees: AnställdListItem[]) => {
     return specData
       .map((spec) => {
         const anställd = allEmployees.find((a) => a.id === spec.anställd_id);
@@ -495,7 +502,7 @@ export const useLonekorning = ({
   );
 
   // Lista mode functions
-  const loadLonekorningar = async () => {
+  const loadLonekorningar = useCallback(async () => {
     if (!enableListMode) return;
 
     try {
@@ -514,7 +521,7 @@ export const useLonekorning = ({
     } finally {
       setListLoading(false);
     }
-  };
+  }, [enableListMode]);
 
   const formatPeriodName = (period: string): string => {
     const [år, månad] = period.split("-");
@@ -547,7 +554,7 @@ export const useLonekorning = ({
   };
 
   // Spec lista mode functions
-  const specListHandleTaBortLönespec = async (spec: any) => {
+  const specListHandleTaBortLönespec = async (spec: LönespecData) => {
     if (onSpecListTaBortSpec) {
       await onSpecListTaBortSpec(spec.id);
       return;

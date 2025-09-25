@@ -82,6 +82,7 @@ export function BokforProvider({ children }: BokforProviderProps) {
       },
       handlers: {
         resetAllFields: bokforData.resetAllFields,
+        handleNewBokforing: bokforData.resetAllFields, // Alias för "Bokför något nytt" knappen
         exitLevfaktMode: bokforData.exitLevfaktMode,
         goToStep: bokforData.goToStep,
         nextStep: bokforData.nextStep,
