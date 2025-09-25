@@ -159,7 +159,27 @@ export function useMailaLonespec({
     const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
     formData.append("pdf", pdfFile);
     formData.append("email", mail);
-    formData.append("namn", `${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`);
+
+    // Använd det fullständiga namnet från anställd.namn eller fallback till för+efternamn
+    const fullNameFromNamn = (item.anställd?.namn || "").toString().trim();
+    const firstName = (item.anställd?.förnamn || "").toString().trim();
+    const lastName = (item.anställd?.efternamn || "").toString().trim();
+
+    let finalName = "";
+    if (fullNameFromNamn) {
+      finalName = fullNameFromNamn;
+    } else {
+      const nameParts = [firstName, lastName].filter((name) => name.length > 0);
+      finalName = nameParts.length > 0 ? nameParts.join(" ") : "Anställd";
+    }
+
+    console.log("Debug namn (hook):", {
+      fullNameFromNamn,
+      firstName,
+      lastName,
+      finalName,
+    });
+    formData.append("namn", finalName);
 
     const res = await fetch("/api/email/send-lonespec", { method: "POST", body: formData });
     if (!res.ok) {

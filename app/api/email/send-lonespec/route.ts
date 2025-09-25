@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
     const email = rawEmail?.trim();
     const namn = sanitizeText(rawNamn);
 
+    console.log("Processed namn:", {
+      original: rawNamn,
+      sanitized: namn,
+      length: namn.length,
+    });
+
     // Validera inputs
     if (!email || !isValidEmail(email)) {
       console.error("Invalid email:", email);
@@ -72,8 +78,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (!namn || namn.length < 1) {
-      console.error("Invalid namn:", namn);
-      return NextResponse.json({ error: "Namn krävs" }, { status: 400 });
+      console.error("Invalid namn - received:", `'${rawNamn}' -> '${namn}'`);
+      return NextResponse.json(
+        {
+          error:
+            "Namn krävs för att skicka lönespecifikation. Kontrollera att anställds för- och efternamn är ifyllt.",
+        },
+        { status: 400 }
+      );
     }
 
     if (!pdfFile || pdfFile.type !== "application/pdf") {
