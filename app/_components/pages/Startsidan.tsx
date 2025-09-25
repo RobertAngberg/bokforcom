@@ -1,10 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
+
+// Custom hook för scroll animationer
+function useScrollAnimation() {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        console.log("Intersection observed:", entry.isIntersecting, "for element:", entry.target);
+        if (entry.isIntersecting) {
+          console.log("Element became visible - triggering animation");
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1, // Trigger när 10% av elementet är synligt
+      }
+    );
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
+
+  return { ref, isVisible };
+}
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const animation1 = useScrollAnimation();
+  const animation2 = useScrollAnimation();
+  const animation3 = useScrollAnimation();
+  const animation4 = useScrollAnimation();
+  const animation5 = useScrollAnimation();
+  const animation6 = useScrollAnimation();
+  const animation7 = useScrollAnimation();
+  const animation8 = useScrollAnimation();
+  const animation9 = useScrollAnimation();
+  const animation10 = useScrollAnimation();
+  const animation11 = useScrollAnimation();
+  const animation12 = useScrollAnimation();
 
   const handleGetStarted = () => {
     setIsLoading(true);
@@ -55,7 +101,7 @@ export default function LandingPage() {
           );
         })}
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           0% {
             opacity: 0;
@@ -328,7 +374,7 @@ export default function LandingPage() {
               <span className="text-blue-400 block">Automatisk bokföring</span>
             </h1>
             <p className="text-3xl font-bold text-slate-200 mb-8">
-              Mindre tid vid datorn, mer tid i ditt företag
+              Bokföring, fakturering & lön - helt gratis för alltid!
             </p>
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl text-xl font-bold mb-8 inline-block shadow-lg">
               <span style={{ textShadow: "0px 1px 1px rgba(0,0,0,0.2)" }}>
@@ -395,6 +441,213 @@ export default function LandingPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">Rapporter</h3>
                 <p className="text-slate-300">
                   Få insikter med resultatrapporter, balansrapporter och SIE-export.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Animated Images Section */}
+          <section className="py-20">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-4xl font-bold text-white text-center mb-16">
+                Bokföring med förval
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Första animerade div */}
+                <div
+                  ref={animation1.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation1.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "0ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-blue-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Andra animerade div */}
+                <div
+                  ref={animation2.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation2.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "200ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-green-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Tredje animerade div */}
+                <div
+                  ref={animation3.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation3.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "400ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-orange-500 shadow-2xl h-80"></div>
+                </div>
+              </div>
+
+              {/* Text under första korten */}
+              <div className="text-center mt-12">
+                <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                  Stort bibliotek med förval som gör att du slipper hålla koll på konton och debet
+                  och kredit. Systemet hittar rätt konton automatiskt!
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Second Card Section */}
+          <section className="py-20">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-4xl font-bold text-white text-center mb-16">
+                Avancerad fakturahantering
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Första nya kort */}
+                <div
+                  ref={animation4.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation4.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "0ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-purple-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Andra nya kort */}
+                <div
+                  ref={animation5.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation5.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "200ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-pink-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Tredje nya kort */}
+                <div
+                  ref={animation6.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation6.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "400ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-cyan-500 shadow-2xl h-80"></div>
+                </div>
+              </div>
+
+              {/* Text under andra korten */}
+              <div className="text-center mt-12">
+                <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                  Skapa, skicka och bokför fakturor direkt från systemet.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Third Card Section */}
+          <section className="py-20">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-4xl font-bold text-white text-center mb-16">
+                Avancerade rapporter
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Första rapport kort */}
+                <div
+                  ref={animation7.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation7.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "0ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-indigo-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Andra rapport kort */}
+                <div
+                  ref={animation8.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation8.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "200ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-teal-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Tredje rapport kort */}
+                <div
+                  ref={animation9.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation9.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "400ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-emerald-500 shadow-2xl h-80"></div>
+                </div>
+              </div>
+
+              {/* Text under tredje korten */}
+              <div className="text-center mt-12">
+                <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                  Få full koll med rapporter
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Fourth Card Section */}
+          <section className="py-20">
+            <div className="max-w-7xl mx-auto">
+              <h2 className="text-4xl font-bold text-white text-center mb-16">
+                Komplett personalhantering
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Första personal kort */}
+                <div
+                  ref={animation10.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation10.isVisible
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "0ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-violet-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Andra personal kort */}
+                <div
+                  ref={animation11.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation11.isVisible
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "200ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-rose-500 shadow-2xl h-80"></div>
+                </div>
+
+                {/* Tredje personal kort */}
+                <div
+                  ref={animation12.ref}
+                  className={`transform transition-all duration-700 ease-out ${
+                    animation12.isVisible
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-24 opacity-0"
+                  }`}
+                  style={{ transitionDelay: "400ms" }}
+                >
+                  <div className="bg-white p-6 rounded-xl border-4 border-amber-500 shadow-2xl h-80"></div>
+                </div>
+              </div>
+
+              {/* Text under fjärde korten */}
+              <div className="text-center mt-12">
+                <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                  Skapa lönespecar, hantera anställda, sköt utlägg och kör lönekörning
                 </p>
               </div>
             </div>
