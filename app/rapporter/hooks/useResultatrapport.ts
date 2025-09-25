@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { formatSEK } from "../../_utils/format";
 import { hamtaResultatrapport, fetchFöretagsprofil } from "../actions/resultatrapportActions";
-import { ResultatKonto, KontoRad, ResultatData } from "../types/types";
+import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/types";
 
 export const useResultatrapport = () => {
   // Filter state
@@ -20,7 +20,7 @@ export const useResultatrapport = () => {
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedKonto, setSelectedKonto] = useState("");
-  const [verifikationer, setVerifikationer] = useState<any[]>([]);
+  const [verifikationer, setVerifikationer] = useState<Verifikation[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
 
   // Export state
@@ -38,7 +38,32 @@ export const useResultatrapport = () => {
           fetchFöretagsprofil(),
         ]);
 
-        setInitialData(resultData);
+        // Typ-konvertering från actions till ResultatData
+        const convertedData: ResultatData = {
+          ar: resultData.ar,
+          intakter: resultData.intakter.map((grupp) => ({
+            namn: grupp.namn,
+            konton: grupp.konton.map((konto) => konto as ResultatKonto),
+            summering: grupp.summering,
+          })),
+          rorelsensKostnader: resultData.rorelsensKostnader.map((grupp) => ({
+            namn: grupp.namn,
+            konton: grupp.konton.map((konto) => konto as ResultatKonto),
+            summering: grupp.summering,
+          })),
+          finansiellaIntakter: resultData.finansiellaIntakter?.map((grupp) => ({
+            namn: grupp.namn,
+            konton: grupp.konton.map((konto) => konto as ResultatKonto),
+            summering: grupp.summering,
+          })),
+          finansiellaKostnader: resultData.finansiellaKostnader.map((grupp) => ({
+            namn: grupp.namn,
+            konton: grupp.konton.map((konto) => konto as ResultatKonto),
+            summering: grupp.summering,
+          })),
+        };
+
+        setInitialData(convertedData);
         setFöretagsnamn(profilData?.företagsnamn ?? "");
         setOrganisationsnummer(profilData?.organisationsnummer ?? "");
       } catch (error) {
@@ -191,8 +216,8 @@ export const useResultatrapport = () => {
         data.intakter.forEach((grupp) => {
           csvRows.push(["", grupp.namn, "", "", ""]);
           grupp.konton.forEach((konto) => {
-            const prevValue = (konto as any).summering?.[previousYear] || 0;
-            const currValue = (konto as any).summering?.[currentYear] || 0;
+            const prevValue = (konto[previousYear] as number) || 0;
+            const currValue = (konto[currentYear] as number) || 0;
             const change = currValue - prevValue;
             csvRows.push([
               konto.kontonummer,
@@ -218,8 +243,8 @@ export const useResultatrapport = () => {
         data.rorelsensKostnader.forEach((grupp) => {
           csvRows.push(["", grupp.namn, "", "", ""]);
           grupp.konton.forEach((konto) => {
-            const prevValue = (konto as any).summering?.[previousYear] || 0;
-            const currValue = (konto as any).summering?.[currentYear] || 0;
+            const prevValue = (konto[previousYear] as number) || 0;
+            const currValue = (konto[currentYear] as number) || 0;
             const change = currValue - prevValue;
             csvRows.push([
               konto.kontonummer,

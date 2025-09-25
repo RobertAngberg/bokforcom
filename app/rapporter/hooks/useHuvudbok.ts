@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "../actions/huvudbokActions";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
-import { TransaktionData, HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
+import { HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
 
 export function useHuvudbok() {
   // State

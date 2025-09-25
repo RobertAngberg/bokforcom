@@ -5,6 +5,18 @@ import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
 
+// Typ för transaktionsdata
+interface TransaktionData {
+  transaktion_id: number;
+  datum: string;
+  beskrivning: string;
+  debet: number;
+  kredit: number;
+  verifikatNummer: string;
+  belopp: number;
+  sort_priority: number;
+}
+
 // SÄKERHETSVALIDERING: Logga huvudbok-åtkomst
 function logLedgerDataEvent(
   eventType: "access" | "violation" | "error",
@@ -347,7 +359,7 @@ export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
     // Bearbeta resultatet för att beräkna löpande saldon
     const huvudboksdata = result.rows.map((row) => {
       let lopandeSaldo = 0;
-      const transaktionerMedSaldo = row.transaktioner.map((trans: any) => {
+      const transaktionerMedSaldo = row.transaktioner.map((trans: TransaktionData) => {
         lopandeSaldo += trans.belopp;
         return {
           ...trans,

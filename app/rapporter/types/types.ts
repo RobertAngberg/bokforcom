@@ -10,6 +10,14 @@ export type Transaktion = {
   verifikatNummer?: string;
 };
 
+// Basic balance account type for raw data
+export type BasicBalanceAccount = {
+  kontonummer: string;
+  beskrivning: string;
+  saldo: number;
+  transaktioner?: Transaktion[];
+};
+
 // Balansrapport types
 export type Konto = {
   kontonummer: string;
@@ -17,17 +25,17 @@ export type Konto = {
   ingaendeSaldo: number;
   aretsResultat: number;
   utgaendeSaldo: number;
-  transaktioner: any[]; // Keep as any[] for flexibility with balance data
+  transaktioner: Transaktion[];
 };
 
 export type BalansData = {
   year: string;
-  ingaendeTillgangar: any[];
-  aretsTillgangar: any[];
-  utgaendeTillgangar: any[];
-  ingaendeSkulder: any[];
-  aretsSkulder: any[];
-  utgaendeSkulder: any[];
+  ingaendeTillgangar: BasicBalanceAccount[];
+  aretsTillgangar: BasicBalanceAccount[];
+  utgaendeTillgangar: BasicBalanceAccount[];
+  ingaendeSkulder: BasicBalanceAccount[];
+  aretsSkulder: BasicBalanceAccount[];
+  utgaendeSkulder: BasicBalanceAccount[];
   ingaendeResultat: number;
   aretsResultat: number;
   utgaendeResultat: number;
@@ -73,7 +81,18 @@ export type ResultatKonto = {
     transaktion_id: number;
     verifikatNummer: string;
   }>;
-  [year: string]: number | string | undefined | Array<any>;
+  [year: string]:
+    | number
+    | string
+    | undefined
+    | Array<{
+        id: string;
+        datum: string;
+        belopp: number;
+        beskrivning: string;
+        transaktion_id: number;
+        verifikatNummer: string;
+      }>;
 };
 
 export type KontoRad = {
@@ -100,3 +119,13 @@ export type ToastState = {
   type: "success" | "error" | "info";
   message: string;
 } | null;
+
+// Verifikat types
+export type Verifikation = {
+  id: string;
+  datum: string;
+  beskrivning: string;
+  debet: number;
+  kredit: number;
+  saldo: number;
+};

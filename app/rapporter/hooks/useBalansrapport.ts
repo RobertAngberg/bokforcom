@@ -1,7 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { fetchBalansData, fetchFöretagsprofil } from "../actions/balansrapportActions";
-import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
-import { Konto, BalansData, ExportMessage } from "../types/types";
+import {
+  BalansData,
+  Konto,
+  ExportMessage,
+  Verifikation,
+  BasicBalanceAccount,
+} from "../types/types";
 
 export function useBalansrapport() {
   // Step 1: Basic data state
@@ -24,7 +29,7 @@ export function useBalansrapport() {
   const [expandedKonto, setExpandedKonto] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedKonto, setSelectedKonto] = useState("");
-  const [verifikationer, setVerifikationer] = useState<any[]>([]);
+  const [verifikationer, setVerifikationer] = useState<Verifikation[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
 
   // Step 2: Data fetching
@@ -56,13 +61,13 @@ export function useBalansrapport() {
   }, [selectedYear, selectedMonth]);
 
   // Step 6: Data processing utilities
-  const createKontoMap = (rows: any[]) => {
+  const createKontoMap = (rows: BasicBalanceAccount[]) => {
     const map = new Map();
-    rows.forEach((row: any) => {
+    rows.forEach((row: BasicBalanceAccount) => {
       map.set(row.kontonummer, {
         kontonummer: row.kontonummer,
         beskrivning: row.beskrivning,
-        saldo: parseFloat(row.saldo || 0),
+        saldo: row.saldo || 0,
         transaktioner: row.transaktioner || [],
       });
     });
@@ -142,7 +147,7 @@ export function useBalansrapport() {
       .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
 
     // Skapa skulder och eget kapital array
-    let rawSkulderOchEgetKapital = Array.from(allaSkulderKonton)
+    const rawSkulderOchEgetKapital = Array.from(allaSkulderKonton)
       .map((kontonummer) => {
         const ing = ingaendeSkulderMap.get(kontonummer);
         const aret = aretsSkulderMap.get(kontonummer);
@@ -160,9 +165,7 @@ export function useBalansrapport() {
       .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
 
     // Beräkna obalans och justeringar (komplexe logik från komponenten)
-    const rawSumTillgangar = rawTillgangar.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
     const rawSumSkulderEK = rawSkulderOchEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
-    const obalans = rawSumTillgangar - rawSumSkulderEK;
 
     // Justera tillgångar med beskrivningar exakt som Bokio
     const adjustedTillgangar = rawTillgangar.map((konto) => ({

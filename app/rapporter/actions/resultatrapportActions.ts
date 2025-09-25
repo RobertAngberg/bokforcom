@@ -3,6 +3,21 @@ import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
 import { validateSessionAttempt } from "../../_utils/rateLimit";
 
+// Typ för kontodata
+interface KontoData {
+  kontonummer: string;
+  beskrivning: string;
+  transaktioner: Array<{
+    id: string;
+    datum: string;
+    belopp: number;
+    beskrivning: string;
+    transaktion_id: number;
+    verifikatNummer: string;
+  }>;
+  [year: string]: unknown; // För år-specifika belopp
+}
+
 // SÄKERHETSVALIDERING: Logga resultatrapport-åtkomst
 function logResultDataEvent(
   eventType: "access" | "violation" | "error",
@@ -62,19 +77,19 @@ export async function hamtaResultatrapport() {
     const rows = result.rows;
 
     const årsSet = new Set<string>();
-    const intakterMap = new Map<string, Map<string, any>>();
-    const rorelsensMap = new Map<string, Map<string, any>>();
-    const finansiellaIntakterMap = new Map<string, Map<string, any>>();
-    const finansiellaKostnaderMap = new Map<string, Map<string, any>>();
+    const intakterMap = new Map<string, Map<string, KontoData>>();
+    const rorelsensMap = new Map<string, Map<string, KontoData>>();
+    const finansiellaIntakterMap = new Map<string, Map<string, KontoData>>();
+    const finansiellaKostnaderMap = new Map<string, Map<string, KontoData>>();
 
     for (const row of rows) {
       const år = String(row.år);
       årsSet.add(år);
 
-      const { kontonummer, beskrivning, kontoklass, kategori, total_belopp, transaktioner } = row;
+      const { kontonummer, beskrivning, kategori, total_belopp, transaktioner } = row;
 
-      let målMap: Map<string, Map<string, any>> | null = null;
-      let grupp = kategori || "Övrigt"; // Gruppnamn = kategori
+      let målMap: Map<string, Map<string, KontoData>> | null = null;
+      const grupp = kategori || "Övrigt"; // Gruppnamn = kategori
 
       if (/^3/.test(kontonummer)) {
         målMap = intakterMap;
@@ -97,9 +112,12 @@ export async function hamtaResultatrapport() {
           beskrivning,
           transaktioner, // Lägg till transaktioner array
           [år]: total_belopp,
-        });
+        } as KontoData);
       } else {
-        kontoMap.get(kontonummer)[år] = (kontoMap.get(kontonummer)[år] || 0) + total_belopp;
+        const existingKonto = kontoMap.get(kontonummer);
+        if (existingKonto) {
+          existingKonto[år] = ((existingKonto[år] as number) || 0) + total_belopp;
+        }
       }
     }
 
@@ -107,13 +125,14 @@ export async function hamtaResultatrapport() {
       .sort((a, b) => b.localeCompare(a))
       .slice(0, 2);
 
-    const formatData = (map: Map<string, Map<string, any>>) =>
+    const formatData = (map: Map<string, Map<string, KontoData>>) =>
       Array.from(map.entries()).map(([namn, kontoMap]) => {
         const konton = Array.from(kontoMap.values());
         const summering: { [år: string]: number } = {};
         for (const konto of konton) {
           for (const år of years) {
-            summering[år] = (summering[år] || 0) + (konto[år] || 0);
+            const kontoValue = konto[år] as number;
+            summering[år] = (summering[år] || 0) + (kontoValue || 0);
           }
         }
         return { namn, konton, summering };

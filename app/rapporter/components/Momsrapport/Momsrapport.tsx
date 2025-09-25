@@ -3,11 +3,9 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 
-import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
 import Dropdown from "../../../_components/Dropdown";
 import Knapp from "../../../_components/Knapp";
 import { useMomsrapport } from "../../hooks/useMomsrapport";
-import { MomsRad } from "../../types/types";
 
 export default function Momsrapport() {
   const { data: sessionData, status: sessionStatus } = useSession();
@@ -82,46 +80,6 @@ export default function Momsrapport() {
       </div>
     );
   }
-
-  // Columns definition for table
-  const columns: ColumnDefinition<MomsRad>[] = [
-    {
-      key: "fält",
-      label: "Fält",
-      className: "w-16 text-center",
-    },
-    {
-      key: "beskrivning",
-      label: "Beskrivning",
-      className: "min-w-0",
-    },
-    {
-      key: "belopp",
-      label: "Belopp",
-      className: "w-32 text-right",
-      render: (_val, row) => {
-        const ärRuta49 = row.fält === "49";
-        const klass = ärRuta49
-          ? !ärKorrekt
-            ? "text-orange-500 font-bold"
-            : momsAttBetalaEllerFaTillbaka > 0
-              ? "text-orange-500 font-bold"
-              : "text-green-600 font-bold"
-          : "";
-
-        return (
-          <span className={klass}>
-            {new Intl.NumberFormat("sv-SE", {
-              style: "currency",
-              currency: "SEK",
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }).format(row.belopp)}
-          </span>
-        );
-      },
-    },
-  ];
 
   // Block generator helper function
   const spawnaBlock = (titel: string, fält: string[]) => {

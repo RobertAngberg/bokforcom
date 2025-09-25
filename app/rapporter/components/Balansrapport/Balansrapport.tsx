@@ -10,7 +10,33 @@ import VerifikatModal from "../../../_components/VerifikatModal";
 import Modal from "../../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
 import { useBalansrapport } from "../../hooks/useBalansrapport";
-import { Transaktion, Konto } from "../../types/types";
+import { Konto } from "../../types/types";
+
+// Typ för tabellrader
+interface TabellRad {
+  id: string;
+  kontonummer?: string;
+  beskrivning: string;
+  ingaendeSaldo?: number;
+  aretsResultat?: number;
+  utgaendeSaldo?: number;
+  datum?: string;
+  belopp?: number;
+  verifikatNummer?: string;
+  transaktion_id?: number;
+  isTransaction?: boolean;
+  isSummary?: boolean;
+}
+
+// Typ för verifikationsdata
+interface VerifikatRad {
+  id: string;
+  datum: string;
+  beskrivning: string;
+  debet: number;
+  kredit: number;
+  saldo: number;
+}
 
 export default function Balansrapport() {
   // Hook for all data and state management
@@ -23,7 +49,6 @@ export default function Balansrapport() {
     exportMessage,
     // Modal state
     verifikatId,
-    expandedKonto,
     showModal,
     selectedKonto,
     verifikationer,
@@ -33,20 +58,14 @@ export default function Balansrapport() {
     summaryData,
     categorizedData,
     formatSEK,
-    formatDaterat,
     // Actions
     setSelectedYear,
     setSelectedMonth,
-    setExportMessage,
     handleExportPDF,
     handleExportCSV,
     // Modal actions
     setVerifikatId,
-    setExpandedKonto,
     setShowModal,
-    setVerifikationer,
-    setLoadingModal,
-    handleShowVerifikationer,
   } = useBalansrapport();
 
   // Loading check
@@ -100,7 +119,7 @@ export default function Balansrapport() {
         ? visaSummaDirekt
         : konton.reduce((a, b) => a + b.utgaendeSaldo, 0);
 
-    const kolumner: ColumnDefinition<any>[] = [
+    const kolumner: ColumnDefinition<TabellRad>[] = [
       {
         key: "beskrivning",
         label: "Konto",
@@ -155,7 +174,7 @@ export default function Balansrapport() {
           if (row.isTransaction) {
             // Transaktionsbelopp ska vara under Resultat, inte Utg. balans
             // För vissa konton (moms konton) ska tecknet reverseras för att matcha Bokio
-            let belopp = row.belopp;
+            let belopp = row.belopp ?? 0;
             if (
               row.kontonummer &&
               (row.kontonummer.startsWith("26") || row.kontonummer.startsWith("264"))
@@ -182,7 +201,7 @@ export default function Balansrapport() {
     ];
 
     // Expandera konton till tabellrader med alla transaktioner
-    const tabellData: any[] = [];
+    const tabellData: TabellRad[] = [];
 
     konton.forEach((konto) => {
       // Lägg till kontorad
@@ -199,11 +218,14 @@ export default function Balansrapport() {
 
       // Lägg till alla transaktioner som separata rader
       if (konto.transaktioner && konto.transaktioner.length > 0) {
-        konto.transaktioner.forEach((transaktion, index) => {
+        konto.transaktioner.forEach((transaktion) => {
           tabellData.push({
             id: transaktion.id, // Använd transaktionens riktiga ID
-            datum: transaktion.datum,
-            beskrivning: transaktion.beskrivning,
+            datum:
+              typeof transaktion.datum === "string"
+                ? transaktion.datum
+                : transaktion.datum.toISOString(),
+            beskrivning: transaktion.beskrivning || "",
             belopp: transaktion.belopp,
             verifikatNummer: transaktion.verifikatNummer,
             transaktion_id: transaktion.transaktion_id,
@@ -243,7 +265,7 @@ export default function Balansrapport() {
     arets: number;
     utgaende: number;
   }) => {
-    const kolumner: ColumnDefinition<any>[] = [
+    const kolumner: ColumnDefinition<TabellRad>[] = [
       {
         key: "beskrivning",
         label: "Konto",
@@ -512,21 +534,23 @@ export default function Balansrapport() {
         ) : (
           <Tabell
             data={verifikationer}
-            columns={[
-              { key: "datum", label: "Datum", render: (value: any) => value },
-              { key: "beskrivning", label: "Beskrivning", render: (value: any) => value },
-              {
-                key: "debet",
-                label: "Debet",
-                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
-              },
-              {
-                key: "kredit",
-                label: "Kredit",
-                render: (value: any) => (value > 0 ? `${value}kr` : "−"),
-              },
-              { key: "saldo", label: "Saldo", render: (value: any) => `${value}kr` },
-            ]}
+            columns={
+              [
+                { key: "datum", label: "Datum", render: (value: string) => value },
+                { key: "beskrivning", label: "Beskrivning", render: (value: string) => value },
+                {
+                  key: "debet",
+                  label: "Debet",
+                  render: (value: number) => (value > 0 ? `${value}kr` : "−"),
+                },
+                {
+                  key: "kredit",
+                  label: "Kredit",
+                  render: (value: number) => (value > 0 ? `${value}kr` : "−"),
+                },
+                { key: "saldo", label: "Saldo", render: (value: number) => `${value}kr` },
+              ] as ColumnDefinition<VerifikatRad>[]
+            }
             getRowId={(row) => row.id}
           />
         )}
