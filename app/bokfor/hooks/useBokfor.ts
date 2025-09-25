@@ -1,22 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { loggaFavoritförval } from "../actions/actions";
 import { hämtaAllaAnställda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../actions/transactionActions";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate, datePickerOnChange } from "../../_utils/datum";
-import { formatCurrency, round } from "../../_utils/format";
 import { showToast } from "../../_components/Toast";
-import {
-  KontoRad,
-  Förval,
-  Anstalld,
-  UseAnstalldDropdownProps,
-  UtlaggAnställd,
-  UseForhandsgranskningProps,
-} from "../types/types";
-import { normalize } from "../../_utils/textUtils";
+import { Förval, Anstalld, UtlaggAnställd } from "../types/types";
 
 // Import nya extraherade hooks
 import { useForvalSok } from "./useForvalSok";
@@ -159,12 +148,11 @@ export function useBokfor() {
   const moms = +(safeBelopp * (momsSats / (1 + momsSats))).toFixed(2);
   const beloppUtanMoms = +(safeBelopp - moms).toFixed(2);
 
-  // Kolla om det är försäljning inom leverantörsfaktura-mode
+  // Kolla om det är försäljning (både i vanlig bokföring och leverantörsfaktura-mode)
   const ärFörsäljning =
-    levfaktMode &&
-    (valtFörval?.namn?.toLowerCase().includes("försäljning") ||
-      valtFörval?.typ?.toLowerCase().includes("intäkt") ||
-      valtFörval?.kategori?.toLowerCase().includes("försäljning"));
+    valtFörval?.namn?.toLowerCase().includes("försäljning") ||
+    valtFörval?.typ?.toLowerCase().includes("intäkt") ||
+    valtFörval?.kategori?.toLowerCase().includes("försäljning");
 
   // ====================================================
   // BERÄKNINGSFUNKTIONER
@@ -187,7 +175,7 @@ export function useBokfor() {
         return safeBelopp; // Kundfordringar vid försäljning
       }
 
-      if (klass === "1") return 0; // Tillgångar ska inte ha debet
+      if (klass === "1") return safeBelopp; // Tillgångar kan ha debet (ökning av tillgång)
       if (klass === "2") return ärFörsäljning ? 0 : moms; // Ingående moms
       if (klass === "3") return 0; // Intäkter ska inte ha debet
       if (klass === "4" || klass === "5" || klass === "6" || klass === "7" || klass === "8") {
