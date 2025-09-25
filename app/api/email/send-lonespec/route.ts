@@ -53,23 +53,9 @@ export async function POST(req: NextRequest) {
     const rawEmail = formData.get("email") as string;
     const rawNamn = formData.get("namn") as string;
 
-    console.log("Received request:", {
-      hasPdfFile: !!pdfFile,
-      pdfFileType: pdfFile?.type,
-      pdfFileSize: pdfFile?.size,
-      email: rawEmail,
-      namn: rawNamn,
-    });
-
     // Säker validering och sanitization
     const email = rawEmail?.trim();
     const namn = sanitizeText(rawNamn);
-
-    console.log("Processed namn:", {
-      original: rawNamn,
-      sanitized: namn,
-      length: namn.length,
-    });
 
     // Validera inputs
     if (!email || !isValidEmail(email)) {

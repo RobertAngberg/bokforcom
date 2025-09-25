@@ -173,12 +173,6 @@ export function useMailaLonespec({
       finalName = nameParts.length > 0 ? nameParts.join(" ") : "Anställd";
     }
 
-    console.log("Debug namn (hook):", {
-      fullNameFromNamn,
-      firstName,
-      lastName,
-      finalName,
-    });
     formData.append("namn", finalName);
 
     const res = await fetch("/api/email/send-lonespec", { method: "POST", body: formData });
