@@ -1,3 +1,4 @@
+import { Session } from "next-auth";
 import { getSessionAndUserId } from "./authUtils";
 import { logError } from "./errorUtils";
 
@@ -8,8 +9,8 @@ import { logError } from "./errorUtils";
 export async function ensureSession() {
   const { session, userId } = await getSessionAndUserId();
   if (!session?.user?.email) {
-    const error = new Error("NO_SESSION");
-    (error as any).code = "NO_SESSION";
+    const error = new Error("NO_SESSION") as Error & { code: string };
+    error.code = "NO_SESSION";
     throw error;
   }
   return { session, userId };
@@ -18,11 +19,11 @@ export async function ensureSession() {
 /**
  * Wrapper som returnerar null istället för att kasta, om session saknas.
  */
-export async function tryGetSession(): Promise<{ session: any; userId: string | number } | null> {
+export async function tryGetSession(): Promise<{ session: Session; userId: number } | null> {
   try {
     return await ensureSession();
-  } catch (e: any) {
-    if (e?.code !== "NO_SESSION") {
+  } catch (e: unknown) {
+    if (e instanceof Error && (e as Error & { code?: string }).code !== "NO_SESSION") {
       logError(e, "tryGetSession");
     }
     return null;
