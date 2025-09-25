@@ -317,7 +317,7 @@ export async function markeraStegFärdigt(lönekörningId: number): Promise<{
     }
 
     const nuvarandeSteg = parseInt(hämtaResult.rows[0].aktivt_steg) || 1;
-    const nyttSteg = Math.min(nuvarandeSteg + 1, 4); // Max 4 steg
+    const nyttSteg = Math.min(nuvarandeSteg + 1, 5); // Max 5 (steg 5 = helt färdig)
 
     // Uppdatera aktivt_steg
     const uppdateraQuery = `

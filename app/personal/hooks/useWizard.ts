@@ -41,13 +41,9 @@ export function useWizard({
         title: "Maila",
         description: "Skicka lönespecar",
         buttonText: "✉️ Maila lönespecar",
-        completed: !!lönekörning?.mailade_datum,
+        completed: aktivtSteg > 1, // Färdigt om vi gått till steg 2+
         enabled: aktivtSteg >= 1,
-        status: !!lönekörning?.mailade_datum
-          ? "completed"
-          : aktivtSteg >= 1
-            ? "available"
-            : "disabled",
+        status: aktivtSteg > 1 ? "completed" : aktivtSteg >= 1 ? "available" : "disabled",
         issues: [],
         onClick: onMaila,
       },
@@ -56,13 +52,9 @@ export function useWizard({
         title: "AGI",
         description: "Generera deklaration",
         buttonText: "� Generera AGI",
-        completed: !!lönekörning?.agi_genererad_datum,
+        completed: aktivtSteg > 2, // Färdigt om vi gått till steg 3+
         enabled: aktivtSteg >= 2,
-        status: !!lönekörning?.agi_genererad_datum
-          ? "completed"
-          : aktivtSteg >= 2
-            ? "available"
-            : "disabled",
+        status: aktivtSteg > 2 ? "completed" : aktivtSteg >= 2 ? "available" : "disabled",
         issues: [],
         onClick: onGenereraAGI,
       },
@@ -71,13 +63,9 @@ export function useWizard({
         title: "Bokför",
         description: "Registrera i bokföring",
         buttonText: "� Bokför",
-        completed: !!lönekörning?.bokford_datum,
+        completed: aktivtSteg > 3, // Färdigt om vi gått till steg 4+
         enabled: aktivtSteg >= 3,
-        status: !!lönekörning?.bokford_datum
-          ? "completed"
-          : aktivtSteg >= 3
-            ? "available"
-            : "disabled",
+        status: aktivtSteg > 3 ? "completed" : aktivtSteg >= 3 ? "available" : "disabled",
         issues: [],
         onClick: onBokför,
       },
@@ -86,18 +74,14 @@ export function useWizard({
         title: "Skatter",
         description: "Bokför skatter",
         buttonText: "💰 Bokför skatter",
-        completed: !!lönekörning?.skatter_bokforda_datum,
+        completed: aktivtSteg > 4, // Färdigt om lönekörningen är helt klar
         enabled: aktivtSteg >= 4,
-        status: !!lönekörning?.skatter_bokforda_datum
-          ? "completed"
-          : aktivtSteg >= 4
-            ? "available"
-            : "disabled",
+        status: aktivtSteg > 4 ? "completed" : aktivtSteg >= 4 ? "available" : "disabled",
         issues: [],
         onClick: onBokförSkatter,
       },
     ],
-    [lönekörning, aktivtSteg, onMaila, onBokför, onGenereraAGI, onBokförSkatter]
+    [aktivtSteg, onMaila, onBokför, onGenereraAGI, onBokförSkatter]
   );
 
   // Progress
