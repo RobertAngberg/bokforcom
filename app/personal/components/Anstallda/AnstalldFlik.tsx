@@ -30,13 +30,29 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
             <Information
               state={{
                 valdAnställd: anställd,
-                // Andra states kommer att laddas via hooks inom Information komponenten
+                personalIsEditing: false,
+                personalHasChanges: false,
+                personalErrorMessage: null,
+                personalEditData: {
+                  förnamn: "",
+                  efternamn: "",
+                  personnummer: "",
+                  jobbtitel: "",
+                  clearingnummer: "",
+                  bankkonto: "",
+                  mail: "",
+                  adress: "",
+                  postnummer: "",
+                  ort: "",
+                },
               }}
-              handlers={
-                {
-                  // Information komponenten kan hantera sin egen state
-                }
-              }
+              handlers={{
+                personalOnEdit: () => console.log("Edit clicked"),
+                personalOnSave: () => console.log("Save clicked"),
+                personalOnCancel: () => console.log("Cancel clicked"),
+                personalOnChange: (name: string, value: string) =>
+                  console.log("Change:", name, value),
+              }}
             />
           </AnimeradFlik>
 

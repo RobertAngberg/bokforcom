@@ -13,6 +13,13 @@ export interface ExtraradResult {
   error?: string;
 }
 
+export interface ModalFields {
+  kolumn1?: string | null;
+  kolumn2?: string | null;
+  kolumn3?: string | null;
+  kolumn4?: string | null;
+}
+
 export interface UtläggData {
   id: number;
   beskrivning: string;
@@ -699,18 +706,41 @@ export interface SemesterRecord {
   skapad_av: number;
 }
 
+export interface InformationState {
+  valdAnställd: AnställdData | null;
+  personalIsEditing: boolean;
+  personalHasChanges: boolean;
+  personalErrorMessage: string | null;
+  personalEditData: PersonalEditData;
+}
+
+export interface InformationHandlers {
+  personalOnEdit: () => void;
+  personalOnSave: () => void;
+  personalOnCancel: () => void;
+  personalOnChange: (name: string, value: string) => void;
+}
+
+export interface AnställdaListaState {
+  anställda: AnställdListItem[];
+}
+
+export interface AnställdaListaHandlers {
+  [key: string]: unknown; // Flexible handlers for employee actions
+}
+
 export interface AnställdaListaProps {
-  state: any;
-  handlers: any;
+  state: AnställdaListaState;
+  handlers: AnställdaListaHandlers;
 }
 
 export interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
-  handlers: any;
+  handlers: AnställdaListaHandlers;
 }
 
 export interface InformationProps {
-  state: any;
-  handlers: any;
+  state: InformationState;
+  handlers: InformationHandlers;
 }
 
 // Lonespecar interfaces
@@ -1055,8 +1085,16 @@ export interface BokföringsRegel {
 export interface RadKonfiguration {
   label: string;
   enhet: string;
-  beräknaVärde?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
-  beräknaTotalt?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
+  beräknaVärde?: (
+    grundlön: number,
+    modalFields?: ModalFields,
+    arbetstimmarPerVecka?: number
+  ) => number;
+  beräknaTotalt?: (
+    grundlön: number,
+    modalFields?: ModalFields,
+    arbetstimmarPerVecka?: number
+  ) => number;
   negativtBelopp?: boolean;
   skattepliktig?: boolean;
   läggTillINettolön?: boolean;

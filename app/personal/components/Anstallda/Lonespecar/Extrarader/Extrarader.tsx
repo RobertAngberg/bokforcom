@@ -4,14 +4,14 @@ import AnimeradFlik from "../../../../../_components/AnimeradFlik";
 import ExtraraderModal from "./ExtraraderModal";
 import ExtraraderSökning from "./ExtraraderSokning";
 import ExtraraderGrid from "./ExtraraderGrid";
-import { sparaExtrarad, läggTillUtläggILönespec } from "../../../../actions/lonespecarActions";
+import { sparaExtrarad } from "../../../../actions/lonespecarActions";
 import {
   beräknaSumma,
-  formatKolumn2Värde,
   initializeModalFields,
   getFieldsForRow,
 } from "../../../../utils/extraraderUtils";
 import { useState } from "react";
+import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
 
 export default function ExtraRader({
   lönespecId,
@@ -40,25 +40,6 @@ export default function ExtraRader({
     enhet: "",
   });
   const [sökterm, setSökterm] = useState("");
-  const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
-
-  const läggTillUtlägg = async () => {
-    if (!lönespecId) return;
-    setLäggerTillUtlägg(true);
-    try {
-      const result = await läggTillUtläggILönespec(lönespecId);
-      if (result.success) {
-        console.log(`✅ Lade till ${result.count} utlägg`);
-        onNyRad(); // Uppdatera vyn
-      } else {
-        console.error("❌ Kunde inte lägga till utlägg:", result.error);
-      }
-    } catch (error) {
-      console.error("❌ Fel vid tillägg av utlägg:", error);
-    } finally {
-      setLäggerTillUtlägg(false);
-    }
-  };
 
   const toggleDropdown = (key: string) => {
     setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -116,21 +97,18 @@ export default function ExtraRader({
             const match = kolumn2Value.match(/\d+(\.\d+)?/);
             kolumn2Value = match ? match[0] : "";
           }
-          // Validera typ mot RAD_KONFIGURATIONER
-          const radKonfigKeys = Object.keys(
-            require("../../../../utils/extraradDefinitioner").RAD_KONFIGURATIONER
-          );
+          const radKonfigKeys = Object.keys(RAD_KONFIGURATIONER);
           let typValue = modalRow?.id ?? "";
           if (!radKonfigKeys.includes(typValue)) {
             console.warn("⚠️ Felaktig typ vid sparande av extrarad:", typValue);
             typValue = "";
           }
           // Sätt alltid enhet till 'Timme' för obetald frånvaro
-          let modalFieldsToSave = { ...modalFields };
+          const modalFieldsToSave = { ...modalFields };
           if (typValue === "obetaldFranvaro") {
             modalFieldsToSave.enhet = "Timme";
           }
-          let kolumn3Value = beräknaSumma(typValue, modalFieldsToSave, grundlön);
+          const kolumn3Value = beräknaSumma(typValue, modalFieldsToSave, grundlön);
           const dataToSave = {
             lönespecifikation_id: lönespecId,
             typ: typValue,

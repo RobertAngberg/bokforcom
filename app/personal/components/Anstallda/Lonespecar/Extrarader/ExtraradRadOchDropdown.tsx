@@ -4,9 +4,7 @@ import type { ExtraradRadOchDropdownProps } from "../../../../types/types";
 
 export default function ExtraradRadOchDropdown({
   label,
-  checked,
   toggle,
-  onRemove,
   isDropdown = false,
   open = false,
   onToggleDropdown,

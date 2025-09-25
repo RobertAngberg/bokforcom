@@ -17,7 +17,7 @@ export default function AnställdaLista({ state, handlers }: AnställdaListaProp
           </tr>
         </thead>
         <tbody>
-          {state.anställda.map((anställd: any) => (
+          {state.anställda.map((anställd) => (
             <AnställdaRad key={anställd.id} anställd={anställd} handlers={handlers} />
           ))}
         </tbody>

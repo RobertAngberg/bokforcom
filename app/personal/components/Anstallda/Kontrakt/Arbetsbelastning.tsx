@@ -10,7 +10,6 @@ import { ArbetsbelastningProps } from "../../../types/types";
 export default function Arbetsbelastning({
   editData,
   handleChange,
-  anställd,
   viewMode,
   options,
   display,

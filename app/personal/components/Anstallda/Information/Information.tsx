@@ -41,16 +41,16 @@ export default function Information({ state, handlers }: InformationProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {(
             [
-              ["Förnamn", (visningsAnställd as any).förnamn],
-              ["Efternamn", (visningsAnställd as any).efternamn],
-              ["Personnummer", (visningsAnställd as any).personnummer],
-              ["Jobbtitel", (visningsAnställd as any).jobbtitel],
-              ["Clearingnummer", (visningsAnställd as any).clearingnummer],
-              ["Bankkonto", (visningsAnställd as any).bankkonto],
-              ["Mail", (visningsAnställd as any).mail],
-              ["Adress", (visningsAnställd as any).adress],
-              ["Postnummer", (visningsAnställd as any).postnummer],
-              ["Ort", (visningsAnställd as any).ort],
+              ["Förnamn", visningsAnställd.förnamn],
+              ["Efternamn", visningsAnställd.efternamn],
+              ["Personnummer", visningsAnställd.personnummer],
+              ["Jobbtitel", visningsAnställd.jobbtitel],
+              ["Clearingnummer", visningsAnställd.clearingnummer],
+              ["Bankkonto", visningsAnställd.bankkonto],
+              ["Mail", visningsAnställd.mail],
+              ["Adress", visningsAnställd.adress],
+              ["Postnummer", visningsAnställd.postnummer],
+              ["Ort", visningsAnställd.ort],
             ] as const
           ).map(([label, value]) => (
             <div key={label} className="bg-slate-800 p-6 rounded-lg">

@@ -5,17 +5,23 @@ import {
   beräknaKarensavdrag,
   beräknaDaglön,
   beräknaObetaldDag,
-  beräknaTimlön,
   beräknaSemesterLön,
-  beräknaSemesterersättning,
-  beräknaSemesterlönPerDag,
 } from "../loneberakningar";
+import { ModalFields } from "../../../../types/types";
 
 export interface RadKonfiguration {
   label: string;
   enhet: string;
-  beräknaVärde?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
-  beräknaTotalt?: (grundlön: number, modalFields?: any, arbetstimmarPerVecka?: number) => number;
+  beräknaVärde?: (
+    grundlön: number,
+    modalFields?: ModalFields,
+    arbetstimmarPerVecka?: number
+  ) => number;
+  beräknaTotalt?: (
+    grundlön: number,
+    modalFields?: ModalFields,
+    arbetstimmarPerVecka?: number
+  ) => number;
   negativtBelopp?: boolean;
   skattepliktig?: boolean;
   läggTillINettolön?: boolean;
@@ -36,7 +42,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Karensavdrag",
     enhet: "st",
     beräknaVärde: (grundlön) => beräknaKarensavdrag(grundlön),
-    beräknaTotalt: (grundlön, antal) => beräknaKarensavdrag(grundlön) * antal,
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaKarensavdrag(grundlön) * parseFloat(modalFields?.kolumn2 || "0"),
     negativtBelopp: true,
     fält: {
       antalLabel: "Antal",
@@ -50,7 +57,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Obetalda dagar",
     enhet: "dagar",
     beräknaVärde: (grundlön) => beräknaObetaldDag(grundlön),
-    beräknaTotalt: (grundlön, antal) => beräknaObetaldDag(grundlön) * antal,
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaObetaldDag(grundlön) * parseFloat(modalFields?.kolumn2 || "0"),
     negativtBelopp: true,
     fält: {
       antalLabel: "Antal dagar",
@@ -64,7 +72,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Reducerade dagar",
     enhet: "dagar",
     beräknaVärde: (grundlön) => beräknaDaglön(grundlön) * 0.2,
-    beräknaTotalt: (grundlön, antal) => beräknaDaglön(grundlön) * 0.2 * antal,
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaDaglön(grundlön) * 0.2 * parseFloat(modalFields?.kolumn2 || "0"),
     negativtBelopp: true,
     fält: {
       antalLabel: "Antal dagar",
@@ -78,7 +87,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Vård av sjukt barn",
     enhet: "dagar",
     beräknaVärde: (grundlön) => beräknaDaglön(grundlön),
-    beräknaTotalt: (grundlön, antal) => beräknaDaglön(grundlön) * antal,
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaDaglön(grundlön) * parseFloat(modalFields?.kolumn2 || "0"),
     negativtBelopp: true,
     fält: {
       antalLabel: "Antal dagar",
@@ -92,7 +102,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Föräldraledighet",
     enhet: "dagar",
     beräknaVärde: (grundlön) => beräknaDaglön(grundlön),
-    beräknaTotalt: (grundlön, antal) => beräknaDaglön(grundlön) * antal,
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaDaglön(grundlön) * parseFloat(modalFields?.kolumn2 || "0"),
     negativtBelopp: true,
     fält: {
       antalLabel: "Antal dagar",
@@ -159,7 +170,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "mål",
     skattepliktig: true,
     beräknaVärde: () => 61,
-    beräknaTotalt: (grundlön, antal) => 61 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 61 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Antal mål",
       antalPlaceholder: "Ange antal mål",
@@ -173,7 +184,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "mål",
     skattepliktig: true,
     beräknaVärde: () => 122,
-    beräknaTotalt: (grundlön, antal) => 122 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 122 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Antal mål",
       antalPlaceholder: "Ange antal mål",
@@ -187,7 +198,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "dagar",
     skattepliktig: true,
     beräknaVärde: () => 305,
-    beräknaTotalt: (grundlön, antal) => 305 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 305 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Antal dagar",
       antalPlaceholder: "Ange antal dagar",
@@ -201,7 +212,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kvm",
     skattepliktig: true,
     beräknaVärde: () => 135,
-    beräknaTotalt: (grundlön, antal) => 135 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 135 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Kvadratmeter",
       antalPlaceholder: "Ange antal kvm",
@@ -280,7 +291,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "km",
     skattepliktig: false,
     beräknaVärde: () => 2.5,
-    beräknaTotalt: (grundlön, antal) => 2.5 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 2.5 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Kilometer",
       antalPlaceholder: "Ange antal kilometer",
@@ -294,7 +305,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "km",
     skattepliktig: false,
     beräknaVärde: () => 1.2,
-    beräknaTotalt: (grundlön, antal) => 1.2 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 1.2 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Kilometer",
       antalPlaceholder: "Ange antal kilometer",
@@ -308,7 +319,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "km",
     skattepliktig: false,
     beräknaVärde: () => 0.95,
-    beräknaTotalt: (grundlön, antal) => 0.95 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 0.95 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Kilometer",
       antalPlaceholder: "Ange antal kilometer",
@@ -335,7 +346,7 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     skattepliktig: true,
     läggTillIBruttolön: true, // <-- NYTT!
     beräknaVärde: () => 150.5,
-    beräknaTotalt: (grundlön, antal) => 150.5 * antal,
+    beräknaTotalt: (grundlön, modalFields) => 150.5 * parseFloat(modalFields?.kolumn2 || "0"),
     fält: {
       antalLabel: "Antal dagar",
       antalPlaceholder: "Ange antal dagar",
@@ -363,8 +374,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
-    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
+    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
+    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",
@@ -391,8 +402,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
-    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2) || 0,
+    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
+    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",
@@ -429,7 +440,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     label: "Betald semester",
     enhet: "dagar",
     beräknaVärde: (grundlön) => beräknaSemesterLön(grundlön, 1),
-    beräknaTotalt: (grundlön, antal) => beräknaSemesterLön(grundlön, antal),
+    beräknaTotalt: (grundlön, modalFields) =>
+      beräknaSemesterLön(grundlön, parseFloat(modalFields?.kolumn2 || "0")),
     negativtBelopp: false,
     fält: {
       antalLabel: "Antal dagar",
