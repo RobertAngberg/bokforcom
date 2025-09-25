@@ -75,7 +75,7 @@ export function useSkickaEpost() {
           customMessage: egetMeddelande.trim(), // Skicka med det egna meddelandet
         };
 
-        const response = await fetch("/api/send", {
+        const response = await fetch("/api/email/send", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

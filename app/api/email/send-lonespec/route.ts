@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { emailRateLimit, createRateLimitIdentifier } from "../../_utils/rateLimit";
+import { emailRateLimit, createRateLimitIdentifier } from "../../../_utils/rateLimit";
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
 
     // Säker email-sending utan känslig logging
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: "info@xn--bokfr-mua.com",
       to: email,
       subject: "Din lönespecifikation",
@@ -109,8 +109,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, message: "Lönespecifikation skickad" });
-  } catch (err: any) {
-    console.error("API error:", err.message); // Logga bara felmeddelande
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("API error:", errorMessage); // Logga bara felmeddelande
     return NextResponse.json({ error: "Ett fel uppstod vid skickande av e-post" }, { status: 500 });
   }
 }

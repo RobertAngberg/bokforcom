@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import EmailTemplate from "./EmailTemplate";
-import { emailRateLimit, createRateLimitIdentifier } from "../../_utils/rateLimit";
-
-const DEV_EMAIL = "info@xn--bokfr-mua.com";
+import { emailRateLimit, createRateLimitIdentifier } from "../../../_utils/rateLimit";
 
 // Säker email-validering
 function isValidEmail(email: string): boolean {
@@ -89,6 +87,7 @@ export async function POST(request: Request) {
       console.log("📧 Skickar faktura email"); // Logga bara i development
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const emailOptions: any = {
       from: process.env.RESEND_FROM_EMAIL || "Faktura <onboarding@resend.dev>",
       to: [customerEmail], // ← ÄNDRAT: Skicka alltid till kundens email
@@ -123,8 +122,9 @@ export async function POST(request: Request) {
       data,
       message: `E-post skickad`,
     });
-  } catch (error: any) {
-    console.error("Server error:", error.message); // Logga bara felmeddelande
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Server error:", errorMessage); // Logga bara felmeddelande
     return NextResponse.json({ error: "Fel vid skickande av e-post" }, { status: 500 });
   }
 }

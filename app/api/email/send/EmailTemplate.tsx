@@ -1,8 +1,29 @@
 import * as React from "react";
 
+interface FakturaArtikel {
+  antal?: string | number;
+  prisPerEnhet?: string | number;
+  moms?: string | number;
+  valuta?: string;
+}
+
+interface Faktura {
+  fakturanummer?: string;
+  fakturadatum?: string;
+  forfallodatum?: string;
+  betalningsmetod?: string;
+  bankinfo?: string;
+  företagsnamn?: string;
+  adress?: string;
+  postnummer?: string;
+  stad?: string;
+  organisationsnummer?: string;
+  artiklar?: FakturaArtikel[];
+}
+
 interface EmailTemplateProps {
   firstName: string;
-  faktura?: any;
+  faktura?: Faktura;
   customMessage?: string;
 }
 
@@ -18,8 +39,8 @@ function escapeHtml(text: string): string {
 }
 
 // Säker formatering av tal
-function safeToFixed(num: any, decimals: number = 2): string {
-  const parsed = parseFloat(num);
+function safeToFixed(num: string | number | undefined, decimals: number = 2): string {
+  const parsed = parseFloat(String(num || 0));
   return isFinite(parsed) ? parsed.toFixed(decimals) : "0.00";
 }
 
@@ -30,17 +51,17 @@ const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
 }) => {
   // Säker beräkning av totalsumma
   const totalExMoms =
-    faktura?.artiklar?.reduce((sum: number, item: any) => {
-      const antal = parseFloat(item?.antal) || 0;
-      const pris = parseFloat(item?.prisPerEnhet) || 0;
+    faktura?.artiklar?.reduce((sum: number, item: FakturaArtikel) => {
+      const antal = parseFloat(String(item?.antal || 0));
+      const pris = parseFloat(String(item?.prisPerEnhet || 0));
       return sum + antal * pris;
     }, 0) || 0;
 
   const totalMoms =
-    faktura?.artiklar?.reduce((sum: number, item: any) => {
-      const antal = parseFloat(item?.antal) || 0;
-      const pris = parseFloat(item?.prisPerEnhet) || 0;
-      const moms = parseFloat(item?.moms) || 0;
+    faktura?.artiklar?.reduce((sum: number, item: FakturaArtikel) => {
+      const antal = parseFloat(String(item?.antal || 0));
+      const pris = parseFloat(String(item?.prisPerEnhet || 0));
+      const moms = parseFloat(String(item?.moms || 0));
       return sum + antal * pris * (moms / 100);
     }, 0) || 0;
 

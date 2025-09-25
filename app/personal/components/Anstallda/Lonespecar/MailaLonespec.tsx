@@ -1,26 +1,51 @@
 import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import { showToast } from "../../../../_components/Toast";
 
+interface Lönespec {
+  [key: string]: unknown;
+}
+
+interface Anställd {
+  förnamn?: string;
+  efternamn?: string;
+  mail?: string;
+  epost?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+interface Företagsprofil {
+  [key: string]: unknown;
+}
+
+interface Extrarad {
+  [key: string]: unknown;
+}
+
+interface BeräknadeVärden {
+  [key: string]: unknown;
+}
+
 interface SingleLönespec {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden?: any;
+  lönespec: Lönespec;
+  anställd: Anställd;
+  företagsprofil: Företagsprofil;
+  extrarader: Extrarad[];
+  beräknadeVärden?: BeräknadeVärden;
 }
 
 interface MailaLonespecProps {
   // For single mode
-  lönespec?: any;
-  anställd?: any;
-  företagsprofil?: any;
-  extrarader?: any[];
-  beräknadeVärden?: any;
+  lönespec?: Lönespec;
+  anställd?: Anställd;
+  företagsprofil?: Företagsprofil;
+  extrarader?: Extrarad[];
+  beräknadeVärden?: BeräknadeVärden;
   // For batch mode
   batch?: SingleLönespec[];
   batchMode?: boolean;
@@ -59,13 +84,13 @@ export default function MailaLonespec({
     let sentCount = 0;
     try {
       for (const item of lönespecList) {
-        let reactRoot: any = null;
+        let reactRoot: Root | null = null;
         const container = document.createElement("div");
         container.style.position = "fixed";
         container.style.left = "-9999px";
         document.body.appendChild(container);
         try {
-          const mail = item.anställd.mail || item.anställd.epost || item.anställd.email || "";
+          const mail = item.anställd?.mail || item.anställd?.epost || item.anställd?.email || "";
           reactRoot = createRoot(container);
           reactRoot.render(
             <Forhandsgranskning
@@ -104,8 +129,11 @@ export default function MailaLonespec({
           const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
           formData.append("pdf", pdfFile);
           formData.append("email", mail);
-          formData.append("namn", `${item.anställd.förnamn} ${item.anställd.efternamn}`);
-          const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
+          formData.append(
+            "namn",
+            `${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`
+          );
+          const res = await fetch("/api/email/send-lonespec", { method: "POST", body: formData });
           if (!res.ok) throw new Error("Kunde inte skicka e-post till " + mail);
           sentCount++;
         } finally {
@@ -119,8 +147,10 @@ export default function MailaLonespec({
       // Anropa callback när mailing är klar
       onMailComplete?.();
       closeModal();
-    } catch (err: any) {
-      setError(err.message || "Något gick fel vid utskick av lönespecar.");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Något gick fel vid utskick av lönespecar.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -130,13 +160,13 @@ export default function MailaLonespec({
   const handleMaila = async () => {
     setLoading(true);
     setError(null);
-    let reactRoot: any = null;
+    let reactRoot: Root | null = null;
     const container = document.createElement("div");
     container.style.position = "fixed";
     container.style.left = "-9999px";
     document.body.appendChild(container);
     try {
-      const mail = anställd.mail || anställd.epost || anställd.email || "";
+      const mail = anställd?.mail || anställd?.epost || anställd?.email || "";
       reactRoot = createRoot(container);
       reactRoot.render(
         <Forhandsgranskning
@@ -172,8 +202,8 @@ export default function MailaLonespec({
       const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
       formData.append("pdf", pdfFile);
       formData.append("email", mail);
-      formData.append("namn", `${anställd.förnamn} ${anställd.efternamn}`);
-      const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
+      formData.append("namn", `${anställd?.förnamn || ""} ${anställd?.efternamn || ""}`);
+      const res = await fetch("/api/email/send-lonespec", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Kunde inte skicka e-post.");
       setSent(true);
       showToast("Lönespec skickad!", "success");
@@ -181,8 +211,9 @@ export default function MailaLonespec({
       // Anropa callback när mailing är klar
       onMailComplete?.();
       closeModal();
-    } catch (err: any) {
-      setError(err.message || "Något gick fel.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Något gick fel.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
       if (reactRoot) reactRoot.unmount();
@@ -237,7 +268,7 @@ export default function MailaLonespec({
                 En PDF av lönespecen kommer att skickas till:
                 <br />
                 <span className="font-semibold text-white">
-                  {anställd.mail || anställd.epost || anställd.email}
+                  {anställd?.mail || anställd?.epost || anställd?.email || "Ingen e-post"}
                 </span>
               </div>
             )}

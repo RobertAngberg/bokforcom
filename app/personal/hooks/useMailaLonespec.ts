@@ -2,16 +2,53 @@ import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import type { SingleLönespec } from "../types/types";
 import { showToast } from "../../_components/Toast";
 
+interface Lönespec {
+  [key: string]: unknown;
+}
+
+interface Anställd {
+  förnamn?: string;
+  efternamn?: string;
+  mail?: string;
+  epost?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+interface Företagsprofil {
+  [key: string]: unknown;
+}
+
+interface Extrarad {
+  [key: string]: unknown;
+}
+
+interface BeräknadeVärden {
+  [key: string]: unknown;
+}
+
+interface ForhandsgranskningComponent {
+  (props: {
+    lönespec: Lönespec;
+    anställd: Anställd;
+    företagsprofil: Företagsprofil;
+    extrarader: Extrarad[];
+    beräknadeVärden?: BeräknadeVärden;
+    onStäng: () => void;
+  }): React.JSX.Element;
+}
+
 interface UseMailaLonespecProps {
   // Single mode props
-  lönespec?: any;
-  anställd?: any;
-  företagsprofil?: any;
-  extrarader?: any[];
-  beräknadeVärden?: any;
+  lönespec?: Lönespec;
+  anställd?: Anställd;
+  företagsprofil?: Företagsprofil;
+  extrarader?: Extrarad[];
+  beräknadeVärden?: BeräknadeVärden;
 
   // Batch mode props
   batch?: SingleLönespec[];
@@ -22,7 +59,7 @@ interface UseMailaLonespecProps {
   onClose?: () => void;
 
   // Component for PDF generation
-  ForhandsgranskningComponent?: any;
+  ForhandsgranskningComponent?: ForhandsgranskningComponent;
 
   // Modal control
   open?: boolean;
@@ -54,9 +91,9 @@ export function useMailaLonespec({
   // PDF generation logic - moved to external function to avoid JSX in .ts file
   const generatePDF = async (
     item: SingleLönespec,
-    ForhandsgrankningComponent: any
+    ForhandsgrankningComponent: ForhandsgranskningComponent
   ): Promise<Blob> => {
-    let reactRoot: any = null;
+    let reactRoot: Root | null = null;
     const container = document.createElement("div");
     container.style.position = "fixed";
     container.style.left = "-9999px";
@@ -111,25 +148,27 @@ export function useMailaLonespec({
 
   // Send email with PDF
   const sendEmail = async (item: SingleLönespec, pdfBlob: Blob): Promise<void> => {
-    const mail = item.anställd.mail || item.anställd.epost || item.anställd.email || "";
+    const mail = item.anställd?.mail || item.anställd?.epost || item.anställd?.email || "";
     if (!mail) {
-      throw new Error(`Ingen e-postadress för ${item.anställd.förnamn} ${item.anställd.efternamn}`);
+      throw new Error(
+        `Ingen e-postadress för ${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`
+      );
     }
 
     const formData = new FormData();
     const pdfFile = new File([pdfBlob], "lonespec.pdf", { type: "application/pdf" });
     formData.append("pdf", pdfFile);
     formData.append("email", mail);
-    formData.append("namn", `${item.anställd.förnamn} ${item.anställd.efternamn}`);
+    formData.append("namn", `${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`);
 
-    const res = await fetch("/api/send-lonespec", { method: "POST", body: formData });
+    const res = await fetch("/api/email/send-lonespec", { method: "POST", body: formData });
     if (!res.ok) {
       throw new Error(`Kunde inte skicka e-post till ${mail}`);
     }
   };
 
   // Batch mail logic
-  const handleBatchMaila = async (ForhandsgrankningComponent: any) => {
+  const handleBatchMaila = async (ForhandsgrankningComponent: ForhandsgranskningComponent) => {
     setLoading(true);
     setError(null);
     let sentCount = 0;
@@ -149,15 +188,17 @@ export function useMailaLonespec({
         onMailComplete?.();
         closeModal();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Något gick fel vid utskick av lönespecar.");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Något gick fel vid utskick av lönespecar.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   // Single mail logic
-  const handleMaila = async (ForhandsgrankningComponent: any) => {
+  const handleMaila = async (ForhandsgrankningComponent: ForhandsgranskningComponent) => {
     setLoading(true);
     setError(null);
 
@@ -174,8 +215,9 @@ export function useMailaLonespec({
         onMailComplete?.();
         closeModal();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Något gick fel.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Något gick fel.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
