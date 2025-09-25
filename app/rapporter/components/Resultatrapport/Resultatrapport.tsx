@@ -12,7 +12,7 @@ import VerifikatModal from "../../../_components/VerifikatModal";
 import Modal from "../../../_components/Modal";
 import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
-import { ResultatData, KontoRad, ResultatKonto } from "../../types/types";
+import { KontoRad } from "../../types/types";
 
 export default function Resultatrapport() {
   const { data: sessionData, status: sessionStatus } = useSession();
@@ -24,8 +24,6 @@ export default function Resultatrapport() {
     selectedMonth,
     setSelectedMonth,
     initialData,
-    företagsnamn,
-    organisationsnummer,
     loading,
     verifikatId,
     setVerifikatId,
@@ -34,23 +32,17 @@ export default function Resultatrapport() {
     selectedKonto,
     verifikationer,
     loadingModal,
-    handleShowVerifikationer,
     isExportingPDF,
-    setIsExportingPDF,
     isExportingCSV,
-    setIsExportingCSV,
     exportMessage,
-    setExportMessage,
     data,
     years,
     currentYear,
     previousYear,
-    summering,
     intaktsSum,
     rorelsensSum,
     finansiellaIntakterSum,
     finansiellaKostnaderSum,
-    formatSEKforPDF,
     handleExportPDF,
     handleExportCSV,
   } = useResultatrapport();
@@ -154,7 +146,7 @@ export default function Resultatrapport() {
           return null;
         }
 
-        const kolumner: ColumnDefinition<any>[] = [
+        const kolumner: ColumnDefinition<Record<string, unknown>>[] = [
           {
             label: "Konto",
             key: "kontonummer",
@@ -257,41 +249,46 @@ export default function Resultatrapport() {
         ];
 
         const tabellData = [
-          ...grupp.konton.reduce((acc, konto) => {
-            // Lägg till kontoraden
-            acc.push({
-              id: konto.kontonummer,
-              kontonummer: konto.kontonummer,
-              beskrivning: konto.beskrivning,
-              isKonto: true,
-              transaktion_id: null,
-              ...years.reduce(
-                (acc, year) => {
-                  acc[year] = (konto as any).summering?.[year] || 0;
-                  return acc;
-                },
-                {} as Record<string, number>
-              ),
-            });
-
-            // Lägg till transaktioner för detta konto (om de finns)
-            if (konto.transaktioner && konto.transaktioner.length > 0) {
-              konto.transaktioner.forEach((transaktion) => {
-                acc.push({
-                  id: `${konto.kontonummer}-trans-${transaktion.id}`,
-                  kontonummer: "",
-                  beskrivning: transaktion.beskrivning,
-                  isTransaction: true,
-                  transaktion_id: transaktion.transaktion_id,
-                  verifikatNummer: transaktion.verifikatNummer,
-                  [currentYear]: transaktion.belopp,
-                  [previousYear]: 0,
-                });
+          ...grupp.konton.reduce(
+            (acc, konto) => {
+              // Lägg till kontoraden
+              acc.push({
+                id: konto.kontonummer,
+                kontonummer: konto.kontonummer,
+                beskrivning: konto.beskrivning,
+                isKonto: true,
+                transaktion_id: null,
+                ...years.reduce(
+                  (acc, year) => {
+                    // Hämta värdet direkt från konto[year] eftersom det lagras så i actions
+                    const kontoValue = (konto as Record<string, unknown>)[year];
+                    acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
+                    return acc;
+                  },
+                  {} as Record<string, number>
+                ),
               });
-            }
 
-            return acc;
-          }, [] as any[]),
+              // Lägg till transaktioner för detta konto (om de finns)
+              if (konto.transaktioner && konto.transaktioner.length > 0) {
+                konto.transaktioner.forEach((transaktion) => {
+                  acc.push({
+                    id: `${konto.kontonummer}-trans-${transaktion.id}`,
+                    kontonummer: "",
+                    beskrivning: transaktion.beskrivning,
+                    isTransaction: true,
+                    transaktion_id: transaktion.transaktion_id,
+                    verifikatNummer: transaktion.verifikatNummer,
+                    [currentYear]: transaktion.belopp,
+                    [previousYear]: 0,
+                  });
+                });
+              }
+
+              return acc;
+            },
+            [] as Record<string, unknown>[]
+          ),
           // Lägg till summeringsrad
           {
             id: `${grupp.namn}-summa`,
@@ -318,7 +315,7 @@ export default function Resultatrapport() {
               data={tabellData}
               columns={kolumner}
               getRowId={(row) =>
-                row.isTransaction ? `${row.kontonummer}-trans-${row.id}` : row.id
+                row.isTransaction ? `${row.kontonummer}-trans-${String(row.id)}` : String(row.id)
               }
             />
           </AnimeradFlik>
