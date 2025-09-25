@@ -128,7 +128,7 @@ export default function Lonekorning({
       <div className="flex justify-end items-center">
         <div className="flex gap-3">
           {!valdLonekorning && (
-            <Knapp text="Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
+            <Knapp text="+ Ny lönekörning" onClick={() => setNyLonekorningModalOpen(true)} />
           )}
           {valdLonekorning && (
             <Knapp

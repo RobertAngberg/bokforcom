@@ -26,13 +26,11 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
   const isPending = typeof form.isPending === "boolean" ? form.isPending : false;
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-white">Ny anställd</h2>
-
+    <div className="space-y-8 px-2 md:px-4 lg:px-6">
       {/* React 19 Form med action */}
       <form action={formAction} className="space-y-8">
         <section className="space-y-4">
-          <h2 className="text-2xl text-white">Personalinformation</h2>
+          <h2 className="text-2xl text-white mt-10">Personalinformation</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <TextFalt
               label="Förnamn"
@@ -116,8 +114,8 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
           </div>
         </section>
 
-        <section className="rounded-lg bg-slate-800 p-6">
-          <h3 className="mb-4 text-xl font-semibold text-white">Kompensation</h3>
+        <section className="space-y-4">
+          <h2 className="text-2xl text-white">Kompensation</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Startdatum</label>
@@ -251,8 +249,8 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
           </div>
         </section>
 
-        <section className="rounded-lg bg-slate-800 p-6">
-          <h3 className="mb-4 text-xl font-semibold text-white">Skatt</h3>
+        <section className="space-y-4">
+          <h2 className="text-2xl text-white">Skatt</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Dropdown
               label="Skattetabell"

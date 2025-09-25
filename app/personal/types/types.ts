@@ -110,6 +110,10 @@ export interface AnställdaRadProps {
   anställd: AnställdListItem;
 }
 
+export interface PersonalContentProps {
+  initialAnställda: AnställdData[];
+}
+
 export interface UtlaggBokforModalProps {
   utlägg: UtläggData;
   previewRows: UtlaggBokföringsRad[];
