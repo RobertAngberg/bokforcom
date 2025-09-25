@@ -91,6 +91,7 @@ export interface Lönekörning {
   skapad: Date;
   uppdaterad: Date;
   aktuellt_steg: number;
+  aktivt_steg?: number;
 }
 
 export interface LönespecifikationMedLönekörning {
@@ -502,6 +503,7 @@ export interface LonespecListaProps {
   onBokförSkatter: () => void;
   onRefreshData?: () => Promise<void>;
   period?: string;
+  onLönekörningUppdaterad?: (uppdateradLönekörning: any) => void;
 }
 
 export interface LonespecManagerProps {

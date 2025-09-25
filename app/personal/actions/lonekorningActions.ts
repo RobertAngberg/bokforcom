@@ -294,6 +294,85 @@ export async function uppdateraLönekörningSteg(
   }
 }
 
+export async function markeraStegFärdigt(lönekörningId: number): Promise<{
+  success: boolean;
+  data?: Lönekörning;
+  error?: string;
+}> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return { success: false, error: "Användare inte inloggad" };
+    }
+
+    // Hämta nuvarande aktivt_steg
+    const hämtaQuery = `
+      SELECT aktivt_steg FROM lönekörningar 
+      WHERE id = $1 AND startad_av = $2
+    `;
+    const hämtaResult = await pool.query(hämtaQuery, [lönekörningId, userId]);
+
+    if (hämtaResult.rows.length === 0) {
+      return { success: false, error: "Lönekörning hittades inte eller du har inte behörighet" };
+    }
+
+    const nuvarandeSteg = parseInt(hämtaResult.rows[0].aktivt_steg) || 1;
+    const nyttSteg = Math.min(nuvarandeSteg + 1, 4); // Max 4 steg
+
+    // Uppdatera aktivt_steg
+    const uppdateraQuery = `
+      UPDATE lönekörningar 
+      SET aktivt_steg = $2,
+          uppdaterad = CURRENT_TIMESTAMP
+      WHERE id = $1 AND startad_av = $3
+      RETURNING *
+    `;
+
+    const result = await pool.query(uppdateraQuery, [lönekörningId, nyttSteg, userId]);
+
+    if (result.rows.length === 0) {
+      return { success: false, error: "Kunde inte uppdatera lönekörning" };
+    }
+
+    const lönekörning = result.rows[0];
+
+    logPersonalDataEvent(
+      "modify",
+      userId,
+      `Markerade steg ${nuvarandeSteg} som färdigt, flyttade till steg ${nyttSteg} för lönekörning ${lönekörningId}`
+    );
+
+    revalidatePath("/personal");
+
+    return {
+      success: true,
+      data: {
+        ...lönekörning,
+        startad_datum: new Date(lönekörning.startad_datum),
+        avslutad_datum: lönekörning.avslutad_datum
+          ? new Date(lönekörning.avslutad_datum)
+          : undefined,
+        bankgiro_exporterad_datum: lönekörning.bankgiro_exporterad_datum
+          ? new Date(lönekörning.bankgiro_exporterad_datum)
+          : undefined,
+        mailade_datum: lönekörning.mailade_datum ? new Date(lönekörning.mailade_datum) : undefined,
+        bokford_datum: lönekörning.bokford_datum ? new Date(lönekörning.bokford_datum) : undefined,
+        agi_genererad_datum: lönekörning.agi_genererad_datum
+          ? new Date(lönekörning.agi_genererad_datum)
+          : undefined,
+        skatter_bokforda_datum: lönekörning.skatter_bokforda_datum
+          ? new Date(lönekörning.skatter_bokforda_datum)
+          : undefined,
+        skapad: new Date(lönekörning.skapad),
+        uppdaterad: new Date(lönekörning.uppdaterad),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Fel vid markering av steg som färdigt:", error);
+    return { success: false, error: "Kunde inte markera steg som färdigt" };
+  }
+}
+
 export async function uppdateraLönekörningTotaler(lönekörningId: number): Promise<{
   success: boolean;
   error?: string;

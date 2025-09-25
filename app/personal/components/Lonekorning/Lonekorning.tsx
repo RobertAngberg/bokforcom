@@ -118,6 +118,7 @@ export default function Lonekorning({
               onBokför={() => setBokforModalOpen(true)}
               onGenereraAGI={hanteraAGI}
               onBokförSkatter={() => setSkatteModalOpen(true)}
+              onLönekörningUppdaterad={setValdLonekorning}
             />
 
             {/* Ta bort lönekörning knapp längst ner till höger */}
