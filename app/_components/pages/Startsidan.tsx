@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 
 // Custom hook för scroll animationer
 function useScrollAnimation() {
@@ -40,17 +41,9 @@ function useScrollAnimation() {
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const animation1 = useScrollAnimation();
-  const animation2 = useScrollAnimation();
-  const animation3 = useScrollAnimation();
   const animation4 = useScrollAnimation();
-  const animation5 = useScrollAnimation();
-  const animation6 = useScrollAnimation();
   const animation7 = useScrollAnimation();
-  const animation8 = useScrollAnimation();
-  const animation9 = useScrollAnimation();
   const animation10 = useScrollAnimation();
-  const animation11 = useScrollAnimation();
-  const animation12 = useScrollAnimation();
 
   const handleGetStarted = () => {
     setIsLoading(true);
@@ -369,18 +362,18 @@ export default function LandingPage() {
       <main className="px-6">
         <div className="max-w-7xl mx-auto">
           {/* Hero */}
-          <section className="text-center py-20">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-              <span className="text-blue-400 block">Automatisk bokföring</span>
+          <section className="text-center py-24">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 mt-8">
+              <span className="text-blue-400 block">Gratis, automatisk bokföring</span>
             </h1>
             <p className="text-3xl font-bold text-slate-200 mb-8">
-              Bokföring, fakturering & lön - helt gratis för alltid!
+              Bokföring, fakturering & lön - gratis för alltid!
             </p>
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl text-xl font-bold mb-8 inline-block shadow-lg">
+            {/* <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl text-xl font-bold mb-8 inline-block shadow-lg">
               <span style={{ textShadow: "0px 1px 1px rgba(0,0,0,0.2)" }}>
-                GRATIS i 12 månader, sen endast 199kr/mån
+                Ta en tur och kolla in funktionerna
               </span>
-            </div>
+            </div> */}
             <div className="space-x-4">
               <button
                 onClick={handleGetStarted}
@@ -399,7 +392,7 @@ export default function LandingPage() {
           </section>
 
           {/* Features Grid */}
-          <section className="py-20">
+          {/* <section className="py-20">
             <h2 className="text-3xl font-bold text-white text-center mb-12">
               Allt du behöver för din bokföring
             </h2>
@@ -444,46 +437,32 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-          </section>
+          </section> */}
 
           {/* Animated Images Section */}
-          <section className="py-20">
+          <section className="py-12">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-4xl font-bold text-white text-center mb-16">
                 Bokföring med förval
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Första animerade div */}
+              <div className="flex justify-center">
+                {/* Enda animerade div */}
                 <div
                   ref={animation1.ref}
-                  className={`transform transition-all duration-700 ease-out ${
+                  className={`transform transition-all duration-[900ms] ease-out max-w-4xl w-full ${
                     animation1.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-6 rounded-xl border-4 border-blue-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Andra animerade div */}
-                <div
-                  ref={animation2.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation2.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "200ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-green-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Tredje animerade div */}
-                <div
-                  ref={animation3.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation3.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "400ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-orange-500 shadow-2xl h-80"></div>
+                  <div className="relative rounded-xl border-4 border-blue-500 shadow-2xl h-[600px] overflow-hidden">
+                    <Image
+                      src="/BoxGratisBokf%C3%B6ring1.jpg"
+                      alt="Gratis bokföring demo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -498,43 +477,21 @@ export default function LandingPage() {
           </section>
 
           {/* Second Card Section */}
-          <section className="py-20">
+          <section className="py-12">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-4xl font-bold text-white text-center mb-16">
                 Avancerad fakturahantering
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Första nya kort */}
+              <div className="flex justify-center">
+                {/* Enda nya kort */}
                 <div
                   ref={animation4.ref}
-                  className={`transform transition-all duration-700 ease-out ${
+                  className={`transform transition-all duration-[900ms] ease-out max-w-4xl w-full ${
                     animation4.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-6 rounded-xl border-4 border-purple-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Andra nya kort */}
-                <div
-                  ref={animation5.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation5.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "200ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-pink-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Tredje nya kort */}
-                <div
-                  ref={animation6.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation6.isVisible ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "400ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-cyan-500 shadow-2xl h-80"></div>
+                  <div className="bg-white p-20 rounded-xl border-4 border-purple-500 shadow-2xl h-[600px]"></div>
                 </div>
               </div>
 
@@ -548,43 +505,21 @@ export default function LandingPage() {
           </section>
 
           {/* Third Card Section */}
-          <section className="py-20">
+          <section className="py-12">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-4xl font-bold text-white text-center mb-16">
                 Avancerade rapporter
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Första rapport kort */}
+              <div className="flex justify-center">
+                {/* Enda rapport kort */}
                 <div
                   ref={animation7.ref}
-                  className={`transform transition-all duration-700 ease-out ${
+                  className={`transform transition-all duration-[900ms] ease-out max-w-4xl w-full ${
                     animation7.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-6 rounded-xl border-4 border-indigo-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Andra rapport kort */}
-                <div
-                  ref={animation8.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation8.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "200ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-teal-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Tredje rapport kort */}
-                <div
-                  ref={animation9.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation9.isVisible ? "translate-x-0 opacity-100" : "translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "400ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-emerald-500 shadow-2xl h-80"></div>
+                  <div className="bg-white p-20 rounded-xl border-4 border-indigo-500 shadow-2xl h-[600px]"></div>
                 </div>
               </div>
 
@@ -598,49 +533,23 @@ export default function LandingPage() {
           </section>
 
           {/* Fourth Card Section */}
-          <section className="py-20">
+          <section className="py-12">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-4xl font-bold text-white text-center mb-16">
                 Komplett personalhantering
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Första personal kort */}
+              <div className="flex justify-center">
+                {/* Enda personal kort */}
                 <div
                   ref={animation10.ref}
-                  className={`transform transition-all duration-700 ease-out ${
+                  className={`transform transition-all duration-[900ms] ease-out max-w-4xl w-full ${
                     animation10.isVisible
                       ? "translate-x-0 opacity-100"
                       : "-translate-x-24 opacity-0"
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-6 rounded-xl border-4 border-violet-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Andra personal kort */}
-                <div
-                  ref={animation11.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation11.isVisible
-                      ? "translate-x-0 opacity-100"
-                      : "-translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "200ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-rose-500 shadow-2xl h-80"></div>
-                </div>
-
-                {/* Tredje personal kort */}
-                <div
-                  ref={animation12.ref}
-                  className={`transform transition-all duration-700 ease-out ${
-                    animation12.isVisible
-                      ? "translate-x-0 opacity-100"
-                      : "-translate-x-24 opacity-0"
-                  }`}
-                  style={{ transitionDelay: "400ms" }}
-                >
-                  <div className="bg-white p-6 rounded-xl border-4 border-amber-500 shadow-2xl h-80"></div>
+                  <div className="bg-white p-20 rounded-xl border-4 border-violet-500 shadow-2xl h-[600px]"></div>
                 </div>
               </div>
 
