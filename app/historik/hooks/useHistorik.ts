@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  fetchTransaktioner,
   fetchTransactionDetails,
   exporteraTransaktionerMedPoster,
   findUnbalancedVerifications,
@@ -68,13 +67,13 @@ function isValidDateRange(year: string, month: string): boolean {
   return true;
 }
 
-export function useHistorik() {
+export function useHistorik(initialData: HistoryItem[] = []) {
   const [year, setYear] = useState("2025");
   const [month, setMonth] = useState(""); // Tom sträng = alla månader
   const [searchTerm, setSearchTerm] = useState(""); // Nytt sökfält
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [historyData, setHistoryData] = useState<HistoryItem[]>(initialData);
+  const [loading] = useState(false);
   const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
   const [activeIds, setActiveIds] = useState<number[]>([]);
   const [showOnlyUnbalanced, setShowOnlyUnbalanced] = useState(false);
@@ -84,43 +83,6 @@ export function useHistorik() {
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const result = await fetchTransaktioner();
-
-        const formattedData =
-          result.success && Array.isArray(result.data)
-            ? result.data.map((item: any) => ({
-                transaktions_id: item.id,
-                transaktionsdatum: new Date(item.transaktionsdatum).toISOString().slice(0, 10),
-                kontobeskrivning: item.kontobeskrivning || "",
-                belopp: item.belopp ?? 0,
-                kommentar: item.kommentar ?? "",
-                fil: item.fil ?? "",
-                blob_url: item.blob_url ?? "",
-              }))
-            : [];
-
-        const sortedData = [...formattedData].sort((a, b) => {
-          // Sortera efter datum DESC, sedan ID DESC
-          const dateCompare =
-            new Date(b.transaktionsdatum).getTime() - new Date(a.transaktionsdatum).getTime();
-          if (dateCompare !== 0) return dateCompare;
-          return b.transaktions_id - a.transaktions_id;
-        });
-
-        setHistoryData(sortedData);
-      } catch (error) {
-        // Fel vid laddning av data
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
 
   // Validera inputs och visa fel i realtid
   const validateInputs = (yearValue: string, monthValue: string): string | null => {
@@ -141,7 +103,7 @@ export function useHistorik() {
   // Förbättrad filtrering med migerade funktioner
   const getFilteredData = (): HistoryItem[] => {
     // Först filtrera på datum
-    let dateFiltered = historyData.filter((item) => {
+    const dateFiltered = historyData.filter((item) => {
       const itemYear = item.transaktionsdatum.slice(0, 4);
       const itemMonth = item.transaktionsdatum.slice(5, 7);
 

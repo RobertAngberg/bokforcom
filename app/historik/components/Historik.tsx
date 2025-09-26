@@ -3,14 +3,13 @@
 import React from "react";
 import Tabell from "../../_components/Tabell";
 import { ColumnDefinition } from "../../_components/TabellRad";
-import MainLayout from "../../_components/MainLayout";
-import { HistoryItem, TransactionDetail } from "../types/types";
+import { HistoryItem, TransactionDetail, HistorikProps } from "../types/types";
 import { useHistorik } from "../hooks/useHistorik";
 import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
 
-export default function Historik() {
+export default function Historik({ initialData }: HistorikProps) {
   const {
     // State
     year,
@@ -25,11 +24,9 @@ export default function Historik() {
     unbalancedResults,
     deletingIds,
     showDeleteModal,
-    deleteTransactionId,
 
     // Computed values
     filteredData,
-    periodTotals,
     detailsMap,
     columns,
 
@@ -39,28 +36,25 @@ export default function Historik() {
     handleSearchChange,
     handleRowClick,
     handleUnbalancedCheck,
-    handleExport,
     handleDelete,
     confirmDelete,
 
     // Setters
     setShowUnbalancedModal,
     setShowDeleteModal,
-  } = useHistorik();
+  } = useHistorik(initialData);
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="text-center">
-          <h1 className="text-3xl mb-8">Historik</h1>
-          <div>Laddar...</div>
-        </div>
-      </MainLayout>
+      <div className="text-center">
+        <h1 className="text-3xl mb-8">Historik</h1>
+        <div>Laddar...</div>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="text-center mb-8 space-y-4">
         <h1 className="text-3xl">Historik</h1>
         <div className="flex justify-center gap-4 flex-wrap">
@@ -323,6 +317,6 @@ export default function Historik() {
           </div>
         </div>
       </Modal>
-    </MainLayout>
+    </>
   );
 }

@@ -32,3 +32,24 @@ export interface UnbalancedResult {
   totalKredit: number;
   skillnad: number;
 }
+
+export interface ExportTransaction {
+  transaktions_id: number;
+  transaktionsdatum: string;
+  kontobeskrivning: string;
+  belopp: number;
+  kommentar: string;
+  fil: string;
+  blob_url: string;
+  transaktionsposter: Array<{
+    transaktionspost_id: number;
+    kontonummer: string;
+    beskrivning: string;
+    debet: number;
+    kredit: number;
+  }>;
+}
+
+export interface HistorikProps {
+  initialData: HistoryItem[];
+}

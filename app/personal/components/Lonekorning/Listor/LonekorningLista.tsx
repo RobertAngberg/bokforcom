@@ -2,6 +2,7 @@
 
 import { LonekorningListaProps } from "../../../types/types";
 import { useLonekorning } from "../../../hooks/useLonekorning";
+import LoadingSpinner from "../../../../_components/LoadingSpinner";
 
 export default function LonekorningLista({
   onValjLonekorning,
@@ -12,7 +13,7 @@ export default function LonekorningLista({
     useLonekorning({ enableListMode: true, refreshTrigger });
 
   if (listLoading) {
-    return <div className="text-white">Laddar lönekörningar...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!hasLonekorningar) {

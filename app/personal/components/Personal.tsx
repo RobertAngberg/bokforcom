@@ -2,6 +2,7 @@
 
 import Knapp from "../../_components/Knapp";
 import AnimeradFlik from "../../_components/AnimeradFlik";
+import LoadingSpinner from "../../_components/LoadingSpinner";
 import AnställdFlik from "./Anstallda/AnstalldFlik";
 import NyAnstalldModal from "./Anstallda/NyAnstalld/NyAnstalldModal";
 import Lonekorning from "./Lonekorning/Lonekorning";
@@ -32,9 +33,8 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
         )}
 
         {state.anställdaLoading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-            <span className="ml-3 text-white">Laddar anställda...</span>
+          <div className="flex justify-center py-8">
+            <LoadingSpinner />
           </div>
         ) : !harAnställda ? (
           <p className="text-gray-400">Inga anställda sparade än.</p>

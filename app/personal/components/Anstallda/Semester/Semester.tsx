@@ -2,8 +2,7 @@
 
 import InfoTooltip from "../../../../_components/InfoTooltip";
 import Knapp from "../../../../_components/Knapp";
-import Tabell from "../../../../_components/Tabell";
-import { ColumnDefinition } from "../../../../_components/TabellRad";
+import LoadingSpinner from "../../../../_components/LoadingSpinner";
 import BokforModal from "./BokforModal";
 import { useSemester } from "../../../hooks/useSemester";
 import type { ModernSemesterProps } from "../../../types/types";
@@ -33,7 +32,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
   } = semesterHook;
 
   if (loading) {
-    return <div className="text-white">Laddar semesterdata...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

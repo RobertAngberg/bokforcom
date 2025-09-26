@@ -3,8 +3,8 @@
 import { pool } from "../../_lib/db";
 import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
 import { withFormRateLimit } from "../../_utils/rateLimit";
-import { validateYear, sanitizeInput } from "../../_utils/validationUtils";
-import { TransactionDetail, UnbalancedVerification } from "../types/types";
+import { validateYear } from "../../_utils/validationUtils";
+import { TransactionDetail, UnbalancedVerification, ExportTransaction } from "../types/types";
 
 // 🚀 OPTIMERAD FUNKTION: Hitta obalanserade direkt i databasen
 export async function findUnbalancedVerifications(): Promise<{
@@ -118,7 +118,7 @@ async function fetchTransaktionerInternal(fromYear?: string) {
 
     client.release();
     return { success: true, data: result.rows };
-  } catch (error: any) {
+  } catch (error) {
     return { success: false, error: "Kunde inte hämta transaktionshistorik säkert" };
   }
 }
@@ -227,7 +227,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
       [userId, start, end]
     );
 
-    const map = new Map<number, any>();
+    const map = new Map<number, ExportTransaction>();
 
     for (const row of rows) {
       if (!map.has(row.transaktions_id)) {
@@ -244,7 +244,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
       }
 
       if (row.transaktionspost_id) {
-        map.get(row.transaktions_id).transaktionsposter.push({
+        map.get(row.transaktions_id)!.transaktionsposter.push({
           transaktionspost_id: row.transaktionspost_id,
           kontonummer: row.kontonummer,
           beskrivning: row.kontobeskrivning,
@@ -256,7 +256,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
 
     const resultat = Array.from(map.values());
     return resultat;
-  } catch (err: any) {
+  } catch (err) {
     return [];
   }
 }
@@ -312,10 +312,10 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
       ]);
 
       // Ta bort transaktionen
-      const deleteResult = await client.query(
-        "DELETE FROM transaktioner WHERE id = $1 AND user_id = $2",
-        [transactionId, userId]
-      );
+      await client.query("DELETE FROM transaktioner WHERE id = $1 AND user_id = $2", [
+        transactionId,
+        userId,
+      ]);
 
       await client.query("COMMIT");
 
@@ -331,7 +331,7 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
     } finally {
       client.release();
     }
-  } catch (err: any) {
+  } catch (err) {
     return {
       success: false,
       error: "Kunde inte ta bort transaktion. Försök igen.",

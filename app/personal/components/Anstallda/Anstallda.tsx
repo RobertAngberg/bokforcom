@@ -1,6 +1,7 @@
 "use client";
 
 import Knapp from "../../../_components/Knapp";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 import NyAnställd from "./NyAnstalld/NyAnstalld";
 import AnställdaLista from "./AnstalldaLista/AnstalldaLista";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
@@ -10,12 +11,10 @@ import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import Semester from "./Semester/Semester";
 import { useAnstallda } from "../../hooks/useAnstallda";
-import { useUtlagg } from "../../hooks/useUtlagg";
 
 export default function Anstallda() {
   const { state, handlers } = useAnstallda();
   const { valdAnställd } = state;
-  const { utlaggFlikData } = useUtlagg(valdAnställd?.id);
 
   return (
     <>
@@ -37,9 +36,8 @@ export default function Anstallda() {
             )}
 
             {state.anställdaLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-                <span className="ml-3 text-white">Laddar anställda...</span>
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
               </div>
             ) : !state.harAnställda ? (
               <p className="text-gray-400">Inga anställda sparade än.</p>
@@ -61,10 +59,17 @@ export default function Anstallda() {
             <Kontrakt anställd={valdAnställd} />
           </AnimeradFlik>
           <AnimeradFlik title="Utlägg" icon="💳">
-            <UtlaggFlik state={state} handlers={handlers} utlaggFlikData={utlaggFlikData} />
+            <UtlaggFlik state={state} handlers={handlers} />
           </AnimeradFlik>
           <AnimeradFlik title="Lönespecar" icon="💰">
-            <Lonespecar anställd={valdAnställd} />
+            <Lonespecar
+              anställd={{
+                ...valdAnställd,
+                id: valdAnställd.id || 0,
+                namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
+                epost: valdAnställd.mail || "",
+              }}
+            />
           </AnimeradFlik>
           <AnimeradFlik title="Semester" icon="🏖️">
             <Semester

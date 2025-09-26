@@ -2,11 +2,12 @@
 
 import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
 import Knapp from "../../../../_components/Knapp";
+import LoadingSpinner from "../../../../_components/LoadingSpinner";
 import UtlaggBokforModal from "./UtlaggBokforModal";
 import { useUtlagg } from "../../../hooks/useUtlagg";
 import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
 
-export default function UtlaggFlik({ state, handlers }: Omit<UtlaggFlikProps, "utlaggFlikData">) {
+export default function UtlaggFlik({ state }: Omit<UtlaggFlikProps, "utlaggFlikData">) {
   const {
     utlägg,
     loading,
@@ -16,7 +17,6 @@ export default function UtlaggFlik({ state, handlers }: Omit<UtlaggFlikProps, "u
     formatBelopp,
     getStatusClass,
     getStatusText,
-    utlaggFlikData,
   } = useUtlagg({
     anställdId: state?.valdAnställd?.id,
     enableFlikMode: true,
@@ -87,12 +87,14 @@ export default function UtlaggFlik({ state, handlers }: Omit<UtlaggFlikProps, "u
       {/* Utläggstabell */}
       <div className="bg-slate-800 p-4 rounded-lg">
         {loading ? (
-          <div className="text-center text-gray-400 py-8">Laddar utlägg...</div>
+          <div className="flex justify-center py-8">
+            <LoadingSpinner />
+          </div>
         ) : utlägg.length === 0 ? (
           <div className="text-center text-gray-400 py-8">
             <p>Inga utlägg hittades för {state.valdAnställd?.förnamn}.</p>
             <p className="text-sm mt-2">
-              Klicka på "Nytt utlägg" för att skapa det första utlägget.
+              Klicka på &quot;Nytt utlägg&quot; för att skapa det första utlägget.
             </p>
           </div>
         ) : (
@@ -111,7 +113,9 @@ export default function UtlaggFlik({ state, handlers }: Omit<UtlaggFlikProps, "u
           <p>
             • <strong>Inkluderat:</strong> Utlägget är kopplat till en lönespecifikation
           </p>
-          <p>• Klicka på "Nytt utlägg" för att registrera ett nytt utlägg via bokföring</p>
+          <p>
+            • Klicka på &quot;Nytt utlägg&quot; för att registrera ett nytt utlägg via bokföring
+          </p>
         </div>
       </div>
 
