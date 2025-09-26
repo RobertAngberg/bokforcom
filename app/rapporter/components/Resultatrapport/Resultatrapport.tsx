@@ -21,8 +21,6 @@ export default function Resultatrapport() {
   const {
     selectedYear,
     setSelectedYear,
-    selectedMonth,
-    setSelectedMonth,
     initialData,
     loading,
     verifikatId,
@@ -116,15 +114,6 @@ export default function Resultatrapport() {
 
   // Helper function for rendering tables
   const renderTabell = (grupperingar: KontoRad[], isIntakt: boolean = false) => {
-    // Debug logging
-    console.log("renderTabell called with:", {
-      grupperingar: grupperingar?.length,
-      years: years?.length,
-      currentYear,
-      previousYear,
-      isIntakt,
-    });
-
     // Safety check - return empty array if no data or invalid years
     if (
       !grupperingar ||
@@ -134,7 +123,6 @@ export default function Resultatrapport() {
       !currentYear ||
       !previousYear
     ) {
-      console.log("Early return due to missing data");
       return [];
     }
 
@@ -142,132 +130,130 @@ export default function Resultatrapport() {
       .map((grupp) => {
         // Safety check for individual group
         if (!grupp || !grupp.konton || !Array.isArray(grupp.konton)) {
-          console.log("Skipping invalid group:", grupp);
           return null;
         }
+
+        // Dynamiska kolumner baserat på tillgängliga år
+        const availableYears = years.filter((year) => year); // Filtrera bort undefined/null
 
         const kolumner: ColumnDefinition<Record<string, unknown>>[] = [
           {
             label: "Konto",
             key: "kontonummer",
-            render: (row) => {
+            render: (value: string, row: Record<string, unknown>) => {
               if (row.isTotal) {
                 return (
                   <span className="cursor-pointer text-blue-400 hover:text-blue-300 hover:underline">
-                    {row.kontonummer}
+                    {value}
                   </span>
                 );
               }
               if (row.isTransaction) {
                 return (
                   <button
-                    onClick={() => setVerifikatId(row.transaktion_id)}
+                    onClick={() => setVerifikatId(row.transaktion_id as number)}
                     className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {row.verifikatNummer}
+                    {row.verifikatNummer as string}
                   </button>
                 );
               }
-              // För konto- och summeringsrader, visa inget
-              return null;
+              // För vanliga kontorader, visa kontonumret
+              return value || "";
             },
           },
           {
             label: "Benämning",
             key: "beskrivning",
-            render: (row) => {
+            render: (value: string, row: Record<string, unknown>) => {
               if (row.isTotal) {
                 return (
                   <button
-                    onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+                    onClick={() =>
+                      row.transaktion_id && setVerifikatId(row.transaktion_id as number)
+                    }
                     className="text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {row.beskrivning}
+                    {value}
                   </button>
                 );
               }
               if (row.isTransaction) {
                 return (
                   <button
-                    onClick={() => row.transaktion_id && setVerifikatId(row.transaktion_id)}
+                    onClick={() =>
+                      row.transaktion_id && setVerifikatId(row.transaktion_id as number)
+                    }
                     className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {row.beskrivning}
+                    {value}
                   </button>
                 );
               }
-              return row.beskrivning;
+              // För vanliga kontorader, visa beskrivningen
+              return value || "";
             },
           },
-          {
-            label: `Ingående balans`,
-            key: "ingaende_balans",
-            render: () => formatSEK(0), // Resultatrapport har alltid 0 i ingående balans
-          },
-          {
-            label: `${previousYear}`,
-            key: previousYear,
-            render: (row) => {
-              if (!row || !previousYear) {
-                console.log("Missing row or previousYear:", { row, previousYear });
-                return formatSEK(0);
-              }
-              const value = row[previousYear] || 0;
-              return formatSEK(isIntakt ? -value : value);
+          // Dynamiska årkolumner baserat på tillgänglig data
+          ...availableYears.map((year) => ({
+            label: year,
+            key: year,
+            render: (value: number) => {
+              const numValue = typeof value === "number" ? value : 0;
+              return formatSEK(isIntakt ? -numValue : numValue);
             },
-          },
-          {
-            label: `${currentYear}`,
-            key: currentYear,
-            render: (row) => {
-              if (!row || !currentYear) {
-                console.log("Missing row or currentYear:", { row, currentYear });
-                return formatSEK(0);
-              }
-              const value = row[currentYear] || 0;
-              return formatSEK(isIntakt ? -value : value);
-            },
-          },
-          {
-            label: "Förändring",
-            key: "forandring",
-            render: (row) => {
-              if (!row || !currentYear || !previousYear) {
-                console.log("Missing data for change calculation:", {
-                  row,
-                  currentYear,
-                  previousYear,
-                });
-                return formatSEK(0);
-              }
-              const currentYearValue = row[currentYear] || 0;
-              const previousYearValue = row[previousYear] || 0;
-              const change = currentYearValue - previousYearValue;
-              return formatSEK(isIntakt ? -change : change);
-            },
-          },
+          })),
+          // Visa endast förändring om vi har minst 2 år
+          ...(availableYears.length >= 2
+            ? [
+                {
+                  label: "Förändring",
+                  key: "forandring",
+                  render: (value: number, row: Record<string, unknown>) => {
+                    if (!row || availableYears.length < 2) {
+                      return formatSEK(0);
+                    }
+                    const currentValue = (row[availableYears[0]] as number) || 0;
+                    const previousValue = (row[availableYears[1]] as number) || 0;
+                    const change = currentValue - previousValue;
+                    return formatSEK(isIntakt ? -change : change);
+                  },
+                },
+              ]
+            : []),
         ];
 
         const tabellData = [
           ...grupp.konton.reduce(
             (acc, konto) => {
-              // Lägg till kontoraden
-              acc.push({
+              // Skapa yearData
+              const yearData = availableYears.reduce(
+                (acc, year) => {
+                  const kontoValue = (konto as Record<string, unknown>)[year];
+                  acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
+                  return acc;
+                },
+                {} as Record<string, number>
+              );
+
+              // Beräkna förändring om vi har minst 2 år
+              const forandring =
+                availableYears.length >= 2
+                  ? (yearData[availableYears[0]] || 0) - (yearData[availableYears[1]] || 0)
+                  : 0;
+
+              const kontorRad = {
                 id: konto.kontonummer,
                 kontonummer: konto.kontonummer,
                 beskrivning: konto.beskrivning,
                 isKonto: true,
                 transaktion_id: null,
-                ...years.reduce(
-                  (acc, year) => {
-                    // Hämta värdet direkt från konto[year] eftersom det lagras så i actions
-                    const kontoValue = (konto as Record<string, unknown>)[year];
-                    acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
-                    return acc;
-                  },
-                  {} as Record<string, number>
-                ),
-              });
+                forandring,
+                ...yearData,
+              };
+
+              // Lägg till kontoraden
+              acc.push(kontorRad);
 
               // Lägg till transaktioner för detta konto (om de finns)
               if (konto.transaktioner && konto.transaktioner.length > 0) {
@@ -279,8 +265,8 @@ export default function Resultatrapport() {
                     isTransaction: true,
                     transaktion_id: transaktion.transaktion_id,
                     verifikatNummer: transaktion.verifikatNummer,
-                    [currentYear]: transaktion.belopp,
-                    [previousYear]: 0,
+                    [availableYears[0] || currentYear]: transaktion.belopp,
+                    ...(availableYears[1] ? { [availableYears[1]]: 0 } : {}),
                   });
                 });
               }
@@ -296,7 +282,12 @@ export default function Resultatrapport() {
             beskrivning: `Summa ${grupp.namn.toLowerCase()}`,
             isSumma: true,
             transaktion_id: null,
-            ...years.reduce(
+            forandring:
+              availableYears.length >= 2
+                ? (grupp.summering?.[availableYears[0]] || 0) -
+                  (grupp.summering?.[availableYears[1]] || 0)
+                : 0,
+            ...availableYears.reduce(
               (acc, year) => {
                 acc[year] = grupp.summering?.[year] || 0;
                 return acc;
@@ -304,8 +295,8 @@ export default function Resultatrapport() {
               {} as Record<string, number>
             ),
             totalBelopp: isIntakt
-              ? -(grupp.summering?.[years[0]] || 0)
-              : grupp.summering?.[years[0]] || 0,
+              ? -(grupp.summering?.[availableYears[0]] || 0)
+              : grupp.summering?.[availableYears[0]] || 0,
           },
         ];
 
@@ -336,27 +327,6 @@ export default function Resultatrapport() {
               onChange={(value) => setSelectedYear(value)}
               options={years.map((year) => ({ value: year, label: year }))}
               className="w-24"
-            />
-
-            <Dropdown
-              value={selectedMonth}
-              onChange={(value) => setSelectedMonth(value)}
-              options={[
-                { value: "all", label: "Alla månader" },
-                { value: "01", label: "Januari" },
-                { value: "02", label: "Februari" },
-                { value: "03", label: "Mars" },
-                { value: "04", label: "April" },
-                { value: "05", label: "Maj" },
-                { value: "06", label: "Juni" },
-                { value: "07", label: "Juli" },
-                { value: "08", label: "Augusti" },
-                { value: "09", label: "September" },
-                { value: "10", label: "Oktober" },
-                { value: "11", label: "November" },
-                { value: "12", label: "December" },
-              ]}
-              className="w-40"
             />
           </div>
 

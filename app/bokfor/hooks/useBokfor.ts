@@ -326,8 +326,8 @@ export function useBokfor() {
       ? Object.entries(extrafält).map(([konto, val], i) => ({
           key: i,
           konto: konto + " " + (val.label ?? ""),
-          debet: round(val.debet),
-          kredit: round(val.kredit),
+          debet: Math.round(val.debet),
+          kredit: Math.round(val.kredit),
         }))
       : valtFörval
         ? valtFörval.konton.map((rad, i) => {
@@ -361,8 +361,8 @@ export function useBokfor() {
             return {
               key: i,
               konto: namn,
-              debet: rad.debet ? round(beloppAttVisa) : 0,
-              kredit: rad.kredit ? round(beloppAttVisa) : 0,
+              debet: rad.debet ? Math.round(beloppAttVisa) : 0,
+              kredit: rad.kredit ? Math.round(beloppAttVisa) : 0,
             };
           })
         : [];

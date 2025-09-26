@@ -8,7 +8,6 @@ import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/ty
 export const useResultatrapport = () => {
   // Filter state
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   // Grundläggande state
   const [initialData, setInitialData] = useState<ResultatData | null>(null);
@@ -296,8 +295,6 @@ export const useResultatrapport = () => {
     // Filter state
     selectedYear,
     setSelectedYear,
-    selectedMonth,
-    setSelectedMonth,
     // Data state
     initialData,
     setInitialData,
