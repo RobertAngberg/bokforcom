@@ -527,7 +527,15 @@ export default function LandingPage() {
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-20 rounded-xl border-4 border-indigo-500 shadow-2xl h-[600px]"></div>
+                  <div className="relative rounded-xl border-4 border-indigo-500 shadow-2xl h-[600px] overflow-hidden">
+                    <Image
+                      src="/BoxGratisBokföring3.jpg"
+                      alt="Avancerade rapporter demo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -557,7 +565,15 @@ export default function LandingPage() {
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-20 rounded-xl border-4 border-violet-500 shadow-2xl h-[600px]"></div>
+                  <div className="relative rounded-xl border-4 border-violet-500 shadow-2xl h-[600px] overflow-hidden">
+                    <Image
+                      src="/BoxGratisBokföring4.jpg"
+                      alt="Komplett personalhantering demo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
               </div>
 

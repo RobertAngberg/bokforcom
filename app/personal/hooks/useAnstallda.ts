@@ -261,7 +261,8 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     if (anställda.length === 0 && !anställdaLoading) {
       laddaAnställda();
     }
-  }, [anställda.length, anställdaLoading, laddaAnställda]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anställda.length, anställdaLoading]);
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)
