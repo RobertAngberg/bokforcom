@@ -3,7 +3,6 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
 import type { AnställdData, FormActionState, Företagsprofil } from "../types/types";
 
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
@@ -282,19 +281,6 @@ export async function taBortAnställd(anställdId: number) {
   }
 
   // userId already a number from getUserId()
-
-  // SÄKERHETSVALIDERING: Rate limiting för GDPR-kritisk borttagning
-  if (!validateSessionAttempt(`hr-delete-${userId}`)) {
-    logPersonalDataEvent(
-      "violation",
-      userId,
-      "Rate limit exceeded for employee deletion operation"
-    );
-    return {
-      success: false,
-      error: "För många förfrågningar. Försök igen om 15 minuter.",
-    };
-  }
 
   logPersonalDataEvent("delete", userId, `Attempting to delete employee ${anställdId}`);
 

@@ -3,7 +3,6 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
 import { uppdateraLönekörningStatus } from "./lonekorningActions";
 import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
 
@@ -274,19 +273,6 @@ export async function skapaNyLönespec(data: {
 
   // userId already a number from getUserId()
 
-  // SÄKERHETSVALIDERING: Rate limiting för känslig lönedata
-  if (!validateSessionAttempt(`hr-salary-${userId}`)) {
-    logPersonalDataEvent(
-      "violation",
-      userId,
-      "Rate limit exceeded for salary specification creation"
-    );
-    return {
-      success: false,
-      error: "För många förfrågningar. Försök igen om 15 minuter.",
-    };
-  }
-
   logPersonalDataEvent(
     "modify",
     userId,
@@ -365,19 +351,6 @@ export async function uppdateraLönespec(data: {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");
-  }
-
-  // SÄKERHETSVALIDERING: Rate limiting för känslig lönedata
-  if (!validateSessionAttempt(`hr-salary-update-${userId}`)) {
-    logPersonalDataEvent(
-      "violation",
-      userId,
-      "Rate limit exceeded for salary specification update"
-    );
-    return {
-      success: false,
-      error: "För många förfrågningar. Försök igen om 15 minuter.",
-    };
   }
 
   logPersonalDataEvent("modify", userId, `Updating salary specification ${data.lönespecId}`);

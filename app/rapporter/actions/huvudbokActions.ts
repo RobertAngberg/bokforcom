@@ -3,7 +3,6 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
 
 // Typ för transaktionsdata
 interface TransaktionData {
@@ -34,12 +33,6 @@ function logLedgerDataEvent(
 
 export async function fetchHuvudbok() {
   const userId = await getUserId();
-
-  // SÄKERHETSVALIDERING: Rate limiting för huvudbok
-  if (!validateSessionAttempt(`finance-ledger-${userId}`)) {
-    logLedgerDataEvent("violation", userId, "Rate limit exceeded for ledger access");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
 
   logLedgerDataEvent("access", userId, "Accessing general ledger data");
 
@@ -172,12 +165,6 @@ export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const userId = await getUserId();
 
-  // SÄKERHETSVALIDERING: Rate limiting för transaktionsdetaljer
-  if (!validateSessionAttempt(`finance-transaction-${userId}`)) {
-    logLedgerDataEvent("violation", userId, "Rate limit exceeded for transaction details access");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
-
   // SÄKERHETSVALIDERING: Input validering
   if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
     logLedgerDataEvent("violation", userId, `Invalid transaction ID: ${transaktionsId}`);
@@ -225,12 +212,6 @@ export async function fetchTransactionDetails(transaktionsId: number) {
 export async function fetchKontoTransaktioner(kontonummer: string) {
   const userId = await getUserId();
 
-  // SÄKERHETSVALIDERING: Rate limiting
-  if (!validateSessionAttempt(`konto-transactions-${userId}`)) {
-    logLedgerDataEvent("violation", userId, "Rate limit exceeded for account transactions");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
-
   logLedgerDataEvent("access", userId, `Accessing transactions for account ${kontonummer}`);
 
   try {
@@ -274,12 +255,6 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
 
 export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
   const userId = await getUserId();
-
-  // SÄKERHETSVALIDERING: Rate limiting för huvudbok med alla transaktioner
-  if (!validateSessionAttempt(`finance-full-ledger-${userId}`)) {
-    logLedgerDataEvent("violation", userId, "Rate limit exceeded for full ledger access");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
 
   logLedgerDataEvent(
     "access",

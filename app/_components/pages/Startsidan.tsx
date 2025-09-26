@@ -480,7 +480,7 @@ export default function LandingPage() {
           <section className="py-12">
             <div className="max-w-7xl mx-auto">
               <h2 className="text-4xl font-bold text-white text-center mb-16">
-                Avancerad fakturahantering
+                Automatisk fakturhantering
               </h2>
               <div className="flex justify-center">
                 {/* Enda nya kort */}
@@ -491,14 +491,22 @@ export default function LandingPage() {
                   }`}
                   style={{ transitionDelay: "0ms" }}
                 >
-                  <div className="bg-white p-20 rounded-xl border-4 border-purple-500 shadow-2xl h-[600px]"></div>
+                  <div className="relative rounded-xl border-4 border-purple-500 shadow-2xl h-[600px] overflow-hidden">
+                    <Image
+                      src="/BoxGratisBokf%C3%B6ring2.jpg"
+                      alt="Fakturahantering demo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Text under andra korten */}
               <div className="text-center mt-12">
                 <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
-                  Skapa, skicka och bokför fakturor direkt från systemet.
+                  AI-avläsning fyller i datum och belopp automatiskt från kvittot
                 </p>
               </div>
             </div>

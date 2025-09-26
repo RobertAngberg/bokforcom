@@ -2,7 +2,6 @@
 "use server";
 import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
 import { validatePeriod } from "../../_utils/validationUtils";
 
 // SÄKERHETSVALIDERING: Logga finansiell dataåtkomst
@@ -22,12 +21,6 @@ function logFinancialDataEvent(
 export async function fetchBalansData(year: string, month?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const userId = await getUserId();
-
-  // SÄKERHETSVALIDERING: Rate limiting för finansiella rapporter
-  if (!validateSessionAttempt(`finance-balance-${userId}`)) {
-    logFinancialDataEvent("violation", userId, "Rate limit exceeded for balance report access");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
 
   // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validatePeriod(year)) {

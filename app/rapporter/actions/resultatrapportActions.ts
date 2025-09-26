@@ -1,7 +1,6 @@
 "use server";
 import { pool } from "../../_lib/db";
 import { getUserId, requireOwnership } from "../../_utils/authUtils";
-import { validateSessionAttempt } from "../../_utils/rateLimit";
 
 // Typ för kontodata
 interface KontoData {
@@ -34,12 +33,6 @@ function logResultDataEvent(
 
 export async function hamtaResultatrapport() {
   const userId = await getUserId();
-
-  // SÄKERHETSVALIDERING: Rate limiting för resultatrapporter
-  if (!validateSessionAttempt(`finance-result-${userId}`)) {
-    logResultDataEvent("violation", userId, "Rate limit exceeded for result report access");
-    throw new Error("För många förfrågningar. Försök igen om 15 minuter.");
-  }
 
   logResultDataEvent("access", userId, "Accessing result report data");
 
