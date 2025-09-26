@@ -8,9 +8,8 @@ import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
 import { useBokforContext } from "../BokforProvider";
-import { Steg3Props } from "../../types/types";
 
-export default function Steg3(props?: Steg3Props) {
+export default function Steg3() {
   const { state, actions, handlers } = useBokforContext();
 
   // Visa bara på steg 3
@@ -103,18 +102,26 @@ export default function Steg3(props?: Steg3Props) {
         <div className="flex justify-center">
           <Knapp
             text={
-              state.loading
-                ? "Bokför..."
-                : state.utlaggMode
-                  ? "Slutför utlägg"
-                  : state.levfaktMode
-                    ? state.ärFörsäljning
-                      ? "Slutför kundfaktura"
-                      : "Slutför leverantörsfaktura"
-                    : "Bokför"
+              state.utlaggMode
+                ? "💳 Slutför utlägg"
+                : state.levfaktMode
+                  ? state.ärFörsäljning
+                    ? "📤 Slutför kundfaktura"
+                    : "📥 Slutför leverantörsfaktura"
+                  : "✅ Bokför"
             }
+            loadingText={
+              state.utlaggMode
+                ? "💳 Slutför utlägg..."
+                : state.levfaktMode
+                  ? state.ärFörsäljning
+                    ? "📤 Slutför kundfaktura..."
+                    : "📥 Slutför leverantörsfaktura..."
+                  : "⏳ Bokför..."
+            }
+            loading={state.loadingSteg3}
             onClick={handlers.handleButtonClick}
-            disabled={state.loading}
+            disabled={state.loadingSteg3}
             className="px-8 py-4 text-xl"
           />
         </div>
