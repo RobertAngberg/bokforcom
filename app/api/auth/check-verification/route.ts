@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
-import { authRateLimit, getClientIP } from "../../../_utils/rateLimit";
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIP(request);
-
-  // Rate limiting för check-verification endpoint
-  const rateLimitResult = authRateLimit(ip);
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json({ error: "För många försök. Försök igen senare." }, { status: 429 });
-  }
-
   try {
     const { email, password } = await request.json();
 

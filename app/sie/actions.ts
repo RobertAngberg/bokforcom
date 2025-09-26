@@ -1,10 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
-import crypto from "crypto";
-import { put } from "@vercel/blob";
 import { getUserId } from "../_utils/authUtils";
-import { validateSessionAttempt } from "../_utils/rateLimit";
 import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
 
 const pool = new Pool({
@@ -89,11 +86,6 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     const userId = await getUserId();
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
-
-    // Rate limiting för SIE-uppladdningar
-    if (!(await validateSessionAttempt(userId))) {
-      return { success: false, error: "För många försök - vänta 15 minuter" };
     }
 
     await logSieSecurityEvent(userId, "sie_upload_attempt", "SIE file upload started");
@@ -1015,11 +1007,6 @@ export async function skapaKonton(
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    // Rate limiting för kontoskapande
-    if (!(await validateSessionAttempt(userId))) {
-      return { success: false, error: "För många försök - vänta 15 minuter" };
-    }
-
     await logSieSecurityEvent(
       userId,
       "sie_create_accounts_attempt",
@@ -1176,14 +1163,6 @@ export async function importeraSieData(
       return {
         success: false,
         error: "Ingen giltig session - måste vara inloggad",
-      };
-    }
-
-    // Rate limiting för SIE-import (mycket känslig operation)
-    if (!(await validateSessionAttempt(userId))) {
-      return {
-        success: false,
-        error: "För många försök - vänta 15 minuter",
       };
     }
 
@@ -1797,11 +1776,6 @@ export async function exporteraSieData(
     const userId = await getUserId();
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
-
-    // Rate limiting för SIE-export
-    if (!(await validateSessionAttempt(userId))) {
-      return { success: false, error: "För många försök - vänta 15 minuter" };
     }
 
     await logSieSecurityEvent(userId, "sie_export_attempt", `Export started for year: ${år}`);

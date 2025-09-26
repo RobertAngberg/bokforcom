@@ -159,7 +159,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
       LEFT JOIN favoritförval ff ON f.id = ff.forval_id AND ff.user_id = $1
       WHERE f."user_id" = $1
     `;
-    const values: any[] = [userId];
+    const values: (string | number)[] = [userId];
     const conditions: string[] = [];
 
     // Sanitera och validera filter
@@ -376,10 +376,6 @@ export async function getAllInvoices() {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
-    }
-
     await logStartSecurityEvent(userId, "fetch_all_invoices_attempt", "Fetching all user invoices");
 
     const client = await pool.connect();
@@ -445,10 +441,6 @@ export async function deleteInvoice(fakturaId: number) {
       throw new Error("Ogiltigt faktura-ID");
     }
 
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
-    }
-
     await logStartSecurityEvent(
       userId,
       "delete_invoice_attempt",
@@ -509,10 +501,6 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
     throw new Error("Åtkomst nekad - ingen giltig session");
   }
 
-  if (!(await validateSessionAttempt(userId))) {
-    throw new Error("För många försök - vänta 15 minuter");
-  }
-
   if (!validateId(id)) {
     throw new Error("Ogiltigt faktura-ID");
   }
@@ -526,7 +514,11 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
   await updateFakturanummerCore(id, safeNummer, userId);
 }
 
-export async function saveInvoice(data: any) {
+export async function saveInvoice(data: {
+  fakturanummer: string;
+  kundnamn: string;
+  total: number;
+}) {
   const client = await pool.connect();
   try {
     await client.query(
@@ -575,14 +567,10 @@ export async function räknaFörval(sök?: string) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
-    }
-
     const client = await pool.connect();
     try {
       let query = `SELECT COUNT(*) FROM förval WHERE "user_id" = $1`;
-      let params: (number | string)[] = [userId];
+      const params: (number | string)[] = [userId];
 
       if (sök) {
         const safeSök = sanitizeInput(sök);
@@ -603,14 +591,10 @@ export async function räknaFörval(sök?: string) {
 
 export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: string) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     if (!validateId(id)) {
@@ -660,14 +644,10 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
 
 export async function taBortFörval(id: number) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     if (!validateId(id)) {
@@ -723,14 +703,10 @@ export async function taBortFörval(id: number) {
 
 export async function taBortTransaktion(id: number) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     if (!validateId(id)) {
@@ -790,14 +766,10 @@ export async function taBortTransaktion(id: number) {
 
 export async function fetchForvalMedFel() {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     await logStartSecurityEvent(
@@ -824,7 +796,8 @@ export async function fetchForvalMedFel() {
         try {
           const konton = Array.isArray(f.konton) ? f.konton : JSON.parse(f.konton);
           return konton.some(
-            (konto: any) => konto.kontonummer && !giltigaKonton.includes(konto.kontonummer)
+            (konto: { kontonummer?: string }) =>
+              konto.kontonummer && !giltigaKonton.includes(konto.kontonummer)
           );
         } catch (err) {
           console.error("❌ JSON parse-fel i förval id:", f.id);
@@ -864,14 +837,10 @@ export async function fetchForvalMedFel() {
 
 export async function uploadPDF(formData: FormData) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     await logStartSecurityEvent(userId, "upload_pdf_attempt", "Attempting PDF upload");

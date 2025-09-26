@@ -3,7 +3,6 @@
 import { pool } from "../_lib/db";
 import { auth, signOut } from "../_lib/auth";
 import { getSessionAndUserId } from "../_utils/authUtils";
-import { signupRateLimit } from "../_utils/rateLimit";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -413,21 +412,6 @@ export async function checkUserSignupStatus() {
     const userId = parseInt(session.user.id, 10);
     const userEmail = session.user.email;
 
-    // Rate limiting för status-kontroller - använd enkel session limiting
-    if (!signupRateLimit(userId.toString())) {
-      await logSignupSecurityEvent(
-        userId.toString(),
-        "rate_limit_exceeded",
-        "Rate limit exceeded for signup status check",
-        undefined
-      );
-      return {
-        loggedIn: true,
-        hasCompanyInfo: false,
-        error: "För många försök - vänta 15 minuter",
-      };
-    }
-
     await logSignupSecurityEvent(
       userId.toString(),
       "signup_status_check",
@@ -497,17 +481,6 @@ export async function saveSignupData(formData: FormData) {
 
     const userEmail = session.user.email;
     const clientIP = getClientIP();
-
-    // Dubbel rate limiting för signup-operationer (session + IP)
-    if (!signupRateLimit(userId.toString(), clientIP)) {
-      await logSignupSecurityEvent(
-        userId.toString(),
-        "rate_limit_exceeded",
-        "Rate limit exceeded for signup data save",
-        clientIP
-      );
-      return { success: false, error: "För många försök - vänta 15 minuter" };
-    }
 
     await logSignupSecurityEvent(
       userId.toString(),
