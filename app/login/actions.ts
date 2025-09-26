@@ -473,7 +473,7 @@ export async function checkUserSignupStatus() {
 
 export async function saveSignupData(formData: FormData) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const { session, userId } = await getSessionAndUserId();
     if (!session?.user?.email || !userId) {
       return { success: false, error: "Ingen användare inloggad" };

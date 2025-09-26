@@ -69,7 +69,7 @@ export async function findUnbalancedVerifications(): Promise<{
   }
 }
 
-// Intern funktion utan rate limiting (för wrappers)
+// Intern funktion
 async function fetchTransaktionerInternal(fromYear?: string) {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
@@ -174,7 +174,7 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
   }
 }
 
-// Intern funktion för export utan rate limiting
+// Intern funktion för export
 async function exporteraTransaktionerMedPosterInternal(year: string) {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
   let userId: number;
@@ -338,7 +338,7 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
   }
 }
 
-// EXPORTS (rate limiting moved to middleware)
+// EXPORTS
 export const fetchTransaktioner = fetchTransaktionerInternal;
 export const exporteraTransaktionerMedPoster = exporteraTransaktionerMedPosterInternal;
 export const deleteTransaction = deleteTransactionInternal;

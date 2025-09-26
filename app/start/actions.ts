@@ -75,7 +75,7 @@ async function logStartSecurityEvent(
 
 export async function hämtaTransaktionsposter(transaktionsId: number) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
@@ -138,7 +138,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 
 export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
@@ -232,11 +232,6 @@ export async function fetchRawYearData(year: string) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    // TODO: Rate limiting borttaget tillfälligt
-    // if (!(await readSessionRateLimit(userId))) {
-    //   throw new Error("För många läsförsök - vänta 15 minuter");
-    // }
-
     // Validera och sanitera år
     const sanitizedYear = sanitizeInput(year);
     const yearNum = parseInt(sanitizedYear);
@@ -305,7 +300,7 @@ export async function fetchRawYearData(year: string) {
 
 export async function hämtaAllaTransaktioner() {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
@@ -370,7 +365,7 @@ export async function hämtaAllaTransaktioner() {
 
 export async function getAllInvoices() {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
@@ -430,7 +425,7 @@ export async function getAllInvoices() {
 
 export async function deleteInvoice(fakturaId: number) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
@@ -495,7 +490,7 @@ export async function deleteInvoice(fakturaId: number) {
 }
 
 export async function updateFakturanummer(id: number, nyttNummer: string) {
-  // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+  // 🔒 SÄKERHETSVALIDERING - Session
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Åtkomst nekad - ingen giltig session");
@@ -561,7 +556,7 @@ export async function hämtaFörvalMedSökning(sök: string, offset: number, lim
 
 export async function räknaFörval(sök?: string) {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");

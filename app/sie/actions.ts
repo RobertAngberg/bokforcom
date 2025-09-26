@@ -82,7 +82,7 @@ interface SieUploadResult {
 
 export async function uploadSieFile(formData: FormData): Promise<SieUploadResult> {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
@@ -1001,7 +1001,7 @@ export async function skapaKonton(
   kontoData: Array<{ nummer: string; namn: string }>
 ): Promise<{ success: boolean; error?: string; skapade?: number }> {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
@@ -1157,7 +1157,7 @@ export async function importeraSieData(
   }
 ): Promise<{ success: boolean; error?: string; resultat?: any }> {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       return {
@@ -1772,7 +1772,7 @@ export async function exporteraSieData(
   år: number = 2025
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   try {
-    // 🔒 SÄKERHETSVALIDERING - Session & Rate Limiting
+    // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
