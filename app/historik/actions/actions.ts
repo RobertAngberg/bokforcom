@@ -2,7 +2,6 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
-import { withFormRateLimit } from "../../_utils/rateLimit";
 import { validateYear } from "../../_utils/validationUtils";
 import { TransactionDetail, UnbalancedVerification, ExportTransaction } from "../types/types";
 
@@ -339,9 +338,7 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
   }
 }
 
-// SÄKRA EXPORTS MED RATE LIMITING
-export const fetchTransaktioner = withFormRateLimit(fetchTransaktionerInternal);
-export const exporteraTransaktionerMedPoster = withFormRateLimit(
-  exporteraTransaktionerMedPosterInternal
-);
-export const deleteTransaction = withFormRateLimit(deleteTransactionInternal);
+// EXPORTS (rate limiting moved to middleware)
+export const fetchTransaktioner = fetchTransaktionerInternal;
+export const exporteraTransaktionerMedPoster = exporteraTransaktionerMedPosterInternal;
+export const deleteTransaction = deleteTransactionInternal;

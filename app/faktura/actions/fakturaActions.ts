@@ -1,19 +1,12 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import {
-  validateKontonummer,
-  validateAmount,
-  sanitizeInput,
-  sanitizeExportInput,
-} from "../../_utils/validationUtils";
+import { validateAmount, sanitizeInput } from "../../_utils/validationUtils";
 import { validateEmail } from "../../login/sakerhet/loginValidation";
 import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
 import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
-import { safeAsync, logError, createError } from "../../_utils/errorUtils";
-import { withFormRateLimit } from "../../_utils/rateLimit";
-import { Artikel } from "../types/types";
+import { logError, createError } from "../../_utils/errorUtils";
 
 // Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
 function safeParseFakturaJSON(jsonString: string): any[] {
@@ -555,9 +548,6 @@ export async function getAllInvoices() {
   });
 }
 
-// SÄKRA EXPORTS MED RATE LIMITING
-// Skyddar kritiska funktioner från missbruk och spam-attacker
-export const saveInvoice = withFormRateLimit(saveInvoiceInternal);
-
-// Rate-limited delete-funktioner för säkerhet
-export const deleteInvoiceSecure = withFormRateLimit(deleteFaktura);
+// EXPORTS (rate limiting moved to middleware)
+export const saveInvoice = saveInvoiceInternal;
+export const deleteInvoiceSecure = deleteFaktura;

@@ -4,7 +4,6 @@ import { pool } from "../_lib/db";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { getUserId } from "../_utils/authUtils";
-import { validateSessionAttempt } from "../_utils/rateLimit";
 import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 // 🎉 VÄLKOMSTMEDDELANDE FUNKTIONER
@@ -82,10 +81,6 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
-    }
-
     // Validera input
     if (!transaktionsId || transaktionsId <= 0) {
       await logStartSecurityEvent(
@@ -147,10 +142,6 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     await logStartSecurityEvent(
@@ -318,10 +309,6 @@ export async function hämtaAllaTransaktioner() {
     const userId = await getUserId();
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
-    }
-
-    if (!(await validateSessionAttempt(userId))) {
-      throw new Error("För många försök - vänta 15 minuter");
     }
 
     await logStartSecurityEvent(
