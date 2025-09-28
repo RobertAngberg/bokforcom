@@ -87,7 +87,9 @@ export const useLonekorning = ({
   const [localAnställda, setLocalAnställda] = useState<AnställdListItem[]>([]);
   const [utlaggMap, setUtlaggMap] = useState<Record<number, UtläggData[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
-  const [företagsprofil, setFöretagsprofil] = useState<unknown>(null);
+  const [företagsprofil, setFöretagsprofil] = useState<
+    import("../types/types").Företagsprofil | null
+  >(null);
 
   // Skatte states
   const [skatteDatum, setSkatteDatum] = useState<Date | null>(null);
@@ -325,13 +327,94 @@ export const useLonekorning = ({
 
   const handleGenereraAGI = async () => {
     if (valdLonekorning?.id) {
-      setValdLonekorning((prev) =>
-        prev ? { ...prev, aktuellt_steg: 4, agi_genererad_datum: new Date() } : prev
-      );
       try {
+        // Ladda företagsprofil om den inte finns
+        let profil = företagsprofil;
+        if (!profil && session?.user?.id) {
+          profil = await hämtaFöretagsprofil(session.user.id);
+          if (!profil) {
+            showToast("Kunde inte hämta företagsprofil för AGI-generering", "error");
+            return;
+          }
+          setFöretagsprofil(profil);
+        }
+
+        // Kontrollera att vi har nödvändiga företagsuppgifter
+        if (!profil?.organisationsnummer || !profil?.telefonnummer || !profil?.epost) {
+          showToast(
+            "Företagsprofilen saknar nödvändiga uppgifter för AGI-generering. Kontrollera organisationsnummer, telefon och e-post i företagsprofilen.",
+            "error"
+          );
+          return;
+        }
+
+        // Samla individuppgifter från lönespecifikationer
+        // Hämta fullständig anställddata för AGI-generering
+        const fullAnställdaData = await hämtaAllaAnställda();
+
+        const individuppgifter = lönekörningSpecar.map((spec, index) => {
+          const anställd = fullAnställdaData?.find(
+            (a: import("../types/types").AnställdData) => a.id === spec.anställd_id
+          );
+
+          return {
+            specifikationsnummer: index + 1,
+            betalningsmottagareId: anställd?.personnummer || "",
+            fornamn: anställd?.förnamn || "",
+            efternamn: anställd?.efternamn || "",
+            gatuadress: anställd?.adress || "",
+            postnummer: anställd?.postnummer || "",
+            postort: anställd?.ort || "",
+            kontantErsattningUlagAG: Math.round((spec.bruttolön || 0) * 100) / 100,
+            // Lägg till fler fält här baserat på lönespec-data
+          };
+        });
+
+        // Skapa AGI-data
+        const agiData = {
+          agRegistreradId: profil.organisationsnummer,
+          redovisningsperiod: valdLonekorning.period || new Date().toISOString().substring(0, 7),
+          organisationsnummer: profil.organisationsnummer,
+          tekniskKontakt: {
+            namn: profil.företagsnamn || "Okänt företag",
+            telefon: profil.telefonnummer,
+            epost: profil.epost,
+          },
+          individuppgifter: individuppgifter,
+          franvarouppgifter: [], // Tom för nu, kan utökas senare
+        };
+
+        // Generera XML
+        const { generateAGIXML } = await import("../utils/agiUtils");
+        const xmlContent = generateAGIXML(agiData);
+
+        // Ladda ner fil
+        const blob = new Blob([xmlContent], { type: "application/xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `AGI_${profil.organisationsnummer}_${agiData.redovisningsperiod}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Uppdatera workflow
+        setValdLonekorning((prev) =>
+          prev ? { ...prev, aktuellt_steg: 4, agi_genererad_datum: new Date() } : prev
+        );
         await uppdateraLönekörningSteg(valdLonekorning.id, 4);
+
+        showToast(
+          `AGI-fil genererad och nedladdad: AGI_${profil.organisationsnummer}_${agiData.redovisningsperiod}.xml`,
+          "success"
+        );
       } catch (error) {
-        console.error("❌ Fel vid uppdatering av workflow:", error);
+        console.error("❌ Fel vid AGI-generering:", error);
+        showToast(
+          "Fel vid AGI-generering: " + (error instanceof Error ? error.message : "Okänt fel"),
+          "error"
+        );
       }
     }
   };

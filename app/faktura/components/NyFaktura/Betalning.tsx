@@ -3,6 +3,7 @@
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import TextFalt from "../../../_components/TextFalt";
 import { useFaktura } from "../../hooks/useFaktura";
 import { BetalningProps } from "../../types/types";
 //#endregion
@@ -47,28 +48,24 @@ export default function Betalning({}: BetalningProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Betalningsvillkor (dagar)
-          </label>
-          <input
-            type="text"
+          <TextFalt
+            label="Betalningsvillkor (dagar)"
             name="betalningsvillkor"
+            type="text"
             value={formData.betalningsvillkor ?? ""}
             onChange={hanteraÄndradText}
-            autoComplete="off"
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+            required={false}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-white mb-2">Dröjsmålsränta (%)</label>
-          <input
-            type="text"
+          <TextFalt
+            label="Dröjsmålsränta (%)"
             name="drojsmalsranta"
+            type="text"
             value={formData.drojsmalsranta ?? ""}
             onChange={hanteraÄndradText}
-            autoComplete="off"
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+            required={false}
           />
         </div>
 
@@ -92,14 +89,13 @@ export default function Betalning({}: BetalningProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-white mb-2">Nummer</label>
-          <input
-            type="text"
+          <TextFalt
+            label="Nummer"
             name="nummer"
+            type="text"
             value={formData.nummer ?? ""}
             onChange={hanteraÄndradText}
-            autoComplete="off"
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700"
+            required={false}
           />
         </div>
       </div>

@@ -410,19 +410,20 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
         <AnimeradFlik title="Avsändare" icon="👤" forcedOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Programnamn</label>
-              <input
+              <TextFalt
+                label="Programnamn"
+                name="programnamn"
                 type="text"
                 value={formData.programnamn}
                 onChange={(e) => setFormData((prev) => ({ ...prev, programnamn: e.target.value }))}
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={100}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Organisationsnummer
-              </label>
-              <input
+              <TextFalt
+                label="Organisationsnummer"
+                name="organisationsnummer"
                 type="text"
                 placeholder="XXXXXXXX-XXXX"
                 value={formData.organisationsnummer}
@@ -430,13 +431,13 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   setFormData((prev) => ({ ...prev, organisationsnummer: e.target.value }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={13}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Kontaktperson namn
-              </label>
-              <input
+              <TextFalt
+                label="Kontaktperson namn"
+                name="tekniskKontaktNamn"
                 type="text"
                 value={formData.tekniskKontakt.namn}
                 onChange={(e) =>
@@ -446,12 +447,14 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={50}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Telefon</label>
-              <input
-                type="text"
+              <TextFalt
+                label="Telefon"
+                name="tekniskKontaktTelefon"
+                type="tel"
                 value={formData.tekniskKontakt.telefon}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -460,11 +463,13 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={20}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">E-post</label>
-              <input
+              <TextFalt
+                label="E-post"
+                name="tekniskKontaktEpost"
                 type="email"
                 value={formData.tekniskKontakt.epost}
                 onChange={(e) =>
@@ -474,6 +479,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={100}
               />
             </div>
           </div>
@@ -483,10 +489,9 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
         <AnimeradFlik title="Huvuduppgift" icon="🏢" forcedOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                AG-registrerat ID
-              </label>
-              <input
+              <TextFalt
+                label="AG-registrerat ID"
+                name="agRegistreradId"
                 type="text"
                 placeholder="XXXXXXXX-XXXX"
                 value={formData.agRegistreradId}
@@ -494,13 +499,13 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   setFormData((prev) => ({ ...prev, agRegistreradId: e.target.value }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={13}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Redovisningsperiod
-              </label>
-              <input
+              <TextFalt
+                label="Redovisningsperiod"
+                name="redovisningsperiod"
                 type="text"
                 placeholder="YYYY-MM"
                 value={formData.redovisningsperiod}
@@ -508,6 +513,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   setFormData((prev) => ({ ...prev, redovisningsperiod: e.target.value }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={7}
               />
             </div>
             <div className="col-span-2">
@@ -530,12 +536,11 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
         <AnimeradFlik title="Summor från huvuduppgift" icon="🧮">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Summa arbetsgivaravgifter (487)
-              </label>
-              <input
+              <TextFalt
+                label="Summa arbetsgivaravgifter (487)"
+                name="summaArbAvgSlf"
                 type="number"
-                value={formData.summaArbAvgSlf || ""}
+                value={formData.summaArbAvgSlf?.toString() || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -543,15 +548,15 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={15}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Summa skatteavdrag (497)
-              </label>
-              <input
+              <TextFalt
+                label="Summa skatteavdrag (497)"
+                name="summaSkatteavdr"
                 type="number"
-                value={formData.summaSkatteavdr || ""}
+                value={formData.summaSkatteavdr?.toString() || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -559,15 +564,15 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={15}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Total sjuklönekostnad (232)
-              </label>
-              <input
+              <TextFalt
+                label="Total sjuklönekostnad (232)"
+                name="totalSjuklonekostnad"
                 type="number"
-                value={formData.totalSjuklonekostnad || ""}
+                value={formData.totalSjuklonekostnad?.toString() || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -575,6 +580,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                   }))
                 }
                 className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                maxLength={15}
               />
             </div>
           </div>
@@ -594,27 +600,26 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                 <h4 className="font-medium mb-3 text-white">Individuppgift {index + 1}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Specifikationsnummer
-                    </label>
-                    <input
+                    <TextFalt
+                      label="Specifikationsnummer"
+                      name={`specifikationsnummer-${index}`}
                       type="number"
-                      value={iu.specifikationsnummer}
+                      value={iu.specifikationsnummer.toString()}
                       onChange={(e) => {
                         const newIndivid = [...formData.individuppgifter];
-                        newIndivid[index].specifikationsnummer = parseInt(e.target.value);
+                        newIndivid[index].specifikationsnummer = parseInt(e.target.value) || 0;
                         setFormData((prev) => ({ ...prev, individuppgifter: newIndivid }));
                       }}
                       className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                      maxLength={10}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Preliminärskatt (001)
-                    </label>
-                    <input
+                    <TextFalt
+                      label="Preliminärskatt (001)"
+                      name={`avdrPrelSkatt-${index}`}
                       type="number"
-                      value={iu.avdrPrelSkatt || ""}
+                      value={iu.avdrPrelSkatt?.toString() || ""}
                       onChange={(e) => {
                         const newIndivid = [...formData.individuppgifter];
                         newIndivid[index].avdrPrelSkatt = e.target.value
@@ -623,15 +628,15 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                         setFormData((prev) => ({ ...prev, individuppgifter: newIndivid }));
                       }}
                       className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                      maxLength={15}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Kontant ersättning (011)
-                    </label>
-                    <input
+                    <TextFalt
+                      label="Kontant ersättning (011)"
+                      name={`kontantErsattningUlagAG-${index}`}
                       type="number"
-                      value={iu.kontantErsattningUlagAG || ""}
+                      value={iu.kontantErsattningUlagAG?.toString() || ""}
                       onChange={(e) => {
                         const newIndivid = [...formData.individuppgifter];
                         newIndivid[index].kontantErsattningUlagAG = e.target.value
@@ -640,6 +645,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                         setFormData((prev) => ({ ...prev, individuppgifter: newIndivid }));
                       }}
                       className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                      maxLength={15}
                     />
                   </div>
                 </div>
@@ -680,10 +686,9 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Betalnings­mottagare ID
-                    </label>
-                    <input
+                    <TextFalt
+                      label="Betalnings­mottagare ID"
+                      name={`betalningsmottagareId-${index}`}
                       type="text"
                       value={fu.betalningsmottagareId}
                       onChange={(e) => {
@@ -692,6 +697,7 @@ http://xmls.skatteverket.se/se/skatteverket/da/arbetsgivardeklaration/arbetsgiva
                         setFormData((prev) => ({ ...prev, franvarouppgifter: newFranvaro }));
                       }}
                       className="w-full border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 focus:border-cyan-400 focus:ring focus:ring-cyan-400 focus:ring-opacity-50"
+                      maxLength={20}
                     />
                   </div>
                   <div>

@@ -1,6 +1,7 @@
 //#region Huvud
 "use client";
 import Knapp from "../../../../_components/Knapp";
+import TextFalt from "../../../../_components/TextFalt";
 import { useSkickaEpost } from "../../../hooks/useSkickaEpost";
 import { SkickaEpostProps } from "../../../types/types";
 //#endregion
@@ -26,20 +27,15 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
       <div className="space-y-4">
         {/* E-postadress fält */}
         <div>
-          <label
-            htmlFor="mottagare-email"
-            className="block text-slate-300 text-sm font-medium mb-2"
-          >
-            Mottagarens e-postadress <span className="text-red-400">*</span>
-          </label>
-          <input
-            id="mottagare-email"
+          <TextFalt
+            label="Mottagarens e-postadress *"
+            name="mottagare-email"
             type="email"
             value={mottagareEmail}
             onChange={(e) => setMottagareEmail(e.target.value)}
             placeholder="kundnamn@exempel.se"
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isSending}
+            required={true}
           />
           {hasCustomerEmail && (
             <p className="text-slate-400 text-xs mt-1">💡 Förifylld med kundens e-postadress</p>
@@ -48,20 +44,15 @@ export default function SkickaEpost({ onSuccess, onError }: SkickaEpostProps) {
 
         {/* Eget meddelande */}
         <div>
-          <label
-            htmlFor="eget-meddelande"
-            className="block text-slate-300 text-sm font-medium mb-2"
-          >
-            Eget meddelande (valfritt)
-          </label>
-          <textarea
-            id="eget-meddelande"
+          <TextFalt
+            label="Eget meddelande (valfritt)"
+            name="eget-meddelande"
+            type="textarea"
             value={egetMeddelande}
             onChange={(e) => setEgetMeddelande(e.target.value)}
             placeholder="Skriv ett personligt meddelande som läggs till i e-postmeddelandet..."
-            rows={4}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
             disabled={isSending}
+            required={false}
           />
           <p className="text-slate-400 text-xs mt-1">
             Detta meddelande visas i e-postmeddelandet före fakturainformationen

@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Dropdown from "../../../../../_components/Dropdown";
 import Modal from "../../../../../_components/Modal";
+import TextFalt from "../../../../../_components/TextFalt";
 import { useLonespec } from "../../../../hooks/useLonespecar";
 import type { ExtraraderModalProps } from "../../../../types/types";
 
@@ -102,14 +103,14 @@ export default function ExtraraderModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
-                Antal arbetsdagar
-              </label>
-              <input
+              <TextFalt
+                label="Antal arbetsdagar"
+                name="semesterDagar"
                 type="number"
-                value={semesterDagar}
-                readOnly
-                className="w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-white cursor-not-allowed"
+                value={semesterDagar?.toString() || ""}
+                onChange={() => {}} // readonly field
+                disabled={true}
+                required={false}
               />
             </div>
 

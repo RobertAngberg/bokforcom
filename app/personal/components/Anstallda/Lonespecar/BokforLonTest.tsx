@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Knapp from "../../../../_components/Knapp";
+import TextFalt from "../../../../_components/TextFalt";
 import type { ExtraRad, SimpleBokföringsPost } from "../../../types/types";
 
 export default function BokförLönTest() {
@@ -29,7 +30,7 @@ export default function BokförLönTest() {
   };
 
   // Uppdatera extrarad
-  const uppdateraRad = (id: string, field: keyof ExtraRad, value: any) => {
+  const uppdateraRad = (id: string, field: keyof ExtraRad, value: string | number | boolean) => {
     setExtrarader(extrarader.map((rad) => (rad.id === id ? { ...rad, [field]: value } : rad)));
   };
 
@@ -46,7 +47,7 @@ export default function BokförLönTest() {
     let bilersättningar = 0;
     let skattadaFörmåner = 0;
     let semester = 0;
-    let poster: SimpleBokföringsPost[] = [];
+    const poster: SimpleBokföringsPost[] = [];
 
     // Bearbeta extrarader
     extrarader.forEach((rad) => {
@@ -266,12 +267,16 @@ export default function BokförLönTest() {
         <h2 className="text-lg font-semibold mb-4">Grundlön</h2>
         <div className="flex gap-4 items-center">
           <label>Månadslön:</label>
-          <input
-            type="number"
-            value={grundlön}
-            onChange={(e) => setGrundlön(Number(e.target.value))}
-            className="bg-slate-700 p-2 rounded w-32"
-          />
+          <div className="w-32">
+            <TextFalt
+              label=""
+              name="grundlon"
+              type="number"
+              value={grundlön.toString()}
+              onChange={(e) => setGrundlön(Number(e.target.value))}
+              required={false}
+            />
+          </div>
           <span>kr</span>
         </div>
       </div>
@@ -319,25 +324,35 @@ export default function BokförLönTest() {
               <option value="obetald_frånvaro">Obetald frånvaro</option>
             </select>
 
-            <input
-              type="number"
-              placeholder="Antal"
-              value={rad.antal}
-              onChange={(e) => uppdateraRad(rad.id, "antal", Number(e.target.value))}
-              className="bg-slate-700 p-2 rounded w-20"
-            />
+            <div className="w-20">
+              <TextFalt
+                label=""
+                name={`antal-${rad.id}`}
+                type="number"
+                placeholder="Antal"
+                value={rad.antal.toString()}
+                onChange={(e) => uppdateraRad(rad.id, "antal", Number(e.target.value))}
+                required={false}
+              />
+            </div>
 
-            <input
-              type="number"
-              placeholder={
-                rad.typ === "vab" || rad.typ === "föräldraledighet" ? "1610 kr/dag" : "Belopp"
-              }
-              value={rad.typ === "vab" || rad.typ === "föräldraledighet" ? 1610 : rad.belopp}
-              onChange={(e) => uppdateraRad(rad.id, "belopp", Number(e.target.value))}
-              className="bg-slate-700 p-2 rounded w-24"
-              readOnly={rad.typ === "vab" || rad.typ === "föräldraledighet"}
-              disabled={rad.typ === "vab" || rad.typ === "föräldraledighet"}
-            />
+            <div className="w-24">
+              <TextFalt
+                label=""
+                name={`belopp-${rad.id}`}
+                type="number"
+                placeholder={
+                  rad.typ === "vab" || rad.typ === "föräldraledighet" ? "1610 kr/dag" : "Belopp"
+                }
+                value={(rad.typ === "vab" || rad.typ === "föräldraledighet"
+                  ? 1610
+                  : rad.belopp
+                ).toString()}
+                onChange={(e) => uppdateraRad(rad.id, "belopp", Number(e.target.value))}
+                required={false}
+                disabled={rad.typ === "vab" || rad.typ === "föräldraledighet"}
+              />
+            </div>
 
             <span className="text-sm">
               ={" "}

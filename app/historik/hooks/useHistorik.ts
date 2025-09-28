@@ -176,7 +176,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const sanitizedSearch = sanitizeHistorikInput(e.target.value);
     setSearchTerm(sanitizedSearch);
   };

@@ -8,6 +8,7 @@ import { useHistorik } from "../hooks/useHistorik";
 import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
+import TextFalt from "../../_components/TextFalt";
 
 export default function Historik({ initialData }: HistorikProps) {
   const {
@@ -96,12 +97,14 @@ export default function Historik({ initialData }: HistorikProps) {
             />
           </div>
           <div className="w-40">
-            <input
+            <TextFalt
+              label=""
+              name="search"
               type="text"
               placeholder="🔍 Sök..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full px-3 py-2 bg-gray-800 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all duration-200"
+              required={false}
             />
           </div>
           <div className="border border-slate-500 rounded-lg px-3 py-2 bg-gray-800 h-[44px]">
