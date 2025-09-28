@@ -2,6 +2,7 @@
 
 import { useBankgiroExport } from "../../../hooks/useBankgiroExport";
 import Knapp from "../../../../_components/Knapp";
+import TextFalt from "../../../../_components/TextFalt";
 import { BankgiroExportProps } from "../../../types/types";
 
 export default function BankgiroExport({
@@ -73,27 +74,23 @@ export default function BankgiroExport({
               {/* Inställningar */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Kundnummer för Bankgiromax <span className="text-gray-500">6 tecken</span>
-                  </label>
-                  <input
+                  <TextFalt
+                    label="Kundnummer för Bankgiromax (6 tecken)"
+                    name="kundnummer"
                     type="text"
-                    maxLength={6}
                     value={kundnummer}
                     onChange={(e) => setKundnummer(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={6}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Bankgironummer <span className="text-gray-500">max 10 tecken</span>
-                  </label>
-                  <input
+                  <TextFalt
+                    label="Bankgironummer (max 10 tecken)"
+                    name="bankgironummer"
                     type="text"
-                    maxLength={11}
                     value={bankgironummer}
                     onChange={(e) => setBankgironummer(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={11}
                   />
                 </div>
               </div>

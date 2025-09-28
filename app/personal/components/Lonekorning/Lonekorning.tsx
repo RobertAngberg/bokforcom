@@ -65,8 +65,6 @@ export default function Lonekorning({
   // Prepare batch data for mailing using hook
   const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, allAnstallda);
 
-  console.log("Batch data prepared:", batchData.length, "items");
-
   if (loading) {
     return <LoadingSpinner />;
   }

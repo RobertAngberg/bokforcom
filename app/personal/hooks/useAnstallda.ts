@@ -169,7 +169,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     setPersonalErrorMessage(null);
   }, [valdAnställd, personalIsEditing]);
 
-  const personalOnEdit = useCallback(() => {
+  const personalOnEdit = () => {
     if (!valdAnställd) return;
     setPersonalIsEditing(true);
     const data = buildPersonalEditData(valdAnställd);
@@ -177,7 +177,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     setPersonalOriginalData(data);
     setPersonalHasChanges(false);
     setPersonalErrorMessage(null);
-  }, [valdAnställd]);
+  };
 
   const personalOnChange = useCallback(
     (name: keyof PersonalEditData | string, value: string | number | boolean) => {
@@ -221,12 +221,12 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     }
   }, [valdAnställd, personalHasChanges, personalEditData, setValdAnställd]);
 
-  const personalOnCancel = useCallback(() => {
+  const personalOnCancel = () => {
     setPersonalEditData(personalOriginalData);
     setPersonalIsEditing(false);
     setPersonalHasChanges(false);
     setPersonalErrorMessage(null);
-  }, [personalOriginalData]);
+  };
 
   // ===========================================
   // ANSTÄLLDA LISTA - För Anstallda.tsx & AnstalldaLista.tsx
@@ -411,11 +411,8 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   const updateNyAnställdFormulär = useCallback(
     (updates: Partial<typeof nyAnställdFormulär>) => {
       if (!enableNyAnstalldMode) return;
-      console.log("🔄 updateNyAnställdFormulär - updates:", updates);
       setNyAnställdFormulär((prev) => {
         const newState = { ...prev, ...updates };
-        console.log("🔄 updateNyAnställdFormulär - prev state:", prev);
-        console.log("🔄 updateNyAnställdFormulär - new state:", newState);
         return newState;
       });
     },
@@ -427,12 +424,6 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       if (!enableNyAnstalldMode) return;
       const { name, value } = e.target;
-
-      console.log("🔍 handleSanitizedChange - input:", {
-        name,
-        value,
-        valueLength: value.length,
-      });
 
       updateNyAnställdFormulär({ [name]: value });
     },

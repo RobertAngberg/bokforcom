@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import Knapp from "../../../_components/Knapp";
 import Information from "./Information/Information";
@@ -8,6 +9,7 @@ import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import Semester from "./Semester/Semester";
 import { useUtlagg } from "../../hooks/useUtlagg";
+import { useAnstallda } from "../../hooks/useAnstallda";
 import type { AnställdData } from "../../types/types";
 
 interface AnställdFlikProps {
@@ -17,6 +19,14 @@ interface AnställdFlikProps {
 
 export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProps) {
   const { laddaUtläggFörAnställd } = useUtlagg(anställd.id);
+  const { state, handlers, actions } = useAnstallda();
+
+  // Sätt valdAnställd när komponenten mountar
+  React.useEffect(() => {
+    if (anställd && (!state.valdAnställd || state.valdAnställd.id !== anställd.id)) {
+      actions.setValdAnställd(anställd);
+    }
+  }, [anställd, state.valdAnställd, actions]);
 
   const anställdNamn = `${anställd.förnamn} ${anställd.efternamn}`;
   const anställdInfo = `${anställdNamn}${anställd.jobbtitel ? " - " + anställd.jobbtitel : ""}`;
@@ -29,30 +39,10 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
           <AnimeradFlik title="Personalinformation" icon="📋">
             <Information
               state={{
+                ...state,
                 valdAnställd: anställd,
-                personalIsEditing: false,
-                personalHasChanges: false,
-                personalErrorMessage: null,
-                personalEditData: {
-                  förnamn: "",
-                  efternamn: "",
-                  personnummer: "",
-                  jobbtitel: "",
-                  clearingnummer: "",
-                  bankkonto: "",
-                  mail: "",
-                  adress: "",
-                  postnummer: "",
-                  ort: "",
-                },
               }}
-              handlers={{
-                personalOnEdit: () => console.log("Edit clicked"),
-                personalOnSave: () => console.log("Save clicked"),
-                personalOnCancel: () => console.log("Cancel clicked"),
-                personalOnChange: (name: string, value: string) =>
-                  console.log("Change:", name, value),
-              }}
+              handlers={handlers}
             />
           </AnimeradFlik>
 

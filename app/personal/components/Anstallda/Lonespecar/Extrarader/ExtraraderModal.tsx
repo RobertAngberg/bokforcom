@@ -134,29 +134,22 @@ export default function ExtraraderModal({
                     }}
                   />
                 ) : (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className="block text-sm font-medium text-slate-200 mb-1"
-                    >
-                      {field.label}
-                      {field.required && <span className="text-red-400 ml-1">*</span>}
-                    </label>
-                    <input
-                      type={field.type}
-                      id={field.name}
-                      name={field.name}
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e);
-                      }}
-                      required={field.required}
-                      placeholder={field.placeholder}
-                      step={field.step}
-                      min={field.min}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    />
-                  </>
+                  <TextFalt
+                    label={field.label + (field.required ? " *" : "")}
+                    type={(field.type as "text" | "number" | "email" | "password") || "text"}
+                    name={field.name}
+                    value={field.value}
+                    onChange={(e) => {
+                      // Skapa kompatibel event för FormField onChange
+                      const adaptedEvent = {
+                        ...e,
+                        target: e.target as HTMLInputElement,
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      field.onChange(adaptedEvent);
+                    }}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                  />
                 )}
               </div>
             ))}
@@ -182,29 +175,22 @@ export default function ExtraraderModal({
                   }}
                 />
               ) : (
-                <>
-                  <label
-                    htmlFor={field.name}
-                    className="block text-sm font-medium text-slate-200 mb-1"
-                  >
-                    {field.label}
-                    {field.required && <span className="text-red-400 ml-1">*</span>}
-                  </label>
-                  <input
-                    type={field.type}
-                    id={field.name}
-                    name={field.name}
-                    value={field.value}
-                    onChange={(e) => {
-                      field.onChange(e);
-                    }}
-                    required={field.required}
-                    placeholder={field.placeholder}
-                    step={field.step}
-                    min={field.min}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                  />
-                </>
+                <TextFalt
+                  label={field.label + (field.required ? " *" : "")}
+                  type={(field.type as "text" | "number" | "email" | "password") || "text"}
+                  name={field.name}
+                  value={field.value}
+                  onChange={(e) => {
+                    // Skapa kompatibel event för FormField onChange
+                    const adaptedEvent = {
+                      ...e,
+                      target: e.target as HTMLInputElement,
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    field.onChange(adaptedEvent);
+                  }}
+                  required={field.required}
+                  placeholder={field.placeholder}
+                />
               )}
             </div>
           ))
