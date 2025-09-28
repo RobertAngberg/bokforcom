@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import AnimeradFlik from "../../_components/AnimeradFlik";
+import TextFalt from "../../_components/TextFalt";
 
 interface TekniskKontakt {
   namn: string;

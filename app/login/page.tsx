@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import EpostRegistrering from "./SignUp";
 import ForgotPassword from "./reset-password/ForgotPassword";
 import { useRememberMe } from "./_utils/rememberMe";
+import TextFalt from "../_components/TextFalt";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
   const [email, setEmail] = useState("");
@@ -96,24 +97,24 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
   return (
     <form onSubmit={handleEmailSignIn} className="space-y-3">
       <div>
-        <input
+        <TextFalt
+          label="E-postadress"
+          name="email"
           type="email"
-          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="E-postadress"
-          autoComplete="email"
           className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div>
-        <input
+        <TextFalt
+          label="Lösenord"
+          name="password"
           type="password"
-          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Lösenord"
-          autoComplete="current-password"
           className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

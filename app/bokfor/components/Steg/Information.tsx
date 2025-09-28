@@ -8,35 +8,28 @@ registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { InformationProps } from "../../types/types";
 import { useBokforContext } from "../BokforProvider";
+import TextFalt from "../../../_components/TextFalt";
 
 export default function Information({
   visaFakturadatum = false,
   fakturadatum,
   setFakturadatum,
 }: InformationProps) {
-  const { state, actions, handlers } = useBokforContext();
+  const { handlers } = useBokforContext();
   const { belopp, handleBeloppChange, handleTransaktionsdatumChange, transaktionsdatumDate } =
     handlers.useInformationHelper();
 
   return (
     <div className="padder">
-      <label htmlFor="belopp" className="block mb-2 text-white">
-        Belopp:
-      </label>
-      <input
-        className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700 appearance-none 
-    [&::-webkit-outer-spin-button]:appearance-none 
-    [&::-webkit-inner-spin-button]:appearance-none 
-    [&::-moz-inner-spin-button]:appearance-none"
-        type="number"
-        id="belopp"
+      <TextFalt
+        label="Belopp"
         name="belopp"
-        required
-        min="0"
-        max="999999999"
-        step="0.01"
+        type="number"
         value={belopp || ""}
         onChange={handleBeloppChange}
+        placeholder="0.00"
+        className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+        maxLength={12}
       />
 
       {/* Fakturadatum - visas endast om fakturametod är aktiverad */}

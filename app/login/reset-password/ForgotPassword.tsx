@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import TextFalt from "../../_components/TextFalt";
 import { requestPasswordReset } from "../actions";
 
 interface ForgotPasswordProps {
@@ -10,6 +11,9 @@ interface ForgotPasswordProps {
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   // React 19 useActionState - all form state in one hook!
   const [state, formAction, isPending] = useActionState(requestPasswordReset, null);
+
+  // Form state for TextFalt
+  const [email, setEmail] = useState("");
 
   if (state?.success) {
     return (
@@ -35,14 +39,16 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
           <p className="text-slate-300 text-sm mb-4">
             Ange din e-postadress så skickar vi dig en länk för att återställa ditt lösenord.
           </p>
-          <input
+          <TextFalt
+            label="E-postadress"
             name="email"
             type="email"
-            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Din e-postadress"
-            autoComplete="email"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <input type="hidden" name="email" value={email} />
         </div>
 
         {state?.error && <div className="text-center text-sm text-red-400 mt-2">{state.error}</div>}

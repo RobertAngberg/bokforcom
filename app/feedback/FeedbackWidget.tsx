@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import TextFalt from "../_components/TextFalt";
 
 export default function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,12 +135,16 @@ export default function FeedbackWidget() {
                 </div>
 
                 <div className="animate-in slide-in-from-left-2 duration-300 delay-150">
-                  <textarea
+                  <TextFalt
+                    label=""
+                    name="message"
+                    type="textarea"
                     placeholder="Berätta mer..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-500 rounded-md text-slate-100 text-sm h-24 resize-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder-slate-400 transition-all duration-200 hover:border-slate-400"
                     required
+                    maxLength={1000}
                   />
                 </div>
 

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Modal from "../_components/Modal";
+import TextFalt from "../_components/TextFalt";
 import { createAccount } from "./actions";
 
 interface EmailSignupFormProps {
@@ -12,6 +13,11 @@ interface EmailSignupFormProps {
 export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormProps) {
   // React 19 useActionState - all form state in one hook! 🚀
   const [state, formAction, isPending] = useActionState(createAccount, null);
+
+  // Form state for TextFalt components
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   // Only keep modal state (not form-related)
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -48,32 +54,35 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
     <div>
       <form action={formAction} className="space-y-4">
         <div>
-          <input
+          <TextFalt
+            label="Ditt namn"
             name="name"
             type="text"
-            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Ditt namn"
-            autoComplete="name"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
-          <input
+          <TextFalt
+            label="E-postadress"
             name="email"
             type="email"
-            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="E-postadress"
-            autoComplete="email"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
-          <input
+          <TextFalt
+            label="Lösenord"
             name="password"
             type="password"
-            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Lösenord (minst 8 tecken)"
-            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -98,6 +107,11 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
             </button>
           </label>
         </div>
+
+        {/* Hidden inputs för server action */}
+        <input type="hidden" name="name" value={name} />
+        <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="password" value={password} />
 
         <button
           type="submit"

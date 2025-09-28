@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import TextFalt from "../../_components/TextFalt";
 import { resetPassword } from "../actions";
 
 interface ResetPasswordProps {
@@ -71,25 +72,25 @@ export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) 
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <input
+          <TextFalt
+            label="Nytt lösenord"
+            name="password"
             type="password"
-            required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Nytt lösenord (minst 8 tecken)"
-            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <input
+          <TextFalt
+            label="Bekräfta lösenord"
+            name="confirmPassword"
             type="password"
-            required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Bekräfta nytt lösenord"
-            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

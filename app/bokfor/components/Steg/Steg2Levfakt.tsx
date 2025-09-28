@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
@@ -18,80 +19,123 @@ registerLocale("sv", sv);
 
 export default function Steg2Levfakt() {
   const { state, actions, handlers } = useBokforContext();
+
+  // State för dynamiskt laddade specialkomponenter
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [SpecialComponent, setSpecialComponent] = useState<any>(null);
+  const [componentLoading, setComponentLoading] = useState(false);
+
+  // Dynamisk laddning av specialkomponent baserat på vald förval
+  useEffect(() => {
+    const loadSpecialComponent = async () => {
+      if (!state.valtFörval?.specialtyp) {
+        setSpecialComponent(null);
+        return;
+      }
+
+      // Mapping mellan specialtyp och komponentnamn - komplett lista från database
+      const specialtypMapping: Record<string, string> = {
+        AvgifterAvrakningsnotaMoms: "AvgifterAvrakningsnotaMoms",
+        AvrakningsnotaUtanMoms: "AvrakningsnotaUtanMoms",
+        Banklan: "Banklan",
+        Billeasing: "Billeasing",
+        Direktpension: "Direktpension",
+        DrojsmalsrantaLevFakt: "DrojsmalsrantaLevFakt",
+        EgetUttag: "EgetUttag",
+        Hyrbil: "Hyrbil",
+        ITtjansterEU: "ITtjansterEU",
+        ITtjansterUtanfEU: "ITtjansterUtanfEU",
+        Importmoms: "Importmoms",
+        InkopTjanstEU: "InkopTjanstEU",
+        InkopTjanstUtanfEU: "InkopTjanstUtanfEU",
+        InkopTjansterSverigeOmvand: "InkopTjansterSverigeOmvand",
+        InkopVarorEU25: "InkopVarorEU25",
+        InkopVarorUtanfEU: "InkopVarorUtanfEU",
+        Kontorsmaterial: "Kontorsmaterial",
+        MilersattningEnskildFirma: "MilersattningEnskildFirma",
+        Pensionsforsakring: "Pensionsforsakring",
+        Rantekostnader: "Rantekostnader",
+        Representation: "Representation",
+        UberAvgift: "UberAvgift",
+        AmorteringBanklan: "AmorteringBanklan",
+      };
+
+      const componentName = specialtypMapping[state.valtFörval.specialtyp];
+
+      if (!componentName) {
+        setSpecialComponent(null);
+        return;
+      }
+
+      try {
+        setComponentLoading(true);
+        // Modern dynamic import istället för require()
+        const componentModule = await import(`./SpecialForval/${componentName}`);
+        setSpecialComponent(() => componentModule.default);
+      } catch (error) {
+        console.error(`Kunde inte ladda specialkomponent ${componentName}:`, error);
+        setSpecialComponent(null);
+      } finally {
+        setComponentLoading(false);
+      }
+    };
+
+    loadSpecialComponent();
+  }, [state.valtFörval?.specialtyp]);
   const levfaktHelper = handlers.useSteg2LevfaktHelper();
 
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;
 
+  // Rendera dynamiskt laddad specialkomponent om det finns
   if (state.valtFörval?.specialtyp) {
-    // Mapping från database specialtyp till komponentnamn
-    const specialtypMapping: { [key: string]: string } = {
-      AvgifterAvrakningsnotaMoms: "AvgifterAvrakningsnotaMoms",
-      AvrakningsnotaUtanMoms: "AvrakningsnotaUtanMoms",
-      Banklan: "Banklan",
-      Billeasing: "Billeasing",
-      Direktpension: "Direktpension",
-      DrojsmalsrantaLevFakt: "DrojsmalsrantaLevFakt",
-      EgetUttag: "EgetUttag",
-      Hyrbil: "Hyrbil",
-      ITtjansterEU: "ITtjansterEU",
-      ITtjansterUtanfEU: "ITtjansterUtanfEU",
-      Importmoms: "Importmoms",
-      InkopTjanstEU: "InkopTjanstEU",
-      InkopTjanstUtanfEU: "InkopTjanstUtanfEU",
-      InkopTjansterSverigeOmvand: "InkopTjansterSverigeOmvand",
-      InkopVarorEU25: "InkopVarorEU25",
-      InkopVarorUtanfEU: "InkopVarorUtanfEU",
-      MilersattningEnskildFirma: "MilersattningEnskildFirma",
-      Pensionsforsakring: "Pensionsforsakring",
-      Rantekostnader: "Rantekostnader",
-      Representation: "Representation",
-      UberAvgift: "UberAvgift",
-      AmorteringBanklan: "AmorteringBanklan",
-    };
-
-    const componentName = specialtypMapping[state.valtFörval.specialtyp];
-
-    if (!componentName) {
-      return <div>Okänd specialtyp: {state.valtFörval.specialtyp}</div>;
+    // Visa laddningsindikator medan komponenten laddas
+    if (componentLoading) {
+      return (
+        <div className="p-10 text-white text-center">
+          <div className="animate-spin inline-block w-6 h-6 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+          Laddar specialförval...
+        </div>
+      );
     }
 
-    try {
-      const SpecialComponent = require(`./SpecialForval/${componentName}`).default;
-      return (
-        <SpecialComponent
-          mode="steg2"
-          renderMode="levfakt"
-          belopp={state.belopp}
-          setBelopp={actions.setBelopp}
-          transaktionsdatum={state.transaktionsdatum}
-          setTransaktionsdatum={actions.setTransaktionsdatum}
-          kommentar={state.kommentar}
-          setKommentar={actions.setKommentar}
-          setCurrentStep={actions.setCurrentStep}
-          fil={state.fil}
-          setFil={actions.setFil}
-          pdfUrl={state.pdfUrl}
-          setPdfUrl={actions.setPdfUrl}
-          extrafält={state.extrafält}
-          setExtrafält={actions.setExtrafält}
-          leverantör={state.leverantör}
-          setLeverantör={actions.setLeverantör}
-          fakturanummer={levfaktHelper.state.fakturanummer}
-          setFakturanummer={levfaktHelper.actions.setFakturanummer}
-          fakturadatum={levfaktHelper.state.fakturadatum}
-          setFakturadatum={levfaktHelper.actions.setFakturadatum}
-          förfallodatum={levfaktHelper.state.förfallodatum}
-          setFörfallodatum={levfaktHelper.actions.setFörfallodatum}
-        />
-      );
-    } catch (err) {
+    // Visa felmeddelande om komponenten inte kunde laddas
+    if (!SpecialComponent) {
       return (
         <div className="p-10 text-white bg-red-900 text-center">
           ⚠️ Kunde inte ladda specialförval: {state.valtFörval.specialtyp}
         </div>
       );
     }
+
+    // Rendera den dynamiskt laddade komponenten
+    return (
+      <SpecialComponent
+        mode="steg2"
+        renderMode="levfakt"
+        belopp={state.belopp}
+        setBelopp={actions.setBelopp}
+        transaktionsdatum={state.transaktionsdatum}
+        setTransaktionsdatum={actions.setTransaktionsdatum}
+        kommentar={state.kommentar}
+        setKommentar={actions.setKommentar}
+        setCurrentStep={actions.setCurrentStep}
+        fil={state.fil}
+        setFil={actions.setFil}
+        pdfUrl={state.pdfUrl}
+        setPdfUrl={actions.setPdfUrl}
+        extrafält={state.extrafält}
+        setExtrafält={actions.setExtrafält}
+        leverantör={state.leverantör}
+        setLeverantör={actions.setLeverantör}
+        fakturanummer={levfaktHelper.state.fakturanummer}
+        setFakturanummer={levfaktHelper.actions.setFakturanummer}
+        fakturadatum={levfaktHelper.state.fakturadatum}
+        setFakturadatum={levfaktHelper.actions.setFakturadatum}
+        förfallodatum={levfaktHelper.state.förfallodatum}
+        setFörfallodatum={levfaktHelper.actions.setFörfallodatum}
+      />
+    );
   }
 
   return (
@@ -177,20 +221,15 @@ export default function Steg2Levfakt() {
 
             {/* Belopp */}
             <div className="mb-4">
-              <label htmlFor="belopp" className="block mb-2 text-white">
-                Belopp:
-              </label>
-              <input
-                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700 appearance-none 
-                [&::-webkit-outer-spin-button]:appearance-none 
-                [&::-webkit-inner-spin-button]:appearance-none 
-                [&::-moz-inner-spin-button]:appearance-none"
-                type="number"
-                id="belopp"
+              <TextFalt
+                label="Belopp"
                 name="belopp"
-                required
-                value={state.belopp || ""}
+                type="number"
+                value={state.belopp?.toString() || ""}
                 onChange={(e) => actions.setBelopp(Number(e.target.value))}
+                placeholder="0.00"
+                className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
+                maxLength={12}
               />
             </div>
 
