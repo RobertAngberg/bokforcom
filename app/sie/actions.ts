@@ -10,20 +10,10 @@ const pool = new Pool({
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR SIE-MODUL
 
-async function logSieSecurityEvent(
-  userId: number | string,
-  eventType: string,
-  details: string
-): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO security_logs (user_id, event_type, details, timestamp, module) 
-       VALUES ($1, $2, $3, NOW(), 'SIE')`,
-      [String(userId), eventType, details]
-    );
-  } catch (error) {
-    console.error("Failed to log SIE security event:", error);
-  }
+// REMOVED: Security logging functionality (security_logs table doesn't exist)
+// All security events are now logged to console only for development debugging
+function logSieSecurityEvent(userId: number | string, eventType: string, details: string): void {
+  console.log(`🔒 SIE Security Event [${eventType}] User: ${userId} - ${details}`);
 }
 function validateFileSize(file: File): { valid: boolean; error?: string } {
   const maxSize = 50 * 1024 * 1024; // 50MB max för SIE-filer
@@ -88,19 +78,19 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    await logSieSecurityEvent(userId, "sie_upload_attempt", "SIE file upload started");
+    logSieSecurityEvent(userId, "sie_upload_attempt", "SIE file upload started");
 
     const file = formData.get("file") as File;
 
     if (!file) {
-      await logSieSecurityEvent(userId, "sie_upload_failed", "No file provided");
+      logSieSecurityEvent(userId, "sie_upload_failed", "No file provided");
       return { success: false, error: "Ingen fil vald" };
     }
 
     // 🔒 FILVALIDERING
     const sizeValidation = validateFileSize(file);
     if (!sizeValidation.valid) {
-      await logSieSecurityEvent(userId, "sie_upload_failed", `File too large: ${file.size} bytes`);
+      logSieSecurityEvent(userId, "sie_upload_failed", `File too large: ${file.size} bytes`);
       return { success: false, error: sizeValidation.error };
     }
 
@@ -110,7 +100,7 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
       !file.name.toLowerCase().endsWith(".sie") &&
       !file.name.toLowerCase().endsWith(".se")
     ) {
-      await logSieSecurityEvent(userId, "sie_upload_failed", `Invalid file type: ${file.name}`);
+      logSieSecurityEvent(userId, "sie_upload_failed", `Invalid file type: ${file.name}`);
       return { success: false, error: "Endast SIE-filer (.sie, .se4, .se) stöds" };
     }
 
@@ -256,7 +246,7 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     // Kontrollera vilka konton som saknas i databasen (globalt)
     const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton));
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_upload_success",
       `File uploaded: ${file.name}, ${sieData.verifikationer.length} verifications`
@@ -274,7 +264,7 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     try {
       const userId = await getUserId();
       if (userId) {
-        await logSieSecurityEvent(
+        logSieSecurityEvent(
           userId,
           "sie_upload_error",
           `Parse error: ${error instanceof Error ? error.message : String(error)}`
@@ -1007,7 +997,7 @@ export async function skapaKonton(
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_create_accounts_attempt",
       `Attempting to create ${kontoData.length} accounts`
@@ -1091,7 +1081,7 @@ export async function skapaKonton(
         }
       } catch (error) {
         console.error(`Fel vid skapande av konto ${konto.nummer}:`, error);
-        await logSieSecurityEvent(
+        logSieSecurityEvent(
           userId,
           "sie_create_account_error",
           `Failed to create account ${konto.nummer}: ${error}`
@@ -1104,7 +1094,7 @@ export async function skapaKonton(
 
     console.log(`📊 Kontoskapande klart - Skapade: ${skapadeAntal}, Hoppade över: ${hoppadeOver}`);
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_create_accounts_success",
       `Created ${skapadeAntal} accounts, skipped ${hoppadeOver} existing`
@@ -1120,7 +1110,7 @@ export async function skapaKonton(
     try {
       const userId = await getUserId();
       if (userId) {
-        await logSieSecurityEvent(
+        logSieSecurityEvent(
           userId,
           "sie_create_accounts_error",
           `Failed to create accounts: ${error}`
@@ -1166,7 +1156,7 @@ export async function importeraSieData(
       };
     }
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_import_attempt",
       `Import started: ${fileInfo?.filnamn || "unknown"}, verifications: ${sieData.verifikationer.length}`
@@ -1778,11 +1768,11 @@ export async function exporteraSieData(
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    await logSieSecurityEvent(userId, "sie_export_attempt", `Export started for year: ${år}`);
+    logSieSecurityEvent(userId, "sie_export_attempt", `Export started for year: ${år}`);
 
     // 🔒 SÄKER DATABASACCESS - Hämta endast användarens företagsinfo
     const företagQuery = await pool.query(
-      `SELECT email, företagsnamn, organisationsnummer FROM users WHERE id = $1`,
+      `SELECT email, företagsnamn, organisationsnummer FROM "user" WHERE id = $1`,
       [userId]
     );
 
@@ -1986,7 +1976,7 @@ export async function exporteraSieData(
       }
     }
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_export_success",
       `SIE export completed for year ${år}, content length: ${sieContent.length}`
@@ -2002,7 +1992,7 @@ export async function exporteraSieData(
     try {
       const userId = await getUserId();
       if (userId) {
-        await logSieSecurityEvent(
+        logSieSecurityEvent(
           userId,
           "sie_export_error",
           `Export failed: ${error instanceof Error ? error.message : String(error)}`
@@ -2074,7 +2064,7 @@ export async function rensaDubblettkonton(): Promise<{
     client.release();
     await pool.end();
 
-    await logSieSecurityEvent(
+    logSieSecurityEvent(
       userId,
       "sie_cleanup_duplicates",
       `Removed ${rensadeAntal} duplicate accounts`

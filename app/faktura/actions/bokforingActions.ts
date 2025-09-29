@@ -34,10 +34,7 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
   if (!userId) return { success: false, error: "Inte inloggad" };
 
   try {
-    await pool.query("UPDATE users SET bokföringsmetod = $1, uppdaterad = NOW() WHERE id = $2", [
-      metod,
-      userId,
-    ]);
+    await pool.query('UPDATE "user" SET bokföringsmetod = $1 WHERE id = $2', [metod, userId]);
 
     return { success: true };
   } catch (error) {

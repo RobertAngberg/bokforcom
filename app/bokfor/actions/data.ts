@@ -4,10 +4,24 @@ import { sanitizeFormInput } from "../../_utils/validationUtils";
 
 // Bokföringsmetod data
 export async function hämtaBokföringsmetod() {
-  // Temporary fix: Returnera bara default tills vi migrerar ordentligt
-  // Better Auth har inte bokföringsmetod-fält än
-  console.log("📝 Använder default bokföringsmetod (Better Auth migration pending)");
-  return "Kontantmetoden";
+  const userId = await getUserId();
+
+  try {
+    const client = await pool.connect();
+    const query = 'SELECT bokföringsmetod FROM "user" WHERE id = $1';
+    const res = await client.query(query, [userId]);
+    client.release();
+
+    if (res.rows.length === 0) {
+      console.warn("⛔ Användare inte funnen:", userId);
+      return "Kontantmetoden"; // Default fallback
+    }
+
+    return res.rows[0].bokföringsmetod || "Kontantmetoden";
+  } catch (error) {
+    console.error("❌ hämtaBokföringsmetod error:", error);
+    return "Kontantmetoden"; // Default fallback
+  }
 }
 
 // Favoritförval data

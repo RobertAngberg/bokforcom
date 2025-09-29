@@ -1,3 +1,26 @@
+// === SEMESTER TYPES ===
+export interface SemesterRecord {
+  id?: number;
+  anställd_id: number;
+  datum: string;
+  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
+  antal: number;
+  från_datum?: string;
+  till_datum?: string;
+  beskrivning?: string;
+  lönespecifikation_id?: number;
+  bokfört: boolean;
+  skapad_av: string; // Uppdaterat för Better Auth UUID
+}
+
+export interface SemesterSummary {
+  betalda_dagar: number;
+  sparade_dagar: number;
+  skuld: number;
+  komp_dagar: number;
+}
+
+// === EXTRARAD TYPES ===
 export interface ExtraradData {
   lönespecifikation_id: number;
   typ: string;
@@ -104,7 +127,7 @@ export interface LönespecifikationMedLönekörning {
   nettolön: number;
   skapad: Date;
   uppdaterad: Date;
-  skapad_av: number;
+  skapad_av: string; // Better Auth UUID
   utbetalningsdatum: Date;
   status: string;
   bankgiro_exporterad: boolean;
@@ -711,7 +734,7 @@ export interface SemesterRecord {
   beskrivning?: string;
   lönespecifikation_id?: number;
   bokfört: boolean;
-  skapad_av: number;
+  skapad_av: string; // Better Auth UUID (duplicate interface)
 }
 
 export interface InformationState {
@@ -1140,7 +1163,7 @@ export interface SemesterRecord {
   beskrivning?: string;
   lönespecifikation_id?: number;
   bokfört: boolean;
-  skapad_av: number;
+  skapad_av: string; // Better Auth UUID (third duplicate)
 }
 
 export interface SemesterSummary {

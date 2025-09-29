@@ -1,7 +1,8 @@
 "use server";
 
 import { getUserId } from "../../_utils/authUtils";
-import type { AnvandarInfo, AktionsResultat, UppdateraAnvandarPayload } from "../types/types";
+import type { AktionsResultat, AnvandarInfo } from "../../_types/common";
+import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
@@ -27,7 +28,7 @@ export async function uppdateraAnvändarInfo(
     }
 
     const updated = await queryOne<AnvandarInfo>(
-      "UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING id, email, name, created_at as skapad",
+      'UPDATE "user" SET name = $1, email = $2 WHERE id = $3 RETURNING id, email, name, "createdAt" as skapad',
       [name, email, userId]
     );
 

@@ -1,3 +1,12 @@
+// === BOKFÖRING TYPES ===
+export interface BokföringPost {
+  konto: string | number;
+  debet: number;
+  kredit: number;
+  beskrivning?: string;
+}
+
+// === LEVERANTÖR TYPES ===
 export type Leverantör = {
   id?: number;
   namn: string;
@@ -563,12 +572,12 @@ export interface BokföringsPost {
 }
 
 export interface BokförFakturaData {
-  fakturaId?: number;
+  fakturaId: number;
   fakturanummer: string;
   kundnamn: string;
   totaltBelopp: number;
-  poster: BokföringsPost[];
-  kommentar?: string;
+  poster: BokföringPost[];
+  kommentar: string;
 }
 
 // === PDF GENERATION ===

@@ -1,11 +1,5 @@
-export interface AnvandarInfo {
-  id: string;
-  email: string;
-  name: string;
-  skapad?: string;
-  uppdaterad?: string;
-  provider?: string;
-}
+// Importerar gemensamma typer
+import type { AnvandarInfo, AktionsResultat } from "../../_types/common";
 
 export interface ForetagsProfil {
   foretagsnamn: string;
@@ -29,12 +23,8 @@ export interface AnvandarRedigeringsFormular {
   email: string;
 }
 
-export interface AktionsResultat<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  user?: AnvandarInfo;
-}
+// Re-export för bakåtkompatibilitet
+export type { AnvandarInfo, AktionsResultat };
 
 export interface UppdateraAnvandarPayload {
   name: string;

@@ -128,7 +128,7 @@ export async function hämtaSemesterHistorik(anställdId: number): Promise<Semes
         u.name as skapad_av_namn,
         l.månad, l.år
       FROM semester s
-      LEFT JOIN users u ON s.skapad_av = u.id
+      LEFT JOIN "user" u ON s.skapad_av = u.id
       LEFT JOIN lönespecifikationer l ON s.lönespecifikation_id = l.id
       WHERE s.anställd_id = $1
       ORDER BY s.datum DESC, s.id DESC

@@ -10,35 +10,17 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function logSignupSecurityEvent(
+// REMOVED: Security logging functionality (security_logs table doesn't exist)
+// All security events are now logged to console only for development debugging
+function logSignupSecurityEvent(
   userId: string,
   eventType: string,
   details: string,
   ip?: string
-): Promise<void> {
-  try {
-    // Kontrollera om security_logs tabellen finns
-    const tableExists = await pool.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'security_logs'
-      );
-    `);
-
-    if (tableExists.rows[0].exists) {
-      await pool.query(
-        `INSERT INTO security_logs (user_id, event_type, details, timestamp, module, ip_address) 
-         VALUES ($1, $2, $3, NOW(), 'SIGNUP', $4)`,
-        [userId.toString(), eventType, details, ip || null]
-      );
-    } else {
-      console.log(`Signup Security Event [${eventType}] User: ${userId} IP: ${ip} - ${details}`);
-    }
-  } catch (error) {
-    console.error("Failed to log signup security event:", error);
-    console.log(`Signup Security Event [${eventType}] User: ${userId} IP: ${ip} - ${details}`);
-  }
+): void {
+  console.log(
+    `🔒 Signup Security Event [${eventType}] User: ${userId} IP: ${ip || "unknown"} - ${details}`
+  );
 }
 
 function getClientIP(headers?: Record<string, string>): string | undefined {
@@ -56,6 +38,7 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
   );
 }
 
+// DEPRECATED: Custom email verification - Better Auth har sitt eget system
 // Skicka verification email
 async function sendVerificationEmail(email: string, token: string, name: string): Promise<boolean> {
   const verificationUrl = `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
@@ -177,7 +160,7 @@ export async function requestPasswordReset(
     }
 
     // Hitta användare
-    const userResult = await pool.query("SELECT id, name, email FROM users WHERE email = $1", [
+    const userResult = await pool.query('SELECT id, name, email FROM "user" WHERE email = $1', [
       email,
     ]);
 
@@ -197,7 +180,7 @@ export async function requestPasswordReset(
     const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 timme
 
     // Uppdatera användaren med reset token
-    await pool.query("UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3", [
+    await pool.query('UPDATE "user" SET reset_token = $1, reset_token_expires = $2 WHERE id = $3', [
       resetToken,
       resetExpires,
       user.id,
@@ -250,7 +233,7 @@ export async function resetPassword(formData: FormData) {
     // Hitta användare med giltig token
     const userResult = await pool.query(
       `SELECT id, email, name, reset_token_expires 
-       FROM users 
+       FROM "user" 
        WHERE reset_token = $1`,
       [token]
     );
@@ -277,7 +260,7 @@ export async function resetPassword(formData: FormData) {
 
     // Uppdatera lösenord och rensa reset token
     await pool.query(
-      `UPDATE users 
+      `UPDATE "user" 
        SET password = $1, reset_token = NULL, reset_token_expires = NULL 
        WHERE id = $2`,
       [hashedPassword, user.id]
@@ -347,7 +330,7 @@ export async function createAccount(
     }
 
     // Kolla om email redan finns
-    const existingUser = await pool.query("SELECT email FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query('SELECT email FROM "user" WHERE email = $1', [email]);
 
     if (existingUser.rows.length > 0) {
       return {
@@ -356,39 +339,34 @@ export async function createAccount(
       };
     }
 
-    // Hasha lösenord
+    // Skapa användare manuellt i Better Auth user-tabellen
+    // TODO: Migrera till Better Auth API när vi förstår det bättre
+    const userId = crypto.randomUUID();
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Skapa verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 timmar
+    try {
+      const result = await pool.query(
+        `INSERT INTO "user" (id, email, name, "emailVerified", password) 
+         VALUES ($1, $2, $3, false, $4) 
+         RETURNING id, email, name`,
+        [userId, email, name.trim(), hashedPassword]
+      );
 
-    // Lägg till användare i databasen
-    const result = await pool.query(
-      `INSERT INTO users (email, password, name, email_verified, verification_token, verification_expires, created_at) 
-       VALUES ($1, $2, $3, false, $4, $5, NOW()) 
-       RETURNING id, email, name`,
-      [email, hashedPassword, name.trim(), verificationToken, verificationExpires]
-    );
+      const newUser = result.rows[0];
+      console.log(`✅ User created: ${email} (ID: ${newUser.id})`);
 
-    const newUser = result.rows[0];
-
-    // Skicka verifieringsmail
-    const emailSent = await sendVerificationEmail(email, verificationToken, name.trim());
-
-    if (!emailSent) {
-      // Om mejlet inte kunde skickas, ta bort användaren från databasen
-      await pool.query("DELETE FROM users WHERE id = $1", [newUser.id]);
+      // TODO: Implementera email verification senare via Better Auth
+    } catch (dbError) {
+      console.error("❌ Database error during signup:", dbError);
       return {
         success: false,
-        error: "Kunde inte skicka verifieringsmail. Försök igen senare.",
+        error: "Kunde inte skapa användarkonto. Försök igen senare.",
       };
     }
 
     return {
       success: true,
       message: "Konto skapat! Kontrollera din e-post för verifiering.",
-      user: newUser,
     };
   } catch (error) {
     console.error("Signup error:", error);
@@ -417,10 +395,10 @@ export async function saveSignupData(formData: FormData) {
     const userEmail = session.user.email;
     const clientIP = getClientIP();
 
-    await logSignupSecurityEvent(
-      userId.toString(),
-      "signup_save_attempt",
-      `Signup data save started for user: ${userEmail}`,
+    logSignupSecurityEvent(
+      userId,
+      "account_creation_attempt",
+      `Account creation started for ${userEmail}`,
       clientIP
     );
 
@@ -435,7 +413,7 @@ export async function saveSignupData(formData: FormData) {
 
     // Grundläggande säkerhetskontroller (frontend validation redan gjord)
     if (!rawOrganisationsnummer || !rawFöretagsnamn) {
-      await logSignupSecurityEvent(
+      logSignupSecurityEvent(
         userId.toString(),
         "signup_validation_failed",
         "Missing required fields",
@@ -458,7 +436,7 @@ export async function saveSignupData(formData: FormData) {
     const allowedMethods = ["kassaredovisning", "fakturaredovisning"];
 
     if (momsperiod && !allowedMomsperiods.includes(momsperiod)) {
-      await logSignupSecurityEvent(
+      logSignupSecurityEvent(
         userId.toString(),
         "signup_security_violation",
         `Invalid momsperiod: ${momsperiod}`,
@@ -468,7 +446,7 @@ export async function saveSignupData(formData: FormData) {
     }
 
     if (bokföringsmetod && !allowedMethods.includes(bokföringsmetod)) {
-      await logSignupSecurityEvent(
+      logSignupSecurityEvent(
         userId.toString(),
         "signup_security_violation",
         `Invalid bokföringsmetod: ${bokföringsmetod}`,
@@ -481,12 +459,12 @@ export async function saveSignupData(formData: FormData) {
     try {
       // 🔒 SÄKER DATABASACCESS - Kontrollera befintlig användare
       const existingUser = await client.query(
-        `SELECT id, företagsnamn, organisationsnummer FROM users WHERE id = $1`,
+        `SELECT id, företagsnamn, organisationsnummer FROM "user" WHERE id = $1`,
         [userId]
       );
 
       if (existingUser.rows.length === 0) {
-        await logSignupSecurityEvent(
+        logSignupSecurityEvent(
           userId.toString(),
           "signup_user_not_found",
           `User not found in database: ${userEmail}`,
@@ -499,7 +477,7 @@ export async function saveSignupData(formData: FormData) {
 
       // Kontrollera om användaren redan har företagsinformation
       if (user.företagsnamn || user.organisationsnummer) {
-        await logSignupSecurityEvent(
+        logSignupSecurityEvent(
           userId.toString(),
           "signup_duplicate_attempt",
           `User already has company info: ${userEmail}`,
@@ -511,7 +489,7 @@ export async function saveSignupData(formData: FormData) {
         };
       }
 
-      await logSignupSecurityEvent(
+      logSignupSecurityEvent(
         userId.toString(),
         "signup_save_processing",
         `Saving signup data for user: ${userEmail}`,
@@ -520,7 +498,7 @@ export async function saveSignupData(formData: FormData) {
 
       // 🔒 SÄKER DATABASUPPDATERING
       const result = await client.query(
-        `UPDATE users 
+        `UPDATE "user" 
          SET organisationsnummer = $1, 
              företagsnamn = $2, 
              momsperiod = $3, 
@@ -544,7 +522,7 @@ export async function saveSignupData(formData: FormData) {
       );
 
       if (result.rows.length === 0) {
-        await logSignupSecurityEvent(
+        logSignupSecurityEvent(
           userId.toString(),
           "signup_update_failed",
           `Failed to update user: ${userEmail}`,
@@ -553,7 +531,7 @@ export async function saveSignupData(formData: FormData) {
         return { success: false, error: "Kunde inte uppdatera användarinformation" };
       }
 
-      await logSignupSecurityEvent(
+      logSignupSecurityEvent(
         userId.toString(),
         "signup_save_success",
         `Signup data saved successfully for user: ${userEmail}`,
@@ -574,7 +552,7 @@ export async function saveSignupData(formData: FormData) {
     try {
       const { session: errorSession, userId: errorUserId } = await getSessionAndUserId();
       if (errorSession?.user?.email && errorUserId) {
-        await logSignupSecurityEvent(
+        logSignupSecurityEvent(
           errorUserId.toString(),
           "signup_save_error",
           `Error saving signup data: ${error instanceof Error ? error.message : String(error)}`

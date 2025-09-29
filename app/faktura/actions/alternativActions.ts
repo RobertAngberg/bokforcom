@@ -283,7 +283,7 @@ export async function hämtaBokföringsmetod() {
   if (!userId) return "kontantmetoden"; // Default
 
   try {
-    const result = await pool.query("SELECT bokföringsmetod FROM users WHERE id = $1", [userId]);
+    const result = await pool.query('SELECT bokföringsmetod FROM "user" WHERE id = $1', [userId]);
 
     return result.rows[0]?.bokföringsmetod || "kontantmetoden";
   } catch (error) {
@@ -317,10 +317,7 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
   if (!userId) return { success: false, error: "Inte inloggad" };
 
   try {
-    await pool.query("UPDATE users SET bokföringsmetod = $1, uppdaterad = NOW() WHERE id = $2", [
-      metod,
-      userId,
-    ]);
+    await pool.query('UPDATE "user" SET bokföringsmetod = $1 WHERE id = $2', [metod, userId]);
 
     return { success: true };
   } catch (error) {
@@ -330,14 +327,9 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 }
 
 // Bokföringsfunktioner
-export async function bokförFaktura(data: {
-  fakturaId: number;
-  fakturanummer: string;
-  kundnamn: string;
-  totaltBelopp: number;
-  poster: any[];
-  kommentar: string;
-}) {
+import type { BokförFakturaData } from "../types/types";
+
+export async function bokförFaktura(data: BokförFakturaData) {
   const userId = await getUserId();
   if (!userId) return { success: false, error: "Ingen användare hittad" };
 

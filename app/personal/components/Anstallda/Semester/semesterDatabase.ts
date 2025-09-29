@@ -4,28 +4,7 @@
  */
 
 import { pool } from "../../../../_lib/db";
-
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: number;
-}
-
-// Ta bort gamla fält och synka med nya definitionen
-export interface SemesterSummary {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-}
+import { SemesterRecord, SemesterSummary } from "../../../types/types";
 
 /**
  * Hämtar semestersammanställning för en anställd
@@ -110,6 +89,7 @@ export async function registreraSemesterintjäning(
 
 /**
  * Registrerar semesteruttag
+ * TODO: Implementera fullständig logik när semestersystemet utvecklas
  */
 export async function registreraSemesteruttag(
   anställdId: number,
@@ -120,15 +100,27 @@ export async function registreraSemesteruttag(
   lönespecId: number | null,
   skapadAv: number
 ): Promise<{ success: boolean; message: string; id?: number }> {
+  // Förhindra oanvända parameter-varningar
+  void anställdId;
+  void startDatum;
+  void slutDatum;
+  void antal;
+  void beskrivning;
+  void lönespecId;
+  void skapadAv;
   const client = await pool.connect();
   try {
-    // Kontrollera tillgängliga dagar
-    // TODO: Anpassa logik till nya fält (betalda_dagar, sparade_dagar, skuld, komp_dagar)
-    // Temporärt: tillåt alltid uttag
-    // const summary = await hämtaSemesterSammanställning(anställdId);
-    // if (antal > summary.tillgängligt) { ... }
-    // ...
-    // Skriv in korrekt logik här om du vill begränsa uttag baserat på nya fält
+    // TODO: Implementera fullständig semesteruttag-logik
+    // Kontrollera tillgängliga dagar baserat på betalda_dagar, sparade_dagar, skuld, komp_dagar
+    // const summary = await hämtaSemesterSammanställning(_anställdId);
+    // if (_antal > summary.tillgängligt) { return { success: false, message: "Inte tillräckligt med dagar" }; }
+    //
+    // Skapa semesterpost:
+    // await client.query(
+    //   "INSERT INTO semester (anställd_id, datum, typ, antal, från_datum, till_datum, beskrivning, lönespecifikation_id, bokfört, skapad_av) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+    //   [_anställdId, new Date().toISOString().split("T")[0], "Uttag", _antal, _startDatum, _slutDatum, _beskrivning, _lönespecId, false, _skapadAv]
+    // );
+
     return { success: true, message: "Uttag registrerat (logik ej implementerad)", id: undefined };
   } finally {
     client.release();
@@ -149,7 +141,7 @@ export async function hämtaSemesterHistorik(anställdId: number): Promise<Semes
         u.name as skapad_av_namn,
         l.månad, l.år
       FROM semester s
-      LEFT JOIN users u ON s.skapad_av = u.id
+      LEFT JOIN "user" u ON s.skapad_av = u.id
       LEFT JOIN lönespecifikationer l ON s.lönespecifikation_id = l.id
       WHERE s.anställd_id = $1
       ORDER BY s.datum DESC, s.id DESC

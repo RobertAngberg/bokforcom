@@ -1,9 +1,10 @@
 import { auth } from "../_lib/better-auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import type { UserId } from "../_types/common";
 
 // Better Auth använder string IDs direkt
-export async function getUserId(): Promise<string> {
+export async function getUserId(): Promise<UserId> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -43,16 +44,17 @@ export async function getUserEmail(): Promise<string> {
 }
 
 // Kombinerar session + userId för vanliga use cases
-export async function getSessionAndUserId(): Promise<{ session: any; userId: number }> {
+// DEPRECATED: Använd getUserId() direkt istället då Better Auth använder string UUIDs
+export async function getSessionAndUserId(): Promise<{ session: any; userId: UserId }> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
   const session = await getValidSession();
-  const userId = parseInt(session.user!.id!, 10);
+  const userId = session.user!.id!; // Använd string direkt
 
   return { session, userId };
 }
 
 // Validerar ägarskap av en resurs baserat på user_id fält
-export async function requireOwnership(resourceUserId: string): Promise<string> {
+export async function requireOwnership(resourceUserId: UserId): Promise<UserId> {
   const userId = await getUserId();
 
   if (userId !== resourceUserId) {
@@ -63,7 +65,7 @@ export async function requireOwnership(resourceUserId: string): Promise<string> 
 }
 
 // Helper för att validera att en databas-post tillhör den inloggade användaren
-export async function validateUserOwnership<T extends { user_id: string }>(
+export async function validateUserOwnership<T extends { user_id: UserId }>(
   resource: T | null,
   resourceName: string = "resurs"
 ): Promise<T> {
@@ -94,8 +96,9 @@ export async function getAuthenticatedUser() {
 }
 
 // För server actions som behöver både validering och error handling
+// DEPRECATED: Bör uppdateras för att använda Better Auth sessions
 export async function withAuth<T>(
-  action: (userId: number, session: any) => Promise<T>
+  action: (userId: UserId, session: any) => Promise<T>
 ): Promise<T> {
   try {
     const { session, userId } = await getSessionAndUserId();

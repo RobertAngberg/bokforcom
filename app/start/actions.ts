@@ -26,7 +26,7 @@ export async function markWelcomeAsShown(): Promise<void> {
     const userId = await getUserId();
     const client = await pool.connect();
 
-    await client.query("UPDATE users SET welcome_shown = true WHERE id = $1", [userId]);
+    await client.query('UPDATE "user" SET welcome_shown = true WHERE id = $1', [userId]);
 
     client.release();
   } catch (error) {
@@ -36,34 +36,10 @@ export async function markWelcomeAsShown(): Promise<void> {
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR START-MODUL
 
-async function logStartSecurityEvent(
-  userId: number | string,
-  eventType: string,
-  details: string
-): Promise<void> {
-  try {
-    // Kontrollera om security_logs tabellen finns
-    const tableExists = await pool.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'security_logs'
-      );
-    `);
-
-    if (tableExists.rows[0].exists) {
-      await pool.query(
-        `INSERT INTO security_logs (user_id, event_type, details, timestamp, module) 
-         VALUES ($1, $2, $3, NOW(), 'START')`,
-        [String(userId), eventType, details]
-      );
-    } else {
-      console.log(`Start Security Event [${eventType}] User: ${userId} - ${details}`);
-    }
-  } catch (error) {
-    console.error("Failed to log start security event:", error);
-    console.log(`Start Security Event [${eventType}] User: ${userId} - ${details}`);
-  }
+// REMOVED: Security logging functionality (security_logs table doesn't exist)
+// All security events are now logged to console only for development debugging
+function logStartSecurityEvent(userId: number | string, eventType: string, details: string): void {
+  console.log(`🔒 Start Security Event [${eventType}] User: ${userId} - ${details}`);
 }
 
 export async function hämtaTransaktionsposter(transaktionsId: number) {
@@ -76,7 +52,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 
     // Validera input
     if (!transaktionsId || transaktionsId <= 0) {
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "invalid_transaction_id",
         `Invalid transaction ID: ${transaktionsId}`
@@ -84,7 +60,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
       throw new Error("Ogiltigt transaktions-ID");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_transaction_posts",
       `Fetching posts for transaction: ${transaktionsId}`
@@ -102,7 +78,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
       [transaktionsId, userId]
     );
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_transaction_posts_success",
       `Retrieved ${result.rows.length} posts for transaction ${transaktionsId}`
@@ -114,7 +90,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_transaction_posts_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -137,7 +113,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_forval_attempt",
       `Fetching förval with filters: ${JSON.stringify(filters)}`
@@ -190,7 +166,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 
     const res = await pool.query(query, values);
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_forval_success",
       `Retrieved ${res.rows.length} förval records`
@@ -202,7 +178,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -229,14 +205,14 @@ export async function fetchRawYearData(year: string) {
     const sanitizedYear = sanitizeInput(year);
     const yearNum = parseInt(sanitizedYear);
     if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
-      await logStartSecurityEvent(userId, "invalid_year", `Invalid year: ${year}`);
+      logStartSecurityEvent(userId, "invalid_year", `Invalid year: ${year}`);
       throw new Error("Ogiltigt år");
     }
 
     const start = new Date(`${yearNum}-01-01`);
     const end = new Date(`${yearNum + 1}-01-01`);
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_year_data_attempt",
       `Fetching raw data for year: ${yearNum}`
@@ -261,7 +237,7 @@ export async function fetchRawYearData(year: string) {
 
       const result = await client.query(query, [start, end, userId]);
 
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "fetch_raw_year_data_success",
         `Retrieved ${result.rows.length} raw records for year ${yearNum}`
@@ -276,7 +252,7 @@ export async function fetchRawYearData(year: string) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_raw_year_data_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -299,7 +275,7 @@ export async function hämtaAllaTransaktioner() {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "fetch_all_transactions_attempt",
       "Fetching all user transactions"
@@ -326,7 +302,7 @@ export async function hämtaAllaTransaktioner() {
         [userId]
       );
 
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "fetch_all_transactions_success",
         `Retrieved ${res.rows.length} transactions`
@@ -341,7 +317,7 @@ export async function hämtaAllaTransaktioner() {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_all_transactions_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -364,7 +340,7 @@ export async function getAllInvoices() {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    await logStartSecurityEvent(userId, "fetch_all_invoices_attempt", "Fetching all user invoices");
+    logStartSecurityEvent(userId, "fetch_all_invoices_attempt", "Fetching all user invoices");
 
     const client = await pool.connect();
     try {
@@ -386,7 +362,7 @@ export async function getAllInvoices() {
         [userId]
       );
 
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "fetch_all_invoices_success",
         `Retrieved ${res.rows.length} invoices`
@@ -401,7 +377,7 @@ export async function getAllInvoices() {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_all_invoices_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -429,7 +405,7 @@ export async function deleteInvoice(fakturaId: number) {
       throw new Error("Ogiltigt faktura-ID");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "delete_invoice_attempt",
       `Attempting to delete invoice ID: ${fakturaId}`
@@ -444,7 +420,7 @@ export async function deleteInvoice(fakturaId: number) {
       );
 
       if (deleteRes.rowCount === 0) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_invoice_unauthorized",
           `Unauthorized attempt to delete invoice ID: ${fakturaId}`
@@ -452,11 +428,7 @@ export async function deleteInvoice(fakturaId: number) {
         throw new Error("Faktura hittades inte eller du saknar behörighet");
       }
 
-      await logStartSecurityEvent(
-        userId,
-        "delete_invoice_success",
-        `Deleted invoice ID: ${fakturaId}`
-      );
+      logStartSecurityEvent(userId, "delete_invoice_success", `Deleted invoice ID: ${fakturaId}`);
 
       return { success: true, message: "Faktura raderad" };
     } finally {
@@ -467,7 +439,7 @@ export async function deleteInvoice(fakturaId: number) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_invoice_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -589,7 +561,7 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("Ogiltigt ID");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "update_forval_attempt",
       `Updating förval ID: ${id}, column: ${kolumn}`
@@ -601,7 +573,7 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
     const result = await updateFörvalCore(id, kolumn, sanitizedValue, userId);
 
     if (result.rowCount === 0) {
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "update_forval_unauthorized",
         `Unauthorized attempt to update förval ID: ${id}`
@@ -609,13 +581,13 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("Förval hittades inte eller du saknar behörighet");
     }
 
-    await logStartSecurityEvent(userId, "update_forval_success", `Updated förval ID: ${id}`);
+    logStartSecurityEvent(userId, "update_forval_success", `Updated förval ID: ${id}`);
   } catch (error) {
     // Logga fel om vi har session
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "update_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -642,11 +614,7 @@ export async function taBortFörval(id: number) {
       throw new Error("Ogiltigt ID");
     }
 
-    await logStartSecurityEvent(
-      userId,
-      "delete_forval_attempt",
-      `Attempting to delete förval ID: ${id}`
-    );
+    logStartSecurityEvent(userId, "delete_forval_attempt", `Attempting to delete förval ID: ${id}`);
 
     const client = await pool.connect();
     try {
@@ -657,7 +625,7 @@ export async function taBortFörval(id: number) {
       );
 
       if (result.rowCount === 0) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_forval_unauthorized",
           `Unauthorized attempt to delete förval ID: ${id}`
@@ -665,7 +633,7 @@ export async function taBortFörval(id: number) {
         throw new Error("Förval hittades inte eller du saknar behörighet");
       }
 
-      await logStartSecurityEvent(userId, "delete_forval_success", `Deleted förval ID: ${id}`);
+      logStartSecurityEvent(userId, "delete_forval_success", `Deleted förval ID: ${id}`);
     } finally {
       client.release();
     }
@@ -674,7 +642,7 @@ export async function taBortFörval(id: number) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_forval_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -701,7 +669,7 @@ export async function taBortTransaktion(id: number) {
       throw new Error("Ogiltigt ID");
     }
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "delete_transaction_attempt",
       `Attempting to delete transaction ID: ${id}`
@@ -716,7 +684,7 @@ export async function taBortTransaktion(id: number) {
       );
 
       if (result.rowCount === 0) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_transaction_unauthorized",
           `Unauthorized attempt to delete transaction ID: ${id}`
@@ -724,11 +692,7 @@ export async function taBortTransaktion(id: number) {
         throw new Error("Transaktion hittades inte eller du saknar behörighet");
       }
 
-      await logStartSecurityEvent(
-        userId,
-        "delete_transaction_success",
-        `Deleted transaction ID: ${id}`
-      );
+      logStartSecurityEvent(userId, "delete_transaction_success", `Deleted transaction ID: ${id}`);
     } finally {
       client.release();
     }
@@ -737,7 +701,7 @@ export async function taBortTransaktion(id: number) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "delete_transaction_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -760,11 +724,7 @@ export async function fetchForvalMedFel() {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    await logStartSecurityEvent(
-      userId,
-      "fetch_forval_errors_attempt",
-      "Fetching förval with errors"
-    );
+    logStartSecurityEvent(userId, "fetch_forval_errors_attempt", "Fetching förval with errors");
 
     const client = await pool.connect();
 
@@ -793,7 +753,7 @@ export async function fetchForvalMedFel() {
         }
       });
 
-      await logStartSecurityEvent(
+      logStartSecurityEvent(
         userId,
         "fetch_forval_errors_success",
         `Found ${felaktiga.length} förval with errors`
@@ -808,7 +768,7 @@ export async function fetchForvalMedFel() {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "fetch_forval_errors_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -831,7 +791,7 @@ export async function uploadPDF(formData: FormData) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
 
-    await logStartSecurityEvent(userId, "upload_pdf_attempt", "Attempting PDF upload");
+    logStartSecurityEvent(userId, "upload_pdf_attempt", "Attempting PDF upload");
 
     const file = formData.get("file") as File;
 
@@ -858,7 +818,7 @@ export async function uploadPDF(formData: FormData) {
       addRandomSuffix: true,
     });
 
-    await logStartSecurityEvent(
+    logStartSecurityEvent(
       userId,
       "upload_pdf_success",
       `Uploaded PDF: ${safeFileName} to ${blob.url}`
@@ -870,7 +830,7 @@ export async function uploadPDF(formData: FormData) {
     try {
       const userId = await getUserId();
       if (userId) {
-        await logStartSecurityEvent(
+        logStartSecurityEvent(
           userId,
           "upload_pdf_error",
           `Error: ${error instanceof Error ? error.message : String(error)}`

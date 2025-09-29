@@ -3,7 +3,7 @@
 import { getUserId } from "../../_utils/authUtils";
 import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
-import type { AktionsResultat } from "../types/types";
+import type { AktionsResultat } from "../../_types/common";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
@@ -17,7 +17,7 @@ export async function raderaFöretag(): Promise<AktionsResultat> {
       await client.query("DELETE FROM transaktioner WHERE anvandare_id = $1", [userId]);
       await client.query("DELETE FROM fakturor WHERE anvandare_id = $1", [userId]);
       await client.query("DELETE FROM företagsprofil WHERE id = $1", [userId]);
-      await client.query("DELETE FROM users WHERE id = $1", [userId]);
+      await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
     });
 
     return { success: true };
