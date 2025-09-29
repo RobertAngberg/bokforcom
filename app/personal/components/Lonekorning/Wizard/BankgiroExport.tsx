@@ -34,7 +34,6 @@ export default function BankgiroExport({
     lönespecar,
     onExportComplete,
     onClose,
-    direktNedladdning,
   });
 
   // Modal state: styrs av prop om satt, annars lokalt

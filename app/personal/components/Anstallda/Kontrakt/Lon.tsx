@@ -14,7 +14,7 @@ export default function Lön({ editData, handleChange, anställd, viewMode, opti
         <div className="space-y-3">
           {[
             ["Kompensation", anställd.kompensation ? `${anställd.kompensation} kr` : null],
-            ["Ersättning per", anställd.ersättning_per],
+            ["Ersättning per", anställd.ersättningPer || anställd.ersättning_per],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>

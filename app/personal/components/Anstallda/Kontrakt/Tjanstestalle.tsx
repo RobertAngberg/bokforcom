@@ -17,8 +17,8 @@ export default function Tjänsteställe({
         <h3 className="text-xl font-semibold text-white mb-4">Tjänsteställe</h3>
         <div className="space-y-3">
           {[
-            ["Adress", anställd.tjänsteställe_adress],
-            ["Ort", anställd.tjänsteställe_ort],
+            ["Adress", anställd.tjänsteställeAdress || anställd.tjänsteställe_adress],
+            ["Ort", anställd.tjänsteställeOrt || anställd.tjänsteställe_ort],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>

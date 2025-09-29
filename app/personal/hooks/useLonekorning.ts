@@ -1,3 +1,18 @@
+/**
+ * ===== HOOK FÖR LÖNEKÖRNING OCH AGI-GENERERING =====
+ *
+ * Detta är huvudhooken för att hantera lönekörningar i BokförCom, inklusive
+ * generering av AGI (Arbetsgivardeklaration) XML-filer för Skatteverket.
+ *
+ * VIKTIGA LÄRDOMAR FRÅN AGI-DEBUGGING:
+ * - AGI-generering kräver korrekt formaterad lönedata från databasen
+ * - Organisationsnummer och personnummer måste valideras innan XML-generering
+ * - Alla belopp måste vara positiva (inga negativa värden tillåts)
+ * - Faltkoder är obligatoriska enligt Skatteverkets schema version 1.1.17.1
+ *
+ * @file useLonekorning.ts - Huvudhook för lönekörning och AGI-funktioner
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { showToast } from "../../_components/Toast";
@@ -46,7 +61,24 @@ export const useLonekorning = ({
 }: LonekorningHookProps = {}) => {
   const { data: session } = useSession();
 
-  // Main state
+  // ===== ANVÄNDNINGSOMRÅDEN FÖR DENNA HOOK =====
+  //
+  // 1. STANDARDLÄGE: Hantering av hela lönekörningsprocessen
+  //    - Skapa ny lönekörning med valda anställda
+  //    - Generera lönespecifikationer
+  //    - Bokför löner i redovisningen
+  //    - Generera AGI XML-filer för Skatteverket
+  //    - Bokför arbetsgivaravgifter och skatter
+  //
+  // 2. LISTLÄGE: Visa befintliga lönekörningar
+  //    - Bläddra genom tidigare lönekörningar
+  //    - Se status och framsteg för varje lönekörning
+  //
+  // 3. SPEC-LISTLÄGE: Hantera valda lönespecifikationer
+  //    - Användbart när man arbetar med specifika lönespecar
+  //    - Möjliggör återanvändning av AGI-logiken från andra delar av appen
+
+  // ===== HUVUDTILLSTÅND =====
   const [nySpecModalOpen, setNySpecModalOpen] = useState(false);
   const [nyLonekorningModalOpen, setNyLonekorningModalOpen] = useState(false);
   const [nySpecDatum, setNySpecDatum] = useState<Date | null>(null);
@@ -325,10 +357,25 @@ export const useLonekorning = ({
     setBokforModalOpen(true);
   };
 
+  /**
+   * ===== HUVUD-FUNKTIONEN FÖR AGI-GENERERING =====
+   *
+   * Denna funktion koordinerar hela processen att generera en AGI-fil:
+   * 1. Validerar att alla nödvändiga data finns
+   * 2. Konverterar BokförComs lönedata till Skatteverkets format
+   * 3. Genererar XML enligt schema 1.1.17.1
+   * 4. Laddar ner filen och uppdaterar workflow
+   *
+   * LÄRDOMAR FRÅN DEBUGGING:
+   * - Företagsprofilen måste vara komplett (org.nr, telefon, e-post)
+   * - Anställddata behöver personnummer i korrekt format
+   * - Alla belopp måste vara positiva för att undvika schema-fel
+   * - XML-strukturen måste följa Skatteverkets krav exakt
+   */
   const handleGenereraAGI = async () => {
     if (valdLonekorning?.id) {
       try {
-        // Ladda företagsprofil om den inte finns
+        // ===== SÄKERSTÄLL ATT FÖRETAGSPROFIL FINNS =====
         let profil = företagsprofil;
         if (!profil && session?.user?.id) {
           profil = await hämtaFöretagsprofil(session.user.id);
@@ -339,7 +386,8 @@ export const useLonekorning = ({
           setFöretagsprofil(profil);
         }
 
-        // Kontrollera att vi har nödvändiga företagsuppgifter
+        // ===== VALIDERING AV FÖRETAGSDATA =====
+        // KRITISKT: Skatteverket kräver komplett företagsinformation för AGI
         if (!profil?.organisationsnummer || !profil?.telefonnummer || !profil?.epost) {
           showToast(
             "Företagsprofilen saknar nödvändiga uppgifter för AGI-generering. Kontrollera organisationsnummer, telefon och e-post i företagsprofilen.",
@@ -348,68 +396,56 @@ export const useLonekorning = ({
           return;
         }
 
-        // Samla individuppgifter från lönespecifikationer
-        // Hämta fullständig anställddata för AGI-generering
+        // ===== HÄMTA FULLSTÄNDIG ANSTÄLLDDATA =====
+        // Behöver komplett data med personnummer, adresser etc för XML-generering
         const fullAnställdaData = await hämtaAllaAnställda();
 
-        const individuppgifter = lönekörningSpecar.map((spec, index) => {
-          const anställd = fullAnställdaData?.find(
-            (a: import("../types/types").AnställdData) => a.id === spec.anställd_id
-          );
+        // ===== IMPORT AV AGI-FUNKTIONER =====
+        // Dynamisk import för att undvika beroendeproblem
+        const { convertLonespecToAGI, generateAGIXML } = await import("../utils/agiUtils");
 
-          return {
-            specifikationsnummer: index + 1,
-            betalningsmottagareId: anställd?.personnummer || "",
-            fornamn: anställd?.förnamn || "",
-            efternamn: anställd?.efternamn || "",
-            gatuadress: anställd?.adress || "",
-            postnummer: anställd?.postnummer || "",
-            postort: anställd?.ort || "",
-            kontantErsattningUlagAG: Math.round((spec.bruttolön || 0) * 100) / 100,
-            // Lägg till fler fält här baserat på lönespec-data
-          };
-        });
+        // ===== KONVERTERING TILL AGI-FORMAT =====
+        // Här sker konverteringen från BokförComs interna format till Skatteverkets krav
+        // Denna funktion hanterar alla kritiska formateringar som upptäcktes under debugging
+        const agiData = convertLonespecToAGI(
+          lönekörningSpecar, // Valda lönespecifikationer
+          fullAnställdaData || [], // Anställdas personuppgifter
+          { ...profil, [Symbol.for("__typename")]: undefined }, // Företagsuppgifter (ta bort GraphQL-metadata)
+          valdLonekorning.period || new Date().toISOString().substring(0, 7) // Period i YYYY-MM format
+        );
 
-        // Skapa AGI-data
-        const agiData = {
-          agRegistreradId: profil.organisationsnummer,
-          redovisningsperiod: valdLonekorning.period || new Date().toISOString().substring(0, 7),
-          organisationsnummer: profil.organisationsnummer,
-          tekniskKontakt: {
-            namn: profil.företagsnamn || "Okänt företag",
-            telefon: profil.telefonnummer,
-            epost: profil.epost,
-          },
-          individuppgifter: individuppgifter,
-          franvarouppgifter: [], // Tom för nu, kan utökas senare
-        };
-
-        // Generera XML
-        const { generateAGIXML } = await import("../utils/agiUtils");
+        // ===== XML-GENERERING =====
+        // Skapar den faktiska XML-filen enligt Skatteverkets schema 1.1.17.1
         const xmlContent = generateAGIXML(agiData);
 
-        // Ladda ner fil
+        // ===== FILNEDLADDNING =====
+        // Skapa och ladda ner XML-filen till användarens dator
         const blob = new Blob([xmlContent], { type: "application/xml" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
+        // Filnamn enligt mönster: AGI_[organisationsnummer]_[YYYYMM].xml
         a.download = `AGI_${profil.organisationsnummer}_${agiData.redovisningsperiod}.xml`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url); // Rensa minne
 
-        // Uppdatera workflow
+        // ===== UPPDATERA WORKFLOW-STATUS =====
+        // Markera att AGI har genererats och flytta till nästa steg (4)
         setValdLonekorning((prev) =>
           prev ? { ...prev, aktuellt_steg: 4, agi_genererad_datum: new Date() } : prev
         );
         await uppdateraLönekörningSteg(valdLonekorning.id, 4);
 
+        // ===== BEKRÄFTA FRAMGÅNG =====
         showToast(
           `AGI-fil genererad och nedladdad: AGI_${profil.organisationsnummer}_${agiData.redovisningsperiod}.xml`,
           "success"
         );
       } catch (error) {
+        // ===== FELHANTERING =====
+        // Logga detaljerad information för debugging
         console.error("❌ Fel vid AGI-generering:", error);
         showToast(
           "Fel vid AGI-generering: " + (error instanceof Error ? error.message : "Okänt fel"),
@@ -679,14 +715,30 @@ export const useLonekorning = ({
     handleBokför();
   };
 
+  /**
+   * ===== WRAPPER FÖR AGI-GENERERING I LISTLÄGE =====
+   *
+   * Hanterar AGI-generering både när hooken används som del av en lönekörning
+   * och när den används i listläge med externa callbacks.
+   *
+   * Denna flexibilitet gör det möjligt att återanvända samma AGI-logik
+   * i olika delar av applikationen.
+   */
   const specListHandleGenereraAGI = () => {
     if (onSpecListGenereraAGI) {
+      // Extern callback från parent-komponent (t.ex. annan sida)
       onSpecListGenereraAGI();
       return;
     }
+    // Använd intern AGI-generering
     handleGenereraAGI();
   };
 
+  /**
+   * ===== WRAPPER FÖR SKATTEBOKFÖRING =====
+   *
+   * Hanterar bokföring av skatter - sista steget i lönekörningsprocessen
+   */
   const specListHandleBokförSkatter = () => {
     if (onSpecListBokförSkatter) {
       onSpecListBokförSkatter();
