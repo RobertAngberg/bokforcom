@@ -461,7 +461,14 @@ export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id
       ORDER BY a.förnamn, a.efternamn
     `;
 
+    console.log(
+      "🔍 DEBUG API: Söker lönespecifikationer med lonekorning_id:",
+      lonekorning_id,
+      "userId:",
+      userId
+    );
     const result = await pool.query(query, [lonekorning_id, userId]);
+    console.log("🔍 DEBUG API: Hittade", result.rows.length, "lönespecifikationer:", result.rows);
 
     return {
       success: true,

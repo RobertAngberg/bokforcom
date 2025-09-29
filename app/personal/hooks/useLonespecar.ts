@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   hämtaLönespecifikationer,
   skapaNyLönespec,
@@ -66,7 +66,6 @@ export function useLonespec({
 
   // New spec modal props
   enableNewSpecModal = false,
-  nySpecModalOpen = false,
   nySpecDatum = null,
   setNySpecDatum,
   anstallda = [],
@@ -195,7 +194,7 @@ export function useLonespec({
       }
       showToast(`${väntandeUtlägg.length} utlägg tillagda!`, "success");
 
-      // Uppdatera UI genom callback - skicka både utlägg och resultat
+      // Notify parent of changes (callback pattern - consider refactoring to parent fetch)
       if (onUtläggAdded) {
         await onUtläggAdded(väntandeUtlägg, extraradResults);
       }
@@ -265,26 +264,21 @@ export function useLonespec({
     [enableExtraraderModal, extraraderFields]
   );
 
-  // Component mode effects
+  // Component mode effects - only for side effects, no derived state
   useEffect(() => {
     if (!enableComponentMode) return;
 
     if (specificLönespec) {
-      setLonespecar([specificLönespec]);
       setLoading(false);
       return;
     }
     loadData();
   }, [enableComponentMode, specificLönespec, loadData]);
 
-  // New spec modal effect
-  useEffect(() => {
-    if (enableNewSpecModal && nySpecModalOpen) {
-      setValdAnställd("");
-    }
-  }, [enableNewSpecModal, nySpecModalOpen]);
+  // Reset selected employee when modal opens - moved to direct computation
+  // (removed useEffect to avoid prop-change listener anti-pattern)
 
-  // Extrarader modal effect
+  // Load semester data when modal opens - converted to effect for side effect only
   useEffect(() => {
     if (
       enableExtraraderModal &&
@@ -293,13 +287,6 @@ export function useLonespec({
       anställdId
     ) {
       hämtaBetaldaSemesterdagar(anställdId).then(setBetaldaDagar);
-    }
-
-    // Rensa state när modalen stängs
-    if (enableExtraraderModal && !extraraderModalOpen) {
-      setStartDate(null);
-      setEndDate(null);
-      setSemesterDagar(0);
     }
   }, [enableExtraraderModal, extraraderModalOpen, extraraderModalTitle, anställdId]);
 
@@ -428,9 +415,17 @@ export function useLonespec({
     ? synkroniseradeUtlägg.filter((u) => u.status === "Inkluderat i lönespec")
     : [];
 
+  // Calculate lönespecar directly to avoid derived state anti-pattern
+  const calculatedLönespecar = useMemo(() => {
+    if (enableComponentMode && specificLönespec) {
+      return [specificLönespec];
+    }
+    return lönespecar;
+  }, [enableComponentMode, specificLönespec, lönespecar]);
+
   return {
     // Base functionality
-    lönespecar,
+    lönespecar: calculatedLönespecar,
     setLonespecar,
     extrarader,
     setExtrarader,

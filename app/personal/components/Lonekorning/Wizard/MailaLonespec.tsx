@@ -62,7 +62,8 @@ export default function MailaLonespec({
                   <ul className="list-disc pl-5">
                     {lönespecList.map((item, i) => (
                       <li key={i} className="mb-1">
-                        {item.anställd?.förnamn} {item.anställd?.efternamn} –{" "}
+                        {item.anställd?.namn ||
+                          `${item.anställd?.förnamn} ${item.anställd?.efternamn}`}{" "}
                         {item.anställd?.mail || item.anställd?.epost || item.anställd?.email}
                       </li>
                     ))}

@@ -11,6 +11,7 @@ interface Lönespec {
 }
 
 interface Anställd {
+  namn?: string;
   förnamn?: string;
   efternamn?: string;
   mail?: string;
@@ -150,9 +151,11 @@ export function useMailaLonespec({
   const sendEmail = async (item: SingleLönespec, pdfBlob: Blob): Promise<void> => {
     const mail = item.anställd?.mail || item.anställd?.epost || item.anställd?.email || "";
     if (!mail) {
-      throw new Error(
-        `Ingen e-postadress för ${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`
-      );
+      const anställdNamn =
+        item.anställd?.namn ||
+        `${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`.trim() ||
+        "Anställd";
+      throw new Error(`Ingen e-postadress för ${anställdNamn}`);
     }
 
     const formData = new FormData();

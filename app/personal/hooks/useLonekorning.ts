@@ -47,7 +47,6 @@ export const useLonekorning = ({
   extrarader,
   beräknadeVärden,
   enableListMode = false,
-  refreshTrigger,
   specListValdaSpecar = [],
   specListLönekörning = null,
   onSpecListTaBortSpec,
@@ -169,11 +168,16 @@ export const useLonekorning = ({
   const loadLönekörningSpecar = useCallback(async () => {
     if (!valdLonekorning) return;
 
+    console.log("🔍 DEBUG: loadLönekörningSpecar anropad för lönekörning:", valdLonekorning);
+
     try {
       setLoading(true);
       const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
 
+      console.log("🔍 DEBUG: Resultat från hämtaLönespecifikationerFörLönekörning:", result);
+
       if (result.success && result.data) {
+        console.log("🔍 DEBUG: Sätter lönekörningSpecar till:", result.data);
         setLönekörningSpecar(result.data);
       } else {
         console.error("❌ Fel vid laddning av lönespecar:", result.error);
@@ -843,11 +847,13 @@ export const useLonekorning = ({
         return;
       }
 
-      onLonekorningCreated?.(lönekörningResult.data);
-      setNyLonekorningModalOpen(false);
+      // Reset state for next time
       setNewLonekorningUtbetalningsdatum(new Date());
       setNewLonekorningSteg("datum");
       setNewLonekorningValdaAnstallda([]);
+
+      // Anropa callback - parent ansvarar för att stänga modal
+      onLonekorningCreated?.(lönekörningResult.data);
 
       // Refresh data if we're in list mode
       if (enableListMode) {

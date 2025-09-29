@@ -23,14 +23,18 @@ export default function NyLonekorningModal({
     handleNewLonekorningCreate: handleCreate,
     handleNewLonekorningAnstalldToggle: handleAnställdToggle,
     handleNewLonekorningBack: handleBack,
-    setNyLonekorningModalOpen,
   } = useLonekorning({
     enableNewLonekorningModal: true,
-    onLonekorningCreated,
+    onLonekorningCreated: (lonekorning) => {
+      // Stäng modal via parent callback FÖRST
+      onClose();
+      // Sedan anropa callback
+      onLonekorningCreated(lonekorning);
+    },
   });
 
   const handleClose = () => {
-    setNyLonekorningModalOpen(false);
+    // Använd bara parent's onClose, inte egen state
     onClose();
   };
 

@@ -12,6 +12,7 @@ import NyLonekorningModal from "./SkapaNy/NyLonekorningModal";
 import LonekorningLista from "./Listor/LonekorningLista";
 import LonespecLista from "./Listor/LonespecLista";
 import MailaLonespec from "./Wizard/MailaLonespec";
+import BokforLoner from "./Wizard/BokforLoner";
 
 //#endregion
 
@@ -39,6 +40,7 @@ export default function Lonekorning({
     loading,
     batchMailModalOpen,
     setBatchMailModalOpen,
+    bokforModalOpen,
     setBokforModalOpen,
     setBankgiroModalOpen,
     setSkatteModalOpen,
@@ -166,6 +168,40 @@ export default function Lonekorning({
             }}
           />
         )}
+
+        {bokforModalOpen &&
+          batchData.length > 0 &&
+          (() => {
+            const item = batchData[0];
+            const lönespec = item?.lönespec;
+
+            // Mappa om data från lönespec till beräknadeVärden-format
+            const beräknadeVärden =
+              Object.keys(item?.beräknadeVärden || {}).length > 0
+                ? item.beräknadeVärden
+                : {
+                    grundlön: parseFloat(lönespec?.grundlön || "0"),
+                    bruttolön: parseFloat(lönespec?.bruttolön || "0"),
+                    skatt: parseFloat(lönespec?.skatt || "0"),
+                    nettolön: parseFloat(lönespec?.nettolön || "0"),
+                    socialaAvgifter: parseFloat(lönespec?.sociala_avgifter || "0"),
+                  };
+
+            return (
+              <BokforLoner
+                lönespec={lönespec}
+                extrarader={item?.extrarader || []}
+                beräknadeVärden={beräknadeVärden}
+                anställdNamn={item?.anställd?.namn || ""}
+                isOpen={bokforModalOpen}
+                onClose={() => setBokforModalOpen(false)}
+                onBokfört={() => {
+                  setBokforModalOpen(false);
+                  refreshData();
+                }}
+              />
+            );
+          })()}
       </div>
     </>
   );
