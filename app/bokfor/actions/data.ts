@@ -2,7 +2,7 @@ import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 
-// Bokföringsmetod data  
+// Bokföringsmetod data
 export async function hämtaBokföringsmetod() {
   // Temporary fix: Returnera bara default tills vi migrerar ordentligt
   // Better Auth har inte bokföringsmetod-fält än
