@@ -1,5 +1,5 @@
 // app/login/sakerhet/security-validation.ts
-// SÄKERHETSVALIDERING för NextAuth konfiguration
+// SÄKERHETSVALIDERING för Better Auth konfiguration
 
 interface AuthSecurityConfig {
   hasSecureSession: boolean;
