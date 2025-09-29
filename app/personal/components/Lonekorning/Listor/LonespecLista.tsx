@@ -20,9 +20,6 @@ export default function LonespecLista({
   onBokförSkatter,
   onLönekörningUppdaterad,
 }: LonespecListaProps) {
-  console.log("🔍 DEBUG LonespecLista: valdaSpecar =", valdaSpecar);
-  console.log("🔍 DEBUG LonespecLista: anstallda =", anstallda);
-  console.log("🔍 DEBUG LonespecLista: lönekörning =", lönekörning);
   // Behåll bara logiken för att ta bort lönespecar från gamla hooken
   const {
     specListTaBortLaddning: taBortLaddning,

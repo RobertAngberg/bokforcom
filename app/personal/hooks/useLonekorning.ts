@@ -151,11 +151,13 @@ export const useLonekorning = ({
 
     lönekörningSpecar.forEach((spec) => {
       const beräkningar = beräknadeVärden?.[spec.id];
-      const socialaAvgifter = beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0;
-      const skatt = beräkningar?.skatt || spec.skatt || 0;
+      const socialaAvgifter = parseFloat(
+        beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0
+      );
+      const skatt = parseFloat(beräkningar?.skatt || spec.skatt || 0);
 
-      totalSocialaAvgifter += socialaAvgifter;
-      totalPersonalskatt += skatt;
+      totalSocialaAvgifter += isNaN(socialaAvgifter) ? 0 : socialaAvgifter;
+      totalPersonalskatt += isNaN(skatt) ? 0 : skatt;
     });
 
     return {
@@ -168,16 +170,11 @@ export const useLonekorning = ({
   const loadLönekörningSpecar = useCallback(async () => {
     if (!valdLonekorning) return;
 
-    console.log("🔍 DEBUG: loadLönekörningSpecar anropad för lönekörning:", valdLonekorning);
-
     try {
       setLoading(true);
       const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
 
-      console.log("🔍 DEBUG: Resultat från hämtaLönespecifikationerFörLönekörning:", result);
-
       if (result.success && result.data) {
-        console.log("🔍 DEBUG: Sätter lönekörningSpecar till:", result.data);
         setLönekörningSpecar(result.data);
       } else {
         console.error("❌ Fel vid laddning av lönespecar:", result.error);
@@ -713,7 +710,7 @@ export const useLonekorning = ({
       onSpecListBokför();
       return;
     }
-    console.log("🔥 specListHandleBokför anropad!");
+
     handleBokför();
   };
 

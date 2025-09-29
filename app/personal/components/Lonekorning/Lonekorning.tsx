@@ -13,6 +13,7 @@ import LonekorningLista from "./Listor/LonekorningLista";
 import LonespecLista from "./Listor/LonespecLista";
 import MailaLonespec from "./Wizard/MailaLonespec";
 import BokforLoner from "./Wizard/BokforLoner";
+import SkatteBokforingModal from "./Wizard/SkatteBokforingModal";
 
 //#endregion
 
@@ -43,7 +44,12 @@ export default function Lonekorning({
     bokforModalOpen,
     setBokforModalOpen,
     setBankgiroModalOpen,
+    skatteModalOpen,
     setSkatteModalOpen,
+    skatteData,
+    skatteDatum,
+    setSkatteDatum,
+    hanteraBokförSkatter,
     // Computed
     anstallda,
     utlaggMap,
@@ -202,6 +208,21 @@ export default function Lonekorning({
               />
             );
           })()}
+
+        {skatteModalOpen && (
+          <SkatteBokforingModal
+            skatteModalOpen={skatteModalOpen}
+            setSkatteModalOpen={setSkatteModalOpen}
+            valdaSpecar={lönekörningSpecar}
+            skatteData={skatteData}
+            utbetalningsdatum={null}
+            skatteDatum={skatteDatum}
+            setSkatteDatum={setSkatteDatum}
+            hanteraBokförSkatter={hanteraBokförSkatter}
+            skatteBokförPågår={false}
+            onHämtaBankgiro={() => {}}
+          />
+        )}
       </div>
     </>
   );

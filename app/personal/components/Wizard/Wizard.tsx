@@ -30,7 +30,7 @@ export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraF�
               key={step.id}
               className={`flex items-center justify-between rounded-lg p-4 transition-all duration-200 ${
                 isCompleted
-                  ? "bg-green-900/30 border border-green-600/50"
+                  ? "bg-slate-800 border border-green-600/30"
                   : isDisabled
                     ? "bg-slate-800 border border-slate-600/50 opacity-50"
                     : "bg-slate-800 border border-slate-600/50"
@@ -54,7 +54,7 @@ export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraF�
                   <div className="flex items-center gap-2 mb-1">
                     <div
                       className={`text-sm font-medium ${
-                        isCompleted ? "text-green-400" : isDisabled ? "text-gray-400" : "text-white"
+                        isCompleted ? "text-white" : isDisabled ? "text-gray-400" : "text-white"
                       }`}
                     >
                       {step.title}
@@ -73,7 +73,7 @@ export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraF�
 
                     {/* Status badges - bara för completed */}
                     {isCompleted && (
-                      <span className="text-xs bg-green-600/20 text-green-400 px-2 py-1 rounded">
+                      <span className="text-xs bg-slate-700 text-green-400 px-2 py-1 rounded">
                         ✅ Klar
                       </span>
                     )}
@@ -103,7 +103,7 @@ export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraF�
                   disabled={isDisabled}
                   className={
                     isCompleted
-                      ? "bg-green-600 hover:bg-green-700"
+                      ? "bg-slate-600 hover:bg-slate-700"
                       : isDisabled
                         ? "bg-gray-500 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700"

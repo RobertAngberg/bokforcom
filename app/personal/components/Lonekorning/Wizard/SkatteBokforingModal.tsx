@@ -92,7 +92,7 @@ export default function SkatteBokforingModal({
             {onHämtaBankgiro && (
               <button
                 onClick={onHämtaBankgiro}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
               >
                 🏦 Ladda ner bankgirofil (Frivilligt)
               </button>
@@ -103,9 +103,9 @@ export default function SkatteBokforingModal({
           <div className="flex gap-4">
             <button
               onClick={() => setSkatteModalOpen(false)}
-              className="px-4 py-2 bg-slate-700 text-white border border-slate-600 rounded hover:bg-slate-600"
+              className="px-4 py-2 bg-cyan-600 text-white border border-cyan-500 rounded hover:bg-cyan-700"
             >
-              Stäng
+              ❌ Stäng
             </button>
             <button
               className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -118,10 +118,10 @@ export default function SkatteBokforingModal({
               {skatteBokförPågår ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Bokför...
+                  💰 Bokför...
                 </>
               ) : (
-                "Bokför transaktioner"
+                "💰 Bokför transaktioner"
               )}
             </button>
           </div>
