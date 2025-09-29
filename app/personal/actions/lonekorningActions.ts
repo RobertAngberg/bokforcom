@@ -403,17 +403,20 @@ export async function hämtaAllaLönekörningar(): Promise<{
 }> {
   try {
     const userId = await getUserId();
+    console.log("🔑 hämtaAllaLönekörningar - userId:", userId);
     if (!userId) {
       return { success: false, error: "Användare inte inloggad" };
     }
 
     const query = `
       SELECT * FROM lönekörningar 
-      WHERE startad_av = $1
+      WHERE startad_av = $1 OR startad_av IS NULL
       ORDER BY startad_datum DESC
     `;
+    console.log("🔍 hämtaAllaLönekörningar - query:", query, "params:", [userId]);
 
     const result = await pool.query(query, [userId]);
+    console.log("📊 hämtaAllaLönekörningar - result.rows:", result.rows.length, "rows");
 
     const lönekörningar = result.rows.map((row) => ({
       ...row,

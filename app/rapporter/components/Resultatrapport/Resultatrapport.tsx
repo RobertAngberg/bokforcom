@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-import { useSession } from "next-auth/react";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 
 import Totalrad from "../../../_components/Totalrad";
@@ -13,9 +11,10 @@ import Modal from "../../../_components/Modal";
 import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
 import { KontoRad } from "../../types/types";
+import { useSession } from "../../../_lib/auth-client";
 
 export default function Resultatrapport() {
-  const { data: sessionData, status: sessionStatus } = useSession();
+  const { data: sessionData, isPending } = useSession();
 
   // Använd hook för all state management
   const {
@@ -46,7 +45,7 @@ export default function Resultatrapport() {
   } = useResultatrapport();
 
   // Session loading
-  if (sessionStatus === "loading") {
+  if (isPending) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
         <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>

@@ -101,7 +101,13 @@ export async function logoutAndClearRememberMe() {
   // Rensa remember me-preferensen
   clearRememberMePreference();
 
-  // Logga ut med NextAuth
-  const { signOut } = await import("next-auth/react");
-  await signOut({ redirect: true, callbackUrl: "/login" });
+  // Logga ut med Better Auth
+  const { authClient } = await import("../../_lib/auth-client");
+  await authClient.signOut({
+    fetchOptions: {
+      onSuccess: () => {
+        window.location.href = "/login";
+      },
+    },
+  });
 }

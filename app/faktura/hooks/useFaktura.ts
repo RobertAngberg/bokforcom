@@ -1,21 +1,18 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
+
+// Auth
+import { useSession } from "../../_lib/auth-client";
 
 // Context
 import { useFakturaContext } from "../context/FakturaContext";
 
 // Actions
-import {
-  hämtaNästaFakturanummer,
-  saveInvoice,
-  hämtaSparadeFakturor,
-  hämtaFakturaMedRader,
-} from "../actions/fakturaActions";
+import { hämtaFakturaMedRader } from "../actions/fakturaActions";
 import {
   hämtaFöretagsprofil,
   sparaFöretagsprofil,

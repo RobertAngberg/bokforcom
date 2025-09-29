@@ -2,8 +2,8 @@ import { auth } from "../_lib/better-auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
-// Vanligt förekommande auth-mönster: parseInt(session.user.id, 10)
-export async function getUserId(): Promise<number> {
+// Better Auth använder string IDs direkt
+export async function getUserId(): Promise<string> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -12,7 +12,7 @@ export async function getUserId(): Promise<number> {
     redirect("/login");
   }
 
-  return parseInt(session.user.id, 10);
+  return session.user.id;
 }
 
 // Hämtar session och validerar att användaren är inloggad
@@ -52,12 +52,10 @@ export async function getSessionAndUserId(): Promise<{ session: any; userId: num
 }
 
 // Validerar ägarskap av en resurs baserat på user_id fält
-export async function requireOwnership(resourceUserId: number | string): Promise<number> {
+export async function requireOwnership(resourceUserId: string): Promise<string> {
   const userId = await getUserId();
-  const resourceId =
-    typeof resourceUserId === "string" ? parseInt(resourceUserId, 10) : resourceUserId;
 
-  if (userId !== resourceId) {
+  if (userId !== resourceUserId) {
     throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
   }
 
@@ -65,7 +63,7 @@ export async function requireOwnership(resourceUserId: number | string): Promise
 }
 
 // Helper för att validera att en databas-post tillhör den inloggade användaren
-export async function validateUserOwnership<T extends { user_id: number }>(
+export async function validateUserOwnership<T extends { user_id: string }>(
   resource: T | null,
   resourceName: string = "resurs"
 ): Promise<T> {

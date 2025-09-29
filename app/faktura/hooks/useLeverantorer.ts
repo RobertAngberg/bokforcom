@@ -11,8 +11,7 @@ import { Leverantör } from "../types/types";
 import { showToast } from "../../_components/Toast";
 import { hamtaTransaktionsposter } from "../actions/alternativActions";
 import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
-import { hämtaFakturaMedRader, hämtaSparadeFakturor } from "../actions/fakturaActions";
-import { hämtaFöretagsprofil } from "../actions/foretagActions";
+import { hämtaSparadeFakturor } from "../actions/fakturaActions";
 import { hämtaSparadeKunder } from "../actions/kundActions";
 import { hämtaSparadeArtiklar } from "../actions/artikelActions";
 import {
@@ -22,7 +21,7 @@ import {
 import { formatSEK } from "../../_utils/format";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { stringTillDate } from "../../_utils/datum";
-import { safeAsync, logError, createError } from "../../_utils/errorUtils";
+import { safeAsync, createError } from "../../_utils/errorUtils";
 import {
   UseLeverantorFlikReturn,
   UseNyLeverantorModalReturn,
@@ -37,7 +36,6 @@ import {
   BokfordFaktura,
 } from "../types/types";
 import { useFaktura } from "./useFaktura";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 // Business Logic Functions for NyLeverantorModal

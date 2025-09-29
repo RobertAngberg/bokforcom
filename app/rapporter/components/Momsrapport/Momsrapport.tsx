@@ -1,14 +1,12 @@
 "use client";
 
-import React from "react";
-import { useSession } from "next-auth/react";
-
 import Dropdown from "../../../_components/Dropdown";
 import Knapp from "../../../_components/Knapp";
 import { useMomsrapport } from "../../hooks/useMomsrapport";
+import { useSession } from "../../../_lib/auth-client";
 
 export default function Momsrapport() {
-  const { data: sessionData, status: sessionStatus } = useSession();
+  const { data: sessionData, isPending } = useSession();
 
   // Använd hook för all state management
   const {
@@ -31,7 +29,7 @@ export default function Momsrapport() {
   } = useMomsrapport();
 
   // Session loading
-  if (sessionStatus === "loading") {
+  if (isPending) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
         <h1 className="mb-6 text-3xl text-center">Momsrapport</h1>

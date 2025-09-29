@@ -38,7 +38,7 @@ export default function Lonespecar({
       ingenAnimering={ingenAnimering}
       onTaBortLönespec={onTaBortLönespec}
       taBortLoading={taBortLoading}
-      onLönespecUppdaterad={() => {}}
+      onLönespecUppdaterad={undefined}
       visaExtraRader={visaExtraRader}
     />
   );

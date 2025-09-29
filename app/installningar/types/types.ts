@@ -1,5 +1,3 @@
-import type { Session } from "next-auth";
-
 export interface AnvandarInfo {
   id: string;
   email: string;

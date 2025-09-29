@@ -488,6 +488,12 @@ export interface LonekorningListaProps {
   onValjLonekorning: (lonekorning: Lönekörning) => void;
   valdLonekorning?: Lönekörning | null;
   refreshTrigger?: number;
+  // Data from parent to avoid duplicate hooks
+  lonekorningar?: Lönekörning[];
+  hasLonekorningar?: boolean;
+  listLoading?: boolean;
+  formatPeriodName?: (period: string) => string;
+  getItemClassName?: (lonekorning: Lönekörning, valdLonekorningItem?: Lönekörning) => string;
 }
 
 export interface LonespecListaProps {

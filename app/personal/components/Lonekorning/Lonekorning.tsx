@@ -47,6 +47,12 @@ export default function Lonekorning({
     utlaggMap,
     // Business logic
     prepareBatchData,
+    // Lista mode data
+    lonekorningar,
+    hasLonekorningar,
+    listLoading,
+    formatPeriodName,
+    getItemClassName,
     // Functions
     hanteraTaBortSpec,
     handleTaBortLönekörning,
@@ -58,6 +64,7 @@ export default function Lonekorning({
     onAnställdaRefresh,
     extrarader,
     beräknadeVärden,
+    enableListMode: true, // Aktivera lista mode så vi får lönekörning-data
   });
 
   const allAnstallda = anstalldaState.anställda || anstallda;
@@ -98,6 +105,11 @@ export default function Lonekorning({
             onValjLonekorning={setValdLonekorning}
             valdLonekorning={valdLonekorning}
             refreshTrigger={refreshTrigger}
+            lonekorningar={lonekorningar}
+            hasLonekorningar={hasLonekorningar}
+            listLoading={listLoading}
+            formatPeriodName={formatPeriodName}
+            getItemClassName={getItemClassName}
           />
         ) : (
           <div className="space-y-6">

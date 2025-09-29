@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
 import { uppdateraAnvändarInfo } from "../actions/anvandarprofilActions";
 import { uppdateraFöretagsprofilAdmin } from "../actions/foretagsprofilActions";
 import { raderaFöretag } from "../actions/farozonActions";

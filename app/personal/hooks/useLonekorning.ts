@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../_lib/auth-client";
 import { showToast } from "../../_components/Toast";
 import {
   hämtaAllaLönespecarFörUser,
@@ -551,10 +551,11 @@ export const useLonekorning = ({
   // Lista mode effect
   useEffect(() => {
     if (enableListMode) {
+      console.log("🔄 Lista mode enabled - laddar lönekörningar...");
       loadLonekorningar();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enableListMode, refreshTrigger, internalRefreshTrigger]);
+  }, [enableListMode]);
 
   // New lönekörning modal effect
   useEffect(() => {
@@ -625,10 +626,13 @@ export const useLonekorning = ({
     if (!enableListMode) return;
 
     try {
+      console.log("📡 loadLonekorningar: Börjar hämta data...");
       setListLoading(true);
       const result = await hämtaAllaLönekörningar();
 
+      console.log("📡 loadLonekorningar result:", result);
       if (result.success && result.data) {
+        console.log("✅ loadLonekorningar: Fick data:", result.data.length, "lönekörningar");
         setLonekorningar(result.data);
       } else {
         console.error("❌ Fel vid laddning av lönekörningar:", result.error);

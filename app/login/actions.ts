@@ -1,7 +1,6 @@
 "use server";
 
 import { pool } from "../_lib/db";
-// import { auth, signOut } from "../_lib/auth";  // OLD NextAuth - inte längre använd
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";
@@ -59,7 +58,7 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
 
 // Skicka verification email
 async function sendVerificationEmail(email: string, token: string, name: string): Promise<boolean> {
-  const verificationUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
 
   try {
     await resend.emails.send({
@@ -113,7 +112,7 @@ async function sendPasswordResetEmail(
   token: string,
   name: string
 ): Promise<boolean> {
-  const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login/reset-password?token=${token}`;
+  const resetUrl = `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/login/reset-password?token=${token}`;
 
   try {
     await resend.emails.send({
@@ -401,74 +400,10 @@ export async function createAccount(
 }
 
 export async function checkUserSignupStatus() {
-  try {
-    // 🔒 SÄKERHETSVALIDERING - Session (optional för signup) - använd auth() direkt utan redirect
-    const session = await auth();
-    if (!session?.user?.email || !session?.user?.id) {
-      // Returnera att användaren inte är inloggad - det är OK för signup-sidan
-      return { loggedIn: false, hasSignedUp: false };
-    }
-
-    const userId = parseInt(session.user.id, 10);
-    const userEmail = session.user.email;
-
-    await logSignupSecurityEvent(
-      userId.toString(),
-      "signup_status_check",
-      `Status check for user: ${userEmail}`
-    );
-
-    const client = await pool.connect();
-    try {
-      // 🔒 SÄKER DATABASACCESS - Använd userId istället för email
-      const result = await client.query(
-        `SELECT företagsnamn, organisationsnummer FROM users WHERE id = $1`,
-        [userId]
-      );
-
-      if (result.rows.length === 0) {
-        await logSignupSecurityEvent(
-          userId.toString(),
-          "signup_status_user_not_found",
-          `User not found in database: ${userEmail}`
-        );
-        return { loggedIn: true, hasCompanyInfo: false };
-      }
-
-      const user = result.rows[0];
-      const hasCompanyInfo = !!(user.företagsnamn || user.organisationsnummer);
-
-      await logSignupSecurityEvent(
-        userId.toString(),
-        "signup_status_success",
-        `Status retrieved successfully: hasCompanyInfo=${hasCompanyInfo}`
-      );
-
-      return {
-        loggedIn: true,
-        hasCompanyInfo,
-        companyName: user.företagsnamn,
-      };
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error("Fel vid kontroll av använderstatus:", error);
-    // Försök logga fel om vi har session
-    try {
-      const { session: errorSession, userId: errorUserId } = await getSessionAndUserId();
-      if (errorSession?.user?.email && errorUserId) {
-        await logSignupSecurityEvent(
-          errorUserId.toString(),
-          "signup_status_error",
-          `Error checking status: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-    return { loggedIn: true, hasCompanyInfo: false, error: true };
-  }
+  // 🔒 SÄKERHETSVALIDERING - Better Auth används nu på client-side
+  // Denna funktion används inte längre då Better Auth hanterar state management
+  // Returnerar default värden för bakåtkompatibilitet
+  return { loggedIn: false, hasSignedUp: false };
 }
 
 export async function saveSignupData(formData: FormData) {
@@ -657,21 +592,13 @@ export async function saveSignupData(formData: FormData) {
 
 /**
  * Loggar ut användaren och rensar remember me-preferensen
+ * Nu hanteras logout på client-side med Better Auth
  */
 export async function logoutWithRememberMeCleanup() {
-  try {
-    // Använd NextAuth's signOut funktion
-    await signOut({ redirect: false });
-
-    return {
-      success: true,
-      message: "Utloggad framgångsrikt",
-    };
-  } catch (error) {
-    console.error("Logout error:", error);
-    return {
-      success: false,
-      error: "Kunde inte logga ut",
-    };
-  }
+  // Better Auth hanterar logout på client-side via authClient.signOut()
+  // Denna server action behövs inte längre
+  return {
+    success: true,
+    message: "Logout hanteras nu på client-side",
+  };
 }

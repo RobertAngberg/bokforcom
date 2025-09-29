@@ -4,7 +4,7 @@
 
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../../../_lib/auth-client";
 import BetalningsInfo from "./BetalningsInfo";
 import RotRutInfo from "./RotRutInfo";
 import ArtiklarLista from "./ArtiklarLista";

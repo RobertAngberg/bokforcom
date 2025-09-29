@@ -1,16 +1,25 @@
 "use client";
 
 import { LonekorningListaProps } from "../../../types/types";
-import { useLonekorning } from "../../../hooks/useLonekorning";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
 
 export default function LonekorningLista({
   onValjLonekorning,
   valdLonekorning,
-  refreshTrigger,
+  // refreshTrigger,
+  lonekorningar = [],
+  hasLonekorningar = false,
+  listLoading = false,
+  formatPeriodName = (period: string) => period,
+  getItemClassName = (_lonekorning, _valdLonekorningItem) =>
+    "p-4 border rounded-lg cursor-pointer hover:bg-gray-50",
 }: LonekorningListaProps) {
-  const { lonekorningar, listLoading, hasLonekorningar, formatPeriodName, getItemClassName } =
-    useLonekorning({ enableListMode: true, refreshTrigger });
+  // Now using data from props instead of duplicate useLonekorning hook
+  console.log("🏗️ LonekorningLista render - props:", {
+    lonekorningar: lonekorningar?.length || 0,
+    hasLonekorningar,
+    listLoading,
+  });
 
   if (listLoading) {
     return <LoadingSpinner />;
@@ -36,7 +45,7 @@ export default function LonekorningLista({
         <div
           key={lonekorning.id}
           onClick={() => onValjLonekorning(lonekorning)}
-          className={getItemClassName(lonekorning, valdLonekorning)}
+          className={getItemClassName(lonekorning, valdLonekorning || undefined)}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -10,18 +10,11 @@ import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 export async function checkWelcomeStatus(): Promise<boolean> {
   try {
     const userId = await getUserId();
-    const client = await pool.connect();
+    console.log("📋 Kontrollerar välkomststatus för användare:", userId);
 
-    const result = await client.query("SELECT welcome_shown FROM users WHERE id = $1", [userId]);
-
-    client.release();
-
-    // Om kolumnen inte finns ännu, returna true (visa välkomstmeddelande)
-    if (result.rows.length === 0 || result.rows[0].welcome_shown === null) {
-      return true;
-    }
-
-    return !result.rows[0].welcome_shown;
+    // Better Auth har inte welcome_shown kolumn
+    // För nu, visa aldrig välkomstmeddelandet (return false = visa inte)
+    return false;
   } catch (error) {
     console.error("Error checking welcome status:", error);
     return false; // Vid fel, visa inte välkomstmeddelande

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "../../../auth";
+import { auth } from "../../_lib/better-auth";
+import { headers } from "next/headers";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
     const body = await request.json();
     const { message, type } = body;
 
