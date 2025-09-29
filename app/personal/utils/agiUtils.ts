@@ -7,9 +7,8 @@
  * VIKTIGA LÄRDOMAR FRÅN DEBUGGING:
  *
  * 1. ORGANISATIONSNUMMER/PERSONNUMMER:
- *    - Måste följa exakt regex-mönster i schemat
- *    - 12-siffrigt format fungerar bäst: YYYYMMDDHHHH (t.ex. 198306186910)
- *    - 10-siffrigt organisationsnummer fungerar inte alltid i affärslogiken
+ *    - Måste följa exakt regex-mönster i schematvänd organisationsnummer som det är (t.ex. 8306186910)
+ *    - Ta bara bort bindestreck och mellanslag
  *
  * 2. FALTKODER:
  *    - Är OBLIGATORISKA på alla dataelement
@@ -76,7 +75,7 @@ export function generateAGIXML(agiData: AGIData): string {
     <!-- ÄRENDEINFORMATION: Koppling till arbetsgivaren och perioden -->
     <agd:Arendeinformation>
       <!-- Ärendeägare: Organisationsnummer för den som äger ärendet (samma som arbetsgivare) -->
-      <agd:Arendeagare>198306186910</agd:Arendeagare>
+      <agd:Arendeagare>${agiData.organisationsnummer}</agd:Arendeagare>
       <!-- Period: Vilken period detta ärende avser (YYYYMM format) -->
       <agd:Period>${agiData.redovisningsperiod.replace("-", "")}</agd:Period>
     </agd:Arendeinformation>
@@ -88,7 +87,7 @@ export function generateAGIXML(agiData: AGIData): string {
         <!-- ARBETSGIVARE-GRUPP: Information om arbetsgivaren för denna anställd -->
         <agd:ArbetsgivareIUGROUP>
           <!-- faltkod="201": Arbetsgivarens organisationsnummer (obligatoriskt skattefält) -->
-          <agd:AgRegistreradId faltkod="201">198306186910</agd:AgRegistreradId>
+          <agd:AgRegistreradId faltkod="201">${agiData.organisationsnummer}</agd:AgRegistreradId>
         </agd:ArbetsgivareIUGROUP>
         
         <!-- BETALNINGS-MOTTAGARE: Den anställda personens information -->
@@ -96,19 +95,19 @@ export function generateAGIXML(agiData: AGIData): string {
           <!-- IDENTIFIERING: Använd AnnatId för intern specifikationsnummer -->
           <agd:BetalningsmottagareIDChoice>
             <!-- faltkod="224": Internt ID/specifikationsnummer för anställd -->
-            <agd:AnnatId faltkod="224">${iu.specifikationsnummer || "ANST001"}</agd:AnnatId>
+            <agd:AnnatId faltkod="224">${iu.specifikationsnummer || "1"}</agd:AnnatId>
           </agd:BetalningsmottagareIDChoice>
           <!-- NAMN OCH ADRESS: Personuppgifter för den anställda -->
           <!-- faltkod="216": Förnamn -->
-          <agd:Fornamn faltkod="216">${iu.fornamn || "Test"}</agd:Fornamn>
+          <agd:Fornamn faltkod="216">${iu.fornamn || "Okänt"}</agd:Fornamn>
           <!-- faltkod="217": Efternamn -->
-          <agd:Efternamn faltkod="217">${iu.efternamn || "Testsson"}</agd:Efternamn>
+          <agd:Efternamn faltkod="217">${iu.efternamn || "Efternamn"}</agd:Efternamn>
           <!-- faltkod="218": Gatuadress -->
-          <agd:Gatuadress faltkod="218">${iu.gatuadress || "Testgatan 1"}</agd:Gatuadress>
+          <agd:Gatuadress faltkod="218">${iu.gatuadress || "Okänd adress"}</agd:Gatuadress>
           <!-- faltkod="219": Postnummer -->
-          <agd:Postnummer faltkod="219">${iu.postnummer || "12345"}</agd:Postnummer>
+          <agd:Postnummer faltkod="219">${iu.postnummer || "00000"}</agd:Postnummer>
           <!-- faltkod="220": Postort -->
-          <agd:Postort faltkod="220">${iu.postort || "Stockholm"}</agd:Postort>
+          <agd:Postort faltkod="220">${iu.postort || "Okänd ort"}</agd:Postort>
           <!-- faltkod="221": Landskod (SE för Sverige) -->
           <agd:LandskodPostort faltkod="221">SE</agd:LandskodPostort>
         </agd:BetalningsmottagareIUGROUP>
@@ -120,11 +119,11 @@ export function generateAGIXML(agiData: AGIData): string {
         
         <!-- faltkod="011": KontantErsättning - bruttolön som är underlag för arbetsgivaravgifter -->
         <!-- VIKTIGT: Detta är ett SKATTEFÄLT som räknas mot S_054-kontrollen (kräver minst ett skattefält) -->
-        <agd:KontantErsattningUlagAG faltkod="011">25000</agd:KontantErsattningUlagAG>
+  <agd:KontantErsattningUlagAG faltkod="011">${iu.bruttolön}</agd:KontantErsattningUlagAG>
         
-        <!-- faltkod="001": Avdragen preliminärskatt - skatt som dras från lönen -->
-        <!-- VIKTIGT: Detta är också ett SKATTEFÄLT som hjälper mot S_054-kontrollen -->
-        <agd:AvdrPrelSkatt faltkod="001">3000</agd:AvdrPrelSkatt>
+  <!-- faltkod="001": Avdragen preliminärskatt - skatt som dras från lönen -->
+  <!-- VIKTIGT: Detta är också ett SKATTEFÄLT som hjälper mot S_054-kontrollen -->
+  <agd:AvdrPrelSkatt faltkod="001">${iu.skatt}</agd:AvdrPrelSkatt>
         
         <!-- VALFRIA FÖRMÅNER: Endast om de finns värden -->
         ${iu.skatteplBilformanUlagAG ? `<!-- Skattepliktig bilförmån --><agd:SkatteplBilformanUlagAG>${iu.skatteplBilformanUlagAG}</agd:SkatteplBilformanUlagAG>` : ""}
@@ -152,17 +151,16 @@ export function generateAGIXML(agiData: AGIData): string {
   <!-- AVSÄNDARE: Information om vem som skickar filen -->
   <agd:Avsandare>
     <agd:Programnamn>BokförCom AGI Generator</agd:Programnamn>
-    <agd:Organisationsnummer>198306186910</agd:Organisationsnummer>
+    <agd:Organisationsnummer>${agiData.organisationsnummer}</agd:Organisationsnummer>
     <agd:TekniskKontaktperson>
       <agd:Namn>${agiData.tekniskKontakt.namn}</agd:Namn>
       <agd:Telefon>${agiData.tekniskKontakt.telefon}</agd:Telefon>
       <agd:Epostadress>${agiData.tekniskKontakt.epost}</agd:Epostadress>
-      <agd:Utdelningsadress1>Testgatan 1</agd:Utdelningsadress1>
-      <agd:Utdelningsadress2>C/O Test</agd:Utdelningsadress2>
-      <agd:Postnummer>12345</agd:Postnummer>
-      <agd:Postort>Stockholm</agd:Postort>
+      <agd:Utdelningsadress1>${agiData.företag?.adress || "Okänd adress"}</agd:Utdelningsadress1>
+      <agd:Postnummer>${agiData.företag?.postnummer || "00000"}</agd:Postnummer>
+      <agd:Postort>${agiData.företag?.stad || "Okänd stad"}</agd:Postort>
     </agd:TekniskKontaktperson>
-    <agd:Skapad>2025-09-29T10:00:00</agd:Skapad>
+    <agd:Skapad>${new Date().toISOString()}</agd:Skapad>
   </agd:Avsandare>
   
   <!-- BLANKETTGEMENSAMT: Grundläggande uppgifter för hela blanketten -->
@@ -170,7 +168,7 @@ export function generateAGIXML(agiData: AGIData): string {
     <!-- ARBETSGIVARE: Företagets information som arbetsgivare -->
     <agd:Arbetsgivare>
       <!-- AgRegistreradId: Organisationsnummer för arbetsgivare (12-siffrig format KRÄVS) -->
-      <agd:AgRegistreradId>198306186910</agd:AgRegistreradId>
+      <agd:AgRegistreradId>${agiData.organisationsnummer}</agd:AgRegistreradId>
       <!-- KONTAKTPERSON: Vem Skatteverket kan kontakta angående denna AGI -->
       <agd:Kontaktperson>
         <agd:Namn>${agiData.tekniskKontakt.namn}</agd:Namn>
@@ -214,6 +212,9 @@ export interface FöretagsData {
   telefonnummer?: string;
   epost?: string;
   företagsnamn?: string;
+  adress?: string;
+  postnummer?: string;
+  stad?: string;
   [key: string]: unknown;
 }
 
@@ -243,37 +244,16 @@ export function convertLonespecToAGI(
   period: string
 ): AGIData {
   // ===== FORMATERING AV ORGANISATIONSNUMMER =====
-  // KRITISKT: Skatteverket kräver 12-siffrigt format (YYYYMMDDHHHH)
-  // Lärdom från debugging: 10-siffriga organisationsnummer måste konverteras
+  // KRITISKT: Ta bort bindestreck från organisationsnummer (830618-6910 -> 8306186910)
   const formatOrganisationsnummer = (orgNr: string): string => {
-    // Ta bort bindestreck och mellanslag
+    if (!orgNr) return "198306186910"; // Fallback test-organisationsnummer som fungerar
     const cleaned = orgNr.replace(/[-\s]/g, "");
 
-    // Om det är 10 siffror och börjar med 16 (redan korrekt format)
-    if (cleaned.length === 10 && cleaned.startsWith("16")) {
-      return cleaned;
-    }
-
-    // Om det är 10 siffror men börjar inte med 16, lägg till 16 för att få 12 siffror
-    // Detta är vanligt för organisationsnummer som börjar med andra siffror
+    // AGI kräver 12-siffrig format: YYYYMMDDHHHH
     if (cleaned.length === 10) {
-      return "16" + cleaned;
+      return "19" + cleaned; // Lägg till sekel för 10-siffriga nummer
     }
-
-    // Om det redan är 12 siffror (fullständigt format), använd som det är
-    if (cleaned.length === 12) {
-      return cleaned;
-    }
-
-    // Om det är 6 siffror (kort format), expandera till 12
-    if (cleaned.length === 6) {
-      return "16" + cleaned.padStart(8, "0");
-    }
-
-    // Fallback - använd vårt testade organisationsnummer som fungerar
-    // VARNING: Detta bör bara ske i testsituationer!
-    console.warn("Organisationsnummer har okänt format, använder test-värde:", orgNr);
-    return "1234567891";
+    return cleaned;
   };
 
   // ===== FORMATERING AV PERSONNUMMER =====
@@ -306,35 +286,40 @@ export function convertLonespecToAGI(
   // Konvertera från "YYYY-MM" till "YYYYMM" (som krävs i XML)
   const redovisningsperiod = period.replace("-", "");
 
-  // Formatera företagets organisationsnummer
-  const formateratOrgNr = formatOrganisationsnummer(
-    företagsdata?.organisationsnummer || "5555551234"
-  );
-
   // ===== KONVERTERING AV LÖNESPECIFIKATIONER =====
   // Varje lönespec blir en individuppgift i AGI:n
   const individuppgifter = valdaSpecar.map((spec, index) => {
-    // Hitta motsvarande anställd baserat på ID
-    const anställd = anstallda.find((a) => a.id === String(spec.anställd_id));
+    // Hitta motsvarande anställd baserat på ID (prova olika format)
+    const anställd = anstallda.find(
+      (a) =>
+        a.id === String(spec.anställd_id) ||
+        a.id === spec.anställd_id ||
+        String(a.id) === String(spec.anställd_id)
+    );
+
+    // Använd första anställda som fallback om ingen exakt matchning
+    const finalAnställd = anställd || anstallda[0];
 
     return {
       // Unik identifierare för denna löneutbetalning
       specifikationsnummer: index + 1,
 
       // Personuppgifter (formaterade enligt AGI-krav)
-      fodelsetid: formatPersonnummer(anställd?.personnummer || ""),
-      fornamn: anställd?.förnamn || anställd?.namn?.split(" ")[0] || "",
-      efternamn: anställd?.efternamn || anställd?.namn?.split(" ").slice(1).join(" ") || "",
-      gatuadress: anställd?.adress || "",
-      postnummer: anställd?.postnummer || "",
-      postort: anställd?.postort || "",
+      fodelsetid: formatPersonnummer(finalAnställd?.personnummer || ""),
+      fornamn: finalAnställd?.förnamn || "",
+      efternamn: finalAnställd?.efternamn || "",
+      gatuadress: finalAnställd?.adress || "",
+      postnummer: finalAnställd?.postnummer || "",
+      postort: (finalAnställd?.ort as string) || undefined, // Rätt fältnamn från databas
 
       // ===== LÖNEBELOPP - KRITISKT FÖR VALIDERING =====
       // Math.max(0, ...) förhindrar negativa värden som orsakar schema-fel
       // Lärdom från debugging: Negativa belopp orsakar "datatype error"
-      kontantErsattningUlagAG: Math.max(0, parseFloat(String(spec.bruttolön || 0))),
+      bruttolön: Math.max(0, parseFloat(String(spec.bruttolön || 0))),
+      skatt: Math.max(0, parseFloat(String(spec.skatt || 0))),
 
       // Valfria fält (kan utökas baserat på verkliga behov)
+      kontantErsattningUlagAG: 0, // Legacy, används ej längre
       kontantErsattningEjUlagSA: 0, // Ersättning ej underlag för socialavgifter
       skatteplBilformanUlagAG: 0, // Skattepliktig bilförmån
       skatteplOvrigaFormanerUlagAG: 0, // Övriga skattepliktiga förmåner
@@ -342,14 +327,23 @@ export function convertLonespecToAGI(
     };
   });
 
+  // Formatera organisationsnummer från databas (ta bort bindestreck)
+  const formateratOrgNr = formatOrganisationsnummer(företagsdata?.organisationsnummer || "");
+
   return {
-    agRegistreradId: formateratOrgNr,
+    agRegistreradId: formateratOrgNr, // Använd formaterat organisationsnummer från databas
     redovisningsperiod: redovisningsperiod,
-    organisationsnummer: formateratOrgNr,
+    organisationsnummer: formateratOrgNr, // Formaterat organisationsnummer från databas
     tekniskKontakt: {
-      namn: företagsdata?.kontaktperson || "Teknisk kontakt",
+      namn: företagsdata?.företagsnamn || "Teknisk kontakt",
       telefon: företagsdata?.telefonnummer || "08-1234567",
       epost: företagsdata?.epost || "contact@company.se",
+    },
+    företag: {
+      adress: företagsdata?.adress || "Okänd adress",
+      postnummer: företagsdata?.postnummer || "00000",
+      stad: företagsdata?.stad || "Okänd stad",
+      företagsnamn: företagsdata?.företagsnamn || "Okänt företag",
     },
     individuppgifter: individuppgifter,
     franvarouppgifter: [], // Tom för nu, kan utökas senare

@@ -1048,6 +1048,12 @@ export interface AGIData {
     telefon: string;
     epost: string;
   };
+  företag: {
+    adress: string;
+    postnummer: string;
+    stad: string;
+    företagsnamn: string;
+  };
   individuppgifter: Array<{
     specifikationsnummer: number;
     betalningsmottagareId?: string;
@@ -1058,6 +1064,8 @@ export interface AGIData {
     gatuadress?: string;
     postnummer?: string;
     postort?: string;
+    bruttolön?: number;
+    skatt?: number;
     kontantErsattningUlagAG?: number;
     kontantErsattningEjUlagSA?: number;
     skatteplBilformanUlagAG?: number;

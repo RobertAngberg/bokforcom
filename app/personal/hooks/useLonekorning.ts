@@ -405,7 +405,7 @@ export const useLonekorning = ({
         const { convertLonespecToAGI, generateAGIXML } = await import("../utils/agiUtils");
 
         // ===== KONVERTERING TILL AGI-FORMAT =====
-        // Här sker konverteringen från BokförComs interna format till Skatteverkets krav
+        // Här scer konverteringen från BokförComs interna format till Skatteverkets krav
         // Denna funktion hanterar alla kritiska formateringar som upptäcktes under debugging
         const agiData = convertLonespecToAGI(
           lönekörningSpecar, // Valda lönespecifikationer
