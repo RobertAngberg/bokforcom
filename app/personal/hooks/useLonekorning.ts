@@ -551,13 +551,10 @@ export const useLonekorning = ({
   // Lista mode effect
   useEffect(() => {
     if (enableListMode) {
-      console.log("🔄 Lista mode enabled - laddar lönekörningar...");
       loadLonekorningar();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enableListMode]);
-
-  // New lönekörning modal effect
+  }, [enableListMode]); // New lönekörning modal effect
   useEffect(() => {
     if (enableNewLonekorningModal && nyLonekorningModalOpen) {
       setNewLonekorningSteg("datum");
@@ -626,13 +623,10 @@ export const useLonekorning = ({
     if (!enableListMode) return;
 
     try {
-      console.log("📡 loadLonekorningar: Börjar hämta data...");
       setListLoading(true);
       const result = await hämtaAllaLönekörningar();
 
-      console.log("📡 loadLonekorningar result:", result);
       if (result.success && result.data) {
-        console.log("✅ loadLonekorningar: Fick data:", result.data.length, "lönekörningar");
         setLonekorningar(result.data);
       } else {
         console.error("❌ Fel vid laddning av lönekörningar:", result.error);

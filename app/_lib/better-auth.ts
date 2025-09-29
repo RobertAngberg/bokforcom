@@ -124,6 +124,7 @@ export const auth = betterAuth({
 
   session: {
     cookieCache: {
+      enabled: true, // 🚀 DETTA VAR PROBLEMET!
       maxAge: 60 * 60 * 24 * 30, // 30 dagar (samma som din nuvarande setup)
     },
   },

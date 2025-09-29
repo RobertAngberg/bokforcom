@@ -15,11 +15,6 @@ export default function LonekorningLista({
     "p-4 border rounded-lg cursor-pointer hover:bg-gray-50",
 }: LonekorningListaProps) {
   // Now using data from props instead of duplicate useLonekorning hook
-  console.log("🏗️ LonekorningLista render - props:", {
-    lonekorningar: lonekorningar?.length || 0,
-    hasLonekorningar,
-    listLoading,
-  });
 
   if (listLoading) {
     return <LoadingSpinner />;
