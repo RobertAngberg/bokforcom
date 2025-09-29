@@ -1,9 +1,12 @@
-import { auth } from "../../auth";
+import { auth } from "../_lib/better-auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 // Vanligt förekommande auth-mönster: parseInt(session.user.id, 10)
 export async function getUserId(): Promise<number> {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user?.id) {
     redirect("/login");
@@ -14,7 +17,9 @@ export async function getUserId(): Promise<number> {
 
 // Hämtar session och validerar att användaren är inloggad
 export async function getValidSession() {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user?.id) {
     redirect("/login");
@@ -25,7 +30,9 @@ export async function getValidSession() {
 
 // Hämtar användarens email för filorganisation
 export async function getUserEmail(): Promise<string> {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user?.email) {
     redirect("/login");
@@ -37,6 +44,7 @@ export async function getUserEmail(): Promise<string> {
 
 // Kombinerar session + userId för vanliga use cases
 export async function getSessionAndUserId(): Promise<{ session: any; userId: number }> {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
   const session = await getValidSession();
   const userId = parseInt(session.user!.id!, 10);
 
@@ -71,7 +79,9 @@ export async function validateUserOwnership<T extends { user_id: number }>(
 
 // Kombinerat mönster: hämta auth + validera database query resultat
 export async function getAuthenticatedUser() {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user?.id) {
     redirect("/login");

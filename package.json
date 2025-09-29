@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth/core": "^0.38.0",
-    "@auth/neon-adapter": "^1.9.1",
     "@neondatabase/serverless": "^1.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@vercel/blob": "^1.1.1",
@@ -24,7 +22,6 @@
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^5.0.2",
     "next": "^15.3.4",
-    "next-auth": "^5.0.0-beta.25",
     "openai": "^4.90.0",
     "pdf-parser-client-side": "^1.1.1",
     "pg": "^8.14.1",

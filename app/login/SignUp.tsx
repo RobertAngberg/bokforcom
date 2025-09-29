@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import Modal from "../_components/Modal";
 import TextFalt from "../_components/TextFalt";
-import { createAccount } from "./actions";
+import { authClient } from "../_lib/auth-client";
 
 interface EmailSignupFormProps {
   onSuccess?: () => void;
@@ -11,25 +11,54 @@ interface EmailSignupFormProps {
 }
 
 export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormProps) {
-  // React 19 useActionState - all form state in one hook! 🚀
-  const [state, formAction, isPending] = useActionState(createAccount, null);
-
   // Form state for TextFalt components
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Form state management
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [successUser, setSuccessUser] = useState<{ email: string } | null>(null);
+
   // Only keep modal state (not form-related)
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  if (state?.success) {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const { data, error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setError(error.message || "Registrering misslyckades");
+      } else {
+        setSuccess(true);
+        setSuccessUser({ email });
+      }
+    } catch (err) {
+      setError("Något gick fel. Försök igen.");
+    }
+
+    setLoading(false);
+  };
+
+  if (success) {
     return (
       <div>
         <div className="text-center space-y-4">
           <div className="p-4 bg-green-900/50 border border-green-500 rounded-lg">
             <h3 className="text-green-300 font-semibold mb-2">✅ Registrering lyckades!</h3>
             <p className="text-green-200 text-sm">
-              Ett verifieringsmail har skickats till <strong>{state?.user?.email}</strong>.
+              Ett verifieringsmail har skickats till <strong>{successUser?.email}</strong>.
               <br />
               Kontrollera din inkorg och klicka på länken för att verifiera ditt konto.
             </p>
@@ -52,7 +81,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
 
   return (
     <div>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={handleSignUp} className="space-y-4">
         <div>
           <TextFalt
             label="Ditt namn"
@@ -86,7 +115,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        {state?.error && <div className="text-center text-sm text-red-400 mt-2">{state.error}</div>}
+        {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
 
         <div className="flex items-start space-x-2 mb-6">
           <input
@@ -115,10 +144,10 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
 
         <button
           type="submit"
-          disabled={isPending}
-          className="w-full px-6 py-3 font-semibold text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          disabled={loading}
+          className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-md transition-all duration-200"
         >
-          {isPending ? "Registrerar..." : "Registrera konto"}
+          {loading ? "Registrerar..." : "Registrera konto"}
         </button>
       </form>
 

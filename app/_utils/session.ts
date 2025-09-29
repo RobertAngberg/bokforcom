@@ -1,4 +1,4 @@
-import { Session } from "next-auth";
+// import { Session } from "next-auth"; // Better Auth has its own session types
 import { getSessionAndUserId } from "./authUtils";
 import { logError } from "./errorUtils";
 
@@ -19,7 +19,8 @@ export async function ensureSession() {
 /**
  * Wrapper som returnerar null istället för att kasta, om session saknas.
  */
-export async function tryGetSession(): Promise<{ session: Session; userId: number } | null> {
+export async function tryGetSession(): Promise<{ session: any; userId: number } | null> {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     return await ensureSession();
   } catch (e: unknown) {

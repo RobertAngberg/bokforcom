@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../_lib/db";
-import { auth, signOut } from "../_lib/auth";
+// import { auth, signOut } from "../_lib/auth";  // OLD NextAuth - inte längre använd
 import { getSessionAndUserId } from "../_utils/authUtils";
 import { sanitizeFormInput } from "../_utils/validationUtils";
 import crypto from "crypto";

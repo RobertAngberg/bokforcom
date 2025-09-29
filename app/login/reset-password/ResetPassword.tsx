@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import TextFalt from "../../_components/TextFalt";
-import { resetPassword } from "../actions";
+import { authClient } from "../../_lib/auth-client";
 
 interface ResetPasswordProps {
   token: string;
@@ -22,21 +22,26 @@ export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) 
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("token", token);
-      formData.append("password", password);
-      formData.append("confirmPassword", confirmPassword);
+      // Validera att lösenorden matchar
+      if (password !== confirmPassword) {
+        setError("Lösenorden matchar inte");
+        setLoading(false);
+        return;
+      }
 
-      const result = await resetPassword(formData);
+      const { error } = await authClient.resetPassword({
+        newPassword: password,
+        token,
+      });
 
-      if (result.success) {
+      if (error) {
+        setError(error.message || "Något gick fel");
+      } else {
         setSuccess(true);
         // Redirect efter 3 sekunder
         setTimeout(() => {
           onSuccess();
         }, 3000);
-      } else {
-        setError(result.error || "Något gick fel");
       }
     } catch (error) {
       setError("Något gick fel. Försök igen.");

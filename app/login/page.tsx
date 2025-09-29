@@ -1,11 +1,11 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import EpostRegistrering from "./SignUp";
 import ForgotPassword from "./reset-password/ForgotPassword";
 import { useRememberMe } from "./_utils/rememberMe";
+import { authClient } from "../_lib/auth-client";
 import TextFalt from "../_components/TextFalt";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
@@ -23,46 +23,28 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
     setShowResendVerification(false);
 
     try {
-      // Kolla först om användaren är verifierad
-      const checkResponse = await fetch("/api/auth/check-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      // Better Auth hanterar email verification automatiskt
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+        rememberMe,
+        callbackURL: "/",
       });
 
-      if (!checkResponse.ok) {
-        const checkData = await checkResponse.json();
-        if (checkData.error === "EMAIL_NOT_VERIFIED") {
+      if (error) {
+        if (error.status === 403) {
+          // Email inte verifierad
           setError(
             "Din email är inte verifierad än. Kontrollera din inkorg och klicka på verifieringslänken."
           );
           setShowResendVerification(true);
-          setLoading(false);
-          return;
-        } else if (checkResponse.status === 429) {
+        } else if (error.status === 429) {
           setError("För många försök. Vänta en stund innan du försöker igen.");
-          setLoading(false);
-          return;
-        } else if (checkData.error === "INVALID_CREDENTIALS") {
+        } else {
           setError("Fel e-post eller lösenord");
-          setLoading(false);
-          return;
         }
-      }
-
-      // Om verifierad, gör vanlig login
-      const result = await signIn("credentials", {
-        email,
-        password,
-        callbackUrl: "/",
-        redirect: false,
-        // Skicka remember me som del av credentials för att NextAuth kan använda det
-        rememberMe: rememberMe.toString(),
-      });
-
-      if (result?.error) {
-        setError("Fel e-post eller lösenord");
-      } else if (result?.ok) {
+      } else if (data) {
+        // Lyckad inloggning - Better Auth hanterar redirect
         window.location.href = "/";
       }
     } catch (error) {
@@ -74,19 +56,16 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
   const handleResendVerification = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: "/",
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (error) {
+        setError(error.message || "Kunde inte skicka verifieringsmail");
+      } else {
         setError("Ett nytt verifieringsmail har skickats till din email!");
         setShowResendVerification(false);
-      } else {
-        setError(data.error || "Kunde inte skicka verifieringsmail");
       }
     } catch (error) {
       setError("Något gick fel. Försök igen.");
@@ -172,7 +151,7 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
 }
 
 export default function LoginPage() {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup" | "forgot-password">("login");
   const [verificationMessage, setVerificationMessage] = useState("");
