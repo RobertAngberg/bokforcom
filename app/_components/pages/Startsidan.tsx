@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { signIn } from "next-auth/react";
+// import { signIn } from "../../_lib/auth-client"; // TODO: Update for better-auth social providers
 import Image from "next/image";
 
 // Custom hook för scroll animationer
@@ -47,7 +47,9 @@ export default function LandingPage() {
 
   const handleGetStarted = () => {
     setIsLoading(true);
-    signIn("google", { callbackUrl: "/signup" });
+    // TODO: Update for better-auth social providers
+    // signIn("google", { callbackUrl: "/signup" });
+    window.location.href = "/login";
   };
 
   return (
@@ -342,7 +344,7 @@ export default function LandingPage() {
           </div>
           <div className="space-x-4">
             <button
-              onClick={() => signIn()}
+              onClick={() => (window.location.href = "/login")}
               className="text-slate-300 hover:text-white transition-colors"
             >
               Logga in
@@ -383,7 +385,7 @@ export default function LandingPage() {
                 {isLoading ? "Startar..." : "🚀 Starta gratis"}
               </button>
               <button
-                onClick={() => signIn()}
+                onClick={() => (window.location.href = "/login")}
                 className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
               >
                 Har redan konto

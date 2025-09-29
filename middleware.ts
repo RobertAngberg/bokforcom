@@ -18,13 +18,13 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 function hasValidSession(request: NextRequest): boolean {
-  // Kolla efter NextAuth session cookie
+  // Kolla efter better-auth session cookie
   const sessionToken =
-    request.cookies.get("next-auth.session-token")?.value ||
-    request.cookies.get("__Secure-next-auth.session-token")?.value;
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value;
 
   // Om det finns en session cookie, anta att användaren är inloggad
-  // NextAuth hanterar validering av JWT själv i komponenter
+  // better-auth hanterar validering av JWT själv i komponenter
   return !!sessionToken;
 }
 

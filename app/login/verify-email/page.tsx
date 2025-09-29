@@ -21,6 +21,7 @@ export default function VerifyEmailPage() {
 
     const verifyEmail = async () => {
       try {
+        // Better Auth hanterar verification via /api/auth/verify-email endpoint
         const response = await fetch(`/api/auth/verify-email?token=${token}`);
 
         if (response.ok) {
@@ -33,7 +34,10 @@ export default function VerifyEmailPage() {
           }, 3000);
         } else {
           const data = await response.json();
-          if (response.status === 400 && data.error?.includes("gått ut")) {
+          if (
+            response.status === 400 &&
+            (data.error?.includes("gått ut") || data.error?.includes("expired"))
+          ) {
             setStatus("expired");
             setMessage("Verifieringslänken har gått ut. Du kan begära en ny länk nedan.");
           } else {
@@ -56,10 +60,11 @@ export default function VerifyEmailPage() {
     if (!email) return;
 
     try {
-      const response = await fetch("/api/auth/resend-verification", {
+      // Använd Better Auth's send-verification-email endpoint
+      const response = await fetch("/api/auth/send-verification-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, callbackURL: "http://localhost:3000/test-auth" }),
       });
 
       if (response.ok) {

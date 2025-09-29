@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "../_lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearRememberMePreference } from "../login/_utils/rememberMe";
@@ -83,8 +83,8 @@ export default function Navbar() {
                 onClick={async () => {
                   // FÖRST rensa remember me-preferensen
                   clearRememberMePreference();
-                  // SEN döda NextAuth sessionen
-                  await signOut({ redirect: false });
+                  // SEN döda better-auth sessionen
+                  await signOut();
                   // SIST tvinga redirect med cache-clearing
                   window.location.replace("/login");
                 }}

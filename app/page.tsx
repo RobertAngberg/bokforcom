@@ -1,12 +1,13 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "../app/_lib/auth-client";
 import StartPage from "./start/page";
 import Startsidan from "./_components/pages/Startsidan";
 
 export default function Page() {
-  const { data: session, status } = useSession();
-  if (status === "loading") {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white bg-slate-950">
         <div className="text-xl">Laddar...</div>
@@ -15,14 +16,10 @@ export default function Page() {
   }
 
   // Icke-inloggad användare - visa landing page
-  if (status === "unauthenticated" || !session) {
+  if (!session) {
     return <Startsidan />;
   }
 
   // Inloggad användare - visa dashboard
-  if (status === "authenticated" && session) {
-    return <StartPage />;
-  }
-
-  return null;
+  return <StartPage />;
 }

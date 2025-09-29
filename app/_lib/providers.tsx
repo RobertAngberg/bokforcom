@@ -1,7 +1,7 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-
+// Better-auth doesn't need a SessionProvider wrapper like NextAuth
+// The auth client handles state management automatically via nanostore
 export function ClientProviders({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return <>{children}</>;
 }
