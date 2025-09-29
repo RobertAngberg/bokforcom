@@ -21,7 +21,7 @@ export default function Navbar() {
     { href: "/rapporter", label: "Rapporter" },
     { href: "/bokslut", label: "Bokslut" },
     { href: "/personal", label: "Personal" },
-    ...(session?.user ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(session?.user ? [{ href: "/installningar", label: "Inställningar" }] : []),
   ];
 
   // Länkar för icke-inloggade användare
@@ -103,7 +103,7 @@ export default function Navbar() {
 function useActivePathMarker(
   currentLinks: { href: string; label: string }[],
   pathname: string,
-  router: any
+  router: ReturnType<typeof useRouter>
 ) {
   const [selectedPath, setSelectedPath] = useState(pathname);
   const [markerStyle, setMarkerStyle] = useState({ left: 0, width: 0 });

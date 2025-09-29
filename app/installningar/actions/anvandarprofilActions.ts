@@ -35,7 +35,7 @@ export async function uppdateraAnvändarInfo(
       return { success: false, error: "Anvandare kunde inte uppdateras" };
     }
 
-    revalidatePath("/admin");
+    revalidatePath("/installningar");
     return { success: true, user: updated, data: updated };
   } catch (error) {
     logError(error as Error, "uppdateraAnvändarInfo");

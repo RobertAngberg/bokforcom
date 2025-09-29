@@ -3,7 +3,7 @@
 import { getUserId } from "../../_utils/authUtils";
 import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
-import { query, queryOne } from "../../_utils/dbUtils";
+import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
@@ -54,7 +54,7 @@ export async function uppdateraFöretagsprofilAdmin(
       ]
     );
 
-    revalidatePath("/admin");
+    revalidatePath("/installningar");
     return { success: true, data: updated || undefined };
   } catch (error) {
     logError(error as Error, "uppdateraFöretagsprofilAdmin");
