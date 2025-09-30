@@ -585,6 +585,139 @@ export default function LandingPage() {
                   Skapa lönespecar, hantera anställda, sköt utlägg och kör lönekörning
                 </p>
               </div>
+
+              {/* Prissättning divs */}
+              <div className="flex flex-col lg:flex-row gap-8 mt-16 max-w-7xl mx-auto">
+                <div className="flex-1 bg-slate-800 rounded-2xl p-8 border border-slate-600 hover:border-green-500 transition-all duration-300 relative">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                    För de flesta
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 text-center">Gratis</h3>
+                  <div className="text-center mb-6">
+                    <span className="text-4xl font-bold text-green-400">0</span>
+                    <span className="text-slate-300 ml-2">kr/månad</span>
+                  </div>
+                  <div className="text-slate-300">
+                    <p className="text-center mb-4 font-semibold">För de flesta företag</p>
+                    <ul className="space-y-2 text-sm pl-6">
+                      <li>
+                        <span className="text-green-400">✓</span> Grundläggande bokföring
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> Upp till 25 transaktioner/månad
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> Enkel fakturahantering
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> Grundläggande rapporter
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> BAS-kontoplan
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> E-postsupport
+                      </li>
+                      <li>
+                        <span className="text-green-400">✓</span> Mobilanpassad
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex-1 bg-slate-800 rounded-2xl p-8 border-2 border-cyan-500 hover:border-cyan-400 transition-all duration-300">
+                  <h3 className="text-2xl font-bold text-white mb-4 text-center">Standard</h3>
+                  <div className="text-center mb-6">
+                    <span className="text-4xl font-bold text-cyan-400">199</span>
+                    <span className="text-slate-300 ml-2">kr/månad</span>
+                  </div>
+                  <div className="text-slate-300">
+                    <p className="text-center mb-4 font-semibold">För växande företag</p>
+                    <ul className="space-y-2 text-sm pl-6">
+                      <li>
+                        <span className="text-cyan-400">✓</span> <strong>Allt från Gratis +</strong>
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Obegränsat antal transaktioner
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Avancerad fakturahantering
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Automatisk OCR (kvittoscanning)
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Grundläggande personalhantering
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Enkla lönespecar
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Utläggshantering
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> SIE-import/export
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Bokslut & årsredovisning
+                      </li>
+                      <li>
+                        <span className="text-cyan-400">✓</span> Prioriterad support
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex-1 bg-slate-800 rounded-2xl p-8 border border-slate-600 hover:border-purple-500 transition-all duration-300">
+                  <h3 className="text-2xl font-bold text-white mb-4 text-center">Premium</h3>
+                  <div className="text-center mb-6">
+                    <span className="text-4xl font-bold text-purple-400">299</span>
+                    <span className="text-slate-300 ml-2">kr/månad</span>
+                  </div>
+                  <div className="text-slate-300">
+                    <p className="text-center mb-4 font-semibold">
+                      För professionella organisationer
+                    </p>
+                    <ul className="space-y-2 text-sm pl-6">
+                      <li>
+                        <span className="text-purple-400">✓</span>{" "}
+                        <strong>Allt från Standard +</strong>
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Avancerad personalhantering
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Kompletta lönespecar &
+                        lönekörning
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Semesterhantering & frånvaro
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Månadsrapporter & deklaration
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Avancerade rapporter & analytics
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> API-integration
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Flera användare & behörigheter
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Bankkoppling & automatisering
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Telefon & chat-support
+                      </li>
+                      <li>
+                        <span className="text-purple-400">✓</span> Personlig onboarding
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 

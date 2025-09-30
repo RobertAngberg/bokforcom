@@ -3,6 +3,21 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import type { UserId } from "../_types/common";
 
+// Better Auth session type
+type BetterAuthSession = {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    createdAt?: Date;
+  };
+  session: {
+    id: string;
+    userId: string;
+    expiresAt: Date;
+  };
+};
+
 // Better Auth använder string IDs direkt
 export async function getUserId(): Promise<UserId> {
   const session = await auth.api.getSession({
@@ -17,7 +32,7 @@ export async function getUserId(): Promise<UserId> {
 }
 
 // Hämtar session och validerar att användaren är inloggad
-export async function getValidSession() {
+export async function getValidSession(): Promise<BetterAuthSession> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -26,7 +41,7 @@ export async function getValidSession() {
     redirect("/login");
   }
 
-  return session;
+  return session as BetterAuthSession;
 }
 
 // Hämtar användarens email för filorganisation
@@ -45,8 +60,10 @@ export async function getUserEmail(): Promise<string> {
 
 // Kombinerar session + userId för vanliga use cases
 // DEPRECATED: Använd getUserId() direkt istället då Better Auth använder string UUIDs
-export async function getSessionAndUserId(): Promise<{ session: any; userId: UserId }> {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+export async function getSessionAndUserId(): Promise<{
+  session: BetterAuthSession;
+  userId: UserId;
+}> {
   const session = await getValidSession();
   const userId = session.user!.id!; // Använd string direkt
 
@@ -98,7 +115,7 @@ export async function getAuthenticatedUser() {
 // För server actions som behöver både validering och error handling
 // DEPRECATED: Bör uppdateras för att använda Better Auth sessions
 export async function withAuth<T>(
-  action: (userId: UserId, session: any) => Promise<T>
+  action: (userId: UserId, session: BetterAuthSession) => Promise<T>
 ): Promise<T> {
   try {
     const { session, userId } = await getSessionAndUserId();
@@ -110,9 +127,7 @@ export async function withAuth<T>(
 }
 
 // Type guard för att säkerställa session finns
-export function isAuthenticated(
-  session: any
-): session is { user: { id: string; email: string; name: string } } {
+export function isAuthenticated(session: BetterAuthSession | null): session is BetterAuthSession {
   return !!session?.user?.id;
 }
 
