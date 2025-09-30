@@ -75,26 +75,6 @@ export default function Navbar() {
             {label}
           </Link>
         ))}
-
-        {session?.user && (
-          <div className="ml-4 hidden md:block">
-            <div className="flex items-center justify-end text-white">
-              <button
-                onClick={async () => {
-                  // FÖRST rensa remember me-preferensen
-                  clearRememberMePreference();
-                  // SEN döda better-auth sessionen
-                  await signOut();
-                  // SIST tvinga redirect med cache-clearing
-                  window.location.replace("/login");
-                }}
-                className="px-4 py-2 font-bold text-white transition duration-300 bg-transparent border border-white rounded hover:bg-white hover:bg-opacity-20"
-              >
-                Logga ut
-              </button>
-            </div>
-          </div>
-        )}
       </nav>
     </div>
   );
