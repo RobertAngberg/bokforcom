@@ -599,27 +599,18 @@ export default function LandingPage() {
                   </div>
                   <div className="text-slate-300">
                     <p className="text-center mb-4 font-semibold">För de flesta företag</p>
-                    <ul className="space-y-2 text-sm pl-6">
+                    <ul className="space-y-2 text-base pl-6">
                       <li>
-                        <span className="text-green-400">✓</span> Grundläggande bokföring
+                        <span className="text-green-400">✓</span> 50 kvittoscanningar/månad
                       </li>
                       <li>
-                        <span className="text-green-400">✓</span> Upp till 25 transaktioner/månad
+                        <span className="text-green-400">✓</span> 10 fakturor/månad
                       </li>
                       <li>
-                        <span className="text-green-400">✓</span> Enkel fakturahantering
+                        <span className="text-green-400">✓</span> 1 anställd
                       </li>
                       <li>
-                        <span className="text-green-400">✓</span> Grundläggande rapporter
-                      </li>
-                      <li>
-                        <span className="text-green-400">✓</span> BAS-kontoplan
-                      </li>
-                      <li>
-                        <span className="text-green-400">✓</span> E-postsupport
-                      </li>
-                      <li>
-                        <span className="text-green-400">✓</span> Mobilanpassad
+                        <span className="text-green-400">✓</span> 1 lönekörning/månad
                       </li>
                     </ul>
                   </div>
@@ -633,36 +624,18 @@ export default function LandingPage() {
                   </div>
                   <div className="text-slate-300">
                     <p className="text-center mb-4 font-semibold">För växande företag</p>
-                    <ul className="space-y-2 text-sm pl-6">
+                    <ul className="space-y-2 text-base pl-6">
                       <li>
-                        <span className="text-cyan-400">✓</span> <strong>Allt från Gratis +</strong>
+                        <span className="text-cyan-400">✓</span> 100 kvittoscanningar/månad
                       </li>
                       <li>
-                        <span className="text-cyan-400">✓</span> Obegränsat antal transaktioner
+                        <span className="text-cyan-400">✓</span> 50 fakturor/månad
                       </li>
                       <li>
-                        <span className="text-cyan-400">✓</span> Avancerad fakturahantering
+                        <span className="text-cyan-400">✓</span> 2 anställda
                       </li>
                       <li>
-                        <span className="text-cyan-400">✓</span> Automatisk OCR (kvittoscanning)
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> Grundläggande personalhantering
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> Enkla lönespecar
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> Utläggshantering
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> SIE-import/export
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> Bokslut & årsredovisning
-                      </li>
-                      <li>
-                        <span className="text-cyan-400">✓</span> Prioriterad support
+                        <span className="text-cyan-400">✓</span> 2 lönekörningar/månad
                       </li>
                     </ul>
                   </div>
@@ -678,41 +651,18 @@ export default function LandingPage() {
                     <p className="text-center mb-4 font-semibold">
                       För professionella organisationer
                     </p>
-                    <ul className="space-y-2 text-sm pl-6">
+                    <ul className="space-y-2 text-base pl-6">
                       <li>
-                        <span className="text-purple-400">✓</span>{" "}
-                        <strong>Allt från Standard +</strong>
+                        <span className="text-purple-400">✓</span> 500 kvittoscanningar/månad
                       </li>
                       <li>
-                        <span className="text-purple-400">✓</span> Avancerad personalhantering
+                        <span className="text-purple-400">✓</span> 500 fakturor/månad
                       </li>
                       <li>
-                        <span className="text-purple-400">✓</span> Kompletta lönespecar &
-                        lönekörning
+                        <span className="text-purple-400">✓</span> 5 anställda
                       </li>
                       <li>
-                        <span className="text-purple-400">✓</span> Semesterhantering & frånvaro
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Månadsrapporter & deklaration
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Avancerade rapporter & analytics
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> API-integration
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Flera användare & behörigheter
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Bankkoppling & automatisering
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Telefon & chat-support
-                      </li>
-                      <li>
-                        <span className="text-purple-400">✓</span> Personlig onboarding
+                        <span className="text-purple-400">✓</span> 5 lönekörningar/månad
                       </li>
                     </ul>
                   </div>
