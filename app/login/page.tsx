@@ -74,7 +74,7 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
   };
 
   return (
-    <form onSubmit={handleEmailSignIn} className="space-y-3">
+    <form onSubmit={handleEmailSignIn} className="space-y-1">
       <div>
         <TextFalt
           label="E-postadress"

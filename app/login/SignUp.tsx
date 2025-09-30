@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "../_components/Modal";
 import TextFalt from "../_components/TextFalt";
+import Knapp from "../_components/Knapp";
 import { authClient } from "../_lib/auth-client";
 
 interface EmailSignupFormProps {
@@ -81,7 +82,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
 
   return (
     <div>
-      <form onSubmit={handleSignUp} className="space-y-4">
+      <form onSubmit={handleSignUp} className="space-y-2">
         <div>
           <TextFalt
             label="Ditt namn"
@@ -101,7 +102,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="E-postadress"
-            className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-1 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
@@ -142,13 +143,13 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
         <input type="hidden" name="email" value={email} />
         <input type="hidden" name="password" value={password} />
 
-        <button
+        <Knapp
           type="submit"
-          disabled={loading}
-          className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-md transition-all duration-200"
-        >
-          {loading ? "Registrerar..." : "Registrera konto"}
-        </button>
+          text="Registrera konto"
+          loading={loading}
+          loadingText="Registrerar..."
+          className="w-full"
+        />
       </form>
 
       {/* Användarvillkor Modal */}
