@@ -254,7 +254,7 @@ export default function LoginPage() {
                 : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
             }`}
           >
-            <h2 className="mb-6 text-xl font-bold text-center text-white">Skapa konto</h2>
+            <h2 className="mb-3 text-xl font-bold text-center text-white">Skapa konto</h2>
             <EpostRegistrering
               onSuccess={undefined}
               onSwitchToLogin={() => setActiveTab("login")}

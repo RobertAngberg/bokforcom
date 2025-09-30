@@ -58,6 +58,9 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
         />
       </div>
 
+      {/* Subtil HR mellan anställda och lönekörning */}
+      <hr className="border-slate-600/30 my-8" />
+
       {/* Lönekörning sektion - alltid tillgänglig */}
       <div className="mb-8">
         <AnimeradFlik title="Lönekörning" icon="💰">

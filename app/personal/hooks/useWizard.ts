@@ -51,7 +51,7 @@ export function useWizard({
         id: "agi",
         title: "AGI",
         description: "Generera deklaration",
-        buttonText: "� Generera AGI",
+        buttonText: "📊 Generera AGI",
         completed: aktivtSteg > 2, // Färdigt om vi gått till steg 3+
         enabled: aktivtSteg >= 2,
         status: aktivtSteg > 2 ? "completed" : aktivtSteg >= 2 ? "available" : "disabled",
@@ -62,7 +62,7 @@ export function useWizard({
         id: "bokfor",
         title: "Bokför",
         description: "Registrera i bokföring",
-        buttonText: "� Bokför",
+        buttonText: "📖 Bokför",
         completed: aktivtSteg > 3, // Färdigt om vi gått till steg 4+
         enabled: aktivtSteg >= 3,
         status: aktivtSteg > 3 ? "completed" : aktivtSteg >= 3 ? "available" : "disabled",

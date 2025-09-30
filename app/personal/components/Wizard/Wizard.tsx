@@ -3,22 +3,13 @@ import type { WizardStep } from "../../hooks/useWizard";
 
 interface WizardProps {
   steps: WizardStep[];
-  isComplete: boolean;
   lönekörningId?: number;
   onMarkeraFärdig?: (lönekörningId: number) => void;
 }
 
-export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraFärdig }: WizardProps) {
+export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: WizardProps) {
   return (
     <div className="space-y-4">
-      {/* Completion message */}
-      {isComplete && (
-        <div className="bg-green-900/30 border border-green-600/50 rounded-lg p-4 text-center">
-          <div className="text-white text-xl font-bold mb-2">🎉 Lönekörning komplett!</div>
-          <div className="text-green-300 text-sm">Alla steg har genomförts framgångsrikt.</div>
-        </div>
-      )}
-
       {/* Steps */}
       <div className="space-y-3">
         {steps.map((step, index) => {
@@ -88,7 +79,7 @@ export default function Wizard({ steps, isComplete, lönekörningId, onMarkeraF�
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:text-blue-300 underline ml-2"
                       >
-                        Länk till Skatteverket
+                        Länk
                       </a>
                     )}
                   </div>

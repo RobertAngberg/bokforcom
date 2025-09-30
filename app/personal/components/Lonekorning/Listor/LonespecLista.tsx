@@ -87,7 +87,6 @@ export default function LonespecLista({
       {/* Wizard */}
       <Wizard
         steps={wizard.steps}
-        isComplete={wizard.isComplete}
         lönekörningId={lönekörning?.id}
         onMarkeraFärdig={handleMarkeraFärdig}
       />
