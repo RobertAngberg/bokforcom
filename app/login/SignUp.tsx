@@ -32,7 +32,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
     setError("");
 
     try {
-      const { data, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         name,
         email,
         password,

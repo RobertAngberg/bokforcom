@@ -151,7 +151,7 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
 }
 
 export default function LoginPage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup" | "forgot-password">("login");
   const [verificationMessage, setVerificationMessage] = useState("");
