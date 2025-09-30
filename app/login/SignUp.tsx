@@ -118,7 +118,7 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
         </div>
         {error && <div className="text-center text-sm text-red-400 mt-2">{error}</div>}
 
-        <div className="flex items-start space-x-2" style={{marginBottom: '20px'}}>
+        <div className="flex items-start space-x-2" style={{ marginBottom: "20px" }}>
           <input
             name="acceptTerms"
             type="checkbox"
