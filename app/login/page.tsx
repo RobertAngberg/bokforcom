@@ -99,7 +99,7 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
       </div>
 
       {/* Remember Me Checkbox */}
-      <div className="flex items-center -mb-3 pb-8">
+      <div className="flex items-center -mb-3 pb-2">
         <input
           type="checkbox"
           id="rememberMe"
@@ -151,7 +151,7 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
 }
 
 export default function LoginPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup" | "forgot-password">("login");
   const [verificationMessage, setVerificationMessage] = useState("");
@@ -181,7 +181,7 @@ export default function LoginPage() {
     }
   }, [session, router]);
 
-  if (status === "loading" || session?.user) {
+  if (isPending || session?.user) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white bg-slate-950">
         <div className="text-xl">Laddar...</div>
