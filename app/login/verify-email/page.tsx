@@ -21,8 +21,8 @@ export default function VerifyEmailPage() {
 
     const verifyEmail = async () => {
       try {
-        // Better Auth hanterar verification via /api/auth/verify-email endpoint
-        const response = await fetch(`/api/auth/verify-email?token=${token}`);
+        // Better Auth hanterar verification via /api/email/verification endpoint
+        const response = await fetch(`/api/email/verification?token=${token}`);
 
         if (response.ok) {
           setStatus("success");
