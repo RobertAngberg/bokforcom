@@ -89,27 +89,7 @@ export default function Direktpension({ mode }: { mode: "steg2" | "steg3" }) {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="1385"
-            kontobeskrivning="Direktpension"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Direktpension",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              momssats: 0,
-              specialtyp: "direktpension",
-              sökord: [],
-            }}
-            setCurrentStep={actions.setCurrentStep}
-            extrafält={state.extrafält}
-          />
+          <Steg3 />
         </div>
       </>
     );

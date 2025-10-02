@@ -3,7 +3,6 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import TillbakaPil from "../../../../_components/TillbakaPil";
 import { useBokforContext } from "../../BokforProvider";
 
 export default function InkopTjansterSverigeOmvand({
@@ -129,29 +128,11 @@ export default function InkopTjansterSverigeOmvand({
 
   if (mode === "steg3") {
     return (
-      <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="4400"
-          kontobeskrivning="Inköp tjänster Sverige (omvänd moms)"
-          belopp={state.belopp ?? 0}
-          transaktionsdatum={state.transaktionsdatum ?? ""}
-          kommentar={state.kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Inköp tjänster Sverige (omvänd moms)",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            momssats: 0.25,
-            specialtyp: "InkopTjansterSverigeOmvand",
-            sökord: [],
-          }}
-          setCurrentStep={actions.setCurrentStep}
-          extrafält={state.extrafält}
-        />
-      </div>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <Steg3 />
+        </div>
+      </>
     );
   }
 }

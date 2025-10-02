@@ -1,10 +1,12 @@
 import { pool } from "../_lib/db";
+import type { PoolClient } from "pg";
+import type { UserId } from "../_types/common";
 
 /**
  * Exekverar en databas-operation med automatisk connection management
  * Eliminerar behovet av manuell client.connect() och client.release()
  */
-export async function withDatabase<T>(operation: (client: any) => Promise<T>): Promise<T> {
+export async function withDatabase<T>(operation: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
 
   try {
@@ -18,7 +20,9 @@ export async function withDatabase<T>(operation: (client: any) => Promise<T>): P
  * Exekverar en databas-transaktion med automatisk ROLLBACK vid fel
  * Perfekt för operationer med flera queries som måste lyckas tillsammans
  */
-export async function withTransaction<T>(operation: (client: any) => Promise<T>): Promise<T> {
+export async function withTransaction<T>(
+  operation: (client: PoolClient) => Promise<T>
+): Promise<T> {
   const client = await pool.connect();
 
   try {
@@ -33,24 +37,27 @@ export async function withTransaction<T>(operation: (client: any) => Promise<T>)
     client.release();
   }
 }
-
 /**
  * Enkel query med automatisk connection management
  * För enkla SELECT/INSERT/UPDATE operationer
  */
-export async function query<T = any>(
+export async function query<T = unknown>(
   text: string,
-  params: any[] = []
+  params: unknown[] = []
 ): Promise<{ rows: T[]; rowCount?: number }> {
   return withDatabase(async (client) => {
-    return await client.query(text, params);
+    const result = await client.query(text, params);
+    return result as { rows: T[]; rowCount?: number };
   });
 }
 
 /**
  * Hämtar första raden från en query, eller null om ingen hittades
  */
-export async function queryOne<T = any>(text: string, params: any[] = []): Promise<T | null> {
+export async function queryOne<T = unknown>(
+  text: string,
+  params: unknown[] = []
+): Promise<T | null> {
   const result = await query<T>(text, params);
   return result.rows[0] || null;
 }
@@ -58,7 +65,7 @@ export async function queryOne<T = any>(text: string, params: any[] = []): Promi
 /**
  * Kontrollerar om en post existerar
  */
-export async function exists(table: string, conditions: Record<string, any>): Promise<boolean> {
+export async function exists(table: string, conditions: Record<string, unknown>): Promise<boolean> {
   const keys = Object.keys(conditions);
   const whereClause = keys.map((key, index) => `"${key}" = $${index + 1}`).join(" AND ");
   const values = Object.values(conditions);
@@ -80,7 +87,7 @@ export async function exists(table: string, conditions: Record<string, any>): Pr
 export async function updateFakturanummerCore(
   id: number,
   nyttNummer: string,
-  userId: number
+  userId: UserId
 ): Promise<{ rowCount: number }> {
   return withDatabase(async (client) => {
     const res = await client.query(
@@ -90,7 +97,7 @@ export async function updateFakturanummerCore(
     if (res.rowCount === 0) {
       throw new Error("Faktura hittades inte eller otillåten åtkomst");
     }
-    return { rowCount: res.rowCount };
+    return { rowCount: res.rowCount || 0 };
   });
 }
 
@@ -102,7 +109,7 @@ export async function updateFörvalCore(
   id: number,
   kolumn: string,
   nyttVärde: string,
-  userId?: number // Optional för admin operations
+  userId?: UserId // Optional för admin operations
 ): Promise<{ rowCount: number }> {
   // Säkra kolumnnamn mot SQL injection
   const tillåtnaKolumner = [
@@ -122,7 +129,7 @@ export async function updateFörvalCore(
 
   return await withDatabase(async (client) => {
     let query = "";
-    let params: any[] = [];
+    let params: unknown[] = [];
 
     if (kolumn === "konton" || kolumn === "sökord") {
       // JSON-hantering
@@ -163,7 +170,8 @@ export async function updateFörvalCore(
       }
     }
 
-    return await client.query(query, params);
+    const result = await client.query(query, params);
+    return { rowCount: result.rowCount || 0 };
   });
 }
 

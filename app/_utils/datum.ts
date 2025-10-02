@@ -44,7 +44,7 @@ export function datumTillPostgreSQL(dateString: string | null): string | null {
   if (!dateString) return null;
 
   // Rensa bort eventuella befintliga timezone-markeringar
-  let cleanDate = dateString.split("T")[0]; // Ta bara YYYY-MM-DD delen
+  const cleanDate = dateString.split("T")[0]; // Ta bara YYYY-MM-DD delen
 
   // Lägg till svensk timezone för att undvika UTC-konvertering
   return cleanDate + "T12:00:00+02:00";

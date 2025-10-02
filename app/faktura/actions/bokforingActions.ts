@@ -7,7 +7,7 @@ import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
 } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-import { BokföringsPost, BokförFakturaData } from "../types/types";
+import { BokförFakturaData } from "../types/types";
 
 export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   status_betalning?: string;
@@ -151,7 +151,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
         ]);
 
         if (kontoResult.rows.length === 0) {
-          throw new Error(`Konto ${post.konto} (${post.kontoNamn}) finns inte i databasen`);
+          throw new Error(`Konto ${post.konto} finns inte i databasen`);
         }
 
         const kontoId = kontoResult.rows[0].id;

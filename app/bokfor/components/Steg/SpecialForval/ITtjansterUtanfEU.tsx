@@ -3,7 +3,6 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import TillbakaPil from "../../../../_components/TillbakaPil";
 import { ITtjansterUtanfEUProps } from "../../../types/types";
 
 export default function ITtjansterUtanfEU({
@@ -20,7 +19,6 @@ export default function ITtjansterUtanfEU({
   setFil,
   pdfUrl,
   setPdfUrl,
-  extrafält,
   setExtrafält,
   leverantör,
   setLeverantör,
@@ -122,29 +120,11 @@ export default function ITtjansterUtanfEU({
 
   if (mode === "steg3") {
     return (
-      <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="4531"
-          kontobeskrivning="IT-tjänster utanför EU"
-          belopp={belopp ?? 0}
-          transaktionsdatum={transaktionsdatum ?? ""}
-          kommentar={kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "IT-tjänster utanför EU",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            momssats: 0.25,
-            specialtyp: "ITtjansterUtanfEU",
-            sökord: [],
-          }}
-          setCurrentStep={setCurrentStep}
-          extrafält={extrafält}
-        />
-      </div>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <Steg3 />
+        </div>
+      </>
     );
   }
 }

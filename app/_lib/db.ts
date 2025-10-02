@@ -3,6 +3,7 @@ import { Pool } from "pg";
 // Singleton pattern för att återanvända samma connection pool
 
 declare global {
+  // eslint-disable-next-line no-var
   var __APP_PG_POOL__: Pool | undefined;
 }
 

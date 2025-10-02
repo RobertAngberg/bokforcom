@@ -182,28 +182,6 @@ async function compressImage(file: File, options: UploadOptions): Promise<File> 
   });
 }
 
-// 📐 Beräkna nya dimensioner (behåll aspect ratio)
-function calculateDimensions(
-  originalWidth: number,
-  originalHeight: number,
-  maxWidth: number,
-  maxHeight: number
-): { width: number; height: number } {
-  let { width, height } = { width: originalWidth, height: originalHeight };
-
-  if (width > maxWidth) {
-    height = (height * maxWidth) / width;
-    width = maxWidth;
-  }
-
-  if (height > maxHeight) {
-    width = (width * maxHeight) / height;
-    height = maxHeight;
-  }
-
-  return { width: Math.round(width), height: Math.round(height) };
-}
-
 // Skapa smart filnamn med datum och beskrivning
 function createSmartFileName(originalName: string, options: UploadOptions): string {
   const fileExt = originalName.split(".").pop()?.toLowerCase() || "";
@@ -224,14 +202,6 @@ function createSmartFileName(originalName: string, options: UploadOptions): stri
   filename += `_${randomSuffix}`;
 
   return `${filename}.${fileExt}`;
-}
-
-// 🧹 Rensa filnamn (behålls för bakåtkompatibilitet)
-function sanitizeFileName(fileName: string): string {
-  return fileName
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_{2,}/g, "_")
-    .toLowerCase();
 }
 
 // 🎯 Convenience-funktioner för specifika användningsfall

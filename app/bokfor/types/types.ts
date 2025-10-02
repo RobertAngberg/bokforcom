@@ -1,6 +1,5 @@
 import type { Leverantör } from "../../faktura/types/types";
 import type { ReactNode } from "react";
-import type { useBokfor } from "../hooks/useBokfor";
 
 // ========================================
 // INITIAL DATA & INTERFACES
@@ -11,7 +10,7 @@ export interface InitialData {
   currentStep: number;
   isLevfaktMode: boolean;
   isUtlaggMode: boolean;
-  leverantör: any;
+  leverantör: Leverantör | null;
 }
 
 // ========================================
@@ -36,8 +35,8 @@ export interface StandardLayoutProps {
   formRef?: React.RefObject<HTMLFormElement>;
   handleSubmit?: (fd: FormData) => void;
   isValid?: boolean;
-  leverantör?: string | any;
-  setLeverantör?: (val: string | any | null) => void;
+  leverantör?: Leverantör | null;
+  setLeverantör?: (val: Leverantör | null) => void;
   fakturanummer?: string;
   setFakturanummer?: (val: string) => void;
   fakturadatum?: string;
@@ -51,7 +50,6 @@ export interface StandardLayoutProps {
   valtFörval?: Förval;
   kontonummer?: string;
   kontobeskrivning?: string;
-  [key: string]: any;
 }
 
 // ===== GEMENSAMMA BASTYPER =====
@@ -117,8 +115,8 @@ export interface BaseSpecialProps {
   formRef?: React.RefObject<HTMLFormElement>;
   handleSubmit?: (fd: FormData) => void;
   // Levfakt-specifika props (optional)
-  leverantör?: string | any;
-  setLeverantör?: (val: string | any | null) => void;
+  leverantör?: Leverantör | null;
+  setLeverantör?: (val: Leverantör | null) => void;
   fakturanummer?: string;
   setFakturanummer?: (val: string) => void;
   fakturadatum?: string;
@@ -188,7 +186,7 @@ export interface FileUploadProps {
   skipBasicAI?: boolean;
   onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
   // Optional leverantörsfaktura props
-  setLeverantör?: (leverantör: any | null) => void;
+  setLeverantör?: (leverantör: Leverantör | null) => void;
   setFakturadatum?: (datum: string | null) => void;
   setFörfallodatum?: (datum: string | null) => void;
   setFakturanummer?: (nummer: string) => void;
@@ -246,7 +244,7 @@ export interface Step2LevfaktProps {
   extrafält?: Record<string, { label: string; debet: number; kredit: number }>;
   // Leverantörsfaktura-specifika props (behåller dessa som required för nu)
   leverantör?: Leverantör | null;
-  setLeverantör?: (leverantör: any | null) => void;
+  setLeverantör?: (leverantör: Leverantör | null) => void;
   fakturanummer?: string | null;
   setFakturanummer?: (nummer: string | null) => void;
   fakturadatum?: string | null;
@@ -269,7 +267,7 @@ export interface Step3Props {
   extrafält?: Record<string, ExtrafältRad>;
   utlaggMode?: boolean;
   levfaktMode?: boolean;
-  leverantör?: any | null;
+  leverantör?: Leverantör | null;
   fakturanummer?: string | null;
   fakturadatum?: string | null;
   förfallodatum?: string | null;
@@ -290,28 +288,28 @@ export interface UtlaggAnställd {
 }
 
 // ===== ALLA SPECIALFÖRVAL USES SAMMA BASE =====
-export interface AmorteringBanklanProps extends BaseSpecialProps {}
-export interface AvgifterAvrakningsnotaMomsProps extends BaseSpecialProps {}
-export interface AvrakningsnotaUtanMomsProps extends BaseSpecialProps {}
-export interface BanklanProps extends BaseSpecialProps {}
-export interface BilleasingProps extends BaseSpecialProps {}
-export interface DirektpensionProps extends BaseSpecialProps {}
-export interface DrojsmalsrantaLevFaktProps extends BaseSpecialProps {}
-export interface EgetUttagProps extends BaseSpecialProps {}
-export interface HyrbilProps extends BaseSpecialProps {}
-export interface ImportmomsProps extends BaseSpecialProps {}
-export interface InkopTjansterSverigeOmvandProps extends BaseSpecialProps {}
-export interface InkopTjanstEUProps extends BaseSpecialProps {}
-export interface InkopTjanstUtanfEUProps extends BaseSpecialProps {}
-export interface InkopVarorEU25Props extends BaseSpecialProps {}
-export interface InkopVarorUtanfEUProps extends BaseSpecialProps {}
-export interface ITtjansterEUProps extends BaseSpecialProps {}
-export interface ITtjansterUtanfEUProps extends BaseSpecialProps {}
-export interface MilersattningEnskildFirmaProps extends BaseSpecialProps {}
-export interface PensionsforsakringProps extends BaseSpecialProps {}
-export interface RantekostnaderProps extends BaseSpecialProps {}
-export interface RepresentationProps extends BaseSpecialProps {}
-export interface UberAvgiftProps extends BaseSpecialProps {}
+export type AmorteringBanklanProps = BaseSpecialProps;
+export type AvgifterAvrakningsnotaMomsProps = BaseSpecialProps;
+export type AvrakningsnotaUtanMomsProps = BaseSpecialProps;
+export type BanklanProps = BaseSpecialProps;
+export type BilleasingProps = BaseSpecialProps;
+export type DirektpensionProps = BaseSpecialProps;
+export type DrojsmalsrantaLevFaktProps = BaseSpecialProps;
+export type EgetUttagProps = BaseSpecialProps;
+export type HyrbilProps = BaseSpecialProps;
+export type ImportmomsProps = BaseSpecialProps;
+export type InkopTjansterSverigeOmvandProps = BaseSpecialProps;
+export type InkopTjanstEUProps = BaseSpecialProps;
+export type InkopTjanstUtanfEUProps = BaseSpecialProps;
+export type InkopVarorEU25Props = BaseSpecialProps;
+export type InkopVarorUtanfEUProps = BaseSpecialProps;
+export type ITtjansterEUProps = BaseSpecialProps;
+export type ITtjansterUtanfEUProps = BaseSpecialProps;
+export type MilersattningEnskildFirmaProps = BaseSpecialProps;
+export type PensionsforsakringProps = BaseSpecialProps;
+export type RantekostnaderProps = BaseSpecialProps;
+export type RepresentationProps = BaseSpecialProps;
+export type UberAvgiftProps = BaseSpecialProps;
 
 // ===== LAYOUT PROPS =====
 
@@ -331,8 +329,8 @@ export interface LevfaktLayoutProps {
   onSubmit: () => void;
   isValid: boolean;
   // Leverantörsfaktura-specifika props
-  leverantör?: string | any; // Will be properly typed as Leverantör
-  setLeverantör?: (val: string | any | null) => void;
+  leverantör?: Leverantör | null;
+  setLeverantör?: (val: Leverantör | null) => void;
   fakturanummer?: string;
   setFakturanummer?: (val: string) => void;
   fakturadatum?: string;
@@ -345,7 +343,11 @@ export interface LevfaktLayoutProps {
 // ===== UTILITY TYPES =====
 export interface TransaktionspostResult {
   success: boolean;
-  data?: any[];
+  data?: Array<{
+    kontonummer: string;
+    debet: number;
+    kredit: number;
+  }>;
   error?: string;
 }
 
@@ -393,7 +395,7 @@ export interface UseLaddaUppFilProps {
   skipBasicAI?: boolean;
   onReprocessTrigger?: (reprocessFn: () => Promise<void>) => void;
   // Optional leverantörsfaktura props
-  setLeverantör?: (leverantör: any | null) => void;
+  setLeverantör?: (leverantör: Leverantör | null) => void;
   setFakturadatum?: (datum: string | null) => void;
   setFörfallodatum?: (datum: string | null) => void;
   setFakturanummer?: (nummer: string) => void;
@@ -414,15 +416,10 @@ export interface UseLaddaUppFilLevfaktProps {
 
 // useLevfaktLayout
 export interface UseLevfaktLayoutProps {
-  leverantör?: string | any;
+  leverantör?: Leverantör | null;
   fakturanummer?: string;
   fakturadatum?: string;
   isValid: boolean;
-}
-
-// useStandardLayout
-export interface UseStandardLayoutProps {
-  // Placeholder för eventuell logik i framtiden
 }
 
 // ========================================
@@ -432,10 +429,10 @@ export interface UseStandardLayoutProps {
 // BokforClient
 export interface BokforClientProps {
   initialData: {
-    favoritFörval: any[];
-    allaFörval: any[];
+    favoritFörval: Förval[];
+    allaFörval: Förval[];
     bokföringsmetod: string;
-    anställda: any[];
+    anställda: UtlaggAnställd[];
   };
 }
 
@@ -448,12 +445,6 @@ export interface BokforProviderProps {
   children: ReactNode;
 }
 
-// SpecialForval components
-export interface RepresentationProps {
-  mode: "steg2" | "steg3";
-  renderMode?: "standard" | "levfakt";
-}
-
 // ========================================
 // CONTEXT TYPES
 // ========================================
@@ -461,9 +452,9 @@ export interface RepresentationProps {
 export interface BokforContextType {
   state: {
     currentStep: number;
-    favoritFörval: any[];
-    allaFörval: any[];
-    anställda: any[];
+    favoritFörval: Förval[];
+    allaFörval: Förval[];
+    anställda: UtlaggAnställd[];
     bokföringsmetod: string;
     levfaktMode: boolean;
     utlaggMode: boolean;
@@ -474,9 +465,9 @@ export interface BokforContextType {
     fil: File | null;
     pdfUrl: string | null;
     transaktionsdatum: string | null;
-    valtFörval: any | null;
-    extrafält: Record<string, any>;
-    leverantör: any;
+    valtFörval: Förval | null;
+    extrafält: Record<string, ExtrafältRad>;
+    leverantör: Leverantör | null;
     fakturanummer: string | null;
     fakturadatum: string | null;
     förfallodatum: string | null;
@@ -485,7 +476,7 @@ export interface BokforContextType {
     kundfakturadatum: string | null;
     ocrText: string;
     visaLeverantorModal: boolean;
-    anstallda: any[];
+    anstallda: Anstalld[];
     anstalldId: string;
     loadingSteg3: boolean;
     konto2890Beskrivning: string;
@@ -496,17 +487,25 @@ export interface BokforContextType {
     moms: number;
     beloppUtanMoms: number;
     ärFörsäljning: boolean | undefined;
-    fallbackRows: any[];
+    fallbackRows: Array<{
+      key: number;
+      konto: string;
+      debet: number;
+      kredit: number;
+    }>;
     searchText: string;
-    results: any[];
+    results: Förval[];
     highlightedIndex: number;
     loading: boolean;
   };
   actions: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
   handlers: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useSteg2LevfaktHelper: () => any;
   };
   getCardClassName: (isHighlighted: boolean) => string;

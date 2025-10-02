@@ -12,7 +12,7 @@ import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 interface UseOCRProcessingProps {
   bokförSomFaktura: boolean;
   levfaktMode: boolean;
-  leverantör?: any;
+  leverantör?: { namn: string; organisationsnummer?: string } | null;
   fakturanummer?: string | null;
   fakturadatum?: string | null;
   utlaggMode: boolean;
@@ -67,7 +67,8 @@ export function useOCRProcessing({
       };
       runKundfakturaAI();
     }
-  }, [bokförSomFaktura, ocrText, setBelopp, setFakturadatum]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bokförSomFaktura, ocrText]);
 
   // ====================================================
   // OCR HANDLERS

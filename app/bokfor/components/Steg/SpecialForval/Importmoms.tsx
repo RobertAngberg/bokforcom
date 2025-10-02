@@ -20,16 +20,6 @@ export default function Importmoms({
   const [fiktiv, setFiktiv] = useState("");
   const [ovrigt, setOvrigt] = useState("");
 
-  // Olika valideringslogik beroende på renderMode
-  const giltigt =
-    renderMode === "levfakt"
-      ? !!state.belopp &&
-        !!state.transaktionsdatum &&
-        !!state.leverantör &&
-        !!state.fakturanummer &&
-        !!state.fakturadatum
-      : !!state.belopp && !!state.transaktionsdatum;
-
   function gåTillSteg3() {
     if (renderMode === "levfakt") {
       // Leverantörsfaktura: Skuld mot leverantör

@@ -12,7 +12,7 @@ import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
 import { useBokforContext } from "../../BokforProvider";
 import { RantekostnaderProps } from "../../../types/types";
 
-export default function Rantekostnader({ mode, renderMode }: RantekostnaderProps) {
+export default function Rantekostnader({ mode }: RantekostnaderProps) {
   const { state, actions } = useBokforContext();
   const [amortering, setAmortering] = useState(0);
   const giltigt = !!state.belopp && !!state.transaktionsdatum;
@@ -59,10 +59,13 @@ export default function Rantekostnader({ mode, renderMode }: RantekostnaderProps
               />
 
               <TextFalt
-                label="Varav amortering"
+                label="Amortering"
                 name="amortering"
-                value={amortering}
-                onChange={(e) => setAmortering(Number(e.target.value))}
+                value={amortering.toString()}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  setAmortering(val);
+                }}
               />
 
               <label className="block text-sm font-medium text-white mb-2">
@@ -81,7 +84,7 @@ export default function Rantekostnader({ mode, renderMode }: RantekostnaderProps
                 label="Kommentar"
                 name="kommentar"
                 value=""
-                onChange={(e) => {
+                onChange={() => {
                   /* TODO: Lägg till kommentar i store */
                 }}
                 required={false}

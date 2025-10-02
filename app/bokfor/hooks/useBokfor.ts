@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { loggaFavoritförval } from "../actions/actions";
 import { hämtaAllaAnställda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../actions/transactionActions";
 import { showToast } from "../../_components/Toast";
@@ -22,7 +21,7 @@ export function useBokfor() {
   // Data & UI state
   const [favoritFörval, setFavoritFörval] = useState<Förval[]>([]);
   const [allaFörval, setAllaFörval] = useState<Förval[]>([]);
-  const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
+  const [anställda] = useState<UtlaggAnställd[]>([]);
   const [bokföringsmetod, setBokföringsmetod] = useState("standard");
   const [levfaktMode, setLevfaktMode] = useState(false);
   const [utlaggMode, setUtlaggMode] = useState(false);
@@ -39,7 +38,10 @@ export function useBokfor() {
   >({});
 
   // Leverantörsfaktura-fält
-  const [leverantör, setLeverantör] = useState<any | null>(null);
+  const [leverantör, setLeverantör] = useState<{
+    namn: string;
+    organisationsnummer?: string;
+  } | null>(null);
   const [fakturanummer, setFakturanummer] = useState<string | null>(null);
   const [fakturadatum, setFakturadatum] = useState<string | null>(null);
   const [förfallodatum, setFörfallodatum] = useState<string | null>(null);
@@ -136,11 +138,12 @@ export function useBokfor() {
   // Hämta anställda för utläggs-mode
   useEffect(() => {
     if (utlaggMode) {
-      hämtaAllaAnställda().then((res) => {
+      hämtaAllaAnställda().then((res: Anstalld[]) => {
         setAnstallda(res);
         if (res.length === 1) setAnstalldId(res[0].id.toString());
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [utlaggMode]);
 
   // Moms- och beloppsberäkning
@@ -330,41 +333,51 @@ export function useBokfor() {
           kredit: Math.round(val.kredit),
         }))
       : valtFörval
-        ? valtFörval.konton.map((rad, i) => {
-            let kontoNr = rad.kontonummer?.toString().trim();
-            let namn = `${kontoNr} ${rad.beskrivning ?? ""}`;
-            let beloppAttVisa = 0;
+        ? valtFörval.konton.map(
+            (
+              rad: {
+                kontonummer?: string;
+                beskrivning?: string;
+                debet?: boolean | number;
+                kredit?: boolean | number;
+              },
+              i: number
+            ) => {
+              let kontoNr = rad.kontonummer?.toString().trim();
+              let namn = `${kontoNr} ${rad.beskrivning ?? ""}`;
+              let beloppAttVisa = 0;
 
-            // Transformera kontonummer baserat på mode
-            if (utlaggMode && kontoNr === "1930") {
-              kontoNr = "2890";
-              namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
-              beloppAttVisa = safeBelopp;
-            } else if (bokförSomFaktura && kontoNr === "1930") {
-              kontoNr = "1510";
-              namn = `1510 Kundfordringar`;
-              beloppAttVisa = safeBelopp;
-            } else if (levfaktMode && !ärFörsäljning && kontoNr === "1930") {
-              kontoNr = "2440";
-              namn = `2440 Leverantörsskulder`;
-              beloppAttVisa = safeBelopp;
-            } else if (levfaktMode && ärFörsäljning && kontoNr === "1930") {
-              kontoNr = "1510";
-              namn = `1510 Kundfordringar`;
-              beloppAttVisa = safeBelopp;
-            } else {
-              beloppAttVisa = rad.debet
-                ? calculateBelopp(kontoNr || "", "debet")
-                : calculateBelopp(kontoNr || "", "kredit");
+              // Transformera kontonummer baserat på mode
+              if (utlaggMode && kontoNr === "1930") {
+                kontoNr = "2890";
+                namn = `2890 ${konto2890Beskrivning || "Övriga kortfristiga skulder"}`;
+                beloppAttVisa = safeBelopp;
+              } else if (bokförSomFaktura && kontoNr === "1930") {
+                kontoNr = "1510";
+                namn = `1510 Kundfordringar`;
+                beloppAttVisa = safeBelopp;
+              } else if (levfaktMode && !ärFörsäljning && kontoNr === "1930") {
+                kontoNr = "2440";
+                namn = `2440 Leverantörsskulder`;
+                beloppAttVisa = safeBelopp;
+              } else if (levfaktMode && ärFörsäljning && kontoNr === "1930") {
+                kontoNr = "1510";
+                namn = `1510 Kundfordringar`;
+                beloppAttVisa = safeBelopp;
+              } else {
+                beloppAttVisa = rad.debet
+                  ? calculateBelopp(kontoNr || "", "debet")
+                  : calculateBelopp(kontoNr || "", "kredit");
+              }
+
+              return {
+                key: i,
+                konto: namn,
+                debet: rad.debet ? Math.round(beloppAttVisa) : 0,
+                kredit: rad.kredit ? Math.round(beloppAttVisa) : 0,
+              };
             }
-
-            return {
-              key: i,
-              konto: namn,
-              debet: rad.debet ? Math.round(beloppAttVisa) : 0,
-              kredit: rad.kredit ? Math.round(beloppAttVisa) : 0,
-            };
-          })
+          )
         : [];
 
   // ====================================================

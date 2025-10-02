@@ -19,7 +19,6 @@ export interface SkapaTransaktionInput {
 
 export async function createTransaktion(data: SkapaTransaktionInput) {
   const client = await pool.connect();
-  const own = true;
   try {
     await client.query("BEGIN");
 

@@ -68,7 +68,7 @@ export default function VerifikatModal({
         {/* Transaktionsposter */}
         {poster.length > 0 ? (
           <div>
-            <Tabell data={poster} columns={columns} getRowId={(post: any) => post.id} />
+            <Tabell data={poster} columns={columns} getRowId={(post: { id: number }) => post.id} />
 
             {/* Summor */}
             <div className="mt-4 bg-gray-800 rounded-lg p-4">

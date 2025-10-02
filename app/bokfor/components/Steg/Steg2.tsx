@@ -50,6 +50,7 @@ export default function Steg2() {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const SpecialComponent = require(`./SpecialForval/${componentName}`).default;
 
       return (
@@ -71,7 +72,7 @@ export default function Steg2() {
           setExtrafält={actions.setExtrafält}
         />
       );
-    } catch (error) {
+    } catch {
       return <div>Fel vid laddning av specialkomponent: {state.valtFörval.specialtyp}</div>;
     }
   }

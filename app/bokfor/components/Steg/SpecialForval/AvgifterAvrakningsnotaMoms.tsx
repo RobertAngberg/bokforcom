@@ -98,27 +98,7 @@ export default function AvgifterAvrakningsnotaMoms({
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="6064"
-            kontobeskrivning="Avgifter avräkningsnota 25 % moms"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Avgifter avräkningsnota 25 % moms",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              momssats: 0.25,
-              specialtyp: "avgifteravrakningsnota",
-              sökord: [],
-            }}
-            setCurrentStep={actions.setCurrentStep}
-            extrafält={state.extrafält}
-          />
+          <Steg3 />
         </div>
       </>
     );

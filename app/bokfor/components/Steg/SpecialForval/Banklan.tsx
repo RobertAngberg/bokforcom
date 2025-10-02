@@ -100,27 +100,7 @@ export default function Banklan({ mode }: Pick<BanklanProps, "mode">) {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="2350"
-            kontobeskrivning="Banklån"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Banklån",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              momssats: 0,
-              specialtyp: "banklan",
-              sökord: [],
-            }}
-            setCurrentStep={actions.setCurrentStep}
-            extrafält={state.extrafält}
-          />
+          <Steg3 />
         </div>
       </>
     );

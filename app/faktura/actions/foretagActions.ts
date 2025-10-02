@@ -3,7 +3,22 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 
-export async function hämtaFöretagsprofil(): Promise<any | null> {
+type Företagsprofil = {
+  företagsnamn: string;
+  adress: string;
+  postnummer: string;
+  stad: string;
+  organisationsnummer: string;
+  momsregistreringsnummer: string;
+  telefonnummer: string;
+  epost: string;
+  webbplats: string;
+  bankinfo?: string;
+  logo?: string;
+  logoWidth?: number;
+};
+
+export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
   try {
     const userId = await getUserId();
 

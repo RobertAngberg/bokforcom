@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 
 interface UseLeverantorModalProps {
-  setLeverantör: (leverantör: any) => void;
+  setLeverantör: (leverantör: { namn: string; organisationsnummer?: string } | null) => void;
 }
 
 export function useLeverantorModal({ setLeverantör }: UseLeverantorModalProps) {
@@ -46,7 +46,7 @@ export function useLeverantorModal({ setLeverantör }: UseLeverantorModalProps) 
   }, [setLeverantör]);
 
   const handleLeverantorSelected = useCallback(
-    (leverantörData: any) => {
+    (leverantörData: { namn: string; organisationsnummer?: string }) => {
       setLeverantör(leverantörData);
       setVisaLeverantorModal(false);
     },

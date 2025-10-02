@@ -97,10 +97,7 @@ export function useLaddaUppFil({
   setPdfUrl,
   setTransaktionsdatum,
   setBelopp,
-  fil,
   onOcrTextChange,
-  skipBasicAI,
-  onReprocessTrigger,
   setLeverantör,
   setFakturadatum,
   setFörfallodatum,
@@ -268,19 +265,11 @@ export function useLaddaUppFil({
         setIsLoading(false);
       }
     })();
-  }, [
-    recognizedText,
-    setTransaktionsdatum,
-    setBelopp,
-    onOcrTextChange,
-    setLeverantör,
-    setFakturadatum,
-    setFörfallodatum,
-    setFakturanummer,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recognizedText]);
 
   const clearFile = () => {
-    setFil(null as any);
+    setFil(null);
     setPdfUrl("");
     setRecognizedText("");
     setTimeoutTriggered(false);

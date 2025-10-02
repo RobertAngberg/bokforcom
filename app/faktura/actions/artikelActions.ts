@@ -92,13 +92,13 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
   }
 }
 
-export async function updateFavoritArtikel(id: number, artikel: any) {
+export async function updateFavoritArtikel(id: number, artikel: Artikel) {
   const userId = await getUserId();
   if (!userId) return { success: false };
   // userId already a number from getUserId()
 
   try {
-    const result = await pool.query(
+    await pool.query(
       `UPDATE faktura_favoritartiklar SET
         beskrivning = $1,
         antal = $2,

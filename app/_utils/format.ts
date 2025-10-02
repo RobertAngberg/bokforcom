@@ -37,7 +37,7 @@ export function parseNumber(s: string): number {
 }
 
 // säker parsing av nummer med null/undefined hantering
-export function parseNumberSafe(värde: any): number {
+export function parseNumberSafe(värde: unknown): number {
   if (värde == null || värde === "") return 0;
   const nummer = parseFloat(String(värde).replace(",", "."));
   return isNaN(nummer) ? 0 : nummer;
@@ -75,7 +75,7 @@ export const getCurrentYear = (): string => {
 };
 
 // Centraliserad data-processing för år-data
-export const processYearData = (rawData: any[]): YearSummary => {
+export const processYearData = (rawData: Array<Record<string, unknown>>): YearSummary => {
   const grouped: Record<string, { inkomst: number; utgift: number }> = {};
   let totalInkomst = 0;
   let totalUtgift = 0;
@@ -91,7 +91,7 @@ export const processYearData = (rawData: any[]): YearSummary => {
       return;
     }
 
-    const date = new Date(transaktionsdatum);
+    const date = new Date(transaktionsdatum as string | number | Date);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
 
     const deb = Number(debet ?? 0);

@@ -3,7 +3,7 @@ export interface AppError {
   code?: string;
   statusCode?: number;
   userId?: string | number;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
@@ -15,7 +15,7 @@ export function createError(
     code?: string;
     statusCode?: number;
     userId?: string | number;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   } = {}
 ): AppError {
   return {

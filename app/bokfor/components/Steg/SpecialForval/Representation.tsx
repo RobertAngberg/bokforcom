@@ -14,10 +14,8 @@ import { RepresentationProps, RepresentationsTypLocal } from "../../../types/typ
 
 // Schablon beräkning enligt Skatteverket
 function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, totalBelopp: number) {
-  let schablon: number;
-
   // Bokio verkar använda samma beräkning för båda typerna
-  schablon = antalPersoner * 46; // kr per person för båda typerna
+  const schablon = antalPersoner * 46; // kr per person för båda typerna
 
   // Avdragsgill del = minimum av faktisk kostnad och schablon
   const avdragsgillDel = Math.min(totalBelopp, schablon);
@@ -189,18 +187,12 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
   }
 
   if (mode === "steg3") {
-    // Bestäm konto baserat på typ
-    const konto = representationstyp === "enklare_fortaring" ? "6071" : "6072";
-    const kontoBeskrivning =
-      representationstyp === "enklare_fortaring"
-        ? "Representation, avdragsgill"
-        : "Representation, ej avdragsgill";
-
     return (
-      <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => actions.setCurrentStep(2)} />
-        <Steg3 />
-      </div>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <Steg3 />
+        </div>
+      </>
     );
   }
 

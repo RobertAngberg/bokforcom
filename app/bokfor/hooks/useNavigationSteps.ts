@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Förval } from "../types/types";
 
 interface UseNavigationStepsProps {
   // State setters for resetting fields
@@ -12,9 +13,9 @@ interface UseNavigationStepsProps {
   setFil: (value: File | null) => void;
   setPdfUrl: (value: string | null) => void;
   setTransaktionsdatum: (value: string | null) => void;
-  setValtFörval: (value: any) => void;
-  setExtrafält: (value: Record<string, any>) => void;
-  setLeverantör: (value: any) => void;
+  setValtFörval: (value: Förval | null) => void;
+  setExtrafält: (value: Record<string, { label: string; debet: number; kredit: number }>) => void;
+  setLeverantör: (value: { namn: string; organisationsnummer?: string } | null) => void;
   setFakturanummer: (value: string | null) => void;
   setFakturadatum: (value: string | null) => void;
   setFörfallodatum: (value: string | null) => void;
@@ -119,7 +120,7 @@ export function useNavigationSteps({
   ]);
 
   const exitLevfaktMode = useCallback(
-    (routerInstance?: any) => {
+    (routerInstance?: { push: (path: string) => void }) => {
       setLevfaktMode(false);
       setCurrentStep(1);
 

@@ -520,7 +520,11 @@ export async function exportBalansrapportPDF(
       y += 8;
 
       // Tabellrader med tre kolumner som webbgränssnittet
-      const rows: any[][] = konton.map((konto) => [
+      const rows: (
+        | string
+        | number
+        | { content: string; colSpan?: number; styles?: Record<string, unknown> }
+      )[][] = konton.map((konto) => [
         konto.kontonummer,
         konto.beskrivning,
         formatSEKForExport(konto.ingaendeSaldo || 0),
@@ -709,7 +713,11 @@ export async function exportResultatrapportPDF(
         if (grupp.konton.length === 0) return;
 
         // Tabellrader
-        const rows: any[][] = grupp.konton.map((konto) => [
+        const rows: (
+          | string
+          | number
+          | { content: string; colSpan?: number; styles?: Record<string, unknown> }
+        )[][] = grupp.konton.map((konto) => [
           konto.kontonummer,
           konto.beskrivning,
           formatSEKForExport(konto.belopp),

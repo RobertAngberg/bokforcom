@@ -37,6 +37,7 @@ export default function ValjLeverantorModal({
   useEffect(() => {
     if (isOpen) {
       loadLeverantörer();
+      setSelectedLeverantör(null); // Reset selection
     }
   }, [isOpen]);
 
@@ -54,16 +55,19 @@ export default function ValjLeverantorModal({
 
   // Auto-hantering: om endast en leverantör och modal öppnas
   useEffect(() => {
-    if (isOpen && !loading && leverantörer.length === 1) {
+    if (isOpen && !loading && leverantörer.length === 1 && !selectedLeverantör) {
       const enda = leverantörer[0];
-      setSelectedLeverantör(enda.id || null);
+
       if (skipNavigate && onSelected) {
         // Direkt välj och stäng
         onSelected(enda);
         onClose();
+      } else {
+        // Bara sätt vald leverantör
+        setSelectedLeverantör(enda.id || null);
       }
     }
-  }, [isOpen, loading, leverantörer, skipNavigate, onSelected, onClose]);
+  }, [isOpen, loading, leverantörer, skipNavigate, onSelected, onClose, selectedLeverantör]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Välj leverantör" maxWidth="lg">

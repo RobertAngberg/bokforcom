@@ -13,6 +13,21 @@ import { useResultatrapport } from "../../hooks/useResultatrapport";
 import { KontoRad } from "../../types/types";
 import { useSession } from "../../../_lib/auth-client";
 
+type ResultatRad = {
+  id: string | number;
+  kontonummer: string;
+  beskrivning: string;
+  transaktion_id: number | null;
+  verifikatNummer?: string | null;
+  isKonto?: boolean;
+  isTransaction?: boolean;
+  isTotal?: boolean;
+  isSumma?: boolean;
+  forandring?: number;
+  totalBelopp?: number;
+  [key: string]: string | number | boolean | null | undefined;
+};
+
 export default function Resultatrapport() {
   const { data: sessionData, isPending } = useSession();
 
@@ -135,15 +150,15 @@ export default function Resultatrapport() {
         // Dynamiska kolumner baserat på tillgängliga år
         const availableYears = years.filter((year) => year); // Filtrera bort undefined/null
 
-        const kolumner: ColumnDefinition<Record<string, unknown>>[] = [
+        const kolumner: ColumnDefinition<ResultatRad>[] = [
           {
             label: "Konto",
             key: "kontonummer",
-            render: (value: string, row: Record<string, unknown>) => {
+            render: (value: unknown, row: ResultatRad) => {
               if (row.isTotal) {
                 return (
                   <span className="cursor-pointer text-blue-400 hover:text-blue-300 hover:underline">
-                    {value}
+                    {typeof value === "string" ? value : ""}
                   </span>
                 );
               }
@@ -153,18 +168,19 @@ export default function Resultatrapport() {
                     onClick={() => setVerifikatId(row.transaktion_id as number)}
                     className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {row.verifikatNummer as string}
+                    {typeof row.verifikatNummer === "string" ? row.verifikatNummer : ""}
                   </button>
                 );
               }
               // För vanliga kontorader, visa kontonumret
-              return value || "";
+              return typeof value === "string" ? value : "";
             },
           },
           {
             label: "Benämning",
             key: "beskrivning",
-            render: (value: string, row: Record<string, unknown>) => {
+            render: (value: unknown, row: ResultatRad) => {
+              const textValue = typeof value === "string" ? value : "";
               if (row.isTotal) {
                 return (
                   <button
@@ -173,7 +189,7 @@ export default function Resultatrapport() {
                     }
                     className="text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {value}
+                    {textValue}
                   </button>
                 );
               }
@@ -185,19 +201,19 @@ export default function Resultatrapport() {
                     }
                     className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
                   >
-                    {value}
+                    {textValue}
                   </button>
                 );
               }
               // För vanliga kontorader, visa beskrivningen
-              return value || "";
+              return textValue;
             },
           },
           // Dynamiska årkolumner baserat på tillgänglig data
           ...availableYears.map((year) => ({
             label: year,
             key: year,
-            render: (value: number) => {
+            render: (value: unknown) => {
               const numValue = typeof value === "number" ? value : 0;
               return formatSEK(isIntakt ? -numValue : numValue);
             },
@@ -208,7 +224,7 @@ export default function Resultatrapport() {
                 {
                   label: "Förändring",
                   key: "forandring",
-                  render: (value: number, row: Record<string, unknown>) => {
+                  render: (_value: unknown, row: ResultatRad) => {
                     if (!row || availableYears.length < 2) {
                       return formatSEK(0);
                     }
@@ -222,58 +238,56 @@ export default function Resultatrapport() {
             : []),
         ];
 
-        const tabellData = [
-          ...grupp.konton.reduce(
-            (acc, konto) => {
-              // Skapa yearData
-              const yearData = availableYears.reduce(
-                (acc, year) => {
-                  const kontoValue = (konto as Record<string, unknown>)[year];
-                  acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
-                  return acc;
-                },
-                {} as Record<string, number>
-              );
+        const tabellData: ResultatRad[] = [
+          ...grupp.konton.reduce<ResultatRad[]>((acc, konto) => {
+            // Skapa yearData
+            const yearData = availableYears.reduce(
+              (acc, year) => {
+                const kontoValue = (konto as Record<string, unknown>)[year];
+                acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
+                return acc;
+              },
+              {} as Record<string, number>
+            );
 
-              // Beräkna förändring om vi har minst 2 år
-              const forandring =
-                availableYears.length >= 2
-                  ? (yearData[availableYears[0]] || 0) - (yearData[availableYears[1]] || 0)
-                  : 0;
+            // Beräkna förändring om vi har minst 2 år
+            const forandring =
+              availableYears.length >= 2
+                ? (yearData[availableYears[0]] || 0) - (yearData[availableYears[1]] || 0)
+                : 0;
 
-              const kontorRad = {
-                id: konto.kontonummer,
-                kontonummer: konto.kontonummer,
-                beskrivning: konto.beskrivning,
-                isKonto: true,
-                transaktion_id: null,
-                forandring,
-                ...yearData,
-              };
+            const kontorRad: ResultatRad = {
+              id: konto.kontonummer,
+              kontonummer: String(konto.kontonummer ?? ""),
+              beskrivning: konto.beskrivning,
+              isKonto: true,
+              transaktion_id: null,
+              forandring,
+              ...yearData,
+            };
 
-              // Lägg till kontoraden
-              acc.push(kontorRad);
+            // Lägg till kontoraden
+            acc.push(kontorRad);
 
-              // Lägg till transaktioner för detta konto (om de finns)
-              if (konto.transaktioner && konto.transaktioner.length > 0) {
-                konto.transaktioner.forEach((transaktion) => {
-                  acc.push({
-                    id: `${konto.kontonummer}-trans-${transaktion.id}`,
-                    kontonummer: "",
-                    beskrivning: transaktion.beskrivning,
-                    isTransaction: true,
-                    transaktion_id: transaktion.transaktion_id,
-                    verifikatNummer: transaktion.verifikatNummer,
-                    [availableYears[0] || currentYear]: transaktion.belopp,
-                    ...(availableYears[1] ? { [availableYears[1]]: 0 } : {}),
-                  });
-                });
-              }
+            // Lägg till transaktioner för detta konto (om de finns)
+            if (konto.transaktioner && konto.transaktioner.length > 0) {
+              konto.transaktioner.forEach((transaktion) => {
+                const transaktionsRad: ResultatRad = {
+                  id: `${konto.kontonummer}-trans-${transaktion.id}`,
+                  kontonummer: "",
+                  beskrivning: transaktion.beskrivning,
+                  isTransaction: true,
+                  transaktion_id: transaktion.transaktion_id,
+                  verifikatNummer: transaktion.verifikatNummer,
+                  [availableYears[0] || currentYear]: transaktion.belopp,
+                  ...(availableYears[1] ? { [availableYears[1]]: 0 } : {}),
+                };
+                acc.push(transaktionsRad);
+              });
+            }
 
-              return acc;
-            },
-            [] as Record<string, unknown>[]
-          ),
+            return acc;
+          }, [] as ResultatRad[]),
           // Lägg till summeringsrad
           {
             id: `${grupp.namn}-summa`,
@@ -438,7 +452,11 @@ export default function Resultatrapport() {
               columns={[
                 { label: "Datum", key: "datum" },
                 { label: "Beskrivning", key: "beskrivning" },
-                { label: "Belopp", key: "belopp", render: (row) => formatSEK(row.belopp) },
+                {
+                  label: "Belopp",
+                  key: "belopp",
+                  render: (value: unknown) => formatSEK(typeof value === "number" ? value : 0),
+                },
               ]}
               getRowId={(row) => row.id}
             />

@@ -1,9 +1,10 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
+import { Förval } from "../types/types";
 
 // Bokföringsmetod data
-export async function hämtaBokföringsmetod() {
+export async function hämtaBokföringsmetod(): Promise<string> {
   const userId = await getUserId();
 
   try {
@@ -25,7 +26,7 @@ export async function hämtaBokföringsmetod() {
 }
 
 // Favoritförval data
-export async function hämtaFavoritförval(): Promise<unknown[]> {
+export async function hämtaFavoritförval(): Promise<Förval[]> {
   const userId = await getUserId();
 
   try {

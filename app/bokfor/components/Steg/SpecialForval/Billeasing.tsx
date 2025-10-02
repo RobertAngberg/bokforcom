@@ -4,7 +4,6 @@ import Steg3 from "../Steg3";
 import { useState } from "react";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import TillbakaPil from "../../../../_components/TillbakaPil";
 import TextFalt from "../../../../_components/TextFalt";
 import { useBokforContext } from "../../BokforProvider";
 import { BilleasingProps } from "../../../types/types";
@@ -25,8 +24,6 @@ export default function Billeasing({
   const momsLeasingavgift = leasingavgiftInklMoms - leasingavgiftExklMoms;
   const adminExklMoms = adminAvgiftInklMoms / 1.25;
   const momsAdminAvgift = adminAvgiftInklMoms - adminExklMoms;
-  const forsakringExklMoms = forsakringOchSkatter / 1.25;
-  const momsForsakring = forsakringOchSkatter - forsakringExklMoms;
 
   // Beräkna totalsumma för validering
   const totalBeraknad =
@@ -186,27 +183,7 @@ export default function Billeasing({
   if (mode === "steg3") {
     return (
       <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="5615"
-          kontobeskrivning="Billeasing"
-          belopp={state.belopp ?? 0}
-          transaktionsdatum={state.transaktionsdatum ?? ""}
-          kommentar={state.kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Billeasing",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            momssats: 0.25,
-            specialtyp: "Billeasing",
-            sökord: [],
-          }}
-          setCurrentStep={actions.setCurrentStep}
-          extrafält={state.extrafält}
-        />
+        <Steg3 />
       </div>
     );
   }

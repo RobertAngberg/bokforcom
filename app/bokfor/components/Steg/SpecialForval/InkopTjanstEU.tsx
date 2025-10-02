@@ -3,7 +3,6 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import TillbakaPil from "../../../../_components/TillbakaPil";
 import { useBokforContext } from "../../BokforProvider";
 
 export default function InkopTjanstEU({
@@ -109,25 +108,11 @@ export default function InkopTjanstEU({
 
   if (mode === "steg3") {
     return (
-      <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="4535"
-          kontobeskrivning="Inköp tjänst EU"
-          belopp={state.belopp ?? 0}
-          transaktionsdatum={state.transaktionsdatum ?? ""}
-          kommentar={state.kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Inköp tjänst EU",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            sökord: [],
-          }}
-        />
-      </div>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <Steg3 />
+        </div>
+      </>
     );
   }
 }

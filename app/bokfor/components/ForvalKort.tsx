@@ -1,11 +1,8 @@
 "use client";
 
 import { ForvalKortProps } from "../types/types";
-import { useBokforContext } from "./BokforProvider";
 
 export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
-  const { state } = useBokforContext();
-
   const getCardClassName = (isHighlighted: boolean) => {
     return `cursor-pointer p-4 mb-4 border border-dashed rounded-lg transition-all duration-200 ${
       isHighlighted
@@ -22,7 +19,7 @@ export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKo
   };
 
   // Skapa lokal state för denna komponent
-  const kontonSökord = förval.konton?.map((k: any) => k.kontonummer).join(", ") || "";
+  const kontonSökord = förval.konton?.map((k) => k.kontonummer).join(", ") || "";
   const showEnterHint = isHighlighted;
 
   return (

@@ -108,23 +108,7 @@ export default function Pensionsforsakring({ mode }: PensionsforsakringProps) {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="7412"
-            kontobeskrivning="Pensionsförsäkring"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Pensionsförsäkring",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              sökord: [],
-            }}
-          />
+          <Steg3 />
         </div>
       </>
     );

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
 import TextFalt from "../../../../_components/TextFalt";
@@ -15,14 +14,11 @@ import { UberAvgiftProps } from "../../../types/types";
 export default function UberAvgift({ mode }: UberAvgiftProps) {
   const { state, actions } = useBokforContext();
 
-  const [moms, setMoms] = useState(0);
-
   const giltigt = !!state.belopp && !!state.transaktionsdatum;
 
   function gåTillSteg3() {
     const total = state.belopp ?? 0;
     const moms = Number((total * 0.25).toFixed(2));
-    setMoms(moms);
 
     const extrafältObj = {
       "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: total },
@@ -111,23 +107,7 @@ export default function UberAvgift({ mode }: UberAvgiftProps) {
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="4535"
-            kontobeskrivning="Uberavgift"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Uberavgift",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              sökord: [],
-            }}
-          />
+          <Steg3 />
         </div>
       </>
     );

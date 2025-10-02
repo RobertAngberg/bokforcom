@@ -3,7 +3,6 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import TillbakaPil from "../../../../_components/TillbakaPil";
 import { useBokforContext } from "../../BokforProvider";
 
 interface InkopVarorEU25Props {
@@ -105,25 +104,11 @@ export default function InkopVarorEU25({ mode, renderMode = "standard" }: InkopV
 
   if (mode === "steg3") {
     return (
-      <div className="max-w-5xl mx-auto px-4 relative">
-        <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-        <Steg3
-          kontonummer="4515"
-          kontobeskrivning="Inköp varor inom EU 25%"
-          belopp={state.belopp ?? 0}
-          transaktionsdatum={state.transaktionsdatum ?? ""}
-          kommentar={state.kommentar ?? ""}
-          valtFörval={{
-            id: 0,
-            namn: "Inköp varor inom EU 25%",
-            beskrivning: "",
-            typ: "",
-            kategori: "",
-            konton: [],
-            sökord: [],
-          }}
-        />
-      </div>
+      <>
+        <div className="max-w-5xl mx-auto px-4 relative">
+          <Steg3 />
+        </div>
+      </>
     );
   }
 }

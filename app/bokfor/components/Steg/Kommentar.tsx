@@ -8,7 +8,7 @@ export default function Kommentar({
   setKommentar: propsSetKommentar,
 }: CommentProps = {}) {
   // Använd hooken med optional props
-  const { state, actions, handlers } = useBokforContext();
+  const { handlers } = useBokforContext();
   const { kommentar, handleChange } = handlers.useKommentarHelper({
     kommentar: propsKommentar,
     setKommentar: propsSetKommentar,

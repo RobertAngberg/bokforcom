@@ -401,7 +401,7 @@ export async function hamtaTransaktionsposter(fakturaId?: number) {
       LEFT JOIN fakturor f ON t.faktura_id = f.id
       WHERE t.user_id = $1
     `;
-    const params = [userId];
+    const params: (string | number)[] = [userId];
 
     if (fakturaId) {
       query += " AND t.faktura_id = $2";

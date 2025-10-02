@@ -109,27 +109,7 @@ export default function AmorteringBanklan({ mode }: Pick<AmorteringBanklanProps,
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="2350"
-            kontobeskrivning="Amortering av banklån"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Amortering av banklån",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              momssats: 0,
-              specialtyp: "amorteringbanklan",
-              sökord: [],
-            }}
-            setCurrentStep={actions.setCurrentStep}
-            extrafält={state.extrafält}
-          />
+          <Steg3 />
         </div>
       </>
     );

@@ -5,7 +5,7 @@ import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
 import TextFalt from "../../../../_components/TextFalt";
 import Knapp from "../../../../_components/Knapp";
-import { formatSEK, parseNumber } from "../../../../_utils/format";
+import { parseNumber } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
@@ -141,23 +141,7 @@ export default function MilersattningEnskildFirma({ mode }: MilersattningEnskild
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="7331"
-            kontobeskrivning="Milersättning"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Milersättning",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              sökord: [],
-            }}
-          />
+          <Steg3 />
         </div>
       </>
     );

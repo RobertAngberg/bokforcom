@@ -88,17 +88,16 @@ function useActivePathMarker(
   const [markerStyle, setMarkerStyle] = useState({ left: 0, width: 0 });
   const linksRef = useRef<Record<string, HTMLAnchorElement | null>>({});
 
-  useEffect(() => {
-    setSelectedPath(pathname);
-  }, [pathname]);
+  // Synka selectedPath med pathname direkt
+  const currentPath = selectedPath === pathname ? selectedPath : pathname;
 
   useEffect(() => {
-    const activeEl = linksRef.current[selectedPath];
+    const activeEl = linksRef.current[currentPath];
     if (activeEl) {
       const { offsetLeft, offsetWidth } = activeEl;
       setMarkerStyle({ left: offsetLeft, width: offsetWidth });
     }
-  }, [selectedPath, currentLinks.length]);
+  }, [currentPath, currentLinks.length]);
 
   const handleClick = (path: string) => {
     setSelectedPath(path);

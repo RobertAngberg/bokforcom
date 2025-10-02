@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 export type ToastType = "success" | "error" | "info";
@@ -30,11 +30,17 @@ interface ToastProps {
 }
 
 export default function Toast({ message, type = "success", duration = 3000, onClose }: ToastProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(true); // Starta direkt som true
 
   useEffect(() => {
-    // Starta animation direkt
-    setIsAnimating(true);
+    // Definiera handleClose INUTI useEffect
+    const handleClose = () => {
+      setIsAnimating(false);
+      // Vänta på fade-out animation innan vi kallar onClose
+      setTimeout(() => {
+        onClose();
+      }, 300);
+    };
 
     // Auto-close efter duration
     const timer = setTimeout(() => {
@@ -42,15 +48,14 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, onClose]); // Inkludera onClose i dependencies
 
-  const handleClose = useCallback(() => {
+  const handleManualClose = () => {
     setIsAnimating(false);
-    // Vänta på fade-out animation innan vi kallar onClose
     setTimeout(() => {
       onClose();
     }, 300);
-  }, [onClose]);
+  };
 
   const getToastStyles = () => {
     const baseStyles =
@@ -105,7 +110,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
   };
 
   return (
-    <div className={getToastStyles()} onClick={handleClose}>
+    <div className={getToastStyles()} onClick={handleManualClose}>
       <div className="flex items-center">
         {getIcon()}
         <span className="font-medium text-base">{message}</span>

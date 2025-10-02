@@ -167,8 +167,9 @@ export default function Steg2Levfakt() {
                   type="button"
                   onClick={() => {
                     actions.setLeverantör(null);
-                    levfaktHelper.handlers.exitLevfaktMode &&
+                    if (levfaktHelper.handlers.exitLevfaktMode) {
                       levfaktHelper.handlers.exitLevfaktMode();
+                    }
                   }}
                   className="text-[11px] px-2 py-1 rounded bg-red-700/40 hover:bg-red-700/60 border border-red-500/40"
                 >

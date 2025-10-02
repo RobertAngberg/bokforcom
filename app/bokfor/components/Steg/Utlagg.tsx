@@ -4,7 +4,7 @@ import { UtläggProps } from "../../types/types";
 import { useBokforContext } from "../BokforProvider";
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
-  const { state, handlers } = useBokforContext();
+  const { handlers } = useBokforContext();
   const { isUtlägg, anställda, valdaAnställda, loading, handleUtläggChange, handleAnställdChange } =
     handlers.useUtlaggHelper({ initialValue, onUtläggChange });
 
@@ -40,7 +40,7 @@ export default function Utlägg({ onUtläggChange, initialValue = false }: Utlä
 
           {!loading && anställda.length > 0 && (
             <div className="space-y-2">
-              {anställda.map((anställd) => (
+              {anställda.map((anställd: { id: number; förnamn: string; efternamn: string }) => (
                 <div key={anställd.id} className="flex items-center gap-3 mb-6">
                   <input
                     type="checkbox"

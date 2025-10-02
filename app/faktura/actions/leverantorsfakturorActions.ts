@@ -2,7 +2,6 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-import { Leverantör } from "../types/types";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const userId = await getUserId();
@@ -54,7 +53,9 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     const kontoRes = await client.query(
       `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
     );
-    const kontoMap = Object.fromEntries(kontoRes.rows.map((r: any) => [r.kontonummer, r.id]));
+    const kontoMap = Object.fromEntries(
+      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
+    );
 
     if (!kontoMap["1930"] || !kontoMap["2440"]) {
       throw new Error("Konto 1930 eller 2440 saknas");
@@ -147,7 +148,9 @@ export async function betalaOchBokförLeverantörsfaktura(
     const kontoRes = await client.query(
       `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
     );
-    const kontoMap = Object.fromEntries(kontoRes.rows.map((r: any) => [r.kontonummer, r.id]));
+    const kontoMap = Object.fromEntries(
+      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
+    );
 
     if (!kontoMap["1930"] || !kontoMap["2440"]) {
       throw new Error("Konto 1930 eller 2440 saknas");
@@ -167,7 +170,7 @@ export async function betalaOchBokförLeverantörsfaktura(
     );
 
     // Uppdatera leverantörsfaktura med betaldatum och status
-    const updateResult = await client.query(
+    await client.query(
       `UPDATE leverantörsfakturor 
        SET betaldatum = $1, status_betalning = 'Betald', status_bokförd = 'Bokförd' 
        WHERE id = $2 AND "user_id" = $3`,

@@ -4,7 +4,7 @@
 export interface ColumnDefinition<T> {
   key: keyof T | string;
   label?: string;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
   hiddenOnMobile?: boolean;
   className?: string;
 }
@@ -35,7 +35,7 @@ export default function TabellRad<T>({
       className={`transition-colors duration-200 ${rowColorClass} ${activeClass} ${clickableClass}`}
     >
       {columns.map((col, colIndex) => {
-        const rawValue = (item as any)[col.key];
+        const rawValue = (item as Record<string, unknown>)[col.key as string];
         const renderedValue = col.render
           ? col.render(rawValue, item)
           : (rawValue as React.ReactNode);

@@ -86,27 +86,7 @@ export default function DrojsmalsrantaLevFakt({ mode }: { mode: "steg2" | "steg3
     return (
       <>
         <div className="max-w-5xl mx-auto px-4 relative">
-          <TillbakaPil onClick={() => actions.setCurrentStep?.(2)} />
-          <Steg3
-            kontonummer="8422"
-            kontobeskrivning="Dröjsmålsränta Leverantörsfaktura"
-            belopp={state.belopp ?? 0}
-            transaktionsdatum={state.transaktionsdatum ?? ""}
-            kommentar={state.kommentar ?? ""}
-            valtFörval={{
-              id: 0,
-              namn: "Dröjsmålsränta Leverantörsfaktura",
-              beskrivning: "",
-              typ: "",
-              kategori: "",
-              konton: [],
-              momssats: 0,
-              specialtyp: "drojsmalsranta",
-              sökord: [],
-            }}
-            setCurrentStep={actions.setCurrentStep}
-            extrafält={state.extrafält}
-          />
+          <Steg3 />
         </div>
       </>
     );
