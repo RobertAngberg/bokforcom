@@ -1,23 +1,16 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
-import { sanitizeInput } from "../../_utils/validationUtils";
-import { validateEmail } from "../../login/sakerhet/loginValidation";
+import { getUserId } from "../../_utils/authUtils";
+import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { withDatabase } from "../../_utils/dbUtils";
 
 export async function sparaNyKund(formData: FormData) {
   // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-    logSecurityEvent("login", userId, "Customer creation operation");
-  } catch (error) {
-    logSecurityEvent(
-      "invalid_access",
-      undefined,
-      "Attempted customer creation without valid session"
-    );
+  } catch {
     return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
   }
 

@@ -2,10 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "../_lib/auth-client";
+import { useSession } from "../_lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { clearRememberMePreference } from "../login/_utils/rememberMe";
 //#endregion
 
 export default function Navbar() {

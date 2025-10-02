@@ -1,8 +1,11 @@
 "use server";
 
 import { pool } from "../../_lib/db";
+import { getUserId } from "../../_utils/authUtils";
 
 export async function getMomsrapport(year: string, kvartal?: string) {
+  const userId = await getUserId();
+
   /* ---- datumintervall ---- */
   let from = `${year}-01-01`;
   let to = `${year}-12-31`;
@@ -33,9 +36,10 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     FROM    transaktioner      t
     JOIN    transaktionsposter tp ON tp.transaktions_id = t.id
     JOIN    konton             k  ON k.id = tp.konto_id
-    WHERE   t.transaktionsdatum BETWEEN $1 AND $2;
+    WHERE   t.transaktionsdatum BETWEEN $1 AND $2
+      AND   t."user_id" = $3;
     `,
-    [from, to]
+    [from, to, userId]
   );
 
   /* ---- hjälpstrukturer ---- */
@@ -134,11 +138,10 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     .sort((a, b) => Number(a.fält) - Number(b.fält));
 }
 
-export async function fetchFöretagsprofil(userId?: number) {
-  try {
-    // Om inget userId skickades, hämta från session
-    const targetUserId = userId || 1; // Fallback, borde egentligen hämta från auth
+export async function fetchFöretagsprofil() {
+  const userId = await getUserId();
 
+  try {
     const client = await pool.connect();
     const query = `
       SELECT företagsnamn, organisationsnummer
@@ -146,7 +149,7 @@ export async function fetchFöretagsprofil(userId?: number) {
       WHERE id = $1
       LIMIT 1
     `;
-    const res = await client.query(query, [targetUserId]);
+    const res = await client.query(query, [userId]);
     client.release();
     return res.rows[0] || null;
   } catch (error) {

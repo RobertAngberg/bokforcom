@@ -34,8 +34,6 @@ function logLedgerDataEvent(
 export async function fetchHuvudbok() {
   const userId = await getUserId();
 
-  logLedgerDataEvent("access", userId, "Accessing general ledger data");
-
   try {
     const client = await pool.connect();
 
@@ -124,11 +122,6 @@ export async function fetchHuvudbok() {
     return huvudboksdata;
   } catch (error) {
     console.error("❌ fetchHuvudbok error:", error);
-    logLedgerDataEvent(
-      "error",
-      userId,
-      `Error fetching ledger data: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     return [];
   }
 }

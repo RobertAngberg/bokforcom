@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { auth } from "../../../_lib/better-auth";
+import { headers } from "next/headers";
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
@@ -20,6 +22,14 @@ function sanitizeText(text: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // ✅ Auth check
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Ej autentiserad" }, { status: 401 });
+    }
+
     // Kontrollera API-nyckel först
     if (!process.env.AUTH_RESEND_KEY) {
       console.error("No Resend API key configured");

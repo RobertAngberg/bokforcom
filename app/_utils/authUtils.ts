@@ -19,7 +19,13 @@ type BetterAuthSession = {
 };
 
 // Better Auth använder string IDs direkt
-export async function getUserId(): Promise<UserId> {
+/**
+ * Hämtar användar-ID för inloggad användare.
+ * Redirectar automatiskt till /login om användaren inte är inloggad.
+ * @throws Redirectar till /login vid oautentiserad åtkomst
+ * @returns Användarens UUID
+ */
+export async function getAuthenticatedUserId(): Promise<UserId> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -29,6 +35,13 @@ export async function getUserId(): Promise<UserId> {
   }
 
   return session.user.id;
+}
+
+/**
+ * @deprecated Använd getAuthenticatedUserId() istället för tydligare semantik
+ */
+export async function getUserId(): Promise<UserId> {
+  return getAuthenticatedUserId();
 }
 
 // Hämtar session och validerar att användaren är inloggad
@@ -129,21 +142,4 @@ export async function withAuth<T>(
 // Type guard för att säkerställa session finns
 export function isAuthenticated(session: BetterAuthSession | null): session is BetterAuthSession {
   return !!session?.user?.id;
-}
-
-// Auditloggning för säkerhetshändelser
-export function logSecurityEvent(
-  event: "login" | "logout" | "session_hijack" | "csrf_attack" | "invalid_access",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.warn(`🔒 SECURITY EVENT [${timestamp}]: ${event.toUpperCase()}`, {
-    userId,
-    details,
-    timestamp,
-  });
-
-  // I produktion: skicka till säkerhetsloggning system
-  // Som Sentry, CloudWatch, eller egen audit log
 }

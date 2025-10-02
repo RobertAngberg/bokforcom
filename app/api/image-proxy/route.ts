@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "../../_lib/better-auth";
+import { headers } from "next/headers";
 
 export async function GET(request: NextRequest) {
   try {
+    // ✅ Auth check - bara inloggade användare kan hämta bilder
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session?.user?.id) {
+      return new NextResponse("Ej autentiserad", { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const imageUrl = searchParams.get("url");
 

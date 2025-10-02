@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
+import { getUserId } from "../../_utils/authUtils";
 import { validateYear } from "../../_utils/validationUtils";
 import { TransactionDetail, UnbalancedVerification, ExportTransaction } from "../types/types";
 
@@ -11,10 +11,10 @@ export async function findUnbalancedVerifications(): Promise<{
   unbalanced?: UnbalancedVerification[];
   error?: string;
 }> {
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-  } catch (error) {
+  } catch {
     return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
   }
 
@@ -64,7 +64,7 @@ export async function findUnbalancedVerifications(): Promise<{
     }));
 
     return { success: true, unbalanced };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Databasfel" };
   }
 }
@@ -72,22 +72,15 @@ export async function findUnbalancedVerifications(): Promise<{
 // Intern funktion
 async function fetchTransaktionerInternal(fromYear?: string) {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-    logSecurityEvent("login", userId, "Transaction history access");
-  } catch (error) {
-    logSecurityEvent(
-      "invalid_access",
-      undefined,
-      "Attempted transaction history access without valid session"
-    );
+  } catch {
     return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
   }
 
   // SÄKERHETSVALIDERING: Validera år-parameter om angiven
   if (fromYear && !validateYear(fromYear)) {
-    logSecurityEvent("invalid_access", userId, `Invalid year parameter: ${fromYear}`);
     return { success: false, error: "Ogiltigt år-format" };
   }
 
@@ -117,17 +110,17 @@ async function fetchTransaktionerInternal(fromYear?: string) {
 
     client.release();
     return { success: true, data: result.rows };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Kunde inte hämta transaktionshistorik säkert" };
   }
 }
 
 export async function fetchTransactionDetails(transactionId: number): Promise<TransactionDetail[]> {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-  } catch (error) {
+  } catch {
     console.error("❌ Säkerhetsvarning: Ogiltig session vid hämtning av transaktionsdetaljer");
     return [];
   }
@@ -167,7 +160,7 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
     );
 
     return result.rows;
-  } catch (error) {
+  } catch {
     return [];
   } finally {
     client.release();
@@ -177,22 +170,15 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
 // Intern funktion för export
 async function exporteraTransaktionerMedPosterInternal(year: string) {
   // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-    logSecurityEvent("login", userId, `Transaction export for year ${year}`);
-  } catch (error) {
-    logSecurityEvent(
-      "invalid_access",
-      undefined,
-      "Attempted transaction export without valid session"
-    );
+  } catch {
     return [];
   }
 
   // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validateYear(year)) {
-    logSecurityEvent("invalid_access", userId, `Invalid year for export: ${year}`);
     return [];
   }
 
@@ -255,7 +241,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
 
     const resultat = Array.from(map.values());
     return resultat;
-  } catch (err) {
+  } catch {
     return [];
   }
 }
@@ -266,10 +252,10 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
   message?: string;
   error?: string;
 }> {
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-  } catch (error) {
+  } catch {
     return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
   }
 
@@ -318,19 +304,17 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
 
       await client.query("COMMIT");
 
-      logSecurityEvent("invalid_access", userId, `Transaction ${transactionId} deleted`);
-
       return {
         success: true,
         message: `Transaktion ${transactionId} har tagits bort`,
       };
-    } catch (error) {
+    } catch {
       await client.query("ROLLBACK");
-      throw error;
+      throw new Error("Rollback error");
     } finally {
       client.release();
     }
-  } catch (err) {
+  } catch {
     return {
       success: false,
       error: "Kunde inte ta bort transaktion. Försök igen.",

@@ -2,8 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-import { sanitizeInput } from "../../_utils/validationUtils";
-import { validateEmail } from "../../login/sakerhet/loginValidation";
+import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 
 export async function saveLeverantör(formData: FormData) {
   const userId = await getUserId();

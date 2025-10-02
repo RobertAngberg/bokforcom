@@ -157,3 +157,11 @@ export function validatePersonnummer(personnummer: string): boolean {
 
   return pattern10.test(cleaned) || pattern12.test(cleaned);
 }
+
+/**
+ * Validerar email-adress
+ */
+export function validateEmail(email: string): boolean {
+  if (!email) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}

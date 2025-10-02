@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import EmailTemplate from "./EmailTemplate";
+import { auth } from "../../../_lib/better-auth";
+import { headers } from "next/headers";
 
 // Säker email-validering
 function isValidEmail(email: string): boolean {
@@ -28,6 +30,14 @@ function sanitizeFilename(filename: string): string {
 
 export async function POST(request: Request) {
   try {
+    // ✅ Auth check
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Ej autentiserad" }, { status: 401 });
+    }
+
     if (!process.env.AUTH_RESEND_KEY) {
       console.error("AUTH_RESEND_KEY is missing");
       return NextResponse.json({ error: "Email service not configured" }, { status: 500 });

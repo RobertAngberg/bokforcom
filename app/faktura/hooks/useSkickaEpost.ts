@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useFaktura } from "./useFaktura";
 import { generatePDFAsBase64 } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
-import { validateEmail } from "../../login/sakerhet/loginValidation";
+import { validateEmail } from "../../_utils/validationUtils";
 
 // Types
 import type { SkickaEpostProps } from "../types/types";

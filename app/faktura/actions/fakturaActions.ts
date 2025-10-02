@@ -1,15 +1,36 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { validateAmount, sanitizeInput } from "../../_utils/validationUtils";
-import { validateEmail } from "../../login/sakerhet/loginValidation";
-import { getUserId, logSecurityEvent } from "../../_utils/authUtils";
+import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/validationUtils";
+import { getUserId } from "../../_utils/authUtils";
 import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { logError, createError } from "../../_utils/errorUtils";
 
+// Typ för artikel från formulärdata
+interface ArtikelInput {
+  beskrivning: string;
+  antal: number;
+  prisPerEnhet: number;
+  moms: number;
+  valuta?: string;
+  typ?: string;
+  rotRutTyp?: string | null;
+  rotRutKategori?: string | null;
+  avdragProcent?: number | null;
+  arbetskostnadExMoms?: number | null;
+  rotRutBeskrivning?: string | null;
+  rotRutStartdatum?: string | null;
+  rotRutSlutdatum?: string | null;
+  rotRutPersonnummer?: string | null;
+  rotRutFastighetsbeteckning?: string | null;
+  rotRutBoendeTyp?: string | null;
+  rotRutBrfOrg?: string | null;
+  rotRutBrfLagenhet?: string | null;
+}
+
 // Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
-function safeParseFakturaJSON(jsonString: string): any[] {
+function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
   try {
     if (!jsonString || typeof jsonString !== "string") return [];
     const parsed = JSON.parse(jsonString);
@@ -31,12 +52,10 @@ function safeParseFakturaJSON(jsonString: string): any[] {
 // Intern funktion utan rate limiting (för wrappers)
 export async function saveInvoiceInternal(formData: FormData) {
   // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: number;
+  let userId: string;
   try {
     userId = await getUserId();
-    logSecurityEvent("login", userId, "Invoice save operation");
-  } catch (error) {
-    logSecurityEvent("invalid_access", undefined, "Attempted invoice save without valid session");
+  } catch {
     return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
   }
 
@@ -469,9 +488,6 @@ export async function deleteFaktura(id: number) {
     return { success: false, error: "Ogiltigt faktura-ID" };
   }
 
-  // SÄKERHETSEVENT: Logga raderingsförsök
-  logSecurityEvent("invalid_access", userId, `delete_faktura_${id}`);
-
   return withTransaction(async (client) => {
     // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
     const verifyRes = await client.query(
@@ -538,7 +554,7 @@ export async function getAllInvoices() {
 
     for (const f of fakturor) {
       const r = await client.query(`SELECT * FROM faktura_artiklar WHERE faktura_id = $1`, [f.id]);
-      f.artiklar = r.rows.map((rad: { pris_per_enhet: any }) => ({
+      f.artiklar = r.rows.map((rad: { pris_per_enhet: number | string }) => ({
         ...rad,
         prisPerEnhet: Number(rad.pris_per_enhet),
       }));

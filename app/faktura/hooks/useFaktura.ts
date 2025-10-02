@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
 
@@ -22,12 +21,15 @@ import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../
 import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
 
 // Utils
-import { sanitizeFormInput, validatePersonnummer } from "../../_utils/validationUtils";
-import { validateEmail } from "../../login/sakerhet/loginValidation";
+import {
+  sanitizeFormInput,
+  validatePersonnummer,
+  validateEmail,
+} from "../../_utils/validationUtils";
 import { showToast } from "../../_components/Toast";
 
 // Types
-import type { FakturaFormData, NyArtikel, KundStatus, KundSaveResponse } from "../types/types";
+import type { FakturaFormData, NyArtikel, KundSaveResponse } from "../types/types";
 
 /**
  * Huvudhook för alla faktura-relaterade funktioner
@@ -52,12 +54,24 @@ export function useFaktura() {
 
   // External hooks
   const { data: session } = useSession();
-  const router = useRouter();
 
   // Local UI state
   const [showPreview, setShowPreview] = useState(false);
   const [isLoadingFaktura, setIsLoadingFaktura] = useState(false);
-  const [kunder, setKunder] = useState<any[]>([]);
+  const [kunder, setKunder] = useState<
+    Array<{
+      id: number;
+      kundnamn: string;
+      kundorgnummer?: string;
+      kundnummer?: string;
+      kundmomsnummer?: string;
+      kundadress1?: string;
+      kundpostnummer?: string;
+      kundstad?: string;
+      kundemail?: string;
+      personnummer?: string;
+    }>
+  >([]);
   const [showDeleteKundModal, setShowDeleteKundModal] = useState(false);
 
   // Refs
@@ -129,8 +143,8 @@ export function useFaktura() {
     const laddaKunder = async () => {
       try {
         const sparade = await hämtaSparadeKunder();
-        setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
-      } catch (error) {
+        setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
+      } catch {
         console.log("Fel vid hämtning av kunder");
       }
     };
@@ -142,7 +156,7 @@ export function useFaktura() {
   // =============================================================================
 
   const updateFormField = useCallback(
-    (field: keyof FakturaFormData, value: any) => {
+    (field: keyof FakturaFormData, value: string | number | boolean | unknown) => {
       setFormData({ [field]: value });
     },
     [setFormData]
@@ -241,7 +255,7 @@ export function useFaktura() {
           webbplats: faktura.webbplats ?? "",
           logo: faktura.logo ?? "",
           logoWidth: faktura.logo_width ?? 200,
-          artiklar: artiklar.map((rad: any) => ({
+          artiklar: artiklar.map((rad) => ({
             beskrivning: rad.beskrivning,
             antal: Number(rad.antal),
             prisPerEnhet: Number(rad.prisPerEnhet),
@@ -262,50 +276,49 @@ export function useFaktura() {
             rotRutBrfLagenhet: rad.rotRutBrfLagenhet,
           })),
           // ROT/RUT-fält från rot_rut-tabellen eller första artikeln med ROT/RUT-data
-          rotRutAktiverat:
-            !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a: any) => a.rotRutTyp),
-          rotRutTyp: rotRut.typ || artiklar.find((a: any) => a.rotRutTyp)?.rotRutTyp || undefined,
+          rotRutAktiverat: !!(rotRut.typ && rotRut.typ !== "") || artiklar.some((a) => a.rotRutTyp),
+          rotRutTyp: rotRut.typ || artiklar.find((a) => a.rotRutTyp)?.rotRutTyp || undefined,
           rotRutKategori:
-            (rotRut as any).rotRutKategori ||
-            artiklar.find((a: any) => a.rotRutKategori)?.rotRutKategori ||
+            ((rotRut as Record<string, unknown>).rotRutKategori as string | undefined) ||
+            artiklar.find((a) => a.rotRutKategori)?.rotRutKategori ||
             undefined,
           avdragProcent:
             rotRut.avdrag_procent ||
-            artiklar.find((a: any) => a.avdragProcent)?.avdragProcent ||
+            artiklar.find((a) => a.avdragProcent)?.avdragProcent ||
             undefined,
           arbetskostnadExMoms:
             rotRut.arbetskostnad_ex_moms ||
-            artiklar.find((a: any) => a.arbetskostnadExMoms)?.arbetskostnadExMoms ||
+            artiklar.find((a) => a.arbetskostnadExMoms)?.arbetskostnadExMoms ||
             undefined,
           avdragBelopp: rotRut.avdrag_belopp || undefined,
           personnummer:
             rotRut.personnummer ||
-            artiklar.find((a: any) => a.rotRutPersonnummer)?.rotRutPersonnummer ||
+            artiklar.find((a) => a.rotRutPersonnummer)?.rotRutPersonnummer ||
             "",
           fastighetsbeteckning:
             rotRut.fastighetsbeteckning ||
-            artiklar.find((a: any) => a.rotRutFastighetsbeteckning)?.rotRutFastighetsbeteckning ||
+            artiklar.find((a) => a.rotRutFastighetsbeteckning)?.rotRutFastighetsbeteckning ||
             "",
           rotBoendeTyp: rotRut.rot_boende_typ || undefined,
           brfOrganisationsnummer:
             rotRut.brf_organisationsnummer ||
-            artiklar.find((a: any) => a.rotRutBrfOrg)?.rotRutBrfOrg ||
+            artiklar.find((a) => a.rotRutBrfOrg)?.rotRutBrfOrg ||
             "",
           brfLagenhetsnummer:
             rotRut.brf_lagenhetsnummer ||
-            artiklar.find((a: any) => a.rotRutBrfLagenhet)?.rotRutBrfLagenhet ||
+            artiklar.find((a) => a.rotRutBrfLagenhet)?.rotRutBrfLagenhet ||
             "",
           rotRutBeskrivning:
-            (rotRut as any).rotRutBeskrivning ||
-            artiklar.find((a: any) => a.rotRutBeskrivning)?.rotRutBeskrivning ||
+            ((rotRut as Record<string, unknown>).rotRutBeskrivning as string | undefined) ||
+            artiklar.find((a) => a.rotRutBeskrivning)?.rotRutBeskrivning ||
             "",
           rotRutStartdatum:
-            (rotRut as any).rotRutStartdatum ||
-            artiklar.find((a: any) => a.rotRutStartdatum)?.rotRutStartdatum ||
+            ((rotRut as Record<string, unknown>).rotRutStartdatum as string | undefined) ||
+            artiklar.find((a) => a.rotRutStartdatum)?.rotRutStartdatum ||
             "",
           rotRutSlutdatum:
-            (rotRut as any).rotRutSlutdatum ||
-            artiklar.find((a: any) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
+            ((rotRut as Record<string, unknown>).rotRutSlutdatum as string | undefined) ||
+            artiklar.find((a) => a.rotRutSlutdatum)?.rotRutSlutdatum ||
             "",
         });
 
@@ -315,7 +328,7 @@ export function useFaktura() {
         }
 
         return true;
-      } catch (error: any) {
+      } catch (error) {
         console.error("❌ Fel vid laddning av fakturedata:", error);
         showError("Kunde inte ladda fakturedata");
         return false;
@@ -523,25 +536,28 @@ export function useFaktura() {
   // =============================================================================
 
   // Validera kunddata
-  const validateKundData = useCallback((data: any): { isValid: boolean; error?: string } => {
-    const kundnamn = sanitizeFormInput(data.kundnamn || "");
-    if (!kundnamn || kundnamn.length < 2) {
-      return { isValid: false, error: "Kundnamn krävs (minst 2 tecken)" };
-    }
+  const validateKundData = useCallback(
+    (data: Partial<FakturaFormData>): { isValid: boolean; error?: string } => {
+      const kundnamn = sanitizeFormInput(data.kundnamn || "");
+      if (!kundnamn || kundnamn.length < 2) {
+        return { isValid: false, error: "Kundnamn krävs (minst 2 tecken)" };
+      }
 
-    if (data.kundemail && !validateEmail(data.kundemail)) {
-      return { isValid: false, error: "Ogiltig email-adress" };
-    }
+      if (data.kundemail && !validateEmail(data.kundemail)) {
+        return { isValid: false, error: "Ogiltig email-adress" };
+      }
 
-    if (data.personnummer && !validatePersonnummer(data.personnummer)) {
-      return { isValid: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
-    }
+      if (data.personnummer && !validatePersonnummer(data.personnummer)) {
+        return { isValid: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
+      }
 
-    return { isValid: true };
-  }, []);
+      return { isValid: true };
+    },
+    []
+  );
 
   // Sanitera kunddata
-  const sanitizeKundFormData = useCallback((data: any) => {
+  const sanitizeKundFormData = useCallback((data: Partial<FakturaFormData>) => {
     return {
       ...data,
       kundnamn: sanitizeFormInput(data.kundnamn || ""),
@@ -565,7 +581,20 @@ export function useFaktura() {
 
     try {
       const sanitizedData = sanitizeKundFormData(formData);
-      const result = await sparaNyKund(sanitizedData);
+
+      // Konvertera till FormData för server action
+      const formDataToSend = new FormData();
+      formDataToSend.append("kundnamn", sanitizedData.kundnamn || "");
+      formDataToSend.append("kundorgnummer", sanitizedData.kundorganisationsnummer || "");
+      formDataToSend.append("kundnummer", sanitizedData.kundnummer || "");
+      formDataToSend.append("kundmomsnummer", sanitizedData.kundmomsnummer || "");
+      formDataToSend.append("kundadress1", sanitizedData.kundadress || "");
+      formDataToSend.append("kundpostnummer", sanitizedData.kundpostnummer || "");
+      formDataToSend.append("kundstad", sanitizedData.kundstad || "");
+      formDataToSend.append("kundemail", sanitizedData.kundemail || "");
+      formDataToSend.append("personnummer", sanitizedData.personnummer || "");
+
+      const result = await sparaNyKund(formDataToSend);
 
       if (result.success) {
         setKundStatus("sparad");
@@ -578,7 +607,7 @@ export function useFaktura() {
       }
 
       return result;
-    } catch (error) {
+    } catch {
       const errorMsg = "Fel vid sparande av kund";
       showError(errorMsg);
       return { success: false, error: errorMsg };
@@ -682,11 +711,11 @@ export function useFaktura() {
 
         // Ladda om kunder
         const sparade = await hämtaSparadeKunder();
-        setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
+        setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
       } else {
         showError("Kunde inte spara kund");
       }
-    } catch (error) {
+    } catch {
       showError("Kunde inte spara kund");
     }
   }, [formData, updateFormField, setKundStatus, validateKundData, sanitizeKundFormData, showError]);
@@ -736,7 +765,7 @@ export function useFaktura() {
       resetKund();
       setKundStatus("none");
       const sparade = await hämtaSparadeKunder();
-      setKunder(sparade.sort((a: any, b: any) => a.kundnamn.localeCompare(b.kundnamn)));
+      setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
       showSuccess("Kund raderad");
     } catch (error) {
       console.error("Fel vid radering av kund:", error);
