@@ -1,19 +1,5 @@
-/**
- * Remember Me utilities för att hantera olika session-längder
- */
-import { useState, useEffect, useCallback } from "react";
-
-// Konstanter för session-längder
-export const SESSION_DURATIONS = {
-  SHORT: 24 * 60 * 60, // 24 timmar
-  LONG: 30 * 24 * 60 * 60, // 30 dagar
-} as const;
-
-// Typer
-export interface RememberMePreference {
-  enabled: boolean;
-  timestamp: number;
-}
+import { useState, useCallback } from "react";
+import { RememberMePreference } from "../_types/types";
 
 // LocalStorage nycklar
 const REMEMBER_ME_KEY = "auth_remember_me";
@@ -74,13 +60,12 @@ export function clearRememberMePreference(): void {
  * Hook för att hantera remember me-state
  */
 export function useRememberMe() {
-  const [rememberMe, setRememberMe] = useState(false);
-
-  // Ladda preferens vid mount
-  useEffect(() => {
-    const saved = getRememberMePreference();
-    setRememberMe(saved);
-  }, []);
+  // Ladda preferens direkt vid initialisering istället för i useEffect
+  const [rememberMe, setRememberMe] = useState(() => {
+    // Använd lazy initialization för att undvika SSR-problem
+    if (typeof window === "undefined") return false;
+    return getRememberMePreference();
+  });
 
   // Uppdatera preferens när state ändras
   const updateRememberMe = useCallback((enabled: boolean) => {

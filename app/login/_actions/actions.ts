@@ -1,11 +1,11 @@
 "use server";
 
-import { pool } from "../_lib/db";
-import { getSessionAndUserId } from "../_utils/authUtils";
-import { sanitizeFormInput } from "../_utils/validationUtils";
+import { pool } from "../../_lib/db";
+import { getSessionAndUserId } from "../../_utils/authUtils";
+import { sanitizeFormInput } from "../../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { validateEmail, validatePassword } from "./sakerhet/loginValidation";
+import { validateEmail, validatePassword } from "../_utils/loginValidation";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -36,57 +36,6 @@ function getClientIP(headers?: Record<string, string>): string | undefined {
     headers["forwarded"] ||
     undefined
   );
-}
-
-// DEPRECATED: Custom email verification - Better Auth har sitt eget system
-// Skicka verification email
-async function sendVerificationEmail(email: string, token: string, name: string): Promise<boolean> {
-  const verificationUrl = `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/login/verify-email?token=${token}`;
-
-  try {
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "noreply@localhost",
-      to: email,
-      subject: "Verifiera din email-adress",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #333;">Hej ${name}!</h2>
-          <p>Tack för att du registrerat dig på vår plattform.</p>
-          <p>Klicka på länken nedan för att verifiera din email-adress:</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}" 
-               style="background: #0070f3; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 6px; display: inline-block;
-                      font-weight: bold;">
-              Verifiera Email
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px;">
-            Om du inte kan klicka på knappen, kopiera denna länk:
-            <br>
-            <code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${verificationUrl}</code>
-          </p>
-          
-          <p style="color: #666; font-size: 14px;">
-            Denna länk är giltig i 24 timmar.
-          </p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          <p style="color: #999; font-size: 12px;">
-            Om du inte registrerat dig kan du ignorera detta mail.
-          </p>
-        </div>
-      `,
-    });
-
-    console.log(`✅ Verification email sent to ${email}`);
-    return true;
-  } catch (error) {
-    console.error("❌ Failed to send verification email:", error);
-    return false;
-  }
 }
 
 // Skicka password reset email
@@ -281,109 +230,6 @@ export async function resetPassword(formData: FormData) {
   }
 }
 
-// Server action för initial signup (React 19 useActionState format)
-export async function createAccount(
-  prevState: {
-    success: boolean;
-    error?: string;
-    message?: string;
-    user?: { id: number; email: string; name: string };
-  } | null,
-  formData: FormData
-) {
-  try {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const name = formData.get("name") as string;
-    const acceptTerms = formData.get("acceptTerms") === "on"; // Checkbox value
-
-    // Validera input
-    if (!email || !password || !name) {
-      return { success: false, error: "Alla fält krävs" };
-    }
-
-    // Validera användarvillkor (server-side säkerhet)
-    if (!acceptTerms) {
-      return {
-        success: false,
-        error: "Du måste godkänna användarvillkoren för att registrera dig",
-      };
-    }
-
-    // Validera email
-    if (!validateEmail(email)) {
-      return { success: false, error: "Ogiltig e-postadress" };
-    }
-
-    // Validera lösenord
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.valid) {
-      return {
-        success: false,
-        error: passwordValidation.errors.join(", "),
-      };
-    }
-
-    // Validera namn
-    if (name.trim().length < 2 || name.trim().length > 100) {
-      return { success: false, error: "Namnet måste vara mellan 2-100 tecken" };
-    }
-
-    // Kolla om email redan finns
-    const existingUser = await pool.query('SELECT email FROM "user" WHERE email = $1', [email]);
-
-    if (existingUser.rows.length > 0) {
-      return {
-        success: false,
-        error: "En användare med denna e-postadress finns redan",
-      };
-    }
-
-    // Skapa användare manuellt i Better Auth user-tabellen
-    // TODO: Migrera till Better Auth API när vi förstår det bättre
-    const userId = crypto.randomUUID();
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    try {
-      const result = await pool.query(
-        `INSERT INTO "user" (id, email, name, "emailVerified", password) 
-         VALUES ($1, $2, $3, false, $4) 
-         RETURNING id, email, name`,
-        [userId, email, name.trim(), hashedPassword]
-      );
-
-      const newUser = result.rows[0];
-      console.log(`✅ User created: ${email} (ID: ${newUser.id})`);
-
-      // TODO: Implementera email verification senare via Better Auth
-    } catch (dbError) {
-      console.error("❌ Database error during signup:", dbError);
-      return {
-        success: false,
-        error: "Kunde inte skapa användarkonto. Försök igen senare.",
-      };
-    }
-
-    return {
-      success: true,
-      message: "Konto skapat! Kontrollera din e-post för verifiering.",
-    };
-  } catch (error) {
-    console.error("Signup error:", error);
-    return {
-      success: false,
-      error: "Något gick fel vid registrering. Försök igen.",
-    };
-  }
-}
-
-export async function checkUserSignupStatus() {
-  // 🔒 SÄKERHETSVALIDERING - Better Auth används nu på client-side
-  // Denna funktion används inte längre då Better Auth hanterar state management
-  // Returnerar default värden för bakåtkompatibilitet
-  return { loggedIn: false, hasSignedUp: false };
-}
-
 export async function saveSignupData(formData: FormData) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
@@ -566,17 +412,4 @@ export async function saveSignupData(formData: FormData) {
       error: "Kunde inte spara företagsinformation",
     };
   }
-}
-
-/**
- * Loggar ut användaren och rensar remember me-preferensen
- * Nu hanteras logout på client-side med Better Auth
- */
-export async function logoutWithRememberMeCleanup() {
-  // Better Auth hanterar logout på client-side via authClient.signOut()
-  // Denna server action behövs inte längre
-  return {
-    success: true,
-    message: "Logout hanteras nu på client-side",
-  };
 }

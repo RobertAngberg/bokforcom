@@ -1,44 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import TextFalt from "../../_components/TextFalt";
-import { authClient } from "../../_lib/auth-client";
-
-interface ForgotPasswordProps {
-  onBackToLogin: () => void;
-}
+import TextFalt from "../../../_components/TextFalt";
+import { useForgotPassword } from "../../_hooks/useForgotPassword";
+import { ForgotPasswordProps } from "../../_types/types";
 
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
-  // Form state for TextFalt
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const { error } = await authClient.requestPasswordReset({
-        email,
-        redirectTo: "/login/reset-password",
-      });
-
-      if (error) {
-        setError(error.message || "Kunde inte skicka återställningsmall");
-      } else {
-        setSuccess(true);
-        setMessage("Ett mail med återställningslänk har skickats till din email!");
-      }
-    } catch (err) {
-      setError("Något gick fel. Försök igen.");
-    }
-
-    setLoading(false);
-  };
+  // Business logic från hook
+  const { email, setEmail, loading, success, error, message, handlePasswordReset } =
+    useForgotPassword();
 
   if (success) {
     return (
@@ -66,11 +35,12 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
           </p>
           <TextFalt
             label="E-postadress"
-            name="email"
+            name="forgot-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Din e-postadress"
+            autoComplete="email"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input type="hidden" name="email" value={email} />

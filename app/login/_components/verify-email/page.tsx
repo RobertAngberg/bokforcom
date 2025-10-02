@@ -45,7 +45,7 @@ export default function VerifyEmailPage() {
             setMessage(data.error || "Verifieringen misslyckades.");
           }
         }
-      } catch (error) {
+      } catch {
         setStatus("error");
         setMessage("Ett fel uppstod vid verifiering. Försök igen.");
       }
@@ -74,7 +74,7 @@ export default function VerifyEmailPage() {
         const data = await response.json();
         setMessage(data.error || "Kunde inte skicka nytt mail.");
       }
-    } catch (error) {
+    } catch {
       setMessage("Ett fel uppstod. Försök igen.");
     }
   };
@@ -82,7 +82,7 @@ export default function VerifyEmailPage() {
   return (
     <div
       className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/bg.png')" }}
+      style={{ backgroundImage: "url('/LoginBG.png')" }}
     >
       <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl backdrop-blur-sm">
         <div className="text-center">

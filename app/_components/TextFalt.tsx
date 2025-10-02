@@ -25,6 +25,7 @@ type TextFaltProps = {
   pattern?: string; // RegEx validation
   className?: string; // Extra styling
   autoFocus?: boolean; // För fokus
+  autoComplete?: string; // Autocomplete attribute
 };
 export default function TextFalt({
   label,
@@ -39,6 +40,7 @@ export default function TextFalt({
   pattern,
   className = "",
   autoFocus = false,
+  autoComplete,
 }: TextFaltProps) {
   // Säker escaping av label för XSS-skydd
   const safeLabel = escapeInput(label);
@@ -104,6 +106,7 @@ export default function TextFalt({
           maxLength={maxLength}
           pattern={pattern}
           autoFocus={autoFocus}
+          autoComplete={autoComplete}
           className={`w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white mb-4 placeholder-slate-400 focus:border-blue-500 focus:outline-none ${
             disabled ? "opacity-50 cursor-not-allowed" : ""
           } ${className}`}

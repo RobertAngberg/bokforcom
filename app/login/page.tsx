@@ -1,99 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import EpostRegistrering from "./SignUp";
-import ForgotPassword from "./reset-password/ForgotPassword";
+import SignUp from "./_components/SignUp";
+import ForgotPassword from "./_components/reset-password/ForgotPassword";
 import { useRememberMe } from "./_utils/rememberMe";
-import { authClient } from "../_lib/auth-client";
+import { useLogin } from "./_hooks/useLogin";
+import { useLoginPage } from "./_hooks/useLoginPage";
 import TextFalt from "../_components/TextFalt";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const { rememberMe, setRememberMe } = useRememberMe();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showResendVerification, setShowResendVerification] = useState(false);
 
-  const handleEmailSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setShowResendVerification(false);
-
-    try {
-      // Better Auth hanterar email verification automatiskt
-      const { data, error } = await authClient.signIn.email({
-        email,
-        password,
-        rememberMe,
-        callbackURL: "/",
-      });
-
-      if (error) {
-        if (error.status === 403) {
-          // Email inte verifierad
-          setError(
-            "Din email är inte verifierad än. Kontrollera din inkorg och klicka på verifieringslänken."
-          );
-          setShowResendVerification(true);
-        } else if (error.status === 429) {
-          setError("För många försök. Vänta en stund innan du försöker igen.");
-        } else {
-          setError("Fel e-post eller lösenord");
-        }
-      } else if (data) {
-        // Lyckad inloggning - Better Auth hanterar redirect
-        window.location.href = "/";
-      }
-    } catch (error) {
-      setError("Något gick fel. Prova igen.");
-    }
-    setLoading(false);
-  };
-
-  const handleResendVerification = async () => {
-    setLoading(true);
-    try {
-      const { error } = await authClient.sendVerificationEmail({
-        email,
-        callbackURL: "/",
-      });
-
-      if (error) {
-        setError(error.message || "Kunde inte skicka verifieringsmail");
-      } else {
-        setError("Ett nytt verifieringsmail har skickats till din email!");
-        setShowResendVerification(false);
-      }
-    } catch (error) {
-      setError("Något gick fel. Försök igen.");
-    }
-    setLoading(false);
-  };
+  // Business logic från hook
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    loading,
+    error,
+    showResendVerification,
+    handleSignIn,
+    handleResendVerification,
+  } = useLogin();
 
   return (
-    <form onSubmit={handleEmailSignIn} className="space-y-1">
+    <form onSubmit={(e) => handleSignIn(e, rememberMe)} className="space-y-1">
       <div>
         <TextFalt
           label="E-postadress"
-          name="email"
+          name="login-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="E-postadress"
+          autoComplete="email"
           className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div>
         <TextFalt
           label="Lösenord"
-          name="password"
+          name="login-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Lösenord"
+          autoComplete="current-password"
           className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -151,37 +103,10 @@ function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => 
 }
 
 export default function LoginPage() {
-  const { data: session, isPending } = authClient.useSession();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"login" | "signup" | "forgot-password">("login");
-  const [verificationMessage, setVerificationMessage] = useState("");
+  // Business logic från hook
+  const { activeTab, setActiveTab, verificationMessage, shouldRedirect } = useLoginPage();
 
-  useEffect(() => {
-    if (session?.user) {
-      router.push("/");
-    }
-
-    // Kolla för verified query parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("verified") === "true") {
-      setVerificationMessage("✅ Din email har verifierats! Du kan nu logga in.");
-      // Ta bort query parameter från URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
-    }
-
-    // Kolla för reset success parameter
-    if (urlParams.get("reset") === "success") {
-      setVerificationMessage(
-        "✅ Ditt lösenord har uppdaterats! Du kan nu logga in med ditt nya lösenord."
-      );
-      // Ta bort query parameter från URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
-    }
-  }, [session, router]);
-
-  if (isPending || session?.user) {
+  if (shouldRedirect) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white bg-slate-950">
         <div className="text-xl">Laddar...</div>
@@ -192,7 +117,7 @@ export default function LoginPage() {
   return (
     <div
       className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/bg.png')" }}
+      style={{ backgroundImage: "url('/LoginBG.png')" }}
     >
       <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl drop-shadow-2xl backdrop-blur-sm">
         <div className="mb-6 text-center">
@@ -255,10 +180,7 @@ export default function LoginPage() {
             }`}
           >
             <h2 className="mb-3 text-xl font-bold text-center text-white">Skapa konto</h2>
-            <EpostRegistrering
-              onSuccess={undefined}
-              onSwitchToLogin={() => setActiveTab("login")}
-            />
+            <SignUp />
           </div>
 
           <div

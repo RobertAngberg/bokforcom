@@ -1,13 +1,7 @@
-// app/login/sakerhet/security-validation.ts
+// app/login/_utils/security-validation.ts
 // SÄKERHETSVALIDERING för Better Auth konfiguration
 
-interface AuthSecurityConfig {
-  hasSecureSession: boolean;
-  hasSecureCallbacks: boolean;
-  hasSecureProviders: boolean;
-  hasSecureAdapter: boolean;
-  securityScore: number;
-}
+import { AuthSecurityConfig } from "../_types/types";
 
 // SÄKERHETSVALIDERING: Kontrollera auth-konfiguration
 export function validateAuthSecurity(): AuthSecurityConfig {

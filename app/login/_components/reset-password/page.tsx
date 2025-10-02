@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ResetPassword from "./ResetPassword";
 
 export default function ResetPasswordPage() {
-  const [token, setToken] = useState<string | null>(null);
-  const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const tokenFromUrl = searchParams.get("token");
-
-    if (!tokenFromUrl) {
-      setError("Ingen återställningstoken hittades i länken.");
-      return;
-    }
-
-    setToken(tokenFromUrl);
-  }, [searchParams]);
+  // Beräkna token direkt från searchParams istället för att lagra i state
+  const token = searchParams.get("token");
+  const error = !token ? "Ingen återställningstoken hittades i länken." : "";
 
   const handleSuccess = () => {
     router.push("/login?reset=success");
@@ -29,7 +19,7 @@ export default function ResetPasswordPage() {
     return (
       <div
         className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/bg.png')" }}
+        style={{ backgroundImage: "url('/LoginBG.png')" }}
       >
         <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl backdrop-blur-sm">
           <div className="text-center">
@@ -75,7 +65,7 @@ export default function ResetPasswordPage() {
   return (
     <div
       className="flex flex-col items-center justify-center min-h-screen text-white bg-slate-800 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/bg.png')" }}
+      style={{ backgroundImage: "url('/LoginBG.png')" }}
     >
       <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl backdrop-blur-sm">
         <ResetPassword token={token} onSuccess={handleSuccess} />

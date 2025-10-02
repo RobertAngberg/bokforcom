@@ -1,84 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "../_components/Modal";
-import TextFalt from "../_components/TextFalt";
-import Knapp from "../_components/Knapp";
-import { authClient } from "../_lib/auth-client";
+import Modal from "../../_components/Modal";
+import TextFalt from "../../_components/TextFalt";
+import Knapp from "../../_components/Knapp";
+import { useSignUp } from "../_hooks/useSignUp";
 
-interface EmailSignupFormProps {
-  onSuccess?: () => void;
-  onSwitchToLogin?: () => void;
-}
+export default function SignUp() {
+  // Business logic från hook
+  const { name, setName, email, setEmail, password, setPassword, loading, error, handleSignUp } =
+    useSignUp();
 
-export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormProps) {
-  // Form state for TextFalt components
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // Form state management
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
-  const [successUser, setSuccessUser] = useState<{ email: string } | null>(null);
-
-  // Only keep modal state (not form-related)
+  // Endast UI state (modal)
   const [showTermsModal, setShowTermsModal] = useState(false);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const { error } = await authClient.signUp.email({
-        name,
-        email,
-        password,
-        callbackURL: "/",
-      });
-
-      if (error) {
-        setError(error.message || "Registrering misslyckades");
-      } else {
-        setSuccess(true);
-        setSuccessUser({ email });
-      }
-    } catch (err) {
-      setError("Något gick fel. Försök igen.");
-    }
-
-    setLoading(false);
-  };
-
-  if (success) {
-    return (
-      <div>
-        <div className="text-center space-y-4">
-          <div className="p-4 bg-green-900/50 border border-green-500 rounded-lg">
-            <h3 className="text-green-300 font-semibold mb-2">✅ Registrering lyckades!</h3>
-            <p className="text-green-200 text-sm">
-              Ett verifieringsmail har skickats till <strong>{successUser?.email}</strong>.
-              <br />
-              Kontrollera din inkorg och klicka på länken för att verifiera ditt konto.
-            </p>
-          </div>
-          <p className="text-slate-400 text-sm">
-            Efter verifiering kan du logga in med dina uppgifter.
-          </p>
-          {onSwitchToLogin && (
-            <button
-              onClick={onSwitchToLogin}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-            >
-              Gå till login
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -86,33 +20,36 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
         <div>
           <TextFalt
             label="Ditt namn"
-            name="name"
+            name="signup-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ditt namn"
+            autoComplete="name"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
           <TextFalt
             label="E-postadress"
-            name="email"
+            name="signup-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="E-postadress"
-            className="w-full px-4 py-1 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoComplete="email"
+            className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
           <TextFalt
             label="Lösenord"
-            name="password"
+            name="signup-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Lösenord (minst 8 tecken)"
+            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -150,6 +87,10 @@ export default function EpostRegistrering({ onSwitchToLogin }: EmailSignupFormPr
           loadingText="Registrerar..."
           className="w-full"
         />
+
+        <p className="text-center text-sm text-slate-400 mt-2">
+          Kolla din mail efter en verifieringslänk.
+        </p>
       </form>
 
       {/* Användarvillkor Modal */}

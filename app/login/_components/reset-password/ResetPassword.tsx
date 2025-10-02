@@ -1,53 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import TextFalt from "../../_components/TextFalt";
-import { authClient } from "../../_lib/auth-client";
-
-interface ResetPasswordProps {
-  token: string;
-  onSuccess: () => void;
-}
+import TextFalt from "../../../_components/TextFalt";
+import { useResetPassword } from "../../_hooks/useResetPassword";
+import { ResetPasswordProps } from "../../_types/types";
 
 export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      // Validera att lösenorden matchar
-      if (password !== confirmPassword) {
-        setError("Lösenorden matchar inte");
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await authClient.resetPassword({
-        newPassword: password,
-        token,
-      });
-
-      if (error) {
-        setError(error.message || "Något gick fel");
-      } else {
-        setSuccess(true);
-        // Redirect efter 3 sekunder
-        setTimeout(() => {
-          onSuccess();
-        }, 3000);
-      }
-    } catch (error) {
-      setError("Något gick fel. Försök igen.");
-    }
-    setLoading(false);
-  };
+  // Business logic från hook
+  const {
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    loading,
+    error,
+    success,
+    handleSubmit,
+  } = useResetPassword();
 
   if (success) {
     return (
@@ -75,15 +43,16 @@ export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) 
         <p className="text-slate-300 text-sm">Ange ditt nya lösenord nedan.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, token, onSuccess)} className="space-y-4">
         <div>
           <TextFalt
             label="Nytt lösenord"
-            name="password"
+            name="reset-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Nytt lösenord (minst 8 tecken)"
+            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -91,11 +60,12 @@ export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) 
         <div>
           <TextFalt
             label="Bekräfta lösenord"
-            name="confirmPassword"
+            name="reset-confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Bekräfta nytt lösenord"
+            autoComplete="new-password"
             className="w-full px-4 py-2 rounded-md bg-slate-800 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

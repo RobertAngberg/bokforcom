@@ -1,21 +1,10 @@
 /**
  * Login och signup validation funktioner
  * Används av SignupForm, actions.ts och andra login-relaterade komponenter
- * Sökväg: app/login/sakerhet/loginValidation.ts
+ * Sökväg: app/login/_utils/loginValidation.ts
  */
 
-export interface ValidationResult {
-  valid: boolean;
-  error?: string;
-}
-
-export interface AuthSecurityConfig {
-  hasSecureSession: boolean;
-  hasSecureCallbacks: boolean;
-  hasSecureProviders: boolean;
-  hasSecureAdapter: boolean;
-  securityScore: number;
-}
+import { ValidationResult, AuthSecurityConfig } from "../_types/types";
 
 /**
  * Validerar svenskt organisationsnummer
