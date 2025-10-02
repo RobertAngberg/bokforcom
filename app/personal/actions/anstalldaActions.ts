@@ -8,7 +8,7 @@ import type { AnställdData, FormActionState, Företagsprofil } from "../types/t
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(
   eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
+  userId?: string,
   details?: string
 ) {
   const timestamp = new Date().toISOString();
@@ -32,7 +32,6 @@ export async function hämtaAllaAnställda() {
     `;
 
     const result = await client.query(query, [userId]);
-
     client.release();
     return result.rows;
   } catch (error) {
@@ -107,8 +106,6 @@ export async function sparaNyAnställdFormAction(
       skattetabell: (formData.get("skattetabell") as string) || "",
       skattekolumn: (formData.get("skattekolumn") as string) || "",
     };
-
-    console.log("🚀 Form Action - Sparar med data:", { förnamn, efternamn, data });
 
     // Anropa befintlig funktion
     const result = await sparaAnställd(data);
@@ -292,8 +289,7 @@ export async function taBortAnställd(anställdId: number) {
       WHERE id = $1 AND user_id = $2
     `;
 
-    const result = await client.query(query, [anställdId, userId]);
-    console.log("✅ Anställd borttagen:", result.rowCount);
+    await client.query(query, [anställdId, userId]);
 
     client.release();
     revalidatePath("/personal");

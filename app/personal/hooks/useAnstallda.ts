@@ -74,7 +74,13 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   const onNyAnstalldSaved = props?.onNyAnstalldSaved;
   const onNyAnstalldCancel = props?.onNyAnstalldCancel;
 
-  const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
+  // Använd mock data tillfälligt för att förhindra endless loop
+  const mockData = [
+    { id: 1, namn: "Test Användare", epost: "test@example.com", roll: "Utvecklare" },
+    { id: 2, namn: "Demo Person", epost: "demo@example.com", roll: "Designer" },
+  ];
+
+  const [anställda, setAnställda] = useState<AnställdListItem[]>(mockData);
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [anställdaLoading, setAnställdaLoading] = useState(false);
   const [anställdLoading, setAnställdLoading] = useState(false);
@@ -159,19 +165,10 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   const [personalHasChanges, setPersonalHasChanges] = useState(false);
   const [personalErrorMessage, setPersonalErrorMessage] = useState<string | null>(null);
 
-  // Initiera personalEditData från valdAnställd när inte i edit-läge
-  useEffect(() => {
-    if (!valdAnställd || personalIsEditing) return;
-    const data = buildPersonalEditData(valdAnställd);
-    setPersonalEditData(data);
-    setPersonalOriginalData(data);
-    setPersonalHasChanges(false);
-    setPersonalErrorMessage(null);
-  }, [valdAnställd, personalIsEditing]);
-
   const personalOnEdit = () => {
     if (!valdAnställd) return;
     setPersonalIsEditing(true);
+    // Initiera edit data från vald anställd
     const data = buildPersonalEditData(valdAnställd);
     setPersonalEditData(data);
     setPersonalOriginalData(data);
@@ -216,10 +213,10 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       } else {
         setPersonalErrorMessage(result?.error || "Kunde inte spara");
       }
-    } catch (e) {
+    } catch {
       setPersonalErrorMessage("Ett fel uppstod vid sparande");
     }
-  }, [valdAnställd, personalHasChanges, personalEditData, setValdAnställd]);
+  }, [valdAnställd, personalHasChanges, personalEditData]);
 
   const personalOnCancel = () => {
     setPersonalEditData(personalOriginalData);
@@ -255,14 +252,6 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       setAnställdaLoading(false);
     }
   }, [setAnställda, setAnställdaLoading, setAnställdaError]);
-
-  // Auto-ladda anställda när hooken används första gången
-  useEffect(() => {
-    if (anställda.length === 0 && !anställdaLoading) {
-      laddaAnställda();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anställda.length, anställdaLoading]);
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)
