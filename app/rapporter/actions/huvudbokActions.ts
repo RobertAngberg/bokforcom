@@ -15,20 +15,6 @@ interface TransaktionData {
   belopp: number;
   sort_priority: number;
 }
-
-// SÄKERHETSVALIDERING: Logga huvudbok-åtkomst
-function logLedgerDataEvent(
-  eventType: "access" | "violation" | "error",
-  userId?: number,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`📚 LEDGER DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
 //#endregion
 
 export async function fetchHuvudbok() {
@@ -126,16 +112,13 @@ export async function fetchHuvudbok() {
   }
 }
 
-export async function fetchFöretagsprofil(userId?: number) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering
+export async function fetchFöretagsprofil(userId?: string) {
   const sessionUserId = await getUserId();
 
   // Använd sessionUserId om inget userId skickades
   const targetUserId = userId || sessionUserId;
 
   await requireOwnership(targetUserId);
-
-  logLedgerDataEvent("access", sessionUserId, "Accessing company profile data");
 
   try {
     const client = await pool.connect();
@@ -155,16 +138,11 @@ export async function fetchFöretagsprofil(userId?: number) {
 }
 
 export async function fetchTransactionDetails(transaktionsId: number) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering
   const userId = await getUserId();
 
-  // SÄKERHETSVALIDERING: Input validering
   if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
-    logLedgerDataEvent("violation", userId, `Invalid transaction ID: ${transaktionsId}`);
     throw new Error("Ogiltigt transaktions-ID");
   }
-
-  logLedgerDataEvent("access", userId, `Accessing transaction details for ID ${transaktionsId}`);
 
   try {
     const result = await pool.query(
@@ -193,19 +171,12 @@ export async function fetchTransactionDetails(transaktionsId: number) {
     return result.rows;
   } catch (error) {
     console.error("❌ fetchTransactionDetails error:", error);
-    logLedgerDataEvent(
-      "error",
-      userId,
-      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     throw new Error("Ett fel uppstod vid hämtning av transaktionsdetaljer");
   }
 }
 
 export async function fetchKontoTransaktioner(kontonummer: string) {
   const userId = await getUserId();
-
-  logLedgerDataEvent("access", userId, `Accessing transactions for account ${kontonummer}`);
 
   try {
     const result = await pool.query(
@@ -237,23 +208,12 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
     return result.rows;
   } catch (error) {
     console.error("❌ fetchKontoTransaktioner error:", error);
-    logLedgerDataEvent(
-      "error",
-      userId,
-      `Error fetching account transactions: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     throw new Error("Ett fel uppstod vid hämtning av kontotransaktioner");
   }
 }
 
 export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
   const userId = await getUserId();
-
-  logLedgerDataEvent(
-    "access",
-    userId,
-    `Accessing full ledger with all transactions${year ? ` for year ${year}` : ""}`
-  );
 
   try {
     const client = await pool.connect();
@@ -347,11 +307,6 @@ export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
     return huvudboksdata;
   } catch (error) {
     console.error("❌ fetchHuvudbokMedAllaTransaktioner error:", error);
-    logLedgerDataEvent(
-      "error",
-      userId,
-      `Error fetching full ledger: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     throw new Error("Ett fel uppstod vid hämtning av huvudbok med transaktioner");
   }
 }
