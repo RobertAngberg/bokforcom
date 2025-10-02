@@ -1,10 +1,10 @@
 /**
  * Login och signup validation funktioner
  * Används av SignupForm, actions.ts och andra login-relaterade komponenter
- * Sökväg: app/login/_utils/loginValidation.ts
+ * Sökväg: app/login/utils/loginValidation.ts
  */
 
-import { ValidationResult, AuthSecurityConfig } from "../_types/types";
+import { ValidationResult, AuthSecurityConfig } from "../types/types";
 
 /**
  * Validerar svenskt organisationsnummer

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Modal from "../../_components/Modal";
 import TextFalt from "../../_components/TextFalt";
 import Knapp from "../../_components/Knapp";
-import { useSignUp } from "../_hooks/useSignUp";
+import { useSignUp } from "../hooks/useSignUp";
 
 export default function SignUp() {
   // Business logic från hook

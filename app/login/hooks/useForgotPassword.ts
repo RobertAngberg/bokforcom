@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { authClient } from "../../_lib/auth-client";
+import { requestPasswordReset } from "../../_lib/auth-client";
 
 /**
  * Hook för forgot password business logic
@@ -24,7 +24,7 @@ export function useForgotPassword() {
     setError("");
 
     try {
-      const { error } = await authClient.requestPasswordReset({
+      const { error } = await requestPasswordReset({
         email,
         redirectTo: "/login/reset-password",
       });

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { RememberMePreference } from "../_types/types";
+import { RememberMePreference } from "../types/types";
 
 // LocalStorage nycklar
 const REMEMBER_ME_KEY = "auth_remember_me";
@@ -87,8 +87,8 @@ export async function logoutAndClearRememberMe() {
   clearRememberMePreference();
 
   // Logga ut med Better Auth
-  const { authClient } = await import("../../_lib/auth-client");
-  await authClient.signOut({
+  const { signOut } = await import("../../_lib/auth-client");
+  await signOut({
     fetchOptions: {
       onSuccess: () => {
         window.location.href = "/login";

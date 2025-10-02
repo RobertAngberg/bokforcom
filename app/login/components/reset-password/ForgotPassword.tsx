@@ -1,8 +1,8 @@
 "use client";
 
 import TextFalt from "../../../_components/TextFalt";
-import { useForgotPassword } from "../../_hooks/useForgotPassword";
-import { ForgotPasswordProps } from "../../_types/types";
+import { useForgotPassword } from "../../hooks/useForgotPassword";
+import { ForgotPasswordProps } from "../../types/types";
 
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   // Business logic från hook

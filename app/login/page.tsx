@@ -1,10 +1,10 @@
 "use client";
 
-import SignUp from "./_components/SignUp";
-import ForgotPassword from "./_components/reset-password/ForgotPassword";
-import { useRememberMe } from "./_utils/rememberMe";
-import { useLogin } from "./_hooks/useLogin";
-import { useLoginPage } from "./_hooks/useLoginPage";
+import SignUp from "./components/SignUp";
+import ForgotPassword from "./components/reset-password/ForgotPassword";
+import { useRememberMe } from "./utils/rememberMe";
+import { useLogin } from "./hooks/useLogin";
+import { useLoginPage } from "./hooks/useLoginPage";
 import TextFalt from "../_components/TextFalt";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "../../_lib/auth-client";
+import { useSession } from "../../_lib/auth-client";
 
 type TabType = "login" | "signup" | "forgot-password";
 
@@ -9,7 +9,7 @@ type TabType = "login" | "signup" | "forgot-password";
  * Hanterar tabs, session check och URL query parameters
  */
 export function useLoginPage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
 
   // Tab state

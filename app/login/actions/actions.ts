@@ -5,7 +5,7 @@ import { getSessionAndUserId } from "../../_utils/authUtils";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { validateEmail, validatePassword } from "../_utils/loginValidation";
+import { validateEmail, validatePassword } from "../utils/loginValidation";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);

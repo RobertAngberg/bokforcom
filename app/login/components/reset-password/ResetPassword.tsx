@@ -1,8 +1,8 @@
 "use client";
 
 import TextFalt from "../../../_components/TextFalt";
-import { useResetPassword } from "../../_hooks/useResetPassword";
-import { ResetPasswordProps } from "../../_types/types";
+import { useResetPassword } from "../../hooks/useResetPassword";
+import { ResetPasswordProps } from "../../types/types";
 
 export default function ResetPassword({ token, onSuccess }: ResetPasswordProps) {
   // Business logic från hook

@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { authClient } from "../../_lib/auth-client";
+import { resetPassword } from "../../_lib/auth-client";
 
 /**
  * Hook för reset password business logic
@@ -33,7 +33,7 @@ export function useResetPassword() {
         return;
       }
 
-      const { error } = await authClient.resetPassword({
+      const { error } = await resetPassword({
         newPassword: password,
         token,
       });

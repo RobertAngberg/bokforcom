@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { authClient } from "../../_lib/auth-client";
+import { signUp } from "../../_lib/auth-client";
 
 /**
  * Hook för signup/registrering business logic
@@ -24,7 +24,7 @@ export function useSignUp() {
     setError("");
 
     try {
-      const { error } = await authClient.signUp.email({
+      const { error } = await signUp.email({
         name,
         email,
         password,

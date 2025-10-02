@@ -1,7 +1,7 @@
-// app/login/_utils/security-validation.ts
+// app/login/utils/security-validation.ts
 // SÄKERHETSVALIDERING för Better Auth konfiguration
 
-import { AuthSecurityConfig } from "../_types/types";
+import { AuthSecurityConfig } from "../types/types";
 
 // SÄKERHETSVALIDERING: Kontrollera auth-konfiguration
 export function validateAuthSecurity(): AuthSecurityConfig {

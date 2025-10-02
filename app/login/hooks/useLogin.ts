@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { authClient } from "../../_lib/auth-client";
+import { signIn, sendVerificationEmail } from "../../_lib/auth-client";
 
 /**
  * Hook för login business logic
@@ -26,7 +26,7 @@ export function useLogin() {
     setShowResendVerification(false);
 
     try {
-      const { data, error } = await authClient.signIn.email({
+      const { data, error } = await signIn.email({
         email,
         password,
         rememberMe,
@@ -61,7 +61,7 @@ export function useLogin() {
   const handleResendVerification = async () => {
     setLoading(true);
     try {
-      const { error } = await authClient.sendVerificationEmail({
+      const { error } = await sendVerificationEmail({
         email,
         callbackURL: "/",
       });
