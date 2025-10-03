@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { formatSEK } from "../../_utils/format";
+import { exportResultatrapportPDF, exportResultatrapportCSV } from "../../_utils/fileUtils";
 import { hamtaResultatrapport, fetchFöretagsprofil } from "../actions/resultatrapportActions";
 import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/types";
 
@@ -155,37 +153,40 @@ export const useResultatrapport = () => {
     setExportMessage("");
 
     try {
-      const element = document.getElementById("resultatrapport-print-area");
-      if (!element) {
-        throw new Error("Kunde inte hitta rapporten för export");
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        imageTimeout: 15000,
-        removeContainer: false,
+      // Transform data to format expected by fileUtils
+      const transformGroup = (grupp: KontoRad) => ({
+        namn: grupp.namn,
+        konton: grupp.konton.map((konto) => ({
+          kontonummer: konto.kontonummer,
+          beskrivning: konto.beskrivning,
+          belopp: (konto[currentYear] as number) || 0,
+        })),
+        summa: grupp.summering?.[currentYear] || 0,
       });
 
-      const imageData = canvas.toDataURL("image/png");
-      if (
-        imageData ===
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-      ) {
-        throw new Error("Canvas är tom!");
-      }
+      const intakterTransformed = data.intakter.map(transformGroup);
+      const kostnaderTransformed = data.rorelsensKostnader.map(transformGroup);
+      const finansiellaIntakterTransformed = data.finansiellaIntakter?.map(transformGroup) || [];
+      const finansiellaKostnaderTransformed = data.finansiellaKostnader.map(transformGroup);
 
-      const pdf = new jsPDF("portrait", "mm", "a4");
-      const pdfWidth = 210;
-      const imgWidth = pdfWidth - 15;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Calculate net result for current year
+      const nettoResultat =
+        (intaktsSum[currentYear] || 0) +
+        (rorelsensSum[currentYear] || 0) +
+        (finansiellaIntakterSum[currentYear] || 0) +
+        (finansiellaKostnaderSum[currentYear] || 0);
 
-      pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
-      pdf.save(`resultatrapport-${selectedYear}-${företagsnamn.replace(/\s+/g, "-")}.pdf`);
+      await exportResultatrapportPDF(
+        intakterTransformed,
+        kostnaderTransformed,
+        finansiellaIntakterTransformed,
+        finansiellaKostnaderTransformed,
+        nettoResultat,
+        företagsnamn,
+        organisationsnummer,
+        "all", // selectedMonth (resultatrapport shows full year)
+        currentYear
+      );
 
       setExportMessage("PDF-rapporten har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);
@@ -203,82 +204,40 @@ export const useResultatrapport = () => {
     setExportMessage("");
 
     try {
-      // Skapa CSV data
-      const csvRows = [];
+      // Transform data to format expected by fileUtils
+      const transformGroup = (grupp: KontoRad) => ({
+        namn: grupp.namn,
+        konton: grupp.konton.map((konto) => ({
+          kontonummer: konto.kontonummer,
+          beskrivning: konto.beskrivning,
+          belopp: (konto[currentYear] as number) || 0,
+        })),
+        summa: grupp.summering?.[currentYear] || 0,
+      });
 
-      // Header
-      csvRows.push(["Konto", "Benämning", previousYear, currentYear, "Förändring"]);
+      const intakterTransformed = data.intakter.map(transformGroup);
+      const kostnaderTransformed = data.rorelsensKostnader.map(transformGroup);
+      const finansiellaIntakterTransformed = data.finansiellaIntakter?.map(transformGroup) || [];
+      const finansiellaKostnaderTransformed = data.finansiellaKostnader.map(transformGroup);
 
-      // Intäkter
-      if (data.intakter && data.intakter.length > 0) {
-        csvRows.push(["", "RÖRELSENS INTÄKTER", "", "", ""]);
-        data.intakter.forEach((grupp) => {
-          csvRows.push(["", grupp.namn, "", "", ""]);
-          grupp.konton.forEach((konto) => {
-            const prevValue = (konto[previousYear] as number) || 0;
-            const currValue = (konto[currentYear] as number) || 0;
-            const change = currValue - prevValue;
-            csvRows.push([
-              konto.kontonummer,
-              konto.beskrivning,
-              formatSEK(-prevValue),
-              formatSEK(-currValue),
-              formatSEK(-change),
-            ]);
-          });
-        });
-        csvRows.push([
-          "",
-          `Summa rörelsens intäkter`,
-          "",
-          formatSEK(intaktsSum[currentYear] || 0),
-          "",
-        ]);
-      }
+      // Calculate net result for current year
+      const nettoResultat =
+        (intaktsSum[currentYear] || 0) +
+        (rorelsensSum[currentYear] || 0) +
+        (finansiellaIntakterSum[currentYear] || 0) +
+        (finansiellaKostnaderSum[currentYear] || 0);
 
-      // Kostnader
-      if (data.rorelsensKostnader && data.rorelsensKostnader.length > 0) {
-        csvRows.push(["", "RÖRELSENS KOSTNADER", "", "", ""]);
-        data.rorelsensKostnader.forEach((grupp) => {
-          csvRows.push(["", grupp.namn, "", "", ""]);
-          grupp.konton.forEach((konto) => {
-            const prevValue = (konto[previousYear] as number) || 0;
-            const currValue = (konto[currentYear] as number) || 0;
-            const change = currValue - prevValue;
-            csvRows.push([
-              konto.kontonummer,
-              konto.beskrivning,
-              formatSEK(prevValue),
-              formatSEK(currValue),
-              formatSEK(change),
-            ]);
-          });
-        });
-        csvRows.push([
-          "",
-          `Summa rörelsens kostnader`,
-          "",
-          formatSEK(rorelsensSum[currentYear] || 0),
-          "",
-        ]);
-      }
-
-      // Konvertera till CSV-sträng
-      const csvContent = csvRows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-
-      // Ladda ner filen
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `resultatrapport-${selectedYear}-${företagsnamn.replace(/\s+/g, "-")}.csv`
+      exportResultatrapportCSV(
+        intakterTransformed,
+        kostnaderTransformed,
+        finansiellaIntakterTransformed,
+        finansiellaKostnaderTransformed,
+        nettoResultat,
+        företagsnamn,
+        organisationsnummer,
+        "all", // selectedMonth (resultatrapport shows full year)
+        currentYear
       );
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
 
       setExportMessage("CSV-filen har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
 import { getMomsrapport, fetchFöretagsprofil } from "../actions/momsrapportActions";
 import { MomsRad } from "../types/types";
 
@@ -187,37 +186,7 @@ export const useMomsrapport = () => {
     setExportMessage("");
 
     try {
-      const element = document.getElementById("momsrapport-print-area");
-      if (!element) {
-        throw new Error("Kunde inte hitta rapporten för export");
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        imageTimeout: 15000,
-        removeContainer: false,
-      });
-
-      const imageData = canvas.toDataURL("image/png");
-      if (
-        imageData ===
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-      ) {
-        throw new Error("Canvas är tom!");
-      }
-
-      const pdf = new jsPDF("portrait", "mm", "a4");
-      const pdfWidth = 210;
-      const imgWidth = pdfWidth - 15;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
-      pdf.save(`momsrapport-${år}-${företagsnamn.replace(/\s+/g, "-")}.pdf`);
+      await exportMomsrapportPDF(initialData, företagsnamn, organisationsnummer, år);
 
       setExportMessage("PDF-rapporten har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);
@@ -235,109 +204,7 @@ export const useMomsrapport = () => {
     setExportMessage("");
 
     try {
-      // Skapa CSV data
-      const csvRows = [];
-
-      // Header med företagsinformation
-      csvRows.push([`Momsrapport för ${företagsnamn || "Företag"}`]);
-      csvRows.push([`Organisationsnummer: ${organisationsnummer || "N/A"}`]);
-      csvRows.push([`År: ${år}`]);
-      csvRows.push([`Genererad: ${new Date().toLocaleDateString("sv-SE")}`]);
-      csvRows.push([]); // Tom rad
-
-      // Tabellhuvud
-      csvRows.push(["Fält", "Beskrivning", "Belopp (SEK)"]);
-
-      // Grupperade data
-      const groups = [
-        {
-          title: "A. Momspliktig försäljning eller uttag exkl. moms",
-          fields: ["05", "06", "07", "08"],
-        },
-        {
-          title: "B. Utgående moms på försäljning",
-          fields: ["10", "11", "12"],
-        },
-        {
-          title: "C. Inkomster med omvänd moms",
-          fields: ["20", "21", "22", "23", "24"],
-        },
-        {
-          title: "D. Utgående moms omvänd",
-          fields: ["30", "31", "32"],
-        },
-        {
-          title: "E. Momsfri försäljning och export",
-          fields: ["35", "36", "37", "38", "39", "40", "41", "42"],
-        },
-        {
-          title: "F. Ingående moms",
-          fields: ["48"],
-        },
-        {
-          title: "G. Moms att betala eller få tillbaka",
-          fields: ["49"],
-        },
-        {
-          title: "H. Import",
-          fields: ["50"],
-        },
-        {
-          title: "I. Utgående moms import",
-          fields: ["60", "61", "62"],
-        },
-      ];
-
-      // Lägg till grupperad data
-      groups.forEach((group) => {
-        csvRows.push([]); // Tom rad före grupp
-        csvRows.push([group.title, "", ""]);
-
-        group.fields.forEach((fältNr) => {
-          const rad = fullData.find((r) => r.fält === fältNr);
-          if (rad) {
-            const belopp = new Intl.NumberFormat("sv-SE", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }).format(rad.belopp);
-
-            csvRows.push([rad.fält, rad.beskrivning, belopp]);
-          }
-        });
-      });
-
-      // Lägg till summering
-      csvRows.push([]); // Tom rad
-      csvRows.push(["SUMMERING", "", ""]);
-      csvRows.push(["Utgående moms totalt", "", utgåendeMoms.toLocaleString("sv-SE")]);
-      csvRows.push(["Ingående moms", "", ingåendeMoms.toLocaleString("sv-SE")]);
-      csvRows.push([
-        "Moms att betala/få tillbaka (beräknat)",
-        "",
-        momsAttBetalaEllerFaTillbaka.toLocaleString("sv-SE"),
-      ]);
-      csvRows.push(["Moms att betala/få tillbaka (ruta 49)", "", ruta49.toLocaleString("sv-SE")]);
-      csvRows.push([
-        "Avvikelse",
-        "",
-        Math.abs(momsAttBetalaEllerFaTillbaka - ruta49).toLocaleString("sv-SE"),
-      ]);
-      csvRows.push(["Status", "", ärKorrekt ? "OK" : "AVVIKELSE"]);
-
-      // Konvertera till CSV-sträng
-      const csvContent = csvRows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-
-      // Ladda ner filen
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `momsrapport-${år}-${företagsnamn.replace(/\s+/g, "-")}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      await exportMomsrapportCSV(initialData, företagsnamn, organisationsnummer, år);
 
       setExportMessage("CSV-filen har laddats ner");
       setTimeout(() => setExportMessage(""), 3000);
