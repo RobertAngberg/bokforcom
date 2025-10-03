@@ -1,10 +1,44 @@
 /**
  * Automatisk semesterintjäning och beräkningar
  * Baserat på svenska semesterlagen och Bokios logik
+ *
+ * SEMESTERLÖNEBERÄKNING:
+ * - Sammalöneregeln (månadslönade): månadslön × 0.43% (0.0043) per dag
+ * - Procentregeln (timanställda): total lön × 12% / 25 dagar
+ * - Semesterersättning: 12% av semesterlön
  */
 
-import { BOKIO_KONSTANTER } from "./loneberakningar";
-import { SemesterIntjäning } from "../types/types";
+import { BOKIO_KONSTANTER } from "../components/Anstallda/Lonespecar/loneberakningar";
+
+// Exportera semesterkonstanter för återanvändning
+export const SEMESTER_KONSTANTER = {
+  /** Sammalöneregeln: 0.43% av månadslön per dag */
+  SEMESTERLÖN_PROCENT_PER_DAG: BOKIO_KONSTANTER.SEMESTERLÖN_PROCENT, // 0.0043
+
+  /** Semesterersättning: 12% av semesterlön */
+  SEMESTERERSÄTTNING_PROCENT: BOKIO_KONSTANTER.SEMESTERERSÄTTNING_PROCENT, // 0.12
+
+  /** Lagstadgad semester: 25 dagar per år */
+  LAGSTADGADE_SEMESTERDAGAR: 25,
+
+  /** Procentregeln: 12% av total lön för timanställda */
+  PROCENTREGELN_PROCENT: 0.12,
+} as const;
+
+export interface SemesterIntjäning {
+  intjänandeår: string; // "2024-2025"
+  intjänadeDagar: number;
+  intjänadPengaTillägg: number;
+  återstående: number;
+  uttagna: number;
+}
+
+export interface SemesterBeräkning {
+  månadslön: number;
+  anställningsdatum: Date;
+  heltid: boolean;
+  tjänstegrad: number; // 0-100%
+}
 
 /**
  * Beräknar intjänade semesterdagar per månad
@@ -71,14 +105,28 @@ function getIntjänandeÅr(datum: Date): string {
 
 /**
  * Beräknar semesterersättning (12% av semesterlön)
+ * Intern hjälpfunktion
  */
 function beräknaSemesterersättning(månadslön: number, dagar: number): number {
-  const semesterlön = månadslön * BOKIO_KONSTANTER.SEMESTERLÖN_PROCENT * dagar;
-  return semesterlön * BOKIO_KONSTANTER.SEMESTERERSÄTTNING_PROCENT;
+  const semesterlön = månadslön * SEMESTER_KONSTANTER.SEMESTERLÖN_PROCENT_PER_DAG * dagar;
+  return semesterlön * SEMESTER_KONSTANTER.SEMESTERERSÄTTNING_PROCENT;
 }
 
 /**
- * Beräknar semesterpenning vid uttag
+ * Beräknar semesterpenning vid uttag enligt sammalöneregeln
+ *
+ * Sammalöneregeln (för månadslönade):
+ * - Semesterlön: månadslön × 0.43% (0.0043) × antal dagar
+ * - Semesterersättning: 12% av semesterlön
+ *
+ * @param månadslön - Anställds månadslön i SEK
+ * @param dagar - Antal semesterdagar att ta ut
+ * @param inkluderaSemesterersättning - Om 12% tillägg ska inkluderas (default: true)
+ *
+ * @example
+ * // Exempel: 35,000 kr/månad, 5 dagar
+ * beräknaSemesterpenning(35000, 5, true)
+ * // => { semesterlön: 752.50, semesterersättning: 90.30, totaltBelopp: 842.80 }
  */
 export function beräknaSemesterpenning(
   månadslön: number,
@@ -89,9 +137,12 @@ export function beräknaSemesterpenning(
   semesterersättning: number;
   totaltBelopp: number;
 } {
-  const semesterlön = månadslön * BOKIO_KONSTANTER.SEMESTERLÖN_PROCENT * dagar;
+  // Sammalöneregeln: månadslön × 0.0043 × antal dagar
+  const semesterlön = månadslön * SEMESTER_KONSTANTER.SEMESTERLÖN_PROCENT_PER_DAG * dagar;
+
+  // Semesterersättning: 12% av semesterlön
   const semesterersättning = inkluderaSemesterersättning
-    ? semesterlön * BOKIO_KONSTANTER.SEMESTERERSÄTTNING_PROCENT
+    ? semesterlön * SEMESTER_KONSTANTER.SEMESTERERSÄTTNING_PROCENT
     : 0;
 
   return {
@@ -103,6 +154,7 @@ export function beräknaSemesterpenning(
 
 /**
  * Beräknar semesterskuld vid uppsägning
+ * Använder sammalöneregeln för att beräkna vad som ska utbetalas
  */
 export function beräknaSemesterskuld(
   månadslön: number,
@@ -111,6 +163,50 @@ export function beräknaSemesterskuld(
 ): number {
   const kvarstående = Math.max(0, intjänadSemester - outtagenSemester);
   return beräknaSemesterpenning(månadslön, kvarstående, true).totaltBelopp;
+}
+
+/**
+ * Beräknar semesterlön enligt procentregeln (för timanställda)
+ *
+ * Procentregeln:
+ * - Total semesterlön: totalt intjänad lön × 12%
+ * - Per dag: total semesterlön / 25 dagar
+ *
+ * @param totalIntjänadLön - Total lön under intjänandeåret
+ * @param dagar - Antal semesterdagar (optional, för att få belopp för specifikt antal dagar)
+ *
+ * @example
+ * // Total lön för året: 300,000 kr
+ * beräknaSemesterProcentregeln(300000)
+ * // => { totalSemesterlön: 36000, perDag: 1440, totaltBelopp: 36000 }
+ *
+ * @example
+ * // Uttag av 5 dagar
+ * beräknaSemesterProcentregeln(300000, 5)
+ * // => { totalSemesterlön: 36000, perDag: 1440, totaltBelopp: 7200 }
+ */
+export function beräknaSemesterProcentregeln(
+  totalIntjänadLön: number,
+  dagar?: number
+): {
+  totalSemesterlön: number;
+  perDag: number;
+  totaltBelopp: number;
+} {
+  // Procentregeln: 12% av total intjänad lön
+  const totalSemesterlön = totalIntjänadLön * SEMESTER_KONSTANTER.PROCENTREGELN_PROCENT;
+
+  // Per dag: total semesterlön / 25 dagar
+  const perDag = totalSemesterlön / SEMESTER_KONSTANTER.LAGSTADGADE_SEMESTERDAGAR;
+
+  // Om specifikt antal dagar anges, beräkna för det
+  const totaltBelopp = dagar ? perDag * dagar : totalSemesterlön;
+
+  return {
+    totalSemesterlön,
+    perDag,
+    totaltBelopp,
+  };
 }
 
 /**
@@ -156,5 +252,6 @@ export function valideraSemesteruttag(
 
 // Enkel util för att beräkna intjänade dagar per månad utifrån tjänstegrad
 export function beräknaIntjänadeDagar(tjänstegrad: number = 100): number {
-  return (25 / 12) * (tjänstegrad / 100);
+  const dagarPerMånad = SEMESTER_KONSTANTER.LAGSTADGADE_SEMESTERDAGAR / 12; // 25 / 12 = 2.08
+  return dagarPerMånad * (tjänstegrad / 100);
 }

@@ -6,6 +6,7 @@ import {
   sparaSemesterTransaktion,
   bokförSemester,
 } from "../actions/semesterActions";
+import { beräknaSemesterpenning } from "../utils/semesterBeräkningar";
 import type { SemesterBoxField, SemesterBoxSummary, BokföringsRad } from "../types/types";
 import { showToast } from "../../_components/Toast";
 
@@ -174,40 +175,49 @@ export function useSemester({
         ];
       }
 
-      // Beräkna belopp baserat på delta
-      const dagslön = anställdKompensation / 21;
-      const semesterlönPerDag = dagslön * 1.0545;
-      const semesterlön = deltaDagar * semesterlönPerDag;
-      const socialaAvgifter = semesterlön * 0.314;
+      // Beräkna belopp baserat på delta med korrekt sammalöneregeln
+      // Använd centraliserad beräkning: månadslön × 0.0043 × antal dagar
+      const { totaltBelopp: semesterlön } = beräknaSemesterpenning(
+        anställdKompensation,
+        Math.abs(deltaDagar),
+        true // Inkludera 12% semesterersättning
+      );
 
-      // Om delta är negativt, vänd tecken på debet/kredit
+      // Sociala avgifter: 31.42% av semesterlön
+      const socialaAvgifter = semesterlön * 0.3142;
+
+      // Justera tecken baserat på om det är ökning eller minskning
+      const adjustedSemesterlön = deltaDagar > 0 ? semesterlön : -semesterlön;
+      const adjustedSocialaAvgifter = deltaDagar > 0 ? socialaAvgifter : -socialaAvgifter;
+
+      // Skapa bokföringsrader med korrekt debet/kredit
       return [
         {
           konto: "2920",
           kontoNamn: "Upplupna semesterlöner",
-          debet: semesterlön > 0 ? Math.round(semesterlön) : 0,
-          kredit: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
+          debet: adjustedSemesterlön > 0 ? Math.round(adjustedSemesterlön) : 0,
+          kredit: adjustedSemesterlön < 0 ? Math.abs(Math.round(adjustedSemesterlön)) : 0,
           beskrivning: "Semesterjustering",
         },
         {
           konto: "2940",
           kontoNamn: "Upplupna lagstadgade sociala och andra avgifter",
-          debet: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
-          kredit: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
+          debet: adjustedSocialaAvgifter > 0 ? Math.round(adjustedSocialaAvgifter) : 0,
+          kredit: adjustedSocialaAvgifter < 0 ? Math.abs(Math.round(adjustedSocialaAvgifter)) : 0,
           beskrivning: "Semesterjustering",
         },
         {
           konto: "7290",
           kontoNamn: "Förändring av semesterlöneskuld",
-          debet: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
-          kredit: semesterlön > 0 ? Math.round(semesterlön) : 0,
+          debet: adjustedSemesterlön < 0 ? Math.abs(Math.round(adjustedSemesterlön)) : 0,
+          kredit: adjustedSemesterlön > 0 ? Math.round(adjustedSemesterlön) : 0,
           beskrivning: "Semesterjustering",
         },
         {
           konto: "7519",
           kontoNamn: "Sociala avgifter för semester- och löneskulder",
-          debet: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
-          kredit: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
+          debet: adjustedSocialaAvgifter < 0 ? Math.abs(Math.round(adjustedSocialaAvgifter)) : 0,
+          kredit: adjustedSocialaAvgifter > 0 ? Math.round(adjustedSocialaAvgifter) : 0,
           beskrivning: "Semesterjustering",
         },
       ];
