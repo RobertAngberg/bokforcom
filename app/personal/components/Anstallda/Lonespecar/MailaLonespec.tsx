@@ -5,47 +5,28 @@ import { createRoot, type Root } from "react-dom/client";
 import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import Knapp from "../../../../_components/Knapp";
 import { showToast } from "../../../../_components/Toast";
-
-interface Lönespec {
-  [key: string]: unknown;
-}
-
-interface Anställd {
-  förnamn?: string;
-  efternamn?: string;
-  mail?: string;
-  epost?: string;
-  email?: string;
-  [key: string]: unknown;
-}
-
-interface Företagsprofil {
-  [key: string]: unknown;
-}
-
-interface Extrarad {
-  [key: string]: unknown;
-}
-
-interface BeräknadeVärden {
-  [key: string]: unknown;
-}
+import type {
+  Lönespec,
+  AnställdListItem,
+  Företagsprofil,
+  ExtraradData,
+} from "../../../types/types";
 
 interface SingleLönespec {
   lönespec: Lönespec;
-  anställd: Anställd;
+  anställd: AnställdListItem;
   företagsprofil: Företagsprofil;
-  extrarader: Extrarad[];
-  beräknadeVärden?: BeräknadeVärden;
+  extrarader?: ExtraradData[];
+  beräknadeVärden?: Record<string, Record<string, unknown>>;
 }
 
 interface MailaLonespecProps {
   // For single mode
   lönespec?: Lönespec;
-  anställd?: Anställd;
+  anställd?: AnställdListItem;
   företagsprofil?: Företagsprofil;
-  extrarader?: Extrarad[];
-  beräknadeVärden?: BeräknadeVärden;
+  extrarader?: ExtraradData[];
+  beräknadeVärden?: Record<string, Record<string, unknown>>;
   // For batch mode
   batch?: SingleLönespec[];
   batchMode?: boolean;
@@ -84,6 +65,10 @@ export default function MailaLonespec({
     let sentCount = 0;
     try {
       for (const item of lönespecList) {
+        if (!item.lönespec || !item.anställd || !item.företagsprofil) {
+          console.warn("Hoppar över item utan fullständig data");
+          continue;
+        }
         let reactRoot: Root | null = null;
         const container = document.createElement("div");
         container.style.position = "fixed";
@@ -97,7 +82,7 @@ export default function MailaLonespec({
               lönespec={item.lönespec}
               anställd={item.anställd}
               företagsprofil={item.företagsprofil}
-              extrarader={item.extrarader}
+              extrarader={item.extrarader || []}
               beräknadeVärden={item.beräknadeVärden}
               onStäng={() => {}}
             />
@@ -176,6 +161,9 @@ export default function MailaLonespec({
     container.style.left = "-9999px";
     document.body.appendChild(container);
     try {
+      if (!lönespec || !anställd || !företagsprofil) {
+        throw new Error("Saknar nödvändig data för att skapa PDF");
+      }
       const mail = anställd?.mail || anställd?.epost || anställd?.email || "";
       reactRoot = createRoot(container);
       reactRoot.render(
@@ -183,7 +171,7 @@ export default function MailaLonespec({
           lönespec={lönespec}
           anställd={anställd}
           företagsprofil={företagsprofil}
-          extrarader={extrarader}
+          extrarader={extrarader || []}
           beräknadeVärden={beräknadeVärden}
           onStäng={() => {}}
         />

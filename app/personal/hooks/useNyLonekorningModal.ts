@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import {
   skapaLönekörning,
   skapaLönespecifikationerFörLönekörning,
 } from "../actions/lonekorningActions";
 import { hämtaAllaAnställda } from "../actions/anstalldaActions";
+import type { AnställdListItem, Lönekörning } from "../types/types";
 
 interface UseNyLonekorningModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLonekorningCreated: (lonekorning: any) => void;
+  onLonekorningCreated: (lonekorning: Lönekörning) => void;
 }
 
 export function useNyLonekorningModal({
@@ -19,7 +21,7 @@ export function useNyLonekorningModal({
   // State
   const [utbetalningsdatum, setUtbetalningsdatum] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(false);
-  const [anställda, setAnställda] = useState<any[]>([]);
+  const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
   const [valdaAnställda, setValdaAnställda] = useState<number[]>([]);
   const [steg, setSteg] = useState<"datum" | "anställda">("datum");
 
@@ -81,7 +83,7 @@ export function useNyLonekorningModal({
         return;
       }
 
-      onLonekorningCreated(lönekörningResult.data); // Skicka med den skapade lönekörningen
+      onLonekorningCreated(lönekörningResult.data!); // Skicka med den skapade lönekörningen
       onClose();
       setUtbetalningsdatum(new Date());
       setSteg("datum");

@@ -56,10 +56,29 @@ export default function Anstallda() {
             <Information state={state} handlers={handlers} />
           </AnimeradFlik>
           <AnimeradFlik title="Kontrakt" icon="📄">
-            <Kontrakt anställd={valdAnställd} />
+            <Kontrakt
+              anställd={{
+                ...valdAnställd,
+                id: valdAnställd.id || 0,
+                namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
+                epost: valdAnställd.mail || "",
+                sparade_dagar:
+                  typeof valdAnställd.sparade_dagar === "string"
+                    ? parseFloat(valdAnställd.sparade_dagar)
+                    : valdAnställd.sparade_dagar,
+                använda_förskott:
+                  typeof valdAnställd.använda_förskott === "string"
+                    ? parseFloat(valdAnställd.använda_förskott)
+                    : valdAnställd.använda_förskott,
+                skattekolumn:
+                  typeof valdAnställd.skattekolumn === "string"
+                    ? parseInt(valdAnställd.skattekolumn, 10)
+                    : valdAnställd.skattekolumn,
+              }}
+            />
           </AnimeradFlik>
           <AnimeradFlik title="Utlägg" icon="💳">
-            <UtlaggFlik state={state} handlers={handlers} />
+            <UtlaggFlik state={state} />
           </AnimeradFlik>
           <AnimeradFlik title="Lönespecar" icon="💰">
             <Lonespecar
@@ -68,6 +87,18 @@ export default function Anstallda() {
                 id: valdAnställd.id || 0,
                 namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
                 epost: valdAnställd.mail || "",
+                sparade_dagar:
+                  typeof valdAnställd.sparade_dagar === "string"
+                    ? parseFloat(valdAnställd.sparade_dagar)
+                    : valdAnställd.sparade_dagar,
+                använda_förskott:
+                  typeof valdAnställd.använda_förskott === "string"
+                    ? parseFloat(valdAnställd.använda_förskott)
+                    : valdAnställd.använda_förskott,
+                skattekolumn:
+                  typeof valdAnställd.skattekolumn === "string"
+                    ? parseInt(valdAnställd.skattekolumn, 10)
+                    : valdAnställd.skattekolumn,
               }}
             />
           </AnimeradFlik>

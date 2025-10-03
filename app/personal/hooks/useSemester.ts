@@ -6,7 +6,7 @@ import {
   sparaSemesterTransaktion,
   bokförSemester,
 } from "../actions/semesterActions";
-import type { SemesterBoxField, SemesterBoxSummary } from "../types/types";
+import type { SemesterBoxField, SemesterBoxSummary, BokföringsRad } from "../types/types";
 import { showToast } from "../../_components/Toast";
 
 interface UseSemesterProps {
@@ -24,7 +24,7 @@ interface UseSemesterReturn {
   editValue: string;
   loading: boolean;
   bokforModalOpen: boolean;
-  bokforRows: any[];
+  bokforRows: BokföringsRad[];
 
   // Actions
   hämtaData: () => Promise<void>;
@@ -56,7 +56,7 @@ export function useSemester({
   const [editValue, setEditValue] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
-  const [bokforRows, setBokforRows] = useState<any[]>([]);
+  const [bokforRows, setBokforRows] = useState<BokföringsRad[]>([]);
 
   // Hämta data vid laddning
   const hämtaData = useCallback(async () => {
@@ -85,6 +85,7 @@ export function useSemester({
   // Ladda data vid ändring av anställdId
   useEffect(() => {
     hämtaData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anställdId]);
 
   // Hantera manuell redigering av semesterbox
@@ -139,22 +140,36 @@ export function useSemester({
 
   // Bokföringsberäkningar enligt Bokio
   const calculateBokföringRows = useCallback(
-    (deltaDagar: number) => {
+    (deltaDagar: number): BokföringsRad[] => {
       if (deltaDagar === 0) {
         return [
-          { konto: "2920", namn: "Upplupna semesterlöner", debet: 0, kredit: 0 },
+          {
+            konto: "2920",
+            kontoNamn: "Upplupna semesterlöner",
+            debet: 0,
+            kredit: 0,
+            beskrivning: "Semesterjustering",
+          },
           {
             konto: "2940",
-            namn: "Upplupna lagstadgade sociala och andra avgifter",
+            kontoNamn: "Upplupna lagstadgade sociala och andra avgifter",
             debet: 0,
             kredit: 0,
+            beskrivning: "Semesterjustering",
           },
-          { konto: "7290", namn: "Förändring av semesterlöneskuld", debet: 0, kredit: 0 },
+          {
+            konto: "7290",
+            kontoNamn: "Förändring av semesterlöneskuld",
+            debet: 0,
+            kredit: 0,
+            beskrivning: "Semesterjustering",
+          },
           {
             konto: "7519",
-            namn: "Sociala avgifter för semester- och löneskulder",
+            kontoNamn: "Sociala avgifter för semester- och löneskulder",
             debet: 0,
             kredit: 0,
+            beskrivning: "Semesterjustering",
           },
         ];
       }
@@ -169,27 +184,31 @@ export function useSemester({
       return [
         {
           konto: "2920",
-          namn: "Upplupna semesterlöner",
+          kontoNamn: "Upplupna semesterlöner",
           debet: semesterlön > 0 ? Math.round(semesterlön) : 0,
           kredit: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
+          beskrivning: "Semesterjustering",
         },
         {
           konto: "2940",
-          namn: "Upplupna lagstadgade sociala och andra avgifter",
+          kontoNamn: "Upplupna lagstadgade sociala och andra avgifter",
           debet: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
           kredit: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
+          beskrivning: "Semesterjustering",
         },
         {
           konto: "7290",
-          namn: "Förändring av semesterlöneskuld",
+          kontoNamn: "Förändring av semesterlöneskuld",
           debet: semesterlön < 0 ? Math.abs(Math.round(semesterlön)) : 0,
           kredit: semesterlön > 0 ? Math.round(semesterlön) : 0,
+          beskrivning: "Semesterjustering",
         },
         {
           konto: "7519",
-          namn: "Sociala avgifter för semester- och löneskulder",
+          kontoNamn: "Sociala avgifter för semester- och löneskulder",
           debet: socialaAvgifter < 0 ? Math.abs(Math.round(socialaAvgifter)) : 0,
           kredit: socialaAvgifter > 0 ? Math.round(socialaAvgifter) : 0,
+          beskrivning: "Semesterjustering",
         },
       ];
     },
@@ -214,7 +233,7 @@ export function useSemester({
       try {
         // Mappa om bokforRows till rätt format för bokförSemester
         const rader = bokforRows.map((row) => ({
-          kontobeskrivning: `${row.konto} ${row.namn}`,
+          kontobeskrivning: `${row.konto} ${row.kontoNamn}`,
           belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
         }));
 

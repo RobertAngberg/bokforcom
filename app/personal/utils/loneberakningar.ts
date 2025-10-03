@@ -1,16 +1,17 @@
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
-import { LöneBeräkning, LöneKontrakt, DagAvdrag, BilTyp, ExtraRad } from "../types/types";
+import type {
+  LöneKontrakt,
+  DagAvdrag,
+  BilTyp,
+  ExtraradData,
+  Lönespec,
+  AnställdData,
+} from "../types/types";
 
 // Om semestertillägg – kortfattat:
 
-// Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut nexport function klassificeraExtrarader(extrarader: any[]) {
-let bruttolönTillägg = 0;
-let skattepliktigaFörmåner = 0;
-let skattefriaErsättningar = 0;
-let övrigaTillägg = 0;
-let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
-// let nettolönejustering = 0;tällda tar semester.
+// Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut när anställda tar semester.
 // Skatt: Semestertillägg är skattepliktigt och ska beskattas som vanlig lön.
 // Syfte: Ger extra pengar under semestern utöver ordinarie lön.
 
@@ -228,17 +229,17 @@ export function beräknaVårdavdrag(månadslön: number): number {
  * Klassificerar extrarader enligt konfigurationens flaggor.
  * Summerar till rätt kategori för löneberäkningarna.
  */
-export function klassificeraExtrarader(extrarader: any[]) {
+export function klassificeraExtrarader(extrarader: ExtraradData[]) {
   let bruttolönTillägg = 0;
   let skattepliktigaFörmåner = 0;
   let skattefriaErsättningar = 0;
   let övrigaTillägg = 0;
   let kontantlönAvdrag = 0; // Lägg till denna variabel
-  let nettolönejustering = 0;
+  let nettolönejustering = 0; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   extrarader.forEach((rad) => {
     const konfig = RAD_KONFIGURATIONER[rad.typ];
-    const belopp = parseFloat(rad.kolumn3) || 0;
+    const belopp = parseFloat(rad.kolumn3 || "0") || 0;
 
     // DEBUG: Logga klassificering
     console.log(`📝 Klassificerar ${rad.typ}: ${belopp} kr`, {
@@ -382,11 +383,11 @@ export function beräknaSkattMedTabell(bruttolön: number, skattetabell?: number
 /**
  * Beräknar skattunderlag med alla skattepliktiga tillägg
  */
-export function beräknaSkattunderlag(grundlön: number, extrarader: any[]): number {
+export function beräknaSkattunderlag(grundlön: number, extrarader: ExtraradData[]): number {
   let skattunderlag = grundlön;
   extrarader.forEach((rad) => {
     if (RAD_KONFIGURATIONER[rad.typ]?.skattepliktig) {
-      skattunderlag += parseFloat(rad.kolumn3) || 0;
+      skattunderlag += parseFloat(rad.kolumn3 || "0") || 0;
     }
   });
   return skattunderlag;
@@ -404,7 +405,7 @@ export function beräknaKomplett(
   kontrakt: LöneKontrakt,
   övertidTimmar: number = 0,
   dagAvdrag: DagAvdrag = { föräldraledighet: 0, vårdAvSjuktBarn: 0, sjukfrånvaro: 0 },
-  extrarader: any[] = []
+  extrarader: ExtraradData[] = []
 ) {
   const timlön = beräknaTimlön(kontrakt.månadslön, kontrakt.arbetstimmarPerVecka);
   const daglön = beräknaDaglön(kontrakt.månadslön);
@@ -468,8 +469,8 @@ export function beräknaKomplett(
 export function beräknaLonekomponenter(
   grundlön: number,
   övertid: number,
-  lönespec: any,
-  extrarader: any[]
+  lönespec: Lönespec | null,
+  extrarader: ExtraradData[]
 ) {
   const originalGrundlön = grundlön ?? lönespec?.grundlön ?? lönespec?.bruttolön ?? 35000;
   const originalÖvertid = övertid ?? lönespec?.övertid ?? 0;
@@ -492,10 +493,10 @@ export function beräknaLonekomponenter(
   };
 
   let karensavdragSumma = 0;
-  const övrigaExtrarader: any[] = [];
+  const övrigaExtrarader: ExtraradData[] = [];
 
   extrarader.forEach((rad) => {
-    const antal = parseFloat(rad.kolumn2) || 1;
+    const antal = parseFloat(rad.kolumn2 || "1") || 1;
 
     if (rad.kolumn1?.toLowerCase().includes("karensavdrag")) {
       // Hantera karensavdrag enligt Bokio
@@ -512,7 +513,7 @@ export function beräknaLonekomponenter(
   });
 
   // Om karensavdrag finns, lägg till det som dagavdrag (så det bara dras en gång)
-  let justeradeDagAvdrag = { ...dagAvdrag };
+  const justeradeDagAvdrag = { ...dagAvdrag };
   if (karensavdragSumma > 0) {
     // Vi lägger karensavdraget som "sjukfrånvaro" (eller egen property om du vill)
     justeradeDagAvdrag.sjukfrånvaro += karensavdragSumma / beräknaDaglön(originalGrundlön);
@@ -532,7 +533,10 @@ export function beräknaLonekomponenter(
   return {
     grundlön: originalGrundlön,
     övertid: originalÖvertid,
-    extraradsSumma: övrigaExtrarader.reduce((sum, rad) => sum + (parseFloat(rad.kolumn3) || 0), 0),
+    extraradsSumma: övrigaExtrarader.reduce(
+      (sum, rad) => sum + (parseFloat(rad.kolumn3 || "0") || 0),
+      0
+    ),
     kontantlön: beräkningar.kontantlön, // Ny: kontantlön för bokföring
     bruttolön: beräkningar.bruttolön,
     socialaAvgifter: beräkningar.socialaAvgifter,
@@ -708,7 +712,7 @@ export function beräknaTotaltSemesterSaldo(
  * Beräknar total semesterintjäning sedan anställningsdatum
  * Använder formeln: (dagar sedan anställning / 365) * 25 * tjänstegrad
  */
-export function beräknaTotalIntjäningSedanAnställning(anställd: any): number {
+export function beräknaTotalIntjäningSedanAnställning(anställd: AnställdData): number {
   const idag = new Date();
   const anställningsdatum = new Date(anställd.startdatum);
 
@@ -718,7 +722,7 @@ export function beräknaTotalIntjäningSedanAnställning(anställd: any): number
   );
 
   // Beräkna intjänade dagar: (dagar / 365) * 25 semesterdagar per år
-  const tjänstegrad = (anställd.deltid_procent || 100) / 100;
+  const tjänstegrad = (parseFloat(anställd.deltidProcent || "100") || 100) / 100;
   const intjänadeDagar = (dagarSedanAnställning / 365) * 25 * tjänstegrad;
 
   return Math.max(0, parseFloat(intjänadeDagar.toFixed(2)));

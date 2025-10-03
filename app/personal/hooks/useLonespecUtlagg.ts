@@ -1,15 +1,18 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { läggTillUtläggSomExtrarad } from "../actions/lonespecarActions";
 import { uppdateraUtläggStatus, hämtaUtlägg } from "../actions/utlaggActions";
+import type { UtläggQueryResult, ExtraradData } from "../types/types";
 
 export const useLonespecUtlagg = (
-  lönespecUtlägg: any[],
+  lönespecUtlägg: UtläggQueryResult[],
   lönespecId?: number,
-  extrarader: any[] = [],
+  extrarader: ExtraradData[] = [],
   anställdId?: number,
-  onUtläggAdded?: (utlägg: any[], extraradResults: any[]) => Promise<void>
+  onUtläggAdded?: (utlägg: UtläggQueryResult[], extraradResults: unknown[]) => Promise<void>
 ) => {
-  const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<any[]>(lönespecUtlägg);
+  const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] =
+    useState<UtläggQueryResult[]>(lönespecUtlägg);
   const [läggerTillUtlägg, setLäggerTillUtlägg] = useState(false);
   const [toast, setToast] = useState({
     message: "",
@@ -28,7 +31,8 @@ export const useLonespecUtlagg = (
             const beskrivningsMatch =
               extrarad.kolumn1?.includes(utlägg.beskrivning) ||
               extrarad.kolumn1?.includes(`Utlägg - ${utlägg.datum}`);
-            const beloppMatch = Math.abs(parseFloat(extrarad.kolumn3) - utlägg.belopp) < 0.01;
+            const beloppMatch =
+              Math.abs(parseFloat(extrarad.kolumn3 || "0") - utlägg.belopp) < 0.01;
 
             return beskrivningsMatch && beloppMatch;
           });
@@ -64,7 +68,7 @@ export const useLonespecUtlagg = (
         const kombineradeUtlägg = [
           ...lönespecUtlägg,
           ...allUtlägg.filter(
-            (u: any) => u.status === "Väntande" && !lönespecUtlägg.some((lu: any) => lu.id === u.id)
+            (u) => u.status === "Väntande" && !lönespecUtlägg.some((lu) => lu.id === u.id)
           ),
         ];
 
@@ -100,7 +104,7 @@ export const useLonespecUtlagg = (
 
     setLäggerTillUtlägg(true);
     try {
-      const extraradResults: any[] = [];
+      const extraradResults: unknown[] = [];
       for (const utlägg of väntandeUtlägg) {
         // Enkel, tydlig funktion - spara resultatet
         const result = await läggTillUtläggSomExtrarad(lönespecId, utlägg);

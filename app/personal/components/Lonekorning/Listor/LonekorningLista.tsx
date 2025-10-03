@@ -11,8 +11,7 @@ export default function LonekorningLista({
   hasLonekorningar = false,
   listLoading = false,
   formatPeriodName = (period: string) => period,
-  getItemClassName = (_lonekorning, _valdLonekorningItem) =>
-    "p-4 border rounded-lg cursor-pointer hover:bg-gray-50",
+  getItemClassName = () => "p-4 border rounded-lg cursor-pointer hover:bg-gray-50",
 }: LonekorningListaProps) {
   // Now using data from props instead of duplicate useLonekorning hook
 

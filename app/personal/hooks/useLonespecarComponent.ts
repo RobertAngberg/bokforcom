@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { hämtaLönespecifikationer } from "../actions/lonespecarActions";
 import { hämtaUtlägg } from "../actions/utlaggActions";
 import { useLonespec } from "./useLonespecar";
+import type { AnställdData, LönespecData, UtläggQueryResult } from "../types/types";
 
 interface UseLonespecarComponentProps {
-  anställd: any;
-  specificLönespec?: any;
+  anställd: AnställdData;
+  specificLönespec?: LönespecData;
 }
 
 export function useLonespecarComponent({
@@ -15,21 +16,11 @@ export function useLonespecarComponent({
   const { setLonespecar } = useLonespec();
 
   // State
-  const [utlägg, setUtlägg] = useState<any[]>([]);
+  const [utlägg, setUtlägg] = useState<UtläggQueryResult[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Effects
-  useEffect(() => {
-    if (specificLönespec) {
-      setLonespecar([specificLönespec]);
-      setLoading(false);
-      return;
-    }
-    loadData();
-  }, [anställd?.id, specificLönespec]);
-
   // Data loading
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!anställd?.id) return;
 
     try {
@@ -45,7 +36,17 @@ export function useLonespecarComponent({
     } finally {
       setLoading(false);
     }
-  };
+  }, [anställd?.id, setLonespecar]);
+
+  // Effects
+  useEffect(() => {
+    if (specificLönespec) {
+      setLonespecar([{ ...specificLönespec, id: String(specificLönespec.id) }]);
+      setLoading(false);
+      return;
+    }
+    loadData();
+  }, [specificLönespec, loadData, setLonespecar]);
 
   return {
     // State

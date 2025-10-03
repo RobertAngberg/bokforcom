@@ -1,26 +1,6 @@
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
 import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
 
-// Om semestertillägg – kortfattat:
-
-// // Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut nexport function klassificeraExtrarader(extrarader: any[]) {
-// let bruttolönTillägg = 0;
-// let skattepliktigaFörmåner = 0;
-// let skattefriaErsättningar = 0;
-// let övrigaTillägg = 0;
-// let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
-let nettolönejustering = 0;
-// // Skatt: Semestertillägg är skattepliktigt och ska beskattas som vanlig lön.
-// // Syfte: Ger extra pengar under semestern utöver ordinarie lön.
-
-// Så funkar det i koden:
-// I extrarad-konfigurationen har semestertillägg läggTillIBruttolön: true.
-// Vid löneberäkning summeras alla extrarader med denna flagga direkt till bruttolönen.
-// Skatt och sociala avgifter beräknas på bruttolönen inklusive semestertillägg.
-// Ingen hårdkodning – det styrs helt av flaggan i konfigurationen.
-
-//#region Huvud
-
 export interface LöneBeräkning {
   grundlön: number;
   tillägg: number;
@@ -54,6 +34,7 @@ export interface Extrarad {
   kolumn2: string; // Antal
   kolumn3: string; // Belopp
   kolumn4?: string; // Kommentar
+  typ?: string; // Typ av extrarad
 }
 //#endregion
 
@@ -263,15 +244,16 @@ export function beräknaVårdavdrag(månadslön: number): number {
  * Klassificerar extrarader enligt konfigurationens flaggor.
  * Summerar till rätt kategori för löneberäkningarna.
  */
-export function klassificeraExtrarader(extrarader: any[]) {
+export function klassificeraExtrarader(extrarader: Extrarad[]) {
   let bruttolönTillägg = 0;
   let skattepliktigaFörmåner = 0;
   let skattefriaErsättningar = 0;
   let övrigaTillägg = 0;
-  let kontantlönAvdrag = 0; // Lägg till denna variabel
+  let kontantlönAvdrag = 0; // Avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
+  let nettolönejustering = 0;
 
   extrarader.forEach((rad) => {
-    const konfig = RAD_KONFIGURATIONER[rad.typ];
+    const konfig = rad.typ ? RAD_KONFIGURATIONER[rad.typ] : undefined;
     const belopp = parseFloat(rad.kolumn3) || 0;
 
     // DEBUG: Logga klassificering
@@ -308,8 +290,8 @@ export function klassificeraExtrarader(extrarader: any[]) {
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
-    kontantlönAvdrag, // Nytt: returnera avdrag
-    // nettolönejustering,
+    kontantlönAvdrag,
+    nettolönejustering,
   };
 }
 
@@ -416,10 +398,10 @@ export function beräknaSkattMedTabell(bruttolön: number, skattetabell?: number
 /**
  * Beräknar skattunderlag med alla skattepliktiga tillägg
  */
-export function beräknaSkattunderlag(grundlön: number, extrarader: any[]): number {
+export function beräknaSkattunderlag(grundlön: number, extrarader: Extrarad[]): number {
   let skattunderlag = grundlön;
   extrarader.forEach((rad) => {
-    if (RAD_KONFIGURATIONER[rad.typ]?.skattepliktig) {
+    if (rad.typ && RAD_KONFIGURATIONER[rad.typ]?.skattepliktig) {
       skattunderlag += parseFloat(rad.kolumn3) || 0;
     }
   });
@@ -438,7 +420,7 @@ export function beräknaKomplett(
   kontrakt: LöneKontrakt,
   övertidTimmar: number = 0,
   dagAvdrag: DagAvdrag = { föräldraledighet: 0, vårdAvSjuktBarn: 0, sjukfrånvaro: 0 },
-  extrarader: any[] = []
+  extrarader: Extrarad[] = []
 ) {
   const timlön = beräknaTimlön(kontrakt.månadslön, kontrakt.arbetstimmarPerVecka);
   const daglön = beräknaDaglön(kontrakt.månadslön);
@@ -452,7 +434,7 @@ export function beräknaKomplett(
     skattefriaErsättningar,
     övrigaTillägg,
     kontantlönAvdrag,
-    // nettolönejustering,
+    nettolönejustering,
   } = klassificeraExtrarader(extrarader);
 
   // Beräkna kontantlön först (som ska på 7210) - UTAN förmåner men MED extrarad-avdrag
@@ -469,8 +451,7 @@ export function beräknaKomplett(
 
   const skattunderlag = bruttolön; // Skattepliktiga förmåner redan inkluderade i bruttolön
   const skatt = beräknaSkattTabell34(skattunderlag);
-  const nettolön = kontantlön - skatt + skattefriaErsättningar;
-  //  + nettolönejustering;
+  const nettolön = kontantlön - skatt + skattefriaErsättningar + nettolönejustering;
 
   const socialaAvgifter = beräknaSocialaAvgifter(skattunderlag, kontrakt.socialaAvgifterSats);
   const lönekostnad = bruttolön + socialaAvgifter; // Skattepliktiga förmåner redan inkluderade i bruttolön
@@ -502,8 +483,8 @@ export function beräknaKomplett(
 export function beräknaLonekomponenter(
   grundlön: number,
   övertid: number,
-  lönespec: any,
-  extrarader: any[]
+  lönespec: { grundlön?: number; bruttolön?: number; övertid?: number; id?: number },
+  extrarader: Extrarad[]
 ) {
   const originalGrundlön = grundlön ?? lönespec?.grundlön ?? lönespec?.bruttolön ?? 35000;
   const originalÖvertid = övertid ?? lönespec?.övertid ?? 0;
@@ -526,7 +507,7 @@ export function beräknaLonekomponenter(
   };
 
   let karensavdragSumma = 0;
-  const övrigaExtrarader: any[] = [];
+  const övrigaExtrarader: Extrarad[] = [];
 
   extrarader.forEach((rad) => {
     const antal = parseFloat(rad.kolumn2) || 1;
@@ -546,7 +527,7 @@ export function beräknaLonekomponenter(
   });
 
   // Om karensavdrag finns, lägg till det som dagavdrag (så det bara dras en gång)
-  let justeradeDagAvdrag = { ...dagAvdrag };
+  const justeradeDagAvdrag = { ...dagAvdrag };
   if (karensavdragSumma > 0) {
     // Vi lägger karensavdraget som "sjukfrånvaro" (eller egen property om du vill)
     justeradeDagAvdrag.sjukfrånvaro += karensavdragSumma / beräknaDaglön(originalGrundlön);
@@ -742,7 +723,10 @@ export function beräknaTotaltSemesterSaldo(
  * Beräknar total semesterintjäning sedan anställningsdatum
  * Använder formeln: (dagar sedan anställning / 365) * 25 * tjänstegrad
  */
-export function beräknaTotalIntjäningSedanAnställning(anställd: any): number {
+export function beräknaTotalIntjäningSedanAnställning(anställd: {
+  startdatum: string | Date;
+  deltid_procent?: number;
+}): number {
   const idag = new Date();
   const anställningsdatum = new Date(anställd.startdatum);
 

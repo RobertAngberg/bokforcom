@@ -181,8 +181,24 @@ export type AnställdData = {
 export interface AnställdListItem {
   id: number;
   namn: string;
+  förnamn?: string;
+  efternamn?: string;
   epost: string;
+  mail?: string;
+  email?: string;
   roll?: string;
+  sparade_dagar?: number;
+  använda_förskott?: number;
+  skattetabell?: string;
+  skattekolumn?: number;
+  clearingnummer?: string;
+  bankkonto?: string;
+  semesterdagarPerÅr?: number;
+  kvarandeDagar?: number;
+  sparadeDagar?: number;
+  användaFörskott?: number;
+  kvarandeFörskott?: number;
+  innestående?: number;
 }
 
 export interface AnställdaRadProps {
@@ -526,7 +542,7 @@ export interface LonekorningListaProps {
 }
 
 export interface LonespecListaProps {
-  valdaSpecar: Lönespec[];
+  valdaSpecar: LönespecData[];
   anstallda: any[];
   utlaggMap: Record<number, any[]>;
   lönekörning?: any;
@@ -577,7 +593,7 @@ export interface UtbetalningsdatumValjareProps {
 export interface SkatteBokforingModalProps {
   skatteModalOpen: boolean;
   setSkatteModalOpen: (open: boolean) => void;
-  valdaSpecar: Lönespec[];
+  valdaSpecar: LönespecData[];
   skatteData: any;
   utbetalningsdatum: string | null;
   skatteDatum: Date | null;
@@ -952,20 +968,6 @@ export interface LönetabellProps {
   formatNoDecimals: (value: number) => string;
 }
 
-export interface SammanfattningProps {
-  totalLönekostnad: number;
-  bruttolön: number;
-  socialaAvgifter?: number;
-  skatt: number;
-  extraraderMapped: Array<{
-    benämning: string;
-    summa: number;
-  }>;
-  formatNoDecimals: (value: number) => string;
-  utbetalningsDatum: Date;
-  nettolön: number;
-}
-
 export interface SemesterInfoProps {
   lönespec: Lönespec;
   anställd: AnställdData;
@@ -1078,9 +1080,13 @@ export interface Utlägg {
 }
 
 export interface UtlaggFlikProps {
-  state: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
-  handlers: any;
-  utlaggFlikData: () => any;
+  state: {
+    valdAnställd?: AnställdData | AnställdListItem | null;
+  };
+  handlers?: {
+    laddaUtläggFörAnställd?: () => void;
+    [key: string]: unknown;
+  };
 }
 
 export interface UtläggProps {
@@ -1103,8 +1109,8 @@ export interface WizardBokföringsPost {
 
 export interface BokforLonerProps {
   lönespec: any;
-  extrarader: Record<string, ExtraradData[]>[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  extrarader: ExtraradData[];
+  beräknadeVärden: BeräknadeVärden;
   anställdNamn: string;
   isOpen: boolean;
   onClose: () => void;
@@ -1115,7 +1121,7 @@ export interface SingleLönespec {
   lönespec: any;
   anställd: AnställdListItem;
   företagsprofil: any;
-  extrarader: Record<string, ExtraradData[]>[];
+  extrarader: ExtraradData[];
   beräknadeVärden?: any;
 }
 

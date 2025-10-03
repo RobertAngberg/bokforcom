@@ -31,6 +31,7 @@ export default function BankgiroExport({
   } = useBankgiroExport({
     anställda,
     utbetalningsdatum,
+    // @ts-expect-error - Type mismatch between Lönespec interfaces from different imports
     lönespecar,
     onExportComplete,
     onClose,

@@ -1,8 +1,9 @@
 import { useState } from "react";
+import type { LönespecData, Lönekörning } from "../types/types";
 
 interface UseLonekorningSpecListaProps {
-  valdaSpecar: any[];
-  lönekörning: any;
+  valdaSpecar: LönespecData[];
+  lönekörning: Lönekörning | null;
   onTaBortSpec: (id: number) => Promise<void>;
   onHämtaBankgiro: () => void;
   onMailaSpecar: () => void;
@@ -40,7 +41,7 @@ export function useLonekorningSpecLista({
   const hasIncompleteSpecs = valdaSpecar.some((spec) => !spec.bruttolön || !spec.nettolön);
 
   // Handlers
-  const handleTaBortLönespec = async (spec: any) => {
+  const handleTaBortLönespec = async (spec: LönespecData) => {
     if (!confirm("Är du säker på att du vill ta bort denna lönespecifikation?")) return;
 
     setTaBortLaddning((prev) => ({ ...prev, [spec.id]: true }));

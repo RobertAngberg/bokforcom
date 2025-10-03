@@ -21,6 +21,9 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
   const { laddaUtläggFörAnställd } = useUtlagg(anställd.id);
   const { state, handlers, actions } = useAnstallda();
 
+  // Prevent unused variable warning
+  void laddaUtläggFörAnställd;
+
   // Sätt valdAnställd när komponenten mountar
   React.useEffect(() => {
     if (anställd && (!state.valdAnställd || state.valdAnställd.id !== anställd.id)) {
@@ -50,16 +53,31 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
             <UtlaggFlik
               state={{
                 valdAnställd: anställd,
-                // Utlägg state laddas via useUtlagg hook
-              }}
-              handlers={{
-                laddaUtläggFörAnställd,
               }}
             />
           </AnimeradFlik>
 
           <AnimeradFlik title="Kontrakt" icon="📄">
-            <Kontrakt anställd={anställd} />
+            <Kontrakt
+              anställd={{
+                ...anställd,
+                id: anställd.id || 0,
+                namn: anställdNamn,
+                epost: anställd.mail,
+                sparade_dagar:
+                  typeof anställd.sparade_dagar === "string"
+                    ? parseFloat(anställd.sparade_dagar)
+                    : anställd.sparade_dagar,
+                använda_förskott:
+                  typeof anställd.använda_förskott === "string"
+                    ? parseFloat(anställd.använda_förskott)
+                    : anställd.använda_förskott,
+                skattekolumn:
+                  typeof anställd.skattekolumn === "string"
+                    ? parseInt(anställd.skattekolumn, 10)
+                    : anställd.skattekolumn,
+              }}
+            />
           </AnimeradFlik>
 
           <AnimeradFlik title="Lönespecar" icon="💰">

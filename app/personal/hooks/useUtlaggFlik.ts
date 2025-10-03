@@ -3,10 +3,24 @@ import { useRouter } from "next/navigation";
 import { taBortUtlägg } from "../actions/utlaggActions";
 import type { Utlägg } from "../types/types";
 
+interface UtlaggFlikState {
+  valdAnställd?: { id: number } | null;
+  [key: string]: unknown;
+}
+
+interface UtlaggFlikHandlers {
+  laddaUtläggFörAnställd?: (id: number) => Promise<void>;
+  [key: string]: unknown;
+}
+
 export const useUtlaggFlik = (
-  state: any,
-  handlers: any,
-  utlaggFlikData: () => { columns: any[]; utlägg: Utlägg[]; loading: boolean }
+  state: UtlaggFlikState,
+  handlers: UtlaggFlikHandlers,
+  utlaggFlikData: () => {
+    columns: { key: string; label: string; render?: (value: unknown, row: Utlägg) => unknown }[];
+    utlägg: Utlägg[];
+    loading: boolean;
+  }
 ) => {
   const router = useRouter();
   const [toast, setToast] = useState<{
@@ -15,7 +29,7 @@ export const useUtlaggFlik = (
   } | null>(null);
 
   // Använd den delade utlaggFlikData funktionen
-  const { columns: basicColumns, utlägg, loading } = utlaggFlikData();
+  const { utlägg, loading } = utlaggFlikData();
 
   const handleNyttUtlägg = async () => {
     router.push("/bokfor?utlagg=true");

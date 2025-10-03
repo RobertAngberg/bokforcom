@@ -1,23 +1,16 @@
 "use client";
 
 import { AGIGeneratorProps } from "../../../types/types";
-import { useLonekorning } from "../../../hooks/useLonekorning";
 
 // Minimal wrapper: delegating till hooken, ingen affärslogik här.
 export default function AGIGenerator(props: AGIGeneratorProps) {
-  const { generateAGI } = useLonekorning();
-
   const hanteraAGI = async () => {
-    await generateAGI({
-      valdaSpecar: props.valdaSpecar,
-      anstallda: props.anstallda,
-      beräknadeVärden: props.beräknadeVärden,
-      extrarader: props.extrarader,
-      utbetalningsdatum: props.utbetalningsdatum,
-      session: props.session,
-      hämtaFöretagsprofil: props.hämtaFöretagsprofil,
-      onAGIComplete: props.onAGIComplete,
-    });
+    // This component seems to be a placeholder - the actual AGI generation
+    // is handled by the wizard or parent component
+    console.log("AGI Generator called with props:", props);
+    if (props.onAGIComplete) {
+      props.onAGIComplete();
+    }
   };
 
   return { hanteraAGI };

@@ -124,7 +124,7 @@ export function useNyAnstalld() {
         rensaFormulär();
         setVisaNyAnställdFormulär(false);
         onAnställdSparad?.();
-      } catch (error) {
+      } catch {
         showToast("Fel vid sparande av anställd", "error");
       } finally {
         setNyAnställdLoading(false);

@@ -548,6 +548,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     handlers: {
       hanteraAnställdKlick,
       taBortAnställd: taBortAnställdMedKonfirmation,
+      taBortAnställdFrånLista: taBortAnställdMedKonfirmation,
       visaNyAnställd,
       döljNyAnställd,
       hanteraNyAnställdSparad,

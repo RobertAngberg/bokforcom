@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { UtläggBokföringModal, UtlaggBokföringsRad, Utlägg } from "../types/types";
+import type { UtläggBokföringModal, UtlaggBokföringsRad, UtläggQueryResult } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { hämtaUtlägg, taBortUtlägg } from "../actions/utlaggActions";
 import { showToast } from "../../_components/Toast";
@@ -17,7 +17,7 @@ interface UseUtlaggProps {
 export function useUtlagg(props?: UseUtlaggProps | number | null) {
   // Backwards compatibility: support both old signature and new object
   const anställdId = typeof props === "object" && props !== null ? props.anställdId : props;
-  const [utlägg, setUtlägg] = useState<Utlägg[]>([]);
+  const [utlägg, setUtlägg] = useState<UtläggQueryResult[]>([]);
   const [utläggLoading, setUtläggLoading] = useState(false);
   const [utläggBokföringModal, setUtläggBokföringModal] = useState<UtläggBokföringModal>({
     isOpen: false,
@@ -29,7 +29,7 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUtläggId, setDeleteUtläggId] = useState<number | null>(null);
 
-  const openUtläggBokföringModal = (utlägg: Utlägg, previewRows: unknown[]) => {
+  const openUtläggBokföringModal = (utlägg: UtläggQueryResult, previewRows: unknown[]) => {
     setUtläggBokföringModal({
       isOpen: true,
       utlägg,
@@ -66,11 +66,11 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
   // ===========================================
 
   // Helper functions för kolumnrendering
-  const formatDatum = (row: Utlägg) => {
+  const formatDatum = (row: UtläggQueryResult) => {
     return row?.datum ? new Date(row.datum).toLocaleDateString("sv-SE") : "-";
   };
 
-  const formatBelopp = (row: Utlägg) => {
+  const formatBelopp = (row: UtläggQueryResult) => {
     return row && row.belopp !== undefined && row.belopp !== null
       ? `${row.belopp.toLocaleString("sv-SE")} kr`
       : "-";
@@ -145,12 +145,12 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
       {
         key: "datum",
         label: "Datum",
-        render: (value: string, row: Utlägg) => formatDatum(row),
+        render: (value: string, row: UtläggQueryResult) => formatDatum(row),
       },
       {
         key: "belopp",
         label: "Belopp",
-        render: (value: number, row: Utlägg) => formatBelopp(row),
+        render: (value: number, row: UtläggQueryResult) => formatBelopp(row),
       },
       { key: "beskrivning", label: "Beskrivning" },
       {
@@ -161,7 +161,7 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
       {
         key: "åtgärd",
         label: "Åtgärd",
-        render: (_: unknown, row: Utlägg) => (row.status === "Väntande" ? null : null), // Placeholder för nu
+        render: (_: unknown, row: UtläggQueryResult) => (row.status === "Väntande" ? null : null), // Placeholder för nu
       },
     ];
 

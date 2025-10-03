@@ -3,67 +3,34 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
-import type { SingleLönespec } from "../types/types";
+import type { SingleLönespec, AnställdListItem, ExtraradData } from "../types/types";
 import { showToast } from "../../_components/Toast";
-
-interface Lönespec {
-  [key: string]: unknown;
-}
-
-interface Anställd {
-  namn?: string;
-  förnamn?: string;
-  efternamn?: string;
-  mail?: string;
-  epost?: string;
-  email?: string;
-  [key: string]: unknown;
-}
-
-interface Företagsprofil {
-  [key: string]: unknown;
-}
-
-interface Extrarad {
-  [key: string]: unknown;
-}
-
-interface BeräknadeVärden {
-  [key: string]: unknown;
-}
 
 interface ForhandsgranskningComponent {
   (props: {
-    lönespec: Lönespec;
-    anställd: Anställd;
-    företagsprofil: Företagsprofil;
-    extrarader: Extrarad[];
-    beräknadeVärden?: BeräknadeVärden;
+    lönespec: Record<string, unknown>;
+    anställd: AnställdListItem;
+    företagsprofil: Record<string, unknown>;
+    extrarader: ExtraradData[];
+    beräknadeVärden?: Record<string, unknown>;
     onStäng: () => void;
   }): React.JSX.Element;
 }
 
 interface UseMailaLonespecProps {
   // Single mode props
-  lönespec?: Lönespec;
-  anställd?: Anställd;
-  företagsprofil?: Företagsprofil;
-  extrarader?: Extrarad[];
-  beräknadeVärden?: BeräknadeVärden;
-
+  lönespec?: Record<string, unknown>;
+  anställd?: AnställdListItem;
+  företagsprofil?: Record<string, unknown>;
+  extrarader?: ExtraradData[];
+  beräknadeVärden?: Record<string, unknown>;
   // Batch mode props
   batch?: SingleLönespec[];
   batchMode?: boolean;
-
-  // Callbacks
-  onMailComplete?: () => void;
-  onClose?: () => void;
-
-  // Component for PDF generation
-  ForhandsgranskningComponent?: ForhandsgranskningComponent;
-
-  // Modal control
   open?: boolean;
+  onClose?: () => void;
+  onMailComplete?: () => void;
+  ForhandsgranskningComponent: ForhandsgranskningComponent;
 }
 
 export function useMailaLonespec({
@@ -91,7 +58,13 @@ export function useMailaLonespec({
 
   // PDF generation logic - moved to external function to avoid JSX in .ts file
   const generatePDF = async (
-    item: SingleLönespec,
+    item: {
+      lönespec?: Record<string, unknown>;
+      anställd?: AnställdListItem;
+      företagsprofil?: Record<string, unknown>;
+      extrarader?: ExtraradData[];
+      beräknadeVärden?: Record<string, unknown>;
+    },
     ForhandsgrankningComponent: ForhandsgranskningComponent
   ): Promise<Blob> => {
     let reactRoot: Root | null = null;
@@ -104,12 +77,19 @@ export function useMailaLonespec({
       const { createElement } = await import("react");
       reactRoot = createRoot(container);
 
+      // Ensure we have valid defaults that match types
+      const defaultAnställd: AnställdListItem = {
+        id: 0,
+        namn: "",
+        epost: "",
+      };
+
       const component = createElement(ForhandsgrankningComponent, {
-        lönespec: item.lönespec,
-        anställd: item.anställd,
-        företagsprofil: item.företagsprofil,
-        extrarader: item.extrarader,
-        beräknadeVärden: item.beräknadeVärden,
+        lönespec: item.lönespec || {},
+        anställd: item.anställd || defaultAnställd,
+        företagsprofil: item.företagsprofil || {},
+        extrarader: item.extrarader || [],
+        beräknadeVärden: item.beräknadeVärden || {},
         onStäng: () => {},
       });
 
@@ -148,7 +128,16 @@ export function useMailaLonespec({
   };
 
   // Send email with PDF
-  const sendEmail = async (item: SingleLönespec, pdfBlob: Blob): Promise<void> => {
+  const sendEmail = async (
+    item: {
+      lönespec?: Record<string, unknown>;
+      anställd?: AnställdListItem;
+      företagsprofil?: Record<string, unknown>;
+      extrarader?: ExtraradData[];
+      beräknadeVärden?: Record<string, unknown>;
+    },
+    pdfBlob: Blob
+  ): Promise<void> => {
     const mail = item.anställd?.mail || item.anställd?.epost || item.anställd?.email || "";
     if (!mail) {
       const anställdNamn =

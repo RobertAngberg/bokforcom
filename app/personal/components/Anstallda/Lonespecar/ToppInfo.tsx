@@ -1,11 +1,6 @@
 import type { ToppInfoProps } from "../../../types/types";
 
-export default function ToppInfo({
-  månadsNamn,
-  lönespec,
-  anställd,
-  getLönespecStatusBadge,
-}: ToppInfoProps) {
+export default function ToppInfo({ månadsNamn, lönespec, anställd }: ToppInfoProps) {
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
       <div className="flex justify-between items-start mb-4">

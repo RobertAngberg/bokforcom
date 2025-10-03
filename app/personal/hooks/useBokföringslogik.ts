@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../actions/bokforingActions";
-import type { WizardBokföringsPost } from "../types/types";
+import type {
+  WizardBokföringsPost,
+  LönespecData,
+  ExtraradData,
+  BeräknadeVärden,
+} from "../types/types";
 
 // Mapping från extrarad-typ till bokföringskonto - SINGLE SOURCE OF TRUTH
 const EXTRARAD_TILL_KONTO: Record<string, { konto: string; kontoNamn: string }> = {
@@ -92,9 +97,9 @@ const validateExtraradMapping = () => {
 };
 
 interface UseBokföringslogikProps {
-  lönespec: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  lönespec: LönespecData;
+  extrarader: ExtraradData[];
+  beräknadeVärden: BeräknadeVärden;
   anställdNamn: string;
   onBokfört?: () => void;
   onClose: () => void;
@@ -127,18 +132,16 @@ export function useBokföringslogik({
 
     // Använd ENDAST de redan beräknade värdena - SINGLE SOURCE OF TRUTH
     const bruttolön = beräknadeVärden.bruttolön || 0;
-    const totalSocialaAvgifter = beräknadeVärden.socialaAvgifter || 0;
     const totalSkatt = beräknadeVärden.skatt || 0;
     const totalNettolön = beräknadeVärden.nettolön || 0;
 
     // Analysera extrarader för specifika konton baserat på typ
     let reraFörmåner = 0; // Endast förmåner som behöver motkonto (7385, 7381-7389 utom 7399)
-    let skattefriaErsättningar = 0;
     const kontoSummor: Record<string, { kontoNamn: string; belopp: number }> = {};
 
     extrarader.forEach((rad) => {
       const typ = rad.typ; // Detta är nyckeln från RAD_KONFIGURATIONER
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
 
       if (belopp === 0) return;
 
@@ -160,7 +163,7 @@ export function useBokföringslogik({
             reraFörmåner += Math.abs(belopp);
           }
         } else {
-          skattefriaErsättningar += Math.abs(belopp);
+          // Kategorisera som skattefri ersättning (används inte längre i bokföringen)
         }
       }
     });
@@ -182,7 +185,7 @@ export function useBokföringslogik({
     let semestertillägBelopp = 0;
     extrarader.forEach((rad) => {
       const typ = rad.typ;
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
       if (typ === "semestertillagg" && belopp > 0) {
         semestertillägBelopp += belopp;
       }
@@ -262,8 +265,7 @@ export function useBokföringslogik({
       });
     }
 
-    // Analysera förmåner för 7512 vs 7515
-    let förmånerFör7512 = 0; // Specifika förmåner som får 7512
+    // Analysera förmåner för 7515
     let förmånerFör7515 = 0; // Andra skattepliktiga förmåner som får 7515
 
     // Dela upp förmånerna baserat på konto
@@ -380,8 +382,10 @@ export function useBokföringslogik({
         onBokfört?.();
         onClose();
       }, 2000); // Stäng efter 2 sekunder
-    } catch (error: any) {
-      setError(error.message || "Ett fel inträffade vid bokföring");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ett fel inträffade vid bokföring";
+      setError(errorMessage);
       console.error("Bokföringsfel:", error);
     } finally {
       setLoading(false);

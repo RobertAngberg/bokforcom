@@ -3,15 +3,13 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "../../../../_components/Modal";
-import Tabell, { ColumnDefinition } from "../../../../_components/Tabell";
+import Tabell from "../../../../_components/Tabell";
 import { SkatteBokforingModalProps } from "../../../types/types";
 
 export default function SkatteBokforingModal({
   skatteModalOpen,
   setSkatteModalOpen,
-  valdaSpecar,
   skatteData,
-  utbetalningsdatum,
   skatteDatum,
   setSkatteDatum,
   hanteraBokförSkatter,
@@ -79,7 +77,7 @@ export default function SkatteBokforingModal({
               dateFormat="yyyy-MM-dd"
               className="bg-slate-800 text-white border border-slate-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-700 w-full"
               calendarClassName="bg-slate-900 text-white"
-              dayClassName={(date) => "text-cyan-400"}
+              dayClassName={() => "text-cyan-400"}
               placeholderText="Välj datum"
             />
           </div>

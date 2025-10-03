@@ -4,8 +4,7 @@
  */
 
 import { BOKIO_KONSTANTER } from "./loneberakningar";
-import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "./loneberakningar";
-import { SemesterIntjäning, SemesterBeräkning } from "../types/types";
+import { SemesterIntjäning } from "../types/types";
 
 /**
  * Beräknar intjänade semesterdagar per månad
@@ -23,7 +22,7 @@ export function beräknaIntjänadeSemesterdagar(
   const intjäningsperioder: SemesterIntjäning[] = [];
 
   // Räkna från anställningsdatum till idag
-  let aktuellMånad = new Date(startDatum.getFullYear(), startDatum.getMonth(), 1);
+  const aktuellMånad = new Date(startDatum.getFullYear(), startDatum.getMonth(), 1);
 
   while (aktuellMånad <= idag) {
     const intjänandeår = getIntjänandeÅr(aktuellMånad);

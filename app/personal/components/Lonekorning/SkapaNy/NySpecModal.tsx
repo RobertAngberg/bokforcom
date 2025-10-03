@@ -14,13 +14,7 @@ export default function NySpecModal({
   anstallda,
   onSpecCreated,
 }: NySpecModalProps) {
-  const {
-    valdAnställd,
-    canCreateSpec: canCreate,
-    handleCreateSpec,
-    handleAnställdChange,
-    handleDatumChange,
-  } = useLonespec({
+  const { valdAnställd, handleCreateSpec, handleAnställdChange, handleDatumChange } = useLonespec({
     enableNewSpecModal: true,
     nySpecModalOpen: isOpen,
     nySpecDatum,
@@ -59,7 +53,7 @@ export default function NySpecModal({
             className="bg-slate-800 text-white px-4 py-2 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:border-cyan-700 cursor-pointer hover:border-slate-500 transition-colors"
             placeholderText="Välj datum"
             calendarClassName="bg-slate-900 text-white"
-            dayClassName={(date) => "text-cyan-400"}
+            dayClassName={() => "text-cyan-400"}
           />
         </div>
       </div>

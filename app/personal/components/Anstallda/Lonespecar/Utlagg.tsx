@@ -1,31 +1,25 @@
 //#region Huvud
 import Knapp from "../../../../_components/Knapp";
 import { useLonespec } from "../../../hooks/useLonespecar";
-import type { UtläggProps } from "../../../types/types";
+import type { UtläggProps, UtläggData } from "../../../types/types";
 
 export default function Utlägg({
   lönespecUtlägg,
   getStatusBadge,
   lönespecId,
   onUtläggAdded,
-  extrarader = [],
   anställdId,
 }: UtläggProps) {
   //#endregion
 
-  const {
-    synkroniseradeUtlägg,
-    läggerTillUtlägg,
-    väntandeUtlägg,
-    inkluderadeUtlägg,
-    handleLäggTillUtlägg,
-  } = useLonespec({
-    enableUtlaggMode: true,
-    lönespecUtlägg,
-    lönespecId,
-    anställdId,
-    onUtläggAdded,
-  });
+  const { synkroniseradeUtlägg, läggerTillUtlägg, väntandeUtlägg, handleLäggTillUtlägg } =
+    useLonespec({
+      enableUtlaggMode: true,
+      lönespecUtlägg,
+      lönespecId,
+      anställdId,
+      onUtläggAdded,
+    });
 
   if (!synkroniseradeUtlägg || synkroniseradeUtlägg.length === 0) return null;
 
@@ -48,7 +42,7 @@ export default function Utlägg({
         </div>
       )}
       <div className="space-y-3">
-        {synkroniseradeUtlägg?.map((utläggItem: any) => (
+        {synkroniseradeUtlägg?.map((utläggItem: UtläggData) => (
           <div key={utläggItem.id} className="bg-slate-800 p-3 rounded-lg">
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -62,7 +56,7 @@ export default function Utlägg({
                 <div className="text-white font-bold">
                   {utläggItem.belopp.toLocaleString("sv-SE")} kr
                 </div>
-                {getStatusBadge(utläggItem.status)}
+                {utläggItem.status && getStatusBadge(utläggItem.status)}
               </div>
             </div>
 
@@ -76,6 +70,7 @@ export default function Utlägg({
                 <Knapp
                   text="Visa kvitto"
                   onClick={() =>
+                    utläggItem.kvitto_url &&
                     window.open(utläggItem.kvitto_url, "_blank", "noopener,noreferrer")
                   }
                 />

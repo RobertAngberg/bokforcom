@@ -5,7 +5,7 @@ import Knapp from "../../../../_components/Knapp";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
 import UtlaggBokforModal from "./UtlaggBokforModal";
 import { useUtlagg } from "../../../hooks/useUtlagg";
-import type { Utlägg, UtlaggFlikProps } from "../../../types/types";
+import type { UtläggQueryResult, UtlaggFlikProps } from "../../../types/types";
 
 export default function UtlaggFlik({ state }: Omit<UtlaggFlikProps, "utlaggFlikData">) {
   const {
@@ -23,7 +23,7 @@ export default function UtlaggFlik({ state }: Omit<UtlaggFlikProps, "utlaggFlikD
   });
 
   // Enhanced columns with all formatting functions
-  const enhancedColumns: ColumnDefinition<Utlägg>[] = [
+  const enhancedColumns: ColumnDefinition<UtläggQueryResult>[] = [
     {
       key: "datum",
       label: "Datum",
@@ -98,7 +98,11 @@ export default function UtlaggFlik({ state }: Omit<UtlaggFlikProps, "utlaggFlikD
             </p>
           </div>
         ) : (
-          <Tabell data={utlägg} columns={enhancedColumns} getRowId={(row: Utlägg) => row.id} />
+          <Tabell
+            data={utlägg}
+            columns={enhancedColumns}
+            getRowId={(row: UtläggQueryResult) => row.id}
+          />
         )}
       </div>
 

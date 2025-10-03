@@ -23,21 +23,13 @@ const initialEditData: EditData = {
   tjänsteställeOrt: "",
 };
 
-export function useKontrakt(initial?: Partial<AnställdData> | any) {
+export function useKontrakt(initial?: Record<string, unknown>) {
   // Egen state istället för PersonalContext
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [kontraktIsEditing, setKontraktIsEditing] = useState(false);
   const [kontraktEditData, setKontraktEditData] = useState<EditData>(initialEditData);
   const [kontraktHasChanges, setKontraktHasChanges] = useState(false);
   const [kontraktError, setKontraktError] = useState<string | null>(null);
-
-  const updateKontraktEditData = (field: string, value: any) => {
-    setKontraktEditData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const resetKontraktEditData = () => {
-    setKontraktEditData(initialEditData);
-  };
 
   // Local state för originalData
   const [originalData, setOriginalData] = useState<EditData>({
@@ -103,24 +95,29 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
   };
 
   // Bygg EditData från en vald anställd
-  const buildEditData = (a: Partial<AnställdData> | any): EditData => ({
-    anställningstyp: a?.anställningstyp || "",
-    startdatum: a?.startdatum ? new Date(a.startdatum) : new Date(),
-    slutdatum: a?.slutdatum ? new Date(a.slutdatum) : new Date(),
+  const buildEditData = (a: Record<string, unknown>): EditData => ({
+    anställningstyp: (a?.anställningstyp as string) || "",
+    startdatum: a?.startdatum ? new Date(a.startdatum as string) : new Date(),
+    slutdatum: a?.slutdatum ? new Date(a.slutdatum as string) : new Date(),
     månadslön: a?.månadslön?.toString?.() || "",
-    betalningssätt: a?.betalningssätt || "",
+    betalningssätt: (a?.betalningssätt as string) || "",
     kompensation: a?.kompensation?.toString?.() || "",
-    ersättningPer: a?.ersättningPer || a?.ersättning_per || "",
-    arbetsbelastning: a?.arbetsbelastning || "",
-    arbetsveckaTimmar: a?.arbetsvecka?.toString?.() || a?.arbetsvecka_timmar?.toString?.() || "",
-    deltidProcent: a?.deltidProcent?.toString?.() || a?.deltid_procent?.toString?.() || "",
+    ersättningPer: (a?.ersättningPer as string) || (a?.ersättning_per as string) || "",
+    arbetsbelastning: (a?.arbetsbelastning as string) || "",
+    arbetsveckaTimmar:
+      a?.arbetsvecka?.toString?.() || (a?.arbetsvecka_timmar as string)?.toString?.() || "",
+    deltidProcent:
+      a?.deltidProcent?.toString?.() || (a?.deltid_procent as string)?.toString?.() || "",
     skattetabell: a?.skattetabell?.toString?.() || "",
     skattekolumn: a?.skattekolumn?.toString?.() || "",
-    jobbtitel: a?.jobbtitel || "",
+    jobbtitel: (a?.jobbtitel as string) || "",
     semesterdagarPerÅr:
-      a?.semesterdagarPerÅr?.toString?.() || a?.semesterdagar_per_år?.toString?.() || "",
-    tjänsteställeAdress: a?.tjänsteställeAdress || a?.tjänsteställe_adress || "",
-    tjänsteställeOrt: a?.tjänsteställeOrt || a?.tjänsteställe_ort || "",
+      a?.semesterdagarPerÅr?.toString?.() ||
+      (a?.semesterdagar_per_år as string)?.toString?.() ||
+      "",
+    tjänsteställeAdress:
+      (a?.tjänsteställeAdress as string) || (a?.tjänsteställe_adress as string) || "",
+    tjänsteställeOrt: (a?.tjänsteställeOrt as string) || (a?.tjänsteställe_ort as string) || "",
   });
 
   // Visnings-anställd: store valdAnställd i första hand, annars initial prop
@@ -147,7 +144,7 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
     setKontraktError(null);
   }, [visningsAnställd, isEditing, setKontraktEditData, setKontraktError]);
 
-  const onInit = (source?: Partial<AnställdData> | any) => {
+  const onInit = (source?: Record<string, unknown>) => {
     if (!source || isEditing) return;
     const data = buildEditData(source);
     setKontraktEditData(data);
@@ -166,7 +163,7 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
     setKontraktError(null);
   };
 
-  const onChange = (name: keyof EditData | string, value: any) => {
+  const onChange = (name: keyof EditData | string, value: string | Date) => {
     const next = { ...editData, [name]: value } as EditData;
     if (name === "arbetsbelastning" && value !== "Deltidsanställd") {
       next.deltidProcent = "";
@@ -196,11 +193,11 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
         tjänsteställeOrt: editData.tjänsteställeOrt,
       } as AnställdData;
 
-      const result = await sparaAnställd(payload, visningsAnställd.id);
-      if (result?.success) {
+      const result = await sparaAnställd(payload, visningsAnställd.id as number);
+      if (result?.success && valdAnställd) {
         // Uppdatera store med sparade värden
         setValdAnställd({
-          ...(valdAnställd ?? visningsAnställd),
+          ...valdAnställd,
           anställningstyp: editData.anställningstyp,
           startdatum: payload.startdatum,
           slutdatum: payload.slutdatum,
@@ -223,7 +220,7 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
       } else {
         setKontraktError(result?.error || "Kunde inte spara");
       }
-    } catch (e) {
+    } catch {
       setKontraktError("Ett fel uppstod vid sparande");
     }
   };
@@ -250,9 +247,9 @@ export function useKontrakt(initial?: Partial<AnställdData> | any) {
       skattOptions,
       // Derived display for view mode (to keep components UI-only)
       arbetsbelastningDisplay: (() => {
-        const bel = (visningsAnställd as any)?.arbetsbelastning;
-        const deltid = (visningsAnställd as any)?.deltidProcent;
-        const arbetsvecka = (visningsAnställd as any)?.arbetsvecka;
+        const bel = visningsAnställd?.arbetsbelastning;
+        const deltid = visningsAnställd?.deltidProcent;
+        const arbetsvecka = visningsAnställd?.arbetsvecka;
         const arbetsbelastningText =
           bel === "Deltidsanställd" && deltid ? `${bel} (${deltid}%)` : bel || "";
         const arbetsveckaText = arbetsvecka ? `${arbetsvecka} timmar` : "";

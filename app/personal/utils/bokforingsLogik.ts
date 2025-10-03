@@ -1,6 +1,11 @@
 // Synkad & kontrollerad 2025-07-15
-import { KONTO_MAPPNINGAR, hittaBokföringsregel } from "./bokforingsRegler";
-import { BokföringsRegel } from "../types/types";
+import { KONTO_MAPPNINGAR } from "./bokforingsRegler";
+import type {
+  BokföringsRad,
+  BokföringsSummering,
+  AnställdListItem,
+  ExtraradData,
+} from "../types/types";
 import {
   klassificeraExtrarader,
   beräknaSkattTabell34,
@@ -8,11 +13,19 @@ import {
   beräknaDaglön,
 } from "./loneberakningar";
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
-import { BokföringsRad, BokföringsSummering } from "../types/types";
+import { beräknaSumma } from "./extraraderUtils";
 
 export function genereraBokföringsrader(
-  lönespecar: Record<string, any>,
-  anställda: any[]
+  lönespecar: Record<
+    string,
+    {
+      extrarader?: ExtraradData[];
+      beräknadeVärden?: Record<string, unknown>;
+      grundlön?: number;
+      socialaAvgifterSats?: number;
+    }
+  >,
+  anställda: AnställdListItem[]
 ): BokföringsSummering {
   const bokföringsrader: BokföringsRad[] = [];
   const anställdMap = new Map(anställda.map((a) => [a.id, a]));
@@ -24,13 +37,13 @@ export function genereraBokföringsrader(
     // Hämta procentsats för sociala avgifter
     const socialaAvgifterSats = Number(lönespec.socialaAvgifterSats || 0.3142);
 
-    // Klassificera extrarader
-    const klassificering = klassificeraExtrarader(lönespec.extrarader || []);
+    // Hämta klassificering (men används inte längre)
+    klassificeraExtrarader(lönespec.extrarader || []);
     const grundlön = Number(lönespec.beräknadeVärden?.grundlön || lönespec.grundlön || 0);
     // ...existing code...
     // Beräkna tillägg till bruttolön
     let tillaggBruttolon = 0;
-    (lönespec.extrarader || []).forEach((rad: any) => {
+    (lönespec.extrarader || []).forEach((rad: ExtraradData) => {
       const konfig = rad.typ && RAD_KONFIGURATIONER[rad.typ];
       if (konfig && konfig.läggTillIBruttolön) {
         tillaggBruttolon += Number(rad.kolumn3) || 0;
@@ -43,12 +56,12 @@ export function genereraBokföringsrader(
     let antalForaldraledighet = 0;
     let antalVab = 0;
     const foraldraledighetRad = (lönespec.extrarader || []).find(
-      (rad: any) => rad.typ === "foraldraledighet"
+      (rad: ExtraradData) => rad.typ === "foraldraledighet"
     );
     if (foraldraledighetRad) {
       antalForaldraledighet = Number(foraldraledighetRad.kolumn2) || 1;
     }
-    const vabRad = (lönespec.extrarader || []).find((rad: any) => rad.typ === "vab");
+    const vabRad = (lönespec.extrarader || []).find((rad: ExtraradData) => rad.typ === "vab");
     if (vabRad) {
       antalVab = Number(vabRad.kolumn2) || 1;
     }
@@ -83,9 +96,9 @@ export function genereraBokföringsrader(
       "karensavdrag",
       "reduceradeDagar",
     ];
-    (lönespec.extrarader || []).forEach((rad: any) => {
+    (lönespec.extrarader || []).forEach((rad: ExtraradData) => {
       if (avdragsTyper.includes(rad.typ)) {
-        const belopp = Number(require("./extraraderUtils").beräknaSumma(rad.typ, rad, grundlön));
+        const belopp = Number(beräknaSumma(rad.typ, rad, grundlön));
         if (belopp !== 0) {
           bokföringsrader.push({
             konto: "7281",
@@ -101,13 +114,12 @@ export function genereraBokföringsrader(
 
     // --- GENERERA ALLA EXTRARADER SOM EGNA BOKFÖRINGSRADER ---
     let socialaAvgifterFörmåner = 0;
-    let skattepliktigaFormanerSumma = 0;
-    (lönespec.extrarader || []).forEach((rad: any) => {
+    (lönespec.extrarader || []).forEach((rad: ExtraradData) => {
       const konfig = rad.typ && RAD_KONFIGURATIONER[rad.typ];
       if (!konfig) return;
       // Beräkna beloppet med samma logik som lönespecen (använder beräknaSumma)
       // Grundlön behövs för vissa automatiska rader
-      const belopp = Number(require("./extraraderUtils").beräknaSumma(rad.typ, rad, grundlön));
+      const belopp = Number(beräknaSumma(rad.typ, rad, grundlön));
       // Visa alltid raden, även om beloppet är 0
 
       // Förmåner och traktamenten på egna konton
@@ -179,7 +191,6 @@ export function genereraBokföringsrader(
             beskrivning: `Motkonto förmåner - ${anställdNamn}`,
             anställdNamn,
           });
-          skattepliktigaFormanerSumma += belopp;
           socialaAvgifterFörmåner += belopp * socialaAvgifterSats;
         }
         return;
@@ -211,17 +222,6 @@ export function genereraBokföringsrader(
           anställdNamn,
         });
         return;
-      }
-      // Övriga extrarader: använd befintlig logik
-      if (konfig.konto) {
-        bokföringsrader.push({
-          konto: konfig.konto,
-          kontoNamn: konfig.kontoNamn || konfig.namn || rad.namn || rad.typ,
-          debet: konfig.typ === "debet" ? belopp : 0,
-          kredit: konfig.typ === "kredit" ? belopp : 0,
-          beskrivning: `${konfig.beskrivning ? konfig.beskrivning + " - " : ""}${anställdNamn} (extrarad: ${rad.typ}, belopp: ${belopp} kr, konto: ${konfig.konto})`,
-          anställdNamn,
-        });
       }
     });
     // Sociala avgifter på förmåner och traktamenten
@@ -319,9 +319,6 @@ export function genereraBokföringsrader(
     );
   });
 
-  const totalDebet = bokföringsrader.reduce((sum, rad) => sum + Number(rad.debet || 0), 0);
-  const totalKredit = bokföringsrader.reduce((sum, rad) => sum + Number(rad.kredit || 0), 0);
-
   // Filtrera bort rader där både debet och kredit är 0
   const filtreradeRader = bokföringsrader.filter(
     (rad) => (rad.debet || 0) !== 0 || (rad.kredit || 0) !== 0
@@ -367,25 +364,4 @@ export function genereraBokföringsrader(
     totalKredit: Math.round(totalKreditFiltrerat * 100) / 100,
     balanserar: Math.abs(totalDebetFiltrerat - totalKreditFiltrerat) < 0.01,
   };
-}
-
-function summeraBokföringsrader(rader: BokföringsRad[]): BokföringsRad[] {
-  const kontoMap = new Map<string, BokföringsRad>();
-
-  rader.forEach((rad) => {
-    const nyckel = `${rad.konto}-${rad.kontoNamn}`;
-    if (kontoMap.has(nyckel)) {
-      const befintlig = kontoMap.get(nyckel)!;
-      befintlig.debet += Number(rad.debet || 0);
-      befintlig.kredit += Number(rad.kredit || 0);
-    } else {
-      kontoMap.set(nyckel, {
-        ...rad,
-        debet: Number(rad.debet || 0),
-        kredit: Number(rad.kredit || 0),
-      });
-    }
-  });
-
-  return Array.from(kontoMap.values()).sort((a, b) => a.konto.localeCompare(b.konto));
 }

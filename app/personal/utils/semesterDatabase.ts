@@ -91,13 +91,13 @@ export async function registreraSemesterintjäning(
  * Registrerar semesteruttag
  */
 export async function registreraSemesteruttag(
-  anställdId: number,
-  startDatum: string,
-  slutDatum: string,
-  antal: number,
-  beskrivning: string,
-  lönespecId: number | null,
-  skapadAv: number
+  anställdId: number, // eslint-disable-line @typescript-eslint/no-unused-vars
+  startDatum: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  slutDatum: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  antal: number, // eslint-disable-line @typescript-eslint/no-unused-vars
+  beskrivning: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  lönespecId: number | null, // eslint-disable-line @typescript-eslint/no-unused-vars
+  skapadAv: number // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<{ success: boolean; message: string; id?: number }> {
   const client = await pool.connect();
   try {

@@ -3,7 +3,7 @@ import { hämtaAllaLönekörningar } from "../actions/lonekorningActions";
 import { Lönekörning } from "../types/types";
 
 interface UseLonekorningListaProps {
-  refreshTrigger?: any;
+  refreshTrigger?: number | string;
 }
 
 export function useLonekorningLista({ refreshTrigger }: UseLonekorningListaProps) {

@@ -1,12 +1,14 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { skapaNyLönespec } from "../actions/lonespecarActions";
+import type { AnställdListItem } from "../types/types";
 
 interface UseNySpecModalProps {
   isOpen: boolean;
   onClose: () => void;
   nySpecDatum: Date | null;
   setNySpecDatum: (date: Date | null) => void;
-  anstallda: any[];
+  anstallda: AnställdListItem[];
   onSpecCreated: () => void;
 }
 

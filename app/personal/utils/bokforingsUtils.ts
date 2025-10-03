@@ -1,4 +1,4 @@
-import { type BokföringsRad, type BokföringsSummering } from "./bokforingsLogik";
+import type { BokföringsRad, BokföringsSummering } from "../types/types";
 import { formatCurrency, formatAmount, parseNumberSafe } from "../../_utils/format";
 
 // FORMATERA KONTO
@@ -7,12 +7,12 @@ export function formateraKonto(konto: string): string {
 }
 
 // EXPORTERA TILL CSV
-export function exporteraTillCSV(summering: BokföringsSummering, datum: Date): string {
+export function exporteraTillCSV(summering: BokföringsSummering): string {
   const header = "Konto,Kontonamn,Debet,Kredit\n";
 
   const rader = summering.rader
     .map(
-      (rad) =>
+      (rad: BokföringsRad) =>
         `${formateraKonto(rad.konto)},"${rad.kontoNamn}",${rad.debet || 0},${rad.kredit || 0}`
     )
     .join("\n");
@@ -46,7 +46,7 @@ export function exporteraTillSIE(summering: BokföringsSummering, datum: Date): 
   sie += `#VER "LÖN" "1" ${datumStr} "Lonekorning ${datum.toLocaleDateString("sv-SE")}"\n`;
   sie += `{\n`;
 
-  summering.rader.forEach((rad) => {
+  summering.rader.forEach((rad: BokföringsRad) => {
     if ((rad.debet || 0) > 0) {
       sie += `#TRANS ${formateraKonto(rad.konto)} {} ${rad.debet || 0} ${datumStr} "${rad.beskrivning}"\n`;
     }
@@ -72,7 +72,7 @@ export function valideraBokföring(summering: BokföringsSummering): string[] {
   }
 
   // Kontrollera tomma konton
-  summering.rader.forEach((rad) => {
+  summering.rader.forEach((rad: BokföringsRad) => {
     if (!rad.konto || rad.konto.trim() === "") {
       fel.push(`Tomt kontonummer för rad: ${rad.beskrivning}`);
     }
@@ -93,7 +93,7 @@ export function valideraBokföring(summering: BokföringsSummering): string[] {
 
   // Kontrollera minimiberlopp
   const minBelopp = 0.01;
-  summering.rader.forEach((rad) => {
+  summering.rader.forEach((rad: BokföringsRad) => {
     const debet = rad.debet || 0;
     const kredit = rad.kredit || 0;
 

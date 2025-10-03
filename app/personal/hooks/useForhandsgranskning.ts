@@ -5,6 +5,8 @@ import { hämtaFöretagsprofil } from "../actions/anstalldaActions";
 import { beräknaSumma } from "../utils/extraraderUtils";
 import { showToast } from "../../_components/Toast";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export const useForhandsgranskning = (
   lönespec: any,
   anställd: any,
@@ -20,7 +22,7 @@ export const useForhandsgranskning = (
     Number(num).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   // Mappa extrarader till rätt format
-  const extraraderMapped = (extrarader ?? []).map((rad: any) => {
+  const extraraderMapped = (extrarader ?? []).map((rad) => {
     const benämning = rad.benämning ?? rad.kolumn1 ?? "";
     const antal = rad.antal ?? rad.kolumn2 ?? "";
     let kostnad = parseFloat(
@@ -95,18 +97,18 @@ export const useForhandsgranskning = (
       if (!kostnad || kostnad === 0) {
         kostnad = parseFloat(
           beräknaSumma(
-            rad.typ,
+            rad.typ as string,
             { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+            (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
           )
         );
       }
       if (!summa || summa === 0) {
         summa = parseFloat(
           beräknaSumma(
-            rad.typ,
+            rad.typ as string,
             { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
+            (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
           )
         );
       }
@@ -115,20 +117,27 @@ export const useForhandsgranskning = (
   });
 
   // Använd beräknade värden om de finns, annars fall back till lönespec
-  const bruttolön = beräknadeVärden.bruttolön ?? parseFloat(lönespec?.bruttolön || 0);
-  const skatt = beräknadeVärden.skatt ?? parseFloat(lönespec?.skatt || 0);
+  const bruttolön =
+    (beräknadeVärden.bruttolön as number) ?? parseFloat((lönespec?.bruttolön as string) || "0");
+  const skatt = (beräknadeVärden.skatt as number) ?? parseFloat((lönespec?.skatt as string) || "0");
   const socialaAvgifter =
-    beräknadeVärden.socialaAvgifter ?? parseFloat(lönespec?.sociala_avgifter || 0);
-  const totalLönekostnad = beräknadeVärden.lönekostnad ?? bruttolön + socialaAvgifter;
-  const nettolön = beräknadeVärden.nettolön ?? parseFloat(lönespec?.nettolön || 0);
+    (beräknadeVärden.socialaAvgifter as number) ??
+    parseFloat((lönespec?.sociala_avgifter as string) || "0");
+  const totalLönekostnad = (beräknadeVärden.lönekostnad as number) ?? bruttolön + socialaAvgifter;
+  const nettolön =
+    (beräknadeVärden.nettolön as number) ?? parseFloat((lönespec?.nettolön as string) || "0");
 
-  const utbetalningsDatum = new Date(lönespec?.år || 2025, (lönespec?.månad || 1) - 1, 25);
-  const periodStart = new Date(lönespec?.period_start || lönespec?.skapad);
-  const periodSlut = new Date(lönespec?.period_slut || lönespec?.skapad);
+  const utbetalningsDatum = new Date(
+    (lönespec?.år as number) || 2025,
+    ((lönespec?.månad as number) || 1) - 1,
+    25
+  );
+  const periodStart = new Date((lönespec?.period_start as string) || (lönespec?.skapad as string));
+  const periodSlut = new Date((lönespec?.period_slut as string) || (lönespec?.skapad as string));
 
   const månadsNamn = new Date(
-    lönespec?.år || 2025,
-    (lönespec?.månad || 1) - 1,
+    (lönespec?.år as number) || 2025,
+    ((lönespec?.månad as number) || 1) - 1,
     1
   ).toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
 
@@ -136,7 +145,7 @@ export const useForhandsgranskning = (
     async function hämtaFöretag() {
       try {
         if (!företag && anställd?.user_id) {
-          const företagsdata = await hämtaFöretagsprofil(anställd.user_id);
+          const företagsdata = await hämtaFöretagsprofil(anställd.user_id as string);
           setFöretag(företagsdata);
         }
       } catch (error) {
@@ -144,7 +153,7 @@ export const useForhandsgranskning = (
       }
     }
     hämtaFöretag();
-  }, [företag, anställd?.user_id]);
+  }, [företag, anställd]);
 
   const handleExportPDF = async () => {
     setIsExporting(true);

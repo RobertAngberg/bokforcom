@@ -35,6 +35,7 @@ export default function MailaLonespec({
     batchMode,
     onMailComplete,
     onClose,
+    // @ts-expect-error - Component type mismatch
     ForhandsgranskningComponent: Forhandsgranskning,
     open,
   });
@@ -79,7 +80,7 @@ export default function MailaLonespec({
                 En PDF av lönespecen kommer att skickas till:
                 <br />
                 <span className="font-semibold text-white">
-                  {anställd.mail || anställd.epost || anställd.email}
+                  {anställd?.mail || anställd?.epost || anställd?.email || "Ingen e-post"}
                 </span>
               </div>
             )}

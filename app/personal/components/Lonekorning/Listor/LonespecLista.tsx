@@ -73,9 +73,19 @@ export default function LonespecLista({
               anställd={anstalld}
               utlägg={utlagg}
               ingenAnimering={false}
-              taBortLoading={taBortLaddning[spec.id] || false}
+              taBortLoading={taBortLaddning[Number(spec.id)] || false}
               visaExtraRader={true}
-              onTaBortLönespec={() => handleTaBortLönespec(spec)}
+              onTaBortLönespec={() => {
+                // Convert Lönespec to LönespecData format
+                const specData = {
+                  ...spec,
+                  id: Number(spec.id),
+                  anställd_id: Number(spec.anställd_id || 0),
+                  grundlön: Number(spec.grundlön || 0),
+                  skatt: Number(spec.skatt || 0),
+                };
+                handleTaBortLönespec(specData);
+              }}
             />
           );
         })}

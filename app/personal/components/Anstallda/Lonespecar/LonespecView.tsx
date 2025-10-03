@@ -12,7 +12,12 @@ import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
 import { useLonespec } from "../../../hooks/useLonespecar";
 import { uppdateraLönespec } from "../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
-import type { LönespecViewProps } from "../../../types/types";
+import type {
+  LönespecViewProps,
+  UtläggData,
+  ExtraradResult,
+  ExtraradData,
+} from "../../../types/types";
 
 export default function LönespecView({
   lönespec,
@@ -24,7 +29,7 @@ export default function LönespecView({
   företagsprofil,
   visaExtraRader = false,
 }: LönespecViewProps) {
-  const { beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader } = useLonespec();
+  const { beräknadeVärden, extrarader, setExtrarader } = useLonespec();
 
   // Lokal state för utlägg så vi kan uppdatera UI direkt
   const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);
@@ -83,7 +88,10 @@ export default function LönespecView({
   }, [lokalUtlägg, lönespec.id]);
 
   // Callback för att uppdatera utlägg status i lokal state
-  const handleUtläggAdded = async (tillagdaUtlägg: any[], extraradResults: any[]) => {
+  const handleUtläggAdded = async (
+    tillagdaUtlägg: UtläggData[],
+    extraradResults: ExtraradResult[]
+  ) => {
     // Uppdatera utlägg status
     setLokalUtlägg((prevUtlägg) =>
       prevUtlägg.map((utlägg) =>
@@ -95,11 +103,11 @@ export default function LönespecView({
 
     // Använd riktiga extrarader från databasen istället för temp-ID:n
     if (extraradResults && extraradResults.length > 0) {
-      const nyaExtrarader = extraradResults.filter((result) => result.success && result.data);
-      setExtrarader(lönespec.id.toString(), [
-        ...(extrarader[lönespec.id] || []),
-        ...nyaExtrarader.map((result) => result.data),
-      ]);
+      const nyaExtrarader = extraradResults
+        .filter((result) => result.success && result.data)
+        .map((result) => result.data!)
+        .filter((data): data is ExtraradData => data !== undefined);
+      setExtrarader(lönespec.id.toString(), [...(extrarader[lönespec.id] || []), ...nyaExtrarader]);
     }
   };
 

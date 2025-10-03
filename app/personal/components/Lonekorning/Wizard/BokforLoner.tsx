@@ -37,13 +37,14 @@ export default function BokforLoner({
         <div className="bg-slate-700 p-4 rounded-lg mb-4">
           <h3 className="text-md font-semibold text-slate-300 mb-2">Lönespec-info</h3>
           <div className="text-sm text-slate-400">
-            <p>Grundlön: {(beräknadeVärden.grundlön || 0).toLocaleString("sv-SE")} kr</p>
-            <p>Bruttolön: {(beräknadeVärden.bruttolön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Grundlön: {Number(beräknadeVärden.grundlön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Bruttolön: {Number(beräknadeVärden.bruttolön || 0).toLocaleString("sv-SE")} kr</p>
             <p>
-              Sociala avgifter: {(beräknadeVärden.socialaAvgifter || 0).toLocaleString("sv-SE")} kr
+              Sociala avgifter:{" "}
+              {Number(beräknadeVärden.socialaAvgifter || 0).toLocaleString("sv-SE")} kr
             </p>
-            <p>Skatt: {(beräknadeVärden.skatt || 0).toLocaleString("sv-SE")} kr</p>
-            <p>Nettolön: {(beräknadeVärden.nettolön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Skatt: {Number(beräknadeVärden.skatt || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Nettolön: {Number(beräknadeVärden.nettolön || 0).toLocaleString("sv-SE")} kr</p>
           </div>
         </div>
 

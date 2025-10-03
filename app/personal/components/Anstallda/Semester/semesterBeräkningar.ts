@@ -4,7 +4,6 @@
  */
 
 import { BOKIO_KONSTANTER } from "../Lonespecar/loneberakningar";
-import { beräknaSemesterpenning as beräknaSemesterpenningLöneberäkning } from "../Lonespecar/loneberakningar";
 
 export interface SemesterIntjäning {
   intjänandeår: string; // "2024-2025"
@@ -37,7 +36,7 @@ export function beräknaIntjänadeSemesterdagar(
   const intjäningsperioder: SemesterIntjäning[] = [];
 
   // Räkna från anställningsdatum till idag
-  let aktuellMånad = new Date(startDatum.getFullYear(), startDatum.getMonth(), 1);
+  const aktuellMånad = new Date(startDatum.getFullYear(), startDatum.getMonth(), 1);
 
   while (aktuellMånad <= idag) {
     const intjänandeår = getIntjänandeÅr(aktuellMånad);

@@ -9,8 +9,6 @@ export default function Sammanfattning({
   anställd,
   bruttolön,
   skatt,
-  socialaAvgifter,
-  lönekostnad,
   onVisaBeräkningar,
 }: SammanfattningProps) {
   //#endregion
@@ -42,20 +40,16 @@ export default function Sammanfattning({
               <div>
                 <span className="text-gray-400">Betalda</span>
                 <div className="text-white font-medium">
-                  {parseFloat(lönespec.semester_uttag || 0)}
+                  {parseFloat(String(lönespec.semester_uttag || 0))}
                 </div>
               </div>
               <div>
                 <span className="text-gray-400">Sparade</span>
-                <div className="text-white font-medium">
-                  {parseFloat(anställd.sparade_dagar || 0)}
-                </div>
+                <div className="text-white font-medium">{anställd.sparade_dagar || 0}</div>
               </div>
               <div>
                 <span className="text-gray-400">Förskott</span>
-                <div className="text-white font-medium">
-                  {parseFloat(anställd.använda_förskott || 0)}
-                </div>
+                <div className="text-white font-medium">{anställd.använda_förskott || 0}</div>
               </div>
             </div>
           </div>
