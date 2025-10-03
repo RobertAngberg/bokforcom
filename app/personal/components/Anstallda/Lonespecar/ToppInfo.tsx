@@ -19,7 +19,9 @@ export default function ToppInfo({ månadsNamn, lönespec, anställd }: ToppInfo
           <span className="font-semibold text-white">Bankkonto:</span>
           <br />
           <span className="text-gray-300">
-            {anställd.clearingnummer}-{anställd.bankkonto}
+            {anställd?.clearingnummer && anställd?.bankkonto
+              ? `${anställd.clearingnummer}-${anställd.bankkonto}`
+              : "Ej angivet"}
           </span>
         </div>
         <div>

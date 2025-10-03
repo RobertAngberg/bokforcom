@@ -125,6 +125,12 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
                 dateFormat="yyyy-MM-dd"
                 className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-transparent focus:ring-2 focus:ring-cyan-500"
               />
+              {/* Hidden input för FormData */}
+              <input
+                type="hidden"
+                name="startdatum"
+                value={nyAnställdFormulär.startdatum?.toISOString().split("T")[0] || ""}
+              />
             </div>
 
             <div>
@@ -135,10 +141,17 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
                 dateFormat="yyyy-MM-dd"
                 className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-transparent focus:ring-2 focus:ring-cyan-500"
               />
+              {/* Hidden input för FormData */}
+              <input
+                type="hidden"
+                name="slutdatum"
+                value={nyAnställdFormulär.slutdatum?.toISOString().split("T")[0] || ""}
+              />
             </div>
 
             <Dropdown
               label="Anställningstyp"
+              name="anställningstyp"
               value={nyAnställdFormulär.anställningstyp}
               onChange={(value) => updateNyAnställdFormulär({ anställningstyp: value })}
               options={[
@@ -153,6 +166,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
 
             <Dropdown
               label="Löneperiod"
+              name="löneperiod"
               value={nyAnställdFormulär.löneperiod}
               onChange={(value) => updateNyAnställdFormulär({ löneperiod: value })}
               options={[
@@ -165,6 +179,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
 
             <Dropdown
               label="Ersättning per"
+              name="ersättningPer"
               value={nyAnställdFormulär.ersättningPer}
               onChange={(value) => updateNyAnställdFormulär({ ersättningPer: value })}
               options={[
@@ -197,6 +212,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
 
             <Dropdown
               label="Arbetsbelastning"
+              name="arbetsbelastning"
               value={nyAnställdFormulär.arbetsbelastning}
               onChange={(value) => updateNyAnställdFormulär({ arbetsbelastning: value })}
               options={[
@@ -254,6 +270,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Dropdown
               label="Skattetabell"
+              name="skattetabell"
               value={nyAnställdFormulär.skattetabell || ""}
               onChange={(value) => updateNyAnställdFormulär({ skattetabell: value })}
               options={[
@@ -267,6 +284,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
 
             <Dropdown
               label="Skattekolumn"
+              name="skattekolumn"
               value={nyAnställdFormulär.skattekolumn || ""}
               onChange={(value) => updateNyAnställdFormulär({ skattekolumn: value })}
               options={[

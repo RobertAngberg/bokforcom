@@ -39,6 +39,10 @@ import {
   skapaLönekörning,
   skapaLönespecifikationerFörLönekörning,
 } from "../actions/lonekorningActions";
+import {
+  valideraFlertalsAnställda,
+  skapaValideringsFelmeddelande,
+} from "../utils/anställdValidering";
 
 export const useLonekorning = ({
   anställda: propsAnställda,
@@ -818,6 +822,19 @@ export const useLonekorning = ({
 
     if (newLonekorningValdaAnstallda.length === 0) {
       showToast("Du måste välja minst en anställd!", "error");
+      return;
+    }
+
+    // ===== VALIDERA ANSTÄLLDA INNAN LÖNESPEC-SKAPANDE =====
+    // Kolla att alla valda anställda har obligatoriska fält
+    const valideringsResultat = valideraFlertalsAnställda(anstallda, newLonekorningValdaAnstallda);
+
+    if (valideringsResultat.length > 0) {
+      const felmeddelande = skapaValideringsFelmeddelande(valideringsResultat);
+      showToast(felmeddelande, "error");
+
+      // Lista specifika anställda med problem i konsolen för debugging
+      console.warn("⚠️ Valideringsfel för anställda:", valideringsResultat);
       return;
     }
 

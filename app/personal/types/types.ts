@@ -167,13 +167,13 @@ export type AnställdData = {
   kompensation: string;
   anställningsdatum?: string;
   tjänstegrad?: number;
-  arbetsvecka: string;
+  arbetsvecka_timmar: string;
   arbetsbelastning: string;
   deltidProcent: string;
   tjänsteställeAdress: string;
   tjänsteställeOrt: string;
-  skattetabell: string;
-  skattekolumn: string;
+  skattetabell: number;
+  skattekolumn: number;
   sparade_dagar?: string | number;
   använda_förskott?: string | number;
 };
@@ -189,7 +189,7 @@ export interface AnställdListItem {
   roll?: string;
   sparade_dagar?: number;
   använda_förskott?: number;
-  skattetabell?: string;
+  skattetabell?: number;
   skattekolumn?: number;
   clearingnummer?: string;
   bankkonto?: string;
@@ -835,7 +835,7 @@ export interface LonespecListProps {
 
 export interface LönespecViewProps {
   lönespec: any;
-  anställd: AnställdListItem;
+  anställd?: AnställdListItem;
   utlägg: any[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
@@ -848,7 +848,7 @@ export interface SammanfattningProps {
   utbetalningsDatum: Date;
   nettolön: number;
   lönespec: any;
-  anställd: AnställdListItem;
+  anställd?: AnställdListItem;
   bruttolön: number;
   skatt: number;
   socialaAvgifter?: number;
@@ -929,7 +929,7 @@ export interface FormelVisningProps {
 export interface ToppInfoProps {
   månadsNamn: string;
   lönespec: Lönespec;
-  anställd: AnställdListItem;
+  anställd?: AnställdListItem;
   getLönespecStatusBadge: (status: string) => React.ReactElement;
 }
 
@@ -1286,7 +1286,7 @@ export interface LöneBeräkning {
 export interface LöneKontrakt {
   månadslön: number;
   arbetstimmarPerVecka: number;
-  skattetabell: string;
+  skattetabell: number;
   skattekolumn: number;
   kommunalSkatt: number;
   socialaAvgifterSats: number;

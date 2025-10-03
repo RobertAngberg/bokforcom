@@ -45,11 +45,11 @@ export default function Sammanfattning({
               </div>
               <div>
                 <span className="text-gray-400">Sparade</span>
-                <div className="text-white font-medium">{anställd.sparade_dagar || 0}</div>
+                <div className="text-white font-medium">{anställd?.sparade_dagar || 0}</div>
               </div>
               <div>
                 <span className="text-gray-400">Förskott</span>
-                <div className="text-white font-medium">{anställd.använda_förskott || 0}</div>
+                <div className="text-white font-medium">{anställd?.använda_förskott || 0}</div>
               </div>
             </div>
           </div>
@@ -61,11 +61,15 @@ export default function Sammanfattning({
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-gray-400">Skattetabell</span>
-                <div className="text-white font-medium">{anställd.skattetabell}</div>
+                <div className="text-white font-medium">
+                  {anställd?.skattetabell || "Ej angiven"}
+                </div>
               </div>
               <div>
                 <span className="text-gray-400">Skattekolumn</span>
-                <div className="text-white font-medium">{anställd.skattekolumn}</div>
+                <div className="text-white font-medium">
+                  {anställd?.skattekolumn || "Ej angiven"}
+                </div>
               </div>
             </div>
           </div>

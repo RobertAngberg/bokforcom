@@ -1,43 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { hämtaFöretagsprofil } from "../actions/anstalldaActions";
 import { beräknaSumma } from "../utils/extraraderUtils";
 import { showToast } from "../../_components/Toast";
+import type { Lönespec, AnställdListItem, Företagsprofil, ExtraradData } from "../types/types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+interface BeräknadeVärden {
+  bruttolön?: number;
+  skatt?: number;
+  socialaAvgifter?: number;
+  lönekostnad?: number;
+  nettolön?: number;
+  grundlön?: number;
+}
+
+interface MappedExtrarad {
+  benämning: string;
+  antal: string;
+  kostnad: number;
+  summa: number;
+}
 
 export const useForhandsgranskning = (
-  lönespec: any,
-  anställd: any,
-  företagsprofil: any,
-  extrarader: any[] = [],
-  beräknadeVärden: any = {}
+  lönespec: Lönespec | null,
+  anställd: AnställdListItem | null,
+  företagsprofil: Företagsprofil | null,
+  extrarader: ExtraradData[] = [],
+  beräknadeVärden: BeräknadeVärden = {}
 ) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [företag, setFöretag] = useState<any>(företagsprofil);
 
   // Formatter utan decimaler
   const formatNoDecimals = (num: number) =>
     Number(num).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   // Mappa extrarader till rätt format
-  const extraraderMapped = (extrarader ?? []).map((rad) => {
-    const benämning = rad.benämning ?? rad.kolumn1 ?? "";
-    const antal = rad.antal ?? rad.kolumn2 ?? "";
-    let kostnad = parseFloat(
-      (rad.kostnad ?? rad.belopp ?? rad.kolumn3 ?? "0").toString().replace(",", ".")
-    );
-    let summa = parseFloat(
-      (rad.summa ?? rad.belopp ?? rad.kolumn3 ?? "0").toString().replace(",", ".")
-    );
+  const extraraderMapped: MappedExtrarad[] = (extrarader ?? []).map((rad) => {
+    const benämning = rad.kolumn1 ?? "";
+    const antal = rad.kolumn2 ?? "";
+    let kostnad = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
+    let summa = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
 
     // Om kostnad eller summa är 0, beräkna automatiskt med modalFields
     if (!kostnad || kostnad === 0) {
       kostnad = parseFloat(
         beräknaSumma(
           rad.typ,
-          { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+          { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
           beräknadeVärden?.grundlön || lönespec?.grundlön || 0
         )
       );
@@ -46,7 +55,7 @@ export const useForhandsgranskning = (
       summa = parseFloat(
         beräknaSumma(
           rad.typ,
-          { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+          { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
           beräknadeVärden?.grundlön || lönespec?.grundlön || 0
         )
       );
@@ -58,7 +67,7 @@ export const useForhandsgranskning = (
         kostnad = parseFloat(
           beräknaSumma(
             rad.typ,
-            { kolumn3: rad.kolumn3 ?? rad.belopp ?? "0" },
+            { kolumn3: rad.kolumn3 ?? "0" },
             beräknadeVärden?.grundlön || lönespec?.grundlön || 0
           )
         );
@@ -67,7 +76,7 @@ export const useForhandsgranskning = (
         summa = parseFloat(
           beräknaSumma(
             rad.typ,
-            { kolumn3: rad.kolumn3 ?? rad.belopp ?? "0" },
+            { kolumn3: rad.kolumn3 ?? "0" },
             beräknadeVärden?.grundlön || lönespec?.grundlön || 0
           )
         );
@@ -78,7 +87,7 @@ export const useForhandsgranskning = (
         kostnad = parseFloat(
           beräknaSumma(
             rad.typ,
-            { kolumn2: rad.antal ?? rad.kolumn2 },
+            { kolumn2: rad.kolumn2 },
             beräknadeVärden?.grundlön || lönespec?.grundlön || 0
           )
         );
@@ -87,7 +96,7 @@ export const useForhandsgranskning = (
         summa = parseFloat(
           beräknaSumma(
             rad.typ,
-            { kolumn2: rad.antal ?? rad.kolumn2 },
+            { kolumn2: rad.kolumn2 },
             beräknadeVärden?.grundlön || lönespec?.grundlön || 0
           )
         );
@@ -98,7 +107,7 @@ export const useForhandsgranskning = (
         kostnad = parseFloat(
           beräknaSumma(
             rad.typ as string,
-            { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+            { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
             (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
           )
         );
@@ -107,7 +116,7 @@ export const useForhandsgranskning = (
         summa = parseFloat(
           beräknaSumma(
             rad.typ as string,
-            { ...rad, kolumn2: rad.antal ?? rad.kolumn2, kolumn3: rad.belopp ?? rad.kolumn3 },
+            { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
             (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
           )
         );
@@ -140,20 +149,6 @@ export const useForhandsgranskning = (
     ((lönespec?.månad as number) || 1) - 1,
     1
   ).toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
-
-  useEffect(() => {
-    async function hämtaFöretag() {
-      try {
-        if (!företag && anställd?.user_id) {
-          const företagsdata = await hämtaFöretagsprofil(anställd.user_id as string);
-          setFöretag(företagsdata);
-        }
-      } catch (error) {
-        console.error("❌ Fel vid hämtning av företagsinfo:", error);
-      }
-    }
-    hämtaFöretag();
-  }, [företag, anställd]);
 
   const handleExportPDF = async () => {
     setIsExporting(true);
@@ -203,7 +198,7 @@ export const useForhandsgranskning = (
   return {
     // State
     isExporting,
-    företag,
+    företag: företagsprofil,
     // Computed values
     formatNoDecimals,
     extraraderMapped,

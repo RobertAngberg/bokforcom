@@ -479,7 +479,7 @@ export function beräknaLonekomponenter(
   const kontrakt: LöneKontrakt = {
     månadslön: originalGrundlön,
     arbetstimmarPerVecka: 40,
-    skattetabell: "34",
+    skattetabell: 34,
     skattekolumn: 1,
     kommunalSkatt: 32,
     socialaAvgifterSats: 0.3142,

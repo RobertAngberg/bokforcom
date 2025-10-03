@@ -29,12 +29,14 @@ export default function Huvudinfo({
         <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto text-xs">
           <div className="text-center">
             <div className="font-semibold text-black">Personnummer</div>
-            <div className="text-black">({anställd.personnummer})</div>
+            <div className="text-black">({anställd.personnummer || "Ej angivet"})</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-black">Bankkonto</div>
             <div className="text-black">
-              {anställd.clearingnummer}-{anställd.bankkonto}
+              {anställd?.clearingnummer && anställd?.bankkonto
+                ? `${anställd.clearingnummer}-${anställd.bankkonto}`
+                : "Ej angivet"}
             </div>
           </div>
           <div className="text-center">

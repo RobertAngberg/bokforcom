@@ -104,12 +104,11 @@ export function useKontrakt(initial?: Record<string, unknown>) {
     kompensation: a?.kompensation?.toString?.() || "",
     ersättningPer: (a?.ersättningPer as string) || (a?.ersättning_per as string) || "",
     arbetsbelastning: (a?.arbetsbelastning as string) || "",
-    arbetsveckaTimmar:
-      a?.arbetsvecka?.toString?.() || (a?.arbetsvecka_timmar as string)?.toString?.() || "",
+    arbetsveckaTimmar: (a?.arbetsvecka_timmar as string)?.toString?.() || "",
     deltidProcent:
       a?.deltidProcent?.toString?.() || (a?.deltid_procent as string)?.toString?.() || "",
-    skattetabell: a?.skattetabell?.toString?.() || "",
-    skattekolumn: a?.skattekolumn?.toString?.() || "",
+    skattetabell: (a?.skattetabell as number)?.toString?.() || "",
+    skattekolumn: (a?.skattekolumn as number)?.toString?.() || "",
     jobbtitel: (a?.jobbtitel as string) || "",
     semesterdagarPerÅr:
       a?.semesterdagarPerÅr?.toString?.() ||
@@ -185,10 +184,10 @@ export function useKontrakt(initial?: Record<string, unknown>) {
         ersättningPer: editData.ersättningPer,
         kompensation: editData.kompensation,
         arbetsbelastning: editData.arbetsbelastning,
-        arbetsvecka: editData.arbetsveckaTimmar,
+        arbetsvecka_timmar: editData.arbetsveckaTimmar,
         deltidProcent: editData.deltidProcent,
-        skattetabell: editData.skattetabell,
-        skattekolumn: editData.skattekolumn,
+        skattetabell: parseInt(editData.skattetabell, 10) || 0,
+        skattekolumn: parseInt(editData.skattekolumn, 10) || 0,
         tjänsteställeAdress: editData.tjänsteställeAdress,
         tjänsteställeOrt: editData.tjänsteställeOrt,
       } as AnställdData;
@@ -205,10 +204,10 @@ export function useKontrakt(initial?: Record<string, unknown>) {
           ersättningPer: editData.ersättningPer,
           kompensation: editData.kompensation,
           arbetsbelastning: editData.arbetsbelastning,
-          arbetsvecka: editData.arbetsveckaTimmar,
+          arbetsvecka_timmar: editData.arbetsveckaTimmar,
           deltidProcent: editData.deltidProcent,
-          skattetabell: editData.skattetabell,
-          skattekolumn: editData.skattekolumn,
+          skattetabell: parseInt(editData.skattetabell, 10) || 0,
+          skattekolumn: parseInt(editData.skattekolumn, 10) || 0,
           tjänsteställeAdress: editData.tjänsteställeAdress,
           tjänsteställeOrt: editData.tjänsteställeOrt,
         });
@@ -249,7 +248,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
       arbetsbelastningDisplay: (() => {
         const bel = visningsAnställd?.arbetsbelastning;
         const deltid = visningsAnställd?.deltidProcent;
-        const arbetsvecka = visningsAnställd?.arbetsvecka;
+        const arbetsvecka = visningsAnställd?.arbetsvecka_timmar;
         const arbetsbelastningText =
           bel === "Deltidsanställd" && deltid ? `${bel} (${deltid}%)` : bel || "";
         const arbetsveckaText = arbetsvecka ? `${arbetsvecka} timmar` : "";
