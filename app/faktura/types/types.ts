@@ -141,7 +141,7 @@ export type ServerData = {
     bankinfo?: string;
     webbplats?: string;
   };
-  kunder?: any[];
+  kunder?: unknown[];
   artiklar?: FavoritArtikel[];
 };
 
@@ -227,7 +227,7 @@ export interface LäggTillFavoritartikelProps {
 
 // SparadeFakturor types
 export interface SparadeFakturorProps {
-  fakturor: any[];
+  fakturor: unknown[];
   activeInvoiceId?: number;
   onSelectInvoice?: (id: number) => void | Promise<void>;
 }
@@ -282,7 +282,7 @@ export interface UseVerifikatModalProps {
 
 // Sparade types
 export interface FakturorComponentProps {
-  initialFakturor: any[];
+  initialFakturor: unknown[];
 }
 
 export interface UseSparadeFakturorReturn {
@@ -290,28 +290,28 @@ export interface UseSparadeFakturorReturn {
 }
 
 export interface UseSparadeFakturorPageReturn {
-  data: { kunder: any[]; fakturor: any[]; artiklar: any[] } | null;
+  data: { kunder: unknown[]; fakturor: unknown[]; artiklar: FavoritArtikel[] } | null;
   loading: boolean;
   loadData: () => Promise<void>;
 }
 
 // Forhandsgranskning subcomponent types
 export interface ArtiklarListaProps {
-  rows: any[];
+  rows: Artikel[];
 }
 
 export interface AvsändMottagProps {
-  formData: any;
+  formData: FakturaFormData;
 }
 
 export interface BetalningsInfoProps {
-  formData: any;
+  formData: FakturaFormData;
   summaAttBetala: number;
 }
 
 export interface FotProps {
-  formData: any;
-  session: any;
+  formData: FakturaFormData;
+  session: unknown;
 }
 
 export interface LogotypProps {
@@ -323,7 +323,7 @@ export interface LogotypProps {
 }
 
 export interface RotRutInfoProps {
-  formData: any;
+  formData: FakturaFormData;
   beraknatAvdrag?: number;
 }
 
@@ -390,30 +390,30 @@ export interface NyLeverantorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
-  editLeverantör?: any; // Import från actions.ts
+  editLeverantör?: Leverantör;
 }
 
 export interface UseLeverantorFlikReturn {
   // State
-  leverantörer: any[]; // Import från actions.ts
+  leverantörer: Leverantör[];
   loading: boolean;
   showModal: boolean;
-  editLeverantör: any | undefined; // Import från actions.ts
-  deleteModal: { show: boolean; leverantör?: any };
+  editLeverantör: Leverantör | undefined;
+  deleteModal: { show: boolean; leverantör?: Leverantör };
   deleteLoading: boolean;
-  bokförModal: { show: boolean; leverantör?: any };
+  bokförModal: { show: boolean; leverantör?: Leverantör };
 
   // Actions
   loadLeverantörer: () => Promise<void>;
   handleLeverantörAdded: () => void;
-  handleEditLeverantör: (leverantör: any) => void;
-  handleDeleteLeverantör: (leverantör: any) => void;
-  handleBokförLeverantör: (leverantör: any) => void;
+  handleEditLeverantör: (leverantör: Leverantör) => void;
+  handleDeleteLeverantör: (leverantör: Leverantör) => void;
+  handleBokförLeverantör: (leverantör: Leverantör) => void;
   confirmDelete: () => Promise<void>;
   handleModalClose: () => void;
   setShowModal: (show: boolean) => void;
-  setDeleteModal: (modal: { show: boolean; leverantör?: any }) => void;
-  setBokförModal: (modal: { show: boolean; leverantör?: any }) => void;
+  setDeleteModal: (modal: { show: boolean; leverantör?: Leverantör }) => void;
+  setBokförModal: (modal: { show: boolean; leverantör?: Leverantör }) => void;
 }
 
 export interface UseNyLeverantorModalReturn {
@@ -439,7 +439,7 @@ export interface UseNyLeverantorModalReturn {
 
 // Hook parameter interfaces
 export interface UseLeverantörerReturn {
-  leverantörer: any[]; // Leverantör från actions.ts
+  leverantörer: Leverantör[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -452,7 +452,7 @@ export interface UseLeverantorFlikParams {
 
 export interface UseNyLeverantorModalParams {
   isOpen: boolean;
-  editLeverantör?: any; // Leverantör från actions.ts
+  editLeverantör?: Leverantör;
   onSaved: () => void;
   onClose: () => void;
 }
@@ -504,9 +504,7 @@ export interface AlternativProps {
 }
 
 // Betalning component types
-export interface BetalningProps {
-  // För framtida props om behövs
-}
+export type BetalningProps = Record<string, never>;
 
 // BetalningsbekraftelseModal component types
 export type BetalningsPost = {

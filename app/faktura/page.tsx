@@ -4,21 +4,18 @@ import MainLayout from "../_components/MainLayout";
 import { hämtaFöretagsprofil } from "./actions/foretagActions";
 import { hämtaSparadeKunder } from "./actions/kundActions";
 import { hämtaSparadeArtiklar } from "./actions/artikelActions";
-import { hämtaSparadeFakturor } from "./actions/fakturaActions";
 
 export default async function FakturaPage() {
-  const [foretagsprofil, kunder, artiklar, sparadeFakturor] = await Promise.all([
+  const [foretagsprofil, kunder, artiklar] = await Promise.all([
     hämtaFöretagsprofil(),
     hämtaSparadeKunder(),
     hämtaSparadeArtiklar(),
-    hämtaSparadeFakturor(),
   ]);
 
   const initialData = {
-    foretagsprofil,
+    foretagsprofil: foretagsprofil || undefined,
     kunder: kunder || [],
     artiklar: artiklar || [],
-    sparadeFakturor: sparadeFakturor || [],
   };
 
   return (

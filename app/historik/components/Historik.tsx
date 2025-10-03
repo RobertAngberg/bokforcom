@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Tabell from "../../_components/Tabell";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import { HistoryItem, TransactionDetail, HistorikProps } from "../types/types";
@@ -154,8 +153,8 @@ export default function Historik({ initialData }: HistorikProps) {
             {
               key: "debet",
               label: "Debet",
-              render: (value) =>
-                value > 0
+              render: (value: unknown) =>
+                typeof value === "number" && value > 0
                   ? value.toLocaleString("sv-SE", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
@@ -166,8 +165,8 @@ export default function Historik({ initialData }: HistorikProps) {
             {
               key: "kredit",
               label: "Kredit",
-              render: (value) =>
-                value > 0
+              render: (value: unknown) =>
+                typeof value === "number" && value > 0
                   ? value.toLocaleString("sv-SE", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,

@@ -10,7 +10,7 @@ import {
 import { showToast } from "../../_components/Toast";
 
 // Types
-import type { FakturaFormData, NyArtikel, Artikel } from "../types/types";
+import type { NyArtikel, Artikel, FavoritArtikel } from "../types/types";
 
 /**
  * Hook för produkter, tjänster och ROT/RUT hantering
@@ -216,7 +216,7 @@ export function useProdukterTjanster() {
       } else {
         showToast("Kunde inte spara som favorit", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Fel vid sparande av favorit", "error");
     }
   }, [
@@ -253,14 +253,14 @@ export function useProdukterTjanster() {
       } else {
         showToast("Kunde inte ta bort favoritartikel", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Fel vid borttagning av favoritartikel", "error");
     }
-  }, [deleteFavoritId, deleteFavoritArtikel, laddaSparadeArtiklar]);
+  }, [deleteFavoritId, laddaSparadeArtiklar]);
 
   // Ladda favoritartikel till formuläret
   const laddaFavoritArtikel = useCallback(
-    (artikel: any) => {
+    (artikel: FavoritArtikel) => {
       // Skapa artikel direkt och lägg till i fakturaraderna
       const nyArtikelData: Artikel = {
         beskrivning: artikel.beskrivning || "",
@@ -440,7 +440,7 @@ export function useProdukterTjanster() {
   );
 
   const setValtArtikel = useCallback(
-    (value: any) => {
+    (value: FavoritArtikel | null) => {
       setProdukterTjansterState({ valtArtikel: value });
     },
     [setProdukterTjansterState]

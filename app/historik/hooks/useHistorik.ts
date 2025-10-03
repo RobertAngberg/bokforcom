@@ -143,7 +143,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     {
       key: "belopp",
       label: "Belopp",
-      render: (_: number, item: HistoryItem) => {
+      render: (_: unknown, item: HistoryItem) => {
         // Summera debet från detailsMap om finns, annars visa originalvärde
         const details = detailsMap[item.transaktions_id];
         let debetSum = item.belopp;
@@ -237,7 +237,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
 
       setUnbalancedResults(unbalancedItems);
       setShowUnbalancedModal(true);
-    } catch (error) {
+    } catch {
       showToast("Ett fel uppstod vid kontrollen", "error");
     } finally {
       setIsCheckingUnbalanced(false);
@@ -291,7 +291,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
       } else {
         showToast(result.error || "Kunde inte ta bort transaktion", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Ett fel uppstod när transaktionen skulle tas bort", "error");
     } finally {
       setDeletingIds((prev) => prev.filter((id) => id !== deleteTransactionId));

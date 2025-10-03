@@ -140,8 +140,8 @@ export default function RotRutBetalningModal({
                   Skatteverket
                 </li>
                 <li>• ROT/RUT-fordran ({rotRutBelopp.toLocaleString("sv-SE")} kr) nollställs</li>
-                <li>• Fakturas betalningsstatus uppdateras till "Betald"</li>
-                <li>• ROT/RUT-status uppdateras till "Godkänd"</li>
+                <li>• Fakturas betalningsstatus uppdateras till &ldquo;Betald&rdquo;</li>
+                <li>• ROT/RUT-status uppdateras till &ldquo;Godkänd&rdquo;</li>
               </ul>
             </div>
           </div>

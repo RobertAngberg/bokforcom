@@ -1,18 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import React, { createContext, useContext, useReducer } from "react";
 import type {
   FakturaFormData,
   NyArtikel,
-  KundStatus,
-  ServerData,
   FavoritArtikel,
   FakturaState,
   FakturaAction,
   FakturaContextType,
   FakturaProviderProps,
   ViewType,
-  NavigationState,
 } from "../types/types";
 
 // Default values - samma som i Zustand store

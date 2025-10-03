@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useFakturaContext } from "../context/FakturaContext";
-import { generatePDFFromElement, generatePDFAsBase64 } from "../utils/pdfGenerator";
+import { generatePDFFromElement } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
 
 // Types
@@ -64,15 +64,16 @@ export function useForhandsgranskning() {
     // ROT/RUT-avdrag enligt Skatteverket: 50% av arbetskostnad inkl moms
     // Kolla om ROT/RUT är aktiverat på formulärnivå ELLER om det finns ROT/RUT-artiklar
     const harROTRUTArtiklar =
-      formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+      formData.artiklar && formData.artiklar.some((artikel) => artikel.rotRutTyp);
     const rotRutTyp =
       formData.rotRutTyp ||
-      (harROTRUTArtiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+      (harROTRUTArtiklar
+        ? formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp
+        : undefined);
 
     // Beräkna arbetskostnad bara för ROT/RUT-tjänster (inte material)
     const rotRutTjänsterSumExkl =
-      formData.artiklar?.reduce((acc, rad: any) => {
+      formData.artiklar?.reduce((acc, rad) => {
         if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
           const antal = parseFloat(String(rad.antal) || "0");
           const pris = parseFloat(String(rad.prisPerEnhet) || "0");
@@ -82,7 +83,7 @@ export function useForhandsgranskning() {
       }, 0) || 0;
 
     const rotRutTjänsterMoms =
-      formData.artiklar?.reduce((acc, rad: any) => {
+      formData.artiklar?.reduce((acc, rad) => {
         if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
           const antal = parseFloat(String(rad.antal) || "0");
           const pris = parseFloat(String(rad.prisPerEnhet) || "0");
@@ -110,23 +111,19 @@ export function useForhandsgranskning() {
     const rotRutPersonnummer =
       formData.personnummer ||
       (formData.artiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutPersonnummer)
-          ?.rotRutPersonnummer);
+        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer);
 
-    const shouldShowRotRut =
+    const shouldShowRotRut = Boolean(
       (formData.rotRutAktiverat || harROTRUTArtiklar) &&
-      rotRutTyp &&
-      (rotRutTyp === "ROT" || rotRutTyp === "RUT");
-
-    const rotRutArtiklar = formData.artiklar?.filter((a: any) => a.rotRutTyp) || [];
-    const rotRutTotalTimmar = rotRutArtiklar.reduce(
-      (sum: number, a: any) => sum + (a.antal || 0),
-      0
+        rotRutTyp &&
+        (rotRutTyp === "ROT" || rotRutTyp === "RUT")
     );
+
+    const rotRutArtiklar = formData.artiklar?.filter((a) => a.rotRutTyp) || [];
+    const rotRutTotalTimmar = rotRutArtiklar.reduce((sum, a) => sum + (a.antal || 0), 0);
     const rotRutGenomsnittsPris =
       rotRutArtiklar.length > 0
-        ? rotRutArtiklar.reduce((sum: number, a: any) => sum + (a.prisPerEnhet || 0), 0) /
-          rotRutArtiklar.length
+        ? rotRutArtiklar.reduce((sum, a) => sum + (a.prisPerEnhet || 0), 0) / rotRutArtiklar.length
         : 0;
 
     const rotRutAvdragProcent = rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—";

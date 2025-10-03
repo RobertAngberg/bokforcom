@@ -34,9 +34,21 @@ import {
   UseSparadeFakturorReturn,
   UseSparadeFakturorPageReturn,
   BokfordFaktura,
+  TransaktionsPost,
+  FavoritArtikel,
 } from "../types/types";
-import { useFaktura } from "./useFaktura";
 import { useRouter } from "next/navigation";
+
+// Type for leverantör form data
+interface LeverantörFormData {
+  namn: string;
+  organisationsnummer?: string;
+  adress?: string;
+  postnummer?: string;
+  stad?: string;
+  telefon?: string;
+  epost?: string;
+}
 
 // Business Logic Functions for NyLeverantorModal
 function sanitizeLeverantörInput(input: string): string {
@@ -53,7 +65,10 @@ function validateLeverantörEmail(email: string): boolean {
   return emailRegex.test(email.trim());
 }
 
-function validateLeverantörData(formData: any): { isValid: boolean; error?: string } {
+function validateLeverantörData(formData: LeverantörFormData): {
+  isValid: boolean;
+  error?: string;
+} {
   // Validera obligatoriska fält
   const namn = sanitizeLeverantörInput(formData.namn || "");
   if (!namn || namn.length < 2) {
@@ -68,7 +83,7 @@ function validateLeverantörData(formData: any): { isValid: boolean; error?: str
   return { isValid: true };
 }
 
-function sanitizeLeverantörFormData(formData: any) {
+function sanitizeLeverantörFormData(formData: LeverantörFormData): LeverantörFormData {
   return {
     ...formData,
     namn: sanitizeLeverantörInput(formData.namn || ""),
@@ -341,7 +356,7 @@ export function useNyLeverantorModal({
           setError(result.error || "Kunde inte spara leverantör");
         }
       }
-    } catch (err) {
+    } catch {
       setError("Ett oväntat fel uppstod");
     } finally {
       setLoading(false);
@@ -424,8 +439,7 @@ export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
 }
 
 // Hook för Sparade fakturor (simplified for list view only)
-export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorReturn {
-  const { setFormData, setKundStatus, showError } = useFaktura();
+export function useSparadeFakturor(): UseSparadeFakturorReturn {
   const router = useRouter();
 
   // Funktion för att hantera när en faktura väljs
@@ -445,9 +459,11 @@ export function useSparadeFakturor(initialFakturor: any[]): UseSparadeFakturorRe
 
 // Hook för Sparade page data loading
 export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
-  const [data, setData] = useState<{ kunder: any[]; fakturor: any[]; artiklar: any[] } | null>(
-    null
-  );
+  const [data, setData] = useState<{
+    kunder: unknown[];
+    fakturor: unknown[];
+    artiklar: FavoritArtikel[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -501,7 +517,7 @@ export function useBokfordaFakturor() {
   const [bekraftelseModal, setBekraftelseModal] = useState<{
     isOpen: boolean;
     faktura: BokfordFaktura | null;
-    transaktionsposter: any[];
+    transaktionsposter: TransaktionsPost[];
     loadingPoster: boolean;
   }>({
     isOpen: false,
@@ -526,18 +542,21 @@ export function useBokfordaFakturor() {
     {
       key: "konto",
       label: "Konto",
-      render: (_: any, post: any) => `${post.kontonummer} - ${post.kontobeskrivning}`,
+      render: (_: unknown, post: TransaktionsPost) =>
+        `${post.kontonummer} - ${post.kontobeskrivning}`,
     },
     {
       key: "debet",
       label: "Debet",
-      render: (_: any, post: any) => (post.debet > 0 ? formatSEK(post.debet) : "—"),
+      render: (_: unknown, post: TransaktionsPost) =>
+        post.debet > 0 ? formatSEK(post.debet) : "—",
       className: "text-right",
     },
     {
       key: "kredit",
       label: "Kredit",
-      render: (_: any, post: any) => (post.kredit > 0 ? formatSEK(post.kredit) : "—"),
+      render: (_: unknown, post: TransaktionsPost) =>
+        post.kredit > 0 ? formatSEK(post.kredit) : "—",
       className: "text-right",
     },
   ];
@@ -746,17 +765,10 @@ export function useVerifikatModal({
   leverantör?: string;
 }) {
   // State management
-  const [poster, setPoster] = useState<any[]>([]);
+  const [poster, setPoster] = useState<TransaktionsPost[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Data fetching effect
-  useEffect(() => {
-    if (isOpen && transaktionId) {
-      hämtaPoster();
-    }
-  }, [isOpen, transaktionId]);
-
-  const hämtaPoster = async () => {
+  const hämtaPoster = useCallback(async () => {
     if (!transaktionId) return;
 
     setLoading(true);
@@ -765,17 +777,24 @@ export function useVerifikatModal({
       const result = await hamtaTransaktionsposter(transaktionId);
       console.log("📝 Verifikat-resultat:", result);
       if (Array.isArray(result)) {
-        setPoster(result as any);
+        setPoster(result as TransaktionsPost[]);
       }
     } catch (error) {
       console.error("Fel vid hämtning av transaktionsposter:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [transaktionId]);
+
+  // Data fetching effect
+  useEffect(() => {
+    if (isOpen && transaktionId) {
+      hämtaPoster();
+    }
+  }, [isOpen, transaktionId, hämtaPoster]);
 
   // Column definitions for table (without JSX render functions)
-  const columns: ColumnDefinition<any>[] = [
+  const columns: ColumnDefinition<TransaktionsPost>[] = [
     {
       key: "kontonummer",
       label: "Konto",

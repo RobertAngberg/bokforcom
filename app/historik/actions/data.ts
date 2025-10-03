@@ -42,7 +42,7 @@ export async function hämtaHistorikData(): Promise<HistoryItem[]> {
     });
 
     return sortedData;
-  } catch (error) {
+  } catch {
     // Vid fel, returnera tom array
     return [];
   }

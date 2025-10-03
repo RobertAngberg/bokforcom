@@ -50,29 +50,33 @@ export default function FeedbackWidget() {
 
   return (
     <>
-      <style jsx>{`
-        @keyframes slideInFromBottomRight {
-          0% {
-            opacity: 0;
-            transform: translate(50px, 50px) scale(0.8);
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          @keyframes slideInFromBottomRight {
+            0% {
+              opacity: 0;
+              transform: translate(50px, 50px) scale(0.8);
+            }
+            100% {
+              opacity: 1;
+              transform: translate(0, 0) scale(1);
+            }
           }
-          100% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-        }
 
-        @keyframes slideOutToBottomRight {
-          0% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
+          @keyframes slideOutToBottomRight {
+            0% {
+              opacity: 1;
+              transform: translate(0, 0) scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(20px, 20px) scale(0.95);
+            }
           }
-          100% {
-            opacity: 0;
-            transform: translate(20px, 20px) scale(0.95);
-          }
-        }
-      `}</style>
+        `,
+        }}
+      />
 
       {/* Widget Button */}
       <div className="fixed bottom-6 right-6 z-50">

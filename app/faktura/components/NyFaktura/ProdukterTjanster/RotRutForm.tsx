@@ -96,7 +96,8 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 className={`${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               />
               <p className="text-xs text-gray-400 mt-1">
-                Ex: "Målning av sovrum och vardagsrum", "Städning av hela bostaden"
+                Ex: &ldquo;Målning av sovrum och vardagsrum&rdquo;, &ldquo;Städning av hela
+                bostaden&rdquo;
               </p>
             </div>
 

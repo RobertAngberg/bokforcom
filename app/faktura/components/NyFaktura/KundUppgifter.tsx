@@ -5,6 +5,11 @@ import Dropdown from "../../../_components/Dropdown";
 import TextFalt from "../../../_components/TextFalt";
 import { useFaktura } from "../../hooks/useFaktura";
 
+type Kund = {
+  id: number;
+  kundnamn: string;
+};
+
 export default function KundUppgifter() {
   const {
     formData,
@@ -25,7 +30,7 @@ export default function KundUppgifter() {
           value={formData.kundId ?? ""}
           onChange={handleSelectCustomer}
           placeholder="Välj existerande kund"
-          options={kunder.map((kund: any) => ({
+          options={kunder.map((kund: Kund) => ({
             label: kund.kundnamn,
             value: kund.id.toString(),
           }))}

@@ -12,7 +12,7 @@ import { useFaktura } from "../../hooks/useFaktura";
 import { NyFakturaProps } from "../../types/types";
 import TillbakaPil from "../../../_components/TillbakaPil";
 
-export default function NyFaktura({ onBackToMenu, editFakturaId }: NyFakturaProps) {
+export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
   const { formData, showPreview, openPreview, closePreview, reloadFaktura, isLoadingFaktura } =
     useFaktura();
 

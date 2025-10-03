@@ -1,5 +1,6 @@
 import Knapp from "../../../../_components/Knapp";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { Artikel } from "../../../types/types";
 
 export default function FavoritArtiklarList() {
   const {
@@ -12,8 +13,16 @@ export default function FavoritArtiklarList() {
   } = useProdukterTjanster();
 
   // Handler functions
-  const handleSelectFavorit = (artikel: any) => {
-    laddaFavoritArtikel(artikel);
+  const handleSelectFavorit = (artikel: Artikel) => {
+    // Convert string fields to numbers if needed
+    const cleanedArtikel: Artikel = {
+      ...artikel,
+      arbetskostnadExMoms:
+        typeof artikel.arbetskostnadExMoms === "string"
+          ? parseFloat(artikel.arbetskostnadExMoms)
+          : artikel.arbetskostnadExMoms,
+    };
+    laddaFavoritArtikel(cleanedArtikel);
   };
 
   const handleDeleteFavorit = (id: number) => {
@@ -49,7 +58,7 @@ export default function FavoritArtiklarList() {
                 >
                   🗑️
                 </button>
-                <div onClick={() => handleSelectFavorit(a)} className="flex-1">
+                <div onClick={() => handleSelectFavorit(a as Artikel)} className="flex-1">
                   <div className="text-white font-semibold">
                     📌 {a.beskrivning}
                     {ursprungligFavoritId === a.id && (

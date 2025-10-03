@@ -2,6 +2,7 @@
 
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { Artikel } from "../../../types/types";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
@@ -22,7 +23,6 @@ export default function ProdukterTjanster() {
     setAntal,
     setPrisPerEnhet,
     setMoms,
-    setValuta,
     setTyp,
 
     // Handlers från useFaktura
@@ -48,7 +48,7 @@ export default function ProdukterTjanster() {
     valtArtikel,
   } = produkterTjansterState;
 
-  const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
+  const { beskrivning, antal, prisPerEnhet, moms, typ } = nyArtikel;
 
   // Handler functions
   const handleAdd = () => {
@@ -81,7 +81,7 @@ export default function ProdukterTjanster() {
       {formData.rotRutAktiverat &&
         formData.artiklar &&
         formData.artiklar.length > 0 &&
-        formData.artiklar.some((artikel: any) => artikel.rotRutTyp) && (
+        formData.artiklar.some((artikel: Artikel) => artikel.rotRutTyp) && (
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -373,31 +373,32 @@ export default function ProdukterTjanster() {
                         Kategori
                       </label>
                       <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                        {(valtArtikel as any).rotRutKategori || "Ej angiven"}
+                        {valtArtikel.rotRutKategori || "Ej angiven"}
                       </div>
                     </div>
                   </div>
 
-                  {(valtArtikel as any).rotRutBeskrivning && (
+                  {valtArtikel.rotRutBeskrivning && (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Beskrivning av arbetet
                       </label>
                       <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                        {(valtArtikel as any).rotRutBeskrivning}
+                        {valtArtikel.rotRutBeskrivning}
                       </div>
                     </div>
                   )}
 
-                  {((valtArtikel as any).rotRutStartdatum ||
-                    (valtArtikel as any).rotRutSlutdatum) && (
+                  {(valtArtikel.rotRutStartdatum || valtArtikel.rotRutSlutdatum) && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">
                           Startdatum
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                          {(valtArtikel as any).rotRutStartdatum || "Ej angiven"}
+                          {valtArtikel.rotRutStartdatum instanceof Date
+                            ? valtArtikel.rotRutStartdatum.toISOString().split("T")[0]
+                            : valtArtikel.rotRutStartdatum || "Ej angiven"}
                         </div>
                       </div>
                       <div>
@@ -405,43 +406,44 @@ export default function ProdukterTjanster() {
                           Slutdatum
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                          {(valtArtikel as any).rotRutSlutdatum || "Ej angiven"}
+                          {valtArtikel.rotRutSlutdatum instanceof Date
+                            ? valtArtikel.rotRutSlutdatum.toISOString().split("T")[0]
+                            : valtArtikel.rotRutSlutdatum || "Ej angiven"}
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {(valtArtikel as any).rotRutPersonnummer && (
+                  {valtArtikel.rotRutPersonnummer && (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Personnummer
                       </label>
                       <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                        {(valtArtikel as any).rotRutPersonnummer}
+                        {valtArtikel.rotRutPersonnummer}
                       </div>
                     </div>
                   )}
 
-                  {(valtArtikel as any).rotRutFastighetsbeteckning && (
+                  {valtArtikel.rotRutFastighetsbeteckning && (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Fastighetsbeteckning
                       </label>
                       <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                        {(valtArtikel as any).rotRutFastighetsbeteckning}
+                        {valtArtikel.rotRutFastighetsbeteckning}
                       </div>
                     </div>
                   )}
 
-                  {((valtArtikel as any).rotRutBrfOrg ||
-                    (valtArtikel as any).rotRutBrfLagenhet) && (
+                  {(valtArtikel.rotRutBrfOrg || valtArtikel.rotRutBrfLagenhet) && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">
                           BRF Organisationsnummer
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                          {(valtArtikel as any).rotRutBrfOrg || "Ej angiven"}
+                          {valtArtikel.rotRutBrfOrg || "Ej angiven"}
                         </div>
                       </div>
                       <div>
@@ -449,7 +451,7 @@ export default function ProdukterTjanster() {
                           Lägenhetsnummer
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
-                          {(valtArtikel as any).rotRutBrfLagenhet || "Ej angiven"}
+                          {valtArtikel.rotRutBrfLagenhet || "Ej angiven"}
                         </div>
                       </div>
                     </div>

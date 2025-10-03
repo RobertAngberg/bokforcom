@@ -4,7 +4,7 @@
 import { FotProps } from "../../../types/types";
 //#endregion
 
-export default function Fot({ formData, session }: FotProps) {
+export default function Fot({ formData }: FotProps) {
   return (
     <div
       className="grid grid-cols-2 mt-10 pt-6 text-[10pt]"

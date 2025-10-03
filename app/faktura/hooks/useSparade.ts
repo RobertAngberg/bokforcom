@@ -62,7 +62,7 @@ export function useSparade() {
           showToast(errorMsg, "error");
         }
       }
-    } catch (error) {
+    } catch {
       const errorMsg = "Fel vid borttagning av faktura";
       if (onError) {
         onError(errorMsg);

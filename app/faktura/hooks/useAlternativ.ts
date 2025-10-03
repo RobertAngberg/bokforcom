@@ -12,6 +12,14 @@ import { laddaNerHUSFil } from "../utils/husFilGenerator";
 import { BokforingsPost } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 
+// Type for bokförings data
+interface BokföringsData {
+  fakturanummer: string;
+  kundnamn: string;
+  poster: BokforingsPost[];
+  totaltBelopp: number;
+}
+
 // Validation functions - flyttad från useBokforFakturaModal
 function validateBokföringsPost(post: BokforingsPost): { isValid: boolean; error?: string } {
   if (!post.konto || !/^\d{4}$/.test(post.konto.toString())) {
@@ -43,7 +51,7 @@ function validateBokföringsBalance(poster: BokforingsPost[]): { isValid: boolea
   return { isValid: true };
 }
 
-function validateBokföringsData(data: any): { isValid: boolean; error?: string } {
+function validateBokföringsData(data: BokföringsData): { isValid: boolean; error?: string } {
   if (!data.fakturanummer || data.fakturanummer.trim().length === 0) {
     return { isValid: false, error: "Fakturanummer krävs" };
   }
@@ -79,7 +87,6 @@ function validateBokföringsData(data: any): { isValid: boolean; error?: string 
 
 export function useAlternativ() {
   const { formData, updateFormField } = useFaktura();
-  const [sparadeFakturor, setSparadeFakturor] = useState<any[]>([]);
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
   const [sparaLoading, setSparaLoading] = useState(false);
@@ -144,7 +151,7 @@ export function useAlternativ() {
         showToast("Faktura sparad!", "success");
 
         // UPPDATERA FORMDATA MED NYTT ID!
-        if (res.id) {
+        if ("id" in res && res.id) {
           updateFormField("id", res.id.toString());
         }
 
@@ -179,7 +186,7 @@ export function useAlternativ() {
           });
           const res = await saveInvoice(fd);
 
-          if (res.success && res.id) {
+          if (res.success && "id" in res && res.id) {
             // UPPDATERA FORMDATA MED NYTT ID!
             updateFormField("id", res.id.toString());
             // Trigga reload event så Fakturor.tsx uppdaterar sin lista
@@ -242,8 +249,7 @@ export function useAlternativ() {
         ) || 0;
 
       // Kolla om det finns ROT/RUT-artiklar
-      const harRotRutArtiklar =
-        formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+      const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
       const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
       const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
 
@@ -317,11 +323,10 @@ export function useAlternativ() {
   const hanteraHUSFil = () => {
     // Kolla om ROT/RUT finns antingen i formData eller i artiklar
     const harROTRUTArtiklar =
-      formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+      formData.artiklar && formData.artiklar.some((artikel) => artikel.rotRutTyp);
     const rotRutTyp =
       formData.rotRutTyp ||
-      (formData.artiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+      (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
 
     if (!formData.rotRutAktiverat && !harROTRUTArtiklar) {
       console.log("🔍 Ingen ROT/RUT-data hittad");
@@ -336,15 +341,13 @@ export function useAlternativ() {
     const personnummer =
       formData.personnummer ||
       (formData.artiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutPersonnummer)
-          ?.rotRutPersonnummer);
+        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer);
 
     // Hämta ROT/RUT-kategori från formData eller artiklar
     const rotRutKategori =
       formData.rotRutKategori ||
       (formData.artiklar &&
-        (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutKategori)
-          ?.rotRutKategori) ||
+        formData.artiklar.find((artikel) => artikel.rotRutKategori)?.rotRutKategori) ||
       "Städa";
 
     // Validera att nödvändiga fält finns
@@ -368,7 +371,7 @@ export function useAlternativ() {
 
     // Beräkna kostnad för endast ROT/RUT-tjänster (för avdragsberäkning)
     const rotRutTjänsterInkMoms =
-      formData.artiklar?.reduce((sum, artikel: any) => {
+      formData.artiklar?.reduce((sum, artikel) => {
         // Bara tjänster med ROT/RUT, inte material
         console.log("Tjänst-check:", {
           beskrivning: artikel.beskrivning,
@@ -386,7 +389,7 @@ export function useAlternativ() {
 
     // Beräkna material kostnad separat
     const rotRutMaterialKostnad =
-      formData.artiklar?.reduce((sum, artikel: any) => {
+      formData.artiklar?.reduce((sum, artikel) => {
         console.log("Material-check:", {
           beskrivning: artikel.beskrivning,
           rotRutMaterial: artikel.rotRutMaterial,
@@ -400,7 +403,7 @@ export function useAlternativ() {
 
     // Beräkna totala timmar från ROT/RUT-tjänster (inte material)
     const totalTimmar =
-      formData.artiklar?.reduce((sum, artikel: any) => {
+      formData.artiklar?.reduce((sum, artikel) => {
         // Om det är en tjänst med ROT/RUT (inte material), använd antal som timmar
         if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
           return sum + artikel.antal;
@@ -483,19 +486,18 @@ export function useAlternativ() {
 
   // ROT/RUT-relaterade beräkningar
   const harROTRUTArtiklar =
-    formData.artiklar && formData.artiklar.some((artikel: any) => artikel.rotRutTyp);
+    formData.artiklar && formData.artiklar.some((artikel) => artikel.rotRutTyp);
   const ärROTRUTFaktura = (formData.rotRutAktiverat && formData.rotRutTyp) || harROTRUTArtiklar;
   const harPersonnummer =
     (formData.personnummer && formData.personnummer.trim() !== "") ||
     (formData.artiklar &&
       formData.artiklar.some(
-        (artikel: any) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
+        (artikel) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
       ));
 
   const rotRutTyp =
     formData.rotRutTyp ||
-    (formData.artiklar &&
-      (formData.artiklar as any[]).find((artikel: any) => artikel.rotRutTyp)?.rotRutTyp);
+    (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
 
   const husFilKnappText = !harPersonnummer
     ? "📄 Personnummer saknas"
@@ -511,7 +513,6 @@ export function useAlternativ() {
 
   return {
     // State
-    sparadeFakturor,
     bokförModalOpen,
     rotRutModalOpen,
     sparaLoading,
@@ -585,7 +586,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       // Samma ID, sätt bara statusLoaded till true
       setStatusLoaded(true);
     }
-  }, [isOpen, formData.id, lastLoadedId]); // Inkludera lastLoadedId
+  }, [isOpen, formData.id, lastLoadedId, setBokföringsmetod]); // Inkludera setBokföringsmetod
 
   // Resettera state när modalen stängs
   useEffect(() => {
@@ -632,8 +633,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       // Fakturan är redan bokförd - visa bara betalningsregistrering
       if (fakturaStatus.status_betalning !== "Betald") {
         // Kolla om det finns ROT/RUT-artiklar för att beräkna kundens del
-        const harRotRutArtiklar =
-          formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+        const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
         const betalningsbelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : totalInkMoms; // Endast kundens del för ROT/RUT
 
         // Om det är "Delvis betald" (ROT/RUT där kunden redan betalat), visa inte betalningsregistrering
@@ -669,8 +669,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
         }
       } else {
         // Kolla om det finns ROT/RUT-artiklar för att visa rätt meddelande
-        const harRotRutArtiklar =
-          formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+        const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
 
         if (harRotRutArtiklar) {
           varningar.push("✅ Fakturan är redan bokförd och betald.");
@@ -707,7 +706,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     }
 
     // Kolla om det finns ROT/RUT-artiklar
-    const harRotRutArtiklar = formData.artiklar?.some((artikel: any) => artikel.rotRutTyp) || false;
+    const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
     const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
     const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
 
@@ -855,12 +854,12 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     {
       key: "debet",
       label: "Debet",
-      render: (value) => (value > 0 ? value.toFixed(2) : ""),
+      render: (value: unknown) => (typeof value === "number" && value > 0 ? value.toFixed(2) : ""),
     },
     {
       key: "kredit",
       label: "Kredit",
-      render: (value) => (value > 0 ? value.toFixed(2) : ""),
+      render: (value: unknown) => (typeof value === "number" && value > 0 ? value.toFixed(2) : ""),
     },
   ];
 
