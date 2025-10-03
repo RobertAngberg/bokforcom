@@ -219,7 +219,7 @@ export default function LönespecView({
         </div>
       </div>
 
-      {visaForhandsgranskning && (
+      {visaForhandsgranskning && anställd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
             <button

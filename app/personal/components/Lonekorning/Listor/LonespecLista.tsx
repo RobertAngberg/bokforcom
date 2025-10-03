@@ -63,13 +63,9 @@ export default function LonespecLista({
       {/* Lönespecar */}
       <>
         {valdaSpecar.map((spec) => {
-          const anstalld = anstallda.find((a) => a.id === spec.anställd_id);
-
-          if (!anstalld) {
-            console.warn(
-              `⚠️ Anställd med id ${spec.anställd_id} hittades inte för lönespec ${spec.id}`
-            );
-          }
+          // Konvertera alltid till nummer för säker jämförelse
+          const anställdId = Number(spec.anställd_id);
+          const anstalld = anstallda.find((a) => a.id === anställdId);
 
           const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
 

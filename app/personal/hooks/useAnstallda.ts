@@ -74,13 +74,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   const onNyAnstalldSaved = props?.onNyAnstalldSaved;
   const onNyAnstalldCancel = props?.onNyAnstalldCancel;
 
-  // Använd mock data tillfälligt för att förhindra endless loop
-  const mockData = [
-    { id: 1, namn: "Test Användare", epost: "test@example.com", roll: "Utvecklare" },
-    { id: 2, namn: "Demo Person", epost: "demo@example.com", roll: "Designer" },
-  ];
-
-  const [anställda, setAnställda] = useState<AnställdListItem[]>(mockData);
+  const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [anställdaLoading, setAnställdaLoading] = useState(false);
   const [anställdLoading, setAnställdLoading] = useState(false);
@@ -252,6 +246,11 @@ export function useAnstallda(props?: UseAnstalldaProps) {
       setAnställdaLoading(false);
     }
   }, [setAnställda, setAnställdaLoading, setAnställdaError]);
+
+  // Hämta alla anställda vid mount
+  useEffect(() => {
+    laddaAnställda();
+  }, [laddaAnställda]);
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)
