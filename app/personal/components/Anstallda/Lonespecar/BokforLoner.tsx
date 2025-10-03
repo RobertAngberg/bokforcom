@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "./Extrarader/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../../../actions/bokforingActions";
 import { showToast } from "../../../../_components/Toast";
+import type { Lönespec, ExtraradData } from "../../../types/types";
 
 interface BokföringsPost {
   konto: string;
@@ -14,9 +15,9 @@ interface BokföringsPost {
 }
 
 interface BokforLonerProps {
-  lönespec: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  lönespec: Lönespec;
+  extrarader: ExtraradData[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   anställdNamn: string;
   isOpen: boolean;
   onClose: () => void;
@@ -141,7 +142,7 @@ export default function BokforLoner({
       // Skicka hela arrayen med bokföringsposter till backend
       const poster = analyseraBokföringsposter();
       const result = await bokförLöneutbetalning({
-        lönespecId: lönespec.id,
+        lönespecId: typeof lönespec.id === "string" ? parseInt(lönespec.id, 10) : lönespec.id,
         bokföringsPoster: poster,
         extrarader,
         beräknadeVärden,
@@ -154,8 +155,10 @@ export default function BokforLoner({
 
       onBokfört?.();
       onClose();
-    } catch (error: any) {
-      setError(error.message || "Ett fel inträffade vid bokföring");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ett fel inträffade vid bokföring";
+      setError(errorMessage);
       console.error("Bokföringsfel:", error);
     } finally {
       setLoading(false);
@@ -169,19 +172,17 @@ export default function BokforLoner({
     const poster: BokföringsPost[] = [];
 
     // Använd ENDAST de redan beräknade värdena - SINGLE SOURCE OF TRUTH
-    const bruttolön = beräknadeVärden.bruttolön || 0;
-    const totalSocialaAvgifter = beräknadeVärden.socialaAvgifter || 0;
-    const totalSkatt = beräknadeVärden.skatt || 0;
-    const totalNettolön = beräknadeVärden.nettolön || 0;
+    const bruttolön = Number(beräknadeVärden.bruttolön) || 0;
+    const totalSkatt = Number(beräknadeVärden.skatt) || 0;
+    const totalNettolön = Number(beräknadeVärden.nettolön) || 0;
 
     // Analysera extrarader för specifika konton baserat på typ
     let reraFörmåner = 0; // Endast förmåner som behöver motkonto (7385, 7381-7389 utom 7399)
-    let skattefriaErsättningar = 0;
     const kontoSummor: Record<string, { kontoNamn: string; belopp: number }> = {};
 
     extrarader.forEach((rad) => {
       const typ = rad.typ; // Detta är nyckeln från RAD_KONFIGURATIONER
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
 
       if (belopp === 0) return;
 
@@ -202,8 +203,6 @@ export default function BokforLoner({
           if (kontoNummer >= "7381" && kontoNummer <= "7389") {
             reraFörmåner += Math.abs(belopp);
           }
-        } else {
-          skattefriaErsättningar += Math.abs(belopp);
         }
       }
     });
@@ -225,7 +224,7 @@ export default function BokforLoner({
     let semestertillägBelopp = 0;
     extrarader.forEach((rad) => {
       const typ = rad.typ;
-      const belopp = parseFloat(rad.kolumn3) || 0;
+      const belopp = parseFloat(rad.kolumn3 || "0") || 0;
       if (typ === "semestertillagg" && belopp > 0) {
         semestertillägBelopp += belopp;
       }
@@ -245,7 +244,7 @@ export default function BokforLoner({
     // Använd kontantlön direkt från beräknadeVärden (redan korrigerad för avdrag)
     // Men dra av semestertillägg som ska på separat konto och sjuk-justering
     const kontantlön =
-      (beräknadeVärden.kontantlön || bruttolön - reraFörmåner) -
+      (Number(beräknadeVärden.kontantlön) || bruttolön - reraFörmåner) -
       semestertillägBelopp -
       sjukJustering;
 
@@ -305,9 +304,8 @@ export default function BokforLoner({
       });
     }
 
-    // Analysera förmåner för 7512 vs 7515
-    let förmånerFör7512 = 0; // Specifika förmåner som får 7512
-    let förmånerFör7515 = 0; // Andra skattepliktiga förmåner som får 7515
+    // Analysera förmåner för 7515
+    let förmånerFör7515 = 0; // Skattepliktiga förmåner som får 7515
 
     // Dela upp förmånerna baserat på konto
     Object.entries(kontoSummor).forEach(([konto, { belopp }]) => {
@@ -327,9 +325,6 @@ export default function BokforLoner({
         }
       }
     });
-
-    // 7512: Sociala avgifter för specifika förmånsvärden
-    // 7512 borttagen enligt Bokio-modell
 
     // 7515: Sociala avgifter på skattepliktiga kostnadsersättningar
     if (förmånerFör7515 > 0) {
@@ -407,13 +402,14 @@ export default function BokforLoner({
         <div className="bg-slate-700 p-4 rounded-lg mb-4">
           <h3 className="text-md font-semibold text-slate-300 mb-2">Lönespec-info</h3>
           <div className="text-sm text-slate-400">
-            <p>Grundlön: {(beräknadeVärden.grundlön || 0).toLocaleString("sv-SE")} kr</p>
-            <p>Bruttolön: {(beräknadeVärden.bruttolön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Grundlön: {Number(beräknadeVärden.grundlön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Bruttolön: {Number(beräknadeVärden.bruttolön || 0).toLocaleString("sv-SE")} kr</p>
             <p>
-              Sociala avgifter: {(beräknadeVärden.socialaAvgifter || 0).toLocaleString("sv-SE")} kr
+              Sociala avgifter:{" "}
+              {Number(beräknadeVärden.socialaAvgifter || 0).toLocaleString("sv-SE")} kr
             </p>
-            <p>Skatt: {(beräknadeVärden.skatt || 0).toLocaleString("sv-SE")} kr</p>
-            <p>Nettolön: {(beräknadeVärden.nettolön || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Skatt: {Number(beräknadeVärden.skatt || 0).toLocaleString("sv-SE")} kr</p>
+            <p>Nettolön: {Number(beräknadeVärden.nettolön || 0).toLocaleString("sv-SE")} kr</p>
           </div>
         </div>
 

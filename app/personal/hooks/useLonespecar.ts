@@ -79,7 +79,9 @@ export function useLonespec({
 }: UseLonespecProps = {}) {
   const [lönespecar, setLonespecar] = useState<Lönespec[]>([]);
   const [extrarader, setExtraraderState] = useState<Record<string, ExtraradData[]>>({});
-  const [beräknadeVärden, setBeräknadeVärdenState] = useState<Record<string, number>>({});
+  const [beräknadeVärden, setBeräknadeVärdenState] = useState<
+    Record<string, Record<string, unknown>>
+  >({});
 
   // Utlägg state (only active when enableUtlaggMode is true)
   const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<Utlägg[]>(lönespecUtlägg);
@@ -102,7 +104,7 @@ export function useLonespec({
     setExtraraderState((prev) => ({ ...prev, [id]: extrarader }));
   }, []);
 
-  const setBeräknadeVärden = useCallback((id: string, värden: number) => {
+  const setBeräknadeVärden = useCallback((id: string, värden: Record<string, unknown>) => {
     setBeräknadeVärdenState((prev) => ({ ...prev, [id]: värden }));
   }, []);
 
@@ -156,10 +158,9 @@ export function useLonespec({
         const kombineradeUtlägg = [
           ...lönespecUtlägg,
           ...allUtlägg.filter(
-            (u: Utlägg) =>
-              u.status === "Väntande" && !lönespecUtlägg.some((lu: Utlägg) => lu.id === u.id)
+            (u) => u.status === "Väntande" && !lönespecUtlägg.some((lu) => lu.id === u.id)
           ),
-        ];
+        ] as Utlägg[];
 
         setSynkroniseradeUtlägg(kombineradeUtlägg);
       } catch (error) {
@@ -217,7 +218,7 @@ export function useLonespec({
         hämtaUtlägg(anställdId),
       ]);
       setLonespecar(lönespecarData);
-      setUtlägg(utläggData);
+      setUtlägg(utläggData as Utlägg[]);
     } catch (error) {
       console.error("Fel vid laddning av data:", error);
     } finally {

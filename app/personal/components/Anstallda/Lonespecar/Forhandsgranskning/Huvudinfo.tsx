@@ -1,6 +1,12 @@
 import React from "react";
+import type { HuvudinfoProps } from "../../../../types/types";
 
-export default function Huvudinfo({ anställd, månadsNamn, periodStart, periodSlut }: any) {
+export default function Huvudinfo({
+  anställd,
+  månadsNamn,
+  periodStart,
+  periodSlut,
+}: HuvudinfoProps) {
   return (
     <>
       {/* Anställd info - Header högerställd */}

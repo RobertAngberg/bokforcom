@@ -1,11 +1,12 @@
 import React from "react";
+import type { LönetabellProps } from "../../../../types/types";
 
 export default function Lönetabell({
   lönespec,
   bruttolön,
   extraraderMapped,
   formatNoDecimals,
-}: any) {
+}: LönetabellProps) {
   return (
     <div className="mb-6">
       <table className="w-full border-collapse border border-gray-400">
@@ -52,7 +53,7 @@ export default function Lönetabell({
               </td>
             </tr>
           )}
-          {extraraderMapped.map((rad: any, i: number) => (
+          {extraraderMapped.map((rad, i: number) => (
             <tr key={i}>
               <td className="border border-gray-400 px-3 py-2 text-black text-xs">
                 {rad.benämning}

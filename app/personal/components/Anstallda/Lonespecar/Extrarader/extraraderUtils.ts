@@ -15,6 +15,7 @@
  */
 
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
+import type { ModalFields, ExtraraderField } from "../../../../types/types";
 
 /**
  * FILTRERAR RADER BASERAT PÅ SÖKTERM
@@ -47,7 +48,7 @@ export function filtreraRader(rader: { id: string; label: string }[], sökterm: 
  * @param grundlön - Användarens månadslön (behövs för automatiska beräkningar)
  * @returns Totalsumma som sträng
  */
-export function beräknaSumma(rowId: string, modalFields: any, grundlön?: number) {
+export function beräknaSumma(rowId: string, modalFields: ModalFields, grundlön?: number) {
   const config = RAD_KONFIGURATIONER[rowId];
 
   // Automatiska beräkningar (karensavdrag, daglön-baserade avdrag, etc.)
@@ -60,8 +61,7 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
       } else if (config.enhet === "kr") {
         summa = config.beräknaTotalt(grundlön, modalFields);
       } else {
-        const antal = parseFloat(modalFields.kolumn2) || 0;
-        summa = config.beräknaTotalt(grundlön, antal);
+        summa = config.beräknaTotalt(grundlön, modalFields);
       }
       if (isNaN(summa)) summa = 0;
       if (config.negativtBelopp) {
@@ -69,14 +69,7 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
       }
       return summa.toFixed(2);
     } else {
-      let antal = 1;
-      if (
-        modalFields &&
-        (typeof modalFields.kolumn2 === "string" || typeof modalFields.kolumn2 === "number")
-      ) {
-        antal = parseFloat(modalFields.kolumn2) || 1;
-      }
-      let summa = config.beräknaTotalt(grundlön, antal);
+      let summa = config.beräknaTotalt(grundlön, modalFields);
       if (isNaN(summa)) summa = 0;
       if (config.negativtBelopp) {
         summa = -Math.abs(summa);
@@ -87,7 +80,7 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
 
   // KR-enheter utan belopp-fält (flyttat hit)
   if (config?.enhet === "kr" && !config.fält.beräknaTotalsummaAutomatiskt) {
-    const summa = parseFloat(modalFields.kolumn2);
+    const summa = parseFloat(modalFields.kolumn2 || "0");
     if (isNaN(summa)) return "0";
     if (config.negativtBelopp) {
       return (-Math.abs(summa)).toString();
@@ -97,8 +90,8 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
 
   // Om raden har beräknaTotalsummaAutomatiskt : true, spara totalsumman i kolumn3
   if (config?.fält.beräknaTotalsummaAutomatiskt) {
-    const antal = parseFloat(modalFields.kolumn2);
-    const beloppPerEnhet = parseFloat(modalFields.kolumn3) || 0;
+    const antal = parseFloat(modalFields.kolumn2 || "0");
+    const beloppPerEnhet = parseFloat(modalFields.kolumn3 || "0") || 0;
     if (isNaN(antal) || isNaN(beloppPerEnhet)) return "0";
     const totalsumma = antal * beloppPerEnhet;
     if (isNaN(totalsumma)) return "0";
@@ -106,8 +99,8 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
   }
 
   // Standard: antal × belopp
-  const antal = parseFloat(modalFields.kolumn2);
-  const belopp = parseFloat(modalFields.kolumn3) || 0;
+  const antal = parseFloat(modalFields.kolumn2 || "0");
+  const belopp = parseFloat(modalFields.kolumn3 || "0") || 0;
 
   if (isNaN(antal) || isNaN(belopp)) {
     return "0";
@@ -133,7 +126,7 @@ export function beräknaSumma(rowId: string, modalFields: any, grundlön?: numbe
  * @param modalFields - Formulärdata med råvärden
  * @returns Formaterat värde för visning
  */
-export function formatKolumn2Värde(rowId: string, modalFields: any) {
+export function formatKolumn2Värde(rowId: string, modalFields: ModalFields) {
   const config = RAD_KONFIGURATIONER[rowId];
 
   // Hantera dropdown-enheter (t.ex. semesterskuld: "5 Dag", "10 Timme")
@@ -212,15 +205,18 @@ export function initializeModalFields(rowId: string, grundlön?: number) {
  * @param setModalFields - State-setter för formulärfälten
  * @returns Array med formulärfält-objekt
  */
-export function getStandardFields(modalFields: any, setModalFields: any) {
+export function getStandardFields(
+  modalFields: ModalFields,
+  setModalFields: React.Dispatch<React.SetStateAction<ModalFields>>
+) {
   return [
     {
       label: "Antal",
       name: "kolumn2",
       type: "text" as const,
-      value: modalFields.kolumn2,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+      value: modalFields.kolumn2 || "",
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
       required: true,
       placeholder: "Ange antal",
     },
@@ -228,9 +224,9 @@ export function getStandardFields(modalFields: any, setModalFields: any) {
       label: "à SEK",
       name: "kolumn3",
       type: "number" as const,
-      value: modalFields.kolumn3,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setModalFields((f: any) => ({ ...f, kolumn3: e.target.value })),
+      value: modalFields.kolumn3 || "",
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setModalFields((f) => ({ ...f, kolumn3: e.target.value })),
       step: "0.01",
       required: true,
       placeholder: "Belopp per enhet",
@@ -239,9 +235,9 @@ export function getStandardFields(modalFields: any, setModalFields: any) {
       label: "Kommentar",
       name: "kolumn4",
       type: "text" as const,
-      value: modalFields.kolumn4,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+      value: modalFields.kolumn4 || "",
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
       required: false,
       placeholder: "Valfri kommentar",
     },
@@ -273,8 +269,8 @@ export function getStandardFields(modalFields: any, setModalFields: any) {
  */
 export function getFieldsForRow(
   rowId: string,
-  modalFields: any,
-  setModalFields: any,
+  modalFields: ModalFields,
+  setModalFields: React.Dispatch<React.SetStateAction<ModalFields>>,
   grundlön?: number
 ) {
   const config = RAD_KONFIGURATIONER[rowId];
@@ -288,8 +284,8 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: "0.01",
           placeholder: "Ange belopp (kr)",
@@ -299,8 +295,8 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text",
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           step: "1",
           placeholder: "Valfri kommentar",
@@ -316,8 +312,8 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
           placeholder: config.fält.antalPlaceholder,
@@ -327,8 +323,8 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
         },
@@ -343,8 +339,8 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
           placeholder: config.fält.antalPlaceholder,
@@ -354,8 +350,8 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
         },
@@ -370,8 +366,8 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
           placeholder: config.fält.antalPlaceholder,
@@ -381,8 +377,8 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
         },
@@ -397,8 +393,8 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: "0.01",
           placeholder: "Ange summa",
@@ -408,23 +404,23 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
         },
       ];
     }
 
-    const fields: any[] = [
+    const fields: ExtraraderField[] = [
       // FÖRSTA FÄLTET: Antal/Modell/Summa (beroende på extraradtyp)
       {
         label: config.fält.antalLabel, // "Antal", "Modell", "Summa", etc.
         name: "kolumn2",
         type: rowId === "foretagsbilExtra" ? "text" : "number",
         value: modalFields.kolumn2,
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-          setModalFields((f: any) => ({ ...f, kolumn2: e.target.value })),
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          setModalFields((f) => ({ ...f, kolumn2: e.target.value })),
         required: true,
         min: rowId === "foretagsbilExtra" ? undefined : "0", // Ingen min-gräns för text
         step: config.fält.step || "1", // Steg för nummer-input
@@ -439,8 +435,8 @@ export function getFieldsForRow(
         name: "enhet",
         type: "select" as const,
         value: modalFields.enhet,
-        onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
-          setModalFields((f: any) => ({ ...f, enhet: e.target.value })),
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          setModalFields((f) => ({ ...f, enhet: e.target.value })),
         required: true,
         options: config.fält.enhetDropdown, // ["Timme", "Dag", "St"]
       });
@@ -448,8 +444,8 @@ export function getFieldsForRow(
 
     // BELOPPSFÄLT: Endast för manuella poster (när beräknaTotalsummaAutomatiskt är false)
     if (!config.fält.beräknaTotalsummaAutomatiskt) {
-      let beloppOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-        setModalFields((f: any) => ({ ...f, kolumn3: e.target.value }));
+      let beloppOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setModalFields((f) => ({ ...f, kolumn3: (e.target as HTMLInputElement).value }));
 
       // Specialfall: obetalda dagar, reducerade dagar, vab, föräldraledighet – uppdatera belopp automatiskt vid ändring av antal
       if (["obetaldaDagar", "reduceradeDagar", "vab", "foraldraledighet"].includes(rowId)) {
@@ -458,18 +454,18 @@ export function getFieldsForRow(
         if (config?.beräknaVärde && grundlön) {
           beloppPerDag = config.beräknaVärde(grundlön);
         } else {
-          beloppPerDag = parseFloat(modalFields.kolumn3) || 0;
+          beloppPerDag = parseFloat(modalFields.kolumn3 || "0") || 0;
         }
         // Ta hänsyn till negativtBelopp
         if (config?.negativtBelopp) {
           beloppPerDag = -Math.abs(beloppPerDag);
         }
-        beloppOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const nyttAntal = parseFloat(e.target.value) || 0;
+        beloppOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+          const nyttAntal = parseFloat((e.target as HTMLInputElement).value) || 0;
           const multiplikation = nyttAntal * beloppPerDag;
-          setModalFields((f: any) => ({
+          setModalFields((f) => ({
             ...f,
-            kolumn2: e.target.value,
+            kolumn2: (e.target as HTMLInputElement).value,
             kolumn3: multiplikation.toFixed(2),
           }));
         };
@@ -493,8 +489,8 @@ export function getFieldsForRow(
         name: "kolumn4",
         type: "text" as const,
         value: modalFields.kolumn4,
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-          setModalFields((f: any) => ({ ...f, kolumn4: e.target.value })),
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          setModalFields((f) => ({ ...f, kolumn4: e.target.value })),
         required: false,
         placeholder: "Valfri kommentar",
       });

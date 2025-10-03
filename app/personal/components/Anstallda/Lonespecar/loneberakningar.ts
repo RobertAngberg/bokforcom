@@ -3,15 +3,15 @@ import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
 
 // Om semestertillägg – kortfattat:
 
-// Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut nexport function klassificeraExtrarader(extrarader: any[]) {
-let bruttolönTillägg = 0;
-let skattepliktigaFörmåner = 0;
-let skattefriaErsättningar = 0;
-let övrigaTillägg = 0;
-let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
-// let nettolönejustering = 0;tällda tar semester.
-// Skatt: Semestertillägg är skattepliktigt och ska beskattas som vanlig lön.
-// Syfte: Ger extra pengar under semestern utöver ordinarie lön.
+// // Vad: Ett extra tillägg (minst 0,43 % av månadslönen per semesterdag) som betalas ut nexport function klassificeraExtrarader(extrarader: any[]) {
+// let bruttolönTillägg = 0;
+// let skattepliktigaFörmåner = 0;
+// let skattefriaErsättningar = 0;
+// let övrigaTillägg = 0;
+// let kontantlönAvdrag = 0; // Nytt: avdrag från kontantlön (obetaldaDagar, reduceradeDagar etc)
+let nettolönejustering = 0;
+// // Skatt: Semestertillägg är skattepliktigt och ska beskattas som vanlig lön.
+// // Syfte: Ger extra pengar under semestern utöver ordinarie lön.
 
 // Så funkar det i koden:
 // I extrarad-konfigurationen har semestertillägg läggTillIBruttolön: true.
@@ -269,7 +269,6 @@ export function klassificeraExtrarader(extrarader: any[]) {
   let skattefriaErsättningar = 0;
   let övrigaTillägg = 0;
   let kontantlönAvdrag = 0; // Lägg till denna variabel
-  let nettolönejustering = 0;
 
   extrarader.forEach((rad) => {
     const konfig = RAD_KONFIGURATIONER[rad.typ];

@@ -24,7 +24,7 @@ export default function Lonekomponenter({
     if (lönespec?.id && !extrarader[lönespec.id]) {
       hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));
     }
-  }, [lönespec?.id]);
+  }, [lönespec?.id, extrarader, setExtrarader]);
 
   // Beräkna värden
   const beräknadeVärden = useMemo(() => {
@@ -39,7 +39,7 @@ export default function Lonekomponenter({
   // Spara i context när beräknadeVärden ändras
   useEffect(() => {
     if (lönespec?.id) setBeräknadeVärden(lönespec.id, beräknadeVärden);
-  }, [lönespec?.id, beräknadeVärden, setBeräknadeVärden]);
+  }, [lönespec?.id, beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader]);
   //#endregion
 
   return (

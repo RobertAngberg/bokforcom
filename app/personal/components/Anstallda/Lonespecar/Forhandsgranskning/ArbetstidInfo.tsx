@@ -1,6 +1,7 @@
 import React from "react";
+import type { ArbetstidInfoProps } from "../../../../types/types";
 
-export default function ArbetstidInfo({ lönespec, formatNoDecimals }: any) {
+export default function ArbetstidInfo({ lönespec, formatNoDecimals }: ArbetstidInfoProps) {
   if (
     !(
       parseFloat(lönespec?.arbetade_timmar || 0) > 0 ||

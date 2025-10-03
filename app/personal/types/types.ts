@@ -22,17 +22,20 @@ export interface SemesterSummary {
 
 // === EXTRARAD TYPES ===
 export interface ExtraradData {
+  id?: number;
   lönespecifikation_id: number;
   typ: string;
   kolumn1?: string | null;
   kolumn2?: string | null;
   kolumn3?: string | null;
   kolumn4?: string | null;
+  enhet?: string;
+  modalFields?: ModalFields;
 }
 
 export interface ExtraradResult {
   success: boolean;
-  data?: any;
+  data?: ExtraradData;
   error?: string;
 }
 
@@ -41,6 +44,7 @@ export interface ModalFields {
   kolumn2?: string | null;
   kolumn3?: string | null;
   kolumn4?: string | null;
+  enhet?: string;
 }
 
 export interface UtläggData {
@@ -170,6 +174,8 @@ export type AnställdData = {
   tjänsteställeOrt: string;
   skattetabell: string;
   skattekolumn: string;
+  sparade_dagar?: string | number;
+  använda_förskott?: string | number;
 };
 
 export interface AnställdListItem {
@@ -266,12 +272,12 @@ export interface PersonalStoreState {
   // Lönekörning / Lönespec slice
   laddaLönespecar: boolean;
   löneperiod: { månad: number; år: number } | null;
-  lönespecar: Record<string | number, any>;
+  lönespecar: Record<string | number, Lönespec>;
   sparar: Record<string | number, boolean>;
   taBort: Record<string | number, boolean>;
   förhandsgranskaId: string | number | null;
-  förhandsgranskaData: any;
-  agiDebugData: any;
+  förhandsgranskaData: Record<string, unknown>;
+  agiDebugData: Record<string, unknown>;
   visaAGIDebug: boolean;
   // Actions
   setAnställda: (anställda: AnställdListItem[]) => void;
@@ -285,7 +291,7 @@ export interface PersonalStoreState {
   updateAnställd: (id: number, updatedData: Partial<AnställdListItem>) => void;
   setNyAnställdFormulär: (formulär: NyAnställdFormular) => void;
   updateNyAnställdFormulär: (updates: Partial<NyAnställdFormular>) => void;
-  handleSanitizedChange: (e: any) => void;
+  handleSanitizedChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   resetNyAnställdFormulär: () => void;
   setNyAnställdLoading: (loading: boolean) => void;
   setVisaNyAnställdFormulär: (visa: boolean) => void;
@@ -301,15 +307,15 @@ export interface PersonalStoreState {
   setLönespecar: (map: Record<string | number, any>) => void;
   setSparar: (id: string | number, value: boolean) => void;
   setTaBort: (id: string | number, value: boolean) => void;
-  skapaNyLönespec: (anställd: any) => Promise<void>;
-  taBortLönespec: (anställd: any) => Promise<void>;
-  openFörhandsgranskning: (anställd: any) => void;
+  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
+  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
+  openFörhandsgranskning: (anställd: AnställdListItem) => void;
   closeFörhandsgranskning: () => void;
   setAgiDebugData: (data: any) => void;
-  openAGIDebug: (data?: any) => void;
+  openAGIDebug: (data?: Record<string, unknown>) => void;
   closeAGIDebug: () => void;
   clearToast: () => void;
-  generateAGI: (args: any) => Promise<void>;
+  generateAGI: (args: Record<string, unknown>) => Promise<void>;
   setUtbetalningsdatum?: (datum: Date | null) => void;
   initStore: (data: {
     anställda?: AnställdListItem[];
@@ -336,8 +342,8 @@ export interface BokföringsPost {
 
 export interface BokförLöneUtbetalningData {
   lönespecId: number;
-  extrarader: any[];
-  beräknadeVärden: any;
+  extrarader: ExtraradData[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   anställdNamn: string;
   period: string;
   utbetalningsdatum: string;
@@ -346,22 +352,22 @@ export interface BokförLöneUtbetalningData {
 }
 
 export interface PersonalinformationProps {
-  anställd?: any;
+  anställd?: AnställdListItem;
   onRedigera?: () => void;
 }
 
 export interface AnställningstypProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: { value: string; label: string }[];
 }
 
 export interface ArbetsbelastningProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: { value: string; label: string }[];
   display?: {
@@ -371,28 +377,28 @@ export interface ArbetsbelastningProps {
 }
 
 export interface JobbtitelProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
 export interface KontraktProps {
-  anställd?: any;
+  anställd?: AnställdListItem;
   onRedigera?: () => void;
 }
 
 export interface KontraktPeriodProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
 export interface LönProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: {
     ersättningPer: { value: string; label: string }[];
@@ -400,16 +406,16 @@ export interface LönProps {
 }
 
 export interface SemesterProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
 export interface SkattProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: {
     skattetabell: { value: string; label: string }[];
@@ -418,9 +424,9 @@ export interface SkattProps {
 }
 
 export interface TjänsteställeProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
-  anställd?: any;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
+  anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
@@ -449,24 +455,24 @@ export interface EditData {
 export interface AGIDebugModalProps {
   visaDebug: boolean;
   setVisaDebug: (show: boolean) => void;
-  agiDebugData: any;
+  agiDebugData: Record<string, unknown>;
 }
 
 export interface AGIGeneratorProps {
-  valdaSpecar: any[];
+  valdaSpecar: Lönespec[];
   anstallda: any[];
-  beräknadeVärden: any;
-  extrarader: any;
+  beräknadeVärden: Record<string, Record<string, unknown>>;
+  extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
-  session: any;
-  hämtaFöretagsprofil: (userId: string) => Promise<any>;
+  session: { userId: string };
+  hämtaFöretagsprofil: (userId: string) => Promise<Record<string, unknown>>;
   onAGIComplete?: () => void; // Callback för när AGI är genererad
 }
 
 export interface BankgiroExportProps {
-  anställda: any[];
+  anställda: AnställdListItem[];
   utbetalningsdatum: Date | null;
-  lönespecar: Record<string, any>;
+  lönespecar: Record<string, Lönespec>;
   open?: boolean;
   onClose?: () => void;
   onExportComplete?: () => void; // Callback när export är klar
@@ -475,17 +481,17 @@ export interface BankgiroExportProps {
 }
 
 export interface BokförProps {
-  anställda: any[];
+  anställda: AnställdListItem[];
   utbetalningsdatum?: Date | null;
-  lönespecar: Record<string, any>;
+  lönespecar: Record<string, Lönespec>;
 }
 
 export interface LöneKnapparProps {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  lönespec: Lönespec;
+  anställd: AnställdListItem;
+  företagsprofil: Företagsprofil;
+  extrarader: ExtraradData[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   onForhandsgranskning: (id: string) => void;
   onTaBortLönespec: () => void;
   taBortLoading: boolean;
@@ -493,10 +499,10 @@ export interface LöneKnapparProps {
 
 export interface LöneBatchKnapparProps {
   lönespecar: any[];
-  anställda: any[];
+  anställda: AnställdListItem[];
   företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  extrarader: Record<string, ExtraradData[]>[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   onMaila: () => void;
   onBankgiroClick: () => void;
   onBokförClick: () => void;
@@ -520,7 +526,7 @@ export interface LonekorningListaProps {
 }
 
 export interface LonespecListaProps {
-  valdaSpecar: any[];
+  valdaSpecar: Lönespec[];
   anstallda: any[];
   utlaggMap: Record<number, any[]>;
   lönekörning?: any;
@@ -536,10 +542,10 @@ export interface LonespecListaProps {
 }
 
 export interface LonespecManagerProps {
-  valdaSpecar: any[];
-  setValdaSpecar: (value: any[] | ((prev: any[]) => any[])) => void;
+  valdaSpecar: Lönespec[];
+  setValdaSpecar: (value: string | number[] | ((prev: any[]) => any[])) => void;
   specarPerDatum: any;
-  setSpecarPerDatum: (value: any | ((prev: any) => any)) => void;
+  setSpecarPerDatum: (value: string | number | ((prev: any) => any)) => void;
   datumLista: string[];
   setDatumLista: (value: string[] | ((prev: string[]) => string[])) => void;
   utbetalningsdatum: string | null;
@@ -571,7 +577,7 @@ export interface UtbetalningsdatumValjareProps {
 export interface SkatteBokforingModalProps {
   skatteModalOpen: boolean;
   setSkatteModalOpen: (open: boolean) => void;
-  valdaSpecar: any[];
+  valdaSpecar: Lönespec[];
   skatteData: any;
   utbetalningsdatum: string | null;
   skatteDatum: Date | null;
@@ -582,12 +588,12 @@ export interface SkatteBokforingModalProps {
 }
 
 export interface SkatteManagerProps {
-  valdaSpecar: any[];
-  beräknadeVärden: any;
+  valdaSpecar: Lönespec[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   skatteDatum: Date | null;
   setSkatteBokförPågår: (loading: boolean) => void;
   setSkatteModalOpen: (open: boolean) => void;
-  bokförLöneskatter: (data: any) => Promise<any>;
+  bokförLöneskatter: (data: any) => Promise<Record<string, unknown>>;
   onSkatteComplete?: () => void;
 }
 
@@ -649,13 +655,13 @@ export interface Lönespec {
 export type ToastType = "success" | "error" | "info";
 
 export type GenerateAGIArgs = {
-  valdaSpecar: any[];
+  valdaSpecar: Lönespec[];
   anstallda: any[];
-  beräknadeVärden: any;
-  extrarader: any;
+  beräknadeVärden: Record<string, Record<string, unknown>>;
+  extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
-  session: any;
-  hämtaFöretagsprofil: (userId: string) => Promise<any>;
+  session: { userId: string };
+  hämtaFöretagsprofil: (userId: string) => Promise<Record<string, unknown>>;
   onAGIComplete?: () => void;
 };
 
@@ -671,10 +677,10 @@ export interface LonekorningState {
   sparar: Record<string | number, boolean>;
   taBort: Record<string | number, boolean>;
   förhandsgranskaId: string | null;
-  förhandsgranskaData: any;
+  förhandsgranskaData: Record<string, unknown>;
   toast: { type: ToastType; message: string } | null;
   utbetalningsdatum: Date | null;
-  anställda: any[];
+  anställda: AnställdListItem[];
   anställdaLoading: boolean;
   harLönespec: (anställdId: string | number) => boolean;
   getLönespec: (anställdId: string | number) => any;
@@ -682,9 +688,9 @@ export interface LonekorningState {
 
 export interface LonekorningHandlers {
   setUtbetalningsdatum: (d: Date | null) => void;
-  skapaNyLönespec: (anställd: any) => Promise<void>;
-  taBortLönespec: (anställd: any) => Promise<void>;
-  openFörhandsgranskning: (anställd: any) => void;
+  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
+  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
+  openFörhandsgranskning: (anställd: AnställdListItem) => void;
   closeFörhandsgranskning: () => void;
   clearToast: () => void;
   generateAGI: (args: GenerateAGIArgs) => Promise<void>;
@@ -699,17 +705,17 @@ export interface UseLonekorningReturn {
   sparar: Record<string | number, boolean>;
   taBort: Record<string | number, boolean>;
   förhandsgranskaId: string | null;
-  förhandsgranskaData: any;
+  förhandsgranskaData: Record<string, unknown>;
   toast: { type: ToastType; message: string } | null;
   utbetalningsdatum: Date | null;
   setUtbetalningsdatum: (d: Date | null) => void;
-  anställda: any[];
+  anställda: AnställdListItem[];
   anställdaLoading: boolean;
   harLönespec: (anställdId: string | number) => boolean;
   getLönespec: (anställdId: string | number) => any;
-  skapaNyLönespec: (anställd: any) => Promise<void>;
-  taBortLönespec: (anställd: any) => Promise<void>;
-  openFörhandsgranskning: (anställd: any) => void;
+  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
+  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
+  openFörhandsgranskning: (anställd: AnställdListItem) => void;
   closeFörhandsgranskning: () => void;
   clearToast: () => void;
   generateAGI: (args: GenerateAGIArgs) => Promise<void>;
@@ -757,7 +763,9 @@ export interface AnställdaListaState {
 }
 
 export interface AnställdaListaHandlers {
-  [key: string]: unknown; // Flexible handlers for employee actions
+  hanteraAnställdKlick: (id: number) => void;
+  taBortAnställdFrånLista: (id: number) => void;
+  [key: string]: unknown; // Additional flexible handlers
 }
 
 export interface AnställdaListaProps {
@@ -778,10 +786,10 @@ export interface InformationProps {
 export interface LonespecContextType {
   lönespecar: Lönespec[];
   setLonespecar: (lönespecar: Lönespec[]) => void;
-  extrarader: Record<string, any[]>;
-  setExtrarader: (id: string, extrarader: any[]) => void;
-  beräknadeVärden: Record<string, any>;
-  setBeräknadeVärden: (id: string, värden: any) => void;
+  extrarader: Record<string, ExtraradData[]>;
+  setExtrarader: (id: string, extrarader: ExtraradData[]) => void;
+  beräknadeVärden: Record<string, Record<string, unknown>>;
+  setBeräknadeVärden: (id: string, värden: Record<string, unknown>) => void;
 }
 
 export interface ExtraRad {
@@ -800,7 +808,7 @@ export interface SimpleBokföringsPost {
 }
 
 export interface LonespecListProps {
-  anställd: any;
+  anställd: AnställdListItem;
   utlägg: any[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
@@ -811,7 +819,7 @@ export interface LonespecListProps {
 
 export interface LönespecViewProps {
   lönespec: any;
-  anställd: any;
+  anställd: AnställdListItem;
   utlägg: any[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
@@ -824,7 +832,7 @@ export interface SammanfattningProps {
   utbetalningsDatum: Date;
   nettolön: number;
   lönespec: any;
-  anställd: any;
+  anställd: AnställdListItem;
   bruttolön: number;
   skatt: number;
   socialaAvgifter?: number;
@@ -851,7 +859,7 @@ export interface ExtraraderField {
   label: string;
   name: string;
   type: "text" | "number" | "select";
-  value: string;
+  value: string | null | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   required?: boolean;
   placeholder?: string;
@@ -888,25 +896,84 @@ export interface ExtraradRadOchDropdownProps {
 
 // Forhandsgranskning interfaces
 export interface ForhandsgranskningProps {
-  lönespec: any;
-  anställd: any;
-  företagsprofil: any;
-  extrarader: any[];
-  beräknadeVärden?: any;
+  lönespec: Lönespec;
+  anställd: AnställdListItem;
+  företagsprofil: Företagsprofil;
+  extrarader: ExtraradData[];
+  beräknadeVärden?: Record<string, Record<string, unknown>>;
   onStäng: () => void;
 }
 
 export interface FormelVisningProps {
-  beräknadeVärden: any;
-  extrarader: any[];
-  lönespec: any;
+  beräknadeVärden: Record<string, Record<string, unknown>>;
+  extrarader: ExtraradData[];
+  lönespec: Lönespec;
 }
 
 export interface ToppInfoProps {
   månadsNamn: string;
-  lönespec: any;
-  anställd: any;
+  lönespec: Lönespec;
+  anställd: AnställdListItem;
   getLönespecStatusBadge: (status: string) => React.ReactElement;
+}
+
+// Förhandsgranskning component interfaces
+export interface ArbetstidInfoProps {
+  lönespec: Lönespec;
+  formatNoDecimals: (value: number) => string;
+}
+
+export interface ÅrssammanställningProps {
+  bruttolön: number;
+  skatt: number;
+  formatNoDecimals: (value: number) => string;
+}
+
+export interface FotinfoProps {
+  företag: any;
+}
+
+export interface HuvudinfoProps {
+  anställd: AnställdData;
+  månadsNamn: string;
+  periodStart: Date;
+  periodSlut: Date;
+}
+
+export interface LönetabellProps {
+  lönespec: Lönespec;
+  bruttolön: number;
+  extraraderMapped: Array<{
+    benämning: string;
+    antal?: string | number;
+    kostnad: number;
+    summa: number;
+  }>;
+  formatNoDecimals: (value: number) => string;
+}
+
+export interface SammanfattningProps {
+  totalLönekostnad: number;
+  bruttolön: number;
+  socialaAvgifter?: number;
+  skatt: number;
+  extraraderMapped: Array<{
+    benämning: string;
+    summa: number;
+  }>;
+  formatNoDecimals: (value: number) => string;
+  utbetalningsDatum: Date;
+  nettolön: number;
+}
+
+export interface SemesterInfoProps {
+  lönespec: Lönespec;
+  anställd: AnställdData;
+  formatNoDecimals: (value: number) => string;
+}
+
+export interface SkatteInfoProps {
+  anställd: AnställdData;
 }
 
 // Lonekomponenter interfaces
@@ -933,7 +1000,7 @@ export interface LöneTabellProps {
     };
   };
   grundlön: number | undefined;
-  extrarader: any[];
+  extrarader: ExtraradData[];
   onTaBortExtrarad: (id: number) => void;
 }
 
@@ -975,13 +1042,13 @@ export interface ModernSemesterProps {
 }
 
 export interface SemesterdataProps {
-  editData?: any;
-  handleChange?: (name: string, value: any) => void;
+  editData?: Partial<AnställdListItem>;
+  handleChange?: (name: string, value: string | number) => void;
   isEditing?: boolean;
 }
 
 export interface TransaktionerProps {
-  anställd?: any;
+  anställd?: AnställdListItem;
 }
 
 export interface Transaktion {
@@ -1011,7 +1078,7 @@ export interface Utlägg {
 }
 
 export interface UtlaggFlikProps {
-  state: any;
+  state: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
   handlers: any;
   utlaggFlikData: () => any;
 }
@@ -1036,8 +1103,8 @@ export interface WizardBokföringsPost {
 
 export interface BokforLonerProps {
   lönespec: any;
-  extrarader: any[];
-  beräknadeVärden: any;
+  extrarader: Record<string, ExtraradData[]>[];
+  beräknadeVärden: Record<string, Record<string, unknown>>;
   anställdNamn: string;
   isOpen: boolean;
   onClose: () => void;
@@ -1046,16 +1113,16 @@ export interface BokforLonerProps {
 
 export interface SingleLönespec {
   lönespec: any;
-  anställd: any;
+  anställd: AnställdListItem;
   företagsprofil: any;
-  extrarader: any[];
+  extrarader: Record<string, ExtraradData[]>[];
   beräknadeVärden?: any;
 }
 
 export interface MailaLonespecProps {
   // For single mode
   lönespec?: any;
-  anställd?: any;
+  anställd?: AnställdListItem;
   företagsprofil?: any;
   extrarader?: any[];
   beräknadeVärden?: any;
@@ -1261,7 +1328,7 @@ export interface BatchDataItem {
   anställd: AnställdData | any; // Using any for now due to mixed types in codebase
   företagsprofil: any;
   extrarader: ExtraradData[];
-  beräknadeVärden: any;
+  beräknadeVärden: Record<string, Record<string, unknown>>;
 }
 
 // useLonekorning hook types

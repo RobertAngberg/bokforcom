@@ -65,7 +65,7 @@ export default function ExtraRader({
         kolumn4: "",
       });
       onNyRad();
-    } catch (error) {
+    } catch {
       setState((prev) => ({ ...prev, [id]: true }));
     }
   };

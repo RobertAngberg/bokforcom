@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import type { Lönespec, LonespecContextType } from "../../../types/types";
+import type { Lönespec, LonespecContextType, ExtraradData } from "../../../types/types";
 
 const LonespecContext = createContext<LonespecContextType | undefined>(undefined);
 
@@ -13,14 +13,16 @@ export const useLonespecContext = () => {
 
 export const LönespecProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lönespecar, setLonespecar] = useState<Lönespec[]>([]);
-  const [extrarader, setExtraraderState] = useState<Record<string, any[]>>({});
-  const [beräknadeVärden, setBeräknadeVärdenState] = useState<Record<string, any>>({});
+  const [extrarader, setExtraraderState] = useState<Record<string, ExtraradData[]>>({});
+  const [beräknadeVärden, setBeräknadeVärdenState] = useState<
+    Record<string, Record<string, unknown>>
+  >({});
 
-  const setExtrarader = useCallback((id: string, extrarader: any[]) => {
+  const setExtrarader = useCallback((id: string, extrarader: ExtraradData[]) => {
     setExtraraderState((prev) => ({ ...prev, [id]: extrarader }));
   }, []);
 
-  const setBeräknadeVärden = useCallback((id: string, värden: any) => {
+  const setBeräknadeVärden = useCallback((id: string, värden: Record<string, unknown>) => {
     setBeräknadeVärdenState((prev) => ({ ...prev, [id]: värden }));
   }, []);
 

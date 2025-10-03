@@ -36,7 +36,7 @@ export default function LonespecList({
       {lönespecar.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           <div className="mb-4">
-            Inga slutförda lönespecifikationer hittades för {anställd.förnamn} {anställd.efternamn}.
+            Inga slutförda lönespecifikationer hittades för {anställd.namn}.
           </div>
           <div className="text-sm text-gray-500 mb-4">
             Lönespecifikationer kopplade till ej slutförda lönekörningar kan finnas.

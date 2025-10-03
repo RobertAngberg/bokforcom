@@ -117,10 +117,10 @@ export default function LönespecView({
     try {
       const result = await uppdateraLönespec({
         lönespecId: lönespec.id,
-        bruttolön: värdentAttSpara.bruttolön,
-        skatt: värdentAttSpara.skatt,
-        socialaAvgifter: värdentAttSpara.socialaAvgifter,
-        nettolön: värdentAttSpara.nettolön,
+        bruttolön: Number(värdentAttSpara.bruttolön) || undefined,
+        skatt: Number(värdentAttSpara.skatt) || undefined,
+        socialaAvgifter: Number(värdentAttSpara.socialaAvgifter) || undefined,
+        nettolön: Number(värdentAttSpara.nettolön) || undefined,
       });
 
       if (result.success) {
@@ -169,19 +169,21 @@ export default function LönespecView({
 
       <Sammanfattning
         utbetalningsDatum={utbetalningsDatum}
-        nettolön={visaNettolön}
+        nettolön={Number(visaNettolön) || 0}
         lönespec={lönespec}
         anställd={anställd}
-        bruttolön={visaBruttolön}
-        skatt={visaSkatt}
-        socialaAvgifter={visaSocialaAvgifter}
-        lönekostnad={visaLönekostnad}
+        bruttolön={Number(visaBruttolön) || 0}
+        skatt={Number(visaSkatt) || 0}
+        socialaAvgifter={Number(visaSocialaAvgifter) || 0}
+        lönekostnad={Number(visaLönekostnad) || 0}
         onVisaBeräkningar={() => setVisaBeräkningar(!visaBeräkningar)}
       />
 
       {visaBeräkningar && (
         <FormelVisning
-          beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+          beräknadeVärden={
+            (beräknadeVärden[lönespec.id] as Record<string, Record<string, unknown>>) || {}
+          }
           extrarader={extrarader[lönespec.id] || []}
           lönespec={lönespec}
         />
@@ -224,7 +226,9 @@ export default function LönespecView({
               anställd={anställd}
               företagsprofil={företagsprofil}
               extrarader={extrarader[lönespec.id] || []}
-              beräknadeVärden={beräknadeVärden[lönespec.id] || {}}
+              beräknadeVärden={
+                (beräknadeVärden[lönespec.id] as Record<string, Record<string, unknown>>) || {}
+              }
               onStäng={() => setVisaForhandsgranskning(false)}
             />
           </div>
@@ -239,17 +243,13 @@ export default function LönespecView({
   }
 
   // Annars visa med AnimeradFlik som vanligt
-  const namn = anställd
-    ? `${anställd.förnamn || ""} ${anställd.efternamn || ""}`.trim() ||
-      anställd.namn ||
-      "Okänd anställd"
-    : "Okänd anställd";
+  const namn = anställd?.namn || "Okänd anställd";
   return (
     <AnimeradFlik
       key={lönespec.id}
       title={`👤 ${namn}`}
       icon="💰"
-      visaSummaDirekt={`Netto: ${visaNettolön.toLocaleString("sv-SE")} kr`}
+      visaSummaDirekt={`Netto: ${Number(visaNettolön).toLocaleString("sv-SE")} kr`}
     >
       {innehåll}
     </AnimeradFlik>

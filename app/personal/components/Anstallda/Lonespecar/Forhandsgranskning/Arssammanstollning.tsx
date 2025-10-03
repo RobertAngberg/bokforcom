@@ -1,6 +1,11 @@
 import React from "react";
+import type { ÅrssammanställningProps } from "../../../../types/types";
 
-export default function Årssammanställning({ bruttolön, skatt, formatNoDecimals }: any) {
+export default function Årssammanställning({
+  bruttolön,
+  skatt,
+  formatNoDecimals,
+}: ÅrssammanställningProps) {
   return (
     <div className="border border-gray-400 rounded p-3 mb-6">
       <h4 className="font-bold mb-2 text-sm text-black">Totalt detta år</h4>

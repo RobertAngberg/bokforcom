@@ -9,7 +9,7 @@ import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
 // SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
 function logPersonalDataEvent(
   eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: number,
+  userId?: string,
   details?: string
 ) {
   const timestamp = new Date().toISOString();

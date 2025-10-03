@@ -4,12 +4,13 @@ import { getUserId } from "../../_utils/authUtils";
 import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../../_types/common";
+import type { PoolClient } from "pg";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
     const userId = await getUserId();
 
-    await withTransaction(async (client: any) => {
+    await withTransaction(async (client: PoolClient) => {
       await client.query(
         "DELETE FROM transaktionsposter WHERE transaktions_id IN (SELECT id FROM transaktioner WHERE anvandare_id = $1)",
         [userId]

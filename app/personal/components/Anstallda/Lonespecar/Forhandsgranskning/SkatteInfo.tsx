@@ -1,6 +1,7 @@
 import React from "react";
+import type { SkatteInfoProps } from "../../../../types/types";
 
-export default function SkatteInfo({ anställd }: any) {
+export default function SkatteInfo({ anställd }: SkatteInfoProps) {
   return (
     <div className="border border-gray-400 rounded p-3">
       <h4 className="font-bold mb-2 text-black text-sm">Skatt beräknad på</h4>

@@ -23,7 +23,7 @@ export async function uppdateraAnvändarInfo(
 
     try {
       requireValid(email, (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Ogiltig email-format");
-    } catch (e) {
+    } catch {
       return { success: false, error: "Ogiltig email-format" };
     }
 

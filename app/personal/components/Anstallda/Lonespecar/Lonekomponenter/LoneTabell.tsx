@@ -70,8 +70,8 @@ export default function LöneTabell({
               benämning={rad.kolumn1 || ""}
               belopp={belopp}
               typ="extrarad"
-              kommentar={rad.kolumn4}
-              onTaBort={() => onTaBortExtrarad(rad.id)}
+              kommentar={rad.kolumn4 || undefined}
+              onTaBort={() => onTaBortExtrarad(rad.id!)}
             />
           );
         })}

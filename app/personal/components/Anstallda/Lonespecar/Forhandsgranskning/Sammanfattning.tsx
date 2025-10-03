@@ -1,4 +1,5 @@
 import React from "react";
+import type { SammanfattningProps } from "../../../../types/types";
 
 export default function Sammanfattning({
   totalLönekostnad,
@@ -9,7 +10,7 @@ export default function Sammanfattning({
   formatNoDecimals,
   utbetalningsDatum,
   nettolön,
-}: any) {
+}: SammanfattningProps) {
   return (
     <div className="space-y-3">
       <div className="border border-gray-400 rounded p-3">
@@ -25,7 +26,7 @@ export default function Sammanfattning({
           </div>
           <div className="flex justify-between text-xs text-black">
             <span>varav sociala avgifter</span>
-            <span>{formatNoDecimals(socialaAvgifter)} kr</span>
+            <span>{formatNoDecimals(socialaAvgifter || 0)} kr</span>
           </div>
           <div className="flex justify-between text-xs text-black">
             <span>varav Skatt</span>
@@ -33,7 +34,7 @@ export default function Sammanfattning({
           </div>
           {extraraderMapped.length > 0 && (
             <div className="pt-2">
-              {extraraderMapped.map((rad: any, i: number) => (
+              {extraraderMapped.map((rad, i: number) => (
                 <div className="flex justify-between text-xs text-black" key={i}>
                   <span>{rad.benämning}</span>
                   <span className={rad.summa < 0 ? "text-red-600" : ""}>

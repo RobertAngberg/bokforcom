@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { signOut } from "../../_lib/auth-client";
 import { uppdateraAnvändarInfo } from "../actions/anvandarprofilActions";
 import { uppdateraFöretagsprofilAdmin } from "../actions/foretagsprofilActions";
 import { raderaFöretag } from "../actions/farozonActions";
@@ -16,61 +17,48 @@ import type {
 export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   // User state
   const [userInfo, setUserInfo] = useState<AnvandarInfo | null>(initialUser);
-  const [editForm, setEditForm] = useState<AnvandarRedigeringsFormular>(() => ({
-    name: initialUser?.name || "",
-    email: initialUser?.email || "",
-  }));
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<MeddelandeTillstand | null>(null);
 
+  // Derive edit form from userInfo
+  const editForm: AnvandarRedigeringsFormular = {
+    name: userInfo?.name || "",
+    email: userInfo?.email || "",
+  };
+
   // Company state
   const [foretagsInfo, setForetagsInfo] = useState<ForetagsProfil | null>(initialForetagsInfo);
-  const [foretagsProfil, setForetagsProfil] = useState<ForetagsProfil>(
-    initialForetagsInfo || TOM_FORETAG
-  );
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
+
+  // Derive company profile from foretagsInfo
+  const foretagsProfil: ForetagsProfil = foretagsInfo || TOM_FORETAG;
 
   // Danger zone state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Update form when userInfo changes (but not during editing to preserve user changes)
-  useEffect(() => {
-    if (userInfo && !isEditing) {
-      setEditForm({
-        name: userInfo.name || "",
-        email: userInfo.email || "",
-      });
-    }
-  }, [userInfo, isEditing]);
-
-  // Update local company state when initial data changes (but not during editing to preserve user changes)
-  useEffect(() => {
-    if (!isEditingCompany) {
-      setForetagsProfil(foretagsInfo || TOM_FORETAG);
-    }
-  }, [foretagsInfo, isEditingCompany]);
+  // Local editing state for forms
+  const [localEditForm, setLocalEditForm] = useState<AnvandarRedigeringsFormular>(editForm);
+  const [localForetagsProfil, setLocalForetagsProfil] = useState<ForetagsProfil>(foretagsProfil);
 
   // User profile handlers
   const onEditUser = () => {
+    setLocalEditForm(editForm);
     setIsEditing(true);
     setMessage(null);
   };
 
   const onCancelUser = () => {
     setIsEditing(false);
-    setEditForm({
-      name: userInfo?.name || "",
-      email: userInfo?.email || "",
-    });
+    setLocalEditForm(editForm);
     setMessage(null);
   };
 
   const onSaveUser = async () => {
-    if (!editForm.name.trim() || !editForm.email.trim()) {
+    if (!localEditForm.name.trim() || !localEditForm.email.trim()) {
       setMessage({ type: "error", text: "Namn och email far inte vara tomma" });
       return;
     }
@@ -78,8 +66,8 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
     setIsSaving(true);
     try {
       const result = await uppdateraAnvändarInfo({
-        name: editForm.name.trim(),
-        email: editForm.email.trim(),
+        name: localEditForm.name.trim(),
+        email: localEditForm.email.trim(),
       });
       if (result.success) {
         setUserInfo(result.user!);
@@ -97,29 +85,30 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   };
 
   const onChangeUser = (field: keyof AnvandarRedigeringsFormular, value: string) => {
-    setEditForm((prev) => ({ ...prev, [field]: value }));
+    setLocalEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const clearUserMessage = () => setMessage(null);
 
   // Company profile handlers
   const onEditCompany = () => {
+    setLocalForetagsProfil(foretagsProfil);
     setIsEditingCompany(true);
     setCompanyMessage(null);
   };
 
   const onCancelCompany = () => {
     setIsEditingCompany(false);
-    setForetagsProfil(foretagsInfo || TOM_FORETAG);
+    setLocalForetagsProfil(foretagsProfil);
     setCompanyMessage(null);
   };
 
   const onSaveCompany = async () => {
     setIsSavingCompany(true);
     try {
-      const result = await uppdateraFöretagsprofilAdmin({ ...foretagsProfil });
+      const result = await uppdateraFöretagsprofilAdmin({ ...localForetagsProfil });
       if (result.success) {
-        setForetagsInfo(foretagsProfil);
+        setForetagsInfo(localForetagsProfil);
         setIsEditingCompany(false);
         setCompanyMessage({ type: "success", text: "Foretagsprofil uppdaterad!" });
       } else {
@@ -164,7 +153,7 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
 
   const onChangeCompany = (field: keyof ForetagsProfil, value: string) => {
     const normalized = normalizeCompanyField(field, value);
-    setForetagsProfil((prev) => ({ ...prev, [field]: normalized }));
+    setLocalForetagsProfil((prev) => ({ ...prev, [field]: normalized }));
   };
 
   const clearCompanyMessage = () => setCompanyMessage(null);
@@ -184,7 +173,8 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
       const result = await raderaFöretag();
 
       if (result.success) {
-        await signOut({ callbackUrl: "/" });
+        await signOut();
+        window.location.href = "/";
       } else {
         console.error("Delete error:", result.error);
       }
@@ -200,13 +190,13 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
     user: {
       state: {
         userInfo,
-        editForm,
+        editForm: isEditing ? localEditForm : editForm,
         isEditing,
         isSaving,
         message,
       },
       actions: {
-        setEditForm,
+        setEditForm: setLocalEditForm,
         setIsEditing,
         setIsSaving,
         setMessage,
@@ -223,13 +213,13 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
     // Company profile
     company: {
       state: {
-        foretagsProfil,
+        foretagsProfil: isEditingCompany ? localForetagsProfil : foretagsProfil,
         isEditingCompany,
         isSavingCompany,
         companyMessage,
       },
       actions: {
-        setForetagsProfil,
+        setForetagsProfil: setLocalForetagsProfil,
         setIsEditingCompany,
         setIsSavingCompany,
         setCompanyMessage,

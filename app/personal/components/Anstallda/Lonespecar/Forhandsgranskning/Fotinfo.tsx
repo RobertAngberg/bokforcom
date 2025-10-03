@@ -1,6 +1,7 @@
 import React from "react";
+import type { FotinfoProps } from "../../../../types/types";
 
-export default function Fotinfo({ företag }: any) {
+export default function Fotinfo({ företag }: FotinfoProps) {
   return (
     <div className="mt-auto pt-4 border-t border-gray-400">
       <div className="text-center text-xs text-black">

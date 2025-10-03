@@ -2,24 +2,11 @@
 
 import type { FormelVisningProps } from "../../../types/types";
 
-export default function FormelVisning({
-  beräknadeVärden,
-  extrarader,
-  lönespec,
-}: FormelVisningProps) {
+export default function FormelVisning({ beräknadeVärden, lönespec }: FormelVisningProps) {
   if (!beräknadeVärden) return null;
 
-  const {
-    timlön,
-    daglön,
-    kontantlön,
-    bruttolön,
-    skatt,
-    socialaAvgifter,
-    nettolön,
-    lönekostnad,
-    dagavdrag,
-  } = beräknadeVärden;
+  // Alla värden tillgängliga men inte använda i denna vy
+  // const { timlön, daglön, kontantlön, bruttolön, skatt, socialaAvgifter, nettolön, lönekostnad, dagavdrag } = beräknadeVärden;
 
   const grundlön = parseFloat(lönespec.grundlön || lönespec.bruttolön || 0);
   const arbetstimmarPerVecka = parseFloat(lönespec.arbetstimmarPerVecka || 40);
@@ -32,17 +19,11 @@ export default function FormelVisning({
   const standard_veckolön = årslön / veckor_per_år;
   const standard_karensavdrag = standard_veckolön * 0.8 * 0.2; // 20% av veckosjuklön
 
-  // Extrarader grupperade
-  const positiva_extrarader = extrarader?.filter((rad) => parseFloat(rad.kolumn3 || 0) > 0) || [];
-  const negativa_extrarader = extrarader?.filter((rad) => parseFloat(rad.kolumn3 || 0) < 0) || [];
-
-  const totalt_tillägg = positiva_extrarader.reduce(
-    (sum, rad) => sum + parseFloat(rad.kolumn3 || 0),
-    0
-  );
-  const totalt_avdrag = Math.abs(
-    negativa_extrarader.reduce((sum, rad) => sum + parseFloat(rad.kolumn3 || 0), 0)
-  );
+  // Extrarader grupperade (inte använda men beräknade för framtida bruk)
+  // const positiva_extrarader = extrarader?.filter((rad) => parseFloat(rad.kolumn3 || "0") > 0) || [];
+  // const negativa_extrarader = extrarader?.filter((rad) => parseFloat(rad.kolumn3 || "0") < 0) || [];
+  // const totalt_tillägg = positiva_extrarader.reduce((sum, rad) => sum + parseFloat(rad.kolumn3 || "0"), 0);
+  // const totalt_avdrag = Math.abs(negativa_extrarader.reduce((sum, rad) => sum + parseFloat(rad.kolumn3 || "0"), 0));
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg mt-4">
