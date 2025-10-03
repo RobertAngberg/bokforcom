@@ -7,6 +7,7 @@ import {
   Verifikation,
   BasicBalanceAccount,
 } from "../types/types";
+import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
 
 export function useBalansrapport() {
   // Step 1: Basic data state
@@ -347,16 +348,27 @@ export function useBalansrapport() {
     };
   }, [processedData, summaryData]);
 
-  // Step 4: Export functions (simplified for now - will need processedData later)
+  // Step 4: Export functions
   const handleExportPDF = async () => {
-    if (isExportingPDF) return;
+    if (isExportingPDF || !summaryData || !processedData) return;
     setIsExportingPDF(true);
     setExportMessage(null);
 
     try {
-      // TODO: Add proper data processing and export logic
+      await exportBalansrapportPDF(
+        processedData.tillgangar,
+        processedData.skulderOchEgetKapital,
+        summaryData.sumTillgangar,
+        summaryData.sumSkulderEK,
+        summaryData.beraknatResultat,
+        företagsnamn,
+        organisationsnummer,
+        selectedMonth,
+        selectedYear
+      );
       setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
     } catch (error) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       setExportMessage({
         type: "error",
         text: "Ett fel uppstod vid PDF-export. Försök igen.",
@@ -367,14 +379,25 @@ export function useBalansrapport() {
   };
 
   const handleExportCSV = async () => {
-    if (isExportingCSV) return;
+    if (isExportingCSV || !summaryData || !processedData) return;
     setIsExportingCSV(true);
     setExportMessage(null);
 
     try {
-      // TODO: Add proper data processing and export logic
+      exportBalansrapportCSV(
+        processedData.tillgangar,
+        processedData.skulderOchEgetKapital,
+        summaryData.sumTillgangar,
+        summaryData.sumSkulderEK,
+        summaryData.beraknatResultat,
+        företagsnamn,
+        organisationsnummer,
+        selectedMonth,
+        selectedYear
+      );
       setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
     } catch (error) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       setExportMessage({
         type: "error",
         text: "Ett fel uppstod vid CSV-export. Försök igen.",
@@ -400,6 +423,7 @@ export function useBalansrapport() {
         setVerifikationer([]);
       }
     } catch (error) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       // Tyst felhantering
       setVerifikationer([]);
     } finally {

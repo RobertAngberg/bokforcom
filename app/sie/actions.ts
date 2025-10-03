@@ -3,18 +3,12 @@
 import { Pool } from "pg";
 import { getUserId } from "../_utils/authUtils";
 import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
+import type { SieData, ImportSettings, Verification, Transaction } from "./types";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR SIE-MODUL
-
-// REMOVED: Security logging functionality (security_logs table doesn't exist)
-// All security events are now logged to console only for development debugging
-function logSieSecurityEvent(userId: number | string, eventType: string, details: string): void {
-  console.log(`🔒 SIE Security Event [${eventType}] User: ${userId} - ${details}`);
-}
 function validateFileSize(file: File): { valid: boolean; error?: string } {
   const maxSize = 50 * 1024 * 1024; // 50MB max för SIE-filer
   if (file.size > maxSize) {
@@ -26,34 +20,7 @@ function validateFileSize(file: File): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-interface SieData {
-  header: {
-    program: string;
-    organisationsnummer: string;
-    företagsnamn: string;
-    räkenskapsår: Array<{ år: number; startdatum: string; slutdatum: string }>;
-    kontoplan: string;
-  };
-  konton: Array<{
-    nummer: string;
-    namn: string;
-  }>;
-  verifikationer: Array<{
-    serie: string;
-    nummer: string;
-    datum: string;
-    beskrivning: string;
-    transaktioner: Array<{
-      konto: string;
-      belopp: number;
-    }>;
-  }>;
-  balanser: {
-    ingående: Array<{ konto: string; belopp: number }>;
-    utgående: Array<{ konto: string; belopp: number }>;
-  };
-  resultat: Array<{ konto: string; belopp: number }>;
-}
+// Type definitions moved to ./types.ts
 
 interface SieUploadResult {
   success: boolean;
@@ -78,19 +45,15 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    logSieSecurityEvent(userId, "sie_upload_attempt", "SIE file upload started");
-
     const file = formData.get("file") as File;
 
     if (!file) {
-      logSieSecurityEvent(userId, "sie_upload_failed", "No file provided");
       return { success: false, error: "Ingen fil vald" };
     }
 
     // 🔒 FILVALIDERING
     const sizeValidation = validateFileSize(file);
     if (!sizeValidation.valid) {
-      logSieSecurityEvent(userId, "sie_upload_failed", `File too large: ${file.size} bytes`);
       return { success: false, error: sizeValidation.error };
     }
 
@@ -100,7 +63,6 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
       !file.name.toLowerCase().endsWith(".sie") &&
       !file.name.toLowerCase().endsWith(".se")
     ) {
-      logSieSecurityEvent(userId, "sie_upload_failed", `Invalid file type: ${file.name}`);
       return { success: false, error: "Endast SIE-filer (.sie, .se4, .se) stöds" };
     }
 
@@ -148,7 +110,6 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
 
       // Försök med olika encodings i prioritetsordning
       const encodings = ["utf-8", "iso-8859-1", "windows-1252", "cp850"];
-      let bestContent = "";
       let bestScore = 0;
 
       for (const encoding of encodings) {
@@ -182,7 +143,6 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
 
           if (score > bestScore) {
             bestScore = score;
-            bestContent = testContent;
             content = testContent;
             console.log(`✅ Ny bästa encoding: ${encoding} (score: ${score})`);
           }
@@ -246,12 +206,6 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     // Kontrollera vilka konton som saknas i databasen (globalt)
     const { saknade, analys } = await kontrollSaknade(sieKonton, Array.from(anvandaKonton));
 
-    logSieSecurityEvent(
-      userId,
-      "sie_upload_success",
-      `File uploaded: ${file.name}, ${sieData.verifikationer.length} verifications`
-    );
-
     return {
       success: true,
       data: sieData,
@@ -260,39 +214,21 @@ export async function uploadSieFile(formData: FormData): Promise<SieUploadResult
     };
   } catch (error) {
     console.error("Fel vid parsning av SIE-fil:", error);
-    // Logga fel om vi har userId från session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logSieSecurityEvent(
-          userId,
-          "sie_upload_error",
-          `Parse error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
     return { success: false, error: "Kunde inte läsa SIE-filen" };
   }
 }
 
 async function kontrollSaknade(sieKonton: string[], anvandaKonton?: string[]) {
   try {
-    const { Pool } = require("pg");
-    const tempPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
-    const client = await tempPool.connect();
+    // Use existing pool from top-level import
+    const client = await pool.connect();
 
     // Hämta ALLA konton (konton är globala, inte användarspecifika)
     const query = "SELECT kontonummer FROM konton";
-    const { rows } = await client.query(query);
-    const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
+    const { rows } = await client.query<{ kontonummer: string }>(query);
+    const befintligaKonton = new Set(rows.map((r) => r.kontonummer.toString()));
 
     client.release();
-    await tempPool.end();
 
     console.log(
       `📊 Kontokontroll - Befintliga konton: ${befintligaKonton.size}, SIE-konton: ${sieKonton.length}`
@@ -812,8 +748,8 @@ function parseSieContent(content: string): SieData {
     resultat: [],
   };
 
-  let currentVerification: any = null;
-  let currentTransactions: any[] = [];
+  let currentVerification: Omit<Verification, "transaktioner"> | null = null;
+  let currentTransactions: Transaction[] = [];
 
   for (const line of lines) {
     // Extrahera värden inom citattecken och utan
@@ -828,7 +764,7 @@ function parseSieContent(content: string): SieData {
       if (!match) return [];
 
       const values: string[] = [];
-      let current = match[1];
+      const current = match[1];
       let inQuotes = false;
       let currentValue = "";
 
@@ -997,23 +933,13 @@ export async function skapaKonton(
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    logSieSecurityEvent(
-      userId,
-      "sie_create_accounts_attempt",
-      `Attempting to create ${kontoData.length} accounts`
-    );
-
-    const { Pool } = require("pg");
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
+    // Use existing pool from top-level import
     const client = await pool.connect();
 
     // Först, kontrollera vilka konton som redan finns (konton är globala)
     const befintligaQuery = "SELECT kontonummer FROM konton";
-    const { rows: befintliga } = await client.query(befintligaQuery);
-    const befintligaKonton = new Set(befintliga.map((r: any) => r.kontonummer.toString()));
+    const { rows: befintliga } = await client.query<{ kontonummer: string }>(befintligaQuery);
+    const befintligaKonton = new Set(befintliga.map((r) => r.kontonummer.toString()));
 
     console.log(`🔍 Befintliga konton i systemet:`, befintligaKonton.size);
 
@@ -1081,24 +1007,12 @@ export async function skapaKonton(
         }
       } catch (error) {
         console.error(`Fel vid skapande av konto ${konto.nummer}:`, error);
-        logSieSecurityEvent(
-          userId,
-          "sie_create_account_error",
-          `Failed to create account ${konto.nummer}: ${error}`
-        );
       }
     }
 
     client.release();
-    await pool.end();
 
     console.log(`📊 Kontoskapande klart - Skapade: ${skapadeAntal}, Hoppade över: ${hoppadeOver}`);
-
-    logSieSecurityEvent(
-      userId,
-      "sie_create_accounts_success",
-      `Created ${skapadeAntal} accounts, skipped ${hoppadeOver} existing`
-    );
 
     return {
       success: true,
@@ -1106,19 +1020,6 @@ export async function skapaKonton(
     };
   } catch (error) {
     console.error("Fel vid skapande av konton:", error);
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logSieSecurityEvent(
-          userId,
-          "sie_create_accounts_error",
-          `Failed to create accounts: ${error}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
     return {
       success: false,
       error: "Kunde inte skapa konton",
@@ -1127,15 +1028,7 @@ export async function skapaKonton(
 }
 
 // Ny funktion för att importera SIE-data
-interface ImportSettings {
-  startDatum?: string;
-  slutDatum?: string;
-  inkluderaVerifikationer: boolean;
-  inkluderaBalanser: boolean;
-  inkluderaResultat: boolean;
-  skapaKonton: boolean;
-  exkluderaVerifikationer?: string[];
-}
+// ImportSettings type definition moved to ./types.ts
 
 export async function importeraSieData(
   sieData: SieData,
@@ -1145,7 +1038,16 @@ export async function importeraSieData(
     filnamn: string;
     filstorlek: number;
   }
-): Promise<{ success: boolean; error?: string; resultat?: any }> {
+): Promise<{
+  success: boolean;
+  error?: string;
+  resultat?: {
+    kontonSkapade: number;
+    verifikationerImporterade: number;
+    balanserImporterade: number;
+    resultatImporterat: number;
+  };
+}> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const userId = await getUserId();
@@ -1156,20 +1058,9 @@ export async function importeraSieData(
       };
     }
 
-    logSieSecurityEvent(
-      userId,
-      "sie_import_attempt",
-      `Import started: ${fileInfo?.filnamn || "unknown"}, verifications: ${sieData.verifikationer.length}`
-    );
-
-    const { Pool } = require("pg");
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
+    // Use existing pool from top-level import
     let client;
     let clientReleased = false;
-    let poolEnded = false;
     let importId = null;
 
     try {
@@ -1249,7 +1140,8 @@ export async function importeraSieData(
         if (duplicateRows.length > 0) {
           const duplicatesList = duplicateRows
             .map(
-              (row: any) => `• ${row.kontobeskrivning} (${dateTillÅÅÅÅMMDD(row.transaktionsdatum)})`
+              (row: { kontobeskrivning: string; transaktionsdatum: Date }) =>
+                `• ${row.kontobeskrivning} (${dateTillÅÅÅÅMMDD(row.transaktionsdatum)})`
             )
             .join("\n");
 
@@ -1267,11 +1159,9 @@ export async function importeraSieData(
             );
           }
 
-          // Markera att vi kommer att stänga
+          // Release client
           client.release();
           clientReleased = true;
-          await pool.end();
-          poolEnded = true;
 
           return {
             success: false,
@@ -1289,7 +1179,7 @@ ${duplicatesList}
       // Nu börja transaktion
       await client.query("BEGIN");
 
-      let resultat = {
+      const resultat = {
         kontonSkapade: 0,
         verifikationerImporterade: 0,
         balanserImporterade: 0,
@@ -1310,8 +1200,10 @@ ${duplicatesList}
         sieData.resultat.forEach((r) => anvandaKonton.add(r.konto));
 
         // Kontrollera vilka av dessa som saknas i databasen
-        const { rows } = await client.query("SELECT kontonummer FROM konton");
-        const befintligaKonton = new Set(rows.map((r: any) => r.kontonummer.toString()));
+        const { rows } = await client.query<{ kontonummer: string }>(
+          "SELECT kontonummer FROM konton"
+        );
+        const befintligaKonton = new Set(rows.map((r) => r.kontonummer.toString()));
 
         const allaAnvandaSaknade = Array.from(anvandaKonton).filter(
           (konto) => !befintligaKonton.has(konto)
@@ -1717,7 +1609,7 @@ ${duplicatesList}
       };
     } catch (error) {
       // Uppdatera import-logg med fel
-      if (importId) {
+      if (importId && client) {
         try {
           await client.query(
             `
@@ -1735,18 +1627,17 @@ ${duplicatesList}
       }
 
       // Rollback vid fel
-      try {
-        await client.query("ROLLBACK");
-      } catch (rollbackError) {
-        console.error("Rollback fel:", rollbackError);
+      if (client) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (rollbackError) {
+          console.error("Rollback fel:", rollbackError);
+        }
       }
       throw error;
     } finally {
       if (client && !clientReleased) {
         client.release();
-      }
-      if (!poolEnded) {
-        await pool.end();
       }
     }
   } catch (error) {
@@ -1767,8 +1658,6 @@ export async function exporteraSieData(
     if (!userId) {
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
-
-    logSieSecurityEvent(userId, "sie_export_attempt", `Export started for year: ${år}`);
 
     // 🔒 SÄKER DATABASACCESS - Hämta endast användarens företagsinfo
     const företagQuery = await pool.query(
@@ -1957,9 +1846,12 @@ export async function exporteraSieData(
       }
 
       // Skriv ut verifikationer
-      for (const [transId, ver] of verifikationer) {
+      for (const [, ver] of verifikationer) {
         // Kontrollera balansering
-        const summa = ver.poster.reduce((sum: number, post: any) => sum + post.belopp, 0);
+        const summa = ver.poster.reduce(
+          (sum: number, post: { belopp: number }) => sum + post.belopp,
+          0
+        );
         if (Math.abs(summa) > 0.01) {
           console.warn(`Verifikation ${ver.nummer} balanserar inte: ${summa} kr`);
           continue;
@@ -1976,31 +1868,12 @@ export async function exporteraSieData(
       }
     }
 
-    logSieSecurityEvent(
-      userId,
-      "sie_export_success",
-      `SIE export completed for year ${år}, content length: ${sieContent.length}`
-    );
-
     return {
       success: true,
       data: sieContent,
     };
   } catch (error) {
     console.error("Fel vid export av SIE-data:", error);
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logSieSecurityEvent(
-          userId,
-          "sie_export_error",
-          `Export failed: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
     return {
       success: false,
       error: `Kunde inte exportera SIE-data: ${error instanceof Error ? error.message : String(error)}`,
@@ -2020,11 +1893,7 @@ export async function rensaDubblettkonton(): Promise<{
       return { success: false, error: "Åtkomst nekad - ingen giltig session" };
     }
 
-    const { Pool } = require("pg");
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
+    // Use existing pool from top-level import
     const client = await pool.connect();
 
     // Hitta dubbletter för användaren
@@ -2062,13 +1931,6 @@ export async function rensaDubblettkonton(): Promise<{
     }
 
     client.release();
-    await pool.end();
-
-    logSieSecurityEvent(
-      userId,
-      "sie_cleanup_duplicates",
-      `Removed ${rensadeAntal} duplicate accounts`
-    );
 
     return {
       success: true,
@@ -2099,11 +1961,7 @@ export async function kontrolleraDubbletter(): Promise<{
       };
     }
 
-    const { Pool } = require("pg");
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-
+    // Use existing pool from top-level import
     const client = await pool.connect();
 
     // Hitta dubbletter för användaren
@@ -2118,7 +1976,6 @@ export async function kontrolleraDubbletter(): Promise<{
     const { rows: dubletter } = await client.query(dublettQuery, [userId]);
 
     client.release();
-    await pool.end();
 
     return {
       success: true,

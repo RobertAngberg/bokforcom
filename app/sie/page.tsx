@@ -13,6 +13,16 @@ import {
   kontrolleraDubbletter,
 } from "./actions";
 import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
+import type {
+  SieData,
+  Analys,
+  WizardStep,
+  LocalImportSettings,
+  ImportResultatWizard,
+  DublettResultatSimple,
+  Transaction,
+  Verification,
+} from "./types";
 
 // CP850 (Code Page 850) till Unicode mapping för svenska tecken
 const CP850_TO_UNICODE: { [key: number]: string } = {
@@ -174,10 +184,6 @@ const validateFileSize = (file: File): { valid: boolean; error?: string } => {
     };
   }
   return { valid: true };
-};
-
-const sanitizeInput = (input: string): string => {
-  return input.replace(/[<>'"&]/g, "").trim();
 };
 
 // BAS 2025 standardkonton (grundläggande kontoplan)
@@ -929,8 +935,8 @@ const parseSieContent = (content: string): SieData => {
     resultat: [],
   };
 
-  let currentVerification: any = null;
-  let currentTransactions: any[] = [];
+  let currentVerification: Omit<Verification, "transaktioner"> | null = null;
+  let currentTransactions: Transaction[] = [];
 
   const extractValue = (line: string, keyword: string): string => {
     const match = line.match(new RegExp(`#${keyword}\\s+"([^"]+)"|#${keyword}\\s+([^\\s]+)`));
@@ -943,7 +949,7 @@ const parseSieContent = (content: string): SieData => {
     if (!match) return [];
 
     const values: string[] = [];
-    let current = match[1];
+    const current = match[1];
     let inQuotes = false;
     let currentValue = "";
 
@@ -1119,66 +1125,24 @@ const analyzeAccounts = (sieKonton: string[], anvandaKonton: string[]) => {
   };
 };
 
-interface SieData {
-  header: {
-    program: string;
-    organisationsnummer: string;
-    företagsnamn: string;
-    räkenskapsår: Array<{ år: number; startdatum: string; slutdatum: string }>;
-    kontoplan: string;
-  };
-  konton: Array<{
-    nummer: string;
-    namn: string;
-  }>;
-  verifikationer: Array<{
-    serie: string;
-    nummer: string;
-    datum: string;
-    beskrivning: string;
-    transaktioner: Array<{
-      konto: string;
-      belopp: number;
-    }>;
-  }>;
-  balanser: {
-    ingående: Array<{ konto: string; belopp: number }>;
-    utgående: Array<{ konto: string; belopp: number }>;
-  };
-  resultat: Array<{ konto: string; belopp: number }>;
-}
-
-interface Analys {
-  totaltAntal: number;
-  standardKonton: number;
-  specialKonton: number;
-  kritiskaKonton: string[];
-  anvandaSaknade: number;
-  totaltAnvanda: number;
-}
-
-type WizardStep = "inställningar" | "förhandsvisning" | "import" | "resultat";
-
 // Wizard-komponenter
 function ImportWizard({
   sieData,
   saknadeKonton,
-  analys,
   onCancel,
   selectedFile,
 }: {
   sieData: SieData;
   saknadeKonton: string[];
-  analys: Analys;
   onCancel: () => void;
   selectedFile?: File | null;
 }) {
   const [currentStep, setCurrentStep] = useState<WizardStep>("inställningar");
-  const [importResultat, setImportResultat] = useState<any>(null);
+  const [importResultat, setImportResultat] = useState<ImportResultatWizard | null>(null);
   const [rensarDubbletter, setRensarDubbletter] = useState(false);
-  const [dublettResultat, setDublettResultat] = useState<any>(null);
+  const [dublettResultat, setDublettResultat] = useState<DublettResultatSimple | null>(null);
   const [harDubbletter, setHarDubbletter] = useState(false);
-  const [importSettings, setImportSettings] = useState({
+  const [importSettings, setImportSettings] = useState<LocalImportSettings>({
     startDatum: "",
     slutDatum: "",
     inkluderaVerifikationer: true,
@@ -1374,134 +1338,6 @@ function ImportWizard({
   );
 }
 
-// Komponent för Steg 1: Kontohantering
-function KontoSteg({
-  sieData,
-  saknadeKonton,
-  analys,
-  onNext,
-  rensarDubbletter,
-  dublettResultat,
-  harDubbletter,
-  onRensaDubbletter,
-}: {
-  sieData: SieData;
-  saknadeKonton: string[];
-  analys: Analys;
-  onNext: () => void;
-  rensarDubbletter: boolean;
-  dublettResultat: any;
-  harDubbletter: boolean;
-  onRensaDubbletter: () => void;
-}) {
-  return (
-    <div>
-      <h2 className="text-xl font-semibold text-white mb-4">Steg 1: Kontohantering</h2>
-
-      <div className="space-y-4">
-        {/* Info om automatisk kontoskapande */}
-        <div className="bg-blue-500/20 border border-blue-500 text-blue-400 px-4 py-3 rounded">
-          <strong>ℹ️ Smart kontoskapande:</strong> Systemet kommer automatiskt att skapa ALLA
-          använda konton som saknas i din kontoplan, inklusive både BAS-standardkonton och
-          företagsspecifika konton.
-        </div>
-
-        {saknadeKonton.length > 0 ? (
-          <div className="space-y-4">
-            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded">
-              <strong>⚠️ Specialkonton att granska:</strong> {saknadeKonton.length}{" "}
-              företagsspecifika konton hittades som bör granskas innan import.
-            </div>
-
-            <div className="bg-slate-800 rounded-lg p-4">
-              <h3 className="font-semibold text-white mb-3">
-                Företagsspecifika konton som kommer att skapas:
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {saknadeKonton.map((kontonummer) => {
-                  const kontoInfo = sieData.konton.find((k) => k.nummer === kontonummer);
-                  return (
-                    <div key={kontonummer} className="bg-slate-700 rounded-lg p-3">
-                      <div className="text-lg font-bold text-white">{kontonummer}</div>
-                      {kontoInfo && (
-                        <div className="text-gray-300 text-sm mt-1">{kontoInfo.namn}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded">
-            ✅ Inga företagsspecifika konton behöver granskas!
-          </div>
-        )}
-
-        {/* Info om övriga konton */}
-        {analys.anvandaSaknade > saknadeKonton.length && (
-          <div className="bg-slate-800 rounded-lg p-4">
-            <h3 className="font-semibold text-white mb-2">📊 Ytterligare kontoskapande</h3>
-            <p className="text-gray-300 text-sm">
-              Totalt kommer {analys.anvandaSaknade} använda konton att skapas, varav{" "}
-              {analys.anvandaSaknade - saknadeKonton.length} är BAS-standardkonton som skapas
-              automatiskt utan granskning.
-            </p>
-          </div>
-        )}
-
-        {/* Debugging och dubbletthantering */}
-        <div className="bg-slate-800 rounded-lg p-4">
-          <h3 className="font-semibold text-white mb-3">🔧 Verktyg och felsökning</h3>
-
-          <div className="space-y-3">
-            <div className="text-sm text-gray-300">
-              <strong>Kontonummer från SIE-fil (sample):</strong>{" "}
-              {saknadeKonton
-                .slice(0, 3)
-                .map((kontonr) => {
-                  const kontoInfo = sieData.konton.find((k) => k.nummer === kontonr);
-                  return kontoInfo ? `${kontonr} ("${kontoInfo.namn}")` : kontonr;
-                })
-                .join(", ")}
-              {saknadeKonton.length > 3 && ` + ${saknadeKonton.length - 3} till`}
-            </div>
-
-            <div className="flex gap-2">
-              {harDubbletter && (
-                <Knapp
-                  text={rensarDubbletter ? "Rensar..." : "🗑️ Rensa dubbletter"}
-                  onClick={onRensaDubbletter}
-                  disabled={rensarDubbletter}
-                  className="bg-orange-600 hover:bg-orange-700"
-                />
-              )}
-            </div>
-
-            {dublettResultat && (
-              <div
-                className={`p-3 rounded ${
-                  dublettResultat.success
-                    ? "bg-green-500/20 border border-green-500 text-green-400"
-                    : "bg-red-500/20 border border-red-500 text-red-400"
-                }`}
-              >
-                {dublettResultat.success
-                  ? `✅ Rensade ${dublettResultat.rensade} dubbletter`
-                  : `❌ Fel: ${dublettResultat.error}`}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <Knapp text="Fortsätt till inställningar →" onClick={onNext} />
-      </div>
-    </div>
-  );
-}
-
 // Komponent för Steg 2: Inställningar
 function InställningarSteg({
   sieData,
@@ -1515,31 +1351,15 @@ function InställningarSteg({
   onRensaDubbletter,
 }: {
   sieData: SieData;
-  settings: any;
-  onSettingsChange: (settings: any) => void;
+  settings: LocalImportSettings;
+  onSettingsChange: (settings: LocalImportSettings) => void;
   onNext: () => void;
   onBack?: () => void;
   rensarDubbletter?: boolean;
-  dublettResultat?: any;
+  dublettResultat?: DublettResultatSimple | null;
   harDubbletter?: boolean;
   onRensaDubbletter?: () => void;
 }) {
-  const tidigasteDatum =
-    sieData.verifikationer.length > 0
-      ? sieData.verifikationer.reduce(
-          (earliest, v) => (v.datum < earliest ? v.datum : earliest),
-          sieData.verifikationer[0].datum
-        )
-      : "";
-
-  const senasteDatum =
-    sieData.verifikationer.length > 0
-      ? sieData.verifikationer.reduce(
-          (latest, v) => (v.datum > latest ? v.datum : latest),
-          sieData.verifikationer[0].datum
-        )
-      : "";
-
   return (
     <div>
       <h2 className="text-xl font-semibold text-white mb-4 text-center">
@@ -1685,7 +1505,7 @@ function FörhandsvisningSteg({
   onBack,
 }: {
   sieData: SieData;
-  settings: any;
+  settings: LocalImportSettings;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -1777,9 +1597,9 @@ function ImportSteg({
 }: {
   sieData: SieData;
   saknadeKonton: string[];
-  settings: any;
+  settings: LocalImportSettings;
   selectedFile?: File | null;
-  onComplete: (resultat: any) => void;
+  onComplete: (resultat: ImportResultatWizard) => void;
 }) {
   const [progress, setProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState("Förbereder import...");
@@ -1843,7 +1663,9 @@ function ImportSteg({
         setCurrentTask("Import slutförd!");
         setProgress(100);
 
-        onComplete(importResult.resultat);
+        if (importResult.resultat) {
+          onComplete(importResult.resultat);
+        }
       } catch (err) {
         if (!isCancelled) {
           // Logga bara fel om inte avbrutet av React Strict Mode
@@ -1948,7 +1770,13 @@ function ImportSteg({
 }
 
 // Komponent för Steg 5: Resultat
-function ResultatSteg({ resultat, onFinish }: { resultat: any; onFinish: () => void }) {
+function ResultatSteg({
+  resultat,
+  onFinish,
+}: {
+  resultat: ImportResultatWizard | null;
+  onFinish: () => void;
+}) {
   return (
     <div className="text-center">
       <h2 className="text-xl font-semibold text-white mb-8">Import slutförd!</h2>
@@ -2232,13 +2060,8 @@ export default function SiePage() {
     }).format(amount);
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("sv-SE");
-  };
-
   // Pagination helpers
-  const getPaginatedData = (data: any[], page: number) => {
+  const getPaginatedData = <T,>(data: T[], page: number) => {
     const startIndex = (page - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return data.slice(startIndex, endIndex);
@@ -2292,7 +2115,6 @@ export default function SiePage() {
       <ImportWizard
         sieData={sieData}
         saknadeKonton={saknadeKonton}
-        analys={analys}
         selectedFile={selectedFile}
         onCancel={() => setVisaWizard(false)}
       />
@@ -2473,22 +2295,24 @@ export default function SiePage() {
             {/* Flikar */}
             <div className="mb-6">
               <div className="flex justify-center space-x-1 bg-slate-700 p-1 rounded-lg">
-                {["översikt", "konton", "verifikationer", "balanser", "resultat"].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab as any);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-4 py-2 rounded-md capitalize transition-colors ${
-                      activeTab === tab
-                        ? "bg-cyan-600 text-white my-1"
-                        : "text-gray-300 hover:text-white hover:bg-slate-600"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+                {(["översikt", "konton", "verifikationer", "balanser", "resultat"] as const).map(
+                  (tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setActiveTab(tab);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2 rounded-md capitalize transition-colors ${
+                        activeTab === tab
+                          ? "bg-cyan-600 text-white my-1"
+                          : "text-gray-300 hover:text-white hover:bg-slate-600"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  )
+                )}
               </div>
             </div>
 

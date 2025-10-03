@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Chart } from "react-chartjs-2";
 import "chart.js/auto";
 import React from "react";
@@ -17,7 +17,7 @@ type Props = {
   chartData: ChartRow[];
 };
 
-export default function HomeChart({ year, onYearChange, chartData }: Props) {
+export default function HomeChart({ year, chartData }: Props) {
   // Memoize the processed chart data to prevent unnecessary re-renders
   const processedData = useMemo(() => {
     const monthNames = [

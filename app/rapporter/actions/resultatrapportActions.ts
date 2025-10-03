@@ -20,7 +20,7 @@ interface KontoData {
 // SÄKERHETSVALIDERING: Logga resultatrapport-åtkomst
 function logResultDataEvent(
   eventType: "access" | "violation" | "error",
-  userId?: number,
+  userId?: string,
   details?: string
 ) {
   const timestamp = new Date().toISOString();
@@ -149,7 +149,7 @@ export async function hamtaResultatrapport() {
   }
 }
 
-export async function fetchFöretagsprofil(userId?: number) {
+export async function fetchFöretagsprofil(userId?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const sessionUserId = await getUserId();
 

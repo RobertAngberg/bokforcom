@@ -7,7 +7,7 @@ import { validatePeriod } from "../../_utils/validationUtils";
 // SÄKERHETSVALIDERING: Logga finansiell dataåtkomst
 function logFinancialDataEvent(
   eventType: "access" | "violation" | "error",
-  userId?: number,
+  userId?: string,
   details?: string
 ) {
   const timestamp = new Date().toISOString();
@@ -245,7 +245,7 @@ export async function fetchBalansData(year: string, month?: string) {
   }
 }
 
-export async function fetchFöretagsprofil(userId?: number) {
+export async function fetchFöretagsprofil(userId?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const sessionUserId = await getUserId();
 

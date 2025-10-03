@@ -3,55 +3,14 @@
 import { useState, useEffect } from "react";
 import Knapp from "../_components/Knapp";
 import { skapaKonton, importeraSieData } from "./actions";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../_utils/datum";
-
-interface SieData {
-  header: {
-    program: string;
-    organisationsnummer: string;
-    företagsnamn: string;
-    räkenskapsår: Array<{ år: number; startdatum: string; slutdatum: string }>;
-    kontoplan: string;
-  };
-  konton: Array<{
-    nummer: string;
-    namn: string;
-  }>;
-  verifikationer: Array<{
-    serie: string;
-    nummer: string;
-    datum: string;
-    beskrivning: string;
-    transaktioner: Array<{
-      konto: string;
-      belopp: number;
-    }>;
-  }>;
-  balanser: {
-    ingående: Array<{ konto: string; belopp: number }>;
-    utgående: Array<{ konto: string; belopp: number }>;
-  };
-  resultat: Array<{ konto: string; belopp: number }>;
-}
-
-interface Analys {
-  totaltAntal: number;
-  standardKonton: number;
-  specialKonton: number;
-  kritiskaKonton: string[];
-  anvandaSaknade: number;
-  totaltAnvanda: number;
-}
-
-interface ImportWizardProps {
-  sieData: SieData;
-  saknadeKonton: string[];
-  analys: Analys;
-  onCancel: () => void;
-  selectedFile?: File | null;
-}
-
-type WizardStep = "konton" | "inställningar" | "förhandsvisning" | "import" | "resultat";
+import type {
+  SieData,
+  Analys,
+  ImportWizardProps,
+  WizardStep,
+  LocalImportSettings,
+  ImportResultatWizard,
+} from "./types";
 
 export default function ImportWizard({
   sieData,
@@ -61,8 +20,8 @@ export default function ImportWizard({
   selectedFile,
 }: ImportWizardProps) {
   const [currentStep, setCurrentStep] = useState<WizardStep>("konton");
-  const [importResultat, setImportResultat] = useState<any>(null);
-  const [importSettings, setImportSettings] = useState({
+  const [importResultat, setImportResultat] = useState<ImportResultatWizard | null>(null);
+  const [importSettings, setImportSettings] = useState<LocalImportSettings>({
     startDatum: "",
     slutDatum: "",
     inkluderaVerifikationer: true,
@@ -117,20 +76,6 @@ export default function ImportWizard({
   ];
 
   const currentStepIndex = steps.findIndex((step) => step.id === currentStep);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("sv-SE", {
-      style: "currency",
-      currency: "SEK",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = ÅÅÅÅMMDDTillDate(dateStr);
-    return date ? dateTillÅÅÅÅMMDD(date) : dateStr;
-  };
 
   return (
     <div className="min-h-screen bg-slate-800 p-6">
@@ -318,8 +263,8 @@ function InställningarSteg({
   onBack,
 }: {
   sieData: SieData;
-  settings: any;
-  onSettingsChange: (settings: any) => void;
+  settings: LocalImportSettings;
+  onSettingsChange: (settings: LocalImportSettings) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -497,7 +442,7 @@ function FörhandsvisningSteg({
   onBack,
 }: {
   sieData: SieData;
-  settings: any;
+  settings: LocalImportSettings;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -589,9 +534,9 @@ function ImportSteg({
 }: {
   sieData: SieData;
   saknadeKonton: string[];
-  settings: any;
+  settings: LocalImportSettings;
   selectedFile?: File | null;
-  onComplete: (resultat: any) => void;
+  onComplete: (resultat: ImportResultatWizard) => void;
 }) {
   const [progress, setProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState("Förbereder import...");
@@ -641,6 +586,10 @@ function ImportSteg({
 
         if (!importResult.success) {
           throw new Error(importResult.error || "Kunde inte importera data");
+        }
+
+        if (!importResult.resultat) {
+          throw new Error("Ingen resultatdata returnerades från importen");
         }
 
         // Steg 4: Validering
@@ -749,7 +698,13 @@ function ImportSteg({
 }
 
 // Komponent för Steg 5: Resultat
-function ResultatSteg({ resultat, onFinish }: { resultat: any; onFinish: () => void }) {
+function ResultatSteg({
+  resultat,
+  onFinish,
+}: {
+  resultat: ImportResultatWizard | null;
+  onFinish: () => void;
+}) {
   return (
     <div className="text-center">
       <h2 className="text-xl font-semibold text-white mb-8">Import slutförd!</h2>

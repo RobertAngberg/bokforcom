@@ -747,7 +747,7 @@ export async function fetchForvalMedFel() {
             (konto: { kontonummer?: string }) =>
               konto.kontonummer && !giltigaKonton.includes(konto.kontonummer)
           );
-        } catch (err) {
+        } catch {
           console.error("❌ JSON parse-fel i förval id:", f.id);
           return true;
         }

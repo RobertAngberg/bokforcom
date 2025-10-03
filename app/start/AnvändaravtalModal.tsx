@@ -23,10 +23,11 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
             1. Definitioner och tillämpningsområde
           </h2>
           <p className="mb-3">
-            Detta användaravtal ("Avtalet") utgör en juridiskt bindande överenskommelse mellan dig
-            som användare ("Kund", "Du", "Användare") och Bokföringsapp ("Vi", "Tjänsteleverantör",
-            "Bolaget") avseende användning av den webbaserade bokföringstjänsten Bokföringsapp
-            ("Tjänsten", "Plattformen").
+            Detta användaravtal (&quot;Avtalet&quot;) utgör en juridiskt bindande överenskommelse
+            mellan dig som användare (&quot;Kund&quot;, &quot;Du&quot;, &quot;Användare&quot;) och
+            Bokföringsapp (&quot;Vi&quot;, &quot;Tjänsteleverantör&quot;, &quot;Bolaget&quot;)
+            avseende användning av den webbaserade bokföringstjänsten Bokföringsapp
+            (&quot;Tjänsten&quot;, &quot;Plattformen&quot;).
           </p>
           <p className="mb-3">
             <strong>Definitioner:</strong>
@@ -215,8 +216,9 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
             9. Ansvarsbegränsning och garantier
           </h2>
           <p className="mb-3">
-            <strong>FULLSTÄNDIG ANSVARSBEGRÄNSNING:</strong> Tjänsten tillhandahålls "som den är"
-            utan några garantier överhuvudtaget. Vi fråntar oss uttryckligen allt ansvar för:
+            <strong>FULLSTÄNDIG ANSVARSBEGRÄNSNING:</strong> Tjänsten tillhandahålls &quot;som den
+            är&quot; utan några garantier överhuvudtaget. Vi fråntar oss uttryckligen allt ansvar
+            för:
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>
@@ -277,9 +279,9 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
           </ul>
 
           <p className="mb-3 mt-4">
-            <strong>TJÄNSTEN I "BEFINTLIGT SKICK":</strong> Tjänsten tillhandahålls i "befintligt
-            skick" och med "befintlig tillgänglighet" utan garantier av något slag. Vi garanterar
-            uttryckligen inte att tjänsten:
+            <strong>TJÄNSTEN I &quot;BEFINTLIGT SKICK&quot;:</strong> Tjänsten tillhandahålls i
+            &quot;befintligt skick&quot; och med &quot;befintlig tillgänglighet&quot; utan garantier
+            av något slag. Vi garanterar uttryckligen inte att tjänsten:
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Kommer att vara tillgänglig, säker, felfri eller fungera utan avbrott</li>
