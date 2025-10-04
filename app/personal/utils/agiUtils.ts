@@ -36,7 +36,7 @@
  * @lastUpdated 2025-09-29
  */
 
-import { AGIData } from "../types/types";
+import { AGIData, FöretagsData } from "../types/types";
 
 /**
  * Genererar giltig AGI XML enligt Skatteverkets schema 1.1.17.1
@@ -187,8 +187,9 @@ export function generateAGIXML(agiData: AGIData): string {
   return xml;
 }
 
-// Typer för inkommande data
-interface LonespecData {
+// AGI-specifika typer för inkommande data (enklare varianter än globala types)
+// Dessa är avsiktligt mer flexibla för att hantera olika dataformat vid AGI-konvertering
+interface AGILonespecData {
   anställd_id: string | number; // Tillåt både string och number
   bruttolön?: number;
   skatt?: number;
@@ -197,7 +198,7 @@ interface LonespecData {
   // Removed index signature to match LönespecData type
 }
 
-interface AnställdData {
+interface AGIAnställdData {
   id: string;
   personnummer?: string;
   förnamn?: string;
@@ -208,18 +209,6 @@ interface AnställdData {
   postort?: string;
   ort?: string;
   // Removed index signature for type safety
-}
-
-export interface FöretagsData {
-  organisationsnummer?: string;
-  kontaktperson?: string;
-  telefonnummer?: string;
-  epost?: string;
-  företagsnamn?: string;
-  adress?: string;
-  postnummer?: string;
-  stad?: string;
-  [key: string]: unknown;
 }
 
 /**
@@ -242,8 +231,8 @@ export interface FöretagsData {
  * @returns AGIData - Strukturerad data redo för XML-generering
  */
 export function convertLonespecToAGI(
-  valdaSpecar: LonespecData[],
-  anstallda: AnställdData[],
+  valdaSpecar: AGILonespecData[],
+  anstallda: AGIAnställdData[],
   företagsdata: FöretagsData,
   period: string
 ): AGIData {

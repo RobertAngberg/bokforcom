@@ -17,29 +17,36 @@ export default function Lonekomponenter({
   anstalldId,
 }: LonekomponenterProps) {
   const { extrarader, setExtrarader, setBeräknadeVärden } = useLonespec();
+  const lönespecNumeriskId = lönespec?.id;
+  const lönespecKey = lönespecNumeriskId !== undefined ? lönespecNumeriskId.toString() : undefined;
+  const currentExtrarader = lönespecKey ? extrarader[lönespecKey] : undefined;
 
   //#region Effects
   // Hämta extrarader från context
   useEffect(() => {
-    if (lönespec?.id && !extrarader[lönespec.id]) {
-      hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));
-    }
-  }, [lönespec?.id, extrarader, setExtrarader]);
+    if (lönespecNumeriskId === undefined || currentExtrarader) return;
+
+    let isMounted = true;
+    hämtaExtrarader(lönespecNumeriskId).then((rader) => {
+      if (isMounted) {
+        setExtrarader(lönespecNumeriskId.toString(), rader);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lönespecNumeriskId, currentExtrarader, setExtrarader]);
 
   // Beräkna värden
   const beräknadeVärden = useMemo(() => {
-    return beräknaLonekomponenter(
-      grundlön ?? 0,
-      övertid ?? 0,
-      lönespec,
-      extrarader[lönespec.id] || []
-    );
-  }, [grundlön, övertid, lönespec, extrarader]);
+    return beräknaLonekomponenter(grundlön ?? 0, övertid ?? 0, lönespec, currentExtrarader ?? []);
+  }, [grundlön, övertid, lönespec, currentExtrarader]);
 
   // Spara i context när beräknadeVärden ändras
   useEffect(() => {
-    if (lönespec?.id) setBeräknadeVärden(lönespec.id, beräknadeVärden);
-  }, [lönespec?.id, beräknadeVärden, setBeräknadeVärden, extrarader, setExtrarader]);
+    if (lönespecKey) setBeräknadeVärden(lönespecKey, beräknadeVärden);
+  }, [lönespecKey, beräknadeVärden, setBeräknadeVärden]);
   //#endregion
 
   return (
@@ -49,11 +56,12 @@ export default function Lonekomponenter({
 
       <LöneTabell
         beräknadeVärden={beräknadeVärden}
-        extrarader={extrarader[lönespec.id] || []}
+        extrarader={currentExtrarader ?? []}
         grundlön={grundlön}
         onTaBortExtrarad={async (extraradId) => {
           await taBortExtrarad(extraradId);
-          hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));
+          if (lönespecNumeriskId === undefined || !lönespecKey) return;
+          hämtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
         }}
       />
 
@@ -61,7 +69,8 @@ export default function Lonekomponenter({
         <ExtraRader
           lönespecId={lönespec.id}
           onNyRad={async () => {
-            hämtaExtrarader(lönespec.id).then((rader) => setExtrarader(lönespec.id, rader));
+            if (lönespecNumeriskId === undefined || !lönespecKey) return;
+            hämtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
           }}
           grundlön={grundlön}
           anstalldId={anstalldId}

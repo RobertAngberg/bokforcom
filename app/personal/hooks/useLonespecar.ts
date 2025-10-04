@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   hämtaLönespecifikationer,
   skapaNyLönespec,
@@ -135,7 +135,7 @@ export function useLonespec({
     hämtaAllaUtlägg();
   }, [enableUtlaggMode, anställdId, lönespecUtlägg]);
 
-  const handleLäggTillUtlägg = useCallback(async () => {
+  const handleLäggTillUtlägg = async () => {
     if (!enableUtlaggMode || !lönespecId) {
       showToast("Fel: Ingen lönespec ID hittades", "error");
       return;
@@ -169,10 +169,10 @@ export function useLonespec({
     } finally {
       setLäggerTillUtlägg(false);
     }
-  }, [enableUtlaggMode, lönespecId, synkroniseradeUtlägg, onUtläggAdded]);
+  };
 
   // Data loading function (only active when enableComponentMode is true)
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     if (!enableComponentMode || !anställdId) return;
 
     try {
@@ -188,46 +188,7 @@ export function useLonespec({
     } finally {
       setLoading(false);
     }
-  }, [enableComponentMode, anställdId]);
-
-  // Extrarader modal utility functions (only active when enableExtraraderModal is true)
-  const beräknaArbetsdagar = useCallback(
-    (start: Date, end: Date): number => {
-      if (!enableExtraraderModal) return 0;
-
-      let count = 0;
-      const current = new Date(start);
-
-      while (current <= end) {
-        const dayOfWeek = current.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          // Inte söndag (0) eller lördag (6)
-          count++;
-        }
-        current.setDate(current.getDate() + 1);
-      }
-
-      return count;
-    },
-    [enableExtraraderModal]
-  );
-
-  const updateSemesterDagar = useCallback(
-    (newSemesterDagar: number) => {
-      if (!enableExtraraderModal) return;
-
-      setSemesterDagar(newSemesterDagar);
-
-      // Uppdatera det motsvarande fältet automatiskt
-      const antalField = extraraderFields.find((field) => field.name === "kolumn2");
-      if (antalField) {
-        antalField.onChange({
-          target: { value: newSemesterDagar.toString() },
-        } as React.ChangeEvent<HTMLInputElement>);
-      }
-    },
-    [enableExtraraderModal, extraraderFields]
-  );
+  };
 
   // Component mode effects - only for side effects, no derived state
   useEffect(() => {
@@ -237,8 +198,27 @@ export function useLonespec({
       setLoading(false);
       return;
     }
-    loadData();
-  }, [enableComponentMode, specificLönespec, loadData]);
+
+    const loadSpecar = async () => {
+      if (!anställdId) return;
+
+      try {
+        setLoading(true);
+        const [lönespecarData, utläggData] = await Promise.all([
+          hämtaLönespecifikationer(anställdId),
+          hämtaUtlägg(anställdId),
+        ]);
+        setLonespecar(lönespecarData);
+        setUtlägg(utläggData as Utlägg[]);
+      } catch (error) {
+        console.error("Fel vid laddning av data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSpecar();
+  }, [enableComponentMode, specificLönespec, anställdId]);
 
   // Reset selected employee when modal opens - moved to direct computation
   // (removed useEffect to avoid prop-change listener anti-pattern)
@@ -263,17 +243,27 @@ export function useLonespec({
       endDate &&
       extraraderModalTitle === "Betald semester"
     ) {
-      const dagar = beräknaArbetsdagar(startDate, endDate);
-      updateSemesterDagar(dagar);
+      // Inline beräknaArbetsdagar
+      let count = 0;
+      const current = new Date(startDate);
+      while (current <= endDate) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+
+      // Inline updateSemesterDagar
+      setSemesterDagar(count);
+      const antalField = extraraderFields.find((field) => field.name === "kolumn2");
+      if (antalField) {
+        antalField.onChange({
+          target: { value: count.toString() },
+        } as React.ChangeEvent<HTMLInputElement>);
+      }
     }
-  }, [
-    enableExtraraderModal,
-    startDate,
-    endDate,
-    extraraderModalTitle,
-    beräknaArbetsdagar,
-    updateSemesterDagar,
-  ]);
+  }, [enableExtraraderModal, startDate, endDate, extraraderModalTitle, extraraderFields]);
 
   // Modal handler functions
   const handleStartDateChange = (date: Date | null) => {
@@ -433,7 +423,6 @@ export function useLonespec({
       handleEndDateChange,
       createSyntheticEvent,
       getFilteredFields,
-      beräknaArbetsdagar,
     }),
   };
 }

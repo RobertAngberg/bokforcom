@@ -1459,6 +1459,19 @@ export interface Företagsprofil {
   // Index signature removed for type safety - define all fields explicitly
 }
 
+// FöretagsData - Flexiblare version av Företagsprofil för AGI och andra integrationer
+export interface FöretagsData {
+  organisationsnummer?: string;
+  kontaktperson?: string;
+  telefonnummer?: string;
+  epost?: string;
+  företagsnamn?: string;
+  adress?: string;
+  postnummer?: string;
+  stad?: string;
+  [key: string]: unknown;
+}
+
 export interface LönespecData {
   id: number;
   anställd_id: number;
@@ -1479,7 +1492,26 @@ export interface BeräknadeVärden {
   socialaAvgifter?: number;
   lönekostnad?: number;
   grundlön?: number;
-  [key: string]: number | undefined;
+  extraradsSumma?: number;
+  övertid?: number;
+  timlön?: number;
+  daglön?: number;
+  skattunderlag?: number;
+  dagavdrag?: {
+    föräldraledighet: number;
+    vårdAvSjuktBarn: number;
+    sjukfrånvaro: number;
+    totalt: number;
+  };
+  [key: string]:
+    | number
+    | {
+        föräldraledighet: number;
+        vårdAvSjuktBarn: number;
+        sjukfrånvaro: number;
+        totalt: number;
+      }
+    | undefined;
 }
 
 // Anstallda.tsx

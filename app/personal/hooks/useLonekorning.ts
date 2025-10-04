@@ -13,7 +13,7 @@
  * @file useLonekorning.ts - Huvudhook för lönekörning och AGI-funktioner
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "../../_lib/auth-client";
 import { showToast } from "../../_components/Toast";
 import {
@@ -169,7 +169,7 @@ export const useLonekorning = ({
     };
   };
 
-  const loadLönekörningSpecar = useCallback(async () => {
+  const loadLönekörningSpecar = async () => {
     if (!valdLonekorning) return;
 
     try {
@@ -188,7 +188,7 @@ export const useLonekorning = ({
     } finally {
       setLoading(false);
     }
-  }, [valdLonekorning]);
+  };
 
   const handleTaBortLönekörning = async () => {
     if (!valdLonekorning) return;
@@ -546,17 +546,54 @@ export const useLonekorning = ({
   }, [utbetalningsdatum, specarPerDatum]);
 
   useEffect(() => {
-    if (valdLonekorning) {
-      loadLönekörningSpecar();
-    }
-  }, [valdLonekorning, loadLönekörningSpecar]);
+    if (!valdLonekorning) return;
+
+    const loadSpecar = async () => {
+      try {
+        setLoading(true);
+        const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
+
+        if (result.success && result.data) {
+          setLönekörningSpecar(result.data);
+        } else {
+          console.error("❌ Fel vid laddning av lönespecar:", result.error);
+          setLönekörningSpecar([]);
+        }
+      } catch (error) {
+        console.error("❌ Fel vid laddning av lönespecar:", error);
+        setLönekörningSpecar([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSpecar();
+  }, [valdLonekorning]);
 
   // Lista mode effect
   useEffect(() => {
-    if (enableListMode) {
-      loadLonekorningar();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!enableListMode) return;
+
+    const loadLonekorningar = async () => {
+      try {
+        setListLoading(true);
+        const result = await hämtaAllaLönekörningar();
+
+        if (result.success && result.data) {
+          setLonekorningar(result.data);
+        } else {
+          console.error("❌ Fel vid laddning av lönekörningar:", result.error);
+          setLonekorningar([]);
+        }
+      } catch (error) {
+        console.error("❌ Fel vid laddning av lönekörningar:", error);
+        setLonekorningar([]);
+      } finally {
+        setListLoading(false);
+      }
+    };
+
+    loadLonekorningar();
   }, [enableListMode]); // New lönekörning modal effect
   useEffect(() => {
     if (enableNewLonekorningModal && nyLonekorningModalOpen) {
@@ -622,7 +659,7 @@ export const useLonekorning = ({
   );
 
   // Lista mode functions
-  const loadLonekorningar = useCallback(async () => {
+  const loadLonekorningar = async () => {
     if (!enableListMode) return;
 
     try {
@@ -641,7 +678,7 @@ export const useLonekorning = ({
     } finally {
       setListLoading(false);
     }
-  }, [enableListMode]);
+  };
 
   const formatPeriodName = (period: string): string => {
     const [år, månad] = period.split("-");

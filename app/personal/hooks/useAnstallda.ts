@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useActionState } from "react";
+import { useEffect, useState, useActionState } from "react";
 import {
   hämtaAllaAnställda,
   hämtaAnställd,
@@ -108,26 +108,17 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // HELPER FUNCTIONS
   // ===========================================
 
-  const addAnställd = useCallback(
-    (anställd: AnställdListItem) => {
-      setAnställda([...anställda, anställd]);
-    },
-    [anställda, setAnställda]
-  );
+  const addAnställd = (anställd: AnställdListItem) => {
+    setAnställda([...anställda, anställd]);
+  };
 
-  const removeAnställd = useCallback(
-    (id: number) => {
-      setAnställda(anställda.filter((a) => a.id !== id));
-    },
-    [anställda, setAnställda]
-  );
+  const removeAnställd = (id: number) => {
+    setAnställda(anställda.filter((a) => a.id !== id));
+  };
 
-  const updateAnställd = useCallback(
-    (id: number, updatedData: Partial<AnställdListItem>) => {
-      setAnställda(anställda.map((a) => (a.id === id ? { ...a, ...updatedData } : a)));
-    },
-    [anställda, setAnställda]
-  );
+  const updateAnställd = (id: number, updatedData: Partial<AnställdListItem>) => {
+    setAnställda(anställda.map((a) => (a.id === id ? { ...a, ...updatedData } : a)));
+  };
 
   // ===========================================
   // PERSONALINFORMATION - Lokal edit-state i hook
@@ -167,17 +158,17 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     setPersonalErrorMessage(null);
   };
 
-  const personalOnChange = useCallback(
-    (name: keyof PersonalEditData | string, value: string | number | boolean) => {
-      const next = { ...personalEditData, [name]: value } as PersonalEditData;
-      setPersonalEditData(next);
-      setPersonalHasChanges(JSON.stringify(next) !== JSON.stringify(personalOriginalData));
-      if (personalErrorMessage) setPersonalErrorMessage(null);
-    },
-    [personalEditData, personalOriginalData, personalErrorMessage]
-  );
+  const personalOnChange = (
+    name: keyof PersonalEditData | string,
+    value: string | number | boolean
+  ) => {
+    const next = { ...personalEditData, [name]: value } as PersonalEditData;
+    setPersonalEditData(next);
+    setPersonalHasChanges(JSON.stringify(next) !== JSON.stringify(personalOriginalData));
+    if (personalErrorMessage) setPersonalErrorMessage(null);
+  };
 
-  const personalOnSave = useCallback(async () => {
+  const personalOnSave = async () => {
     if (!valdAnställd || !personalHasChanges) return;
     try {
       const payload: AnställdData = {
@@ -207,7 +198,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     } catch {
       setPersonalErrorMessage("Ett fel uppstod vid sparande");
     }
-  }, [valdAnställd, personalHasChanges, personalEditData]);
+  };
 
   const personalOnCancel = () => {
     setPersonalEditData(personalOriginalData);
@@ -221,7 +212,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
   // ===========================================
 
   // Ladda alla anställda
-  const laddaAnställda = useCallback(async () => {
+  const laddaAnställda = async () => {
     setAnställdaLoading(true);
     setAnställdaError(null);
     try {
@@ -242,60 +233,57 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     } finally {
       setAnställdaLoading(false);
     }
-  }, [setAnställda, setAnställdaLoading, setAnställdaError]);
+  };
 
   // Hämta alla anställda vid mount
   useEffect(() => {
     laddaAnställda();
-  }, [laddaAnställda]);
+  }, []); // Tom array - kör bara vid mount
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)
   // ===========================================
 
   // Ladda en specifik anställd med full data
-  const laddaAnställd = useCallback(
-    async (anställdId: number) => {
-      setAnställdLoadingId(anställdId);
-      setAnställdLoading(true);
-      try {
-        const fullData = await hämtaAnställd(anställdId);
-        setValdAnställd(fullData);
-        return fullData;
-      } catch (error) {
-        console.error("Fel vid laddning av anställd:", error);
-        // Fallback till grundläggande data från listan
-        const anställdFrånLista = anställda.find((a) => a.id === anställdId);
-        if (anställdFrånLista) {
-          // Skapa en minimal AnställdData från AnställdListItem
-          const fallbackData: Partial<AnställdData> = {
-            förnamn: anställdFrånLista.namn.split(" ")[0] || "",
-            efternamn: anställdFrånLista.namn.split(" ").slice(1).join(" ") || "",
-            mail: anställdFrånLista.epost,
-            jobbtitel: anställdFrånLista.roll || "",
-          };
-          setValdAnställd(fallbackData as AnställdData);
-          return fallbackData;
-        }
-      } finally {
-        setAnställdLoadingId(null);
-        setAnställdLoading(false);
+  const laddaAnställd = async (anställdId: number) => {
+    setAnställdLoadingId(anställdId);
+    setAnställdLoading(true);
+    try {
+      const fullData = await hämtaAnställd(anställdId);
+      setValdAnställd(fullData);
+      return fullData;
+    } catch (error) {
+      console.error("Fel vid laddning av anställd:", error);
+      // Fallback till grundläggande data från listan
+      const anställdFrånLista = anställda.find((a) => a.id === anställdId);
+      if (anställdFrånLista) {
+        // Skapa en minimal AnställdData från AnställdListItem
+        const fallbackData: Partial<AnställdData> = {
+          förnamn: anställdFrånLista.namn.split(" ")[0] || "",
+          efternamn: anställdFrånLista.namn.split(" ").slice(1).join(" ") || "",
+          mail: anställdFrånLista.epost,
+          jobbtitel: anställdFrånLista.roll || "",
+        };
+        setValdAnställd(fallbackData as AnställdData);
+        return fallbackData;
       }
-    },
-    [anställda, setValdAnställd, setAnställdLoading, setAnställdLoadingId]
-  );
+    } finally {
+      setAnställdLoadingId(null);
+      setAnställdLoading(false);
+    }
+  };
 
   // ===========================================
   // ANSTÄLLDA RAD - För AnstalldaRad.tsx
   // ===========================================
 
   // Ta bort anställd
-  const taBortAnställdMedKonfirmation = useCallback(async (id: number) => {
+  const taBortAnställdMedKonfirmation = async (id: number) => {
     setDeleteAnställdId(id);
     setShowDeleteAnställdModal(true);
-  }, []);
+  };
 
-  const confirmDeleteAnställd = useCallback(async () => {
+  const confirmDeleteAnställd = async () => {
     if (!deleteAnställdId) return;
 
     setShowDeleteAnställdModal(false);
@@ -319,31 +307,25 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     } finally {
       setDeleteAnställdId(null);
     }
-  }, [removeAnställd, valdAnställd, setValdAnställd, setAnställdaError, deleteAnställdId]);
+  };
 
   // Hantera klick på anställd (ladda full data och sätt som vald)
-  const hanteraAnställdKlick = useCallback(
-    async (anställdId: number) => {
-      await laddaAnställd(anställdId);
-    },
-    [laddaAnställd]
-  );
+  const hanteraAnställdKlick = async (anställdId: number) => {
+    await laddaAnställd(anställdId);
+  };
 
   // ===========================================
   // LÖNESPEC LISTA - För LonespecList.tsx (flyttad från useAnstalldalonespecList)
   // ===========================================
 
-  const handleTaBortLönespec = useCallback(
-    async (lönespecId: string) => {
-      if (!enableLonespecMode) return;
+  const handleTaBortLönespec = async (lönespecId: string) => {
+    if (!enableLonespecMode) return;
 
-      setDeleteLönespecId(parseInt(lönespecId));
-      setShowDeleteLönespecModal(true);
-    },
-    [enableLonespecMode]
-  );
+    setDeleteLönespecId(parseInt(lönespecId));
+    setShowDeleteLönespecModal(true);
+  };
 
-  const confirmDeleteLönespec = useCallback(async () => {
+  const confirmDeleteLönespec = async () => {
     if (!deleteLönespecId) return;
 
     setShowDeleteLönespecModal(false);
@@ -363,119 +345,109 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     } finally {
       setTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: false }));
     }
-  }, [deleteLönespecId, onLönespecUppdaterad]);
+  };
 
-  const handleNavigateToLonekorning = useCallback(() => {
+  const handleNavigateToLonekorning = () => {
     if (typeof window !== "undefined") {
       window.location.href = "/personal/Lonekorning";
     }
-  }, []);
+  };
 
   // ===========================================
   // NY ANSTÄLLD - För NyAnstalld.tsx
   // ===========================================
 
   // Visa/dölj ny anställd formulär
-  const visaNyAnställd = useCallback(() => {
+  const visaNyAnställd = () => {
     setVisaNyAnställdFormulär(true);
-  }, [setVisaNyAnställdFormulär]);
+  };
 
-  const döljNyAnställd = useCallback(() => {
+  const döljNyAnställd = () => {
     setVisaNyAnställdFormulär(false);
-  }, [setVisaNyAnställdFormulär]);
+  };
 
   // När en ny anställd sparats
-  const hanteraNyAnställdSparad = useCallback(async () => {
+  const hanteraNyAnställdSparad = async () => {
     await laddaAnställda();
     setVisaNyAnställdFormulär(false);
-  }, [laddaAnställda, setVisaNyAnställdFormulär]);
+  };
 
   // NY ANSTÄLLD FORMULÄR FUNKTIONER - flyttade från useNyAnstalld.ts
 
   // Update formulär with partial data
-  const updateNyAnställdFormulär = useCallback(
-    (updates: Partial<typeof nyAnställdFormulär>) => {
-      if (!enableNyAnstalldMode) return;
-      setNyAnställdFormulär((prev) => {
-        const newState = { ...prev, ...updates };
-        return newState;
-      });
-    },
-    [enableNyAnstalldMode]
-  );
+  const updateNyAnställdFormulär = (updates: Partial<typeof nyAnställdFormulär>) => {
+    if (!enableNyAnstalldMode) return;
+    setNyAnställdFormulär((prev) => {
+      const newState = { ...prev, ...updates };
+      return newState;
+    });
+  };
 
   // Handle input changes
-  const handleSanitizedChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      if (!enableNyAnstalldMode) return;
-      const { name, value } = e.target;
+  const handleSanitizedChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    if (!enableNyAnstalldMode) return;
+    const { name, value } = e.target;
 
-      updateNyAnställdFormulär({ [name]: value });
-    },
-    [enableNyAnstalldMode, updateNyAnställdFormulär]
-  );
+    updateNyAnställdFormulär({ [name]: value });
+  };
 
   // Reset formulär
-  const rensaFormulär = useCallback(() => {
+  const rensaFormulär = () => {
     if (!enableNyAnstalldMode) return;
     setNyAnställdFormulär(initialNyAnställdFormulär);
-  }, [enableNyAnstalldMode]);
+  };
 
-  const avbrytNyAnställd = useCallback(() => {
+  const avbrytNyAnställd = () => {
     if (!enableNyAnstalldMode) return;
     rensaFormulär();
     döljNyAnställd();
     onNyAnstalldCancel?.();
-  }, [enableNyAnstalldMode, döljNyAnställd, onNyAnstalldCancel, rensaFormulär]);
+  };
 
   // ===========================================
   // ANSTÄLLD RAD - För AnställdaRad.tsx
   // ===========================================
 
   // Hantera radklick (undvik klick på knappar)
-  const hanteraRadKlick = useCallback(
-    (e: React.MouseEvent, anställdId: number) => {
-      // Hindra klick om användaren klickar på Ta bort-knappen
-      if ((e.target as HTMLElement).closest("button")) {
-        return;
-      }
-      if (anställdLoadingId !== anställdId) {
-        hanteraAnställdKlick(anställdId);
-      }
-    },
-    [anställdLoadingId, hanteraAnställdKlick]
-  );
+  const hanteraRadKlick = (e: React.MouseEvent, anställdId: number) => {
+    // Hindra klick om användaren klickar på Ta bort-knappen
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
+    if (anställdLoadingId !== anställdId) {
+      hanteraAnställdKlick(anställdId);
+    }
+  };
 
   // Hook för specifik anställd rad
-  const useAnställdRad = useCallback(
-    (anställd: AnställdListItem) => {
-      const loading = anställdLoadingId === anställd.id;
+  const useAnställdRad = (anställd: AnställdListItem) => {
+    const loading = anställdLoadingId === anställd.id;
 
-      const handleTaBort = () => {
-        taBortAnställdMedKonfirmation(anställd.id);
-      };
+    const handleTaBort = () => {
+      taBortAnställdMedKonfirmation(anställd.id);
+    };
 
-      const handleRadKlick = (e: React.MouseEvent) => {
-        hanteraRadKlick(e, anställd.id);
-      };
+    const handleRadKlick = (e: React.MouseEvent) => {
+      hanteraRadKlick(e, anställd.id);
+    };
 
-      return {
-        loading,
-        handleTaBort,
-        handleRadKlick,
-      };
-    },
-    [anställdLoadingId, taBortAnställdMedKonfirmation, hanteraRadKlick]
-  );
+    return {
+      loading,
+      handleTaBort,
+      handleRadKlick,
+    };
+  };
 
   // ===========================================
   // ALLMÄNNA FUNKTIONER
   // ===========================================
 
   // Rensa fel meddelanden
-  const rensaFel = useCallback(() => {
+  const rensaFel = () => {
     setAnställdaError(null);
-  }, [setAnställdaError]);
+  };
 
   // NY ANSTÄLLD form action effect - flyttad från useNyAnstalld.ts
   useEffect(() => {
@@ -483,13 +455,14 @@ export function useAnstallda(props?: UseAnstalldaProps) {
 
     if (actionState.success) {
       showToast(actionState.message || "Anställd sparad!", "success");
-      rensaFormulär();
-      döljNyAnställd();
+      // Inline funktioner istället för att referera dem
+      setNyAnställdFormulär(initialNyAnställdFormulär);
+      setVisaNyAnställdFormulär(false);
       onNyAnstalldSaved?.();
     } else if (actionState.message) {
       showToast(actionState.message, "error");
     }
-  }, [enableNyAnstalldMode, actionState, döljNyAnställd, onNyAnstalldSaved, rensaFormulär]);
+  }, [enableNyAnstalldMode, actionState, onNyAnstalldSaved]);
 
   // ===========================================
   // RETURN - Grupperat per användningsområde
