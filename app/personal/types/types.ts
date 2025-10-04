@@ -155,12 +155,14 @@ export interface LönespecifikationMedLönekörning {
 }
 
 export type AnställdData = {
-  id?: number;
+  id: number; // Gör required för kompatibilitet med AnställdListItem
+  namn: string; // Gör required för kompatibilitet med AnställdListItem
   förnamn: string;
   efternamn: string;
   personnummer: string;
   jobbtitel: string;
   mail: string;
+  epost: string; // Gör required för kompatibilitet med AnställdListItem
   clearingnummer: string;
   bankkonto: string;
   adress: string;
@@ -181,8 +183,8 @@ export type AnställdData = {
   tjänsteställeOrt: string;
   skattetabell: number;
   skattekolumn: number;
-  sparade_dagar?: string | number;
-  använda_förskott?: string | number;
+  sparade_dagar?: number; // Ändra till number för kompatibilitet med AnställdListItem
+  använda_förskott?: number; // Ändra till number för kompatibilitet med AnställdListItem
 };
 
 export interface AnställdListItem {
@@ -698,7 +700,32 @@ export type PersonalEditData = {
 // useLonespec types
 export interface Lönespec {
   id: number;
-  [key: string]: string | number | boolean | Date | null | undefined;
+  anställd_id?: number;
+  grundlön?: number;
+  bruttolön?: number;
+  skatt?: number;
+  nettolön?: number;
+  sociala_avgifter?: number;
+  skatter_bokförda?: boolean;
+  agi_genererad?: boolean;
+
+  // Datum och period
+  månad?: number;
+  år?: number;
+  utbetalningsdatum?: string | Date;
+  period_start?: string | Date;
+  period_slut?: string | Date;
+  skapad?: string | Date;
+
+  // Övriga lönekomponenter
+  övertid?: number;
+  arbetstimmarPerVecka?: number;
+  semester_uttag?: number;
+
+  // Status flags
+  bankgiro_exporterad?: boolean;
+  mailad?: boolean;
+  bokförd?: boolean;
 }
 
 // useLonekorning types
@@ -960,7 +987,7 @@ export interface ExtraradRadOchDropdownProps {
 export interface ForhandsgranskningProps {
   lönespec: Lönespec;
   anställd: AnställdListItem;
-  företagsprofil: Företagsprofil;
+  företagsprofil: Företagsprofil | null;
   extrarader: ExtraradData[];
   beräknadeVärden?: BeräknadeVärden;
   onStäng: () => void;
@@ -1169,7 +1196,7 @@ export interface BokforLonerProps {
 export interface SingleLönespec {
   lönespec: Lönespec;
   anställd: AnställdListItem;
-  företagsprofil: Företagsprofil;
+  företagsprofil: Företagsprofil | null;
   extrarader: ExtraradData[];
   beräknadeVärden: BeräknadeVärden;
 }
@@ -1380,10 +1407,10 @@ export interface LonekorningProps {
 
 export interface BatchDataItem {
   lönespec: Lönespec;
-  anställd: AnställdData | AnställdListItem;
-  företagsprofil: Företagsprofil;
+  anställd: AnställdListItem;
+  företagsprofil: Företagsprofil | null;
   extrarader: ExtraradData[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: BeräknadeVärden;
 }
 
 // useLonekorning hook types
@@ -1429,7 +1456,7 @@ export interface Företagsprofil {
   telefonnummer: string;
   epost: string;
   webbplats: string;
-  [key: string]: string | undefined;
+  // Index signature removed for type safety - define all fields explicitly
 }
 
 export interface LönespecData {
@@ -1437,7 +1464,11 @@ export interface LönespecData {
   anställd_id: number;
   grundlön: number;
   skatt: number;
-  [key: string]: string | number | boolean | Date | null | undefined;
+  bruttolön?: number;
+  nettolön?: number;
+  sociala_avgifter?: number;
+  skatter_bokförda?: boolean;
+  agi_genererad?: boolean;
 }
 
 export interface BeräknadeVärden {

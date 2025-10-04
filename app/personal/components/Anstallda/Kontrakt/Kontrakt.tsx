@@ -22,7 +22,7 @@ export default function Kontrakt({ anställd }: KontraktProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white">
-          Kontrakt för {(anstalld?.förnamn as string) || ""} {(anstalld?.efternamn as string) || ""}
+          Kontrakt för {anstalld?.förnamn || ""} {anstalld?.efternamn || ""}
         </h2>
         <div className="flex gap-2">
           {!state.isEditing ? (

@@ -100,27 +100,19 @@ export const useForhandsgranskning = (
   });
 
   // Använd beräknade värden om de finns, annars fall back till lönespec
-  const bruttolön =
-    (beräknadeVärden.bruttolön as number) ?? parseFloat((lönespec?.bruttolön as string) || "0");
-  const skatt = (beräknadeVärden.skatt as number) ?? parseFloat((lönespec?.skatt as string) || "0");
-  const socialaAvgifter =
-    (beräknadeVärden.socialaAvgifter as number) ??
-    parseFloat((lönespec?.sociala_avgifter as string) || "0");
-  const totalLönekostnad = (beräknadeVärden.lönekostnad as number) ?? bruttolön + socialaAvgifter;
-  const nettolön =
-    (beräknadeVärden.nettolön as number) ?? parseFloat((lönespec?.nettolön as string) || "0");
+  const bruttolön = beräknadeVärden.bruttolön ?? lönespec?.bruttolön ?? 0;
+  const skatt = beräknadeVärden.skatt ?? lönespec?.skatt ?? 0;
+  const socialaAvgifter = beräknadeVärden.socialaAvgifter ?? lönespec?.sociala_avgifter ?? 0;
+  const totalLönekostnad = beräknadeVärden.lönekostnad ?? bruttolön + socialaAvgifter;
+  const nettolön = beräknadeVärden.nettolön ?? lönespec?.nettolön ?? 0;
 
-  const utbetalningsDatum = new Date(
-    (lönespec?.år as number) || 2025,
-    ((lönespec?.månad as number) || 1) - 1,
-    25
-  );
-  const periodStart = new Date((lönespec?.period_start as string) || (lönespec?.skapad as string));
-  const periodSlut = new Date((lönespec?.period_slut as string) || (lönespec?.skapad as string));
+  const utbetalningsDatum = new Date(lönespec?.år ?? 2025, (lönespec?.månad ?? 1) - 1, 25);
+  const periodStart = new Date(lönespec?.period_start ?? lönespec?.skapad ?? new Date());
+  const periodSlut = new Date(lönespec?.period_slut ?? lönespec?.skapad ?? new Date());
 
   const månadsNamn = new Date(
-    (lönespec?.år as number) || 2025,
-    ((lönespec?.månad as number) || 1) - 1,
+    lönespec?.år ?? 2025,
+    (lönespec?.månad ?? 1) - 1,
     1
   ).toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
 

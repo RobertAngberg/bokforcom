@@ -95,9 +95,7 @@ export function useKontrakt(initial?: AnställdListItem) {
   };
 
   // Bygg EditData från en vald anställd
-  const buildEditData = (
-    a: AnställdListItem | AnställdData | Record<string, unknown>
-  ): EditData => {
+  const buildEditData = (a: AnställdListItem | AnställdData): EditData => {
     // Helper to safely get string value
     const getString = (key: string): string => {
       const val = a[key as keyof typeof a];
@@ -154,7 +152,7 @@ export function useKontrakt(initial?: AnställdListItem) {
     setKontraktError(null);
   }, [visningsAnställd, isEditing, setKontraktEditData, setKontraktError]);
 
-  const onInit = (source?: Record<string, unknown>) => {
+  const onInit = (source?: AnställdListItem | AnställdData) => {
     if (!source || isEditing) return;
     const data = buildEditData(source);
     setKontraktEditData(data);

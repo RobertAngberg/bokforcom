@@ -190,8 +190,11 @@ export function generateAGIXML(agiData: AGIData): string {
 // Typer för inkommande data
 interface LonespecData {
   anställd_id: string | number; // Tillåt både string och number
-  bruttolön?: string | number; // Gör den optional
-  [key: string]: unknown;
+  bruttolön?: number;
+  skatt?: number;
+  nettolön?: number;
+  sociala_avgifter?: number;
+  // Removed index signature to match LönespecData type
 }
 
 interface AnställdData {
@@ -203,7 +206,8 @@ interface AnställdData {
   adress?: string;
   postnummer?: string;
   postort?: string;
-  [key: string]: unknown;
+  ort?: string;
+  // Removed index signature for type safety
 }
 
 export interface FöretagsData {

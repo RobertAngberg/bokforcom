@@ -186,11 +186,11 @@ export default function Lonekorning({
               Object.keys(item?.beräknadeVärden || {}).length > 0
                 ? item.beräknadeVärden
                 : {
-                    grundlön: parseFloat(lönespec?.grundlön || "0"),
-                    bruttolön: parseFloat(lönespec?.bruttolön || "0"),
-                    skatt: parseFloat(lönespec?.skatt || "0"),
-                    nettolön: parseFloat(lönespec?.nettolön || "0"),
-                    socialaAvgifter: parseFloat(lönespec?.sociala_avgifter || "0"),
+                    grundlön: lönespec?.grundlön ?? 0,
+                    bruttolön: lönespec?.bruttolön ?? 0,
+                    skatt: lönespec?.skatt ?? 0,
+                    nettolön: lönespec?.nettolön ?? 0,
+                    socialaAvgifter: lönespec?.sociala_avgifter ?? 0,
                   };
 
             return (

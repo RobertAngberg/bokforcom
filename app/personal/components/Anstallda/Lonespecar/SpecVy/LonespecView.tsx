@@ -136,7 +136,7 @@ export default function LönespecView({
     const värdentAttSpara = aktuellBeräkning || {
       bruttolön: lönespec.bruttolön,
       skatt: lönespec.skatt,
-      socialaAvgifter: lönespec.socialaAvgifter,
+      socialaAvgifter: lönespec.sociala_avgifter, // Rätt property name
       nettolön: lönespec.nettolön,
     };
 

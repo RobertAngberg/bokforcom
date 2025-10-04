@@ -52,7 +52,7 @@ export const useLonekorning = ({
   beräknadeVärden,
   enableListMode = false,
   specListValdaSpecar = [],
-  specListLönekörning = null,
+  specListLönekörning,
   onSpecListTaBortSpec,
   onSpecListHämtaBankgiro,
   onSpecListMailaSpecar,
@@ -155,10 +155,8 @@ export const useLonekorning = ({
 
     lönekörningSpecar.forEach((spec) => {
       const beräkningar = beräknadeVärden?.[spec.id];
-      const socialaAvgifter = parseFloat(
-        beräkningar?.socialaAvgifter || spec.sociala_avgifter || 0
-      );
-      const skatt = parseFloat(beräkningar?.skatt || spec.skatt || 0);
+      const socialaAvgifter = beräkningar?.socialaAvgifter ?? spec.sociala_avgifter ?? 0;
+      const skatt = beräkningar?.skatt ?? spec.skatt ?? 0;
 
       totalSocialaAvgifter += isNaN(socialaAvgifter) ? 0 : socialaAvgifter;
       totalPersonalskatt += isNaN(skatt) ? 0 : skatt;
@@ -867,7 +865,9 @@ export const useLonekorning = ({
       setNewLonekorningValdaAnstallda([]);
 
       // Anropa callback - parent ansvarar för att stänga modal
-      onLonekorningCreated?.(lönekörningResult.data);
+      if (lönekörningResult.data) {
+        onLonekorningCreated?.(lönekörningResult.data);
+      }
 
       // Refresh data if we're in list mode
       if (enableListMode) {

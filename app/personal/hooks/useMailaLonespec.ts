@@ -17,7 +17,7 @@ interface ForhandsgranskningComponent {
   (props: {
     lönespec: Lönespec;
     anställd: AnställdListItem;
-    företagsprofil: Företagsprofil;
+    företagsprofil: Företagsprofil | null;
     extrarader: ExtraradData[];
     beräknadeVärden: BeräknadeVärden;
     onStäng: () => void;
@@ -71,7 +71,7 @@ export function useMailaLonespec({
     item: {
       lönespec: Lönespec;
       anställd: AnställdListItem;
-      företagsprofil: Företagsprofil;
+      företagsprofil: Företagsprofil | null;
       extrarader: ExtraradData[];
       beräknadeVärden: BeräknadeVärden;
     },
@@ -95,11 +95,11 @@ export function useMailaLonespec({
       };
 
       const component = createElement(ForhandsgrankningComponent, {
-        lönespec: item.lönespec || {},
+        lönespec: item.lönespec,
         anställd: item.anställd || defaultAnställd,
-        företagsprofil: item.företagsprofil || {},
+        företagsprofil: item.företagsprofil ?? null,
         extrarader: item.extrarader || [],
-        beräknadeVärden: item.beräknadeVärden || {},
+        beräknadeVärden: item.beräknadeVärden,
         onStäng: () => {},
       });
 
@@ -140,11 +140,11 @@ export function useMailaLonespec({
   // Send email with PDF
   const sendEmail = async (
     item: {
-      lönespec?: Record<string, unknown>;
+      lönespec?: Lönespec;
       anställd?: AnställdListItem;
-      företagsprofil?: Record<string, unknown>;
+      företagsprofil?: Företagsprofil | null;
       extrarader?: ExtraradData[];
-      beräknadeVärden?: Record<string, unknown>;
+      beräknadeVärden?: BeräknadeVärden;
     },
     pdfBlob: Blob
   ): Promise<void> => {
