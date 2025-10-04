@@ -11,12 +11,12 @@ export default function BokforModal({ open, onClose, rows, onConfirm }: BokforMo
 
   const columns: ColumnDefinition<{
     konto: string;
-    namn: string;
+    kontoNamn: string;
     debet: number;
     kredit: number;
   }>[] = [
     { key: "konto", label: "Konto" },
-    { key: "namn", label: "Namn" },
+    { key: "kontoNamn", label: "Namn" },
     { key: "debet", label: "Debet" },
     { key: "kredit", label: "Kredit" },
   ];

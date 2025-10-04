@@ -9,7 +9,14 @@ import {
 import { uppdateraUtläggStatus, hämtaUtlägg } from "../actions/utlaggActions";
 import { hämtaBetaldaSemesterdagar } from "../actions/semesterActions";
 import { showToast } from "../../_components/Toast";
-import type { Lönespec, Utlägg, ExtraradResult, ExtraradData, AnställdData } from "../types/types";
+import type {
+  Lönespec,
+  Utlägg,
+  ExtraradResult,
+  ExtraradData,
+  AnställdData,
+  BeräknadeVärden,
+} from "../types/types";
 
 interface FormField {
   name: string;
@@ -79,9 +86,7 @@ export function useLonespec({
 }: UseLonespecProps = {}) {
   const [lönespecar, setLonespecar] = useState<Lönespec[]>([]);
   const [extrarader, setExtraraderState] = useState<Record<string, ExtraradData[]>>({});
-  const [beräknadeVärden, setBeräknadeVärdenState] = useState<
-    Record<string, Record<string, unknown>>
-  >({});
+  const [beräknadeVärden, setBeräknadeVärdenState] = useState<Record<string, BeräknadeVärden>>({});
 
   // Utlägg state (only active when enableUtlaggMode is true)
   const [synkroniseradeUtlägg, setSynkroniseradeUtlägg] = useState<Utlägg[]>(lönespecUtlägg);
@@ -104,7 +109,7 @@ export function useLonespec({
     setExtraraderState((prev) => ({ ...prev, [id]: extrarader }));
   }, []);
 
-  const setBeräknadeVärden = useCallback((id: string, värden: Record<string, unknown>) => {
+  const setBeräknadeVärden = useCallback((id: string, värden: BeräknadeVärden) => {
     setBeräknadeVärdenState((prev) => ({ ...prev, [id]: värden }));
   }, []);
 

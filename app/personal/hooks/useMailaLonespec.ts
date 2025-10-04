@@ -3,27 +3,34 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
-import type { SingleLönespec, AnställdListItem, ExtraradData } from "../types/types";
+import type {
+  SingleLönespec,
+  AnställdListItem,
+  ExtraradData,
+  Lönespec,
+  Företagsprofil,
+  BeräknadeVärden,
+} from "../types/types";
 import { showToast } from "../../_components/Toast";
 
 interface ForhandsgranskningComponent {
   (props: {
-    lönespec: Record<string, unknown>;
+    lönespec: Lönespec;
     anställd: AnställdListItem;
-    företagsprofil: Record<string, unknown>;
+    företagsprofil: Företagsprofil;
     extrarader: ExtraradData[];
-    beräknadeVärden?: Record<string, unknown>;
+    beräknadeVärden: BeräknadeVärden;
     onStäng: () => void;
-  }): React.JSX.Element;
+  }): React.JSX.Element | null;
 }
 
 interface UseMailaLonespecProps {
   // Single mode props
-  lönespec?: Record<string, unknown>;
+  lönespec?: Lönespec;
   anställd?: AnställdListItem;
-  företagsprofil?: Record<string, unknown>;
+  företagsprofil?: Företagsprofil;
   extrarader?: ExtraradData[];
-  beräknadeVärden?: Record<string, unknown>;
+  beräknadeVärden?: BeräknadeVärden;
   // Batch mode props
   batch?: SingleLönespec[];
   batchMode?: boolean;
@@ -51,19 +58,22 @@ export function useMailaLonespec({
   const [error, setError] = useState<string | null>(null);
   const [visaModal, setVisaModal] = useState(false);
 
-  // Helper for single or batch
-  const lönespecList = batchMode
-    ? batch
-    : [{ lönespec, anställd, företagsprofil, extrarader, beräknadeVärden }];
+  // Helper for single or batch - ensure we have proper SingleLönespec array
+  const lönespecList: SingleLönespec[] =
+    batchMode && batch
+      ? batch
+      : lönespec && anställd && företagsprofil && beräknadeVärden
+        ? [{ lönespec, anställd, företagsprofil, extrarader: extrarader || [], beräknadeVärden }]
+        : [];
 
   // PDF generation logic - moved to external function to avoid JSX in .ts file
   const generatePDF = async (
     item: {
-      lönespec?: Record<string, unknown>;
-      anställd?: AnställdListItem;
-      företagsprofil?: Record<string, unknown>;
-      extrarader?: ExtraradData[];
-      beräknadeVärden?: Record<string, unknown>;
+      lönespec: Lönespec;
+      anställd: AnställdListItem;
+      företagsprofil: Företagsprofil;
+      extrarader: ExtraradData[];
+      beräknadeVärden: BeräknadeVärden;
     },
     ForhandsgrankningComponent: ForhandsgranskningComponent
   ): Promise<Blob> => {
@@ -209,7 +219,18 @@ export function useMailaLonespec({
     setError(null);
 
     try {
-      const singleItem = { lönespec, anställd, företagsprofil, extrarader, beräknadeVärden };
+      // Validate all required fields exist
+      if (!lönespec || !anställd || !företagsprofil || !beräknadeVärden) {
+        throw new Error("Saknar nödvändig data för att skicka lönespec");
+      }
+
+      const singleItem = {
+        lönespec,
+        anställd,
+        företagsprofil,
+        extrarader: extrarader || [],
+        beräknadeVärden,
+      };
       const pdfBlob = await generatePDF(singleItem, ForhandsgrankningComponent);
       await sendEmail(singleItem, pdfBlob);
 

@@ -1,6 +1,6 @@
 //#region
-import InfoTooltip from "../../../../_components/InfoTooltip";
-import type { SammanfattningProps } from "../../../types/types";
+import InfoTooltip from "../../../../../_components/InfoTooltip";
+import type { SpecVySammanfattningProps } from "../../../../types/types";
 
 export default function Sammanfattning({
   utbetalningsDatum,
@@ -10,7 +10,7 @@ export default function Sammanfattning({
   bruttolön,
   skatt,
   onVisaBeräkningar,
-}: SammanfattningProps) {
+}: SpecVySammanfattningProps) {
   //#endregion
 
   return (

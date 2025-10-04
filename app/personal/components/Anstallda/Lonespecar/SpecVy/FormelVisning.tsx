@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormelVisningProps } from "../../../types/types";
+import type { FormelVisningProps } from "../../../../types/types";
 
 export default function FormelVisning({ beräknadeVärden, lönespec }: FormelVisningProps) {
   if (!beräknadeVärden) return null;
@@ -8,8 +8,18 @@ export default function FormelVisning({ beräknadeVärden, lönespec }: FormelVi
   // Alla värden tillgängliga men inte använda i denna vy
   // const { timlön, daglön, kontantlön, bruttolön, skatt, socialaAvgifter, nettolön, lönekostnad, dagavdrag } = beräknadeVärden;
 
-  const grundlön = parseFloat(lönespec.grundlön || lönespec.bruttolön || 0);
-  const arbetstimmarPerVecka = parseFloat(lönespec.arbetstimmarPerVecka || 40);
+  const grundlönValue = lönespec.grundlön || lönespec.bruttolön || 0;
+  const grundlön = parseFloat(
+    typeof grundlönValue === "string" || typeof grundlönValue === "number"
+      ? String(grundlönValue)
+      : "0"
+  );
+  const arbetstimmarValue = lönespec.arbetstimmarPerVecka || 40;
+  const arbetstimmarPerVecka = parseFloat(
+    typeof arbetstimmarValue === "string" || typeof arbetstimmarValue === "number"
+      ? String(arbetstimmarValue)
+      : "40"
+  );
 
   // Standardberäkningar (branschstandard enligt fackförbund)
   const årslön = grundlön * 12;

@@ -34,7 +34,7 @@ export default function LonespecLista({
 
   // Använd nya wizard-hooken
   const wizard = useWizard({
-    lönekörning,
+    lönekörning: lönekörning || null,
     onMaila: onMailaSpecar,
     onBokför,
     onGenereraAGI,

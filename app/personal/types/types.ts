@@ -47,6 +47,13 @@ export interface ModalFields {
   enhet?: string;
 }
 
+export interface MappedExtrarad {
+  benämning: string;
+  antal: string;
+  kostnad: number;
+  summa: number;
+}
+
 export interface UtläggData {
   id: number;
   beskrivning: string;
@@ -345,14 +352,14 @@ export interface PersonalStoreState {
   setUtläggBokföringLoading: (loading: boolean) => void;
   setLaddaLönespecar: (loading: boolean) => void;
   setLöneperiod: (period: { månad: number; år: number } | null) => void;
-  setLönespecar: (map: Record<string | number, any>) => void;
+  setLönespecar: (map: Record<string | number, Lönespec>) => void;
   setSparar: (id: string | number, value: boolean) => void;
   setTaBort: (id: string | number, value: boolean) => void;
   skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
   taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
   openFörhandsgranskning: (anställd: AnställdListItem) => void;
   closeFörhandsgranskning: () => void;
-  setAgiDebugData: (data: any) => void;
+  setAgiDebugData: (data: Record<string, unknown>) => void;
   openAGIDebug: (data?: Record<string, unknown>) => void;
   closeAGIDebug: () => void;
   clearToast: () => void;
@@ -384,7 +391,7 @@ export interface BokföringsPost {
 export interface BokförLöneUtbetalningData {
   lönespecId: number;
   extrarader: ExtraradData[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: BeräknadeVärden;
   anställdNamn: string;
   period: string;
   utbetalningsdatum: string;
@@ -501,8 +508,8 @@ export interface AGIDebugModalProps {
 
 export interface AGIGeneratorProps {
   valdaSpecar: Lönespec[];
-  anstallda: any[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  anstallda: AnställdListItem[];
+  beräknadeVärden: Record<string, BeräknadeVärden>;
   extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
   session: { userId: string };
@@ -532,18 +539,18 @@ export interface LöneKnapparProps {
   anställd: AnställdListItem;
   företagsprofil: Företagsprofil;
   extrarader: ExtraradData[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: BeräknadeVärden;
   onForhandsgranskning: (id: string) => void;
   onTaBortLönespec: () => void;
   taBortLoading: boolean;
 }
 
 export interface LöneBatchKnapparProps {
-  lönespecar: any[];
+  lönespecar: Lönespec[];
   anställda: AnställdListItem[];
-  företagsprofil: any;
+  företagsprofil: Företagsprofil;
   extrarader: Record<string, ExtraradData[]>[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: Record<string, BeräknadeVärden>;
   onMaila: () => void;
   onBankgiroClick: () => void;
   onBokförClick: () => void;
@@ -568,9 +575,9 @@ export interface LonekorningListaProps {
 
 export interface LonespecListaProps {
   valdaSpecar: LönespecData[];
-  anstallda: any[];
-  utlaggMap: Record<number, any[]>;
-  lönekörning?: any;
+  anstallda: AnställdListItem[];
+  utlaggMap: Record<number, UtläggData[]>;
+  lönekörning?: Lönekörning;
   onTaBortSpec: (specId: number) => Promise<void>;
   onHämtaBankgiro: () => void;
   onMailaSpecar: () => void;
@@ -579,14 +586,16 @@ export interface LonespecListaProps {
   onBokförSkatter: () => void;
   onRefreshData?: () => Promise<void>;
   period?: string;
-  onLönekörningUppdaterad?: (uppdateradLönekörning: any) => void;
+  onLönekörningUppdaterad?: (uppdateradLönekörning: Lönekörning) => void;
 }
 
 export interface LonespecManagerProps {
   valdaSpecar: Lönespec[];
-  setValdaSpecar: (value: string | number[] | ((prev: any[]) => any[])) => void;
-  specarPerDatum: any;
-  setSpecarPerDatum: (value: string | number | ((prev: any) => any)) => void;
+  setValdaSpecar: (value: string | number[] | ((prev: Lönespec[]) => Lönespec[])) => void;
+  specarPerDatum: Record<string, Lönespec[]>;
+  setSpecarPerDatum: (
+    value: string | number | ((prev: Record<string, Lönespec[]>) => Record<string, Lönespec[]>)
+  ) => void;
   datumLista: string[];
   setDatumLista: (value: string[] | ((prev: string[]) => string[])) => void;
   utbetalningsdatum: string | null;
@@ -596,7 +605,7 @@ export interface LonespecManagerProps {
 export interface NyLonekorningModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLonekorningCreated: (lonekorning: any) => void;
+  onLonekorningCreated: (lonekorning: Lönekörning) => void;
 }
 
 export interface NySpecModalProps {
@@ -612,14 +621,14 @@ export interface UtbetalningsdatumValjareProps {
   datumLista: string[];
   utbetalningsdatum: string | null;
   setUtbetalningsdatum: (datum: string) => void;
-  specarPerDatum: Record<string, any[]>;
+  specarPerDatum: Record<string, Lönespec[]>;
 }
 
 export interface SkatteBokforingModalProps {
   skatteModalOpen: boolean;
   setSkatteModalOpen: (open: boolean) => void;
   valdaSpecar: LönespecData[];
-  skatteData: any;
+  skatteData: Record<string, unknown>;
   utbetalningsdatum: string | null;
   skatteDatum: Date | null;
   setSkatteDatum: (date: Date | null) => void;
@@ -630,17 +639,17 @@ export interface SkatteBokforingModalProps {
 
 export interface SkatteManagerProps {
   valdaSpecar: Lönespec[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: Record<string, BeräknadeVärden>;
   skatteDatum: Date | null;
   setSkatteBokförPågår: (loading: boolean) => void;
   setSkatteModalOpen: (open: boolean) => void;
-  bokförLöneskatter: (data: any) => Promise<Record<string, unknown>>;
+  bokförLöneskatter: (data: Record<string, unknown>) => Promise<Record<string, unknown>>;
   onSkatteComplete?: () => void;
 }
 
 export interface PersonalAction {
   type: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
 }
 
 // ===========================================
@@ -654,8 +663,8 @@ export interface PersonalAction {
 // useUtlagg types
 export type UtläggBokföringModal = {
   isOpen: boolean;
-  utlägg: any | null;
-  previewRows: any[];
+  utlägg: UtläggData | null;
+  previewRows: UtlaggBokföringsRad[];
   loading: boolean;
 };
 
@@ -688,8 +697,8 @@ export type PersonalEditData = {
 
 // useLonespec types
 export interface Lönespec {
-  id: string;
-  [key: string]: any;
+  id: number;
+  [key: string]: string | number | boolean | Date | null | undefined;
 }
 
 // useLonekorning types
@@ -697,8 +706,8 @@ export type ToastType = "success" | "error" | "info";
 
 export type GenerateAGIArgs = {
   valdaSpecar: Lönespec[];
-  anstallda: any[];
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  anstallda: AnställdListItem[];
+  beräknadeVärden: Record<string, BeräknadeVärden>;
   extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
   session: { userId: string };
@@ -707,9 +716,9 @@ export type GenerateAGIArgs = {
 };
 
 export type UseLonekorningInit = {
-  anställda?: any[];
+  anställda?: AnställdListItem[];
   utbetalningsdatum?: Date | null;
-  onLonespecarChange?: (specar: Record<string, any>) => void;
+  onLonespecarChange?: (specar: Record<string, Lönespec>) => void;
 };
 
 export interface LonekorningState {
@@ -724,7 +733,7 @@ export interface LonekorningState {
   anställda: AnställdListItem[];
   anställdaLoading: boolean;
   harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => any;
+  getLönespec: (anställdId: string | number) => Lönespec | undefined;
 }
 
 export interface LonekorningHandlers {
@@ -753,7 +762,7 @@ export interface UseLonekorningReturn {
   anställda: AnställdListItem[];
   anställdaLoading: boolean;
   harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => any;
+  getLönespec: (anställdId: string | number) => Lönespec | undefined;
   skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
   taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
   openFörhandsgranskning: (anställd: AnställdListItem) => void;
@@ -829,8 +838,8 @@ export interface LonespecContextType {
   setLonespecar: (lönespecar: Lönespec[]) => void;
   extrarader: Record<string, ExtraradData[]>;
   setExtrarader: (id: string, extrarader: ExtraradData[]) => void;
-  beräknadeVärden: Record<string, Record<string, unknown>>;
-  setBeräknadeVärden: (id: string, värden: Record<string, unknown>) => void;
+  beräknadeVärden: Record<string, BeräknadeVärden>;
+  setBeräknadeVärden: (id: string, värden: BeräknadeVärden) => void;
 }
 
 export interface ExtraRad {
@@ -850,7 +859,7 @@ export interface SimpleBokföringsPost {
 
 export interface LonespecListProps {
   anställd: AnställdListItem;
-  utlägg: any[];
+  utlägg: UtläggData[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
@@ -859,20 +868,32 @@ export interface LonespecListProps {
 }
 
 export interface LönespecViewProps {
-  lönespec: any;
+  lönespec: Lönespec;
   anställd?: AnställdListItem;
-  utlägg: any[];
+  utlägg: UtläggData[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
-  företagsprofil?: any;
+  företagsprofil?: Företagsprofil;
   visaExtraRader?: boolean;
 }
 
 export interface SammanfattningProps {
   utbetalningsDatum: Date;
   nettolön: number;
-  lönespec: any;
+  bruttolön: number;
+  skatt: number;
+  socialaAvgifter: number;
+  totalLönekostnad: number;
+  extraraderMapped: MappedExtrarad[];
+  formatNoDecimals: (num: number) => string;
+}
+
+// SpecVy version of Sammanfattning has different props
+export interface SpecVySammanfattningProps {
+  utbetalningsDatum: Date;
+  nettolön: number;
+  lönespec: Lönespec;
   anställd?: AnställdListItem;
   bruttolön: number;
   skatt: number;
@@ -941,12 +962,12 @@ export interface ForhandsgranskningProps {
   anställd: AnställdListItem;
   företagsprofil: Företagsprofil;
   extrarader: ExtraradData[];
-  beräknadeVärden?: Record<string, Record<string, unknown>>;
+  beräknadeVärden?: BeräknadeVärden;
   onStäng: () => void;
 }
 
 export interface FormelVisningProps {
-  beräknadeVärden: Record<string, Record<string, unknown>>;
+  beräknadeVärden: BeräknadeVärden;
   extrarader: ExtraradData[];
   lönespec: Lönespec;
 }
@@ -971,11 +992,11 @@ export interface ÅrssammanställningProps {
 }
 
 export interface FotinfoProps {
-  företag: any;
+  företag: Företagsprofil;
 }
 
 export interface HuvudinfoProps {
-  anställd: AnställdData;
+  anställd: AnställdListItem;
   månadsNamn: string;
   periodStart: Date;
   periodSlut: Date;
@@ -995,12 +1016,12 @@ export interface LönetabellProps {
 
 export interface SemesterInfoProps {
   lönespec: Lönespec;
-  anställd: AnställdData;
+  anställd: AnställdListItem;
   formatNoDecimals: (value: number) => string;
 }
 
 export interface SkatteInfoProps {
-  anställd: AnställdData;
+  anställd: AnställdListItem;
 }
 
 // Lonekomponenter interfaces
@@ -1032,7 +1053,7 @@ export interface LöneTabellProps {
 }
 
 export type LonekomponenterProps = {
-  lönespec: any;
+  lönespec: Lönespec;
   grundlön?: number;
   övertid?: number;
   visaExtraRader?: boolean;
@@ -1043,7 +1064,7 @@ export type LonekomponenterProps = {
 export interface BokforModalProps {
   open: boolean;
   onClose: () => void;
-  rows: { konto: string; namn: string; debet: number; kredit: number }[];
+  rows: BokföringsRad[];
   onConfirm?: (kommentar: string) => void;
 }
 
@@ -1098,10 +1119,10 @@ export interface Utlägg {
   beskrivning: string;
   datum: string;
   kategori?: string;
-  status: string;
+  status?: string;
   anställd_namn?: string;
-  kvitto_fil?: string;
-  kvitto_url?: string;
+  kvitto_fil?: string | null;
+  kvitto_url?: string | null;
 }
 
 export interface UtlaggFlikProps {
@@ -1115,11 +1136,14 @@ export interface UtlaggFlikProps {
 }
 
 export interface UtläggProps {
-  lönespecUtlägg: any[];
+  lönespecUtlägg: UtläggData[];
   getStatusBadge: (status: string) => React.ReactElement;
   lönespecId?: number;
-  onUtläggAdded?: (tillagdaUtlägg: any[], extraradResults: any[]) => Promise<void>;
-  extrarader?: any[];
+  onUtläggAdded?: (
+    tillagdaUtlägg: UtläggData[],
+    extraradResults: ExtraradResult[]
+  ) => Promise<void>;
+  extrarader?: ExtraradData[];
   anställdId?: number;
 }
 
@@ -1133,7 +1157,7 @@ export interface WizardBokföringsPost {
 }
 
 export interface BokforLonerProps {
-  lönespec: any;
+  lönespec: Lönespec;
   extrarader: ExtraradData[];
   beräknadeVärden: BeräknadeVärden;
   anställdNamn: string;
@@ -1143,20 +1167,20 @@ export interface BokforLonerProps {
 }
 
 export interface SingleLönespec {
-  lönespec: any;
+  lönespec: Lönespec;
   anställd: AnställdListItem;
-  företagsprofil: any;
+  företagsprofil: Företagsprofil;
   extrarader: ExtraradData[];
-  beräknadeVärden?: any;
+  beräknadeVärden: BeräknadeVärden;
 }
 
 export interface MailaLonespecProps {
   // For single mode
-  lönespec?: any;
+  lönespec?: Lönespec;
   anställd?: AnställdListItem;
-  företagsprofil?: any;
-  extrarader?: any[];
-  beräknadeVärden?: any;
+  företagsprofil?: Företagsprofil;
+  extrarader?: ExtraradData[];
+  beräknadeVärden?: BeräknadeVärden;
   // For batch mode
   batch?: SingleLönespec[];
   batchMode?: boolean;
@@ -1229,7 +1253,7 @@ export interface RadKonfiguration {
   ) => number;
   beräknaTotalt?: (
     grundlön: number,
-    modalFields?: ModalFields,
+    modalFields?: ModalFields | number,
     arbetstimmarPerVecka?: number
   ) => number;
   negativtBelopp?: boolean;
@@ -1244,7 +1268,7 @@ export interface RadKonfiguration {
     beräknaTotalsummaAutomatiskt?: boolean;
     enhetDropdown?: string[];
     skipKommentar?: boolean;
-    [key: string]: any;
+    [key: string]: string | number | boolean | string[] | undefined;
   };
 }
 
@@ -1355,27 +1379,27 @@ export interface LonekorningProps {
 }
 
 export interface BatchDataItem {
-  lönespec: any;
-  anställd: AnställdData | any; // Using any for now due to mixed types in codebase
-  företagsprofil: any;
+  lönespec: Lönespec;
+  anställd: AnställdData | AnställdListItem;
+  företagsprofil: Företagsprofil;
   extrarader: ExtraradData[];
   beräknadeVärden: Record<string, Record<string, unknown>>;
 }
 
 // useLonekorning hook types
 export interface LonekorningHookProps {
-  anställda?: any[];
+  anställda?: AnställdListItem[];
   anställdaLoading?: boolean;
   onAnställdaRefresh?: () => void;
-  extrarader?: any;
-  beräknadeVärden?: any;
+  extrarader?: Record<string, ExtraradData[]>;
+  beräknadeVärden?: Record<string, BeräknadeVärden>;
   // Lista mode props
   enableListMode?: boolean;
-  refreshTrigger?: any;
+  refreshTrigger?: number;
   // Spec lista mode props
   enableSpecListMode?: boolean;
-  specListValdaSpecar?: any[];
-  specListLönekörning?: any;
+  specListValdaSpecar?: Lönespec[];
+  specListLönekörning?: Lönekörning;
   // Spec lista callbacks (these override the internal functions)
   onSpecListTaBortSpec?: (id: number) => Promise<void>;
   onSpecListHämtaBankgiro?: () => void;
@@ -1385,7 +1409,7 @@ export interface LonekorningHookProps {
   onSpecListBokförSkatter?: () => void;
   // New lönekörning modal props
   enableNewLonekorningModal?: boolean;
-  onLonekorningCreated?: (lonekorning: any) => void;
+  onLonekorningCreated?: (lonekorning: Lönekörning) => void;
 }
 
 // Actions types
@@ -1405,6 +1429,7 @@ export interface Företagsprofil {
   telefonnummer: string;
   epost: string;
   webbplats: string;
+  [key: string]: string | undefined;
 }
 
 export interface LönespecData {
@@ -1412,14 +1437,18 @@ export interface LönespecData {
   anställd_id: number;
   grundlön: number;
   skatt: number;
-  [key: string]: any; // För andra dynamiska fält
+  [key: string]: string | number | boolean | Date | null | undefined;
 }
 
 export interface BeräknadeVärden {
   kontantlön?: number;
+  bruttolön?: number;
   skatt?: number;
   nettolön?: number;
-  [key: string]: any; // För andra beräknade värden
+  socialaAvgifter?: number;
+  lönekostnad?: number;
+  grundlön?: number;
+  [key: string]: number | undefined;
 }
 
 // Anstallda.tsx

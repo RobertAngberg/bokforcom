@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { EditData, AnställdData } from "../types/types";
+import type { EditData, AnställdData, AnställdListItem } from "../types/types";
 import { sparaAnställd } from "../actions/anstalldaActions";
 
 const initialEditData: EditData = {
@@ -23,7 +23,7 @@ const initialEditData: EditData = {
   tjänsteställeOrt: "",
 };
 
-export function useKontrakt(initial?: Record<string, unknown>) {
+export function useKontrakt(initial?: AnställdListItem) {
   // Egen state istället för PersonalContext
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [kontraktIsEditing, setKontraktIsEditing] = useState(false);
@@ -95,29 +95,40 @@ export function useKontrakt(initial?: Record<string, unknown>) {
   };
 
   // Bygg EditData från en vald anställd
-  const buildEditData = (a: Record<string, unknown>): EditData => ({
-    anställningstyp: (a?.anställningstyp as string) || "",
-    startdatum: a?.startdatum ? new Date(a.startdatum as string) : new Date(),
-    slutdatum: a?.slutdatum ? new Date(a.slutdatum as string) : new Date(),
-    månadslön: a?.månadslön?.toString?.() || "",
-    betalningssätt: (a?.betalningssätt as string) || "",
-    kompensation: a?.kompensation?.toString?.() || "",
-    ersättningPer: (a?.ersättningPer as string) || (a?.ersättning_per as string) || "",
-    arbetsbelastning: (a?.arbetsbelastning as string) || "",
-    arbetsvecka_timmar: (a?.arbetsvecka_timmar as string)?.toString?.() || "",
-    deltidProcent:
-      a?.deltidProcent?.toString?.() || (a?.deltid_procent as string)?.toString?.() || "",
-    skattetabell: (a?.skattetabell as number)?.toString?.() || "",
-    skattekolumn: (a?.skattekolumn as number)?.toString?.() || "",
-    jobbtitel: (a?.jobbtitel as string) || "",
-    semesterdagarPerÅr:
-      a?.semesterdagarPerÅr?.toString?.() ||
-      (a?.semesterdagar_per_år as string)?.toString?.() ||
-      "",
-    tjänsteställeAdress:
-      (a?.tjänsteställeAdress as string) || (a?.tjänsteställe_adress as string) || "",
-    tjänsteställeOrt: (a?.tjänsteställeOrt as string) || (a?.tjänsteställe_ort as string) || "",
-  });
+  const buildEditData = (
+    a: AnställdListItem | AnställdData | Record<string, unknown>
+  ): EditData => {
+    // Helper to safely get string value
+    const getString = (key: string): string => {
+      const val = a[key as keyof typeof a];
+      return val != null ? String(val) : "";
+    };
+
+    // Helper to safely get date
+    const getDate = (key: string): Date => {
+      const val = a[key as keyof typeof a];
+      return val ? new Date(String(val)) : new Date();
+    };
+
+    return {
+      anställningstyp: getString("anställningstyp"),
+      startdatum: getDate("startdatum"),
+      slutdatum: getDate("slutdatum"),
+      månadslön: getString("månadslön"),
+      betalningssätt: getString("betalningssätt"),
+      kompensation: getString("kompensation"),
+      ersättningPer: getString("ersättningPer") || getString("ersättning_per"),
+      arbetsbelastning: getString("arbetsbelastning"),
+      arbetsvecka_timmar: getString("arbetsvecka_timmar"),
+      deltidProcent: getString("deltidProcent") || getString("deltid_procent"),
+      skattetabell: getString("skattetabell"),
+      skattekolumn: getString("skattekolumn"),
+      jobbtitel: getString("jobbtitel"),
+      semesterdagarPerÅr: getString("semesterdagarPerÅr") || getString("semesterdagar_per_år"),
+      tjänsteställeAdress: getString("tjänsteställeAdress") || getString("tjänsteställe_adress"),
+      tjänsteställeOrt: getString("tjänsteställeOrt") || getString("tjänsteställe_ort"),
+    };
+  };
 
   // Visnings-anställd: store valdAnställd i första hand, annars initial prop
   const visningsAnställd = useMemo(() => valdAnställd ?? initial ?? null, [valdAnställd, initial]);

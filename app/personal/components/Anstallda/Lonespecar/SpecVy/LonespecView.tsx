@@ -1,23 +1,24 @@
 //#region Huvud
-import AnimeradFlik from "../../../../_components/AnimeradFlik";
+import AnimeradFlik from "../../../../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
-import Lonekomponenter from "./Lonekomponenter/Lonekomponenter";
-import Utlagg from "./Utlagg";
+import Lonekomponenter from "../Lonekomponenter/Lonekomponenter";
+import Utlagg from "../Utlagg/Utlagg";
 import Sammanfattning from "./Sammanfattning";
-import Knapp from "../../../../_components/Knapp";
+import Knapp from "../../../../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import { showToast } from "../../../../_components/Toast";
+import { showToast } from "../../../../../_components/Toast";
 import { useState, useMemo } from "react";
-import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
-import { useLonespec } from "../../../hooks/useLonespecar";
-import { uppdateraLönespec } from "../../../actions/lonespecarActions";
+import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
+import { useLonespec } from "../../../../hooks/useLonespecar";
+import { uppdateraLönespec } from "../../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 import type {
   LönespecViewProps,
   UtläggData,
   ExtraradResult,
   ExtraradData,
-} from "../../../types/types";
+  BeräknadeVärden,
+} from "../../../../types/types";
 
 export default function LönespecView({
   lönespec,
@@ -58,17 +59,36 @@ export default function LönespecView({
   //#endregion
 
   //#region Data Processing
-  const månadsNamn = getMånadsNamn(lönespec.månad || 1, lönespec.år || 2025);
-  const grundlön = parseFloat(lönespec.grundlön || lönespec.bruttolön || 0);
-  const övertid = parseFloat(lönespec.övertid || 0);
-  const bruttolön = parseFloat(lönespec.bruttolön || 0);
-  const socialaAvgifter = parseFloat(lönespec.sociala_avgifter || 0);
-  const skatt = parseFloat(lönespec.skatt || 0);
-  const nettolön = parseFloat(lönespec.nettolön || 0);
+  // Helper function för att konvertera värden till nummer
+  const toNumber = (
+    value: string | number | boolean | Date | null | undefined,
+    fallback: number = 0
+  ): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") return parseFloat(value) || fallback;
+    return fallback;
+  };
+
+  const månadsNamn = getMånadsNamn(toNumber(lönespec.månad, 1), toNumber(lönespec.år, 2025));
+
+  const grundlön = toNumber(lönespec.grundlön || lönespec.bruttolön, 0);
+  const övertid = toNumber(lönespec.övertid, 0);
+  const bruttolön = toNumber(lönespec.bruttolön, 0);
+  const socialaAvgifter = toNumber(lönespec.sociala_avgifter, 0);
+  const skatt = toNumber(lönespec.skatt, 0);
+  const nettolön = toNumber(lönespec.nettolön, 0);
+
   // Fix: Use lönespec.utbetalningsdatum if available, otherwise fallback to old logic
-  const utbetalningsDatum = lönespec.utbetalningsdatum
-    ? new Date(lönespec.utbetalningsdatum)
-    : new Date(lönespec.år, (lönespec.månad || 1) - 1, 25);
+  const utbetalningsDatumValue = lönespec.utbetalningsdatum;
+  const år = toNumber(lönespec.år, 2025);
+  const månad = toNumber(lönespec.månad, 1);
+  const utbetalningsDatum =
+    utbetalningsDatumValue &&
+    (typeof utbetalningsDatumValue === "string" ||
+      typeof utbetalningsDatumValue === "number" ||
+      utbetalningsDatumValue instanceof Date)
+      ? new Date(utbetalningsDatumValue)
+      : new Date(år, månad - 1, 25);
 
   // Hämta beräknade värden för denna lönespec
   const aktuellBeräkning = beräknadeVärden[lönespec.id];
@@ -81,11 +101,10 @@ export default function LönespecView({
   const visaLönekostnad = aktuellBeräkning?.lönekostnad ?? bruttolön + socialaAvgifter;
 
   // Använd useMemo för att säkerställa att lönespecUtlägg uppdateras när lokalUtlägg ändras
+  // All utlägg passed in this component are already filtered for this lönespec
   const lönespecUtlägg = useMemo(() => {
-    return lokalUtlägg.filter(
-      (u) => u.lönespecifikation_id === lönespec.id || !u.lönespecifikation_id
-    );
-  }, [lokalUtlägg, lönespec.id]);
+    return lokalUtlägg;
+  }, [lokalUtlägg]);
 
   // Callback för att uppdatera utlägg status i lokal state
   const handleUtläggAdded = async (
@@ -93,8 +112,8 @@ export default function LönespecView({
     extraradResults: ExtraradResult[]
   ) => {
     // Uppdatera utlägg status
-    setLokalUtlägg((prevUtlägg) =>
-      prevUtlägg.map((utlägg) =>
+    setLokalUtlägg((prevUtlägg: UtläggData[]) =>
+      prevUtlägg.map((utlägg: UtläggData) =>
         tillagdaUtlägg.some((t) => t.id === utlägg.id)
           ? { ...utlägg, status: "Inkluderat i lönespec" }
           : utlägg
@@ -189,9 +208,7 @@ export default function LönespecView({
 
       {visaBeräkningar && (
         <FormelVisning
-          beräknadeVärden={
-            (beräknadeVärden[lönespec.id] as Record<string, Record<string, unknown>>) || {}
-          }
+          beräknadeVärden={beräknadeVärden[lönespec.id] || ({} as BeräknadeVärden)}
           extrarader={extrarader[lönespec.id] || []}
           lönespec={lönespec}
         />
@@ -232,11 +249,9 @@ export default function LönespecView({
             <Forhandsgranskning
               lönespec={lönespec}
               anställd={anställd}
-              företagsprofil={företagsprofil}
+              företagsprofil={företagsprofil!}
               extrarader={extrarader[lönespec.id] || []}
-              beräknadeVärden={
-                (beräknadeVärden[lönespec.id] as Record<string, Record<string, unknown>>) || {}
-              }
+              beräknadeVärden={beräknadeVärden[lönespec.id] || ({} as BeräknadeVärden)}
               onStäng={() => setVisaForhandsgranskning(false)}
             />
           </div>

@@ -15,7 +15,7 @@
  */
 
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
-import type { ModalFields } from "../types/types";
+import type { ModalFields, FormField } from "../types/types";
 
 /**
  * FILTRERAR RADER BASERAT PÅ SÖKTERM
@@ -62,7 +62,7 @@ export function beräknaSumma(rowId: string, modalFields: ModalFields, grundlön
         summa = config.beräknaTotalt(grundlön, modalFields);
       } else {
         const antal = parseFloat(modalFields.kolumn2 || "0") || 0;
-        summa = config.beräknaTotalt(grundlön, antal as unknown as ModalFields);
+        summa = config.beräknaTotalt(grundlön, antal);
       }
       if (isNaN(summa)) summa = 0;
       if (config.negativtBelopp) {
@@ -77,7 +77,7 @@ export function beräknaSumma(rowId: string, modalFields: ModalFields, grundlön
       ) {
         antal = parseFloat(modalFields.kolumn2 || "1") || 1;
       }
-      let summa = config.beräknaTotalt(grundlön, antal as unknown as ModalFields);
+      let summa = config.beräknaTotalt(grundlön, antal);
       if (isNaN(summa)) summa = 0;
       if (config.negativtBelopp) {
         summa = -Math.abs(summa);
@@ -223,7 +223,7 @@ export function getStandardFields(
       name: "kolumn2",
       type: "text" as const,
       value: modalFields.kolumn2,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
         setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
       required: true,
       placeholder: "Ange antal",
@@ -233,7 +233,7 @@ export function getStandardFields(
       name: "kolumn3",
       type: "number" as const,
       value: modalFields.kolumn3,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
         setModalFields((f: ModalFields) => ({ ...f, kolumn3: e.target.value })),
       step: "0.01",
       required: true,
@@ -244,7 +244,7 @@ export function getStandardFields(
       name: "kolumn4",
       type: "text" as const,
       value: modalFields.kolumn4,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
         setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
       required: false,
       placeholder: "Valfri kommentar",
@@ -280,7 +280,7 @@ export function getFieldsForRow(
   modalFields: ModalFields,
   setModalFields: React.Dispatch<React.SetStateAction<ModalFields>>,
   grundlön?: number
-) {
+): FormField[] {
   const config = RAD_KONFIGURATIONER[rowId];
 
   if (config) {
@@ -292,7 +292,7 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: "0.01",
@@ -303,7 +303,7 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text",
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           step: "1",
@@ -320,7 +320,7 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
@@ -331,7 +331,7 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
@@ -347,7 +347,7 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
@@ -358,7 +358,7 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
@@ -374,7 +374,7 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: config.fält.step || "0.01",
@@ -385,7 +385,7 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",
@@ -401,7 +401,7 @@ export function getFieldsForRow(
           name: "kolumn2",
           type: "number",
           value: modalFields.kolumn2,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn2: e.target.value })),
           required: true,
           step: "0.01",
@@ -412,7 +412,7 @@ export function getFieldsForRow(
           name: "kolumn4",
           type: "text" as const,
           value: modalFields.kolumn4,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setModalFields((f: ModalFields) => ({ ...f, kolumn4: e.target.value })),
           required: false,
           placeholder: "Valfri kommentar",

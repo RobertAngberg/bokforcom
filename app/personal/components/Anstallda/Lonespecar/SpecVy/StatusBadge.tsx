@@ -1,5 +1,5 @@
 //#region Huvud
-import type { StatusBadgeProps } from "../../../types/types";
+import type { StatusBadgeProps } from "../../../../types/types";
 
 export default function StatusBadge({ status, type }: StatusBadgeProps) {
   //#endregion

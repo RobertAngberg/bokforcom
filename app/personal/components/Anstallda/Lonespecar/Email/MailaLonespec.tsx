@@ -1,15 +1,9 @@
 "use client";
 
-import { useMailaLonespec } from "../../../hooks/useMailaLonespec";
-import Forhandsgranskning from "./Forhandsgranskning/Forhandsgranskning";
-import Knapp from "../../../../_components/Knapp";
-import type {
-  MailaLonespecProps,
-  Lönespec,
-  Företagsprofil,
-  AnställdListItem,
-  ExtraradData,
-} from "../../../types/types";
+import { useMailaLonespec } from "../../../../hooks/useMailaLonespec";
+import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
+import Knapp from "../../../../../_components/Knapp";
+import type { MailaLonespecProps } from "../../../../types/types";
 
 export default function MailaLonespec({
   lönespec,
@@ -23,25 +17,6 @@ export default function MailaLonespec({
   onClose,
   onMailComplete,
 }: MailaLonespecProps) {
-  // Wrapper för att matcha hookens förväntade type
-  const ForhandsgranskningWrapper = (props: {
-    lönespec: Record<string, unknown>;
-    anställd: AnställdListItem;
-    företagsprofil: Record<string, unknown>;
-    extrarader: ExtraradData[];
-    beräknadeVärden?: Record<string, unknown>;
-    onStäng: () => void;
-  }) => (
-    <Forhandsgranskning
-      lönespec={props.lönespec as unknown as Lönespec}
-      anställd={props.anställd}
-      företagsprofil={props.företagsprofil as unknown as Företagsprofil}
-      extrarader={props.extrarader}
-      beräknadeVärden={props.beräknadeVärden as Record<string, Record<string, unknown>>}
-      onStäng={props.onStäng}
-    />
-  );
-
   // Använd hooken för ALL affärslogik
   const {
     loading,
@@ -64,7 +39,7 @@ export default function MailaLonespec({
     open,
     onClose,
     onMailComplete,
-    ForhandsgranskningComponent: ForhandsgranskningWrapper,
+    ForhandsgranskningComponent: Forhandsgranskning,
   });
 
   return (
@@ -88,7 +63,7 @@ export default function MailaLonespec({
               <>
                 <div className="mb-2 text-slate-200 max-h-40 overflow-y-auto">
                   <ul className="list-disc pl-5">
-                    {lönespecList.map((item, i) => (
+                    {lönespecList.map((item, i: number) => (
                       <li key={i} className="mb-1">
                         {item.anställd?.förnamn} {item.anställd?.efternamn} –{" "}
                         {item.anställd?.mail || item.anställd?.epost || item.anställd?.email}

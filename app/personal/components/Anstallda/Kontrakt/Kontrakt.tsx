@@ -15,7 +15,7 @@ import { useKontrakt } from "../../../hooks/useKontrakt";
 // #endregion
 
 export default function Kontrakt({ anställd }: KontraktProps) {
-  const { state, handlers } = useKontrakt(anställd as unknown as Record<string, unknown>);
+  const { state, handlers } = useKontrakt(anställd);
   const anstalld = state.visningsAnställd as AnställdListItem | null;
 
   return (

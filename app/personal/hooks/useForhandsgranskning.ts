@@ -3,16 +3,13 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { beräknaSumma } from "../utils/extraraderUtils";
 import { showToast } from "../../_components/Toast";
-import type { Lönespec, AnställdListItem, Företagsprofil, ExtraradData } from "../types/types";
-
-interface BeräknadeVärden {
-  bruttolön?: number;
-  skatt?: number;
-  socialaAvgifter?: number;
-  lönekostnad?: number;
-  nettolön?: number;
-  grundlön?: number;
-}
+import type {
+  Lönespec,
+  AnställdListItem,
+  Företagsprofil,
+  ExtraradData,
+  BeräknadeVärden,
+} from "../types/types";
 
 interface MappedExtrarad {
   benämning: string;
@@ -30,6 +27,13 @@ export const useForhandsgranskning = (
 ) => {
   const [isExporting, setIsExporting] = useState(false);
 
+  // Helper för att konvertera till nummer
+  const toNum = (val: unknown): number => {
+    if (typeof val === "number") return val;
+    if (typeof val === "string") return parseFloat(val) || 0;
+    return 0;
+  };
+
   // Formatter utan decimaler
   const formatNoDecimals = (num: number) =>
     Number(num).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -41,65 +45,35 @@ export const useForhandsgranskning = (
     let kostnad = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
     let summa = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
 
+    const grundlön = toNum(beräknadeVärden?.grundlön) || toNum(lönespec?.grundlön) || 0;
+
     // Om kostnad eller summa är 0, beräkna automatiskt med modalFields
     if (!kostnad || kostnad === 0) {
       kostnad = parseFloat(
-        beräknaSumma(
-          rad.typ,
-          { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
-          beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-        )
+        beräknaSumma(rad.typ, { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 }, grundlön)
       );
     }
     if (!summa || summa === 0) {
       summa = parseFloat(
-        beräknaSumma(
-          rad.typ,
-          { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
-          beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-        )
+        beräknaSumma(rad.typ, { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 }, grundlön)
       );
     }
 
     // Specialfall: Företagsbil (man anger bara summa)
     if (rad.typ === "foretagsbilExtra") {
       if (!kostnad || kostnad === 0) {
-        kostnad = parseFloat(
-          beräknaSumma(
-            rad.typ,
-            { kolumn3: rad.kolumn3 ?? "0" },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-          )
-        );
+        kostnad = parseFloat(beräknaSumma(rad.typ, { kolumn3: rad.kolumn3 ?? "0" }, grundlön));
       }
       if (!summa || summa === 0) {
-        summa = parseFloat(
-          beräknaSumma(
-            rad.typ,
-            { kolumn3: rad.kolumn3 ?? "0" },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-          )
-        );
+        summa = parseFloat(beräknaSumma(rad.typ, { kolumn3: rad.kolumn3 ?? "0" }, grundlön));
       }
     } else if (rad.typ === "vab") {
       // Specialfall: VAB (antal dagar krävs)
       if (!kostnad || kostnad === 0) {
-        kostnad = parseFloat(
-          beräknaSumma(
-            rad.typ,
-            { kolumn2: rad.kolumn2 },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-          )
-        );
+        kostnad = parseFloat(beräknaSumma(rad.typ, { kolumn2: rad.kolumn2 }, grundlön));
       }
       if (!summa || summa === 0) {
-        summa = parseFloat(
-          beräknaSumma(
-            rad.typ,
-            { kolumn2: rad.kolumn2 },
-            beräknadeVärden?.grundlön || lönespec?.grundlön || 0
-          )
-        );
+        summa = parseFloat(beräknaSumma(rad.typ, { kolumn2: rad.kolumn2 }, grundlön));
       }
     } else {
       // Default: skicka in både antal och belopp
@@ -108,7 +82,7 @@ export const useForhandsgranskning = (
           beräknaSumma(
             rad.typ as string,
             { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
-            (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
+            grundlön
           )
         );
       }
@@ -117,7 +91,7 @@ export const useForhandsgranskning = (
           beräknaSumma(
             rad.typ as string,
             { ...rad, kolumn2: rad.kolumn2, kolumn3: rad.kolumn3 },
-            (beräknadeVärden?.grundlön as number) || (lönespec?.grundlön as number) || 0
+            grundlön
           )
         );
       }

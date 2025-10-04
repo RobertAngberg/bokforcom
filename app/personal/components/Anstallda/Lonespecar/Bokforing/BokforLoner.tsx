@@ -1,8 +1,8 @@
 "use client";
 
-import { useBokforing } from "../../../hooks/useBokforing";
-import type { BokforLonerProps } from "../../../types/types";
-import Knapp from "../../../../_components/Knapp";
+import { useBokforing } from "../../../../hooks/useBokforing";
+import type { BokforLonerProps, WizardBokföringsPost } from "../../../../types/types";
+import Knapp from "../../../../../_components/Knapp";
 
 export default function BokforLoner({
   lönespec,
@@ -62,8 +62,10 @@ export default function BokforLoner({
             </thead>
             <tbody>
               {poster
-                .sort((a, b) => a.konto.localeCompare(b.konto))
-                .map((post, i) => (
+                .sort((a: WizardBokföringsPost, b: WizardBokföringsPost) =>
+                  a.konto.localeCompare(b.konto)
+                )
+                .map((post: WizardBokföringsPost, i: number) => (
                   <tr key={i} className="border-b border-slate-700 hover:bg-slate-700">
                     <td className="p-2 font-mono">{post.konto}</td>
                     <td className="p-2">{post.kontoNamn}</td>

@@ -2,8 +2,8 @@
 
 //#region Huvud
 import LönespecView from "./LonespecView";
-import Knapp from "../../../../_components/Knapp";
-import type { LonespecListProps } from "../../../types/types";
+import Knapp from "../../../../../_components/Knapp";
+import type { LonespecListProps } from "../../../../types/types";
 
 export default function LonespecList({
   anställd,

@@ -156,7 +156,10 @@ export default function ExtraraderModal({
                   }
                   onChange={(value) => {
                     if (field.onChange && createSyntheticEvent) {
-                      field.onChange(createSyntheticEvent(value));
+                      const syntheticEvent = createSyntheticEvent(value);
+                      field.onChange(
+                        syntheticEvent as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+                      );
                     }
                   }}
                 />

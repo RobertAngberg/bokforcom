@@ -1,7 +1,7 @@
 //#region Huvud
-import Knapp from "../../../../_components/Knapp";
-import { useLonespec } from "../../../hooks/useLonespecar";
-import type { UtläggProps, UtläggData } from "../../../types/types";
+import Knapp from "../../../../../_components/Knapp";
+import { useLonespec } from "../../../../hooks/useLonespecar";
+import type { UtläggProps, UtläggData } from "../../../../types/types";
 
 export default function Utlägg({
   lönespecUtlägg,

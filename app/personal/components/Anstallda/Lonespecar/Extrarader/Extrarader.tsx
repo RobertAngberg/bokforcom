@@ -12,6 +12,7 @@ import {
 } from "../../../../utils/extraraderUtils";
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../../../../utils/extraradDefinitioner";
+import type { ModalFields } from "../../../../types/types";
 
 export default function ExtraRader({
   lönespecId,
@@ -33,7 +34,7 @@ export default function ExtraRader({
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalRow, setModalRow] = useState<{ id: string; label: string } | null>(null);
-  const [modalFields, setModalFields] = useState({
+  const [modalFields, setModalFields] = useState<ModalFields>({
     kolumn2: "",
     kolumn3: "",
     kolumn4: "",

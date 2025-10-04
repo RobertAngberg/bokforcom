@@ -100,7 +100,7 @@ export default function Forhandsgranskning({
             formatNoDecimals={formatNoDecimals}
           />
           <ArbetstidInfo lönespec={lönespec} formatNoDecimals={formatNoDecimals} />
-          <Fotinfo företag={företag} />
+          {företag && <Fotinfo företag={företag} />}
         </div>
       </div>
     </div>
