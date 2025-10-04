@@ -187,6 +187,9 @@ export type AnställdData = {
   använda_förskott?: number; // Ändra till number för kompatibilitet med AnställdListItem
 };
 
+export type AnställdInput = Omit<AnställdData, "id" | "namn" | "epost"> &
+  Partial<Pick<AnställdData, "id" | "namn" | "epost">>;
+
 export interface AnställdListItem {
   id: number;
   namn: string;

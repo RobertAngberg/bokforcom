@@ -3,21 +3,7 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
-import type { AnställdData, FormActionState, Företagsprofil } from "../types/types";
-
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: string,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
+import type { AnställdInput, FormActionState, Företagsprofil } from "../types/types";
 
 export async function hämtaAllaAnställda() {
   const userId = await getUserId();
@@ -79,9 +65,10 @@ export async function sparaNyAnställdFormAction(
     }
 
     // Extrahera alla fält från FormData (med fallback till tomma strängar)
-    const data: AnställdData = {
+    const data: AnställdInput = {
       förnamn,
       efternamn,
+      namn: `${förnamn} ${efternamn}`.trim(),
       personnummer: (formData.get("personnummer") as string) || "",
       jobbtitel: (formData.get("jobbtitel") as string) || "",
       mail: (formData.get("mail") as string) || "",
@@ -105,6 +92,7 @@ export async function sparaNyAnställdFormAction(
       tjänsteställeOrt: (formData.get("tjänsteställeOrt") as string) || "",
       skattetabell: parseInt((formData.get("skattetabell") as string) || "0", 10),
       skattekolumn: parseInt((formData.get("skattekolumn") as string) || "0", 10),
+      epost: (formData.get("epost") as string) || undefined,
     };
 
     // Anropa befintlig funktion
@@ -121,7 +109,7 @@ export async function sparaNyAnställdFormAction(
   }
 }
 
-export async function sparaAnställd(data: AnställdData, anställdId?: number | null) {
+export async function sparaAnställd(data: AnställdInput, anställdId?: number | null) {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("Ingen inloggad användare");
@@ -140,11 +128,6 @@ export async function sparaAnställd(data: AnställdData, anställdId?: number |
 
       if (ownershipCheck.rows.length === 0) {
         client.release();
-        logPersonalDataEvent(
-          "violation",
-          userId,
-          `Attempted to update unauthorized employee ${anställdId}`
-        );
         return {
           success: false,
           error: "Säkerhetsfel: Otillåten åtkomst till anställd",
@@ -278,9 +261,6 @@ export async function taBortAnställd(anställdId: number) {
   }
 
   // userId already a number from getUserId()
-
-  logPersonalDataEvent("delete", userId, `Attempting to delete employee ${anställdId}`);
-
   try {
     const client = await pool.connect();
 

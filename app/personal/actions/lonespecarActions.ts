@@ -6,20 +6,6 @@ import { revalidatePath } from "next/cache";
 import { uppdateraLönekörningStatus } from "./lonekorningActions";
 import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
 
-// SÄKERHETSVALIDERING: Logga säkerhetshändelser för HR-data
-function logPersonalDataEvent(
-  eventType: "encrypt" | "decrypt" | "validate" | "access" | "modify" | "delete" | "violation",
-  userId?: string,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`🔒 PERSONAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
-
 export async function läggTillUtläggSomExtrarad(
   lönespecId: number,
   utlägg: UtläggData
@@ -272,13 +258,6 @@ export async function skapaNyLönespec(data: {
   }
 
   // userId already a number from getUserId()
-
-  logPersonalDataEvent(
-    "modify",
-    userId,
-    `Creating salary specification for employee ${data.anställd_id}`
-  );
-
   try {
     const client = await pool.connect();
 
@@ -352,9 +331,6 @@ export async function uppdateraLönespec(data: {
   if (!userId) {
     throw new Error("Ingen inloggad användare");
   }
-
-  logPersonalDataEvent("modify", userId, `Updating salary specification ${data.lönespecId}`);
-
   try {
     const client = await pool.connect();
 
