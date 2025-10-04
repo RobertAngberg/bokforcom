@@ -17,8 +17,8 @@ export default function Tjänsteställe({
         <h3 className="text-xl font-semibold text-white mb-4">Tjänsteställe</h3>
         <div className="space-y-3">
           {[
-            ["Adress", anställd.tjänsteställeAdress || anställd.tjänsteställe_adress],
-            ["Ort", anställd.tjänsteställeOrt || anställd.tjänsteställe_ort],
+            ["Adress", anställd?.tjänsteställeAdress],
+            ["Ort", anställd?.tjänsteställeOrt],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>
@@ -37,13 +37,13 @@ export default function Tjänsteställe({
         <TextFalt
           label="Adress"
           name="tjänsteställeAdress"
-          value={editData.tjänsteställeAdress || ""}
+          value={editData?.tjänsteställeAdress || ""}
           onChange={(e) => handleChange?.("tjänsteställeAdress", e.target.value)}
         />
         <TextFalt
           label="Ort"
           name="tjänsteställeOrt"
-          value={editData.tjänsteställeOrt || ""}
+          value={editData?.tjänsteställeOrt || ""}
           onChange={(e) => handleChange?.("tjänsteställeOrt", e.target.value)}
         />
       </div>

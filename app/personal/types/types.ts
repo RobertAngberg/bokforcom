@@ -187,18 +187,43 @@ export interface AnställdListItem {
   mail?: string;
   email?: string;
   roll?: string;
-  sparade_dagar?: number;
-  använda_förskott?: number;
+
+  // Kontrakt-relaterade fält
+  jobbtitel?: string;
+  anställningstyp?: string;
+  löneperiod?: string;
+  ersättningPer?: string;
+  kompensation?: string;
+  arbetsvecka_timmar?: string;
+  arbetsbelastning?: string;
+  deltidProcent?: string;
+  tjänsteställeAdress?: string;
+  tjänsteställeOrt?: string;
+  startdatum?: string;
+  slutdatum?: string;
+  anställningsdatum?: string;
+  tjänstegrad?: number;
+
+  // Skatt och bank
   skattetabell?: number;
   skattekolumn?: number;
   clearingnummer?: string;
   bankkonto?: string;
+  personnummer?: string;
+  adress?: string;
+  postnummer?: string;
+  ort?: string;
+
+  // Semester
+  sparade_dagar?: number;
+  använda_förskott?: number;
   semesterdagarPerÅr?: number;
   kvarandeDagar?: number;
   sparadeDagar?: number;
   användaFörskott?: number;
   kvarandeFörskott?: number;
   innestående?: number;
+  växaStöd?: boolean;
 }
 
 export interface AnställdaRadProps {
@@ -373,16 +398,16 @@ export interface PersonalinformationProps {
 }
 
 export interface AnställningstypProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: { value: string; label: string }[];
 }
 
 export interface ArbetsbelastningProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: { value: string; label: string }[];
@@ -393,8 +418,8 @@ export interface ArbetsbelastningProps {
 }
 
 export interface JobbtitelProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
 }
@@ -405,15 +430,15 @@ export interface KontraktProps {
 }
 
 export interface KontraktPeriodProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
 export interface LönProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: {
@@ -422,15 +447,15 @@ export interface LönProps {
 }
 
 export interface SemesterProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
 }
 
 export interface SkattProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
   options?: {
@@ -440,8 +465,8 @@ export interface SkattProps {
 }
 
 export interface TjänsteställeProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
+  editData?: Partial<EditData>;
+  handleChange?: (name: string, value: string | number | Date) => void;
   anställd?: AnställdListItem;
   viewMode?: boolean;
 }
@@ -455,7 +480,7 @@ export interface EditData {
   kompensation: string;
   ersättningPer: string;
   arbetsbelastning: string;
-  arbetsveckaTimmar: string;
+  arbetsvecka_timmar: string;
   deltidProcent: string;
   skattetabell: string;
   skattekolumn: string;
@@ -889,7 +914,7 @@ export interface ExtraraderModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
-  fields: ExtraraderField[];
+  fields: FormField[];
   onSubmit: (e: React.FormEvent) => void;
   anstalldId?: number;
 }
@@ -1395,4 +1420,39 @@ export interface BeräknadeVärden {
   skatt?: number;
   nettolön?: number;
   [key: string]: any; // För andra beräknade värden
+}
+
+// Anstallda.tsx
+export interface AnställdFlikProps {
+  anställd: AnställdData;
+  onTaBort: (id: number, namn: string) => void;
+}
+
+// NyAnstalldModal.tsx
+export interface NyAnstalldModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  handlers: NyAnstalldProps["handlers"];
+}
+
+// ExtraraderModal.tsx
+export interface FormField {
+  name: string;
+  value: string | null | undefined;
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  hidden?: boolean;
+  type?: string;
+  label?: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+  step?: string;
+  min?: string;
+}
+
+// Wizard.tsx
+export interface WizardProps {
+  steps: import("../hooks/useWizard").WizardStep[];
+  lönekörningId?: number;
+  onMarkeraFärdig?: (lönekörningId: number) => void;
 }

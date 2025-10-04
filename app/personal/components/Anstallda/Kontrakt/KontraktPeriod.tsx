@@ -19,9 +19,9 @@ export default function KontraktPeriod({
         <h3 className="text-xl font-semibold text-white mb-4">Kontrakt</h3>
         <div className="space-y-3">
           {[
-            ["Anställningstyp", anställd.anställningstyp],
-            ["Från", anställd.startdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.startdatum)) : null],
-            ["Till", anställd.slutdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.slutdatum)) : null],
+            ["Anställningstyp", anställd?.anställningstyp],
+            ["Från", anställd?.startdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.startdatum)) : null],
+            ["Till", anställd?.slutdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.slutdatum)) : null],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>
@@ -40,7 +40,7 @@ export default function KontraktPeriod({
         <div>
           <label className="block text-sm font-medium text-white mb-2">Från</label>
           <DatePicker
-            selected={editData.startdatum}
+            selected={editData?.startdatum ?? null}
             onChange={(date) => date && handleChange?.("startdatum", date)}
             dateFormat="yyyy-MM-dd"
             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
@@ -49,7 +49,7 @@ export default function KontraktPeriod({
         <div>
           <label className="block text-sm font-medium text-white mb-2">Till</label>
           <DatePicker
-            selected={editData.slutdatum}
+            selected={editData?.slutdatum ?? null}
             onChange={(date) => date && handleChange?.("slutdatum", date)}
             dateFormat="yyyy-MM-dd"
             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"

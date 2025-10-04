@@ -13,8 +13,8 @@ export default function Lön({ editData, handleChange, anställd, viewMode, opti
         <h3 className="text-xl font-semibold text-white mb-4">Lön</h3>
         <div className="space-y-3">
           {[
-            ["Kompensation", anställd.kompensation ? `${anställd.kompensation} kr` : null],
-            ["Ersättning per", anställd.ersättningPer || anställd.ersättning_per],
+            ["Kompensation", anställd?.kompensation ? `${anställd.kompensation} kr` : null],
+            ["Ersättning per", anställd?.ersättningPer],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>
@@ -34,12 +34,12 @@ export default function Lön({ editData, handleChange, anställd, viewMode, opti
           label="Kompensation (kr)"
           name="kompensation"
           type="number"
-          value={editData.kompensation || ""}
+          value={editData?.kompensation || ""}
           onChange={(e) => handleChange?.("kompensation", e.target.value)}
         />
         <Dropdown
           label="Ersättning per"
-          value={editData.ersättningPer || ""}
+          value={editData?.ersättningPer || ""}
           onChange={(value) => handleChange?.("ersättningPer", value)}
           options={options?.ersättningPer || []}
         />

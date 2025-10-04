@@ -13,7 +13,7 @@ const initialEditData: EditData = {
   kompensation: "",
   ersättningPer: "",
   arbetsbelastning: "",
-  arbetsveckaTimmar: "",
+  arbetsvecka_timmar: "",
   deltidProcent: "",
   skattetabell: "",
   skattekolumn: "",
@@ -41,7 +41,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
     kompensation: "",
     ersättningPer: "",
     arbetsbelastning: "",
-    arbetsveckaTimmar: "",
+    arbetsvecka_timmar: "",
     deltidProcent: "",
     skattetabell: "",
     skattekolumn: "",
@@ -104,7 +104,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
     kompensation: a?.kompensation?.toString?.() || "",
     ersättningPer: (a?.ersättningPer as string) || (a?.ersättning_per as string) || "",
     arbetsbelastning: (a?.arbetsbelastning as string) || "",
-    arbetsveckaTimmar: (a?.arbetsvecka_timmar as string)?.toString?.() || "",
+    arbetsvecka_timmar: (a?.arbetsvecka_timmar as string)?.toString?.() || "",
     deltidProcent:
       a?.deltidProcent?.toString?.() || (a?.deltid_procent as string)?.toString?.() || "",
     skattetabell: (a?.skattetabell as number)?.toString?.() || "",
@@ -162,7 +162,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
     setKontraktError(null);
   };
 
-  const onChange = (name: keyof EditData | string, value: string | Date) => {
+  const onChange = (name: keyof EditData | string, value: string | number | Date) => {
     const next = { ...editData, [name]: value } as EditData;
     if (name === "arbetsbelastning" && value !== "Deltidsanställd") {
       next.deltidProcent = "";
@@ -184,7 +184,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
         ersättningPer: editData.ersättningPer,
         kompensation: editData.kompensation,
         arbetsbelastning: editData.arbetsbelastning,
-        arbetsvecka_timmar: editData.arbetsveckaTimmar,
+        arbetsvecka_timmar: editData.arbetsvecka_timmar,
         deltidProcent: editData.deltidProcent,
         skattetabell: parseInt(editData.skattetabell, 10) || 0,
         skattekolumn: parseInt(editData.skattekolumn, 10) || 0,
@@ -204,7 +204,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
           ersättningPer: editData.ersättningPer,
           kompensation: editData.kompensation,
           arbetsbelastning: editData.arbetsbelastning,
-          arbetsvecka_timmar: editData.arbetsveckaTimmar,
+          arbetsvecka_timmar: editData.arbetsvecka_timmar,
           deltidProcent: editData.deltidProcent,
           skattetabell: parseInt(editData.skattetabell, 10) || 0,
           skattekolumn: parseInt(editData.skattekolumn, 10) || 0,
@@ -246,7 +246,7 @@ export function useKontrakt(initial?: Record<string, unknown>) {
       skattOptions,
       // Derived display for view mode (to keep components UI-only)
       arbetsbelastningDisplay: (() => {
-        const bel = visningsAnställd?.arbetsbelastning;
+        const bel = visningsAnställd?.arbetsbelastning as string | undefined;
         const deltid = visningsAnställd?.deltidProcent;
         const arbetsvecka = visningsAnställd?.arbetsvecka_timmar;
         const arbetsbelastningText =

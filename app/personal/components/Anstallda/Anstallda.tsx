@@ -1,120 +1,107 @@
 "use client";
 
-import Knapp from "../../../_components/Knapp";
-import LoadingSpinner from "../../../_components/LoadingSpinner";
-import NyAnställd from "./NyAnstalld/NyAnstalld";
-import AnställdaLista from "./AnstalldaLista/AnstalldaLista";
+import { useEffect } from "react";
 import AnimeradFlik from "../../../_components/AnimeradFlik";
-import UtlaggFlik from "./Utlagg/UtlaggFlik";
+import Knapp from "../../../_components/Knapp";
 import Information from "./Information/Information";
+import UtlaggFlik from "./Utlagg/UtlaggFlik";
 import Kontrakt from "./Kontrakt/Kontrakt";
 import Lonespecar from "./Lonespecar/Lonespecar";
 import Semester from "./Semester/Semester";
 import { useAnstallda } from "../../hooks/useAnstallda";
+import type { AnställdFlikProps } from "../../types/types";
 
-export default function Anstallda() {
-  const { state, handlers } = useAnstallda();
-  const { valdAnställd } = state;
+export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProps) {
+  const { state, handlers, actions } = useAnstallda();
+
+  // Sätt valdAnställd när komponenten mountar
+  useEffect(() => {
+    if (anställd && (!state.valdAnställd || state.valdAnställd.id !== anställd.id)) {
+      actions.setValdAnställd(anställd);
+    }
+  }, [anställd, state.valdAnställd, actions]);
+
+  const anställdNamn = `${anställd.förnamn} ${anställd.efternamn}`;
+  const anställdInfo = `${anställdNamn}${anställd.jobbtitel ? " - " + anställd.jobbtitel : ""}`;
 
   return (
-    <>
-      <h1 className="text-3xl text-white mb-6 text-center">Anställda</h1>
-
-      <div className="space-y-6">
-        {!state.visaNyAnställdFormulär ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl text-white font-semibold">Sparade anställda</h3>
-              <Knapp text="Lägg till anställd" onClick={handlers.visaNyAnställd} />
-            </div>
-
-            {state.anställdaError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                <strong className="font-bold">Fel: </strong>
-                <span className="block sm:inline">{state.anställdaError}</span>
-              </div>
-            )}
-
-            {state.anställdaLoading ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : !state.harAnställda ? (
-              <p className="text-gray-400">Inga anställda sparade än.</p>
-            ) : (
-              <AnställdaLista state={state} handlers={handlers} />
-            )}
-          </div>
-        ) : (
-          <NyAnställd handlers={handlers} />
-        )}
-      </div>
-
-      {valdAnställd && (
-        <div className="mt-8">
+    <div className="mb-4">
+      <AnimeradFlik title={anställdInfo} icon="👤">
+        <div className="space-y-4">
+          {/* Anställd detaljer som nested animerade flikar */}
           <AnimeradFlik title="Personalinformation" icon="📋">
-            <Information state={state} handlers={handlers} />
+            <Information
+              state={{
+                ...state,
+                valdAnställd: anställd,
+              }}
+              handlers={handlers}
+            />
           </AnimeradFlik>
+
+          <AnimeradFlik title="Utlägg" icon="💳">
+            <UtlaggFlik
+              state={{
+                valdAnställd: anställd,
+              }}
+            />
+          </AnimeradFlik>
+
           <AnimeradFlik title="Kontrakt" icon="📄">
             <Kontrakt
               anställd={{
-                ...valdAnställd,
-                id: valdAnställd.id || 0,
-                namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
-                epost: valdAnställd.mail || "",
+                ...anställd,
+                id: anställd.id || 0,
+                namn: anställdNamn,
+                epost: anställd.mail,
                 sparade_dagar:
-                  typeof valdAnställd.sparade_dagar === "string"
-                    ? parseFloat(valdAnställd.sparade_dagar)
-                    : valdAnställd.sparade_dagar,
+                  typeof anställd.sparade_dagar === "string"
+                    ? parseFloat(anställd.sparade_dagar)
+                    : anställd.sparade_dagar,
                 använda_förskott:
-                  typeof valdAnställd.använda_förskott === "string"
-                    ? parseFloat(valdAnställd.använda_förskott)
-                    : valdAnställd.använda_förskott,
+                  typeof anställd.använda_förskott === "string"
+                    ? parseFloat(anställd.använda_förskott)
+                    : anställd.använda_förskott,
                 skattekolumn:
-                  typeof valdAnställd.skattekolumn === "string"
-                    ? parseInt(valdAnställd.skattekolumn, 10)
-                    : valdAnställd.skattekolumn,
+                  typeof anställd.skattekolumn === "string"
+                    ? parseInt(anställd.skattekolumn, 10)
+                    : anställd.skattekolumn,
               }}
             />
           </AnimeradFlik>
-          <AnimeradFlik title="Utlägg" icon="💳">
-            <UtlaggFlik state={state} />
-          </AnimeradFlik>
+
           <AnimeradFlik title="Lönespecar" icon="💰">
             <Lonespecar
               anställd={{
-                ...valdAnställd,
-                id: valdAnställd.id || 0,
-                namn: `${valdAnställd.förnamn} ${valdAnställd.efternamn}`,
-                epost: valdAnställd.mail || "",
-                sparade_dagar:
-                  typeof valdAnställd.sparade_dagar === "string"
-                    ? parseFloat(valdAnställd.sparade_dagar)
-                    : valdAnställd.sparade_dagar,
-                använda_förskott:
-                  typeof valdAnställd.använda_förskott === "string"
-                    ? parseFloat(valdAnställd.använda_förskott)
-                    : valdAnställd.använda_förskott,
-                skattekolumn:
-                  typeof valdAnställd.skattekolumn === "string"
-                    ? parseInt(valdAnställd.skattekolumn, 10)
-                    : valdAnställd.skattekolumn,
+                id: anställd.id || 0,
+                namn: anställdNamn,
+                epost: anställd.mail,
               }}
             />
           </AnimeradFlik>
+
           <AnimeradFlik title="Semester" icon="🏖️">
             <Semester
               anställd={{
-                ...valdAnställd,
-                id: valdAnställd.id || 0,
-                kompensation: parseFloat(valdAnställd.kompensation) || 0,
-                anställningsdatum: valdAnställd.anställningsdatum || valdAnställd.startdatum,
+                ...anställd,
+                id: anställd.id || 0,
+                kompensation: parseFloat(anställd.kompensation || "0") || 0,
+                anställningsdatum: anställd.anställningsdatum || anställd.startdatum,
               }}
-              userId={valdAnställd?.id || 0}
+              userId={anställd?.id || 0}
             />
           </AnimeradFlik>
+
+          {/* Ta bort anställd - längst ner */}
+          <div className="flex justify-end mt-6">
+            <Knapp
+              text="❌ Ta bort anställd"
+              onClick={() => onTaBort(anställd.id || 0, anställdNamn)}
+              type="button"
+            />
+          </div>
         </div>
-      )}
-    </>
+      </AnimeradFlik>
+    </div>
   );
 }

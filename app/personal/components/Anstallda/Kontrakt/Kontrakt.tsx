@@ -10,19 +10,19 @@ import Skatt from "./Skatt";
 import Jobbtitel from "./Jobbtitel";
 import Semester from "./Semester";
 import Tjänsteställe from "./Tjanstestalle";
-import type { KontraktProps } from "../../../types/types";
+import type { KontraktProps, AnställdListItem } from "../../../types/types";
 import { useKontrakt } from "../../../hooks/useKontrakt";
 // #endregion
 
 export default function Kontrakt({ anställd }: KontraktProps) {
-  const { state, handlers } = useKontrakt(anställd);
-  const anstalld = state.visningsAnställd;
+  const { state, handlers } = useKontrakt(anställd as unknown as Record<string, unknown>);
+  const anstalld = state.visningsAnställd as AnställdListItem | null;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white">
-          Kontrakt för {anstalld?.förnamn} {anstalld?.efternamn}
+          Kontrakt för {(anstalld?.förnamn as string) || ""} {(anstalld?.efternamn as string) || ""}
         </h2>
         <div className="flex gap-2">
           {!state.isEditing ? (
@@ -76,10 +76,10 @@ export default function Kontrakt({ anställd }: KontraktProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Vänster kolumn */}
           <div className="space-y-6">
-            <KontraktPeriod anställd={anstalld} viewMode />
-            <Lön anställd={anstalld} viewMode />
+            <KontraktPeriod anställd={anstalld || undefined} viewMode />
+            <Lön anställd={anstalld || undefined} viewMode />
             <Arbetsbelastning
-              anställd={anstalld}
+              anställd={anstalld || undefined}
               viewMode
               display={state.arbetsbelastningDisplay}
             />
@@ -87,10 +87,10 @@ export default function Kontrakt({ anställd }: KontraktProps) {
 
           {/* Höger kolumn */}
           <div className="space-y-6">
-            <Skatt anställd={anstalld} viewMode />
-            <Jobbtitel anställd={anstalld} viewMode />
-            <Semester anställd={anstalld} viewMode />
-            <Tjänsteställe anställd={anstalld} viewMode />
+            <Skatt anställd={anstalld || undefined} viewMode />
+            <Jobbtitel anställd={anstalld || undefined} viewMode />
+            <Semester anställd={anstalld || undefined} viewMode />
+            <Tjänsteställe anställd={anstalld || undefined} viewMode />
           </div>
         </div>
       )}

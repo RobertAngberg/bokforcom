@@ -1,7 +1,7 @@
 "use client";
 
-import LönespecView from "../../Anstallda/Lonespecar/LonespecView";
-import Wizard from "../../Wizard/Wizard";
+import LönespecView from "../../Anstallda/Lonespecar/SpecVy/LonespecView";
+import Wizard from "../Wizard/Wizard";
 import { LonespecListaProps } from "../../../types/types";
 import { useLonekorning } from "../../../hooks/useLonekorning";
 import { useWizard } from "../../../hooks/useWizard";

@@ -9,12 +9,12 @@ export default function Semester({ anställd, viewMode }: SemesterProps) {
 
   // Beräkna semesterdagar baserat på anställningstyp och arbetsbelastning
   const getSemesterdagarPerÅr = () => {
-    const arbetsbelastning = anställd.arbetsbelastning || "";
+    const arbetsbelastning = anställd?.arbetsbelastning || "";
 
     if (arbetsbelastning.includes("Heltid") || arbetsbelastning === "Heltidsanställd") {
       return "25 dagar";
     } else if (arbetsbelastning.includes("Deltid")) {
-      const deltidProcent = anställd.deltidProcent || anställd.deltid_procent;
+      const deltidProcent = anställd?.deltidProcent;
       if (deltidProcent) {
         const procent = parseInt(deltidProcent.toString());
         const dagar = Math.round((25 * procent) / 100);
@@ -36,7 +36,7 @@ export default function Semester({ anställd, viewMode }: SemesterProps) {
               <div className="text-white">{value}</div>
             </div>
           ))}
-          {(anställd.växaStöd || anställd.växa_stöd) && (
+          {anställd?.växaStöd && (
             <div>
               <span className="text-gray-400">VÄXA-stöd:</span>
               <div className="text-green-400">Ja</div>
@@ -58,7 +58,7 @@ export default function Semester({ anställd, viewMode }: SemesterProps) {
             Beräknas automatiskt baserat på arbetsbelastning
           </div>
         </div>
-        {(anställd.växaStöd || anställd.växa_stöd) && (
+        {anställd?.växaStöd && (
           <div>
             <span className="text-gray-400">VÄXA-stöd:</span>
             <div className="text-green-400">Ja</div>

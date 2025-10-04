@@ -4,7 +4,7 @@ import Knapp from "../../_components/Knapp";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import Modal from "../../_components/Modal";
-import AnställdFlik from "./Anstallda/AnstalldFlik";
+import Anstallda from "./Anstallda/Anstallda";
 import NyAnstalldModal from "./Anstallda/NyAnstalld/NyAnstalldModal";
 import Lonekorning from "./Lonekorning/Lonekorning";
 import { useAnstallda } from "../hooks/useAnstallda";
@@ -42,11 +42,7 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
         ) : (
           <div className="space-y-4">
             {initialAnställda.map((anställd) => (
-              <AnställdFlik
-                key={anställd.id}
-                anställd={anställd}
-                onTaBort={handlers.taBortAnställd}
-              />
+              <Anstallda key={anställd.id} anställd={anställd} onTaBort={handlers.taBortAnställd} />
             ))}
           </div>
         )}

@@ -2,13 +2,7 @@
 
 import Modal from "../../../../_components/Modal";
 import NyAnställd from "./NyAnstalld";
-import type { NyAnstalldProps } from "../../../types/types";
-
-interface NyAnstalldModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  handlers: NyAnstalldProps["handlers"];
-}
+import type { NyAnstalldModalProps } from "../../../types/types";
 
 export default function NyAnstalldModal({ isOpen, onClose, handlers }: NyAnstalldModalProps) {
   return (

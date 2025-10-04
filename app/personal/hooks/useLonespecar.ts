@@ -13,7 +13,7 @@ import type { Lönespec, Utlägg, ExtraradResult, ExtraradData, AnställdData } 
 
 interface FormField {
   name: string;
-  value: string;
+  value: string | null | undefined;
   onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   hidden?: boolean;
   type?: string;

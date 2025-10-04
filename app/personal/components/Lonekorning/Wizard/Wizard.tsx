@@ -1,11 +1,5 @@
-import Knapp from "../../../_components/Knapp";
-import type { WizardStep } from "../../hooks/useWizard";
-
-interface WizardProps {
-  steps: WizardStep[];
-  lönekörningId?: number;
-  onMarkeraFärdig?: (lönekörningId: number) => void;
-}
+import Knapp from "../../../../_components/Knapp";
+import type { WizardProps } from "../../../types/types";
 
 export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: WizardProps) {
   return (

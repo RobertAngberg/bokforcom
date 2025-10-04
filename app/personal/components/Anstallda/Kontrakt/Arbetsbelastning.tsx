@@ -45,10 +45,10 @@ export default function Arbetsbelastning({
         />
         <TextFalt
           label="Arbetsvecka (timmar)"
-          name="arbetsveckaTimmar"
+          name="arbetsvecka_timmar"
           type="number"
-          value={editData?.arbetsveckaTimmar || ""}
-          onChange={(e) => handleChange?.("arbetsveckaTimmar", e.target.value)}
+          value={editData?.arbetsvecka_timmar || ""}
+          onChange={(e) => handleChange?.("arbetsvecka_timmar", e.target.value)}
         />
         {editData?.arbetsbelastning === "Deltidsanställd" && (
           <TextFalt

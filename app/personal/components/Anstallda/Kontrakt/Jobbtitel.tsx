@@ -14,7 +14,7 @@ export default function Jobbtitel({ editData, handleChange, anställd, viewMode 
         <div className="space-y-3">
           <div>
             <span className="text-gray-400">Jobbtitel:</span>
-            <div className="text-white">{anställd.jobbtitel || "Ej angiven"}</div>
+            <div className="text-white">{anställd?.jobbtitel || "Ej angiven"}</div>
           </div>
         </div>
       </div>
@@ -28,7 +28,7 @@ export default function Jobbtitel({ editData, handleChange, anställd, viewMode 
         <TextFalt
           label="Jobbtitel"
           name="jobbtitel"
-          value={editData.jobbtitel || ""}
+          value={editData?.jobbtitel || ""}
           onChange={(e) => handleChange?.("jobbtitel", e.target.value)}
         />
       </div>

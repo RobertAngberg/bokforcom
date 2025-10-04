@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import LonespecList from "./LonespecList";
+import LonespecList from "./SpecVy/LonespecList";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
 import { useLonespec } from "../../../hooks/useLonespecar";
 import type { AnställdListItem, Lönespec } from "../../../types/types";

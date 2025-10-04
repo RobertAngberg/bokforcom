@@ -6,21 +6,7 @@ import Dropdown from "../../../../../_components/Dropdown";
 import Modal from "../../../../../_components/Modal";
 import TextFalt from "../../../../../_components/TextFalt";
 import { useLonespec } from "../../../../hooks/useLonespecar";
-import type { ExtraraderModalProps } from "../../../../types/types";
-
-interface FormField {
-  name: string;
-  value: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  hidden?: boolean;
-  type?: string;
-  label?: string;
-  required?: boolean;
-  options?: string[];
-  placeholder?: string;
-  step?: string;
-  min?: string;
-}
+import type { FormField, ExtraraderModalProps } from "../../../../types/types";
 
 export default function ExtraraderModal({
   open,
@@ -120,7 +106,7 @@ export default function ExtraraderModal({
                 {field.type === "select" ? (
                   <Dropdown
                     label={field.label + (field.required ? " *" : "")}
-                    value={field.value}
+                    value={field.value || ""}
                     options={
                       field.options?.map((opt: string) => ({
                         label: opt,
@@ -138,7 +124,7 @@ export default function ExtraraderModal({
                     label={field.label + (field.required ? " *" : "")}
                     type={(field.type as "text" | "number" | "email" | "password") || "text"}
                     name={field.name}
-                    value={field.value}
+                    value={field.value || ""}
                     onChange={(e) => {
                       // Skapa kompatibel event för FormField onChange
                       const adaptedEvent = {
@@ -161,7 +147,7 @@ export default function ExtraraderModal({
               {field.type === "select" ? (
                 <Dropdown
                   label={field.label + (field.required ? " *" : "")}
-                  value={field.value}
+                  value={field.value || ""}
                   options={
                     field.options?.map((opt: string) => ({
                       label: opt,
@@ -179,7 +165,7 @@ export default function ExtraraderModal({
                   label={field.label + (field.required ? " *" : "")}
                   type={(field.type as "text" | "number" | "email" | "password") || "text"}
                   name={field.name}
-                  value={field.value}
+                  value={field.value || ""}
                   onChange={(e) => {
                     // Skapa kompatibel event för FormField onChange
                     const adaptedEvent = {

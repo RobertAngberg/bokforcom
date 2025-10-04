@@ -8,7 +8,7 @@
  * - Semesterersättning: 12% av semesterlön
  */
 
-import { BOKIO_KONSTANTER } from "../components/Anstallda/Lonespecar/loneberakningar";
+import { BOKIO_KONSTANTER } from "./loneberakningar";
 
 // Exportera semesterkonstanter för återanvändning
 export const SEMESTER_KONSTANTER = {
