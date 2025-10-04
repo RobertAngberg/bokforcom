@@ -11,7 +11,7 @@ import { useAnstallda } from "../hooks/useAnstallda";
 import type { PersonalContentProps } from "../types/types";
 
 export default function Personal({ initialAnställda }: PersonalContentProps) {
-  const { state, actions, handlers } = useAnstallda();
+  const { state, actions, handlers } = useAnstallda({ initialAnstallda: initialAnställda });
 
   // Vi använder alltid initialAnställda som har full data
   const harAnställda = initialAnställda.length > 0;

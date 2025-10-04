@@ -1635,6 +1635,7 @@ export interface UseSemesterReturn {
 
 // useAnstallda.ts
 export interface UseAnstalldaProps {
+  initialAnstallda?: AnställdData[];
   enableLonespecMode?: boolean;
   onLönespecUppdaterad?: () => void;
   enableNyAnstalldMode?: boolean;

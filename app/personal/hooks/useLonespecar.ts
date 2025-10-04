@@ -344,7 +344,6 @@ export function useLonespec({
       } else {
         showToast("Ny lönespecifikation skapad!", "success");
         onSpecCreated?.();
-        loadData(); // Refresh data
       }
     } catch (error) {
       console.error("❌ Fel vid skapande av lönespec:", error);

@@ -307,12 +307,30 @@ export const useLonekorning = ({
 
         setTimeout(async () => {
           setSkatteModalOpen(false);
+          const uppdateradeSpecar: number[] = [];
           for (const spec of lönekörningSpecar) {
             if (!spec.skatter_bokförda) {
               await markeraSkatternaBokförda(spec.id);
+              uppdateradeSpecar.push(spec.id);
             }
           }
-          await loadLönekörningSpecar();
+          if (uppdateradeSpecar.length > 0) {
+            const markeraSkatter = (spec: (typeof lönekörningSpecar)[number]) =>
+              uppdateradeSpecar.includes(spec.id)
+                ? {
+                    ...spec,
+                    skatter_bokförda: true,
+                  }
+                : spec;
+
+            setLönekörningSpecar((prev) => prev.map(markeraSkatter));
+            setValdaSpecar((prev) => prev.map(markeraSkatter));
+            setSpecarPerDatum((prev) =>
+              Object.fromEntries(
+                Object.entries(prev).map(([datum, lista]) => [datum, lista.map(markeraSkatter)])
+              )
+            );
+          }
         }, 2000);
       } else {
         setSkatteToast({
@@ -832,13 +850,31 @@ export const useLonekorning = ({
     await handleGenereraAGI();
 
     // Mark all specs as AGI generated
+    const uppdateradeSpecar: number[] = [];
     for (const spec of lönekörningSpecar) {
       if (!spec.agi_genererad) {
         await markeraAGIGenererad(spec.id);
+        uppdateradeSpecar.push(spec.id);
       }
     }
-    // Refresh data to show updated buttons
-    await refreshData();
+
+    if (uppdateradeSpecar.length > 0) {
+      const markeraAgi = (spec: (typeof lönekörningSpecar)[number]) =>
+        uppdateradeSpecar.includes(spec.id)
+          ? {
+              ...spec,
+              agi_genererad: true,
+            }
+          : spec;
+
+      setLönekörningSpecar((prev) => prev.map(markeraAgi));
+      setValdaSpecar((prev) => prev.map(markeraAgi));
+      setSpecarPerDatum((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).map(([datum, lista]) => [datum, lista.map(markeraAgi)])
+        )
+      );
+    }
   };
 
   // New lönekörning modal functions (only active when enableNewLonekorningModal is true)

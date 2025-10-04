@@ -64,14 +64,33 @@ const initialActionResult = {
   message: "",
 };
 
-export function useAnstallda(props?: UseAnstalldaProps) {
-  const enableLonespecMode = props?.enableLonespecMode || false;
-  const onLönespecUppdaterad = props?.onLönespecUppdaterad;
-  const enableNyAnstalldMode = props?.enableNyAnstalldMode || false;
-  const onNyAnstalldSaved = props?.onNyAnstalldSaved;
-  const onNyAnstalldCancel = props?.onNyAnstalldCancel;
+const mapAnställdaDataToListItems = (data: AnställdData[] = []): AnställdListItem[] => {
+  return data
+    .filter((a): a is AnställdData & { id: number } => typeof a.id === "number")
+    .map((a) => {
+      const fullName = [a.förnamn, a.efternamn].filter(Boolean).join(" ").trim();
+      return {
+        id: a.id,
+        namn: fullName || a.namn || a.mail || "",
+        epost: a.mail || a.epost || "",
+        roll: a.jobbtitel || "",
+      };
+    });
+};
 
-  const [anställda, setAnställda] = useState<AnställdListItem[]>([]);
+export function useAnstallda(props: UseAnstalldaProps = {}) {
+  const {
+    initialAnstallda,
+    enableLonespecMode = false,
+    onLönespecUppdaterad,
+    enableNyAnstalldMode = false,
+    onNyAnstalldSaved,
+    onNyAnstalldCancel,
+  } = props;
+
+  const [anställda, setAnställda] = useState<AnställdListItem[]>(() =>
+    mapAnställdaDataToListItems(initialAnstallda)
+  );
   const [valdAnställd, setValdAnställd] = useState<AnställdData | null>(null);
   const [anställdaLoading, setAnställdaLoading] = useState(false);
   const [anställdLoading, setAnställdLoading] = useState(false);
@@ -217,15 +236,7 @@ export function useAnstallda(props?: UseAnstalldaProps) {
     setAnställdaError(null);
     try {
       const anställdaData = await hämtaAllaAnställda();
-      // Konvertera till AnställdListItem format
-      const anställdaLista: AnställdListItem[] = anställdaData
-        .filter((a: AnställdData) => a.id !== undefined)
-        .map((a: AnställdData) => ({
-          id: a.id!,
-          namn: `${a.förnamn} ${a.efternamn}`,
-          epost: a.mail || "",
-          roll: a.jobbtitel || "",
-        }));
+      const anställdaLista = mapAnställdaDataToListItems(anställdaData);
       setAnställda(anställdaLista);
     } catch (error) {
       console.error("Fel vid laddning av anställda:", error);
@@ -237,8 +248,15 @@ export function useAnstallda(props?: UseAnstalldaProps) {
 
   // Hämta alla anställda vid mount
   useEffect(() => {
+    if (initialAnstallda && initialAnstallda.length > 0) {
+      setAnställda((prev) =>
+        prev.length > 0 ? prev : mapAnställdaDataToListItems(initialAnstallda)
+      );
+      return;
+    }
     laddaAnställda();
-  }, []); // Tom array - kör bara vid mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAnstallda]);
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)
@@ -368,7 +386,6 @@ export function useAnstallda(props?: UseAnstalldaProps) {
 
   // När en ny anställd sparats
   const hanteraNyAnställdSparad = async () => {
-    await laddaAnställda();
     setVisaNyAnställdFormulär(false);
   };
 

@@ -88,17 +88,22 @@ export function useSemester({
           kolumn: editingField, // "betalda_dagar", "sparade_dagar", "skuld", "komp_dagar"
           nyttVärde: newValue,
         });
+        setPrevSummary(summary);
+        setSummary((prev) => ({
+          ...prev,
+          [editingField]: newValue,
+        }));
+        setShowBokforKnapp(true);
       }
       setEditingField(null);
       setEditValue("");
-      await hämtaData(); // Hämta om data från servern
     } catch (error) {
       console.error("Fel vid sparande:", error);
       showToast("Kunde inte spara ändringen", "error");
     } finally {
       setLoading(false);
     }
-  }, [editingField, editValue, summary, anställdId, hämtaData]);
+  }, [editingField, editValue, summary, anställdId]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingField(null);
@@ -234,7 +239,7 @@ export function useSemester({
         setBokforModalOpen(false);
         if (res?.success) {
           showToast("Bokföring sparad!", "success");
-          await hämtaData();
+          setShowBokforKnapp(false);
         } else {
           showToast(`Fel vid bokföring: ${res?.error || "Okänt fel"}`, "error");
         }
@@ -244,7 +249,7 @@ export function useSemester({
         setLoading(false);
       }
     },
-    [bokforRows, userId, hämtaData]
+    [bokforRows, userId]
   );
 
   const clearToast = useCallback(() => {
