@@ -10,35 +10,10 @@ import type {
   Lönespec,
   Företagsprofil,
   BeräknadeVärden,
+  ForhandsgranskningComponent,
+  UseMailaLonespecProps,
 } from "../types/types";
 import { showToast } from "../../_components/Toast";
-
-interface ForhandsgranskningComponent {
-  (props: {
-    lönespec: Lönespec;
-    anställd: AnställdListItem;
-    företagsprofil: Företagsprofil | null;
-    extrarader: ExtraradData[];
-    beräknadeVärden: BeräknadeVärden;
-    onStäng: () => void;
-  }): React.JSX.Element | null;
-}
-
-interface UseMailaLonespecProps {
-  // Single mode props
-  lönespec?: Lönespec;
-  anställd?: AnställdListItem;
-  företagsprofil?: Företagsprofil;
-  extrarader?: ExtraradData[];
-  beräknadeVärden?: BeräknadeVärden;
-  // Batch mode props
-  batch?: SingleLönespec[];
-  batchMode?: boolean;
-  open?: boolean;
-  onClose?: () => void;
-  onMailComplete?: () => void;
-  ForhandsgranskningComponent: ForhandsgranskningComponent;
-}
 
 export function useMailaLonespec({
   lönespec,

@@ -1512,7 +1512,176 @@ export interface FormField {
 
 // Wizard.tsx
 export interface WizardProps {
-  steps: import("../hooks/useWizard").WizardStep[];
+  steps: WizardStep[];
   lönekörningId?: number;
   onMarkeraFärdig?: (lönekörningId: number) => void;
+}
+
+// ============================================================================
+// HOOK TYPES - Centralized from individual hook files
+// ============================================================================
+
+// useBokforing.ts
+export interface UseBokforingProps {
+  lönespec: Lönespec;
+  extrarader: ExtraradData[];
+  beräknadeVärden: BeräknadeVärden;
+  anställdNamn: string;
+  onBokfört?: () => void;
+  onClose: () => void;
+}
+
+// useForhandsgranskning.ts
+export interface MappedExtrarad {
+  benämning: string;
+  antal: string;
+  kostnad: number;
+  summa: number;
+}
+
+// useWizard.ts
+export type WizardStepStatus = "disabled" | "available" | "completed";
+
+export interface WizardStep {
+  id: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  completed: boolean;
+  enabled: boolean;
+  status: WizardStepStatus;
+  issues: string[];
+  onClick: () => void;
+}
+
+export interface UseWizardProps {
+  lönekörning: Lönekörning | null;
+  onMaila: () => void;
+  onBokför: () => void;
+  onGenereraAGI: () => void;
+  onBokförSkatter: () => void;
+}
+
+// useUtlagg.ts
+export interface UseUtlaggProps {
+  anställdId?: number | null;
+  enableFlikMode?: boolean;
+}
+
+// useSemester.ts
+export interface UseSemesterProps {
+  anställdId: number;
+  anställdKompensation: number;
+  userId: number;
+}
+
+export interface UseSemesterReturn {
+  // State
+  showBokforKnapp: boolean;
+  summary: SemesterBoxSummary;
+  prevSummary: SemesterBoxSummary | null;
+  editingField: SemesterBoxField | null;
+  editValue: string;
+  loading: boolean;
+  bokforModalOpen: boolean;
+  bokforRows: BokföringsRad[];
+
+  // Actions
+  hämtaData: () => Promise<void>;
+  handleEditField: (fieldName: SemesterBoxField, currentValue: number) => void;
+  handleSaveEdit: () => Promise<void>;
+  handleCancelEdit: () => void;
+  handleOpenBokforModal: () => void;
+  handleConfirmBokfor: (kommentar: string) => Promise<void>;
+  setEditValue: (value: string) => void;
+  setBokforModalOpen: (open: boolean) => void;
+  clearToast: () => void;
+}
+
+// useAnstallda.ts
+export interface UseAnstalldaProps {
+  enableLonespecMode?: boolean;
+  onLönespecUppdaterad?: () => void;
+  enableNyAnstalldMode?: boolean;
+  onNyAnstalldSaved?: () => void;
+  onNyAnstalldCancel?: () => void;
+}
+
+// useMailaLonespec.ts
+export interface ForhandsgranskningComponent {
+  (props: {
+    lönespec: Lönespec;
+    anställd: AnställdListItem;
+    företagsprofil: Företagsprofil | null;
+    extrarader: ExtraradData[];
+    beräknadeVärden: BeräknadeVärden;
+    onStäng: () => void;
+  }): React.JSX.Element | null;
+}
+
+export interface UseMailaLonespecProps {
+  // Single mode props
+  lönespec?: Lönespec;
+  anställd?: AnställdListItem;
+  företagsprofil?: Företagsprofil;
+  extrarader?: ExtraradData[];
+  beräknadeVärden?: BeräknadeVärden;
+  // Batch mode props
+  batch?: SingleLönespec[];
+  batchMode?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onMailComplete?: () => void;
+  ForhandsgranskningComponent: ForhandsgranskningComponent;
+}
+
+// useBankgiroExport.ts
+export interface UseBankgiroExportProps {
+  anställda: AnställdListItem[];
+  utbetalningsdatum: Date | null;
+  lönespecar: Record<string, Lönespec>;
+  onExportComplete?: () => void;
+  onClose?: () => void;
+}
+
+// useLonespecar.ts
+export interface FormField {
+  name: string;
+  value: string | null | undefined;
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  hidden?: boolean;
+  type?: string;
+  label?: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+  step?: string;
+  min?: string;
+}
+
+export interface UseLonespecProps {
+  // Utlägg mode props
+  enableUtlaggMode?: boolean;
+  lönespecUtlägg?: Utlägg[];
+  lönespecId?: number;
+  anställdId?: number;
+  onUtläggAdded?: (utlägg: Utlägg[], extraradResults: ExtraradResult[]) => Promise<void>;
+
+  // Component mode props
+  enableComponentMode?: boolean;
+  specificLönespec?: Lönespec;
+
+  // New spec modal props
+  enableNewSpecModal?: boolean;
+  nySpecModalOpen?: boolean;
+  nySpecDatum?: Date | null;
+  setNySpecDatum?: (date: Date | null) => void;
+  anstallda?: AnställdData[];
+  onSpecCreated?: () => void;
+
+  // Extrarader modal props
+  enableExtraraderModal?: boolean;
+  extraraderModalOpen?: boolean;
+  extraraderModalTitle?: string;
+  extraraderFields?: FormField[];
 }

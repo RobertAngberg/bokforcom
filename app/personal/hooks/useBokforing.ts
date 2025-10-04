@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { bokförLöneutbetalning } from "../actions/bokforingActions";
-import type { WizardBokföringsPost, Lönespec, ExtraradData, BeräknadeVärden } from "../types/types";
+import type { WizardBokföringsPost, UseBokforingProps } from "../types/types";
 import { showToast } from "../../_components/Toast";
 
 // Mapping från extrarad-typ till bokföringskonto - SINGLE SOURCE OF TRUTH
@@ -93,15 +93,6 @@ const validateExtraradMapping = () => {
     ärKonsistent: saknarBokföring.length === 0 && onödigaMappningar.length === 0,
   };
 };
-
-interface UseBokforingProps {
-  lönespec: Lönespec;
-  extrarader: ExtraradData[];
-  beräknadeVärden: BeräknadeVärden;
-  anställdNamn: string;
-  onBokfört?: () => void;
-  onClose: () => void;
-}
 
 export function useBokforing({
   lönespec,

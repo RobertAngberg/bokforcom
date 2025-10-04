@@ -2,15 +2,15 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { UtläggBokföringModal, UtlaggBokföringsRad, UtläggQueryResult } from "../types/types";
+import type {
+  UtläggBokföringModal,
+  UtlaggBokföringsRad,
+  UtläggQueryResult,
+  UseUtlaggProps,
+} from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { hämtaUtlägg, taBortUtlägg } from "../actions/utlaggActions";
 import { showToast } from "../../_components/Toast";
-
-interface UseUtlaggProps {
-  anställdId?: number | null;
-  enableFlikMode?: boolean;
-}
 
 // Use the shared Utlägg interface from types
 
@@ -29,7 +29,10 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUtläggId, setDeleteUtläggId] = useState<number | null>(null);
 
-  const openUtläggBokföringModal = (utlägg: UtläggQueryResult, previewRows: unknown[]) => {
+  const openUtläggBokföringModal = (
+    utlägg: UtläggQueryResult,
+    previewRows: UtlaggBokföringsRad[]
+  ) => {
     setUtläggBokföringModal({
       isOpen: true,
       utlägg,

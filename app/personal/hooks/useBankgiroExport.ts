@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { showToast } from "../../_components/Toast";
-import type { AnställdListItem, Lönespec } from "../types/types";
-
-interface UseBankgiroExportProps {
-  anställda: AnställdListItem[];
-  utbetalningsdatum: Date | null;
-  lönespecar: Record<string, Lönespec>;
-  onExportComplete?: () => void;
-  onClose?: () => void;
-}
+import type { UseBankgiroExportProps } from "../types/types";
 
 export function useBankgiroExport({
   anställda,

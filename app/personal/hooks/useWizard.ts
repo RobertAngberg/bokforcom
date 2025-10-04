@@ -1,27 +1,5 @@
 import { useMemo } from "react";
-import type { Lönekörning } from "../types/types";
-
-export type WizardStepStatus = "disabled" | "available" | "completed";
-
-export interface WizardStep {
-  id: string;
-  title: string;
-  description: string;
-  buttonText: string;
-  completed: boolean;
-  enabled: boolean;
-  status: WizardStepStatus;
-  issues: string[];
-  onClick: () => void;
-}
-
-export interface UseWizardProps {
-  lönekörning: Lönekörning | null;
-  onMaila: () => void;
-  onBokför: () => void;
-  onGenereraAGI: () => void;
-  onBokförSkatter: () => void;
-}
+import type { WizardStep, UseWizardProps } from "../types/types";
 
 export function useWizard({
   lönekörning,

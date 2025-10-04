@@ -7,37 +7,14 @@ import {
   bokförSemester,
 } from "../actions/semesterActions";
 import { beräknaSemesterpenning } from "../utils/semesterBeräkningar";
-import type { SemesterBoxField, SemesterBoxSummary, BokföringsRad } from "../types/types";
+import type {
+  SemesterBoxField,
+  SemesterBoxSummary,
+  BokföringsRad,
+  UseSemesterProps,
+  UseSemesterReturn,
+} from "../types/types";
 import { showToast } from "../../_components/Toast";
-
-interface UseSemesterProps {
-  anställdId: number;
-  anställdKompensation: number;
-  userId: number;
-}
-
-interface UseSemesterReturn {
-  // State
-  showBokforKnapp: boolean;
-  summary: SemesterBoxSummary;
-  prevSummary: SemesterBoxSummary | null;
-  editingField: SemesterBoxField | null;
-  editValue: string;
-  loading: boolean;
-  bokforModalOpen: boolean;
-  bokforRows: BokföringsRad[];
-
-  // Actions
-  hämtaData: () => Promise<void>;
-  handleEditField: (fieldName: SemesterBoxField, currentValue: number) => void;
-  handleSaveEdit: () => Promise<void>;
-  handleCancelEdit: () => void;
-  handleOpenBokforModal: () => void;
-  handleConfirmBokfor: (kommentar: string) => Promise<void>;
-  setEditValue: (value: string) => void;
-  setBokforModalOpen: (open: boolean) => void;
-  clearToast: () => void;
-}
 
 export function useSemester({
   anställdId,

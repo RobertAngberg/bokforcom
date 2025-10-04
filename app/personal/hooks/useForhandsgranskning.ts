@@ -9,14 +9,8 @@ import type {
   Företagsprofil,
   ExtraradData,
   BeräknadeVärden,
+  MappedExtrarad,
 } from "../types/types";
-
-interface MappedExtrarad {
-  benämning: string;
-  antal: string;
-  kostnad: number;
-  summa: number;
-}
 
 export const useForhandsgranskning = (
   lönespec: Lönespec | null,

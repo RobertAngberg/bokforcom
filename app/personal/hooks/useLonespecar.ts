@@ -14,50 +14,9 @@ import type {
   Utlägg,
   ExtraradResult,
   ExtraradData,
-  AnställdData,
   BeräknadeVärden,
+  UseLonespecProps,
 } from "../types/types";
-
-interface FormField {
-  name: string;
-  value: string | null | undefined;
-  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  hidden?: boolean;
-  type?: string;
-  label?: string;
-  required?: boolean;
-  options?: string[];
-  placeholder?: string;
-  step?: string;
-  min?: string;
-}
-
-interface UseLonespecProps {
-  // Utlägg mode props
-  enableUtlaggMode?: boolean;
-  lönespecUtlägg?: Utlägg[];
-  lönespecId?: number;
-  anställdId?: number;
-  onUtläggAdded?: (utlägg: Utlägg[], extraradResults: ExtraradResult[]) => Promise<void>;
-
-  // Component mode props
-  enableComponentMode?: boolean;
-  specificLönespec?: Lönespec;
-
-  // New spec modal props
-  enableNewSpecModal?: boolean;
-  nySpecModalOpen?: boolean;
-  nySpecDatum?: Date | null;
-  setNySpecDatum?: (date: Date | null) => void;
-  anstallda?: AnställdData[];
-  onSpecCreated?: () => void;
-
-  // Extrarader modal props
-  enableExtraraderModal?: boolean;
-  extraraderModalOpen?: boolean;
-  extraraderModalTitle?: string;
-  extraraderFields?: FormField[];
-}
 
 export function useLonespec({
   // Utlägg mode props

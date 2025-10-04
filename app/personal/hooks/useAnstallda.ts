@@ -11,7 +11,12 @@ import {
 import { taBortLönespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
 import { showToast } from "../../_components/Toast";
-import type { AnställdData, AnställdListItem, PersonalEditData } from "../types/types";
+import type {
+  AnställdData,
+  AnställdListItem,
+  PersonalEditData,
+  UseAnstalldaProps,
+} from "../types/types";
 
 // Ny Anställd formulär initial data - flyttad från useNyAnstalld.ts
 const initialNyAnställdFormulär = {
@@ -58,14 +63,6 @@ const initialActionResult = {
   success: false,
   message: "",
 };
-
-interface UseAnstalldaProps {
-  enableLonespecMode?: boolean;
-  onLönespecUppdaterad?: () => void;
-  enableNyAnstalldMode?: boolean;
-  onNyAnstalldSaved?: () => void;
-  onNyAnstalldCancel?: () => void;
-}
 
 export function useAnstallda(props?: UseAnstalldaProps) {
   const enableLonespecMode = props?.enableLonespecMode || false;
