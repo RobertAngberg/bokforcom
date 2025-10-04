@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useFakturaContext } from "../context/FakturaContext";
+import { useFakturaContext } from "../context/FakturaContextProvider";
 import {
   hämtaSparadeArtiklar,
   deleteFavoritArtikel,

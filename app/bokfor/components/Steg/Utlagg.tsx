@@ -1,7 +1,7 @@
 "use client";
 
 import { UtläggProps } from "../../types/types";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Utlägg({ onUtläggChange, initialValue = false }: UtläggProps) {
   const { handlers } = useBokforContext();

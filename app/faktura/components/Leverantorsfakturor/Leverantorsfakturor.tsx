@@ -5,7 +5,7 @@ import LeverantorFlik from "./Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
 import { useLeverantörer } from "../../hooks/useLeverantorer";
 import { useLeverantorNavigation } from "../../hooks/useLeverantorer";
-import { FakturaProvider } from "../../context/FakturaContext";
+import { FakturaProvider } from "../../context/FakturaContextProvider";
 
 interface LeverantorsfakturorPageProps {
   onBackToMenu?: () => void;

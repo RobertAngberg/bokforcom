@@ -1,7 +1,7 @@
 import React from "react";
 import TextFalt from "../../../_components/TextFalt";
 import { CommentProps } from "../../types/types";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Kommentar({
   kommentar: propsKommentar,

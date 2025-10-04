@@ -9,7 +9,7 @@ import Steg3 from "../Steg3";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
 import Forhandsgranskning from "../Forhandsgranskning";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 import { AmorteringBanklanProps } from "../../../types/types";
 
 export default function AmorteringBanklan({ mode }: Pick<AmorteringBanklanProps, "mode">) {

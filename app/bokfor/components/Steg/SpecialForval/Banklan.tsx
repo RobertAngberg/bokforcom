@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { datePickerValue, datePickerOnChange } from "../../../../_utils/datum";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 import { BanklanProps } from "../../../types/types";
 
 export default function Banklan({ mode }: Pick<BanklanProps, "mode">) {

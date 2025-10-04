@@ -7,7 +7,7 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Steg2() {
   // Hämta all state och funktioner från useBokfor

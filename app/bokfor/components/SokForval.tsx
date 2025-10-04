@@ -2,7 +2,7 @@
 
 import FörvalKort from "./ForvalKort";
 import TextFalt from "../../_components/TextFalt";
-import { useBokforContext } from "./BokforProvider";
+import { useBokforContext } from "../context/BokforContextProvider";
 
 export default function SokForval() {
   const { state, handlers } = useBokforContext();

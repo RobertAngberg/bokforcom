@@ -7,7 +7,7 @@ import TextFalt from "../../../../../_components/TextFalt";
 import Knapp from "../../../../../_components/Knapp";
 import TillbakaPil from "../../../../../_components/TillbakaPil";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../../_utils/datum";
-import { useBokforContext } from "../../../BokforProvider";
+import { useBokforContext } from "../../../../context/BokforContextProvider";
 import type { StandardLayoutProps } from "../../../../types/types";
 
 /**

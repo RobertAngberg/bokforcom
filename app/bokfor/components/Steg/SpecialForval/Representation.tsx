@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
 import { datePickerValue } from "../../../../_utils/datum";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 import { RepresentationProps, RepresentationsTypLocal } from "../../../types/types";
 
 // Schablon beräkning enligt Skatteverket

@@ -7,7 +7,7 @@ import TillbakaPil from "../../../_components/TillbakaPil";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
 import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Steg3() {
   const { state, actions, handlers } = useBokforContext();

@@ -1,5 +1,5 @@
 import MainLayout from "../_components/MainLayout";
-import { BokforProvider } from "./components/BokforProvider";
+import { BokforProvider } from "./context/BokforContextProvider";
 import Bokfor from "./components/Bokfor";
 import {
   hämtaFavoritförval,

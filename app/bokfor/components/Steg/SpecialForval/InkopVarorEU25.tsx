@@ -3,7 +3,7 @@
 import Steg3 from "../Steg3";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 
 interface InkopVarorEU25Props {
   mode: "steg2" | "steg3";

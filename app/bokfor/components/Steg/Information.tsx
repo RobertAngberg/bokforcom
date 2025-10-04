@@ -7,7 +7,7 @@ import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 import "react-datepicker/dist/react-datepicker.css";
 import { InformationProps } from "../../types/types";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 import TextFalt from "../../../_components/TextFalt";
 
 export default function Information({

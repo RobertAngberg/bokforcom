@@ -24,7 +24,7 @@ import Forhandsgranskning from "../../Forhandsgranskning";
 import TillbakaPil from "../../../../../_components/TillbakaPil";
 import Knapp from "../../../../../_components/Knapp";
 import TextFalt from "../../../../../_components/TextFalt";
-import { useBokforContext } from "../../../BokforProvider";
+import { useBokforContext } from "../../../../context/BokforContextProvider";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";

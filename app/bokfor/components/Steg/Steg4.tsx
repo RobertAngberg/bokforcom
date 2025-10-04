@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Steg4() {
   const { state, handlers } = useBokforContext();

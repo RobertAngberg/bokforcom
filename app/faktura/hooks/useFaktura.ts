@@ -8,7 +8,7 @@ import { sv } from "date-fns/locale";
 import { useSession } from "../../_lib/auth-client";
 
 // Context
-import { useFakturaContext } from "../context/FakturaContext";
+import { useFakturaContext } from "../context/FakturaContextProvider";
 
 // Actions
 import { hämtaFakturaMedRader } from "../actions/fakturaActions";

@@ -13,7 +13,7 @@ import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
-import { useBokforContext } from "../BokforProvider";
+import { useBokforContext } from "../../context/BokforContextProvider";
 
 registerLocale("sv", sv);
 

@@ -10,7 +10,7 @@ import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
 import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 import TillbakaPil from "../../../../_components/TillbakaPil";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 import { MilersattningEnskildFirmaProps } from "../../../types/types";
 
 export default function MilersattningEnskildFirma({ mode }: MilersattningEnskildFirmaProps) {

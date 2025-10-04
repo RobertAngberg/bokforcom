@@ -1,4 +1,4 @@
-import { FakturaProvider } from "./context/FakturaContext";
+import { FakturaProvider } from "./context/FakturaContextProvider";
 import FakturaNavigation from "./components/FakturaNavigation";
 import MainLayout from "../_components/MainLayout";
 import { hämtaFöretagsprofil } from "./actions/foretagActions";

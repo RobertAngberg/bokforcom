@@ -5,7 +5,7 @@ import { useState } from "react";
 import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
 import TextFalt from "../../../../_components/TextFalt";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 import { BilleasingProps } from "../../../types/types";
 
 export default function Billeasing({

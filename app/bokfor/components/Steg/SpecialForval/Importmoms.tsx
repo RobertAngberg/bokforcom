@@ -6,7 +6,7 @@ import StandardLayout from "./layouts/StandardLayout";
 import LevfaktLayout from "./layouts/LevfaktLayout";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import TextFalt from "../../../../_components/TextFalt";
-import { useBokforContext } from "../../BokforProvider";
+import { useBokforContext } from "../../../context/BokforContextProvider";
 
 export default function Importmoms({
   mode,

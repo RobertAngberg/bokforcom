@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useBokforContext } from "./BokforProvider";
+import { useBokforContext } from "../context/BokforContextProvider";
 import { BokforClientProps } from "../types/types";
 
 // Importera alla steg-komponenter

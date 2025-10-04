@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useFakturaContext } from "../context/FakturaContext";
+import { useFakturaContext } from "../context/FakturaContextProvider";
 import { generatePDFFromElement } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
 
