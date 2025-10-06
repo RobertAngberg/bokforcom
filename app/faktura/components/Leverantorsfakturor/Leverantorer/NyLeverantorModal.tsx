@@ -47,14 +47,14 @@ export default function NyLeverantorModal({
             <TextFalt
               label="Organisationsnummer"
               name="organisationsnummer"
-              value={formData.organisationsnummer}
+              value={formData.organisationsnummer ?? ""}
               onChange={handleInputChange}
               placeholder="XXXXXX-XXXX"
             />
             <TextFalt
               label="E-post"
               name="epost"
-              value={formData.epost}
+              value={formData.epost ?? ""}
               onChange={handleInputChange}
               placeholder="kontakt@företag.se"
             />
@@ -63,7 +63,7 @@ export default function NyLeverantorModal({
           <TextFalt
             label="Postadress"
             name="adress"
-            value={formData.adress}
+            value={formData.adress ?? ""}
             onChange={handleInputChange}
             placeholder="Gatuadress"
           />
@@ -72,14 +72,14 @@ export default function NyLeverantorModal({
             <TextFalt
               label="Postnummer"
               name="postnummer"
-              value={formData.postnummer}
+              value={formData.postnummer ?? ""}
               onChange={handleInputChange}
               placeholder="12345"
             />
             <TextFalt
               label="Stad"
               name="stad"
-              value={formData.stad}
+              value={formData.stad ?? ""}
               onChange={handleInputChange}
               placeholder="Stockholm"
             />
@@ -88,7 +88,7 @@ export default function NyLeverantorModal({
           <TextFalt
             label="Telefon"
             name="telefon"
-            value={formData.telefon}
+            value={formData.telefon ?? ""}
             onChange={handleInputChange}
             placeholder="08-123 456 78"
           />

@@ -1,140 +1,179 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useFakturaContext } from "../context/FakturaContextProvider";
+import { useCallback, useEffect, useMemo } from "react";
+import type { ChangeEvent } from "react";
+
+import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { sanitizeFormInput, sanitizeInput } from "../../_utils/validationUtils";
+
+import { useFakturaArtikelContext } from "../context/FakturaArtikelContext";
+import { useFakturaForm, useFakturaFormActions } from "../context/FakturaFormContext";
 import {
   hämtaSparadeArtiklar,
   deleteFavoritArtikel,
   sparaFavoritArtikel,
 } from "../actions/artikelActions";
 import { showToast } from "../../_components/Toast";
+import type { Artikel, FavoritArtikel, FakturaFormData, NyArtikel } from "../types/types";
 
-// Types
-import type { NyArtikel, Artikel, FavoritArtikel } from "../types/types";
+const RUT_KATEGORIER = [
+  "Passa barn",
+  "Fiber- och it-tjänster",
+  "Flytta och packa",
+  "Transport till försäljning för återanvändning",
+  "Möblering",
+  "Ta hand om en person och ge omsorg",
+  "Reparera vitvaror",
+  "Skotta snö",
+  "Städa",
+  "Tvätta, laga och sy",
+  "Tvätt vid tvättinrättning",
+  "Trädgårdsarbete – fälla och beskära träd",
+  "Trädgårdsarbete – underhålla, klippa och gräva",
+  "Tillsyn",
+];
 
-/**
- * Hook för produkter, tjänster och ROT/RUT hantering
- */
+const ROT_KATEGORIER = [
+  "Bygg – reparera och underhålla",
+  "Bygg – bygga om och bygga till",
+  "El",
+  "Glas och plåt",
+  "Gräv- och markarbete",
+  "Murning och sotning",
+  "Målning och tapetsering",
+  "Rengöring",
+  "VVS",
+];
+
+function deriveArtikelMetrics(formData: FakturaFormData) {
+  const rows = formData.artiklar ?? [];
+
+  const sumExkl = rows.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    return acc + antal * pris;
+  }, 0);
+
+  const totalMoms = rows.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    const moms = Number(rad.moms) || 0;
+    return acc + antal * pris * (moms / 100);
+  }, 0);
+
+  const sumInkl = sumExkl + totalMoms;
+
+  const rotRutArtiklar = rows.filter((rad) => Boolean(rad.rotRutTyp));
+  const harRotRutArtiklar = rotRutArtiklar.length > 0;
+  const rotRutAktiverat = Boolean(formData.rotRutAktiverat || harRotRutArtiklar);
+  const rotRutTyp = formData.rotRutTyp ?? rotRutArtiklar.find((rad) => rad.rotRutTyp)?.rotRutTyp;
+
+  const rotRutTjänster = rotRutArtiklar.filter(
+    (rad) => rad.typ === "tjänst" && !rad.rotRutMaterial
+  );
+
+  const rotRutTjänsterSumExkl = rotRutTjänster.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    return acc + antal * pris;
+  }, 0);
+
+  const rotRutTjänsterMoms = rotRutTjänster.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    const moms = Number(rad.moms) || 0;
+    return acc + antal * pris * (moms / 100);
+  }, 0);
+
+  const rotRutTjänsterInklMoms = rotRutTjänsterSumExkl + rotRutTjänsterMoms;
+
+  const rotRutAvdrag =
+    rotRutAktiverat && (rotRutTyp === "ROT" || rotRutTyp === "RUT")
+      ? 0.5 * rotRutTjänsterInklMoms
+      : 0;
+
+  const summaAttBetala = Math.max(sumInkl - rotRutAvdrag, 0);
+
+  const rotRutPersonnummer =
+    formData.personnummer ||
+    rotRutArtiklar.find((rad) => rad.rotRutPersonnummer)?.rotRutPersonnummer ||
+    "";
+
+  const rotRutTotalTimmar = rotRutArtiklar.reduce((sum, rad) => sum + (Number(rad.antal) || 0), 0);
+  const rotRutGenomsnittsPris =
+    rotRutArtiklar.length > 0
+      ? rotRutArtiklar.reduce((sum, rad) => sum + (Number(rad.prisPerEnhet) || 0), 0) /
+        rotRutArtiklar.length
+      : 0;
+
+  const rotRutAvdragProcent = rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—";
+
+  const shouldShowRotRut = Boolean(rotRutAktiverat && rotRutTyp);
+
+  return {
+    artiklar: rows,
+    totals: {
+      sumExkl,
+      totalMoms,
+      sumInkl,
+      rotRutAvdrag,
+      summaAttBetala,
+    },
+    rotRutSummary: {
+      harRotRutArtiklar,
+      rotRutTyp,
+      rotRutTjänsterSumExkl,
+      rotRutTjänsterMoms,
+      rotRutTjänsterInklMoms,
+      rotRutAvdrag,
+      rotRutPersonnummer,
+      rotRutTotalTimmar,
+      rotRutGenomsnittsPris,
+      rotRutAvdragProcent,
+      shouldShowRotRut,
+    },
+  };
+}
+
+const sanitizeRotRutText = (text: string): string => {
+  if (!text || typeof text !== "string") return "";
+  return sanitizeInput(text, 500).replace(/\s+/g, " ").trim();
+};
+
+const sanitizeRotRutPersonnummer = (value: string): string => {
+  const sanitized = sanitizeFormInput(value).replace(/[^\d-]/g, "");
+  return sanitized.slice(0, 13);
+};
+
 export function useProdukterTjanster() {
-  // Context state
-  const context = useFakturaContext();
-  const {
-    state: { formData, nyArtikel, produkterTjansterState },
-    setFormData,
-    setNyArtikel,
-    resetNyArtikel,
-    setProdukterTjansterState,
-  } = context;
+  const { state, setState, setNyArtikel, resetNyArtikel, setFavoritArtiklar } =
+    useFakturaArtikelContext();
+  const formData = useFakturaForm();
+  const { setFormData } = useFakturaFormActions();
 
-  // Modal states
-  const [showDeleteFavoritModal, setShowDeleteFavoritModal] = useState(false);
-  const [deleteFavoritId, setDeleteFavoritId] = useState<number | null>(null);
+  const metrics = useMemo(() => deriveArtikelMetrics(formData), [formData]);
+  const artiklar = metrics.artiklar;
 
-  // =============================================================================
-  // ROT/RUT CONSTANTS
-  // =============================================================================
-
-  const RUT_KATEGORIER = [
-    "Passa barn",
-    "Fiber- och it-tjänster",
-    "Flytta och packa",
-    "Transport till försäljning för återanvändning",
-    "Möblering",
-    "Ta hand om en person och ge omsorg",
-    "Reparera vitvaror",
-    "Skotta snö",
-    "Städa",
-    "Tvätta, laga och sy",
-    "Tvätt vid tvättinrättning",
-    "Trädgårdsarbete – fälla och beskära träd",
-    "Trädgårdsarbete – underhålla, klippa och gräva",
-    "Tillsyn",
-  ];
-
-  const ROT_KATEGORIER = [
-    "Bygg – reparera och underhålla",
-    "Bygg – bygga om och bygga till",
-    "El",
-    "Glas och plåt",
-    "Gräv- och markarbete",
-    "Murning och sotning",
-    "Målning och tapetsering",
-    "Rengöring",
-    "VVS",
-  ];
-
-  // =============================================================================
-  // ROT/RUT UTILITY FUNCTIONS
-  // =============================================================================
-
-  const sanitizeRotRutInput = useCallback((text: string): string => {
-    if (!text || typeof text !== "string") return "";
-    return text
-      .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-      .replace(/\s+/g, " ") // Normalisera whitespace
-      .trim()
-      .substring(0, 500); // Begränsa längd
-  }, []);
-
-  const validateRotRutNumeric = useCallback((value: string): boolean => {
-    const num = parseFloat(value);
-    return !isNaN(num) && isFinite(num) && num >= 0 && num < 10000000;
-  }, []);
-
-  const validatePersonnummerRotRut = useCallback((personnummer: string): boolean => {
-    if (!personnummer) return false;
-    const clean = personnummer.replace(/[-\s]/g, "");
-    return /^\d{10}$/.test(clean) || /^\d{12}$/.test(clean);
-  }, []);
-
-  // =============================================================================
-  // STORE STATE HELPERS
-  // =============================================================================
-
-  // Store state destructuring
-  const {
-    favoritArtiklar,
-    showFavoritArtiklar,
-    blinkIndex,
-    visaRotRutForm,
-    visaArtikelForm,
-    visaArtikelModal,
-    redigerarIndex,
-    favoritArtikelVald,
-    ursprungligFavoritId,
-    artikelSparadSomFavorit,
-    valtArtikel,
-  } = produkterTjansterState;
-
-  // =============================================================================
-  // ARTIKEL FUNCTIONS
-  // =============================================================================
-
-  // Ladda sparade artiklar
   const laddaSparadeArtiklar = useCallback(async () => {
     try {
       const artiklar = await hämtaSparadeArtiklar();
-      setProdukterTjansterState({ favoritArtiklar: artiklar || [] });
+      setFavoritArtiklar(artiklar || []);
     } catch (error) {
       console.error("Fel vid laddning av artiklar:", error);
       showToast("Kunde inte ladda sparade artiklar", "error");
     }
-  }, [setProdukterTjansterState]);
+  }, [setFavoritArtiklar]);
 
-  // =============================================================================
-  // INITIALIZATION
-  // =============================================================================
-
-  // Ladda favoritartiklar när komponenten mountas
   useEffect(() => {
-    if (favoritArtiklar.length === 0) {
-      laddaSparadeArtiklar();
+    if (state.favoritArtiklar.length === 0) {
+      laddaSparadeArtiklar().catch((error) => {
+        console.error("[FakturaArtikel] kunde inte ladda favoritartiklar", error);
+      });
     }
-  }, [laddaSparadeArtiklar]);
+  }, [state.favoritArtiklar.length, laddaSparadeArtiklar]);
 
-  // Lägg till artikel
   const läggTillArtikel = useCallback(() => {
-    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
+    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;
 
     if (!beskrivning || !antal || !prisPerEnhet) {
       showToast("Fyll i alla obligatoriska fält", "error");
@@ -148,40 +187,40 @@ export function useProdukterTjanster() {
       moms: parseFloat(moms),
       valuta,
       typ,
-      ursprungligFavoritId: ursprungligFavoritId ?? undefined,
+      ursprungligFavoritId: state.ursprungligFavoritId ?? undefined,
     };
 
-    const uppdateradeArtiklar = [...formData.artiklar, nyArtikelData];
+    const uppdateradeArtiklar = [...artiklar, nyArtikelData];
     setFormData({ artiklar: uppdateradeArtiklar });
     resetNyArtikel();
-    setProdukterTjansterState({
+    setState({
       visaArtikelForm: false,
       favoritArtikelVald: false,
       ursprungligFavoritId: null,
+      blinkIndex: uppdateradeArtiklar.length - 1,
     });
     showToast("Artikel tillagd", "success");
   }, [
-    nyArtikel,
-    formData.artiklar,
-    ursprungligFavoritId,
+    state.nyArtikel,
+    state.ursprungligFavoritId,
+    artiklar,
     setFormData,
     resetNyArtikel,
-    setProdukterTjansterState,
+    setState,
   ]);
 
-  // Ta bort artikel
   const taBortArtikel = useCallback(
     (index: number) => {
-      const uppdateradeArtiklar = formData.artiklar.filter((_, i) => i !== index);
+      const uppdateradeArtiklar = artiklar.filter((_, i) => i !== index);
       setFormData({ artiklar: uppdateradeArtiklar });
+      setState({ blinkIndex: null });
       showToast("Artikel borttagen", "success");
     },
-    [formData.artiklar, setFormData]
+    [artiklar, setFormData, setState]
   );
 
-  // Spara artikel som favorit
   const sparaArtikelSomFavorit = useCallback(async () => {
-    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
+    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;
 
     if (!beskrivning.trim() || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
       showToast("Fyll i alla obligatoriska fält", "error");
@@ -195,7 +234,6 @@ export function useProdukterTjanster() {
       moms: Number(moms),
       valuta,
       typ,
-      // Lägg till ROT/RUT data om det finns
       rotRutTyp: formData.rotRutTyp || undefined,
       rotRutKategori: formData.rotRutKategori || undefined,
       avdragProcent: formData.avdragProcent || undefined,
@@ -210,58 +248,47 @@ export function useProdukterTjanster() {
         } else {
           showToast("Artikel sparad som favorit! 📌", "success");
         }
-        setProdukterTjansterState({ artikelSparadSomFavorit: true });
-        // Ladda om favoriter för att visa den nya
+        setState({ artikelSparadSomFavorit: true });
         await laddaSparadeArtiklar();
       } else {
         showToast("Kunde inte spara som favorit", "error");
       }
-    } catch {
+    } catch (error) {
+      console.error("Fel vid sparande av favoritartikel", error);
       showToast("Fel vid sparande av favorit", "error");
     }
-  }, [
-    nyArtikel,
-    formData.rotRutTyp,
-    formData.rotRutKategori,
-    formData.avdragProcent,
-    formData.arbetskostnadExMoms,
-    sparaFavoritArtikel,
-    setProdukterTjansterState,
-    laddaSparadeArtiklar,
-  ]);
+  }, [state.nyArtikel, formData, setState, laddaSparadeArtiklar]);
 
-  // Ta bort favoritartikel
   const taBortFavoritArtikel = useCallback(
-    async (id: number) => {
-      setDeleteFavoritId(id);
-      setShowDeleteFavoritModal(true);
+    (id: number) => {
+      setState({ deleteFavoritId: id, showDeleteFavoritModal: true });
     },
-    [setDeleteFavoritId, setShowDeleteFavoritModal]
+    [setState]
   );
 
   const confirmDeleteFavorit = useCallback(async () => {
-    if (!deleteFavoritId) return;
+    if (!state.deleteFavoritId) return;
 
-    setShowDeleteFavoritModal(false);
+    setState({ showDeleteFavoritModal: false });
 
     try {
-      const result = await deleteFavoritArtikel(deleteFavoritId);
+      const result = await deleteFavoritArtikel(state.deleteFavoritId);
       if (result.success) {
         showToast("Favoritartikel borttagen! 🗑️", "success");
-        // Ladda om favoriter för att uppdatera listan
         await laddaSparadeArtiklar();
       } else {
         showToast("Kunde inte ta bort favoritartikel", "error");
       }
-    } catch {
+    } catch (error) {
+      console.error("Fel vid borttagning av favoritartikel", error);
       showToast("Fel vid borttagning av favoritartikel", "error");
+    } finally {
+      setState({ deleteFavoritId: null });
     }
-  }, [deleteFavoritId, laddaSparadeArtiklar]);
+  }, [state.deleteFavoritId, laddaSparadeArtiklar, setState]);
 
-  // Ladda favoritartikel till formuläret
   const laddaFavoritArtikel = useCallback(
     (artikel: FavoritArtikel) => {
-      // Skapa artikel direkt och lägg till i fakturaraderna
       const nyArtikelData: Artikel = {
         beskrivning: artikel.beskrivning || "",
         antal: artikel.antal || 1,
@@ -272,11 +299,9 @@ export function useProdukterTjanster() {
         ursprungligFavoritId: artikel.id,
       };
 
-      // Lägg till artikeln direkt i fakturaraderna
-      const uppdateradeArtiklar = [...formData.artiklar, nyArtikelData];
+      const uppdateradeArtiklar = [...artiklar, nyArtikelData];
       setFormData({ artiklar: uppdateradeArtiklar });
 
-      // Uppdatera också ROT/RUT data om det finns
       if (artikel.rotRutTyp) {
         setFormData({
           rotRutAktiverat: true,
@@ -287,43 +312,37 @@ export function useProdukterTjanster() {
         });
       }
 
+      setState({ blinkIndex: uppdateradeArtiklar.length - 1 });
       showToast(`Favoritartikel "${artikel.beskrivning}" tillagd! 📌`, "success");
     },
-    [formData.artiklar, setFormData]
+    [artiklar, setFormData, setState]
   );
 
-  // =============================================================================
-  // ROT/RUT EVENT HANDLERS
-  // =============================================================================
-
   const handleRotRutChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       let finalValue: string | boolean = value;
 
       if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
         finalValue = e.target.checked;
       } else if (typeof value === "string") {
-        // SÄKERHETSVALIDERING: Sanitera alla textvärden
-        if (name === "rotRutBeskrivning") {
-          finalValue = sanitizeRotRutInput(value);
-        } else if (name === "personnummer") {
-          // Tillåt bara siffror och bindestreck för personnummer
-          finalValue = value.replace(/[^\d-]/g, "").substring(0, 13);
+        if (name === "personnummer") {
+          const personnummer = sanitizeRotRutPersonnummer(value);
+          finalValue = personnummer;
         } else if (
+          name === "rotRutBeskrivning" ||
           name === "fastighetsbeteckning" ||
           name === "brfOrganisationsnummer" ||
           name === "brfLagenhetsnummer"
         ) {
-          finalValue = sanitizeRotRutInput(value);
-        } else if (typeof value === "string") {
-          finalValue = sanitizeRotRutInput(value);
+          finalValue = sanitizeRotRutText(value);
+        } else {
+          finalValue = sanitizeFormInput(value);
         }
       }
 
       if (name === "rotRutAktiverat" && finalValue === false) {
-        // Reset alla ROT/RUT fält när det inaktiveras
-        const fieldsToReset = {
+        setFormData({
           rotRutAktiverat: false,
           rotRutTyp: undefined,
           rotRutKategori: undefined,
@@ -335,16 +354,12 @@ export function useProdukterTjanster() {
           rotBoendeTyp: undefined,
           brfOrganisationsnummer: undefined,
           brfLagenhetsnummer: undefined,
-        };
-
-        Object.entries(fieldsToReset).forEach(([key, value]) => {
-          setFormData({ [key]: value });
         });
         return;
       }
 
       if (name === "rotRutTyp") {
-        const procent = value === "ROT" ? 50 : value === "RUT" ? 50 : undefined;
+        const procent = value === "ROT" || value === "RUT" ? 50 : undefined;
         const isActive = value === "ROT" || value === "RUT";
 
         setFormData({
@@ -356,10 +371,9 @@ export function useProdukterTjanster() {
         return;
       }
 
-      // Vanlig uppdatering av enskilt fält
       setFormData({ [name]: finalValue });
     },
-    [setFormData, sanitizeRotRutInput]
+    [setFormData]
   );
 
   const handleRotRutBoendeTypChange = useCallback(
@@ -372,90 +386,98 @@ export function useProdukterTjanster() {
   const handleRotRutDateChange = useCallback(
     (field: string, date: Date | null) => {
       if (date) {
-        const dateString = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-        setFormData({ [field]: dateString });
+        setFormData({ [field]: dateTillÅÅÅÅMMDD(date) });
       }
     },
     [setFormData]
   );
 
-  // =============================================================================
-  // STATE SETTERS
-  // =============================================================================
-
   const setShowFavoritArtiklar = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ showFavoritArtiklar: value });
+      setState({ showFavoritArtiklar: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setVisaRotRutForm = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ visaRotRutForm: value });
+      setState({ visaRotRutForm: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setVisaArtikelForm = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ visaArtikelForm: value });
+      setState({ visaArtikelForm: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setVisaArtikelModal = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ visaArtikelModal: value });
+      setState({ visaArtikelModal: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setRedigerarIndex = useCallback(
     (value: number | null) => {
-      setProdukterTjansterState({ redigerarIndex: value });
+      setState({ redigerarIndex: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setFavoritArtikelVald = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ favoritArtikelVald: value });
+      setState({ favoritArtikelVald: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setUrsprungligFavoritId = useCallback(
     (value: number | null) => {
-      setProdukterTjansterState({ ursprungligFavoritId: value });
+      setState({ ursprungligFavoritId: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setArtikelSparadSomFavorit = useCallback(
     (value: boolean) => {
-      setProdukterTjansterState({ artikelSparadSomFavorit: value });
+      setState({ artikelSparadSomFavorit: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setValtArtikel = useCallback(
     (value: FavoritArtikel | null) => {
-      setProdukterTjansterState({ valtArtikel: value });
+      setState({ valtArtikel: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
   const setBlinkIndex = useCallback(
     (value: number | null) => {
-      setProdukterTjansterState({ blinkIndex: value });
+      setState({ blinkIndex: value });
     },
-    [setProdukterTjansterState]
+    [setState]
   );
 
-  // =============================================================================
-  // HELPER FUNCTIONS
-  // =============================================================================
+  const setShowDeleteFavoritModal = useCallback(
+    (value: boolean) => {
+      setState({
+        showDeleteFavoritModal: value,
+        deleteFavoritId: value ? state.deleteFavoritId : null,
+      });
+    },
+    [setState, state.deleteFavoritId]
+  );
+
+  const setDeleteFavoritId = useCallback(
+    (value: number | null) => {
+      setState({ deleteFavoritId: value });
+    },
+    [setState]
+  );
 
   const updateArtikel = useCallback(
     (updates: Partial<NyArtikel>) => {
@@ -464,63 +486,66 @@ export function useProdukterTjanster() {
     [setNyArtikel]
   );
 
-  // Artikel setters för nyArtikel state
   const setBeskrivning = useCallback(
     (value: string) => updateArtikel({ beskrivning: value }),
     [updateArtikel]
   );
+
   const setAntal = useCallback(
     (value: number) => updateArtikel({ antal: value.toString() }),
     [updateArtikel]
   );
+
   const setPrisPerEnhet = useCallback(
     (value: number) => updateArtikel({ prisPerEnhet: value.toString() }),
     [updateArtikel]
   );
+
   const setMoms = useCallback(
     (value: number) => updateArtikel({ moms: value.toString() }),
     [updateArtikel]
   );
+
   const setValuta = useCallback(
     (value: string) => updateArtikel({ valuta: value }),
     [updateArtikel]
   );
+
   const setTyp = useCallback(
     (value: "vara" | "tjänst") => updateArtikel({ typ: value }),
     [updateArtikel]
   );
 
-  // =============================================================================
-  // RETURN OBJECT
-  // =============================================================================
-
   return {
-    // State from produkterTjansterState
-    favoritArtiklar,
-    showFavoritArtiklar,
-    blinkIndex,
-    visaRotRutForm,
-    visaArtikelForm,
-    visaArtikelModal,
-    redigerarIndex,
-    favoritArtikelVald,
-    ursprungligFavoritId,
-    artikelSparadSomFavorit,
-    valtArtikel,
+    // State
+    favoritArtiklar: state.favoritArtiklar,
+    showFavoritArtiklar: state.showFavoritArtiklar,
+    blinkIndex: state.blinkIndex,
+    visaRotRutForm: state.visaRotRutForm,
+    visaArtikelForm: state.visaArtikelForm,
+    visaArtikelModal: state.visaArtikelModal,
+    redigerarIndex: state.redigerarIndex,
+    favoritArtikelVald: state.favoritArtikelVald,
+    ursprungligFavoritId: state.ursprungligFavoritId,
+    artikelSparadSomFavorit: state.artikelSparadSomFavorit,
+    valtArtikel: state.valtArtikel,
+    showDeleteFavoritModal: state.showDeleteFavoritModal,
+    deleteFavoritId: state.deleteFavoritId,
+    nyArtikel: state.nyArtikel,
 
-    // nyArtikel state
-    nyArtikel,
+    // Derived
+    artiklar,
+    harArtiklar: artiklar.length > 0,
+    totals: metrics.totals,
+    rotRutSummary: metrics.rotRutSummary,
+    standardValuta: artiklar[0]?.valuta ?? "SEK",
 
-    // ROT/RUT constants
+    // Constants
     RUT_KATEGORIER,
     ROT_KATEGORIER,
 
-    // ROT/RUT utility functions
-    sanitizeRotRutInput,
-    validateRotRutNumeric,
-    validatePersonnummerRotRut,
-
-    // Artikel functions
+    // Utils
+    // Actions
     laddaSparadeArtiklar,
     läggTillArtikel,
     taBortArtikel,
@@ -528,13 +553,6 @@ export function useProdukterTjanster() {
     taBortFavoritArtikel,
     confirmDeleteFavorit,
     laddaFavoritArtikel,
-
-    // Modal states
-    showDeleteFavoritModal,
-    setShowDeleteFavoritModal,
-    deleteFavoritId,
-
-    // ROT/RUT event handlers
     handleRotRutChange,
     handleRotRutBoendeTypChange,
     handleRotRutDateChange,
@@ -550,8 +568,10 @@ export function useProdukterTjanster() {
     setArtikelSparadSomFavorit,
     setValtArtikel,
     setBlinkIndex,
+    setShowDeleteFavoritModal,
+    setDeleteFavoritId,
 
-    // Artikel setters för nyArtikel state
+    // Artikel setters
     setBeskrivning,
     setAntal,
     setPrisPerEnhet,
@@ -559,5 +579,6 @@ export function useProdukterTjanster() {
     setValuta,
     setTyp,
     updateArtikel,
+    resetNyArtikel,
   };
 }

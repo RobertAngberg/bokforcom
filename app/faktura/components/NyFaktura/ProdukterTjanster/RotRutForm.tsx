@@ -3,6 +3,7 @@
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import TextFalt from "../../../../_components/TextFalt";
+import { formatCurrency } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
@@ -76,10 +77,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
               <div className="md:col-span-2 p-3 bg-slate-700 rounded">
                 <div className="text-white">
                   <span className="font-semibold">Beräknad arbetskostnad exkl. moms:</span>{" "}
-                  {(Number(antal) * Number(prisPerEnhet)).toLocaleString("sv-SE", {
-                    style: "currency",
-                    currency: "SEK",
-                  })}
+                  {formatCurrency(Number(antal) * Number(prisPerEnhet))}
                 </div>
               </div>
             )}
@@ -228,10 +226,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
           {formData.avdragBelopp !== undefined && formData.avdragBelopp > 0 && (
             <div className="text-white font-semibold mt-4">
               Avdrag (50% av belopp inkl. moms):{" "}
-              {formData.avdragBelopp.toLocaleString("sv-SE", {
-                style: "currency",
-                currency: "SEK",
-              })}
+              {formatCurrency(Number(formData.avdragBelopp ?? 0))}
             </div>
           )}
         </>

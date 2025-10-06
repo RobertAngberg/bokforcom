@@ -3,17 +3,14 @@
 import { useSparade } from "../../hooks/useSparade";
 import { useSparadeFakturorPage } from "../../hooks/useLeverantorer";
 import TillbakaPil from "../../../_components/TillbakaPil";
-
-interface SparadeProps {
-  onBackToMenu?: () => void;
-  onEditFaktura?: (fakturaId: number) => void;
-}
+import { formatCurrency } from "../../../_utils/format";
+import type { SparadeProps, SparadFaktura } from "../../types/types";
 
 export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
   const { data } = useSparadeFakturorPage();
   const { loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } = useSparade();
 
-  const fakturor = data?.fakturor || [];
+  const fakturor: SparadFaktura[] = data?.fakturor ?? [];
 
   return (
     <>
@@ -27,7 +24,7 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
           <p className="text-gray-400 italic">Inga fakturor hittades.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {fakturor.map((faktura: any) => {
+            {fakturor.map((faktura) => {
               const datum = faktura.fakturadatum
                 ? new Date(faktura.fakturadatum).toLocaleDateString("sv-SE", {
                     year: "numeric",
@@ -82,7 +79,7 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
                     <hr className="border-slate-600 mb-3" />
                     <div className="text-white text-sm mb-2">{datum}</div>
                     <div className="font-medium text-white text-sm mb-2">
-                      {faktura.totalBelopp?.toFixed(2) ?? "0.00"} kr
+                      {formatCurrency(faktura.totalBelopp ?? 0)}
                     </div>
                     <div className={`text-sm ${statusColor} mb-2`}>{statusBadge}</div>
                     {faktura.betaldatum && (

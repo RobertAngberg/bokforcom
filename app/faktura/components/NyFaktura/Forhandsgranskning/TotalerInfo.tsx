@@ -1,3 +1,4 @@
+import { formatAmount, formatCurrency } from "../../../../_utils/format";
 import { TotalerInfoProps } from "../../../types/types";
 
 export default function TotalerInfo({
@@ -11,20 +12,22 @@ export default function TotalerInfo({
   return (
     <div className="text-right space-y-1 text-[10pt]">
       <p>
-        <strong>Summa exkl. moms:</strong> {sumExkl.toFixed(2)} {valuta}
+        <strong>Summa exkl. moms:</strong> {formatAmount(sumExkl)} {valuta}
       </p>
       <p>
-        <strong>Moms totalt:</strong> {totalMoms.toFixed(2)} {valuta}
+        <strong>Moms totalt:</strong> {formatAmount(totalMoms)} {valuta}
       </p>
       {rotRutAvdrag > 0 && (
         <p className="font-bold">
           {rotRutTyp === "ROT" ? "ROT-avdrag: –" : "RUT-avdrag: –"}
-          {rotRutAvdrag.toLocaleString("sv-SE", { style: "currency", currency: "SEK" })}
+          {formatCurrency(rotRutAvdrag)}
         </p>
       )}
       <p className="text-lg font-bold mt-2">
         Summa att betala:{" "}
-        {summaAttBetala.toLocaleString("sv-SE", { style: "currency", currency: "SEK" })}
+        {valuta === "SEK"
+          ? formatCurrency(summaAttBetala)
+          : `${formatAmount(summaAttBetala)} ${valuta}`}
       </p>
     </div>
   );

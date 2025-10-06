@@ -1,3 +1,5 @@
+import type { MutableRefObject } from "react";
+
 // === BOKFÖRING TYPES ===
 export interface BokföringPost {
   konto: string | number;
@@ -225,9 +227,31 @@ export interface LäggTillFavoritartikelProps {
   labelClassName?: string;
 }
 
-// SparadeFakturor types
+// Sparade fakturor types
+export interface SparadFaktura {
+  id: number;
+  fakturanummer: string;
+  fakturadatum: string | Date | null;
+  kundId: number | null;
+  status_betalning: string | null;
+  status_bokförd: string | null;
+  betaldatum: string | Date | null;
+  transaktions_id: number | null;
+  rot_rut_status: string | null;
+  typ: string;
+  kundnamn: string | null;
+  totalBelopp: number;
+  antalArtiklar: number;
+  rotRutTyp: "ROT" | "RUT" | "ROT+RUT" | null;
+}
+
+export interface SparadeProps {
+  onBackToMenu?: () => void;
+  onEditFaktura?: (fakturaId: number) => void;
+}
+
 export interface SparadeFakturorProps {
-  fakturor: unknown[];
+  fakturor: SparadFaktura[];
   activeInvoiceId?: number;
   onSelectInvoice?: (id: number) => void | Promise<void>;
 }
@@ -282,15 +306,21 @@ export interface UseVerifikatModalProps {
 
 // Sparade types
 export interface FakturorComponentProps {
-  initialFakturor: unknown[];
+  initialFakturor: SparadFaktura[];
 }
 
 export interface UseSparadeFakturorReturn {
   hanteraValdFaktura: (fakturaId: number) => Promise<void>;
 }
 
+export interface SparadeFakturorPageData {
+  kunder: unknown[];
+  fakturor: SparadFaktura[];
+  artiklar: FavoritArtikel[];
+}
+
 export interface UseSparadeFakturorPageReturn {
-  data: { kunder: unknown[]; fakturor: unknown[]; artiklar: FavoritArtikel[] } | null;
+  data: SparadeFakturorPageData | null;
   loading: boolean;
   loadData: () => Promise<void>;
 }
@@ -420,15 +450,7 @@ export interface UseNyLeverantorModalReturn {
   // State
   loading: boolean;
   error: string | null;
-  formData: {
-    namn: string;
-    organisationsnummer: string;
-    adress: string;
-    postnummer: string;
-    stad: string;
-    telefon: string;
-    epost: string;
-  };
+  formData: LeverantörFormData;
   isEditing: boolean;
 
   // Actions
@@ -598,6 +620,13 @@ export interface RotRutBetalningModalProps {
   onSuccess: (nyStatus: { rot_rut_status: string; status_betalning: string }) => void;
 }
 
+export type RotRutStatusPayload = Parameters<RotRutBetalningModalProps["onSuccess"]>[0];
+
+export type UseRotRutOptions = Pick<
+  RotRutBetalningModalProps,
+  "fakturaId" | "totalBelopp" | "bokföringsmetod" | "onSuccess" | "onClose"
+>;
+
 // === HUS FIL GENERATION ===
 export interface HUSFilData {
   fakturanummer: string;
@@ -615,74 +644,134 @@ export interface HUSFilData {
   materialKostnad?: number;
 }
 
+export interface FakturaArtikelState {
+  nyArtikel: NyArtikel;
+  favoritArtiklar: FavoritArtikel[];
+  showFavoritArtiklar: boolean;
+  blinkIndex: number | null;
+  visaRotRutForm: boolean;
+  visaArtikelForm: boolean;
+  visaArtikelModal: boolean;
+  redigerarIndex: number | null;
+  favoritArtikelVald: boolean;
+  ursprungligFavoritId: number | null;
+  artikelSparadSomFavorit: boolean;
+  valtArtikel: FavoritArtikel | null;
+  showDeleteFavoritModal: boolean;
+  deleteFavoritId: number | null;
+}
+
+export type FakturaArtikelAction =
+  | { type: "SET_STATE"; payload: Partial<FakturaArtikelState> }
+  | { type: "RESET_STATE" }
+  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
+  | { type: "RESET_NY_ARTIKEL" }
+  | { type: "SET_FAVORIT_ARTIKLAR"; payload: FavoritArtikel[] };
+
+export interface FakturaArtikelContextValue {
+  state: FakturaArtikelState;
+  setState: (updates: Partial<FakturaArtikelState>) => void;
+  setNyArtikel: (updates: Partial<NyArtikel>) => void;
+  resetNyArtikel: () => void;
+  setFavoritArtiklar: (artiklar: FavoritArtikel[]) => void;
+  resetState: () => void;
+}
+
+export interface FakturaArtikelProviderProps {
+  children: React.ReactNode;
+}
+
+export interface LeverantörFormData {
+  namn: string;
+  organisationsnummer?: string;
+  adress?: string;
+  postnummer?: string;
+  stad?: string;
+  telefon?: string;
+  epost?: string;
+}
+
+export interface BokföringsData {
+  fakturanummer: string;
+  kundnamn: string;
+  poster: BokforingsPost[];
+  totaltBelopp: number;
+}
+
 // === CONTEXT TYPES ===
 export interface FakturaState {
-  formData: FakturaFormData;
   kundStatus: KundStatus;
   navigationState: NavigationState;
-  nyArtikel: NyArtikel;
-  produkterTjansterState: {
-    favoritArtiklar: FavoritArtikel[];
-    showFavoritArtiklar: boolean;
-    blinkIndex: number | null;
-    visaRotRutForm: boolean;
-    visaArtikelForm: boolean;
-    visaArtikelModal: boolean;
-    redigerarIndex: number | null;
-    favoritArtikelVald: boolean;
-    ursprungligFavoritId: number | null;
-    artikelSparadSomFavorit: boolean;
-    valtArtikel: FavoritArtikel | null;
-  };
   userSettings: {
     bokföringsmetod: "kontantmetoden" | "fakturametoden";
   };
 }
 
-export type FakturaAction =
+// Håller reda på engångsguards som delas mellan alla `useFaktura`-instanser
+// så att init-logik bara körs när det verkligen behövs.
+// Dessa flaggor används för att styra engångslogik (defaults, autofyll osv.)
+// och delas mellan alla komponenter via context för att undvika loopar.
+export interface FakturaLifecycleFlags {
+  lastDefaultsSessionId: string | null;
+  harInitDefaults: boolean;
+  harAutoBeraknatForfallo: boolean;
+  harLastatForetagsprofil: boolean;
+}
+
+export type FakturaFormAction =
   | { type: "SET_FORM_DATA"; payload: Partial<FakturaFormData> }
   | { type: "RESET_FORM_DATA" }
+  | { type: "HYDRATE_FORM_DATA"; payload: Partial<FakturaFormData> };
+
+export type FakturaFormSelector<T> = (state: FakturaFormData) => T;
+
+export interface FakturaFormContextValue {
+  getSnapshot: () => FakturaFormData;
+  subscribe: (listener: () => void) => () => void;
+  setFormData: (updates: Partial<FakturaFormData>) => void;
+  resetFormData: () => void;
+  hydrateFromServer: (data: ServerData) => void;
+  lifecycle: MutableRefObject<FakturaLifecycleFlags>;
+}
+
+export interface FakturaFormProviderProps {
+  children: React.ReactNode;
+  initialData?: ServerData;
+}
+
+export type FakturaAction =
   | { type: "SET_KUND_STATUS"; payload: KundStatus }
   | { type: "RESET_KUND" }
   | { type: "SET_NAVIGATION"; payload: Partial<NavigationState> }
   | { type: "NAVIGATE_TO_VIEW"; payload: ViewType }
   | { type: "NAVIGATE_TO_EDIT"; payload: { view: ViewType; fakturaId?: number } }
   | { type: "NAVIGATE_BACK" }
-  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
-  | { type: "RESET_NY_ARTIKEL" }
-  | {
-      type: "SET_PRODUKTER_TJANSTER_STATE";
-      payload: Partial<FakturaState["produkterTjansterState"]>;
-    }
-  | { type: "RESET_PRODUKTER_TJANSTER" }
   | { type: "SET_TOAST"; payload: { message: string; type: "success" | "error" | "info" } }
   | { type: "CLEAR_TOAST" }
-  | { type: "SET_BOKFÖRINGSMETOD"; payload: "kontantmetoden" | "fakturametoden" }
-  | { type: "INIT_STORE"; payload: ServerData };
+  | { type: "SET_BOKFÖRINGSMETOD"; payload: "kontantmetoden" | "fakturametoden" };
+
+export type FakturaDispatch = React.Dispatch<FakturaAction>;
 
 export interface FakturaContextType {
   state: FakturaState;
-  dispatch: React.Dispatch<FakturaAction>;
+  dispatch: FakturaDispatch;
   // Helper actions - samma API som Zustand store
-  setFormData: (data: Partial<FakturaFormData>) => void;
-  resetFormData: () => void;
   setKundStatus: (status: KundStatus) => void;
   resetKund: () => void;
   setNavigation: (navigation: Partial<NavigationState>) => void;
   navigateToView: (view: ViewType) => void;
   navigateToEdit: (view: ViewType, fakturaId?: number) => void;
   navigateBack: () => void;
-  setNyArtikel: (artikel: Partial<NyArtikel>) => void;
-  resetNyArtikel: () => void;
-  setProdukterTjansterState: (state: Partial<FakturaState["produkterTjansterState"]>) => void;
-  resetProdukterTjanster: () => void;
   setBokföringsmetod: (metod: "kontantmetoden" | "fakturametoden") => void;
-  initStore: (data: ServerData) => void;
 }
 
 export interface FakturaProviderProps {
   children: React.ReactNode;
   initialData?: ServerData;
+}
+
+export interface FakturaContextInnerProps {
+  children: React.ReactNode;
 }
 
 export interface NyFakturaProps {

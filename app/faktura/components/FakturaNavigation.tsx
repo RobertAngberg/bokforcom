@@ -1,28 +1,37 @@
 "use client";
 
-import { useState } from "react";
 import Knapp from "../../_components/Knapp";
 import NyFaktura from "./NyFaktura/NyFaktura";
 import Sparade from "./Sparade/Sparade";
 import Leverantorsfakturor from "./Leverantorsfakturor/Leverantorsfakturor";
-
-type ActiveView = "overview" | "ny" | "sparade" | "leverantorer";
+import { useFakturaClient } from "../context/FakturaContextProvider";
 
 export default function FakturaNavigation() {
-  const [activeView, setActiveView] = useState<ActiveView>("overview");
-  const [editFakturaId, setEditFakturaId] = useState<number | undefined>(undefined);
+  const { navigationState, navigateToView, navigateToEdit, navigateBack } = useFakturaClient();
+  const activeView = navigationState.currentView;
+  const editFakturaId = navigationState.editFakturaId;
+
+  const handleCreateNew = () => {
+    navigateToEdit("ny");
+  };
+
+  const handleShowSparade = () => {
+    navigateToView("sparade");
+  };
+
+  const handleShowLeverantorsfakturor = () => {
+    navigateToView("leverantorsfakturor");
+  };
 
   const handleEditFaktura = (fakturaId: number) => {
-    setEditFakturaId(fakturaId);
-    setActiveView("ny");
+    navigateToEdit("ny", fakturaId);
   };
 
   const handleBackToOverview = () => {
-    setEditFakturaId(undefined);
-    setActiveView("overview");
+    navigateBack();
   };
 
-  if (activeView === "overview") {
+  if (activeView === "menu") {
     return (
       <>
         <h1 className="text-3xl text-center text-slate-100 mb-8">Faktura</h1>
@@ -32,18 +41,14 @@ export default function FakturaNavigation() {
             <h2 className="text-xl font-semibold mb-4 text-white flex items-center justify-center gap-3">
               📄 Ny Faktura
             </h2>
-            <Knapp text="Skapa Faktura" onClick={() => setActiveView("ny")} className="w-full" />
+            <Knapp text="Skapa Faktura" onClick={handleCreateNew} className="w-full" />
           </div>
 
           <div className="bg-slate-800 rounded-lg shadow p-6 border border-slate-600">
             <h2 className="text-xl font-semibold mb-4 text-white flex items-center justify-center gap-3">
               📂 Sparade Fakturor
             </h2>
-            <Knapp
-              text="Visa Sparade"
-              onClick={() => setActiveView("sparade")}
-              className="w-full"
-            />
+            <Knapp text="Visa Sparade" onClick={handleShowSparade} className="w-full" />
           </div>
 
           <div className="bg-slate-800 rounded-lg shadow p-6 border border-slate-600">
@@ -52,7 +57,7 @@ export default function FakturaNavigation() {
             </h2>
             <Knapp
               text="Visa Leverantörsfakturor"
-              onClick={() => setActiveView("leverantorer")}
+              onClick={handleShowLeverantorsfakturor}
               className="w-full"
             />
           </div>
@@ -70,7 +75,9 @@ export default function FakturaNavigation() {
       {activeView === "sparade" && (
         <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}
-      {activeView === "leverantorer" && <Leverantorsfakturor onBackToMenu={handleBackToOverview} />}
+      {activeView === "leverantorsfakturor" && (
+        <Leverantorsfakturor onBackToMenu={handleBackToOverview} />
+      )}
     </>
   );
 }

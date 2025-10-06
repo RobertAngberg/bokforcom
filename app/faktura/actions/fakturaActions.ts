@@ -6,6 +6,7 @@ import { getUserId } from "../../_utils/authUtils";
 import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { logError, createError } from "../../_utils/errorUtils";
+import type { SparadFaktura } from "../types/types";
 
 // Typ för artikel från formulärdata
 interface ArtikelInput {
@@ -399,7 +400,7 @@ export async function hämtaFakturaMedRader(id: number) {
   }
 }
 
-export async function hämtaSparadeFakturor() {
+export async function hämtaSparadeFakturor(): Promise<SparadFaktura[]> {
   const userId = await getUserId();
   if (!userId) {
     return [];
@@ -441,7 +442,7 @@ export async function hämtaSparadeFakturor() {
         const harROT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "ROT");
         const harRUT = rotRutArtiklar.some((artikel) => artikel.rot_rut_typ === "RUT");
 
-        let rotRutTyp: string | null = null;
+        let rotRutTyp: SparadFaktura["rotRutTyp"] = null;
         if (harROT && harRUT) {
           rotRutTyp = "ROT+RUT";
         } else if (harROT) {
@@ -455,7 +456,7 @@ export async function hämtaSparadeFakturor() {
           totalBelopp: Math.round(totalBelopp * 100) / 100, // Avrunda till 2 decimaler
           antalArtiklar: artiklarRes.rows.length,
           rotRutTyp, // ✅ Lägg till ROT/RUT-info
-        };
+        } as SparadFaktura;
       })
     );
 

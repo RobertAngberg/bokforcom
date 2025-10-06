@@ -9,16 +9,8 @@ import {
   uppdateraRotRutStatus,
 } from "../actions/alternativActions";
 import { laddaNerHUSFil } from "../utils/husFilGenerator";
-import { BokforingsPost } from "../types/types";
+import { BokforingsPost, BokföringsData } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
-
-// Type for bokförings data
-interface BokföringsData {
-  fakturanummer: string;
-  kundnamn: string;
-  poster: BokforingsPost[];
-  totaltBelopp: number;
-}
 
 // Validation functions - flyttad från useBokforFakturaModal
 function validateBokföringsPost(post: BokforingsPost): { isValid: boolean; error?: string } {
@@ -453,19 +445,10 @@ export function useAlternativ() {
   };
 
   // Beräknade värden
-  const harKund = formData.kundId && formData.kundId.trim() !== "";
-  const harArtiklar = formData.artiklar && formData.artiklar.length > 0;
+  const harKund = !!(formData.kundId && formData.kundId.trim() !== "");
+  const artiklarLength = formData.artiklar?.length ?? 0;
+  const harArtiklar = artiklarLength > 0;
   const kanSpara = harKund && harArtiklar;
-
-  console.log("🔍 Spara-validering:", {
-    harKund,
-    harArtiklar,
-    kanSpara,
-    sparaLoading,
-    knappDisabled: !kanSpara || sparaLoading,
-    kundId: formData.kundId,
-    artiklarLength: formData.artiklar?.length,
-  });
   const ärFakturanBetald = fakturaStatus.status_betalning === "Betald";
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
   const ärNyFaktura = !formData.id;

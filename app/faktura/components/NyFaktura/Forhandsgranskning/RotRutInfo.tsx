@@ -1,3 +1,4 @@
+import { formatCurrency, parseNumberSafe } from "../../../../_utils/format";
 import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
 import { RotRutInfoProps } from "../../../types/types";
 
@@ -30,20 +31,14 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
               </div>
               <div>
                 <span className="font-semibold">Genomsnittligt pris per timme exkl. moms:</span>{" "}
-                {rotRutGenomsnittsPris.toLocaleString("sv-SE", {
-                  style: "currency",
-                  currency: "SEK",
-                })}
+                {formatCurrency(rotRutGenomsnittsPris)}
               </div>
             </>
           ) : (
             <div>
               <span className="font-semibold">Arbetskostnad exkl. moms:</span>{" "}
               {formData.arbetskostnadExMoms
-                ? Number(formData.arbetskostnadExMoms).toLocaleString("sv-SE", {
-                    style: "currency",
-                    currency: "SEK",
-                  })
+                ? formatCurrency(parseNumberSafe(formData.arbetskostnadExMoms))
                 : "—"}
             </div>
           )}
@@ -52,12 +47,7 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
           </div>
           <div>
             <span className="font-semibold">Beräknat avdrag:</span>{" "}
-            {beraknatAvdrag > 0
-              ? beraknatAvdrag.toLocaleString("sv-SE", {
-                  style: "currency",
-                  currency: "SEK",
-                })
-              : "—"}
+            {beraknatAvdrag > 0 ? formatCurrency(beraknatAvdrag) : "—"}
           </div>
         </div>
         <div>

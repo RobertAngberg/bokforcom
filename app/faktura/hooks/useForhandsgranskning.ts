@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useFakturaContext } from "../context/FakturaContextProvider";
+import { useFakturaForm, useFakturaFormActions } from "../context/FakturaFormContext";
 import { generatePDFFromElement } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
 
@@ -12,12 +12,8 @@ import type { ForhandsgranskningCalculations } from "../types/types";
  * Hook för förhandsgranskning, beräkningar och PDF/email funktionalitet
  */
 export function useForhandsgranskning() {
-  // Context state
-  const context = useFakturaContext();
-  const {
-    state: { formData },
-    setFormData,
-  } = context;
+  const formData = useFakturaForm();
+  const { setFormData } = useFakturaFormActions();
 
   // Local state för förhandsgranskning
   const [logoSliderValue, setLogoSliderValue] = useState(() => {

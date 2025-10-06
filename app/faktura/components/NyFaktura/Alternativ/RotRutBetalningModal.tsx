@@ -1,13 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Modal from "../../../../_components/Modal";
-import {
-  registreraRotRutBetalning,
-  uppdateraRotRutStatus,
-} from "../../../actions/alternativActions";
 import { RotRutBetalningModalProps } from "../../../types/types";
-import { showToast } from "../../../../_components/Toast";
+import { useRotRut } from "../../../hooks/useRotRut";
 
 export default function RotRutBetalningModal({
   isOpen,
@@ -19,43 +14,15 @@ export default function RotRutBetalningModal({
   bokföringsmetod,
   onSuccess,
 }: RotRutBetalningModalProps) {
-  const [loading, setLoading] = useState(false);
+  const { loading, rotRutBelopp, handleRegistrering } = useRotRut({
+    fakturaId,
+    totalBelopp,
+    bokföringsmetod,
+    onSuccess,
+    onClose,
+  });
 
   if (!isOpen) return null;
-
-  const rotRutBelopp = Math.round(totalBelopp * 0.5 * 100) / 100; // 50% avrundad
-
-  const hanteraRegistrering = async () => {
-    setLoading(true);
-
-    try {
-      const result = await registreraRotRutBetalning(fakturaId);
-      if (result.success) {
-        // Uppdatera ROT/RUT-status till godkänd
-        const statusResult = await uppdateraRotRutStatus(fakturaId, "godkänd");
-        if (statusResult.success) {
-          onSuccess({ rot_rut_status: "godkänd", status_betalning: "Betald" });
-          onClose();
-          // Visa bekräftelse efter att modalen stängs
-          setTimeout(() => {
-            const ärKontantmetod = bokföringsmetod === "kontantmetoden";
-            const meddelande = ärKontantmetod
-              ? `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nKunden betalade sin del vid fakturering.`
-              : `ROT/RUT-utbetalning registrerad.\n\n${rotRutBelopp.toLocaleString("sv-SE")} kr bokförd från Skatteverket.\nFakturan är nu avslutad och klar.`;
-
-            showToast(meddelande, "success");
-          }, 100);
-        }
-      } else {
-        showToast(result.error || "Kunde inte registrera betalning", "error");
-      }
-    } catch (error) {
-      console.error("Fel vid ROT/RUT-betalning:", error);
-      showToast("Ett oväntat fel uppstod", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Modal
@@ -157,7 +124,7 @@ export default function RotRutBetalningModal({
             Avbryt
           </button>
           <button
-            onClick={hanteraRegistrering}
+            onClick={handleRegistrering}
             disabled={loading}
             className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >

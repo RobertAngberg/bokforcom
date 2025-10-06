@@ -36,19 +36,10 @@ import {
   BokfordFaktura,
   TransaktionsPost,
   FavoritArtikel,
+  SparadeFakturorPageData,
+  LeverantörFormData,
 } from "../types/types";
 import { useRouter } from "next/navigation";
-
-// Type for leverantör form data
-interface LeverantörFormData {
-  namn: string;
-  organisationsnummer?: string;
-  adress?: string;
-  postnummer?: string;
-  stad?: string;
-  telefon?: string;
-  epost?: string;
-}
 
 // Business Logic Functions for NyLeverantorModal
 function sanitizeLeverantörInput(input: string): string {
@@ -257,7 +248,7 @@ export function useNyLeverantorModal({
 }: UseNyLeverantorModalParams): UseNyLeverantorModalReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LeverantörFormData>({
     namn: "",
     organisationsnummer: "",
     adress: "",
@@ -326,7 +317,7 @@ export function useNyLeverantorModal({
           postnummer: sanitizedData.postnummer || undefined,
           ort: sanitizedData.stad || undefined,
           telefon: sanitizedData.telefon || undefined,
-          email: formData.epost.trim() || undefined,
+          email: formData.epost?.trim() || undefined,
         };
         const result = await updateLeverantör(editLeverantör.id!, data);
 
@@ -459,11 +450,7 @@ export function useSparadeFakturor(): UseSparadeFakturorReturn {
 
 // Hook för Sparade page data loading
 export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
-  const [data, setData] = useState<{
-    kunder: unknown[];
-    fakturor: unknown[];
-    artiklar: FavoritArtikel[];
-  } | null>(null);
+  const [data, setData] = useState<SparadeFakturorPageData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -474,7 +461,11 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
         hämtaSparadeFakturor(),
         hämtaSparadeArtiklar(),
       ]);
-      setData({ kunder, fakturor, artiklar });
+      setData({
+        kunder,
+        fakturor,
+        artiklar: artiklar as FavoritArtikel[],
+      });
     } catch (error) {
       console.error("Fel vid laddning av data:", error);
     } finally {

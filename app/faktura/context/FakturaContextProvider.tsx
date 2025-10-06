@@ -1,304 +1,85 @@
 "use client";
 
-import React, { createContext, useContext, useReducer } from "react";
+/**
+ * Översikt:
+ * - Den här filen sätter upp FakturaContext, som håller koll på övergripande UI-state
+ *   (kundstatus, vilken vy som visas, vald bokföringsmetod osv).
+ * - `FakturaProvider` wrappar barnen med tre lager: formulärkontext, artikelkontext och slutligen fakturakontexten här.
+ * - Reducern `fakturaReducer` beskriver exakt hur state förändras när actions dispatchas.
+ * - `FakturaStateProvider` skapar helper-funktioner (navigate, setKundStatus m.m.), memoiserar värdet och matar in i context.
+ * - `useFakturaContext` / `useFakturaClient` är hjälphooks för att konsumera värden/åtgärder inne i komponenterna.
+ * Så: lägg till `FakturaProvider` högst upp i sidan, och använd helper-hooks för att läsa/uppdatera fakturaflödet.
+ */
+
+import { createContext, useContext, useMemo, useReducer } from "react";
 import type {
-  FakturaFormData,
-  NyArtikel,
-  FavoritArtikel,
-  FakturaState,
-  FakturaAction,
   FakturaContextType,
   FakturaProviderProps,
-  ViewType,
+  FakturaContextInnerProps,
 } from "../types/types";
+import { FakturaFormProvider, useFakturaForm, useFakturaFormActions } from "./FakturaFormContext";
+import { FakturaArtikelProvider } from "./FakturaArtikelContext";
+import { fakturaReducer, initialFakturaState } from "./fakturaReducer";
+import { useFakturaActions } from "./useFakturaActions";
 
-// Default values - samma som i Zustand store
-const defaultFormData: FakturaFormData = {
-  id: "",
-  fakturanummer: "",
-  fakturadatum: "",
-  forfallodatum: "",
-  betalningsmetod: "",
-  betalningsvillkor: "",
-  drojsmalsranta: "",
-  kundId: "",
-  nummer: "",
-  personnummer: "",
-  fastighetsbeteckning: "",
-  rotBoendeTyp: "fastighet",
-  brfOrganisationsnummer: "",
-  brfLagenhetsnummer: "",
-
-  // Kunduppgifter
-  kundnamn: "",
-  kundnummer: "",
-  kundorganisationsnummer: "",
-  kundmomsnummer: "",
-  kundadress: "",
-  kundpostnummer: "",
-  kundstad: "",
-  kundemail: "",
-
-  // Avsändare
-  företagsnamn: "",
-  adress: "",
-  postnummer: "",
-  stad: "",
-  organisationsnummer: "",
-  momsregistreringsnummer: "",
-  telefonnummer: "",
-  bankinfo: "",
-  epost: "",
-  webbplats: "",
-  logo: "",
-  logoWidth: 200,
-
-  rotRutAktiverat: false,
-  rotRutTyp: "ROT",
-  rotRutKategori: "",
-  avdragProcent: 0,
-  avdragBelopp: 0,
-  arbetskostnadExMoms: 0,
-  materialkostnadExMoms: 0,
-  rotRutBeskrivning: "",
-  rotRutStartdatum: "",
-  rotRutSlutdatum: "",
-
-  artiklar: [],
-};
-
-const defaultNyArtikel: NyArtikel = {
-  beskrivning: "",
-  antal: "",
-  prisPerEnhet: "",
-  moms: "25",
-  valuta: "SEK",
-  typ: "tjänst",
-};
-
-const defaultProdukterTjansterState = {
-  favoritArtiklar: [] as FavoritArtikel[],
-  showFavoritArtiklar: false,
-  blinkIndex: null as number | null,
-  visaRotRutForm: false,
-  visaArtikelForm: false,
-  visaArtikelModal: false,
-  redigerarIndex: null as number | null,
-  favoritArtikelVald: false,
-  ursprungligFavoritId: null as number | null,
-  artikelSparadSomFavorit: false,
-  valtArtikel: null as FavoritArtikel | null,
-};
-
-const defaultUserSettings = {
-  bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
-};
-
-const defaultNavigationState = {
-  currentView: "menu" as ViewType,
-};
-
-// Initial state
-const initialState: FakturaState = {
-  formData: defaultFormData,
-  kundStatus: "none",
-  navigationState: defaultNavigationState,
-  nyArtikel: defaultNyArtikel,
-  produkterTjansterState: defaultProdukterTjansterState,
-  userSettings: defaultUserSettings,
-};
-
-// Reducer function
-function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaState {
-  switch (action.type) {
-    case "SET_FORM_DATA":
-      return {
-        ...state,
-        formData: { ...state.formData, ...action.payload },
-      };
-
-    case "RESET_FORM_DATA":
-      return {
-        ...state,
-        formData: defaultFormData,
-        kundStatus: "none",
-      };
-
-    case "SET_KUND_STATUS":
-      return {
-        ...state,
-        kundStatus: action.payload,
-      };
-
-    case "RESET_KUND":
-      return {
-        ...state,
-        formData: {
-          ...state.formData,
-          kundId: "",
-          kundnamn: "",
-          kundnummer: "",
-          kundorganisationsnummer: "",
-          kundmomsnummer: "",
-          kundadress: "",
-          kundpostnummer: "",
-          kundstad: "",
-          kundemail: "",
-        },
-        kundStatus: "none",
-      };
-
-    case "SET_NAVIGATION":
-      return {
-        ...state,
-        navigationState: { ...state.navigationState, ...action.payload },
-      };
-
-    case "NAVIGATE_TO_VIEW":
-      return {
-        ...state,
-        navigationState: { currentView: action.payload },
-      };
-
-    case "NAVIGATE_TO_EDIT":
-      return {
-        ...state,
-        navigationState: {
-          currentView: action.payload.view,
-          editFakturaId: action.payload.fakturaId,
-        },
-      };
-
-    case "NAVIGATE_BACK":
-      return {
-        ...state,
-        navigationState: { currentView: "menu" },
-      };
-
-    case "SET_NY_ARTIKEL":
-      return {
-        ...state,
-        nyArtikel: { ...state.nyArtikel, ...action.payload },
-      };
-
-    case "RESET_NY_ARTIKEL":
-      return {
-        ...state,
-        nyArtikel: defaultNyArtikel,
-      };
-
-    case "SET_PRODUKTER_TJANSTER_STATE":
-      return {
-        ...state,
-        produkterTjansterState: { ...state.produkterTjansterState, ...action.payload },
-      };
-
-    case "RESET_PRODUKTER_TJANSTER":
-      return {
-        ...state,
-        produkterTjansterState: defaultProdukterTjansterState,
-      };
-
-    case "SET_BOKFÖRINGSMETOD":
-      return {
-        ...state,
-        userSettings: { ...state.userSettings, bokföringsmetod: action.payload },
-      };
-
-    case "INIT_STORE":
-      if (action.payload.foretagsprofil) {
-        const profil = action.payload.foretagsprofil;
-        return {
-          ...state,
-          formData: {
-            ...state.formData,
-            företagsnamn: profil.företagsnamn ?? "",
-            adress: profil.adress ?? "",
-            postnummer: profil.postnummer ?? "",
-            stad: profil.stad ?? "",
-            organisationsnummer: profil.organisationsnummer ?? "",
-            momsregistreringsnummer: profil.momsregistreringsnummer ?? "",
-            telefonnummer: profil.telefonnummer ?? "",
-            epost: profil.epost ?? "",
-            bankinfo: profil.bankinfo ?? "",
-            webbplats: profil.webbplats ?? "",
-          },
-        };
-      }
-      return state;
-
-    default:
-      return state;
-  }
-}
-
-// Create contexts
 const FakturaContext = createContext<FakturaContextType | undefined>(undefined);
 
-// Provider component
-export function FakturaProvider({ children, initialData }: FakturaProviderProps) {
-  const [state, dispatch] = useReducer(fakturaReducer, initialState);
+// Wrapper som instansierar reducer, helper-actions och exponerar context-värdet
+function FakturaStateProvider({ children }: FakturaContextInnerProps) {
+  const [state, dispatch] = useReducer(fakturaReducer, initialFakturaState);
+  const actions = useFakturaActions(dispatch);
 
-  // Initialize store with server data on mount
-  React.useEffect(() => {
-    if (initialData) {
-      dispatch({ type: "INIT_STORE", payload: initialData });
-    }
-  }, [initialData]);
-
-  // Helper actions - samma API som Zustand store för enklare migration
-  const contextValue: FakturaContextType = {
-    state,
-    dispatch,
-    setFormData: (data) => dispatch({ type: "SET_FORM_DATA", payload: data }),
-    resetFormData: () => dispatch({ type: "RESET_FORM_DATA" }),
-    setKundStatus: (status) => dispatch({ type: "SET_KUND_STATUS", payload: status }),
-    resetKund: () => dispatch({ type: "RESET_KUND" }),
-    setNavigation: (navigation) => dispatch({ type: "SET_NAVIGATION", payload: navigation }),
-    navigateToView: (view) => dispatch({ type: "NAVIGATE_TO_VIEW", payload: view }),
-    navigateToEdit: (view, fakturaId) =>
-      dispatch({ type: "NAVIGATE_TO_EDIT", payload: { view, fakturaId } }),
-    navigateBack: () => dispatch({ type: "NAVIGATE_BACK" }),
-    setNyArtikel: (artikel) => dispatch({ type: "SET_NY_ARTIKEL", payload: artikel }),
-    resetNyArtikel: () => dispatch({ type: "RESET_NY_ARTIKEL" }),
-    setProdukterTjansterState: (state) =>
-      dispatch({ type: "SET_PRODUKTER_TJANSTER_STATE", payload: state }),
-    resetProdukterTjanster: () => dispatch({ type: "RESET_PRODUKTER_TJANSTER" }),
-    setBokföringsmetod: (metod) => dispatch({ type: "SET_BOKFÖRINGSMETOD", payload: metod }),
-    initStore: (data) => dispatch({ type: "INIT_STORE", payload: data }),
-  };
+  const contextValue: FakturaContextType = useMemo(
+    () => ({
+      state,
+      dispatch,
+      ...actions,
+    }),
+    [state, dispatch, actions]
+  );
 
   return <FakturaContext.Provider value={contextValue}>{children}</FakturaContext.Provider>;
 }
 
-// Custom hook to use the context
+// Huvudprovider som komponerar formulär-, artikel- och fakturacontexten
+export function FakturaProvider({ children, initialData }: FakturaProviderProps) {
+  return (
+    <FakturaFormProvider initialData={initialData}>
+      <FakturaArtikelProvider>
+        <FakturaStateProvider>{children}</FakturaStateProvider>
+      </FakturaArtikelProvider>
+    </FakturaFormProvider>
+  );
+}
+
+// Hook för att komma åt FakturaContext och garantera att provider finns
 export function useFakturaContext() {
   const context = useContext(FakturaContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useFakturaContext must be used within a FakturaProvider");
   }
   return context;
 }
 
-// Custom hooks that mirror the Zustand store API for easier migration
+// Hjälphook som kapslar formulärdata ihop med fakturaåtgärder för komponenterna
 export function useFakturaClient() {
   const context = useFakturaContext();
+  const formData = useFakturaForm();
+  const { setFormData, resetFormData } = useFakturaFormActions();
 
   return {
-    formData: context.state.formData,
+    formData,
     kundStatus: context.state.kundStatus,
-    nyArtikel: context.state.nyArtikel,
-    produkterTjansterState: context.state.produkterTjansterState,
     userSettings: context.state.userSettings,
-    setFormData: context.setFormData,
-    resetFormData: context.resetFormData,
+    navigationState: context.state.navigationState,
+    setFormData,
+    resetFormData,
     setKundStatus: context.setKundStatus,
     resetKund: context.resetKund,
-    setNyArtikel: context.setNyArtikel,
-    resetNyArtikel: context.resetNyArtikel,
-    setProdukterTjansterState: context.setProdukterTjansterState,
-    resetProdukterTjanster: context.resetProdukterTjanster,
     setBokföringsmetod: context.setBokföringsmetod,
-    initStore: context.initStore,
+    navigateToView: context.navigateToView,
+    navigateToEdit: context.navigateToEdit,
+    navigateBack: context.navigateBack,
+    setNavigation: context.setNavigation,
   };
 }

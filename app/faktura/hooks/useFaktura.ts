@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
 
@@ -8,7 +8,9 @@ import { sv } from "date-fns/locale";
 import { useSession } from "../../_lib/auth-client";
 
 // Context
-import { useFakturaContext } from "../context/FakturaContextProvider";
+import { useFakturaClient } from "../context/FakturaContextProvider";
+import { useProdukterTjanster } from "./useProdukterTjanster";
+import { useFakturaLifecycle } from "../context/FakturaFormContext";
 
 // Actions
 import { hämtaFakturaMedRader } from "../actions/fakturaActions";
@@ -26,10 +28,18 @@ import {
   validatePersonnummer,
   validateEmail,
 } from "../../_utils/validationUtils";
+import { stringTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import { showToast } from "../../_components/Toast";
 
 // Types
-import type { FakturaFormData, NyArtikel, KundSaveResponse } from "../types/types";
+import type { FakturaFormData, KundSaveResponse } from "../types/types";
+
+const sanitizePersonnummerValue = (value: string): string => {
+  if (!value) return "";
+  return sanitizeFormInput(value)
+    .replace(/[^\d-]/g, "")
+    .slice(0, 13);
+};
 
 /**
  * Huvudhook för alla faktura-relaterade funktioner
@@ -37,20 +47,78 @@ import type { FakturaFormData, NyArtikel, KundSaveResponse } from "../types/type
  */
 export function useFaktura() {
   // Context state
-  const context = useFakturaContext();
   const {
-    state: { formData, kundStatus, nyArtikel, produkterTjansterState, userSettings },
+    formData,
+    kundStatus,
+    userSettings,
     setFormData,
     resetFormData,
     setKundStatus,
     resetKund,
-    setNyArtikel,
-    resetNyArtikel,
-    setProdukterTjansterState,
-    resetProdukterTjanster,
     setBokföringsmetod,
-    initStore,
-  } = context;
+  } = useFakturaClient();
+
+  const artikelContext = useProdukterTjanster();
+  const {
+    nyArtikel,
+    favoritArtiklar,
+    showFavoritArtiklar,
+    blinkIndex,
+    visaRotRutForm,
+    visaArtikelForm,
+    visaArtikelModal,
+    redigerarIndex,
+    favoritArtikelVald,
+    ursprungligFavoritId,
+    artikelSparadSomFavorit,
+    valtArtikel,
+    showDeleteFavoritModal,
+    deleteFavoritId,
+    läggTillArtikel,
+    taBortArtikel,
+    setBeskrivning,
+    setAntal,
+    setPrisPerEnhet,
+    setMoms,
+    setValuta,
+    setTyp,
+    updateArtikel,
+    resetNyArtikel,
+  } = artikelContext;
+
+  const produkterTjansterState = useMemo(
+    () => ({
+      favoritArtiklar,
+      showFavoritArtiklar,
+      blinkIndex,
+      visaRotRutForm,
+      visaArtikelForm,
+      visaArtikelModal,
+      redigerarIndex,
+      favoritArtikelVald,
+      ursprungligFavoritId,
+      artikelSparadSomFavorit,
+      valtArtikel,
+      showDeleteFavoritModal,
+      deleteFavoritId,
+    }),
+    [
+      favoritArtiklar,
+      showFavoritArtiklar,
+      blinkIndex,
+      visaRotRutForm,
+      visaArtikelForm,
+      visaArtikelModal,
+      redigerarIndex,
+      favoritArtikelVald,
+      ursprungligFavoritId,
+      artikelSparadSomFavorit,
+      valtArtikel,
+      showDeleteFavoritModal,
+      deleteFavoritId,
+    ]
+  );
+  const lifecycle = useFakturaLifecycle();
 
   // External hooks
   const { data: session } = useSession();
@@ -75,7 +143,14 @@ export function useFaktura() {
   const [showDeleteKundModal, setShowDeleteKundModal] = useState(false);
 
   // Refs
-  const fileInputRef = useRef<HTMLInputElement>(null); // =============================================================================
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const formDataRef = useRef(formData);
+
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  // =============================================================================
   // SETUP & INITIALIZATION
   // =============================================================================
 
@@ -85,9 +160,27 @@ export function useFaktura() {
   }, []);
 
   // Initialisera betalningsdata och standardvärden
+  // Körs bara en gång per session tack vare lifecycle-flaggan.
   useEffect(() => {
+    if (!session?.user?.id) return;
+
+    if (lifecycle.current.lastDefaultsSessionId !== session.user.id) {
+      lifecycle.current.lastDefaultsSessionId = session.user.id;
+      lifecycle.current.harInitDefaults = false;
+      lifecycle.current.harAutoBeraknatForfallo = false;
+    }
+
+    if (lifecycle.current.harInitDefaults) {
+      return;
+    }
+
+    lifecycle.current.harInitDefaults = true;
+
     const initializeDefaults = async () => {
-      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayISO = dateTillÅÅÅÅMMDD(new Date());
+
+      const currentFormData = formDataRef.current;
+      const defaultFakturadatum = stringTillDate(currentFormData.fakturadatum);
 
       // Hämta senaste betalningsmetod för denna användare
       let senasteBetalning = { betalningsmetod: null, nummer: null };
@@ -97,46 +190,48 @@ export function useFaktura() {
       }
 
       setFormData({
-        fakturadatum: formData.fakturadatum || todayISO,
-        betalningsvillkor: formData.betalningsvillkor || "30",
-        drojsmalsranta: formData.drojsmalsranta || "12",
-        betalningsmetod: formData.betalningsmetod || senasteBetalning.betalningsmetod || "",
-        nummer: formData.nummer || senasteBetalning.nummer || "",
+        fakturadatum: currentFormData.fakturadatum || todayISO,
+        betalningsvillkor: currentFormData.betalningsvillkor || "30",
+        drojsmalsranta: currentFormData.drojsmalsranta || "12",
+        betalningsmetod: currentFormData.betalningsmetod || senasteBetalning.betalningsmetod || "",
+        nummer: currentFormData.nummer || senasteBetalning.nummer || "",
         forfallodatum:
-          formData.forfallodatum ||
-          (formData.fakturadatum
-            ? addDays(
-                new Date(formData.fakturadatum),
-                parseInt(formData.betalningsvillkor || "30", 10)
+          currentFormData.forfallodatum ||
+          (defaultFakturadatum
+            ? dateTillÅÅÅÅMMDD(
+                addDays(
+                  defaultFakturadatum,
+                  parseInt(currentFormData.betalningsvillkor || "30", 10)
+                )
               )
-                .toISOString()
-                .slice(0, 10)
             : ""),
       });
     };
 
-    // Kör bara när session är laddad
-    if (session?.user?.id) {
-      initializeDefaults();
-    }
-  }, [session?.user?.id]);
+    initializeDefaults();
+  }, [session?.user?.id, setFormData, lifecycle]);
 
   // Sätter förfallodatum automatiskt bara om det är tomt
+  // Guarden säkerställer att vi inte triggar en ny render-loop när forfallodatum sätts.
   useEffect(() => {
-    const fakturadatumDate = parseISODate(formData.fakturadatum);
+    if (lifecycle.current.harAutoBeraknatForfallo) {
+      return;
+    }
+
+    const fakturadatumDate = stringTillDate(formData.fakturadatum);
     if (!fakturadatumDate || formData.forfallodatum) return;
 
     const days = parseInt(formData.betalningsvillkor || "30", 10);
-    const calc = addDays(fakturadatumDate, isNaN(days) ? 30 : days)
-      .toISOString()
-      .slice(0, 10);
+    const calc = dateTillÅÅÅÅMMDD(addDays(fakturadatumDate, isNaN(days) ? 30 : days));
+    lifecycle.current.harAutoBeraknatForfallo = true;
     setFormData({ forfallodatum: calc });
-  }, [formData.fakturadatum, formData.betalningsvillkor, formData.forfallodatum]);
-
-  // Ladda företagsprofil automatiskt när komponenten mountas
-  useEffect(() => {
-    loadForetagsprofil();
-  }, []);
+  }, [
+    formData.fakturadatum,
+    formData.betalningsvillkor,
+    formData.forfallodatum,
+    setFormData,
+    lifecycle,
+  ]);
 
   // Hämta sparade kunder vid mount
   useEffect(() => {
@@ -167,13 +262,6 @@ export function useFaktura() {
       setFormData(updates);
     },
     [setFormData]
-  );
-
-  const updateArtikel = useCallback(
-    (updates: Partial<NyArtikel>) => {
-      setNyArtikel(updates);
-    },
-    [setNyArtikel]
   );
 
   // Toast helpers
@@ -221,15 +309,18 @@ export function useFaktura() {
 
         const { faktura, artiklar, rotRut } = data;
 
+        const toDateString = (value: unknown): string => {
+          if (value instanceof Date) {
+            return dateTillÅÅÅÅMMDD(value);
+          }
+          return typeof value === "string" ? value : "";
+        };
+
         setFormData({
           id: faktura.id,
           fakturanummer: faktura.fakturanummer ?? "",
-          fakturadatum: faktura.fakturadatum?.toISOString
-            ? faktura.fakturadatum.toISOString().slice(0, 10)
-            : (faktura.fakturadatum ?? ""),
-          forfallodatum: faktura.forfallodatum?.toISOString
-            ? faktura.forfallodatum.toISOString().slice(0, 10)
-            : (faktura.forfallodatum ?? ""),
+          fakturadatum: toDateString(faktura.fakturadatum),
+          forfallodatum: toDateString(faktura.forfallodatum),
           betalningsmetod: faktura.betalningsmetod ?? "",
           betalningsvillkor: faktura.betalningsvillkor ?? "",
           drojsmalsranta: faktura.drojsmalsranta ?? "",
@@ -355,15 +446,6 @@ export function useFaktura() {
   // BETALNING FUNCTIONS
   // =============================================================================
 
-  function parseISODate(value: unknown): Date | null {
-    if (value instanceof Date && !isNaN(value.getTime())) return value;
-    if (typeof value === "string") {
-      const d = new Date(value.trim());
-      return isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-  }
-
   function addDays(date: Date, days: number) {
     const out = new Date(date);
     out.setDate(out.getDate() + days);
@@ -376,8 +458,8 @@ export function useFaktura() {
       const forfallodatum = addDays(fakturadatum, days);
 
       setFormData({
-        fakturadatum: fakturadatum.toISOString().split("T")[0],
-        forfallodatum: forfallodatum.toISOString().split("T")[0],
+        fakturadatum: dateTillÅÅÅÅMMDD(fakturadatum),
+        forfallodatum: dateTillÅÅÅÅMMDD(forfallodatum),
       });
     },
     [setFormData]
@@ -388,7 +470,7 @@ export function useFaktura() {
     (field: "fakturadatum" | "forfallodatum") => {
       return (d: Date | null) =>
         setFormData({
-          [field]: d ? d.toISOString().slice(0, 10) : "",
+          [field]: d ? dateTillÅÅÅÅMMDD(d) : "",
         });
     },
     [setFormData]
@@ -398,14 +480,24 @@ export function useFaktura() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
 
-      // Blockera farliga tecken för nummer-fältet
-      if (name === "nummer") {
-        const sanitizedValue = value.replace(/[<>'"&]/g, "");
-        setFormData({ [name]: sanitizedValue });
+      if (typeof value !== "string") {
+        setFormData({ [name]: value });
         return;
       }
 
-      setFormData({ [name]: value });
+      let sanitizedValue = value;
+
+      if (name === "nummer") {
+        sanitizedValue = sanitizeFormInput(value)
+          .replace(/[^0-9A-Za-z-]/g, "")
+          .slice(0, 30);
+      } else if (name === "personnummer") {
+        sanitizedValue = sanitizePersonnummerValue(value);
+      } else {
+        sanitizedValue = sanitizeFormInput(value);
+      }
+
+      setFormData({ [name]: sanitizedValue });
     },
     [setFormData]
   );
@@ -418,15 +510,16 @@ export function useFaktura() {
   );
 
   // Beräknade datum-värden
-  const fakturadatumDate = parseISODate(formData.fakturadatum);
+  const fakturadatumDate = stringTillDate(formData.fakturadatum);
   const fallbackForfallo = fakturadatumDate
     ? addDays(fakturadatumDate, parseInt(formData.betalningsvillkor || "30", 10))
     : null;
-  const forfalloDate = parseISODate(formData.forfallodatum) ?? fallbackForfallo; // =============================================================================
+  const forfalloDate = stringTillDate(formData.forfallodatum) ?? fallbackForfallo; // =============================================================================
   // AVSÄNDARE FUNCTIONS
   // =============================================================================
 
   // Ladda företagsprofil
+  // Samma guard-tanke: hämta och applicera bara första gången.
   const loadForetagsprofil = useCallback(async () => {
     try {
       const data = await hämtaFöretagsprofil();
@@ -452,6 +545,17 @@ export function useFaktura() {
       showError("Kunde inte ladda företagsprofil");
     }
   }, [setFormData, showError]);
+
+  useEffect(() => {
+    // Har någon annan useFaktura redan laddat profilen? Hoppa över i så fall.
+    if (lifecycle.current.harLastatForetagsprofil) {
+      return;
+    }
+    lifecycle.current.harLastatForetagsprofil = true;
+    loadForetagsprofil().catch((error) => {
+      console.error("[useFaktura] loadForetagsprofil effect error", error);
+    });
+  }, [loadForetagsprofil, lifecycle]);
 
   // Spara företagsprofil
   const sparaForetagsprofil = useCallback(async () => {
@@ -567,7 +671,8 @@ export function useFaktura() {
       kundadress: sanitizeFormInput(data.kundadress || ""),
       kundpostnummer: sanitizeFormInput(data.kundpostnummer || ""),
       kundstad: sanitizeFormInput(data.kundstad || ""),
-      personnummer: sanitizeFormInput(data.personnummer || ""),
+      kundemail: sanitizeFormInput(data.kundemail || ""),
+      personnummer: sanitizePersonnummerValue(data.personnummer || ""),
     };
   }, []);
 
@@ -623,44 +728,6 @@ export function useFaktura() {
   ]);
 
   // =============================================================================
-  // BASIC ARTIKEL FUNCTIONS (för bakåtkompatibilitet)
-  // =============================================================================
-
-  // Lägg till artikel (förenklad version)
-  const läggTillArtikel = useCallback(() => {
-    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = nyArtikel;
-
-    if (!beskrivning || !antal || !prisPerEnhet) {
-      showError("Fyll i alla obligatoriska fält");
-      return;
-    }
-
-    const nyArtikelData = {
-      beskrivning,
-      antal: parseFloat(antal),
-      prisPerEnhet: parseFloat(prisPerEnhet),
-      moms: parseFloat(moms),
-      valuta,
-      typ,
-    };
-
-    const uppdateradeArtiklar = [...formData.artiklar, nyArtikelData];
-    setFormData({ artiklar: uppdateradeArtiklar });
-    resetNyArtikel();
-    showSuccess("Artikel tillagd");
-  }, [nyArtikel, formData.artiklar, setFormData, resetNyArtikel, showSuccess, showError]);
-
-  // Ta bort artikel
-  const taBortArtikel = useCallback(
-    (index: number) => {
-      const uppdateradeArtiklar = formData.artiklar.filter((_, i) => i !== index);
-      setFormData({ artiklar: uppdateradeArtiklar });
-      showSuccess("Artikel borttagen");
-    },
-    [formData.artiklar, setFormData, showSuccess]
-  );
-
-  // =============================================================================
   // KUND MANAGEMENT FUNCTIONS (från useKundUppgifter)
   // =============================================================================
 
@@ -668,7 +735,19 @@ export function useFaktura() {
   const handleKundChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      updateFormField(name as keyof FakturaFormData, value);
+      let sanitizedValue: string | boolean = value;
+
+      if (typeof value === "string") {
+        if (name === "kundemail") {
+          sanitizedValue = sanitizeFormInput(value.trim());
+        } else if (name === "personnummer") {
+          sanitizedValue = sanitizePersonnummerValue(value);
+        } else {
+          sanitizedValue = sanitizeFormInput(value);
+        }
+      }
+
+      updateFormField(name as keyof FakturaFormData, sanitizedValue);
       if (kundStatus === "loaded") setKundStatus("editing");
     },
     [updateFormField, kundStatus, setKundStatus]
@@ -695,7 +774,7 @@ export function useFaktura() {
       fd.append("kundadress1", sanitizedData.kundadress);
       fd.append("kundpostnummer", sanitizedData.kundpostnummer);
       fd.append("kundstad", sanitizedData.kundstad);
-      fd.append("kundemail", formData.kundemail);
+      fd.append("kundemail", sanitizedData.kundemail);
       fd.append("personnummer", sanitizedData.personnummer);
 
       const res: KundSaveResponse = formData.kundId
@@ -735,8 +814,8 @@ export function useFaktura() {
         kundadress: valdKund.kundadress1,
         kundpostnummer: valdKund.kundpostnummer,
         kundstad: valdKund.kundstad,
-        kundemail: valdKund.kundemail,
-        personnummer: valdKund.personnummer || "",
+        kundemail: sanitizeFormInput(valdKund.kundemail || ""),
+        personnummer: sanitizePersonnummerValue(valdKund.personnummer || ""),
       });
       setKundStatus("loaded");
     },
@@ -799,12 +878,8 @@ export function useFaktura() {
     resetFormData,
     setKundStatus,
     resetKund,
-    setNyArtikel,
     resetNyArtikel,
-    setProdukterTjansterState,
-    resetProdukterTjanster,
     setBokföringsmetod,
-    initStore,
 
     // Helper functions
     updateFormField,
@@ -828,15 +903,14 @@ export function useFaktura() {
     setShowPreview,
 
     // Artikel setters för nyArtikel state
-    setBeskrivning: (value: string) => updateArtikel({ beskrivning: value }),
-    setAntal: (value: number) => updateArtikel({ antal: value.toString() }),
-    setPrisPerEnhet: (value: number) => updateArtikel({ prisPerEnhet: value.toString() }),
-    setMoms: (value: number) => updateArtikel({ moms: value.toString() }),
-    setValuta: (value: string) => updateArtikel({ valuta: value }),
-    setTyp: (value: "vara" | "tjänst") => updateArtikel({ typ: value }),
+    setBeskrivning,
+    setAntal,
+    setPrisPerEnhet,
+    setMoms,
+    setValuta,
+    setTyp,
 
     // Betalning functions
-    parseISODate,
     addDays,
     updatePaymentDates,
     hanteraÄndraDatum,
