@@ -11,7 +11,7 @@ export interface SkapaTransaktionInput {
   datum?: string | Date;
   beskrivning: string;
   kommentar?: string | null;
-  userId: number;
+  userId: number | string;
   poster: TransaktionsPostInput[];
   autoBelopp?: boolean; // default true -> summan av debet
   skipBalanceCheck?: boolean; // om sant hoppar vi balansvalidering

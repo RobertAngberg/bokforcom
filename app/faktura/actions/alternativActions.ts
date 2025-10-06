@@ -3,6 +3,10 @@
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { withDatabase } from "../../_utils/dbUtils";
+import {
+  registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
+  registreraRotRutBetalning as registreraRotRutBetalningBase,
+} from "./betalningActions";
 
 // === BETALNINGSMETOD (från alternativActions.ts) ===
 export async function hämtaSenasteBetalningsmetod(userId: string) {
@@ -42,102 +46,7 @@ export async function registreraKundfakturaBetalning(
   betalningsbelopp: number,
   kontoklass: string
 ): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Inte inloggad" };
-  }
-
-  // userId already a number from getUserId()
-  const client = await pool.connect();
-  try {
-    // Hämta fakturauppgifter och artiklar
-    const fakturaResult = await client.query(
-      'SELECT * FROM fakturor WHERE id = $1 AND "user_id" = $2',
-      [fakturaId, userId]
-    );
-
-    if (fakturaResult.rows.length === 0) {
-      return { success: false, error: "Faktura hittades inte" };
-    }
-
-    const faktura = fakturaResult.rows[0];
-
-    // Kontrollera att fakturan är en kundfaktura och inte redan betald
-    if (faktura.typ !== "kund" || faktura.status_betalning === "betald") {
-      return { success: false, error: "Fakturan kan inte betalas" };
-    }
-
-    // Kolla om fakturan har ROT/RUT-artiklar
-    const artiklarResult = await client.query(
-      "SELECT rot_rut_typ FROM faktura_artiklar WHERE faktura_id = $1",
-      [fakturaId]
-    );
-
-    const harRotRut = artiklarResult.rows.some((row) => row.rot_rut_typ);
-
-    await client.query("BEGIN");
-
-    // Skapa ny transaktion för betalningen
-    const transaktionResult = await client.query(
-      "INSERT INTO transaktioner (user_id, datum, beskrivning, typ) VALUES ($1, $2, $3, $4) RETURNING id",
-      [
-        userId,
-        new Date().toISOString().split("T")[0],
-        `Betalning kundfaktura ${faktura.fakturanummer}`,
-        "kundfaktura_betalning",
-      ]
-    );
-
-    const transaktionsId = transaktionResult.rows[0].id;
-
-    // Debitera bank/kassa konto
-    const bankKonto = kontoklass === "1930" ? "1930" : "1910";
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktion_id, konto, debet, kredit, beskrivning) VALUES ($1, $2, $3, $4, $5)",
-      [
-        transaktionsId,
-        bankKonto,
-        betalningsbelopp,
-        0,
-        `Betalning kundfaktura ${faktura.fakturanummer}`,
-      ]
-    );
-
-    // Kreditera kundfordringar (bara 1510 för vanliga fakturor, även för ROT/RUT)
-    // För ROT/RUT: betalningsbelopp ska vara kundens del (50%), 1513 förblir orörd
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktion_id, konto, debet, kredit, beskrivning) VALUES ($1, $2, $3, $4, $5)",
-      [
-        transaktionsId,
-        "1510",
-        0,
-        betalningsbelopp,
-        `Betalning kundfaktura ${faktura.fakturanummer}${harRotRut ? " (kundens del)" : ""}`,
-      ]
-    );
-
-    // Uppdatera fakturastatus
-    await client.query(
-      "UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4",
-      ["betald", new Date().toISOString().split("T")[0], transaktionsId, fakturaId]
-    );
-
-    await client.query("COMMIT");
-
-    return {
-      success: true,
-      transaktionsId: transaktionsId,
-    };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Fel vid registrering av kundfakturabetalning:", error);
-    return {
-      success: false,
-      error: "Kunde inte registrera betalning",
-    };
-  } finally {
-    client.release();
-  }
+  return registreraKundfakturaBetalningBase(fakturaId, betalningsbelopp, kontoklass);
 }
 
 export async function uppdateraRotRutStatus(
@@ -171,110 +80,7 @@ export async function uppdateraRotRutStatus(
 export async function registreraRotRutBetalning(
   fakturaId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Inte inloggad" };
-  }
-
-  // userId already a number from getUserId()
-  const client = await pool.connect();
-
-  try {
-    // Hämta faktura för att kolla ROT/RUT-belopp
-    const fakturaResult = await client.query(
-      'SELECT * FROM fakturor WHERE id = $1 AND "user_id" = $2',
-      [fakturaId, userId]
-    );
-
-    if (fakturaResult.rows.length === 0) {
-      return { success: false, error: "Faktura hittades inte" };
-    }
-
-    const faktura = fakturaResult.rows[0];
-
-    // Kolla om fakturan har ROT/RUT-artiklar
-    const artiklarResult = await client.query(
-      "SELECT * FROM faktura_artiklar WHERE faktura_id = $1 AND rot_rut_typ IS NOT NULL",
-      [fakturaId]
-    );
-
-    if (artiklarResult.rows.length === 0) {
-      return { success: false, error: "Inga ROT/RUT-artiklar hittades" };
-    }
-
-    // Beräkna totalt ROT/RUT-belopp (50% av fakturasumman)
-    const totalArtiklarResult = await client.query(
-      "SELECT SUM(antal * pris_per_enhet * (1 + moms/100)) as total FROM faktura_artiklar WHERE faktura_id = $1",
-      [fakturaId]
-    );
-
-    const totalBelopp = totalArtiklarResult.rows[0].total || 0;
-    const rotRutBelopp = Math.round(totalBelopp * 0.5 * 100) / 100; // 50% avrundad
-
-    await client.query("BEGIN");
-
-    // Skapa transaktion för ROT/RUT-betalning
-    const transaktionResult = await client.query(
-      `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
-      ) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [
-        new Date(),
-        `ROT/RUT-betalning faktura ${faktura.fakturanummer}`,
-        rotRutBelopp,
-        `ROT/RUT-utbetalning från Skatteverket för faktura ${faktura.fakturanummer}`,
-        userId,
-      ]
-    );
-
-    const transaktionsId = transaktionResult.rows[0].id;
-
-    // Hämta konto_id för 1930 (Bank/Kassa)
-    const konto1930Result = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-      "1930",
-    ]);
-    if (konto1930Result.rows.length === 0) {
-      throw new Error("Konto 1930 (Bank/Kassa) finns inte i databasen");
-    }
-    const konto1930Id = konto1930Result.rows[0].id;
-
-    // Hämta konto_id för 1513 (Kundfordringar – delad faktura)
-    const konto1513Result = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-      "1513",
-    ]);
-    if (konto1513Result.rows.length === 0) {
-      throw new Error("Konto 1513 (Kundfordringar – delad faktura) finns inte i databasen");
-    }
-    const konto1513Id = konto1513Result.rows[0].id;
-
-    // Debitera Bank/Kassa (pengarna kommer in)
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
-      [transaktionsId, konto1930Id, rotRutBelopp, 0]
-    );
-
-    // Kreditera 1513 (nollar SKV-fordran)
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
-      [transaktionsId, konto1513Id, 0, rotRutBelopp]
-    );
-
-    // Uppdatera fakturas betalningsstatus till "Betald" när SKV har betalat
-    await client.query("UPDATE fakturor SET status_betalning = $1 WHERE id = $2", [
-      "Betald",
-      fakturaId,
-    ]);
-
-    await client.query("COMMIT");
-
-    return { success: true };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Fel vid registrering av ROT/RUT-betalning:", error);
-    return { success: false, error: "Kunde inte registrera ROT/RUT-betalning" };
-  } finally {
-    client.release();
-  }
+  return registreraRotRutBetalningBase(fakturaId);
 }
 
 // === BOKFÖRING (från bokforingActions.ts) ===

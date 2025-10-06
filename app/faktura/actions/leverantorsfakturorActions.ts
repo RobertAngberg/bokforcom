@@ -2,6 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
+import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const userId = await getUserId();
@@ -9,12 +10,13 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
     return { success: false, error: "Ej autentiserad" };
   }
 
-  // userId already a number from getUserId()
-  const client = await pool.connect();
-
   try {
+    if (!Number.isFinite(belopp) || belopp <= 0) {
+      return { success: false, error: "Ogiltigt betalningsbelopp" };
+    }
+
     // Kontrollera att fakturan är bokförd och obetald
-    const { rows: fakturaRows } = await client.query(
+    const { rows: fakturaRows } = await pool.query(
       `SELECT status_bokförd, status_betalning FROM leverantörsfakturor 
        WHERE id = $1 AND "user_id" = $2`,
       [leverantörsfakturaId, userId]
@@ -33,66 +35,52 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
       return { success: false, error: "Fakturan är redan betald" };
     }
 
-    // Skapa ny transaktion för betalningen
-    const { rows: transRows } = await client.query(
-      `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
-      ) VALUES ($1, $2, $3, $4, $5)
-      RETURNING id`,
-      [
-        new Date().toISOString().split("T")[0], // Dagens datum
-        "Betalning leverantörsfaktura",
-        belopp,
-        "Automatisk betalning av leverantörsfaktura",
+    const todayISO = new Date().toISOString().split("T")[0];
+    let transaktionsId: number | null = null;
+
+    try {
+      const { transaktionsId: createdId } = await createTransaktion({
+        datum: todayISO,
+        beskrivning: `Betalning leverantörsfaktura ${leverantörsfakturaId}`,
+        kommentar: "Automatisk betalning av leverantörsfaktura",
         userId,
-      ]
-    );
-    const transaktionsId = transRows[0].id;
+        poster: [
+          { kontonummer: "2440", debet: belopp, kredit: 0 },
+          { kontonummer: "1930", debet: 0, kredit: belopp },
+        ],
+      });
 
-    // Hämta konto-id för 1930 (Företagskonto) och 2440 (Leverantörsskulder)
-    const kontoRes = await client.query(
-      `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
-    );
-    const kontoMap = Object.fromEntries(
-      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
-    );
+      transaktionsId = createdId;
 
-    if (!kontoMap["1930"] || !kontoMap["2440"]) {
-      throw new Error("Konto 1930 eller 2440 saknas");
+      console.log("🆔 Skapad leverantörsbetalning-transaktion:", transaktionsId);
+      const updateResult = await pool.query(
+        `UPDATE leverantörsfakturor 
+         SET betaldatum = $1, status_betalning = 'Betald' 
+         WHERE id = $2 AND "user_id" = $3`,
+        [todayISO, leverantörsfakturaId, userId]
+      );
+      console.log("📝 Update result rowCount:", updateResult.rowCount);
+
+      return { success: true, transaktionsId };
+    } catch (error) {
+      if (transaktionsId) {
+        try {
+          await pool.query('DELETE FROM transaktioner WHERE id = $1 AND "user_id" = $2', [
+            transaktionsId,
+            userId,
+          ]);
+        } catch (cleanupError) {
+          console.error("⚠️ Kunde inte rulla tillbaka skapad leverantörsbetalning:", cleanupError);
+        }
+      }
+      throw error;
     }
-
-    // Skapa transaktionsposter för betalningen
-    // 1930 Företagskonto - Kredit (pengar ut)
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["1930"], 0, belopp]
-    );
-
-    // 2440 Leverantörsskulder - Debet (skuld minskar)
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["2440"], belopp, 0]
-    );
-
-    // Uppdatera leverantörsfaktura med betaldatum och status
-    console.log("📝 Uppdaterar leverantörsfaktura:", leverantörsfakturaId, "för userId:", userId);
-    const updateResult = await client.query(
-      `UPDATE leverantörsfakturor 
-       SET betaldatum = $1, status_betalning = 'Betald' 
-       WHERE id = $2 AND "user_id" = $3`,
-      [new Date().toISOString().split("T")[0], leverantörsfakturaId, userId]
-    );
-    console.log("📝 Update result rowCount:", updateResult.rowCount);
-
-    return { success: true, transaktionsId };
   } catch (error) {
     console.error("Fel vid registrering av betalning:", error);
     return {
       success: false,
       error: "Kunde inte registrera betalning",
     };
-  } finally {
-    client.release();
   }
 }
 
@@ -106,11 +94,13 @@ export async function betalaOchBokförLeverantörsfaktura(
     return { success: false, error: "Ej autentiserad" };
   }
 
-  const client = await pool.connect();
-
   try {
+    if (!Number.isFinite(belopp) || belopp <= 0) {
+      return { success: false, error: "Ogiltigt belopp" };
+    }
+
     // Kontrollera att fakturan finns och är ej bokförd
-    const { rows: fakturaRows } = await client.query(
+    const { rows: fakturaRows } = await pool.query(
       `SELECT status_bokförd, status_betalning FROM leverantörsfakturor 
        WHERE id = $1 AND "user_id" = $2`,
       [leverantörsfakturaId, userId]
@@ -125,70 +115,53 @@ export async function betalaOchBokförLeverantörsfaktura(
       return { success: false, error: "Fakturan är redan bokförd" };
     }
 
-    await client.query("BEGIN");
+    const todayISO = new Date().toISOString().split("T")[0];
+    let transaktionsId: number | null = null;
 
-    // Skapa ny transaktion för betalningen
-    const { rows: transRows } = await client.query(
-      `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
-      ) VALUES ($1, $2, $3, $4, $5)
-      RETURNING id`,
-      [
-        new Date().toISOString().split("T")[0], // Dagens datum
-        "Betalning leverantörsfaktura",
-        belopp,
-        "Betalning och bokföring av leverantörsfaktura",
+    try {
+      const { transaktionsId: createdId } = await createTransaktion({
+        datum: todayISO,
+        beskrivning: `Betalning och bokföring av leverantörsfaktura ${leverantörsfakturaId}`,
+        kommentar: "Betalning och bokföring av leverantörsfaktura",
         userId,
-      ]
-    );
+        poster: [
+          { kontonummer: "2440", debet: belopp, kredit: 0 },
+          { kontonummer: "1930", debet: 0, kredit: belopp },
+        ],
+      });
 
-    const transaktionsId = transRows[0].id;
+      transaktionsId = createdId;
 
-    // Hämta konto-id för 1930 (Företagskonto) och 2440 (Leverantörsskulder)
-    const kontoRes = await client.query(
-      `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('1930','2440')`
-    );
-    const kontoMap = Object.fromEntries(
-      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
-    );
+      await pool.query(
+        `UPDATE leverantörsfakturor 
+         SET betaldatum = $1, status_betalning = 'Betald', status_bokförd = 'Bokförd' 
+         WHERE id = $2 AND "user_id" = $3`,
+        [todayISO, leverantörsfakturaId, userId]
+      );
 
-    if (!kontoMap["1930"] || !kontoMap["2440"]) {
-      throw new Error("Konto 1930 eller 2440 saknas");
+      return { success: true, transaktionsId };
+    } catch (error) {
+      if (transaktionsId) {
+        try {
+          await pool.query('DELETE FROM transaktioner WHERE id = $1 AND "user_id" = $2', [
+            transaktionsId,
+            userId,
+          ]);
+        } catch (cleanupError) {
+          console.error(
+            "⚠️ Kunde inte rulla tillbaka skapad leverantörstransaktion:",
+            cleanupError
+          );
+        }
+      }
+      throw error;
     }
-
-    // Skapa transaktionsposter för betalningen
-    // 1930 Företagskonto - Kredit (pengar ut)
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["1930"], 0, belopp]
-    );
-
-    // 2440 Leverantörsskulder - Debet (skuld minskar)
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["2440"], belopp, 0]
-    );
-
-    // Uppdatera leverantörsfaktura med betaldatum och status
-    await client.query(
-      `UPDATE leverantörsfakturor 
-       SET betaldatum = $1, status_betalning = 'Betald', status_bokförd = 'Bokförd' 
-       WHERE id = $2 AND "user_id" = $3`,
-      [new Date().toISOString().split("T")[0], leverantörsfakturaId, userId]
-    );
-
-    await client.query("COMMIT");
-
-    return { success: true, transaktionsId };
   } catch (error) {
-    await client.query("ROLLBACK");
     console.error("Fel vid betalning och bokföring:", error);
     return {
       success: false,
       error: "Kunde inte betala och bokföra leverantörsfaktura",
     };
-  } finally {
-    client.release();
   }
 }
 
@@ -200,50 +173,51 @@ export async function registreraBetalningEnkel(
   const userId = await getUserId();
   if (!userId) return { success: false, error: "Inte inloggad" };
 
-  // userId already a number from getUserId()
-  const client = await pool.connect();
-
   try {
-    await client.query("BEGIN");
+    if (!Number.isFinite(belopp) || belopp <= 0) {
+      return { success: false, error: "Ogiltigt belopp" };
+    }
 
-    // Skapa transaktion
-    const transResult = await client.query(
-      'INSERT INTO transaktioner (transaktionsdatum, kontobeskrivning, belopp, "user_id") VALUES ($1, $2, $3, $4) RETURNING id',
-      [new Date(), `Betalning faktura ${fakturaId}`, belopp, userId]
-    );
-    const transId = transResult.rows[0].id;
+    const today = new Date();
+    const todayISO = today.toISOString().split("T")[0];
+    let transId: number | null = null;
 
-    // Hämta konto-IDn
-    const bankResult = await client.query("SELECT id FROM konton WHERE kontonummer = '1930'");
-    const kundResult = await client.query("SELECT id FROM konton WHERE kontonummer = '1510'");
+    try {
+      const { transaktionsId } = await createTransaktion({
+        datum: today,
+        beskrivning: `Betalning faktura ${fakturaId}`,
+        userId,
+        poster: [
+          { kontonummer: "1930", debet: belopp, kredit: 0 },
+          { kontonummer: "1510", debet: 0, kredit: belopp },
+        ],
+      });
 
-    // 1930 Bank - DEBET
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
-      [transId, bankResult.rows[0].id, belopp, 0]
-    );
+      transId = transaktionsId;
 
-    // 1510 Kundfordringar - KREDIT
-    await client.query(
-      "INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)",
-      [transId, kundResult.rows[0].id, 0, belopp]
-    );
+      await pool.query("UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3", [
+        "Betald",
+        todayISO,
+        fakturaId,
+      ]);
+    } catch (error) {
+      if (transId) {
+        try {
+          await pool.query('DELETE FROM transaktioner WHERE id = $1 AND "user_id" = $2', [
+            transId,
+            userId,
+          ]);
+        } catch (cleanupError) {
+          console.error("⚠️ Kunde inte rulla tillbaka enkel betalning:", cleanupError);
+        }
+      }
+      throw error;
+    }
 
-    // Uppdatera fakturaSTATUS
-    await client.query("UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3", [
-      "Betald",
-      new Date().toISOString().split("T")[0],
-      fakturaId,
-    ]);
-
-    await client.query("COMMIT");
     return { success: true };
   } catch (error) {
-    await client.query("ROLLBACK");
     console.error("Fel:", error);
     return { success: false, error: "Kunde inte registrera betalning" };
-  } finally {
-    client.release();
   }
 }
 
