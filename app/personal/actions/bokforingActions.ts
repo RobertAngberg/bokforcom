@@ -1,6 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
+import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
 import { getUserId } from "../../_utils/authUtils";
 import { revalidatePath } from "next/cache";
@@ -29,95 +30,37 @@ export async function bokförLöneskatter({
 }) {
   const userId = await getUserId();
   if (!userId) throw new Error("Ingen inloggad användare");
-  const realUserId = userId;
+
+  const transaktionsdatum = datum || new Date().toISOString();
+  const standardKommentar = kommentar || "Automatisk bokföring från lönekörning";
 
   try {
-    const client = await pool.connect();
-    const transaktionsdatum = datum || new Date().toISOString();
-
-    // Skapa huvudtransaktion för sociala avgifter
-    const socialTransaktion = await client.query(
-      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "user_id")
-       VALUES ($1, $2, $3, $4) RETURNING id`,
-      [
-        transaktionsdatum,
-        "Bokföring av sociala avgifter",
-        kommentar || "Automatisk bokföring från lönekörning",
-        realUserId,
-      ]
-    );
-    const socialTransaktionsId = socialTransaktion.rows[0].id;
-
-    // Sociala avgifter - transaktionsposter
     if (socialaAvgifter > 0) {
-      // Hämta konto-id för 1930 och 2731
-      const konto1930 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "1930",
-      ]);
-      const konto2731 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "2731",
-      ]);
-
-      if (konto1930.rows.length === 0) throw new Error("Konto 1930 finns inte");
-      if (konto2731.rows.length === 0) throw new Error("Konto 2731 finns inte");
-
-      // 1930 Företagskonto (kredit)
-      await client.query(
-        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-         VALUES ($1, $2, $3, $4)`,
-        [socialTransaktionsId, konto1930.rows[0].id, 0, socialaAvgifter]
-      );
-
-      // 2731 Avräkning lagstadgade sociala avgifter (debet)
-      await client.query(
-        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-         VALUES ($1, $2, $3, $4)`,
-        [socialTransaktionsId, konto2731.rows[0].id, socialaAvgifter, 0]
-      );
+      await createTransaktion({
+        datum: transaktionsdatum,
+        beskrivning: "Bokföring av sociala avgifter",
+        kommentar: standardKommentar,
+        userId,
+        poster: [
+          { kontonummer: "2731", debet: socialaAvgifter, kredit: 0 },
+          { kontonummer: "1930", debet: 0, kredit: socialaAvgifter },
+        ],
+      });
     }
 
-    // Skapa huvudtransaktion för personalskatt
-    const skattTransaktion = await client.query(
-      `INSERT INTO transaktioner ("transaktionsdatum", "kontobeskrivning", "kommentar", "user_id")
-       VALUES ($1, $2, $3, $4) RETURNING id`,
-      [
-        transaktionsdatum,
-        "Bokföring av personalskatt",
-        kommentar || "Automatisk bokföring från lönekörning",
-        realUserId,
-      ]
-    );
-    const skattTransaktionsId = skattTransaktion.rows[0].id;
-
-    // Personalskatt - transaktionsposter
     if (personalskatt > 0) {
-      // Hämta konto-id för 1930 och 2710
-      const konto1930 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "1930",
-      ]);
-      const konto2710 = await client.query("SELECT id FROM konton WHERE kontonummer = $1", [
-        "2710",
-      ]);
-
-      if (konto1930.rows.length === 0) throw new Error("Konto 1930 finns inte");
-      if (konto2710.rows.length === 0) throw new Error("Konto 2710 finns inte");
-
-      // 1930 Företagskonto (kredit)
-      await client.query(
-        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-         VALUES ($1, $2, $3, $4)`,
-        [skattTransaktionsId, konto1930.rows[0].id, 0, personalskatt]
-      );
-
-      // 2710 Personalskatt (debet)
-      await client.query(
-        `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-         VALUES ($1, $2, $3, $4)`,
-        [skattTransaktionsId, konto2710.rows[0].id, personalskatt, 0]
-      );
+      await createTransaktion({
+        datum: transaktionsdatum,
+        beskrivning: "Bokföring av personalskatt",
+        kommentar: standardKommentar,
+        userId,
+        poster: [
+          { kontonummer: "2710", debet: personalskatt, kredit: 0 },
+          { kontonummer: "1930", debet: 0, kredit: personalskatt },
+        ],
+      });
     }
 
-    client.release();
     revalidatePath("/personal");
     revalidatePath("/historik");
     return { success: true, message: "Löneskatter bokförda!" };
@@ -133,12 +76,8 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
     throw new Error("Ingen inloggad användare");
   }
 
-  // userId already a number from getUserId()
-
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-
-    // Hämta lönespecifikation för att säkerställa att den tillhör användaren
     const lönespecQuery = `
       SELECT l.*, a.förnamn, a.efternamn, a.kompensation
       FROM lönespecifikationer l
@@ -148,28 +87,21 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
     const lönespecResult = await client.query(lönespecQuery, [data.lönespecId, userId]);
 
     if (lönespecResult.rows.length === 0) {
-      client.release();
       throw new Error("Lönespecifikation hittades inte");
     }
 
     const lönespec = lönespecResult.rows[0];
 
-    // Kontrollera att lönespec inte redan är bokförd
     if (lönespec.bokförd === true) {
-      client.release();
       throw new Error("Lönespecifikation är redan bokförd");
     }
 
-    // Sätt bokförd till false innan bokföring (reset)
-    const updateLönespecQueryReset = `
-      UPDATE lönespecifikationer 
-      SET bokförd = false, uppdaterad = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `;
-    await client.query(updateLönespecQueryReset, [data.lönespecId]);
+    await client.query(
+      `UPDATE lönespecifikationer SET bokförd = false, uppdaterad = CURRENT_TIMESTAMP WHERE id = $1`,
+      [data.lönespecId]
+    );
 
-    // Använd bokföringsPoster direkt om den finns, annars generera som tidigare
-    const bokföringsPoster =
+    const bokföringsPoster: BokföringsPost[] =
       data.bokföringsPoster && Array.isArray(data.bokföringsPoster)
         ? data.bokföringsPoster
         : genereraBokföringsPoster(
@@ -179,69 +111,40 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
             data.anställdNamn
           );
 
-    // Validera att bokföringen balanserar
-    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + post.debet, 0);
-    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + post.kredit, 0);
+    const totalDebet = bokföringsPoster.reduce((sum, post) => sum + (post.debet || 0), 0);
+    const totalKredit = bokföringsPoster.reduce((sum, post) => sum + (post.kredit || 0), 0);
 
     if (Math.abs(totalDebet - totalKredit) > 0.01) {
-      client.release();
       throw new Error(
         `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`
       );
     }
 
-    // Skapa huvudtransaktion
-    const transaktionQuery = `
-      INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, kommentar, "user_id"
-      ) VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
-    `;
+    const poster = bokföringsPoster
+      .map((post) => ({
+        kontonummer: post.konto,
+        debet: Number(post.debet) || 0,
+        kredit: Number(post.kredit) || 0,
+      }))
+      .filter((post) => post.debet !== 0 || post.kredit !== 0);
 
-    const nettolön = data.beräknadeVärden.nettolön || lönespec.nettolön;
-    const transaktionResult = await client.query(transaktionQuery, [
-      new Date(data.utbetalningsdatum),
-      `Löneutbetalning ${data.anställdNamn} ${data.period}`,
-      nettolön,
-      data.kommentar || `Löneutbetalning för ${data.anställdNamn}, period ${data.period}`,
-      userId,
-    ]);
-
-    const transaktionId = transaktionResult.rows[0].id;
-
-    // Skapa transaktionsposter för varje bokföringspost
-    const transaktionspostQuery = `
-      INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit)
-      VALUES ($1, $2, $3, $4)
-    `;
-
-    for (const post of bokföringsPoster) {
-      post.debet = Number(post.debet) || 0;
-      post.kredit = Number(post.kredit) || 0;
-      if (post.debet === 0 && post.kredit === 0) {
-        continue;
-      }
-
-      const kontoQuery = `SELECT id FROM konton WHERE kontonummer = $1`;
-      const kontoResult = await client.query(kontoQuery, [post.konto]);
-      if (kontoResult.rows.length === 0) {
-        client.release();
-        throw new Error(`Konto ${post.konto} (${post.kontoNamn}) hittades inte i databasen`);
-      }
-      const kontoId = kontoResult.rows[0].id;
-
-      await client.query(transaktionspostQuery, [transaktionId, kontoId, post.debet, post.kredit]);
+    if (poster.length === 0) {
+      throw new Error("Inga bokföringsposter att bokföra");
     }
 
-    // Markera lönespecifikation som bokförd
-    const updateLönespecQuery = `
-      UPDATE lönespecifikationer 
-      SET bokförd = true, bokförd_datum = CURRENT_TIMESTAMP, uppdaterad = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `;
-    await client.query(updateLönespecQuery, [data.lönespecId]);
+    const { transaktionsId: transaktionId } = await createTransaktion({
+      datum: new Date(data.utbetalningsdatum),
+      beskrivning: `Löneutbetalning ${data.anställdNamn} ${data.period}`,
+      kommentar:
+        data.kommentar || `Löneutbetalning för ${data.anställdNamn}, period ${data.period}`,
+      userId,
+      poster,
+    });
 
-    client.release();
+    await client.query(
+      `UPDATE lönespecifikationer SET bokförd = true, bokförd_datum = CURRENT_TIMESTAMP, uppdaterad = CURRENT_TIMESTAMP WHERE id = $1`,
+      [data.lönespecId]
+    );
 
     revalidatePath("/personal");
     revalidatePath("/historik");
@@ -256,6 +159,8 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
   } catch (error) {
     console.error("❌ bokförLöneutbetalning error:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
