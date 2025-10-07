@@ -22,6 +22,34 @@ export type Leverantör = {
   uppdaterad?: string;
 };
 
+export interface KundListItem {
+  id: number;
+  kundnamn: string;
+  kundorgnummer?: string | null;
+  kundnummer?: string | null;
+  kundmomsnummer?: string | null;
+  kundadress1?: string | null;
+  kundpostnummer?: string | null;
+  kundstad?: string | null;
+  kundemail?: string | null;
+  personnummer?: string | null;
+}
+
+export interface Företagsprofil {
+  företagsnamn: string;
+  adress: string;
+  postnummer: string;
+  stad: string;
+  organisationsnummer: string;
+  momsregistreringsnummer: string;
+  telefonnummer: string;
+  epost: string;
+  webbplats: string;
+  bankinfo?: string;
+  logo?: string;
+  logoWidth?: number;
+}
+
 export type FakturaFormData = {
   id: string;
   fakturanummer: string;
@@ -127,23 +155,55 @@ export type FavoritArtikel = Omit<
   rotRutSlutdatum?: string | Date;
 };
 
+export interface FavoritArtikelRow {
+  id: number;
+  beskrivning: string;
+  antal: number | string;
+  pris_per_enhet: number | string;
+  moms: number | string;
+  valuta: string;
+  typ: string;
+  rot_rut_typ: string | null;
+  rot_rut_kategori: string | null;
+  avdrag_procent: number | string | null;
+  arbetskostnad_ex_moms: number | string | null;
+  rot_rut_beskrivning: string | null;
+  rot_rut_startdatum: string | null;
+  rot_rut_slutdatum: string | null;
+  rot_rut_personnummer: string | null;
+  rot_rut_fastighetsbeteckning: string | null;
+  rot_rut_boende_typ: string | null;
+  rot_rut_brf_org: string | null;
+  rot_rut_brf_lagenhet: string | null;
+}
+
+export interface ArtikelInput {
+  beskrivning: string;
+  antal: number;
+  prisPerEnhet: number;
+  moms: number;
+  valuta?: string;
+  typ?: string;
+  rotRutTyp?: string | null;
+  rotRutKategori?: string | null;
+  avdragProcent?: number | null;
+  arbetskostnadExMoms?: number | null;
+  rotRutBeskrivning?: string | null;
+  rotRutStartdatum?: string | null;
+  rotRutSlutdatum?: string | null;
+  rotRutPersonnummer?: string | null;
+  rotRutFastighetsbeteckning?: string | null;
+  rotRutBoendeTyp?: string | null;
+  rotRutBrfOrg?: string | null;
+  rotRutBrfLagenhet?: string | null;
+}
+
 export type KundStatus = "none" | "loaded" | "editing" | "sparad";
 
 // Server data types
 export type ServerData = {
-  foretagsprofil?: {
-    företagsnamn?: string;
-    adress?: string;
-    postnummer?: string;
-    stad?: string;
-    organisationsnummer?: string;
-    momsregistreringsnummer?: string;
-    telefonnummer?: string;
-    epost?: string;
-    bankinfo?: string;
-    webbplats?: string;
-  };
-  kunder?: unknown[];
+  foretagsprofil?: Partial<Företagsprofil>;
+  kunder?: KundListItem[];
   artiklar?: FavoritArtikel[];
 };
 
@@ -314,7 +374,7 @@ export interface UseSparadeFakturorReturn {
 }
 
 export interface SparadeFakturorPageData {
-  kunder: unknown[];
+  kunder: KundListItem[];
   fakturor: SparadFaktura[];
   artiklar: FavoritArtikel[];
 }
@@ -679,6 +739,7 @@ export interface FakturaArtikelContextValue {
 
 export interface FakturaArtikelProviderProps {
   children: React.ReactNode;
+  initialFavoritArtiklar?: FavoritArtikel[];
 }
 
 export interface LeverantörFormData {
@@ -716,6 +777,8 @@ export interface FakturaLifecycleFlags {
   harInitDefaults: boolean;
   harAutoBeraknatForfallo: boolean;
   harLastatForetagsprofil: boolean;
+  harLastatKunder: boolean;
+  harLastatFavoritArtiklar: boolean;
 }
 
 export type FakturaFormAction =

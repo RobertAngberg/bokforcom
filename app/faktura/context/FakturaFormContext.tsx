@@ -27,6 +27,8 @@ const lifecycleDefaults: FakturaLifecycleFlags = {
   harInitDefaults: false,
   harAutoBeraknatForfallo: false,
   harLastatForetagsprofil: false,
+  harLastatKunder: false,
+  harLastatFavoritArtiklar: false,
 };
 
 const defaultFormTemplate: FakturaFormData = {
@@ -181,6 +183,9 @@ function mapForetagsprofil(data: ServerData["foretagsprofil"]): Partial<FakturaF
     epost: data.epost ?? "",
     bankinfo: data.bankinfo ?? "",
     webbplats: data.webbplats ?? "",
+    logo: data.logo ?? "",
+    logoWidth:
+      typeof data.logoWidth === "number" && Number.isFinite(data.logoWidth) ? data.logoWidth : 200,
   };
 }
 

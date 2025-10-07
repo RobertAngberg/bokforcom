@@ -7,7 +7,11 @@ import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import { sanitizeFormInput, sanitizeInput } from "../../_utils/validationUtils";
 
 import { useFakturaArtikelContext } from "../context/FakturaArtikelContext";
-import { useFakturaForm, useFakturaFormActions } from "../context/FakturaFormContext";
+import {
+  useFakturaForm,
+  useFakturaFormActions,
+  useFakturaLifecycle,
+} from "../context/FakturaFormContext";
 import {
   hämtaSparadeArtiklar,
   deleteFavoritArtikel,
@@ -150,6 +154,7 @@ export function useProdukterTjanster() {
     useFakturaArtikelContext();
   const formData = useFakturaForm();
   const { setFormData } = useFakturaFormActions();
+  const lifecycle = useFakturaLifecycle();
 
   const metrics = useMemo(() => deriveArtikelMetrics(formData), [formData]);
   const artiklar = metrics.artiklar;
@@ -165,12 +170,21 @@ export function useProdukterTjanster() {
   }, [setFavoritArtiklar]);
 
   useEffect(() => {
-    if (state.favoritArtiklar.length === 0) {
-      laddaSparadeArtiklar().catch((error) => {
-        console.error("[FakturaArtikel] kunde inte ladda favoritartiklar", error);
-      });
+    if (state.favoritArtiklar.length > 0) {
+      return;
     }
-  }, [state.favoritArtiklar.length, laddaSparadeArtiklar]);
+
+    if (lifecycle.current.harLastatFavoritArtiklar) {
+      return;
+    }
+
+    lifecycle.current.harLastatFavoritArtiklar = true;
+
+    laddaSparadeArtiklar().catch((error) => {
+      console.error("[FakturaArtikel] kunde inte ladda favoritartiklar", error);
+      lifecycle.current.harLastatFavoritArtiklar = false;
+    });
+  }, [state.favoritArtiklar.length, laddaSparadeArtiklar, lifecycle]);
 
   const läggTillArtikel = useCallback(() => {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;

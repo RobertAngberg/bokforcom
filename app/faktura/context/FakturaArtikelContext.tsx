@@ -55,8 +55,14 @@ function reducer(state: FakturaArtikelState, action: FakturaArtikelAction): Fakt
 
 const FakturaArtikelContext = createContext<FakturaArtikelContextValue | undefined>(undefined);
 
-export function FakturaArtikelProvider({ children }: FakturaArtikelProviderProps) {
-  const [state, dispatch] = useReducer(reducer, defaultState);
+export function FakturaArtikelProvider({
+  children,
+  initialFavoritArtiklar,
+}: FakturaArtikelProviderProps) {
+  const [state, dispatch] = useReducer(reducer, initialFavoritArtiklar, (favoriter) => ({
+    ...defaultState,
+    favoritArtiklar: Array.isArray(favoriter) ? favoriter : [],
+  }));
 
   const setState = useCallback((updates: Partial<FakturaArtikelState>) => {
     dispatch({ type: "SET_STATE", payload: updates });

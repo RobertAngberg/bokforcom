@@ -1,8 +1,9 @@
 "use server";
 
+import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
-import { Artikel } from "../types/types";
+import { Artikel, FavoritArtikel, FavoritArtikelRow } from "../types/types";
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
   const userId = await getUserId();
@@ -85,6 +86,8 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
       ]
     );
 
+    await revalidateTag("faktura-artiklar");
+
     return { success: true };
   } catch (err) {
     console.error("❌ Kunde inte spara favoritartikel:", err);
@@ -152,6 +155,8 @@ export async function updateFavoritArtikel(id: number, artikel: Artikel) {
       ]
     );
 
+    await revalidateTag("faktura-artiklar");
+
     return { success: true };
   } catch (err) {
     console.error("❌ Kunde inte uppdatera favoritartikel:", err);
@@ -170,6 +175,7 @@ export async function deleteFavoritArtikel(id: number) {
       id,
       userId,
     ]);
+    await revalidateTag("faktura-artiklar");
     return { success: true };
   } catch (err) {
     console.error("❌ deleteFavoritArtikel error:", err);
@@ -179,12 +185,53 @@ export async function deleteFavoritArtikel(id: number) {
   }
 }
 
-export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
-  // userId already a number from getUserId()
+const mapFavoritArtiklar = (rows: FavoritArtikelRow[]): FavoritArtikel[] =>
+  rows.map((row) => {
+    const typ = row.typ === "tjänst" ? "tjänst" : "vara";
+    const rotRutTyp =
+      row.rot_rut_typ === "ROT" || row.rot_rut_typ === "RUT"
+        ? (row.rot_rut_typ as "ROT" | "RUT")
+        : undefined;
+    const avdragProcentValue =
+      row.avdrag_procent !== null && row.avdrag_procent !== undefined
+        ? Number(row.avdrag_procent)
+        : undefined;
+    const arbetskostnadValue =
+      row.arbetskostnad_ex_moms !== null && row.arbetskostnad_ex_moms !== undefined
+        ? Number(row.arbetskostnad_ex_moms)
+        : undefined;
 
-  try {
+    return {
+      id: row.id,
+      beskrivning: row.beskrivning,
+      antal: Number(row.antal) || 0,
+      prisPerEnhet: Number(row.pris_per_enhet) || 0,
+      moms: Number(row.moms) || 0,
+      valuta: row.valuta ?? "SEK",
+      typ,
+      rotRutTyp,
+      rotRutKategori: row.rot_rut_kategori ?? undefined,
+      avdragProcent:
+        avdragProcentValue !== undefined && Number.isFinite(avdragProcentValue)
+          ? avdragProcentValue
+          : undefined,
+      arbetskostnadExMoms:
+        arbetskostnadValue !== undefined && Number.isFinite(arbetskostnadValue)
+          ? arbetskostnadValue
+          : undefined,
+      rotRutBeskrivning: row.rot_rut_beskrivning ?? undefined,
+      rotRutStartdatum: row.rot_rut_startdatum ?? undefined,
+      rotRutSlutdatum: row.rot_rut_slutdatum ?? undefined,
+      rotRutPersonnummer: row.rot_rut_personnummer ?? undefined,
+      rotRutFastighetsbeteckning: row.rot_rut_fastighetsbeteckning ?? undefined,
+      rotRutBoendeTyp: row.rot_rut_boende_typ ?? undefined,
+      rotRutBrfOrg: row.rot_rut_brf_org ?? undefined,
+      rotRutBrfLagenhet: row.rot_rut_brf_lagenhet ?? undefined,
+    } satisfies FavoritArtikel;
+  });
+
+const fetchSparadeArtiklar = unstable_cache(
+  async (userId: string): Promise<FavoritArtikel[]> => {
     const res = await pool.query(
       `
       SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
@@ -200,28 +247,18 @@ export async function hämtaSparadeArtiklar(): Promise<Artikel[]> {
       [userId]
     );
 
-    return res.rows.map((row) => ({
-      id: row.id,
-      beskrivning: row.beskrivning,
-      antal: Number(row.antal),
-      prisPerEnhet: Number(row.pris_per_enhet),
-      moms: Number(row.moms),
-      valuta: row.valuta,
-      typ: row.typ,
-      rotRutTyp: row.rot_rut_typ,
-      rotRutKategori: row.rot_rut_kategori,
-      avdragProcent: row.avdrag_procent,
-      arbetskostnadExMoms: row.arbetskostnad_ex_moms,
-      // rotRutAntalTimmar och rotRutPrisPerTimme ersätts av antal och prisPerEnhet
-      rotRutBeskrivning: row.rot_rut_beskrivning,
-      rotRutStartdatum: row.rot_rut_startdatum,
-      rotRutSlutdatum: row.rot_rut_slutdatum,
-      rotRutPersonnummer: row.rot_rut_personnummer,
-      rotRutFastighetsbeteckning: row.rot_rut_fastighetsbeteckning,
-      rotRutBoendeTyp: row.rot_rut_boende_typ,
-      rotRutBrfOrg: row.rot_rut_brf_org,
-      rotRutBrfLagenhet: row.rot_rut_brf_lagenhet,
-    }));
+    return mapFavoritArtiklar(res.rows as FavoritArtikelRow[]);
+  },
+  ["faktura-artiklar"],
+  { revalidate: 60, tags: ["faktura-artiklar"] }
+);
+
+export async function hämtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
+  const userId = await getUserId();
+  if (!userId) return [];
+
+  try {
+    return await fetchSparadeArtiklar(String(userId));
   } catch (err) {
     console.error("❌ Kunde inte hämta sparade artiklar:", err);
     return [];

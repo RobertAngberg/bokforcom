@@ -168,7 +168,7 @@ export default function BokfordaFakturor() {
             <div className="flex gap-3 justify-end pt-4">
               <Knapp text="❌ Avbryt" onClick={stängBekraftelseModal} className="px-6 py-2" />
               <Knapp
-                text="✅ Bokför"
+                text="✓ Bokför"
                 onClick={() => utförBokföring(bekraftelseModal.faktura!)}
                 className="px-6 py-2"
               />

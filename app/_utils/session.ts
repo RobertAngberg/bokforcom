@@ -1,6 +1,5 @@
 import { auth } from "../_lib/better-auth";
 import { headers } from "next/headers";
-import { logError } from "./errorUtils";
 import type { UserId } from "../_types/common";
 
 // Better Auth session type
@@ -37,21 +36,4 @@ export async function ensureSession() {
     session: session as BetterAuthSession,
     userId: session.user.id as UserId,
   };
-}
-
-/**
- * Wrapper som returnerar null istället för att kasta, om session saknas.
- */
-export async function tryGetSession(): Promise<{
-  session: BetterAuthSession;
-  userId: UserId;
-} | null> {
-  try {
-    return await ensureSession();
-  } catch (e: unknown) {
-    if (e instanceof Error && (e as Error & { code?: string }).code !== "NO_SESSION") {
-      logError(e, "tryGetSession");
-    }
-    return null;
-  }
 }

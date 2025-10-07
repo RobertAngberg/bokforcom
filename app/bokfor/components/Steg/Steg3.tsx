@@ -108,7 +108,7 @@ export default function Steg3() {
                   ? state.ärFörsäljning
                     ? "📤 Slutför kundfaktura"
                     : "📥 Slutför leverantörsfaktura"
-                  : "✅ Bokför"
+                  : "✓ Bokför"
             }
             loadingText={
               state.utlaggMode
@@ -117,7 +117,7 @@ export default function Steg3() {
                   ? state.ärFörsäljning
                     ? "📤 Slutför kundfaktura..."
                     : "📥 Slutför leverantörsfaktura..."
-                  : "⏳ Bokför..."
+                  : "Bokför..."
             }
             loading={state.loadingSteg3}
             onClick={handlers.handleButtonClick}

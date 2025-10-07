@@ -6,31 +6,8 @@ import { getUserId } from "../../_utils/authUtils";
 import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { logError, createError } from "../../_utils/errorUtils";
-import type { SparadFaktura } from "../types/types";
+import type { ArtikelInput, SparadFaktura } from "../types/types";
 
-// Typ för artikel från formulärdata
-interface ArtikelInput {
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  moms: number;
-  valuta?: string;
-  typ?: string;
-  rotRutTyp?: string | null;
-  rotRutKategori?: string | null;
-  avdragProcent?: number | null;
-  arbetskostnadExMoms?: number | null;
-  rotRutBeskrivning?: string | null;
-  rotRutStartdatum?: string | null;
-  rotRutSlutdatum?: string | null;
-  rotRutPersonnummer?: string | null;
-  rotRutFastighetsbeteckning?: string | null;
-  rotRutBoendeTyp?: string | null;
-  rotRutBrfOrg?: string | null;
-  rotRutBrfLagenhet?: string | null;
-}
-
-// Förbättrad JSON-parsing med validering som använder centraliserad sanitisering
 function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
   try {
     if (!jsonString || typeof jsonString !== "string") return [];

@@ -99,6 +99,7 @@ export default function Avsandare() {
                 height={100}
                 className="object-contain rounded"
                 style={{ height: "auto", maxHeight: "100px" }}
+                unoptimized
               />
             </div>
           )}

@@ -3,16 +3,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
-
-// Auth
 import { useSession } from "../../_lib/auth-client";
-
-// Context
-import { useFakturaClient } from "../context/FakturaContextProvider";
+import { useFakturaClient, useFakturaInitialData } from "../context/FakturaContextProvider";
 import { useProdukterTjanster } from "./useProdukterTjanster";
 import { useFakturaLifecycle } from "../context/FakturaFormContext";
-
-// Actions
 import { hämtaFakturaMedRader } from "../actions/fakturaActions";
 import {
   hämtaFöretagsprofil,
@@ -21,8 +15,6 @@ import {
 } from "../actions/foretagActions";
 import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
 import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
-
-// Utils
 import {
   sanitizeFormInput,
   validatePersonnummer,
@@ -30,9 +22,7 @@ import {
 } from "../../_utils/validationUtils";
 import { stringTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import { showToast } from "../../_components/Toast";
-
-// Types
-import type { FakturaFormData, KundSaveResponse } from "../types/types";
+import type { FakturaFormData, KundListItem, KundSaveResponse } from "../types/types";
 
 const sanitizePersonnummerValue = (value: string): string => {
   if (!value) return "";
@@ -57,6 +47,7 @@ export function useFaktura() {
     resetKund,
     setBokföringsmetod,
   } = useFakturaClient();
+  const initialData = useFakturaInitialData();
 
   const artikelContext = useProdukterTjanster();
   const {
@@ -126,21 +117,16 @@ export function useFaktura() {
   // Local UI state
   const [showPreview, setShowPreview] = useState(false);
   const [isLoadingFaktura, setIsLoadingFaktura] = useState(false);
-  const [kunder, setKunder] = useState<
-    Array<{
-      id: number;
-      kundnamn: string;
-      kundorgnummer?: string;
-      kundnummer?: string;
-      kundmomsnummer?: string;
-      kundadress1?: string;
-      kundpostnummer?: string;
-      kundstad?: string;
-      kundemail?: string;
-      personnummer?: string;
-    }>
-  >([]);
+  const initialKunder = useMemo(() => {
+    const kunder = initialData?.kunder ?? [];
+    return [...kunder].sort((a, b) => a.kundnamn.localeCompare(b.kundnamn));
+  }, [initialData?.kunder]);
+  const [kunder, setKunder] = useState<Array<KundListItem>>(() => initialKunder);
   const [showDeleteKundModal, setShowDeleteKundModal] = useState(false);
+
+  if (!lifecycle.current.harLastatKunder && initialKunder.length > 0) {
+    lifecycle.current.harLastatKunder = true;
+  }
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -235,16 +221,24 @@ export function useFaktura() {
 
   // Hämta sparade kunder vid mount
   useEffect(() => {
+    if (lifecycle.current.harLastatKunder) {
+      return;
+    }
+
+    lifecycle.current.harLastatKunder = true;
+
     const laddaKunder = async () => {
       try {
         const sparade = await hämtaSparadeKunder();
         setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
-      } catch {
-        console.log("Fel vid hämtning av kunder");
+      } catch (error) {
+        console.log("Fel vid hämtning av kunder", error);
+        lifecycle.current.harLastatKunder = false;
       }
     };
+
     laddaKunder();
-  }, []);
+  }, [lifecycle]);
 
   // =============================================================================
   // HELPER FUNCTIONS
@@ -808,12 +802,12 @@ export function useFaktura() {
       updateMultipleFields({
         kundId: valdKund.id.toString(),
         kundnamn: valdKund.kundnamn,
-        kundorganisationsnummer: valdKund.kundorgnummer,
-        kundnummer: valdKund.kundnummer,
-        kundmomsnummer: valdKund.kundmomsnummer,
-        kundadress: valdKund.kundadress1,
-        kundpostnummer: valdKund.kundpostnummer,
-        kundstad: valdKund.kundstad,
+        kundorganisationsnummer: valdKund.kundorgnummer ?? "",
+        kundnummer: valdKund.kundnummer ?? "",
+        kundmomsnummer: valdKund.kundmomsnummer ?? "",
+        kundadress: valdKund.kundadress1 ?? "",
+        kundpostnummer: valdKund.kundpostnummer ?? "",
+        kundstad: valdKund.kundstad ?? "",
         kundemail: sanitizeFormInput(valdKund.kundemail || ""),
         personnummer: sanitizePersonnummerValue(valdKund.personnummer || ""),
       });

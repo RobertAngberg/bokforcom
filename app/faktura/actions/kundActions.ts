@@ -1,9 +1,11 @@
 "use server";
 
+import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { withDatabase } from "../../_utils/dbUtils";
+import type { KundListItem } from "../types/types";
 
 export async function sparaNyKund(formData: FormData) {
   // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering
@@ -35,7 +37,7 @@ export async function sparaNyKund(formData: FormData) {
     return { success: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
   }
 
-  return withDatabase(async (client) => {
+  const result = await withDatabase(async (client) => {
     // Säker parametriserad query med saniterade värden
     const res = await client.query(
       `INSERT INTO kunder (
@@ -57,6 +59,12 @@ export async function sparaNyKund(formData: FormData) {
     );
     return { success: true, id: res.rows[0].id };
   });
+
+  if (result.success) {
+    await revalidateTag("faktura-kunder");
+  }
+
+  return result;
 }
 
 export async function uppdateraKund(id: number, formData: FormData) {
@@ -138,6 +146,7 @@ export async function uppdateraKund(id: number, formData: FormData) {
       );
 
       console.log(`✅ Kund ${id} uppdaterad säkert för user ${userId}`);
+      await revalidateTag("faktura-kunder");
       return { success: true };
     } catch (err) {
       console.error("❌ Databasfel vid uppdatering av kund:", err);
@@ -194,6 +203,7 @@ export async function deleteKund(id: number) {
       }
 
       console.log(`✅ Säkert raderade kund ${id} för user ${userId}`);
+      await revalidateTag("faktura-kunder");
       return { success: true };
     });
   } catch (err) {
@@ -202,21 +212,41 @@ export async function deleteKund(id: number) {
   }
 }
 
-export async function hämtaSparadeKunder() {
+const fetchSparadeKunder = unstable_cache(
+  async (userId: string): Promise<KundListItem[]> => {
+    const res = await pool.query<KundListItem>(
+      `SELECT
+         id,
+         kundnamn,
+         kundorgnummer,
+         kundnummer,
+         kundmomsnummer,
+         kundadress1,
+         kundpostnummer,
+         kundstad,
+         kundemail
+       FROM kunder
+       WHERE "user_id" = $1
+         AND kundnamn IS NOT NULL
+         AND kundnamn <> ''
+       ORDER BY LOWER(kundnamn), id`,
+      [userId]
+    );
+
+    return res.rows;
+  },
+  ["faktura-kunder"],
+  { revalidate: 60, tags: ["faktura-kunder"] }
+);
+
+export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
   const userId = await getUserId();
   if (!userId) return [];
-  // userId already a number from getUserId()
 
-  const client = await pool.connect();
   try {
-    const res = await client.query(`SELECT * FROM kunder WHERE "user_id" = $1 ORDER BY id DESC`, [
-      userId,
-    ]);
-    return res.rows;
+    return await fetchSparadeKunder(String(userId));
   } catch (err) {
     console.error("❌ hämtaSparadeKunder error:", err);
     return [];
-  } finally {
-    client.release();
   }
 }

@@ -36,12 +36,6 @@ export async function markWelcomeAsShown(): Promise<void> {
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR START-MODUL
 
-// REMOVED: Security logging functionality (security_logs table doesn't exist)
-// All security events are now logged to console only for development debugging
-function logStartSecurityEvent(userId: number | string, eventType: string, details: string): void {
-  console.log(`🔒 Start Security Event [${eventType}] User: ${userId} - ${details}`);
-}
-
 export async function hämtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
@@ -52,19 +46,8 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 
     // Validera input
     if (!transaktionsId || transaktionsId <= 0) {
-      logStartSecurityEvent(
-        userId,
-        "invalid_transaction_id",
-        `Invalid transaction ID: ${transaktionsId}`
-      );
       throw new Error("Ogiltigt transaktions-ID");
     }
-
-    logStartSecurityEvent(
-      userId,
-      "fetch_transaction_posts",
-      `Fetching posts for transaction: ${transaktionsId}`
-    );
 
     // 🔒 SÄKER DATABASACCESS - Endast användarens egna transaktioner
     const result = await pool.query(
@@ -78,28 +61,8 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
       [transaktionsId, userId]
     );
 
-    logStartSecurityEvent(
-      userId,
-      "fetch_transaction_posts_success",
-      `Retrieved ${result.rows.length} posts for transaction ${transaktionsId}`
-    );
-
     return result.rows;
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_transaction_posts_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ hämtaTransaktionsposter error:", error);
     return [];
   }
@@ -112,12 +75,6 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    logStartSecurityEvent(
-      userId,
-      "fetch_forval_attempt",
-      `Fetching förval with filters: ${JSON.stringify(filters)}`
-    );
 
     // 🔒 SÄKER DATABASACCESS - Endast användarens egna förval med popularitetsdata
     let query = `
@@ -166,28 +123,8 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 
     const res = await pool.query(query, values);
 
-    logStartSecurityEvent(
-      userId,
-      "fetch_forval_success",
-      `Retrieved ${res.rows.length} förval records`
-    );
-
     return res.rows;
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_forval_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ fetchAllaForval error:", error);
     return [];
   }
@@ -205,18 +142,11 @@ export async function fetchRawYearData(year: string) {
     const sanitizedYear = sanitizeInput(year);
     const yearNum = parseInt(sanitizedYear);
     if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
-      logStartSecurityEvent(userId, "invalid_year", `Invalid year: ${year}`);
       throw new Error("Ogiltigt år");
     }
 
     const start = new Date(`${yearNum}-01-01`);
     const end = new Date(`${yearNum + 1}-01-01`);
-
-    logStartSecurityEvent(
-      userId,
-      "fetch_year_data_attempt",
-      `Fetching raw data for year: ${yearNum}`
-    );
 
     const client = await pool.connect();
     try {
@@ -237,31 +167,11 @@ export async function fetchRawYearData(year: string) {
 
       const result = await client.query(query, [start, end, userId]);
 
-      logStartSecurityEvent(
-        userId,
-        "fetch_raw_year_data_success",
-        `Retrieved ${result.rows.length} raw records for year ${yearNum}`
-      );
-
       return result.rows;
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_raw_year_data_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ fetchRawYearData error:", error);
     return [];
   }
@@ -274,12 +184,6 @@ export async function hämtaAllaTransaktioner() {
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    logStartSecurityEvent(
-      userId,
-      "fetch_all_transactions_attempt",
-      "Fetching all user transactions"
-    );
 
     const client = await pool.connect();
     try {
@@ -302,31 +206,11 @@ export async function hämtaAllaTransaktioner() {
         [userId]
       );
 
-      logStartSecurityEvent(
-        userId,
-        "fetch_all_transactions_success",
-        `Retrieved ${res.rows.length} transactions`
-      );
-
       return res.rows;
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_all_transactions_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ hämtaAllaTransaktioner error:", error);
     return [];
   }
@@ -339,8 +223,6 @@ export async function getAllInvoices() {
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    logStartSecurityEvent(userId, "fetch_all_invoices_attempt", "Fetching all user invoices");
 
     const client = await pool.connect();
     try {
@@ -362,31 +244,11 @@ export async function getAllInvoices() {
         [userId]
       );
 
-      logStartSecurityEvent(
-        userId,
-        "fetch_all_invoices_success",
-        `Retrieved ${res.rows.length} invoices`
-      );
-
       return res.rows;
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_all_invoices_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ getAllInvoices error:", error);
     return [];
   }
@@ -405,12 +267,6 @@ export async function deleteInvoice(fakturaId: number) {
       throw new Error("Ogiltigt faktura-ID");
     }
 
-    logStartSecurityEvent(
-      userId,
-      "delete_invoice_attempt",
-      `Attempting to delete invoice ID: ${fakturaId}`
-    );
-
     const client = await pool.connect();
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna fakturor
@@ -420,35 +276,14 @@ export async function deleteInvoice(fakturaId: number) {
       );
 
       if (deleteRes.rowCount === 0) {
-        logStartSecurityEvent(
-          userId,
-          "delete_invoice_unauthorized",
-          `Unauthorized attempt to delete invoice ID: ${fakturaId}`
-        );
         throw new Error("Faktura hittades inte eller du saknar behörighet");
       }
-
-      logStartSecurityEvent(userId, "delete_invoice_success", `Deleted invoice ID: ${fakturaId}`);
 
       return { success: true, message: "Faktura raderad" };
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "delete_invoice_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ deleteInvoice error:", error);
     return { success: false, message: "Kunde inte radera faktura" };
   }
@@ -561,42 +396,15 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       throw new Error("Ogiltigt ID");
     }
 
-    logStartSecurityEvent(
-      userId,
-      "update_forval_attempt",
-      `Updating förval ID: ${id}, column: ${kolumn}`
-    );
-
     const sanitizedValue = sanitizeInput(nyttVärde);
 
     // Använd centraliserad databasoperation med user ownership
     const result = await updateFörvalCore(id, kolumn, sanitizedValue, userId);
 
     if (result.rowCount === 0) {
-      logStartSecurityEvent(
-        userId,
-        "update_forval_unauthorized",
-        `Unauthorized attempt to update förval ID: ${id}`
-      );
       throw new Error("Förval hittades inte eller du saknar behörighet");
     }
-
-    logStartSecurityEvent(userId, "update_forval_success", `Updated förval ID: ${id}`);
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "update_forval_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ uppdateraFörval error:", error);
     throw error;
   }
@@ -614,8 +422,6 @@ export async function taBortFörval(id: number) {
       throw new Error("Ogiltigt ID");
     }
 
-    logStartSecurityEvent(userId, "delete_forval_attempt", `Attempting to delete förval ID: ${id}`);
-
     const client = await pool.connect();
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna förval
@@ -625,33 +431,12 @@ export async function taBortFörval(id: number) {
       );
 
       if (result.rowCount === 0) {
-        logStartSecurityEvent(
-          userId,
-          "delete_forval_unauthorized",
-          `Unauthorized attempt to delete förval ID: ${id}`
-        );
         throw new Error("Förval hittades inte eller du saknar behörighet");
       }
-
-      logStartSecurityEvent(userId, "delete_forval_success", `Deleted förval ID: ${id}`);
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "delete_forval_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ taBortFörval error:", error);
     throw error;
   }
@@ -669,12 +454,6 @@ export async function taBortTransaktion(id: number) {
       throw new Error("Ogiltigt ID");
     }
 
-    logStartSecurityEvent(
-      userId,
-      "delete_transaction_attempt",
-      `Attempting to delete transaction ID: ${id}`
-    );
-
     const client = await pool.connect();
     try {
       // 🔒 SÄKER BORTTAGNING - Endast användarens egna transaktioner
@@ -684,33 +463,12 @@ export async function taBortTransaktion(id: number) {
       );
 
       if (result.rowCount === 0) {
-        logStartSecurityEvent(
-          userId,
-          "delete_transaction_unauthorized",
-          `Unauthorized attempt to delete transaction ID: ${id}`
-        );
         throw new Error("Transaktion hittades inte eller du saknar behörighet");
       }
-
-      logStartSecurityEvent(userId, "delete_transaction_success", `Deleted transaction ID: ${id}`);
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "delete_transaction_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ taBortTransaktion error:", error);
     throw error;
   }
@@ -723,8 +481,6 @@ export async function fetchForvalMedFel() {
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    logStartSecurityEvent(userId, "fetch_forval_errors_attempt", "Fetching förval with errors");
 
     const client = await pool.connect();
 
@@ -753,31 +509,11 @@ export async function fetchForvalMedFel() {
         }
       });
 
-      logStartSecurityEvent(
-        userId,
-        "fetch_forval_errors_success",
-        `Found ${felaktiga.length} förval with errors`
-      );
-
       return felaktiga;
     } finally {
       client.release();
     }
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "fetch_forval_errors_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("❌ fetchForvalMedFel error:", error);
     return [];
   }
@@ -790,8 +526,6 @@ export async function uploadPDF(formData: FormData) {
     if (!userId) {
       throw new Error("Åtkomst nekad - ingen giltig session");
     }
-
-    logStartSecurityEvent(userId, "upload_pdf_attempt", "Attempting PDF upload");
 
     const file = formData.get("file") as File;
 
@@ -818,28 +552,8 @@ export async function uploadPDF(formData: FormData) {
       addRandomSuffix: true,
     });
 
-    logStartSecurityEvent(
-      userId,
-      "upload_pdf_success",
-      `Uploaded PDF: ${safeFileName} to ${blob.url}`
-    );
-
     return { success: true, blob };
   } catch (error) {
-    // Logga fel om vi har session
-    try {
-      const userId = await getUserId();
-      if (userId) {
-        logStartSecurityEvent(
-          userId,
-          "upload_pdf_error",
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
-
     console.error("Upload error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Okänt fel" };
   }

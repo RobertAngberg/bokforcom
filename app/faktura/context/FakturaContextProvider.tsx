@@ -16,6 +16,7 @@ import type {
   FakturaContextType,
   FakturaProviderProps,
   FakturaContextInnerProps,
+  ServerData,
 } from "../types/types";
 import { FakturaFormProvider, useFakturaForm, useFakturaFormActions } from "./FakturaFormContext";
 import { FakturaArtikelProvider } from "./FakturaArtikelContext";
@@ -23,6 +24,7 @@ import { fakturaReducer, initialFakturaState } from "./fakturaReducer";
 import { useFakturaActions } from "./useFakturaActions";
 
 const FakturaContext = createContext<FakturaContextType | undefined>(undefined);
+const FakturaInitialDataContext = createContext<ServerData | null>(null);
 
 // Wrapper som instansierar reducer, helper-actions och exponerar context-värdet
 function FakturaStateProvider({ children }: FakturaContextInnerProps) {
@@ -44,11 +46,13 @@ function FakturaStateProvider({ children }: FakturaContextInnerProps) {
 // Huvudprovider som komponerar formulär-, artikel- och fakturacontexten
 export function FakturaProvider({ children, initialData }: FakturaProviderProps) {
   return (
-    <FakturaFormProvider initialData={initialData}>
-      <FakturaArtikelProvider>
-        <FakturaStateProvider>{children}</FakturaStateProvider>
-      </FakturaArtikelProvider>
-    </FakturaFormProvider>
+    <FakturaInitialDataContext.Provider value={initialData ?? null}>
+      <FakturaFormProvider initialData={initialData}>
+        <FakturaArtikelProvider initialFavoritArtiklar={initialData?.artiklar}>
+          <FakturaStateProvider>{children}</FakturaStateProvider>
+        </FakturaArtikelProvider>
+      </FakturaFormProvider>
+    </FakturaInitialDataContext.Provider>
   );
 }
 
@@ -82,4 +86,8 @@ export function useFakturaClient() {
     navigateBack: context.navigateBack,
     setNavigation: context.setNavigation,
   };
+}
+
+export function useFakturaInitialData() {
+  return useContext(FakturaInitialDataContext);
 }

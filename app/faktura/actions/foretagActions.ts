@@ -1,27 +1,12 @@
 "use server";
 
+import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { getUserId } from "../../_utils/authUtils";
+import type { Företagsprofil } from "../types/types";
 
-type Företagsprofil = {
-  företagsnamn: string;
-  adress: string;
-  postnummer: string;
-  stad: string;
-  organisationsnummer: string;
-  momsregistreringsnummer: string;
-  telefonnummer: string;
-  epost: string;
-  webbplats: string;
-  bankinfo?: string;
-  logo?: string;
-  logoWidth?: number;
-};
-
-export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
-  try {
-    const userId = await getUserId();
-
+const fetchFöretagsprofil = unstable_cache(
+  async (userId: string): Promise<Företagsprofil | null> => {
     const { rows } = await pool.query(
       `
       SELECT
@@ -33,7 +18,8 @@ export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
         momsregistreringsnummer,
         telefonnummer,
         epost,
-        webbplats
+        webbplats,
+        logo_url
       FROM företagsprofil
       WHERE id = $1
       LIMIT 1
@@ -41,25 +27,57 @@ export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
       [userId]
     );
 
-    return rows[0] || null;
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const row = rows[0] as {
+      företagsnamn: string | null;
+      adress: string | null;
+      postnummer: string | null;
+      stad: string | null;
+      organisationsnummer: string | null;
+      momsregistreringsnummer: string | null;
+      telefonnummer: string | null;
+      epost: string | null;
+      webbplats: string | null;
+      logo_url: string | null;
+    };
+
+    return {
+      företagsnamn: row.företagsnamn ?? "",
+      adress: row.adress ?? "",
+      postnummer: row.postnummer ?? "",
+      stad: row.stad ?? "",
+      organisationsnummer: row.organisationsnummer ?? "",
+      momsregistreringsnummer: row.momsregistreringsnummer ?? "",
+      telefonnummer: row.telefonnummer ?? "",
+      epost: row.epost ?? "",
+      webbplats: row.webbplats ?? "",
+      bankinfo: "",
+      logo: row.logo_url ?? "",
+      logoWidth: undefined,
+    } satisfies Företagsprofil;
+  },
+  ["faktura-företagsprofil"],
+  { revalidate: 60, tags: ["faktura-företagsprofil"] }
+);
+
+export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return null;
+    }
+
+    return await fetchFöretagsprofil(String(userId));
   } catch (error) {
     console.error("Fel vid hämtning av företagsprofil:", error);
     return null;
   }
 }
 
-export async function sparaFöretagsprofil(data: {
-  företagsnamn: string;
-  adress: string;
-  postnummer: string;
-  stad: string;
-  organisationsnummer: string;
-  momsregistreringsnummer: string;
-  telefonnummer: string;
-  epost: string;
-  webbplats: string;
-  logoWidth?: number;
-}): Promise<{ success: boolean }> {
+export async function sparaFöretagsprofil(data: Företagsprofil): Promise<{ success: boolean }> {
   try {
     const userId = await getUserId();
 
@@ -75,10 +93,11 @@ export async function sparaFöretagsprofil(data: {
         momsregistreringsnummer,
         telefonnummer,
         epost,
-        webbplats
+        webbplats,
+        logo_url
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
       )
       ON CONFLICT (id)
       DO UPDATE SET
@@ -90,7 +109,8 @@ export async function sparaFöretagsprofil(data: {
         momsregistreringsnummer = EXCLUDED.momsregistreringsnummer,
         telefonnummer = EXCLUDED.telefonnummer,
         epost = EXCLUDED.epost,
-        webbplats = EXCLUDED.webbplats
+        webbplats = EXCLUDED.webbplats,
+        logo_url = EXCLUDED.logo_url
       `,
       [
         userId,
@@ -103,8 +123,11 @@ export async function sparaFöretagsprofil(data: {
         data.telefonnummer,
         data.epost,
         data.webbplats,
+        data.logo ?? null,
       ]
     );
+
+    await revalidateTag("faktura-företagsprofil");
 
     return { success: true };
   } catch (error) {
