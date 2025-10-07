@@ -1,11 +1,11 @@
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { Förval } from "../types/types";
 
 // Bokföringsmetod data
 export async function hämtaBokföringsmetod(): Promise<string> {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -27,7 +27,7 @@ export async function hämtaBokföringsmetod(): Promise<string> {
 
 // Favoritförval data
 export async function hämtaFavoritförval(): Promise<Förval[]> {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const result = await pool.query(
@@ -87,7 +87,7 @@ export async function hämtaAllaFörval(filters?: { sök?: string; kategori?: st
 
 // Anställda data
 export async function hämtaAnställda() {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {

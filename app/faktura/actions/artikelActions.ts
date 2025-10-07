@@ -2,13 +2,11 @@
 
 import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { Artikel, FavoritArtikel, FavoritArtikelRow } from "../types/types";
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     // Kolla om en liknande favorit redan finns för denna användare
@@ -96,9 +94,7 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
 }
 
 export async function updateFavoritArtikel(id: number, artikel: Artikel) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     await pool.query(
@@ -165,9 +161,7 @@ export async function updateFavoritArtikel(id: number, artikel: Artikel) {
 }
 
 export async function deleteFavoritArtikel(id: number) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {
@@ -254,8 +248,7 @@ const fetchSparadeArtiklar = unstable_cache(
 );
 
 export async function hämtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
+  const { userId } = await ensureSession();
 
   try {
     return await fetchSparadeArtiklar(String(userId));

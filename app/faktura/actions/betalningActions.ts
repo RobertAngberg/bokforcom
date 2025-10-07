@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 
 export async function registreraKundfakturaBetalning(
@@ -9,10 +9,7 @@ export async function registreraKundfakturaBetalning(
   betalningsbelopp: number,
   kontoklass: string
 ): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Inte inloggad" };
-  }
+  const { userId } = await ensureSession();
 
   if (!Number.isFinite(betalningsbelopp) || betalningsbelopp <= 0) {
     return { success: false, error: "Ogiltigt betalningsbelopp" };
@@ -102,9 +99,7 @@ export async function uppdateraRotRutStatus(
   fakturaId: number,
   status: "ej_inskickad" | "väntar" | "godkänd"
 ) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {
@@ -129,10 +124,7 @@ export async function uppdateraRotRutStatus(
 export async function registreraRotRutBetalning(
   fakturaId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Inte inloggad" };
-  }
+  const { userId } = await ensureSession();
 
   try {
     // Hämta faktura för att kolla ROT/RUT-belopp

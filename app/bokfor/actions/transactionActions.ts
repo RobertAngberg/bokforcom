@@ -2,7 +2,9 @@
 
 import { pool } from "../../_lib/db";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-import { getUserId, requireOwnership } from "../../_utils/authUtils";
+import { requireOwnership } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
+import { runAuthedDbAction } from "../../_utils/actionHandler";
 import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/datum";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
@@ -43,7 +45,7 @@ export async function taBortTransaktion(id: number) {
 }
 
 export async function fetchTransactionWithBlob(transactionId: number) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {
@@ -68,7 +70,7 @@ function sanitizeFilename(name: string): string {
 export async function saveTransaction(formData: FormData) {
   const anstalldId = formData.get("anstalldId")?.toString();
   const leverantorId = formData.get("leverantorId")?.toString();
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
   const kommentar = formData.get("kommentar")?.toString().trim() || "";
@@ -222,21 +224,18 @@ export async function saveTransaction(formData: FormData) {
       );
     }
 
-    client.release();
     await invalidateBokförCache();
     return { success: true, id: transaktionsId, blobUrl };
   } catch (err) {
-    client.release();
     console.error("❌ saveTransaction error:", err);
     return { success: false, error: (err as Error).message };
+  } finally {
+    client.release();
   }
 }
 
 export async function bokförUtlägg(utläggId: number) {
-  const userId = await getUserId();
-
-  const client = await pool.connect();
-  try {
+  return runAuthedDbAction("bokförUtlägg", async ({ client, userId }) => {
     // Hämta utläggsraden
     const { rows: utläggRows } = await client.query(
       `SELECT * FROM utlägg WHERE id = $1 AND user_id = $2`,
@@ -287,12 +286,7 @@ export async function bokförUtlägg(utläggId: number) {
       utläggId,
     ]);
 
-    client.release();
     await invalidateBokförCache();
     return { success: true, transaktionsId };
-  } catch (err) {
-    client.release();
-    console.error("❌ bokförUtlägg error:", err);
-    return { success: false, error: (err as Error).message };
-  }
+  });
 }

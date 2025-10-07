@@ -1,10 +1,10 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 
 export async function loggaFavoritförval(forvalId: number) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     await pool.query(

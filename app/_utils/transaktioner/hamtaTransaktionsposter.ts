@@ -1,5 +1,5 @@
 import { pool } from "../../_lib/db";
-import { getUserId } from "../authUtils";
+import { ensureSession } from "../session";
 
 export interface TransaktionspostStandard {
   id: number;
@@ -23,8 +23,7 @@ export async function hamtaTransaktionsposter(
   transaktionsId: number,
   opts: Options = {}
 ): Promise<TransaktionspostStandard[] | TransaktionspostMedMeta[]> {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ej autentiserad");
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {

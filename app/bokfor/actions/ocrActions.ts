@@ -1,7 +1,7 @@
 "use server";
 
 import OpenAI from "openai";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 
 function sanitizeOCRText(text: string): string {
   if (!text || typeof text !== "string") return "";
@@ -14,7 +14,7 @@ function sanitizeOCRText(text: string): string {
 }
 
 export async function extractDataFromOCR(text: string) {
-  await getUserId(); // ✅ Auth check
+  await ensureSession(); // ✅ Auth check
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
@@ -55,7 +55,7 @@ export async function extractDataFromOCR(text: string) {
 }
 
 export async function extractDataFromOCRLevFakt(text: string) {
-  await getUserId(); // ✅ Auth check
+  await ensureSession(); // ✅ Auth check
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",
@@ -136,7 +136,7 @@ export async function extractDataFromOCRLevFakt(text: string) {
 }
 
 export async function extractDataFromOCRKundfaktura(text: string) {
-  await getUserId(); // ✅ Auth check
+  await ensureSession(); // ✅ Auth check
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "",

@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { withDatabase } from "../../_utils/dbUtils";
 import {
   registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
@@ -53,9 +53,7 @@ export async function uppdateraRotRutStatus(
   fakturaId: number,
   status: "ej_inskickad" | "väntar" | "godkänd"
 ) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {
@@ -85,8 +83,7 @@ export async function registreraRotRutBetalning(
 
 // === BOKFÖRING (från bokforingActions.ts) ===
 export async function hämtaBokföringsmetod() {
-  const userId = await getUserId();
-  if (!userId) return "kontantmetoden"; // Default
+  const { userId } = await ensureSession();
 
   try {
     const result = await pool.query('SELECT bokföringsmetod FROM "user" WHERE id = $1', [userId]);
@@ -103,8 +100,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   status_bokförd?: string;
   betaldatum?: string;
 }> {
-  const userId = await getUserId();
-  if (!userId) return {};
+  const { userId } = await ensureSession();
 
   try {
     const result = await pool.query(
@@ -119,8 +115,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
 }
 
 export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
-  const userId = await getUserId();
-  if (!userId) return { success: false, error: "Inte inloggad" };
+  const { userId } = await ensureSession();
 
   try {
     await pool.query('UPDATE "user" SET bokföringsmetod = $1 WHERE id = $2', [metod, userId]);
@@ -136,8 +131,7 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 import type { BokförFakturaData } from "../types/types";
 
 export async function bokförFaktura(data: BokförFakturaData) {
-  const userId = await getUserId();
-  if (!userId) return { success: false, error: "Ingen användare hittad" };
+  const { userId } = await ensureSession();
 
   return withDatabase(async (client) => {
     try {
@@ -182,8 +176,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
 }
 
 export async function hamtaBokfordaFakturor() {
-  const userId = await getUserId();
-  if (!userId) return { success: false, data: [] };
+  const { userId } = await ensureSession();
 
   return withDatabase(async (client) => {
     const result = await client.query(
@@ -197,8 +190,7 @@ export async function hamtaBokfordaFakturor() {
 }
 
 export async function hamtaTransaktionsposter(fakturaId?: number) {
-  const userId = await getUserId();
-  if (!userId) return { success: false, data: [] };
+  const { userId } = await ensureSession();
 
   return withDatabase(async (client) => {
     let query = `

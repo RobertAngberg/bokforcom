@@ -1,22 +1,5 @@
-import { auth } from "../_lib/better-auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import type { UserId } from "../_types/common";
-
-// Better Auth session type
-type BetterAuthSession = {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    createdAt?: Date;
-  };
-  session: {
-    id: string;
-    userId: string;
-    expiresAt: Date;
-  };
-};
+import { ensureSession, type BetterAuthSession } from "./session";
 
 // Better Auth använder string IDs direkt
 /**
@@ -26,15 +9,8 @@ type BetterAuthSession = {
  * @returns Användarens UUID
  */
 export async function getAuthenticatedUserId(): Promise<UserId> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  return session.user.id;
+  const { userId } = await ensureSession();
+  return userId;
 }
 
 /**
@@ -46,25 +22,16 @@ export async function getUserId(): Promise<UserId> {
 
 // Hämtar session och validerar att användaren är inloggad
 export async function getValidSession(): Promise<BetterAuthSession> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  return session as BetterAuthSession;
+  const { session } = await ensureSession();
+  return session;
 }
 
 // Hämtar användarens email för filorganisation
 export async function getUserEmail(): Promise<string> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const { session } = await ensureSession();
 
-  if (!session?.user?.email) {
-    redirect("/login");
+  if (!session.user.email) {
+    throw new Error("Saknar e-postadress på inloggad användare");
   }
 
   // Sanitera email för filsystem - ersätt @ med _at_ och ta bort specialtecken
@@ -77,15 +44,12 @@ export async function getSessionAndUserId(): Promise<{
   session: BetterAuthSession;
   userId: UserId;
 }> {
-  const session = await getValidSession();
-  const userId = session.user!.id!; // Använd string direkt
-
-  return { session, userId };
+  return ensureSession();
 }
 
 // Validerar ägarskap av en resurs baserat på user_id fält
 export async function requireOwnership(resourceUserId: UserId): Promise<UserId> {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   if (userId !== resourceUserId) {
     throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
@@ -109,17 +73,11 @@ export async function validateUserOwnership<T extends { user_id: UserId }>(
 
 // Kombinerat mönster: hämta auth + validera database query resultat
 export async function getAuthenticatedUser() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  const { session, userId } = await ensureSession();
 
   return {
     session,
-    userId: parseInt(session.user.id, 10),
+    userId,
     userEmail: session.user.email,
     userName: session.user.name,
   };
@@ -131,7 +89,7 @@ export async function withAuth<T>(
   action: (userId: UserId, session: BetterAuthSession) => Promise<T>
 ): Promise<T> {
   try {
-    const { session, userId } = await getSessionAndUserId();
+    const { session, userId } = await ensureSession();
     return await action(userId, session);
   } catch (error) {
     console.error("Auth error:", error);
