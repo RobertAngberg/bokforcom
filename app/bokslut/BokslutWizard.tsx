@@ -1,26 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Knapp from "../_components/Knapp";
 import LoadingSpinner from "../_components/LoadingSpinner";
 import TextFalt from "../_components/TextFalt";
 import { hamtaKontosaldo, hamtaSenasteTransaktioner } from "./actions";
+import type {
+  BokslutFormState,
+  ChecklistItem,
+  KontosaldoRad,
+  NEBilagaResult,
+  PeriodiseringarState,
+  TransaktionOverview,
+  WizardStep,
+} from "./types";
 
 interface BokslutWizardProps {
   aktivPeriod: string;
   onCancel: () => void;
 }
 
-type WizardStep = "checklista" | "paket" | "bokningar" | "resultat" | "färdigställ";
-
 export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardProps) {
   const [currentStep, setCurrentStep] = useState<WizardStep>("checklista");
-  const [loading, setLoading] = useState(false);
-  const [checklistData, setChecklistData] = useState<any>(null);
-  const [kontosaldo, setKontosaldo] = useState<any>(null);
-  const [neBilaga, setNeBilaga] = useState<any>(null);
-  const [bokslutData, setBokslutData] = useState({
-    bokslutstyp: "manuellt", // eller "konsult"
+  const [loading, setLoading] = useState<boolean>(false);
+  const [checklistData, setChecklistData] = useState<ChecklistItem[] | null>(null);
+  const [kontosaldo, setKontosaldo] = useState<KontosaldoRad[] | null>(null);
+  const [neBilaga, setNeBilaga] = useState<NEBilagaResult | null>(null);
+  const [bokslutData, setBokslutData] = useState<BokslutFormState>({
+    bokslutstyp: "manuellt",
     avskrivningar: false,
     periodiseringar: {
       förutbetaldaIntäkter: false,
@@ -31,7 +38,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
     åretsBokfört: false,
   });
 
-  const steps = [
+  const steps: Array<{ id: WizardStep; title: string; description: string }> = [
     {
       id: "checklista",
       title: "Kontrollera bankkonto",
@@ -52,13 +59,46 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
 
   const currentStepIndex = steps.findIndex((step) => step.id === currentStep);
 
-  useEffect(() => {
-    if (currentStep === "checklista") {
-      loadChecklistData();
-    }
-  }, [currentStep, aktivPeriod]);
+  const generateBokslutChecklist = useCallback(
+    (
+      kontosaldoData: KontosaldoRad[],
+      transaktioner: TransaktionOverview[] = []
+    ): ChecklistItem[] => {
+      const antalTransaktioner = transaktioner.length;
+      const harBanktransaktioner = kontosaldoData.some(
+        (k) => k.kontonummer === "1930" && k.antalTransaktioner > 0
+      );
+      const antalBokslutsjusteringar = transaktioner.filter((t) =>
+        t.beskrivning?.includes("BOKSLUT:")
+      ).length;
 
-  const loadChecklistData = async () => {
+      return [
+        { uppgift: "Kontrollera alla verifikat är bokförda", klar: antalTransaktioner > 0 },
+        { uppgift: "Genomför bankavstämningar för alla konton", klar: harBanktransaktioner },
+        { uppgift: "Kontrollera och inventera lager", klar: false },
+        { uppgift: "Beräkna och bokför avskrivningar", klar: antalBokslutsjusteringar > 0 },
+        { uppgift: "Bokför upplupna kostnader (löner, hyror, räntor)", klar: false },
+        { uppgift: "Kontrollera semesterlöneskuld och sociala avgifter", klar: false },
+        { uppgift: "Granska kundfordringar och bedöm osäkra fordringar", klar: false },
+        { uppgift: "Kontrollera leverantörsskulder", klar: false },
+        { uppgift: "Genomför momsavstämning", klar: false },
+        { uppgift: "Granska och bokför avsättningar", klar: false },
+        { uppgift: "Kontrollera periodiseringar (förutbetalda/upplupna)", klar: false },
+        { uppgift: "Upprätta preliminär resultat- och balansräkning", klar: false },
+        { uppgift: "Granska skattemässiga justeringar", klar: false },
+        { uppgift: "Kontrollera substansrapporten", klar: false },
+        { uppgift: "Upprätta slutlig årsredovisning", klar: false },
+        { uppgift: "Revisorsgranskning och revision", klar: false },
+        { uppgift: "Fastställelse av årsredovisning på bolagsstämma", klar: false },
+        { uppgift: "Inlämning till Bolagsverket (senast 31 juli)", klar: false },
+        { uppgift: "Skattedeklaration (senast 18 maj)", klar: false },
+        { uppgift: "Kontrolluppgifter till Skatteverket", klar: false },
+      ];
+    },
+    []
+  );
+
+  const loadChecklistData = useCallback(async () => {
     setLoading(true);
     try {
       const ar = parseInt(aktivPeriod);
@@ -76,7 +116,21 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
     } finally {
       setLoading(false);
     }
-  };
+  }, [aktivPeriod, generateBokslutChecklist]);
+
+  useEffect(() => {
+    void loadChecklistData();
+  }, [loadChecklistData]);
+
+  const goToStep = useCallback(
+    (step: WizardStep) => {
+      setCurrentStep(step);
+      if (step === "checklista") {
+        void loadChecklistData();
+      }
+    },
+    [loadChecklistData]
+  );
 
   const generateNEBilaga = async () => {
     setLoading(true);
@@ -89,7 +143,10 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
         setKontosaldo(saldoData);
       }
 
-      // Generera NE-bilaga på frontend baserat på kontosaldo
+      if (!saldoData) {
+        throw new Error("Kontosaldo kunde inte hämtas");
+      }
+
       const data = generateNEBilagaFromKontosaldo(saldoData);
       setNeBilaga(data);
     } catch (error) {
@@ -97,122 +154,6 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("sv-SE", {
-      style: "currency",
-      currency: "SEK",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  // Valideringsfunktioner (flyttade från actions.ts)
-  const sanitizeBokslutInput = (text: string): string => {
-    if (!text || typeof text !== "string") return "";
-
-    return text
-      .replace(/[<>'"&{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-      .replace(/\s+/g, " ") // Normalisera whitespace
-      .trim()
-      .substring(0, 500); // Begränsa längd
-  };
-
-  const validateNumericInput = (value: number): boolean => {
-    return !isNaN(value) && isFinite(value) && value >= 0 && value < 1000000000;
-  };
-
-  const validateDateInput = (dateString: string): boolean => {
-    const date = new Date(dateString);
-    const currentYear = new Date().getFullYear();
-    const inputYear = date.getFullYear();
-
-    return !isNaN(date.getTime()) && inputYear >= 2020 && inputYear <= currentYear + 1;
-  };
-
-  const validatePeriod = (period: string): boolean => {
-    // Endast år-format accepteras (YYYY)
-    const yearPattern = /^\d{4}$/;
-    if (!yearPattern.test(period)) return false;
-
-    const year = parseInt(period);
-    const currentYear = new Date().getFullYear();
-
-    return year >= 2020 && year <= currentYear + 1;
-  };
-
-  // Dynamisk checklista-generering (flyttad från actions.ts)
-  const generateBokslutChecklist = (kontosaldo: any[], transaktioner: any[] = []) => {
-    const antalTransaktioner = transaktioner.length;
-    const harBanktransaktioner =
-      kontosaldo?.some((k) => k.kontonummer === "1930" && k.antalTransaktioner > 0) || false;
-    const antalBokslutsjusteringar = transaktioner.filter((t) =>
-      t.beskrivning?.includes("BOKSLUT:")
-    ).length;
-
-    return [
-      { uppgift: "Kontrollera alla verifikat är bokförda", klar: antalTransaktioner > 0 },
-      { uppgift: "Genomför bankavstämningar för alla konton", klar: harBanktransaktioner },
-      { uppgift: "Kontrollera och inventera lager", klar: false },
-      { uppgift: "Beräkna och bokför avskrivningar", klar: antalBokslutsjusteringar > 0 },
-      { uppgift: "Bokför upplupna kostnader (löner, hyror, räntor)", klar: false },
-      { uppgift: "Kontrollera semesterlöneskuld och sociala avgifter", klar: false },
-      { uppgift: "Granska kundfordringar och bedöm osäkra fordringar", klar: false },
-      { uppgift: "Kontrollera leverantörsskulder", klar: false },
-      { uppgift: "Genomför momsavstämning", klar: false },
-      { uppgift: "Granska och bokför avsättningar", klar: false },
-      { uppgift: "Kontrollera periodiseringar (förutbetalda/upplupna)", klar: false },
-      { uppgift: "Upprätta preliminär resultat- och balansräkning", klar: false },
-      { uppgift: "Granska skattemässiga justeringar", klar: false },
-      { uppgift: "Kontrollera substansrapporten", klar: false },
-      { uppgift: "Upprätta slutlig årsredovisning", klar: false },
-      { uppgift: "Revisorsgranskning och revision", klar: false },
-      { uppgift: "Fastställelse av årsredovisning på bolagsstämma", klar: false },
-      { uppgift: "Inlämning till Bolagsverket (senast 31 juli)", klar: false },
-      { uppgift: "Skattedeklaration (senast 18 maj)", klar: false },
-      { uppgift: "Kontrolluppgifter till Skatteverket", klar: false },
-    ];
-  };
-
-  // Bokslutsjustering-kalkylator (flyttad från actions.ts)
-  const calculateTotalBelopp = (poster: Array<{ debet: number; kredit: number }>) => {
-    return poster.reduce((sum, post) => sum + post.debet, 0);
-  };
-
-  const validateBokslutsPoster = (
-    poster: Array<{ kontonummer: string; debet: number; kredit: number }>
-  ) => {
-    return poster.every(
-      (post) =>
-        validateNumericInput(post.debet) &&
-        validateNumericInput(post.kredit) &&
-        /^\d{4}$/.test(post.kontonummer)
-    );
-  };
-
-  const validateBokslutsjusteringData = (data: {
-    beskrivning: string;
-    datum: string;
-    poster: Array<{ kontonummer: string; debet: number; kredit: number }>;
-    kommentar?: string;
-  }) => {
-    const beskrivning = sanitizeBokslutInput(data.beskrivning);
-    const kommentar = sanitizeBokslutInput(data.kommentar || "");
-
-    if (!beskrivning || beskrivning.length < 2) {
-      return { valid: false, error: "Ogiltig beskrivning för bokslutsjustering" };
-    }
-
-    if (!validateDateInput(data.datum)) {
-      return { valid: false, error: "Ogiltigt datum för bokslutsjustering" };
-    }
-
-    if (!validateBokslutsPoster(data.poster)) {
-      return { valid: false, error: "Ogiltiga belopp eller kontonummer i bokslutsjusteringar" };
-    }
-
-    return { valid: true, beskrivning, kommentar };
   };
 
   // NE-bilaga business logic (flyttad från neBilaga.ts)
@@ -255,7 +196,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
     return null; // Okänt konto
   };
 
-  const generateNEBilagaFromKontosaldo = (kontosaldoData: any[]) => {
+  const generateNEBilagaFromKontosaldo = (kontosaldoData: KontosaldoRad[]): NEBilagaResult => {
     // Initialisera NE-bilaga med alla punkter som 0
     const neBilaga: Record<string, number> = {};
 
@@ -300,7 +241,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
         // För tillgångar och kostnader: positivt saldo = positivt värde
         // För skulder och intäkter: negativt saldo = positivt värde (de ökar på kredit-sidan)
         const kontoklass = row.kontoklass?.toLowerCase() || "";
-        let varde = parseFloat(row.saldo);
+        let varde = row.saldo;
 
         if (
           kontoklass.includes("skulder") ||
@@ -328,7 +269,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
         neBilaga["R10"]);
 
     return {
-      ar: parseInt(aktivPeriod),
+      ar: parseInt(aktivPeriod, 10),
       neBilaga,
       genererad: new Date().toISOString(),
     };
@@ -390,7 +331,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
               kontosaldo={kontosaldo}
               checklistData={checklistData}
               loading={loading}
-              onNext={() => setCurrentStep("bokningar")}
+              onNext={() => goToStep("bokningar")}
             />
           )}
 
@@ -398,22 +339,22 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
             <BokningarSteg
               periodiseringar={bokslutData.periodiseringar}
               avskrivningar={bokslutData.avskrivningar}
-              onPeriodiceringsChange={(data: any) =>
+              onPeriodiceringsChange={(data) =>
                 setBokslutData((prev) => ({ ...prev, periodiseringar: data }))
               }
               onAvskrivningarChange={(value: boolean) =>
                 setBokslutData((prev) => ({ ...prev, avskrivningar: value }))
               }
-              onNext={() => setCurrentStep("resultat")}
-              onBack={() => setCurrentStep("checklista")}
+              onNext={() => goToStep("resultat")}
+              onBack={() => goToStep("checklista")}
             />
           )}
 
           {currentStep === "resultat" && (
             <ResultatSteg
               kontosaldo={kontosaldo}
-              onNext={() => setCurrentStep("färdigställ")}
-              onBack={() => setCurrentStep("bokningar")}
+              onNext={() => goToStep("färdigställ")}
+              onBack={() => goToStep("bokningar")}
             />
           )}
 
@@ -423,7 +364,7 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
               neBilaga={neBilaga}
               loading={loading}
               onGenerateNE={generateNEBilaga}
-              onBack={() => setCurrentStep("resultat")}
+              onBack={() => goToStep("resultat")}
             />
           )}
         </div>
@@ -433,7 +374,14 @@ export default function BokslutWizard({ aktivPeriod, onCancel }: BokslutWizardPr
 }
 
 // Steg 1: Kontrollera bankkonto
-function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
+interface ChecklistaStegProps {
+  kontosaldo: KontosaldoRad[] | null;
+  checklistData: ChecklistItem[] | null;
+  loading: boolean;
+  onNext: () => void;
+}
+
+function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: ChecklistaStegProps) {
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -443,7 +391,7 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
     );
   }
 
-  const företagskonto = kontosaldo?.find((k: any) => k.kontonummer === "1930");
+  const företagskonto = kontosaldo?.find((k) => k.kontonummer === "1930");
 
   return (
     <div>
@@ -476,9 +424,9 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
               </div>
             </div>
 
-            {företagskonto.antal_transaktioner && (
+            {typeof företagskonto.antalTransaktioner === "number" && (
               <div className="mt-4 text-sm text-gray-400">
-                Antal transaktioner: {företagskonto.antal_transaktioner}
+                Antal transaktioner: {företagskonto.antalTransaktioner}
               </div>
             )}
           </div>
@@ -498,6 +446,22 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
         )}
       </div>
 
+      {checklistData && checklistData.length > 0 && (
+        <div className="mt-8 bg-slate-800 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-white mb-4">Checklista inför bokslut</h3>
+          <ul className="space-y-3">
+            {checklistData.map((punkt) => (
+              <li key={punkt.uppgift} className="flex items-start space-x-3">
+                <span className={punkt.klar ? "text-green-400" : "text-gray-500"}>
+                  {punkt.klar ? "✓" : "•"}
+                </span>
+                <span className="text-gray-200 text-sm">{punkt.uppgift}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="flex justify-end mt-8">
         <Knapp
           fullWidth
@@ -511,6 +475,15 @@ function ChecklistaSteg({ kontosaldo, checklistData, loading, onNext }: any) {
 }
 
 // Steg 2: Bokslutsbokningar
+interface BokningarStegProps {
+  periodiseringar: BokslutFormState["periodiseringar"];
+  avskrivningar: boolean;
+  onPeriodiceringsChange: (data: PeriodiseringarState) => void;
+  onAvskrivningarChange: (value: boolean) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
 function BokningarSteg({
   periodiseringar,
   avskrivningar,
@@ -518,8 +491,11 @@ function BokningarSteg({
   onAvskrivningarChange,
   onNext,
   onBack,
-}: any) {
-  const handlePeriodiceringsChange = (field: string, value: any) => {
+}: BokningarStegProps) {
+  const handlePeriodiceringsChange = (
+    field: keyof PeriodiseringarState,
+    value: boolean | number
+  ) => {
     onPeriodiceringsChange({
       ...periodiseringar,
       [field]: value,
@@ -642,19 +618,25 @@ function BokningarSteg({
 }
 
 // Steg 3: Bokför årets resultat
-function ResultatSteg({ kontosaldo, onNext, onBack }: any) {
+interface ResultatStegProps {
+  kontosaldo: KontosaldoRad[] | null;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+function ResultatSteg({ kontosaldo, onNext, onBack }: ResultatStegProps) {
   const beräknaÅretsResultat = () => {
     if (!kontosaldo) return 0;
 
     // Beräkna intäkter (konto 3000-3999) - kredit
     const intäkter = kontosaldo
-      .filter((k: any) => k.kontonummer >= "3000" && k.kontonummer < "4000")
-      .reduce((sum: number, k: any) => sum + (k.saldo || 0), 0);
+      .filter((k) => k.kontonummer >= "3000" && k.kontonummer < "4000")
+      .reduce((sum, k) => sum + (k.saldo || 0), 0);
 
     // Beräkna kostnader (konto 4000-8999) - debet
     const kostnader = kontosaldo
-      .filter((k: any) => k.kontonummer >= "4000" && k.kontonummer < "9000")
-      .reduce((sum: number, k: any) => sum + Math.abs(k.saldo || 0), 0);
+      .filter((k) => k.kontonummer >= "4000" && k.kontonummer < "9000")
+      .reduce((sum, k) => sum + Math.abs(k.saldo || 0), 0);
 
     return intäkter - kostnader;
   };
@@ -705,7 +687,21 @@ function ResultatSteg({ kontosaldo, onNext, onBack }: any) {
 }
 
 // Steg 4: Färdigställ
-function FärdigställSteg({ aktivPeriod, neBilaga, loading, onGenerateNE, onBack }: any) {
+interface FärdigställStegProps {
+  aktivPeriod: string;
+  neBilaga: NEBilagaResult | null;
+  loading: boolean;
+  onGenerateNE: () => Promise<void>;
+  onBack: () => void;
+}
+
+function FärdigställSteg({
+  aktivPeriod,
+  neBilaga,
+  loading,
+  onGenerateNE,
+  onBack,
+}: FärdigställStegProps) {
   return (
     <div>
       <h2 className="text-xl font-bold text-white mb-6">Steg 4 - Färdigställ bokslut</h2>
@@ -728,7 +724,13 @@ function FärdigställSteg({ aktivPeriod, neBilaga, loading, onGenerateNE, onBac
               <p className="text-gray-400 mt-4">Genererar NE-bilaga...</p>
             </>
           ) : (
-            <Knapp fullWidth text="🧾 Generera NE-bilaga" onClick={onGenerateNE} />
+            <Knapp
+              fullWidth
+              text="🧾 Generera NE-bilaga"
+              onClick={() => {
+                void onGenerateNE();
+              }}
+            />
           )}
         </div>
       ) : (

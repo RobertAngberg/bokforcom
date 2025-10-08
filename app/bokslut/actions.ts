@@ -2,6 +2,7 @@
 
 import { pool } from "../_lib/db";
 import { ensureSession } from "../_utils/session";
+import type { KontosaldoRad, TransaktionOverview, TransaktionsPost } from "./types";
 
 // Hämta användarens session via ensureSession
 async function requireAuth() {
@@ -69,7 +70,7 @@ export async function testDatabaseConnection() {
 }
 
 // Hämta kontosaldo för viktiga bokslutskonton
-export async function hamtaKontosaldo(ar: number = 2025) {
+export async function hamtaKontosaldo(ar: number = 2025): Promise<KontosaldoRad[]> {
   console.log(`[DEBUG] hamtaKontosaldo called for year: ${ar}`);
   const userId = await requireAuth();
   console.log(`[DEBUG] userId: ${userId}`);
@@ -107,9 +108,9 @@ export async function hamtaKontosaldo(ar: number = 2025) {
     return result.rows.map((row) => ({
       kontonummer: row.kontonummer,
       beskrivning: row.beskrivning,
-      kontoklass: row.kontoklass,
+      kontoklass: (row.kontoklass as string | null) ?? null,
       saldo: parseFloat(row.saldo),
-      antalTransaktioner: parseInt(row.antal_transaktioner),
+      antalTransaktioner: parseInt(row.antal_transaktioner, 10) || 0,
     }));
   } catch (error) {
     console.error("Fel vid hämtning av kontosaldo:", error);
@@ -120,7 +121,10 @@ export async function hamtaKontosaldo(ar: number = 2025) {
 }
 
 // Hämta senaste transaktioner för granskning
-export async function hamtaSenasteTransaktioner(ar: number = 2025, limit: number = 50) {
+export async function hamtaSenasteTransaktioner(
+  ar: number = 2025,
+  limit: number = 50
+): Promise<TransaktionOverview[]> {
   const userId = await requireAuth();
   const client = await pool.connect();
 
@@ -153,16 +157,32 @@ export async function hamtaSenasteTransaktioner(ar: number = 2025, limit: number
     `,
       [userId, ar, limit]
     );
+    return result.rows.map((row) => {
+      const poster: TransaktionsPost[] = Array.isArray(row.transaktionsposter)
+        ? (row.transaktionsposter as Array<Record<string, unknown>>).map((post) => ({
+            kontonummer: String(post.kontonummer ?? ""),
+            beskrivning: (post.beskrivning as string | null) ?? null,
+            debet:
+              typeof post.debet === "number"
+                ? post.debet
+                : parseFloat(String(post.debet ?? 0)) || 0,
+            kredit:
+              typeof post.kredit === "number"
+                ? post.kredit
+                : parseFloat(String(post.kredit ?? 0)) || 0,
+          }))
+        : [];
 
-    return result.rows.map((row) => ({
-      id: row.id,
-      datum: row.transaktionsdatum,
-      beskrivning: row.kontobeskrivning,
-      belopp: parseFloat(row.belopp || 0),
-      kommentar: row.kommentar,
-      fil: row.fil,
-      transaktionsposter: row.transaktionsposter || [],
-    }));
+      return {
+        id: row.id,
+        datum: row.transaktionsdatum,
+        beskrivning: row.kontobeskrivning,
+        belopp: parseFloat(row.belopp || 0),
+        kommentar: row.kommentar,
+        fil: row.fil,
+        transaktionsposter: poster,
+      } satisfies TransaktionOverview;
+    });
   } catch (error) {
     console.error("Fel vid hämtning av senaste transaktioner:", error);
     return [];
