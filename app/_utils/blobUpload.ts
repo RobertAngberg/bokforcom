@@ -205,13 +205,8 @@ function createSmartFileName(originalName: string, options: UploadOptions): stri
 }
 
 // 🎯 Convenience-funktioner för specifika användningsfall
-export const uploadInvoiceAttachment = async (file: File) => uploadBlob(file, { quality: 0.7 });
-
 export const uploadReceiptImage = async (file: File, options: UploadOptions = {}) =>
   uploadBlob(file, { quality: 0.8, maxWidth: 1200, ...options });
-
-export const uploadProfileImage = async (file: File) =>
-  uploadBlob(file, { quality: 0.9, maxWidth: 400, maxHeight: 400 });
 
 export const uploadCompanyLogo = async (file: File) =>
   uploadBlob(file, {

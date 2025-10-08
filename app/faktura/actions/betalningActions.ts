@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
+import { createTransaktion } from "../../_utils/transactions";
 
 export async function registreraKundfakturaBetalning(
   fakturaId: number,

@@ -3,36 +3,14 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { validatePeriod } from "../../_utils/validationUtils";
-
-// SÄKERHETSVALIDERING: Logga finansiell dataåtkomst
-function logFinancialDataEvent(
-  eventType: "access" | "violation" | "error",
-  userId?: string,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`💰 FINANCIAL DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
+import { fetchTransactionWithEntries } from "../../_utils/transactions";
 
 export async function fetchBalansData(year: string, month?: string) {
-  // SÄKERHETSVALIDERING: Kontrollera autentisering
   const { userId } = await ensureSession();
 
-  // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validatePeriod(year)) {
-    logFinancialDataEvent("violation", userId, `Invalid year parameter: ${year}`);
     throw new Error("Ogiltigt år-format");
   }
-
-  logFinancialDataEvent(
-    "access",
-    userId,
-    `Accessing balance report for year ${year}${month && month !== "all" ? `, month ${month}` : ""}`
-  );
 
   const start = `${year}-01-01`;
   // Om månad är specificerad och inte "all", använd den månaden, annars hela året
@@ -236,11 +214,6 @@ export async function fetchBalansData(year: string, month?: string) {
     };
   } catch (error) {
     console.error("❌ fetchBalansData error:", error);
-    logFinancialDataEvent(
-      "error",
-      userId,
-      `Error fetching balance data: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     throw new Error("Ett fel uppstod vid hämtning av balansdata");
   }
 }
@@ -255,8 +228,6 @@ export async function fetchFöretagsprofil(userId?: string) {
   if (targetUserId !== sessionUserId) {
     throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
   }
-
-  logFinancialDataEvent("access", sessionUserId, "Accessing company profile data");
 
   try {
     const client = await pool.connect();
@@ -278,45 +249,10 @@ export async function fetchFöretagsprofil(userId?: string) {
 export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const { userId } = await ensureSession();
-
-  logFinancialDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
-
   try {
-    const client = await pool.connect();
-    const query = `
-      SELECT 
-        t.id,
-        t.transaktionsdatum as datum,
-        t.kontobeskrivning as beskrivning,
-        t.summa_debet,
-        t.summa_kredit,
-        t.blob_url,
-        json_agg(
-          json_build_object(
-            'konto', k.kontonummer || '',
-            'beskrivning', k.beskrivning || '',
-            'debet', tp.debet,
-            'kredit', tp.kredit
-          ) ORDER BY k.kontonummer
-        ) as poster
-      FROM transaktioner t
-      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      LEFT JOIN konton k ON k.id = tp.konto_id
-      WHERE t.id = $1 AND t.user_id = $2
-      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
-    `;
-
-    const res = await client.query(query, [transaktionsId, userId]);
-    client.release();
-
-    return res.rows[0] || null;
+    return await fetchTransactionWithEntries(userId, transaktionsId);
   } catch (error) {
     console.error("❌ fetchTransactionDetails error:", error);
-    logFinancialDataEvent(
-      "error",
-      userId,
-      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     return null;
   }
 }

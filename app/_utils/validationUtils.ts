@@ -61,48 +61,11 @@ export function sanitizeFormInput(input: string): string {
 }
 
 /**
- * Sanitisering för export/rapport data (ex. SIE export)
- * Längre gräns för exportdata
- */
-export function sanitizeExportInput(input: string): string {
-  return sanitizeInput(input, 1000);
-}
-
-/**
- * Sanitisering för admin operationer
- * Flexibel gräns för administrativa funktioner
- * @param input - Texten som ska saniteras
- * @param isSQL - Om true, behålls citattecken för SQL-syntax
- */
-export function sanitizeAdminInput(input: string, isSQL: boolean = false): string {
-  if (!input) return "";
-
-  if (isSQL) {
-    // För SQL: behåll citattecken men ta bort farliga tecken
-    return input.trim().replace(/[<>&]/g, "").slice(0, 5000);
-  }
-
-  // Standard admin sanitizing
-  return sanitizeInput(input, 500);
-}
-
-/**
  * Validerar belopp (positiva decimaler)
  */
 export function validateAmount(amount: number | string): boolean {
   const amountNum = typeof amount === "string" ? parseFloat(amount) : amount;
   return !isNaN(amountNum) && amountNum >= 0 && isFinite(amountNum);
-}
-
-/**
- * Validerar datum i YYYY-MM-DD format
- */
-export function validateDate(date: string): boolean {
-  const pattern = /^\d{4}-\d{2}-\d{2}$/;
-  if (!pattern.test(date)) return false;
-
-  const dateObj = new Date(date);
-  return dateObj instanceof Date && !isNaN(dateObj.getTime());
 }
 
 /**
@@ -113,31 +76,6 @@ export function requireValid<T>(value: T, validator: (val: T) => boolean, errorM
     throw new Error(errorMessage);
   }
   return value;
-}
-
-/**
- * Validerar filstorlek (i bytes)
- */
-export function validateFileSize(size: number, maxSizeMB: number = 10): boolean {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  return size > 0 && size <= maxSizeBytes;
-}
-
-/**
- * Validerar SQL-injection risker
- */
-export function isSafeSql(sql: string): boolean {
-  const dangerousPatterns = [
-    /;\s*DROP/i,
-    /;\s*DELETE\s+FROM/i,
-    /;\s*TRUNCATE/i,
-    /;\s*ALTER\s+TABLE/i,
-    /;\s*CREATE\s+USER/i,
-    /;\s*GRANT/i,
-    /;\s*REVOKE/i,
-  ];
-
-  return !dangerousPatterns.some((pattern) => pattern.test(sql));
 }
 
 /**

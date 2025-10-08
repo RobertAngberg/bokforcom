@@ -3,11 +3,11 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { validateKontonummer, sanitizeInput } from "../../_utils/validationUtils";
-import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 import {
+  createTransaktion,
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
-} from "../../_utils/transaktioner/hamtaTransaktionsposter";
+} from "../../_utils/transactions";
 import { BokförFakturaData } from "../types/types";
 
 export async function hämtaFakturaStatus(fakturaId: number): Promise<{

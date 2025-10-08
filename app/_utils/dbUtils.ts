@@ -63,19 +63,6 @@ export async function queryOne<T = unknown>(
 }
 
 /**
- * Kontrollerar om en post existerar
- */
-export async function exists(table: string, conditions: Record<string, unknown>): Promise<boolean> {
-  const keys = Object.keys(conditions);
-  const whereClause = keys.map((key, index) => `"${key}" = $${index + 1}`).join(" AND ");
-  const values = Object.values(conditions);
-
-  const result = await query(`SELECT 1 FROM ${table} WHERE ${whereClause} LIMIT 1`, values);
-
-  return result.rows.length > 0;
-}
-
-/**
  * CENTRALISERADE DATABAS OPERATIONS
  * Minskar kod-duplicering mellan user och admin operationer
  */

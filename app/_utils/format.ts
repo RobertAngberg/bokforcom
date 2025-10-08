@@ -26,11 +26,6 @@ export function formatAmount(v: number): string {
   });
 }
 
-// rundar ett tal till två decimaler
-export function round(val: number): number {
-  return Math.round((val + Number.EPSILON) * 100) / 100;
-}
-
 // konverterar en sträng med , eller . till ett tal, returnerar 0 om fel
 export function parseNumber(s: string): number {
   return parseFloat(s.replace(",", ".")) || 0;
@@ -41,18 +36,6 @@ export function parseNumberSafe(värde: unknown): number {
   if (värde == null || värde === "") return 0;
   const nummer = parseFloat(String(värde).replace(",", "."));
   return isNaN(nummer) ? 0 : nummer;
-}
-
-// summerar en viss nyckel (debet eller kredit) i en array av objekt
-export function summeraFält(
-  arr: { debet?: number; kredit?: number }[],
-  field: "debet" | "kredit"
-): number {
-  const summa = arr.reduce((sum, row) => {
-    return sum + (row[field] ?? 0);
-  }, 0);
-
-  return round(summa);
 }
 
 // Types för år-data
@@ -67,11 +50,6 @@ export type YearSummary = {
   totalUtgift: number;
   totalResultat: number;
   yearData: YearDataPoint[];
-};
-
-// Returnerar nuvarande år som sträng
-export const getCurrentYear = (): string => {
-  return new Date().getFullYear().toString();
 };
 
 // Centraliserad data-processing för år-data

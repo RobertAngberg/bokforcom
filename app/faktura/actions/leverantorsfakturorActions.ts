@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
+import { createTransaktion } from "../../_utils/transactions";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const { userId } = await ensureSession();

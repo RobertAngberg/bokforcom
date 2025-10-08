@@ -1,8 +1,10 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
-import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
+import {
+  createTransaktion,
+  hamtaTransaktionsposter as hamtaTransaktionsposterCore,
+} from "../../_utils/transactions";
 import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type {

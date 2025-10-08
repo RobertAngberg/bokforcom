@@ -1,6 +1,7 @@
 "use server";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { fetchTransactionWithEntries } from "../../_utils/transactions";
 
 // Typ för kontodata
 interface KontoData {
@@ -17,24 +18,8 @@ interface KontoData {
   [year: string]: unknown; // För år-specifika belopp
 }
 
-// SÄKERHETSVALIDERING: Logga resultatrapport-åtkomst
-function logResultDataEvent(
-  eventType: "access" | "violation" | "error",
-  userId?: string,
-  details?: string
-) {
-  const timestamp = new Date().toISOString();
-  console.log(`📈 RESULT DATA EVENT [${timestamp}]: ${eventType.toUpperCase()} {`);
-  if (userId) console.log(`  userId: ${userId},`);
-  if (details) console.log(`  details: '${details}',`);
-  console.log(`  timestamp: '${timestamp}'`);
-  console.log(`}`);
-}
-
 export async function hamtaResultatrapport() {
   const { userId } = await ensureSession();
-
-  logResultDataEvent("access", userId, "Accessing result report data");
 
   try {
     const result = await pool.query(
@@ -140,11 +125,6 @@ export async function hamtaResultatrapport() {
     };
   } catch (error) {
     console.error("❌ hamtaResultatrapport error:", error);
-    logResultDataEvent(
-      "error",
-      userId,
-      `Error fetching result report: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     throw new Error("Ett fel uppstod vid hämtning av resultatrapport");
   }
 }
@@ -159,8 +139,6 @@ export async function fetchFöretagsprofil(userId?: string) {
   if (targetUserId !== sessionUserId) {
     throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
   }
-
-  logResultDataEvent("access", sessionUserId, "Accessing company profile data");
 
   try {
     const client = await pool.connect();
@@ -183,44 +161,10 @@ export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
   const { userId } = await ensureSession();
 
-  logResultDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
-
   try {
-    const client = await pool.connect();
-    const query = `
-      SELECT 
-        t.id,
-        t.transaktionsdatum as datum,
-        t.kontobeskrivning as beskrivning,
-        t.summa_debet,
-        t.summa_kredit,
-        t.blob_url,
-        json_agg(
-          json_build_object(
-            'konto', k.kontonummer || '',
-            'beskrivning', k.beskrivning || '',
-            'debet', tp.debet,
-            'kredit', tp.kredit
-          ) ORDER BY k.kontonummer
-        ) as poster
-      FROM transaktioner t
-      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      LEFT JOIN konton k ON k.id = tp.konto_id
-      WHERE t.id = $1 AND t.user_id = $2
-      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
-    `;
-
-    const res = await client.query(query, [transaktionsId, userId]);
-    client.release();
-
-    return res.rows[0] || null;
+    return await fetchTransactionWithEntries(userId, transaktionsId);
   } catch (error) {
     console.error("❌ fetchTransactionDetails error:", error);
-    logResultDataEvent(
-      "error",
-      userId,
-      `Error fetching transaction details: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
     return null;
   }
 }

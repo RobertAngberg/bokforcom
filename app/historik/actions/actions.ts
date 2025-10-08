@@ -5,7 +5,6 @@ import { ensureSession } from "../../_utils/session";
 import { validateYear } from "../../_utils/validationUtils";
 import { TransactionDetail, UnbalancedVerification, ExportTransaction } from "../types/types";
 
-// 🚀 OPTIMERAD FUNKTION: Hitta obalanserade direkt i databasen
 export async function findUnbalancedVerifications(): Promise<{
   success: boolean;
   unbalanced?: UnbalancedVerification[];
