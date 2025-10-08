@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { queryOne } from "../../_utils/dbUtils";
@@ -11,7 +11,7 @@ export async function uppdateraFöretagsprofilAdmin(
   payload: ForetagsProfil
 ): Promise<AktionsResultat<ForetagsProfil>> {
   try {
-    const userId = await getUserId();
+    const { userId } = await ensureSession();
 
     const foretagsnamn = sanitizeFormInput(payload.foretagsnamn || "");
     const adress = sanitizeFormInput(payload.adress || "");

@@ -1,7 +1,7 @@
 "use server";
 
 import { Pool } from "pg";
-import { getUserId } from "../_utils/authUtils";
+import { ensureSession } from "../_utils/session";
 import { dateTillÅÅÅÅMMDD } from "../_utils/datum";
 import type { SieData, ImportSettings, Verification, Transaction } from "./types";
 
@@ -40,10 +40,7 @@ interface SieUploadResult {
 export async function uploadSieFile(formData: FormData): Promise<SieUploadResult> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
+    await ensureSession();
 
     const file = formData.get("file") as File;
 
@@ -928,10 +925,7 @@ export async function skapaKonton(
 ): Promise<{ success: boolean; error?: string; skapade?: number }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
+    await ensureSession();
 
     // Use existing pool from top-level import
     const client = await pool.connect();
@@ -1050,13 +1044,7 @@ export async function importeraSieData(
 }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      return {
-        success: false,
-        error: "Ingen giltig session - måste vara inloggad",
-      };
-    }
+    const { userId } = await ensureSession();
 
     // Use existing pool from top-level import
     let client;
@@ -1654,10 +1642,7 @@ export async function exporteraSieData(
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
+    const { userId } = await ensureSession();
 
     // 🔒 SÄKER DATABASACCESS - Hämta endast användarens företagsinfo
     const företagQuery = await pool.query(
@@ -1888,10 +1873,7 @@ export async function rensaDubblettkonton(): Promise<{
   rensade?: number;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Åtkomst nekad - ingen giltig session" };
-    }
+    const { userId } = await ensureSession();
 
     // Use existing pool from top-level import
     const client = await pool.connect();
@@ -1952,14 +1934,7 @@ export async function kontrolleraDubbletter(): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return {
-        success: false,
-        harDubbletter: false,
-        error: "Åtkomst nekad - ingen giltig session",
-      };
-    }
+    const { userId } = await ensureSession();
 
     // Use existing pool from top-level import
     const client = await pool.connect();

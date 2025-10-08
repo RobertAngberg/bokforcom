@@ -3,14 +3,13 @@
 import { pool } from "../_lib/db";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
-import { getUserId } from "../_utils/authUtils";
+import { ensureSession } from "../_utils/session";
 import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 // 🎉 VÄLKOMSTMEDDELANDE FUNKTIONER
 export async function checkWelcomeStatus(): Promise<boolean> {
   try {
-    const userId = await getUserId();
-    console.log("📋 Kontrollerar välkomststatus för användare:", userId);
+    await ensureSession();
 
     // Better Auth har inte welcome_shown kolumn
     // För nu, visa aldrig välkomstmeddelandet (return false = visa inte)
@@ -23,7 +22,7 @@ export async function checkWelcomeStatus(): Promise<boolean> {
 
 export async function markWelcomeAsShown(): Promise<void> {
   try {
-    const userId = await getUserId();
+    const { userId } = await ensureSession();
     const client = await pool.connect();
 
     await client.query('UPDATE "user" SET welcome_shown = true WHERE id = $1', [userId]);
@@ -39,10 +38,7 @@ export async function markWelcomeAsShown(): Promise<void> {
 export async function hämtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     // Validera input
     if (!transaktionsId || transaktionsId <= 0) {
@@ -71,10 +67,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     // 🔒 SÄKER DATABASACCESS - Endast användarens egna förval med popularitetsdata
     let query = `
@@ -133,10 +126,7 @@ export async function fetchAllaForval(filters?: { sök?: string; kategori?: stri
 export async function fetchRawYearData(year: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     // Validera och sanitera år
     const sanitizedYear = sanitizeInput(year);
@@ -180,10 +170,7 @@ export async function fetchRawYearData(year: string) {
 export async function hämtaAllaTransaktioner() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     const client = await pool.connect();
     try {
@@ -219,10 +206,7 @@ export async function hämtaAllaTransaktioner() {
 export async function getAllInvoices() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     const client = await pool.connect();
     try {
@@ -257,10 +241,7 @@ export async function getAllInvoices() {
 export async function deleteInvoice(fakturaId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     // Validera och rensa input
     if (!fakturaId || isNaN(fakturaId) || fakturaId <= 0) {
@@ -291,10 +272,7 @@ export async function deleteInvoice(fakturaId: number) {
 
 export async function updateFakturanummer(id: number, nyttNummer: string) {
   // 🔒 SÄKERHETSVALIDERING - Session
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Åtkomst nekad - ingen giltig session");
-  }
+  const { userId } = await ensureSession();
 
   if (!validateId(id)) {
     throw new Error("Ogiltigt faktura-ID");
@@ -357,10 +335,7 @@ export async function hämtaFörvalMedSökning(sök: string, offset: number, lim
 export async function räknaFörval(sök?: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     const client = await pool.connect();
     try {
@@ -387,10 +362,7 @@ export async function räknaFörval(sök?: string) {
 export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
@@ -413,10 +385,7 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
 export async function taBortFörval(id: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
@@ -445,10 +414,7 @@ export async function taBortFörval(id: number) {
 export async function taBortTransaktion(id: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     if (!validateId(id)) {
       throw new Error("Ogiltigt ID");
@@ -477,10 +443,7 @@ export async function taBortTransaktion(id: number) {
 export async function fetchForvalMedFel() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     const client = await pool.connect();
 
@@ -522,10 +485,7 @@ export async function fetchForvalMedFel() {
 export async function uploadPDF(formData: FormData) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const userId = await getUserId();
-    if (!userId) {
-      throw new Error("Åtkomst nekad - ingen giltig session");
-    }
+    const { userId } = await ensureSession();
 
     const file = formData.get("file") as File;
 

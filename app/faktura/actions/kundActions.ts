@@ -2,19 +2,13 @@
 
 import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { withDatabase } from "../../_utils/dbUtils";
 import type { KundListItem } from "../types/types";
 
 export async function sparaNyKund(formData: FormData) {
-  // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Sanitera och validera all kundinformation
   const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
@@ -68,14 +62,9 @@ export async function sparaNyKund(formData: FormData) {
 }
 
 export async function uppdateraKund(id: number, formData: FormData) {
-  try {
-    // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const userId = await getUserId();
-    if (!userId) {
-      console.error("❌ Säkerhetsvarning: Ogiltig session vid uppdatering av kund");
-      return { success: false, error: "Säkerhetsvalidering misslyckades" };
-    }
+  const { userId } = await ensureSession();
 
+  try {
     // SÄKERHETSEVENT: Logga uppdateringsförsök
     console.log(`🔒 Säker kunduppdatering initierad för user ${userId}, kund ${id}`);
 
@@ -161,14 +150,9 @@ export async function uppdateraKund(id: number, formData: FormData) {
 }
 
 export async function deleteKund(id: number) {
-  try {
-    // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const userId = await getUserId();
-    if (!userId) {
-      console.error("❌ Säkerhetsvarning: Ogiltig session vid radering av kund");
-      return { success: false, error: "Säkerhetsvalidering misslyckades" };
-    }
+  const { userId } = await ensureSession();
 
+  try {
     // SÄKERHETSEVENT: Logga raderingsförsök
     console.log(`🔒 Säker kundradering initierad för user ${userId}, kund ${id}`);
 
@@ -240,8 +224,7 @@ const fetchSparadeKunder = unstable_cache(
 );
 
 export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
+  const { userId } = await ensureSession();
 
   try {
     return await fetchSparadeKunder(String(userId));

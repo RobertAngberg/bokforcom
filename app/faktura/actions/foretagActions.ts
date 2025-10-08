@@ -2,7 +2,7 @@
 
 import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import type { Företagsprofil } from "../types/types";
 
 const fetchFöretagsprofil = unstable_cache(
@@ -64,12 +64,9 @@ const fetchFöretagsprofil = unstable_cache(
 );
 
 export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
-  try {
-    const userId = await getUserId();
-    if (!userId) {
-      return null;
-    }
+  const { userId } = await ensureSession();
 
+  try {
     return await fetchFöretagsprofil(String(userId));
   } catch (error) {
     console.error("Fel vid hämtning av företagsprofil:", error);
@@ -78,9 +75,9 @@ export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
 }
 
 export async function sparaFöretagsprofil(data: Företagsprofil): Promise<{ success: boolean }> {
-  try {
-    const userId = await getUserId();
+  const { userId } = await ensureSession();
 
+  try {
     await pool.query(
       `
       INSERT INTO företagsprofil (

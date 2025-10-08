@@ -1,10 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-import { requireOwnership } from "../../_utils/authUtils";
 import { ensureSession } from "../../_utils/session";
-import { runAuthedDbAction } from "../../_utils/actionHandler";
 import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/datum";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
@@ -14,20 +11,11 @@ export async function invalidateBokförCache() {
   revalidatePath("/rapporter");
 }
 
-export async function hamtaTransaktionsposter(transaktionsId: number) {
-  const rows = await hamtaTransaktionsposterCore(transaktionsId);
-  return rows.map((r) => ({
-    id: r.id,
-    kontonummer: r.kontonummer,
-    beskrivning: r.kontobeskrivning,
-    debet: r.debet,
-    kredit: r.kredit,
-  }));
-}
-
 export async function taBortTransaktion(id: number) {
   const client = await pool.connect();
   try {
+    const { userId } = await ensureSession();
+
     // Säkerhetskontroll: Kontrollera att transaktionen tillhör användaren
     const ownerCheck = await client.query(`SELECT user_id FROM transaktioner WHERE id = $1`, [id]);
 
@@ -35,7 +23,9 @@ export async function taBortTransaktion(id: number) {
       throw new Error("Transaktionen hittades inte");
     }
 
-    await requireOwnership(ownerCheck.rows[0].user_id);
+    if (ownerCheck.rows[0].user_id !== userId) {
+      throw new Error("Otillåten åtkomst: Du äger inte denna transaktion");
+    }
 
     // Ta bort transaktionen
     await client.query(`DELETE FROM transaktioner WHERE id = $1`, [id]);
@@ -235,7 +225,10 @@ export async function saveTransaction(formData: FormData) {
 }
 
 export async function bokförUtlägg(utläggId: number) {
-  return runAuthedDbAction("bokförUtlägg", async ({ client, userId }) => {
+  const { userId } = await ensureSession();
+
+  const client = await pool.connect();
+  try {
     // Hämta utläggsraden
     const { rows: utläggRows } = await client.query(
       `SELECT * FROM utlägg WHERE id = $1 AND user_id = $2`,
@@ -288,5 +281,10 @@ export async function bokförUtlägg(utläggId: number) {
 
     await invalidateBokförCache();
     return { success: true, transaktionsId };
-  });
+  } catch (err) {
+    console.error("❌ bokförUtlägg error:", err);
+    return { success: false, error: (err as Error).message };
+  } finally {
+    client.release();
+  }
 }

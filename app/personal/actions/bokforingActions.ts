@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 import { hamtaTransaktionsposter as hamtaTransaktionsposterCore } from "../../_utils/transaktioner/hamtaTransaktionsposter";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type {
   BokförLöneUtbetalningData,
@@ -28,8 +28,7 @@ export async function bokförLöneskatter({
   datum?: string;
   kommentar?: string;
 }) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   const transaktionsdatum = datum || new Date().toISOString();
   const standardKommentar = kommentar || "Automatisk bokföring från lönekörning";
@@ -71,10 +70,7 @@ export async function bokförLöneskatter({
 }
 
 export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {

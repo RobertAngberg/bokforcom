@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import type { AktionsResultat, AnvandarInfo } from "../../_types/common";
 import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
@@ -12,7 +12,7 @@ export async function uppdateraAnvändarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
   try {
-    const userId = await getUserId();
+    const { userId } = await ensureSession();
 
     const name = sanitizeFormInput(payload.name || "").trim();
     const email = sanitizeFormInput(payload.email || "").trim();

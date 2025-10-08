@@ -1,6 +1,6 @@
 "use server";
 import { pool } from "../../_lib/db";
-import { getUserId, requireOwnership } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 
 // Typ för kontodata
 interface KontoData {
@@ -32,7 +32,7 @@ function logResultDataEvent(
 }
 
 export async function hamtaResultatrapport() {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   logResultDataEvent("access", userId, "Accessing result report data");
 
@@ -151,12 +151,14 @@ export async function hamtaResultatrapport() {
 
 export async function fetchFöretagsprofil(userId?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const sessionUserId = await getUserId();
+  const { userId: sessionUserId } = await ensureSession();
 
   // Använd sessionUserId om inget userId skickades
   const targetUserId = userId || sessionUserId;
 
-  await requireOwnership(targetUserId);
+  if (targetUserId !== sessionUserId) {
+    throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
+  }
 
   logResultDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -179,7 +181,7 @@ export async function fetchFöretagsprofil(userId?: string) {
 
 export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   logResultDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
 

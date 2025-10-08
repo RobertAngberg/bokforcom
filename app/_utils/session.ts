@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { UserId } from "../_types/common";
 
-// Better Auth session type
 export type BetterAuthSession = {
   user: {
     id: string;
@@ -18,28 +17,13 @@ export type BetterAuthSession = {
   };
 };
 
-/**
- * Säkerställer att en giltig session finns. Kastar fel om ingen.
- * Minimal abstraktion för att DRY:a upp actions.
- */
-export type EnsureSessionOptions = {
-  redirectTo?: string | false;
-  message?: string;
-};
-
-export async function ensureSession(options: EnsureSessionOptions = {}) {
+export async function ensureSession() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session?.user?.email) {
-    if (options.redirectTo !== false) {
-      redirect(typeof options.redirectTo === "string" ? options.redirectTo : "/login");
-    }
-
-    const error = new Error(options.message ?? "Ingen giltig session") as Error & { code: string };
-    error.code = "NO_SESSION";
-    throw error;
+    redirect("/login");
   }
 
   return {

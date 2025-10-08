@@ -1,13 +1,11 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 
 export async function saveLeverantör(formData: FormData) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   const namn = sanitizeInput(formData.get("namn")?.toString() || "");
   const organisationsnummer = sanitizeInput(
@@ -51,9 +49,7 @@ export async function saveLeverantör(formData: FormData) {
 }
 
 export async function getLeverantörer() {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {
@@ -83,9 +79,7 @@ export async function updateLeverantör(
     email?: string;
   }
 ) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {
@@ -121,9 +115,7 @@ export async function updateLeverantör(
 }
 
 export async function deleteLeverantör(id: number) {
-  const userId = await getUserId();
-  if (!userId) return { success: false };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {

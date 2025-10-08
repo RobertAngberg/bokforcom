@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { validateYear } from "../../_utils/validationUtils";
 import { TransactionDetail, UnbalancedVerification, ExportTransaction } from "../types/types";
 
@@ -11,12 +11,7 @@ export async function findUnbalancedVerifications(): Promise<{
   unbalanced?: UnbalancedVerification[];
   error?: string;
 }> {
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
-  }
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -71,13 +66,7 @@ export async function findUnbalancedVerifications(): Promise<{
 
 // Intern funktion
 async function fetchTransaktionerInternal(fromYear?: string) {
-  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Validera år-parameter om angiven
   if (fromYear && !validateYear(fromYear)) {
@@ -116,14 +105,7 @@ async function fetchTransaktionerInternal(fromYear?: string) {
 }
 
 export async function fetchTransactionDetails(transactionId: number): Promise<TransactionDetail[]> {
-  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    console.error("❌ Säkerhetsvarning: Ogiltig session vid hämtning av transaktionsdetaljer");
-    return [];
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Validera transaktions-ID
   if (isNaN(transactionId) || transactionId <= 0) {
@@ -169,13 +151,7 @@ export async function fetchTransactionDetails(transactionId: number): Promise<Tr
 
 // Intern funktion för export
 async function exporteraTransaktionerMedPosterInternal(year: string) {
-  // SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return [];
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validateYear(year)) {
@@ -252,12 +228,7 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
   message?: string;
   error?: string;
 }> {
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return { success: false, error: "Säkerhetsfel: Ingen giltig session" };
-  }
+  const { userId } = await ensureSession();
 
   if (!transactionId || transactionId <= 0) {
     return { success: false, error: "Ogiltigt transaktions-ID" };

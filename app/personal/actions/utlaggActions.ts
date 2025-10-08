@@ -1,17 +1,12 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type { UtläggQueryResult, UtläggCreateParams, UtläggActionResult } from "../types/types";
 
 export async function hämtaUtlägg(anställdId: number): Promise<UtläggQueryResult[]> {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -51,8 +46,6 @@ export async function hämtaUtlägg(anställdId: number): Promise<UtläggQueryRe
 
     const result = await client.query(query, [anställdId]);
 
-    console.log(`🔍 hämtaUtlägg för anställd ${anställdId}:`, result.rows);
-
     client.release();
     return result.rows;
   } catch (error) {
@@ -65,10 +58,7 @@ export async function uppdateraUtläggStatus(
   utläggId: number,
   status: string
 ): Promise<UtläggActionResult> {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -93,11 +83,7 @@ export async function uppdateraUtläggStatus(
 
 export async function sparaUtlägg(params: UtläggCreateParams): Promise<UtläggActionResult> {
   const { belopp, datum, beskrivning, kategori, anställd_id, kvitto_fil, kvitto_filtyp } = params;
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
     const query = `
@@ -128,11 +114,7 @@ export async function sparaUtlägg(params: UtläggCreateParams): Promise<Utlägg
 }
 
 export async function taBortUtlägg(utläggId: number): Promise<UtläggActionResult> {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();

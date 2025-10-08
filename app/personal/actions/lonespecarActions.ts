@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import { uppdateraLönekörningStatus } from "./lonekorningActions";
 import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
@@ -23,12 +23,7 @@ export async function läggTillUtläggSomExtrarad(
 }
 
 export async function hämtaLönespecifikationer(anställdId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -88,10 +83,7 @@ export async function hämtaLönespecifikationer(anställdId: number) {
 }
 
 export async function sparaExtrarad(data: ExtraradData): Promise<ExtraradResult> {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -143,10 +135,7 @@ export async function hämtaExtrarader(lönespecifikation_id: number) {
 }
 
 export async function läggTillUtläggILönespec(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -221,10 +210,7 @@ export async function läggTillUtläggILönespec(lönespecId: number) {
 }
 
 export async function taBortExtrarad(extraradId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -252,12 +238,8 @@ export async function skapaNyLönespec(data: {
   anställd_id: number;
   utbetalningsdatum: string; // YYYY-MM-DD
 }) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  const { userId } = await ensureSession();
 
-  // userId already a number from getUserId()
   try {
     const client = await pool.connect();
 
@@ -327,10 +309,7 @@ export async function uppdateraLönespec(data: {
   nettolön?: number;
   lönekostnad?: number;
 }) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
 
@@ -401,8 +380,7 @@ export async function uppdateraLönespec(data: {
 }
 
 export async function markeraBankgiroExporterad(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -458,8 +436,7 @@ export async function markeraBankgiroExporterad(lönespecId: number) {
 }
 
 export async function markeraMailad(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -495,8 +472,7 @@ export async function markeraMailad(lönespecId: number) {
 }
 
 export async function markeraBokförd(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -532,8 +508,7 @@ export async function markeraBokförd(lönespecId: number) {
 }
 
 export async function markeraAGIGenererad(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -573,8 +548,7 @@ export async function markeraAGIGenererad(lönespecId: number) {
 }
 
 export async function markeraSkatternaBokförda(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Ingen inloggad användare");
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -614,12 +588,7 @@ export async function markeraSkatternaBokförda(lönespecId: number) {
 }
 
 export async function taBortLönespec(lönespecId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -655,11 +624,7 @@ export async function taBortLönespec(lönespecId: number) {
 }
 
 export async function hämtaAllaLönespecarFörUser() {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
     const query = `
@@ -679,11 +644,7 @@ export async function hämtaAllaLönespecarFörUser() {
 }
 
 export async function hämtaUtbetalningsdatumLista() {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
     const query = `

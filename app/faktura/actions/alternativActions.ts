@@ -7,6 +7,7 @@ import {
   registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
   registreraRotRutBetalning as registreraRotRutBetalningBase,
 } from "./betalningActions";
+import type { BokförFakturaData } from "../types/types";
 
 // === BETALNINGSMETOD (från alternativActions.ts) ===
 export async function hämtaSenasteBetalningsmetod(userId: string) {
@@ -128,7 +129,6 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 }
 
 // Bokföringsfunktioner
-import type { BokförFakturaData } from "../types/types";
 
 export async function bokförFaktura(data: BokförFakturaData) {
   const { userId } = await ensureSession();

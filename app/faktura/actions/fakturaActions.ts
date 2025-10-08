@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/validationUtils";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { logError, createError } from "../../_utils/errorUtils";
@@ -29,13 +29,7 @@ function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
 
 // Intern funktion utan rate limiting (för wrappers)
 export async function saveInvoiceInternal(formData: FormData) {
-  // FÖRBÄTTRAD SÄKERHETSVALIDERING: Säker session-hantering via authUtils
-  let userId: string;
-  try {
-    userId = await getUserId();
-  } catch {
-    return { success: false, error: "Säkerhetsfel: Ingen giltig session - måste vara inloggad" };
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Kolla att kund är vald och säker
   const kundIdRaw = formData.get("kundId")?.toString();
@@ -276,9 +270,7 @@ export async function saveInvoiceInternal(formData: FormData) {
 }
 
 export async function hämtaNästaFakturanummer() {
-  const userId = await getUserId();
-  if (!userId) return 1;
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {
@@ -378,11 +370,7 @@ export async function hämtaFakturaMedRader(id: number) {
 }
 
 export async function hämtaSparadeFakturor(): Promise<SparadFaktura[]> {
-  const userId = await getUserId();
-  if (!userId) {
-    return [];
-  }
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {
@@ -447,12 +435,7 @@ export async function hämtaSparadeFakturor(): Promise<SparadFaktura[]> {
 }
 
 export async function deleteFaktura(id: number) {
-  // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-  const userId = await getUserId();
-  if (!userId) {
-    console.error("Ogiltig session vid radering av faktura", { userId });
-    return { success: false, error: "Säkerhetsvalidering misslyckades" };
-  }
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Validera faktura-ID
   if (!validateAmount(id) || id <= 0) {
@@ -520,9 +503,7 @@ export async function deleteFaktura(id: number) {
 }
 
 export async function getAllInvoices() {
-  const userId = await getUserId();
-  if (!userId) return { success: false, invoices: [] };
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   return withDatabase(async (client) => {
     const res = await client.query(`SELECT * FROM fakturor WHERE "user_id" = $1 ORDER BY id DESC`, [

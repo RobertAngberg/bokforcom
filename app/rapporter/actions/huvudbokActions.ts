@@ -2,7 +2,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId, requireOwnership } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 
 // Typ för transaktionsdata
 interface TransaktionData {
@@ -18,7 +18,7 @@ interface TransaktionData {
 //#endregion
 
 export async function fetchHuvudbok() {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -113,12 +113,14 @@ export async function fetchHuvudbok() {
 }
 
 export async function fetchFöretagsprofil(userId?: string) {
-  const sessionUserId = await getUserId();
+  const { userId: sessionUserId } = await ensureSession();
 
   // Använd sessionUserId om inget userId skickades
   const targetUserId = userId || sessionUserId;
 
-  await requireOwnership(targetUserId);
+  if (targetUserId !== sessionUserId) {
+    throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
+  }
 
   try {
     const client = await pool.connect();
@@ -138,7 +140,7 @@ export async function fetchFöretagsprofil(userId?: string) {
 }
 
 export async function fetchTransactionDetails(transaktionsId: number) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   if (!transaktionsId || isNaN(transaktionsId) || transaktionsId <= 0) {
     throw new Error("Ogiltigt transaktions-ID");
@@ -176,7 +178,7 @@ export async function fetchTransactionDetails(transaktionsId: number) {
 }
 
 export async function fetchKontoTransaktioner(kontonummer: string) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const result = await pool.query(
@@ -213,7 +215,7 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
 }
 
 export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();

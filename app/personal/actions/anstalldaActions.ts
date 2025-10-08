@@ -1,12 +1,12 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type { AnställdInput, FormActionState, Företagsprofil } from "../types/types";
 
 export async function hämtaAllaAnställda() {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -27,7 +27,7 @@ export async function hämtaAllaAnställda() {
 }
 
 export async function hämtaAnställd(anställdId: number) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -110,10 +110,7 @@ export async function sparaNyAnställdFormAction(
 }
 
 export async function sparaAnställd(data: AnställdInput, anställdId?: number | null) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -255,12 +252,7 @@ export async function sparaAnställd(data: AnställdInput, anställdId?: number 
 }
 
 export async function taBortAnställd(anställdId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
 

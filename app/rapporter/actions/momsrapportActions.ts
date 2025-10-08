@@ -1,10 +1,10 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 
 export async function getMomsrapport(year: string, kvartal?: string) {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   /* ---- datumintervall ---- */
   let from = `${year}-01-01`;
@@ -139,7 +139,7 @@ export async function getMomsrapport(year: string, kvartal?: string) {
 }
 
 export async function fetchFöretagsprofil() {
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();

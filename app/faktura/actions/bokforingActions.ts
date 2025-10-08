@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { validateKontonummer, sanitizeInput } from "../../_utils/validationUtils";
 import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 import {
@@ -15,8 +15,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   status_bokförd?: string;
   betaldatum?: string;
 }> {
-  const userId = await getUserId();
-  if (!userId) return {};
+  const { userId } = await ensureSession();
 
   try {
     const result = await pool.query(
@@ -31,8 +30,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
 }
 
 export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
-  const userId = await getUserId();
-  if (!userId) return { success: false, error: "Inte inloggad" };
+  const { userId } = await ensureSession();
 
   try {
     await pool.query('UPDATE "user" SET bokföringsmetod = $1 WHERE id = $2', [metod, userId]);
@@ -45,14 +43,9 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 }
 
 export async function bokförFaktura(data: BokförFakturaData) {
-  try {
-    // SÄKERHETSVALIDERING: Omfattande sessionsvalidering
-    const userId = await getUserId();
-    if (!userId) {
-      console.error("❌ Säkerhetsvarning: Ogiltig session vid bokföring av faktura");
-      return { success: false, error: "Säkerhetsvalidering misslyckades" };
-    }
+  const { userId } = await ensureSession();
 
+  try {
     // SÄKERHETSEVENT: Logga bokföringsförsök
     console.log(`🔒 Säker fakturbokföring initierad för user ${userId}, faktura ${data.fakturaId}`);
 
@@ -231,12 +224,7 @@ export async function bokförFaktura(data: BokförFakturaData) {
 }
 
 export async function hamtaBokfordaFakturor() {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Ej autentiserad" };
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
   const client = await pool.connect();
 
   try {

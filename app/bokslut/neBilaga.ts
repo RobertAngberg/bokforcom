@@ -1,12 +1,13 @@
 "use server";
 
 import { pool } from "../_lib/db";
-import { getUserId } from "../_utils/authUtils";
+import { ensureSession } from "../_utils/session";
 import { validateYear } from "../_utils/validationUtils";
 
-// Hämta användarens session - nu via authUtils
+// Hämta användarens session via ensureSession
 async function requireAuth() {
-  return await getUserId();
+  const { userId } = await ensureSession();
+  return userId;
 }
 
 // Hämta kontosaldo för NE-bilaga (endast databasoperationer)

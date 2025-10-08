@@ -1,7 +1,7 @@
 "use server";
 
 import { put } from "@vercel/blob";
-import { getUserId } from "./authUtils";
+import { ensureSession } from "./session";
 
 // Tillåtna filtyper och deras MIME-types
 const ALLOWED_FILE_TYPES = {
@@ -31,7 +31,7 @@ export type UploadOptions = {
 export async function uploadBlob(file: File, options: UploadOptions = {}): Promise<UploadResult> {
   try {
     // 🔒 Session-validering
-    const userId = await getUserId();
+    const { userId } = await ensureSession();
 
     // 🔍 Filvalidering
     const validation = validateFile(file);

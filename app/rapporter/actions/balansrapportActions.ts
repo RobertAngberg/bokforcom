@@ -1,7 +1,7 @@
 // balansrapport/actions.ts
 "use server";
 import { pool } from "../../_lib/db";
-import { getUserId, requireOwnership } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { validatePeriod } from "../../_utils/validationUtils";
 
 // SÄKERHETSVALIDERING: Logga finansiell dataåtkomst
@@ -20,7 +20,7 @@ function logFinancialDataEvent(
 
 export async function fetchBalansData(year: string, month?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Validera år-parameter
   if (!validatePeriod(year)) {
@@ -247,12 +247,14 @@ export async function fetchBalansData(year: string, month?: string) {
 
 export async function fetchFöretagsprofil(userId?: string) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const sessionUserId = await getUserId();
+  const { userId: sessionUserId } = await ensureSession();
 
   // Använd sessionUserId om inget userId skickades
   const targetUserId = userId || sessionUserId;
 
-  await requireOwnership(targetUserId);
+  if (targetUserId !== sessionUserId) {
+    throw new Error("Otillåten åtkomst: Du äger inte denna resurs");
+  }
 
   logFinancialDataEvent("access", sessionUserId, "Accessing company profile data");
 
@@ -275,7 +277,7 @@ export async function fetchFöretagsprofil(userId?: string) {
 
 export async function fetchTransactionDetails(transaktionsId: number) {
   // SÄKERHETSVALIDERING: Kontrollera autentisering
-  const userId = await getUserId();
+  const { userId } = await ensureSession();
 
   logFinancialDataEvent("access", userId, `Fetching transaction details for ID: ${transaktionsId}`);
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../../_types/common";
@@ -8,7 +8,7 @@ import type { PoolClient } from "pg";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
-    const userId = await getUserId();
+    const { userId } = await ensureSession();
 
     await withTransaction(async (client: PoolClient) => {
       await client.query(

@@ -1,14 +1,11 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { createTransaktion } from "../../_utils/transaktioner/createTransaktion";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Ej autentiserad" };
-  }
+  const { userId } = await ensureSession();
 
   try {
     if (!Number.isFinite(belopp) || belopp <= 0) {
@@ -89,10 +86,7 @@ export async function betalaOchBokförLeverantörsfaktura(
   leverantörsfakturaId: number,
   belopp: number
 ) {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Ej autentiserad" };
-  }
+  const { userId } = await ensureSession();
 
   try {
     if (!Number.isFinite(belopp) || belopp <= 0) {
@@ -170,8 +164,7 @@ export async function registreraBetalningEnkel(
   fakturaId: number,
   belopp: number
 ): Promise<{ success: boolean; error?: string }> {
-  const userId = await getUserId();
-  if (!userId) return { success: false, error: "Inte inloggad" };
+  const { userId } = await ensureSession();
 
   try {
     if (!Number.isFinite(belopp) || belopp <= 0) {
@@ -223,10 +216,7 @@ export async function registreraBetalningEnkel(
 
 // Ta bort en leverantörsfaktura
 export async function taBortLeverantörsfaktura(leverantörsfakturaId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    return { success: false, error: "Ej autentiserad" };
-  }
+  const { userId } = await ensureSession();
 
   const client = await pool.connect();
 

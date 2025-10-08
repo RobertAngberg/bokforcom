@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type { Lönekörning, LönespecData } from "../types/types";
 
@@ -11,10 +11,7 @@ export async function skapaLönekörning(period: string): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     // Kolla om det redan finns en aktiv lönekörning för perioden
     const befintligQuery = `
@@ -68,10 +65,7 @@ export async function hämtaAktivLönekörning(period: string): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    await ensureSession();
 
     const query = `
       SELECT * FROM lönekörningar 
@@ -126,10 +120,7 @@ export async function uppdateraLönekörningStatus(
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     let query = `
       UPDATE lönekörningar 
@@ -141,9 +132,9 @@ export async function uppdateraLönekörningStatus(
       query += `, status = 'avslutad', avslutad_datum = CURRENT_TIMESTAMP`;
     }
 
-    query += ` WHERE id = $1 RETURNING *`;
+    query += ` WHERE id = $1 AND startad_av = $2 RETURNING *`;
 
-    const result = await pool.query(query, [lönekörningId]);
+    const result = await pool.query(query, [lönekörningId, userId]);
 
     if (result.rows.length === 0) {
       return { success: false, error: "Lönekörning hittades inte" };
@@ -189,10 +180,7 @@ export async function uppdateraLönekörningSteg(
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     // Bestäm vilken datum-kolumn som ska uppdateras
     let datumKolumn = "";
@@ -272,10 +260,7 @@ export async function markeraStegFärdigt(lönekörningId: number): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     // Hämta nuvarande aktivt_steg
     const hämtaQuery = `
@@ -347,10 +332,7 @@ export async function uppdateraLönekörningTotaler(lönekörningId: number): Pr
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    await ensureSession();
 
     // Beräkna totaler från alla lönespecar för denna lönekörning
     const totalerQuery = `
@@ -402,10 +384,7 @@ export async function hämtaAllaLönekörningar(): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     const query = `
       SELECT * FROM lönekörningar 
@@ -448,10 +427,7 @@ export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     const query = `
       SELECT l.*, a.förnamn, a.efternamn, a.mail
@@ -481,10 +457,7 @@ export async function koppLaLönespecTillLönekörning(
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    await ensureSession();
 
     const query = `
       UPDATE lönespecifikationer 
@@ -512,10 +485,7 @@ export async function markeraLönekörningSteg(
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    await ensureSession();
 
     // Hitta eller skapa lönekörning för perioden
     let lönekörningResult = await hämtaAktivLönekörning(period);
@@ -601,10 +571,7 @@ export async function skapaLönespecifikationerFörLönekörning(
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     const skapadeSpecar: LönespecData[] = [];
 
@@ -680,10 +647,7 @@ export async function taBortLönekörning(lönekörningId: number): Promise<{
   error?: string;
 }> {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return { success: false, error: "Användare inte inloggad" };
-    }
+    const { userId } = await ensureSession();
 
     // Kontrollera att användaren äger lönekörningen
     const kontrollQuery = `

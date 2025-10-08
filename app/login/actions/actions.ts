@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getSessionAndUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -9,34 +9,6 @@ import { validateEmail, validatePassword } from "../utils/loginValidation";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// REMOVED: Security logging functionality (security_logs table doesn't exist)
-// All security events are now logged to console only for development debugging
-function logSignupSecurityEvent(
-  userId: string,
-  eventType: string,
-  details: string,
-  ip?: string
-): void {
-  console.log(
-    `🔒 Signup Security Event [${eventType}] User: ${userId} IP: ${ip || "unknown"} - ${details}`
-  );
-}
-
-function getClientIP(headers?: Record<string, string>): string | undefined {
-  if (!headers) return undefined;
-
-  // Kolla vanliga IP-headers i ordning
-  return (
-    headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-    headers["x-real-ip"] ||
-    headers["cf-connecting-ip"] ||
-    headers["x-client-ip"] ||
-    headers["x-forwarded"] ||
-    headers["forwarded"] ||
-    undefined
-  );
-}
 
 // Skicka password reset email
 async function sendPasswordResetEmail(
@@ -233,20 +205,10 @@ export async function resetPassword(formData: FormData) {
 export async function saveSignupData(formData: FormData) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
-    const { session, userId } = await getSessionAndUserId();
+    const { session, userId } = await ensureSession();
     if (!session?.user?.email || !userId) {
       return { success: false, error: "Ingen användare inloggad" };
     }
-
-    const userEmail = session.user.email;
-    const clientIP = getClientIP();
-
-    logSignupSecurityEvent(
-      userId,
-      "account_creation_attempt",
-      `Account creation started for ${userEmail}`,
-      clientIP
-    );
 
     // 🔒 INPUT-SANITERING (grundläggande säkerhet - frontend redan validerat)
     const rawOrganisationsnummer = formData.get("organisationsnummer")?.toString() || "";
@@ -259,12 +221,6 @@ export async function saveSignupData(formData: FormData) {
 
     // Grundläggande säkerhetskontroller (frontend validation redan gjord)
     if (!rawOrganisationsnummer || !rawFöretagsnamn) {
-      logSignupSecurityEvent(
-        userId.toString(),
-        "signup_validation_failed",
-        "Missing required fields",
-        clientIP
-      );
       return { success: false, error: "Saknade obligatoriska fält" };
     }
 
@@ -282,22 +238,10 @@ export async function saveSignupData(formData: FormData) {
     const allowedMethods = ["kassaredovisning", "fakturaredovisning"];
 
     if (momsperiod && !allowedMomsperiods.includes(momsperiod)) {
-      logSignupSecurityEvent(
-        userId.toString(),
-        "signup_security_violation",
-        `Invalid momsperiod: ${momsperiod}`,
-        clientIP
-      );
       return { success: false, error: "Säkerhetsfel - ogiltig data" };
     }
 
     if (bokföringsmetod && !allowedMethods.includes(bokföringsmetod)) {
-      logSignupSecurityEvent(
-        userId.toString(),
-        "signup_security_violation",
-        `Invalid bokföringsmetod: ${bokföringsmetod}`,
-        clientIP
-      );
       return { success: false, error: "Säkerhetsfel - ogiltig data" };
     }
 
@@ -310,12 +254,6 @@ export async function saveSignupData(formData: FormData) {
       );
 
       if (existingUser.rows.length === 0) {
-        logSignupSecurityEvent(
-          userId.toString(),
-          "signup_user_not_found",
-          `User not found in database: ${userEmail}`,
-          clientIP
-        );
         return { success: false, error: "Användare hittades inte" };
       }
 
@@ -323,24 +261,11 @@ export async function saveSignupData(formData: FormData) {
 
       // Kontrollera om användaren redan har företagsinformation
       if (user.företagsnamn || user.organisationsnummer) {
-        logSignupSecurityEvent(
-          userId.toString(),
-          "signup_duplicate_attempt",
-          `User already has company info: ${userEmail}`,
-          clientIP
-        );
         return {
           success: false,
           error: "Företagsinformation finns redan registrerad för detta konto",
         };
       }
-
-      logSignupSecurityEvent(
-        userId.toString(),
-        "signup_save_processing",
-        `Saving signup data for user: ${userEmail}`,
-        clientIP
-      );
 
       // 🔒 SÄKER DATABASUPPDATERING
       const result = await client.query(
@@ -368,21 +293,8 @@ export async function saveSignupData(formData: FormData) {
       );
 
       if (result.rows.length === 0) {
-        logSignupSecurityEvent(
-          userId.toString(),
-          "signup_update_failed",
-          `Failed to update user: ${userEmail}`,
-          clientIP
-        );
         return { success: false, error: "Kunde inte uppdatera användarinformation" };
       }
-
-      logSignupSecurityEvent(
-        userId.toString(),
-        "signup_save_success",
-        `Signup data saved successfully for user: ${userEmail}`,
-        clientIP
-      );
 
       return {
         success: true,
@@ -394,19 +306,6 @@ export async function saveSignupData(formData: FormData) {
     }
   } catch (error) {
     console.error("❌ Fel vid sparande av signup-data:", error);
-    // Logga fel om vi har session
-    try {
-      const { session: errorSession, userId: errorUserId } = await getSessionAndUserId();
-      if (errorSession?.user?.email && errorUserId) {
-        logSignupSecurityEvent(
-          errorUserId.toString(),
-          "signup_save_error",
-          `Error saving signup data: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
     return {
       success: false,
       error: "Kunde inte spara företagsinformation",

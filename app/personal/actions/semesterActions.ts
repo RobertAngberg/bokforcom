@@ -1,16 +1,11 @@
 "use server";
 
 import { pool } from "../../_lib/db";
-import { getUserId } from "../../_utils/authUtils";
+import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 
 export async function hämtaSemesterTransaktioner(anställdId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -46,12 +41,7 @@ export async function sparaSemesterTransaktion(data: {
   nyttVärde: number;
   kolumn: "betalda_dagar" | "sparade_dagar" | "skuld" | "komp_dagar";
 }) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -63,7 +53,6 @@ export async function sparaSemesterTransaktion(data: {
       RETURNING id
     `;
     const updateResult = await client.query(updateQuery, [data.nyttVärde, data.anställdId]);
-    console.log("sparaSemesterTransaktion: updateResult", updateResult.rows);
     let id = updateResult.rows[0]?.id;
     if (!id) {
       // Ingen rad uppdaterad, skapa en ny rad med rätt värde
@@ -100,7 +89,6 @@ export async function sparaSemesterTransaktion(data: {
         komp_dagar,
       ]);
       id = insertResult.rows[0]?.id;
-      console.log("sparaSemesterTransaktion: insertResult", insertResult.rows);
     }
     client.release();
     revalidatePath("/personal");
@@ -119,12 +107,7 @@ export async function sparaSemesterTransaktion(data: {
 }
 
 export async function raderaSemesterTransaktion(transaktionId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -172,12 +155,7 @@ export async function uppdateraSemesterdata(
     innestående?: number;
   }
 ) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -239,9 +217,7 @@ export async function bokförSemester({
   kommentar?: string;
   datum?: string;
 }) {
-  const loggedInUserId = await getUserId();
-  if (!loggedInUserId) throw new Error("Ingen inloggad användare");
-  const realUserId = loggedInUserId; // Alltid inloggad användare
+  const { userId: realUserId } = await ensureSession();
 
   try {
     const client = await pool.connect();
@@ -289,12 +265,7 @@ export async function bokförSemester({
 }
 
 export async function hämtaBetaldaSemesterdagar(anställdId: number) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("Ingen inloggad användare");
-  }
-
-  // userId already a number from getUserId()
+  const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();

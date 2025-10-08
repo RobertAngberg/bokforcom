@@ -8,10 +8,8 @@ export async function hämtaBokföringsmetod(): Promise<string> {
   const { userId } = await ensureSession();
 
   try {
-    const client = await pool.connect();
     const query = 'SELECT bokföringsmetod FROM "user" WHERE id = $1';
-    const res = await client.query(query, [userId]);
-    client.release();
+    const res = await pool.query(query, [userId]);
 
     if (res.rows.length === 0) {
       console.warn("⛔ Användare inte funnen:", userId);
