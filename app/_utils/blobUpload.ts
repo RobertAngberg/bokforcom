@@ -3,13 +3,6 @@
 import { put } from "@vercel/blob";
 import { ensureSession } from "./session";
 
-// Tillåtna filtyper och deras MIME-types
-const ALLOWED_FILE_TYPES = {
-  "image/jpeg": { ext: "jpg", maxSize: 1024 * 1024 }, // 1MB
-  "image/png": { ext: "png", maxSize: 1024 * 1024 }, // 1MB
-  "application/pdf": { ext: "pdf", maxSize: 1024 * 1024 }, // 1MB
-} as const;
-
 export type UploadResult = {
   success: boolean;
   url?: string;
@@ -27,8 +20,13 @@ export type UploadOptions = {
   datum?: string; // Datum i format YYYY-MM-DD
 };
 
-// Huvudfunktion för blob-upload
-export async function uploadBlob(file: File, options: UploadOptions = {}): Promise<UploadResult> {
+const ALLOWED_FILE_TYPES = {
+  "image/jpeg": { ext: "jpg", maxSize: 1024 * 1024 }, // 1MB
+  "image/png": { ext: "png", maxSize: 1024 * 1024 }, // 1MB
+  "application/pdf": { ext: "pdf", maxSize: 1024 * 1024 }, // 1MB
+} as const;
+
+async function uploadBlob(file: File, options: UploadOptions = {}): Promise<UploadResult> {
   try {
     // 🔒 Session-validering
     const { userId } = await ensureSession();
@@ -67,7 +65,6 @@ export async function uploadBlob(file: File, options: UploadOptions = {}): Promi
   }
 }
 
-// 🔍 Filvalidering
 function validateFile(file: File): { valid: boolean; error?: string } {
   const fileType = ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES];
 
@@ -90,7 +87,6 @@ function validateFile(file: File): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-// 🗜️ Fil-processering och kompression
 async function processFile(file: File, options: UploadOptions): Promise<File> {
   // För PDF-filer, returnera som de är
   if (file.type === "application/pdf") {
@@ -112,7 +108,6 @@ async function processFile(file: File, options: UploadOptions): Promise<File> {
   return file;
 }
 
-// 🖼️ Bildkompression med adaptiv kvalitet (förbättrad från lokala versioner)
 async function compressImage(file: File, options: UploadOptions): Promise<File> {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
@@ -182,7 +177,6 @@ async function compressImage(file: File, options: UploadOptions): Promise<File> 
   });
 }
 
-// Skapa smart filnamn med datum och beskrivning
 function createSmartFileName(originalName: string, options: UploadOptions): string {
   const fileExt = originalName.split(".").pop()?.toLowerCase() || "";
   const datum = options.datum || new Date().toISOString().split("T")[0]; // YYYY-MM-DD
@@ -204,17 +198,18 @@ function createSmartFileName(originalName: string, options: UploadOptions): stri
   return `${filename}.${fileExt}`;
 }
 
-// 🎯 Convenience-funktioner för specifika användningsfall
-export const uploadReceiptImage = async (file: File, options: UploadOptions = {}) =>
-  uploadBlob(file, { quality: 0.8, maxWidth: 1200, ...options });
+export async function uploadReceiptImage(file: File, options: UploadOptions = {}) {
+  return uploadBlob(file, { quality: 0.8, maxWidth: 1200, ...options });
+}
 
-export const uploadCompanyLogo = async (file: File) =>
-  uploadBlob(file, {
+export async function uploadCompanyLogo(file: File) {
+  return uploadBlob(file, {
     quality: 0.9,
     maxWidth: 800,
     maxHeight: 400,
     beskrivning: "foretags-logotyp",
   });
+}
 
 // 🗜️ Exporterad komprimerings-funktion för direkt användning (utan upload)
 export async function compressImageFile(file: File, options: UploadOptions = {}): Promise<File> {

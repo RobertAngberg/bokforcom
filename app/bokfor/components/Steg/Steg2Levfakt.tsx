@@ -258,7 +258,7 @@ export default function Steg2Levfakt() {
         onSelected={(lev) => {
           actions.setLeverantör(lev);
         }}
-        onClose={() => actions.setVisaLeverantorModal(false)}
+        onClose={handlers.handleLeverantorModalClose}
       />
     </>
   );

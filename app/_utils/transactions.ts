@@ -137,7 +137,7 @@ export async function hamtaTransaktionsposter(
   }
 }
 
-export async function hamtaKontoIdMap(kontonummerLista: string[]) {
+async function hamtaKontoIdMap(kontonummerLista: string[]) {
   if (kontonummerLista.length === 0) return {} as Record<string, number>;
   const unika = [...new Set(kontonummerLista)];
   const client = await pool.connect();

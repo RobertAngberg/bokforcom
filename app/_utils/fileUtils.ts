@@ -5,7 +5,7 @@ import "jspdf-autotable";
  * Ladda ner fil från innehåll
  * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
  */
-export function downloadFile(
+function downloadFile(
   content: string | Blob,
   filename: string,
   mimeType: string = "text/plain"
@@ -27,7 +27,7 @@ export function downloadFile(
  * Generera filnamn med datum
  * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
  */
-export function generateFilename(prefix: string, date: Date, extension: string): string {
+function generateFilename(prefix: string, date: Date, extension: string): string {
   const dateStr = date.toISOString().split("T")[0];
   return `${prefix}_${dateStr}.${extension}`;
 }
@@ -47,21 +47,11 @@ export function sanitizeFilename(filename: string): string {
 /**
  * Förkonfigurerade download-funktioner för vanliga användningsfall
  */
-export const downloadCSV = (content: string, filename: string) =>
+const downloadCSV = (content: string, filename: string) =>
   downloadFile(content, filename, "text/csv");
 
-export const downloadJSON = (data: object, filename: string) =>
-  downloadFile(JSON.stringify(data, null, 2), filename, "application/json");
-
-export const downloadXML = (content: string, filename: string) =>
-  downloadFile(content, filename, "application/xml");
-
-export const downloadPDF = (blob: Blob, filename: string) =>
+const downloadPDF = (blob: Blob, filename: string) =>
   downloadFile(blob, filename, "application/pdf");
-
-// Legacy aliases för bakåtkompatibilitet
-export const laddaNerFil = downloadFile;
-export const genereraFilnamn = generateFilename;
 
 /**
  * Huvudbok export-funktioner

@@ -74,8 +74,8 @@ export function BokforProvider({ children }: BokforProviderProps) {
         setCurrentStep: bokforData.setCurrentStep,
         setFavoritFörvalen: bokforData.setFavoritFörvalen,
         setAllaFörval: bokforData.setAllaFörval,
+        setAnställda: bokforData.setAnställda,
         setAnstallda: bokforData.setAnstallda,
-        setAnställda: bokforData.setAnstallda, // Alias för bakåtkompatibilitet
         setAnstalldId: bokforData.setAnstalldId,
         showToast: bokforData.showToast,
         setKonto2890Beskrivning: bokforData.setKonto2890Beskrivning,

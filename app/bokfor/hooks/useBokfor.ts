@@ -21,7 +21,7 @@ export function useBokfor() {
   // Data & UI state
   const [favoritFörval, setFavoritFörval] = useState<Förval[]>([]);
   const [allaFörval, setAllaFörval] = useState<Förval[]>([]);
-  const [anställda] = useState<UtlaggAnställd[]>([]);
+  const [anställda, setAnställda] = useState<UtlaggAnställd[]>([]);
   const [bokföringsmetod, setBokföringsmetod] = useState("standard");
   const [levfaktMode, setLevfaktMode] = useState(false);
   const [utlaggMode, setUtlaggMode] = useState(false);
@@ -452,6 +452,7 @@ export function useBokfor() {
     setCurrentStep: navigation.setCurrentStep,
     setFavoritFörvalen,
     setAllaFörval,
+    setAnställda,
     setAnstallda,
     setAnstalldId,
     showToast,
