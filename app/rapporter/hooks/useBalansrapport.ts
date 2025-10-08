@@ -367,8 +367,7 @@ export function useBalansrapport() {
         selectedYear
       );
       setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
-    } catch (error) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       setExportMessage({
         type: "error",
         text: "Ett fel uppstod vid PDF-export. Försök igen.",
@@ -396,8 +395,7 @@ export function useBalansrapport() {
         selectedYear
       );
       setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
-    } catch (error) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       setExportMessage({
         type: "error",
         text: "Ett fel uppstod vid CSV-export. Försök igen.",
@@ -422,8 +420,7 @@ export function useBalansrapport() {
       } else {
         setVerifikationer([]);
       }
-    } catch (error) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       // Tyst felhantering
       setVerifikationer([]);
     } finally {
