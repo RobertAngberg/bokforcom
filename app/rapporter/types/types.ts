@@ -70,29 +70,20 @@ export type HuvudboksKontoMedTransaktioner = {
 };
 
 // Resultatrapport types
+export type ResultatTransaktion = {
+  id: string;
+  datum: string;
+  belopp: number;
+  beskrivning: string;
+  transaktion_id: number;
+  verifikatNummer: string;
+};
+
 export type ResultatKonto = {
   kontonummer: string;
   beskrivning: string;
-  transaktioner?: Array<{
-    id: string;
-    datum: string;
-    belopp: number;
-    beskrivning: string;
-    transaktion_id: number;
-    verifikatNummer: string;
-  }>;
-  [year: string]:
-    | number
-    | string
-    | undefined
-    | Array<{
-        id: string;
-        datum: string;
-        belopp: number;
-        beskrivning: string;
-        transaktion_id: number;
-        verifikatNummer: string;
-      }>;
+  transaktioner: ResultatTransaktion[];
+  [year: string]: number | string | ResultatTransaktion[] | undefined;
 };
 
 export type KontoRad = {

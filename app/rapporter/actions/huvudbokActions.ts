@@ -1,21 +1,8 @@
-//#region
 "use server";
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-
-// Typ för transaktionsdata
-interface TransaktionData {
-  transaktion_id: number;
-  datum: string;
-  beskrivning: string;
-  debet: number;
-  kredit: number;
-  verifikatNummer: string;
-  belopp: number;
-  sort_priority: number;
-}
-//#endregion
+import type { TransaktionData } from "../types/types";
 
 export async function fetchHuvudbok() {
   const { userId } = await ensureSession();
