@@ -2,7 +2,6 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { withDatabase } from "../../_utils/dbUtils";
 import {
   registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
   registreraRotRutBetalning as registreraRotRutBetalningBase,
@@ -133,52 +132,47 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 export async function bokförFaktura(data: BokförFakturaData) {
   const { userId } = await ensureSession();
 
-  return withDatabase(async (client) => {
-    try {
-      // Uppdatera fakturastatus
-      await client.query(
-        `UPDATE fakturor 
+  const client = await pool.connect();
+  try {
+    // Uppdatera fakturastatus
+    await client.query(
+      `UPDATE fakturor 
          SET 
            status_bokförd = 'Bokförd',
            uppdaterad = CURRENT_TIMESTAMP
          WHERE id = $1 AND user_id = $2`,
-        [data.fakturaId, userId]
-      );
+      [data.fakturaId, userId]
+    );
 
-      // Spara bokföringsposter om de finns
-      if (data.poster && data.poster.length > 0) {
-        for (const post of data.poster) {
-          await client.query(
-            `INSERT INTO bokforing_poster (
+    // Spara bokföringsposter om de finns
+    if (data.poster && data.poster.length > 0) {
+      for (const post of data.poster) {
+        await client.query(
+          `INSERT INTO bokforing_poster (
               user_id, faktura_id, konto, beskrivning, debet, kredit
             ) VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              userId,
-              data.fakturaId,
-              post.konto,
-              post.beskrivning,
-              post.debet || 0,
-              post.kredit || 0,
-            ]
-          );
-        }
+          [userId, data.fakturaId, post.konto, post.beskrivning, post.debet || 0, post.kredit || 0]
+        );
       }
-
-      return {
-        success: true,
-        message: `Faktura ${data.fakturanummer} har bokförts för ${data.kundnamn}`,
-      };
-    } catch (error) {
-      console.error("Bokföringsfel:", error);
-      return { success: false, error: "Databasfel vid bokföring" };
     }
-  });
+
+    return {
+      success: true,
+      message: `Faktura ${data.fakturanummer} har bokförts för ${data.kundnamn}`,
+    };
+  } catch (error) {
+    console.error("Bokföringsfel:", error);
+    return { success: false, error: "Databasfel vid bokföring" };
+  } finally {
+    client.release();
+  }
 }
 
 export async function hamtaBokfordaFakturor() {
   const { userId } = await ensureSession();
 
-  return withDatabase(async (client) => {
+  const client = await pool.connect();
+  try {
     const result = await client.query(
       `SELECT * FROM fakturor 
        WHERE user_id = $1 AND status_bokförd = 'Bokförd'
@@ -186,13 +180,16 @@ export async function hamtaBokfordaFakturor() {
       [userId]
     );
     return { success: true, data: result.rows };
-  });
+  } finally {
+    client.release();
+  }
 }
 
 export async function hamtaTransaktionsposter(fakturaId?: number) {
   const { userId } = await ensureSession();
 
-  return withDatabase(async (client) => {
+  const client = await pool.connect();
+  try {
     let query = `
       SELECT t.*, f.fakturanummer, f.belopp 
       FROM transaktioner t
@@ -210,5 +207,7 @@ export async function hamtaTransaktionsposter(fakturaId?: number) {
 
     const result = await client.query(query, params);
     return { success: true, data: result.rows };
-  });
+  } finally {
+    client.release();
+  }
 }

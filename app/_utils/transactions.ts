@@ -1,6 +1,5 @@
 import { pool } from "../_lib/db";
 import { ensureSession } from "./session";
-import { queryOne } from "./dbUtils";
 import type { UserId } from "../_types/common";
 
 export interface TransaktionsPostInput {
@@ -175,35 +174,40 @@ export async function fetchTransactionWithEntries(
     return null;
   }
 
-  const row = await queryOne<TransactionWithEntries>(
-    `
-    SELECT 
-      t.id,
-      t.transaktionsdatum AS datum,
-      t.kontobeskrivning AS beskrivning,
-      t.summa_debet,
-      t.summa_kredit,
-      t.blob_url,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'konto', k.kontonummer || '',
-            'beskrivning', k.beskrivning || '',
-            'debet', tp.debet,
-            'kredit', tp.kredit
-          )
-          ORDER BY k.kontonummer
-        ) FILTER (WHERE tp.id IS NOT NULL),
-        '[]'::json
-      ) AS poster
-    FROM transaktioner t
-    LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-    LEFT JOIN konton k ON k.id = tp.konto_id
-    WHERE t.id = $1 AND t."user_id" = $2
-    GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
-    `,
-    [transactionId, userId]
-  );
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query<TransactionWithEntries>(
+      `
+      SELECT 
+        t.id,
+        t.transaktionsdatum AS datum,
+        t.kontobeskrivning AS beskrivning,
+        t.summa_debet,
+        t.summa_kredit,
+        t.blob_url,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'konto', k.kontonummer || '',
+              'beskrivning', k.beskrivning || '',
+              'debet', tp.debet,
+              'kredit', tp.kredit
+            )
+            ORDER BY k.kontonummer
+          ) FILTER (WHERE tp.id IS NOT NULL),
+          '[]'::json
+        ) AS poster
+      FROM transaktioner t
+      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
+      LEFT JOIN konton k ON k.id = tp.konto_id
+      WHERE t.id = $1 AND t."user_id" = $2
+      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
+      `,
+      [transactionId, userId]
+    );
 
-  return row;
+    return rows[0] || null;
+  } finally {
+    client.release();
+  }
 }

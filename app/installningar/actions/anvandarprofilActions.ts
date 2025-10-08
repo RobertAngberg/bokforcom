@@ -1,10 +1,10 @@
 "use server";
 
+import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import type { AktionsResultat, AnvandarInfo } from "../../_types/common";
 import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
-import { queryOne } from "../../_utils/dbUtils";
 import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
 import { logError } from "../../_utils/errorUtils";
 
@@ -27,10 +27,18 @@ export async function uppdateraAnvändarInfo(
       return { success: false, error: "Ogiltig email-format" };
     }
 
-    const updated = await queryOne<AnvandarInfo>(
-      'UPDATE "user" SET name = $1, email = $2 WHERE id = $3 RETURNING id, email, name, "createdAt" as skapad',
-      [name, email, userId]
-    );
+    const client = await pool.connect();
+    let updated: AnvandarInfo | null = null;
+
+    try {
+      const result = await client.query<AnvandarInfo>(
+        'UPDATE "user" SET name = $1, email = $2 WHERE id = $3 RETURNING id, email, name, "createdAt" as skapad',
+        [name, email, userId]
+      );
+      updated = (result.rows[0] as AnvandarInfo | undefined) ?? null;
+    } finally {
+      client.release();
+    }
 
     if (!updated) {
       return { success: false, error: "Anvandare kunde inte uppdateras" };

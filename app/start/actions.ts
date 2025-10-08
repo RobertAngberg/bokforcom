@@ -4,7 +4,6 @@ import { pool } from "../_lib/db";
 import { put } from "@vercel/blob";
 import { validateId, sanitizeInput } from "../_utils/validationUtils";
 import { ensureSession } from "../_utils/session";
-import { updateFakturanummerCore, updateFörvalCore } from "../_utils/dbUtils";
 
 // 🎉 VÄLKOMSTMEDDELANDE FUNKTIONER
 export async function checkWelcomeStatus(): Promise<boolean> {
@@ -283,8 +282,19 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
     throw new Error("Ogiltigt fakturanummer");
   }
 
-  // Använd centraliserad databasoperation med ägarskapskontroll
-  await updateFakturanummerCore(id, safeNummer, userId);
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `UPDATE fakturor SET fakturanummer = $1 WHERE id = $2 AND user_id = $3`,
+      [safeNummer, id, userId]
+    );
+
+    if (res.rowCount === 0) {
+      throw new Error("Faktura hittades inte eller otillåten åtkomst");
+    }
+  } finally {
+    client.release();
+  }
 }
 
 export async function saveInvoice(data: {
@@ -370,11 +380,54 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
 
     const sanitizedValue = sanitizeInput(nyttVärde);
 
-    // Använd centraliserad databasoperation med user ownership
-    const result = await updateFörvalCore(id, kolumn, sanitizedValue, userId);
+    const tillåtnaKolumner = [
+      "namn",
+      "beskrivning",
+      "typ",
+      "kategori",
+      "momssats",
+      "specialtyp",
+      "konton",
+      "sökord",
+    ];
 
-    if (result.rowCount === 0) {
-      throw new Error("Förval hittades inte eller du saknar behörighet");
+    if (!tillåtnaKolumner.includes(kolumn)) {
+      throw new Error(`Ogiltig kolumn: ${kolumn}`);
+    }
+
+    const client = await pool.connect();
+    try {
+      let queryText = "";
+      let params: (string | number)[] = [];
+
+      if (kolumn === "konton" || kolumn === "sökord") {
+        try {
+          JSON.parse(sanitizedValue);
+        } catch {
+          throw new Error("Ogiltigt JSON-format");
+        }
+
+        queryText = `UPDATE förval SET "${kolumn}" = $1::jsonb WHERE id = $2 AND "user_id" = $3`;
+        params = [sanitizedValue, id, userId];
+      } else if (kolumn === "momssats") {
+        if (isNaN(parseFloat(sanitizedValue))) {
+          throw new Error("Ogiltigt momssats-värde");
+        }
+
+        queryText = `UPDATE förval SET "${kolumn}" = $1::real WHERE id = $2 AND "user_id" = $3`;
+        params = [sanitizedValue, id, userId];
+      } else {
+        queryText = `UPDATE förval SET "${kolumn}" = $1 WHERE id = $2 AND "user_id" = $3`;
+        params = [sanitizedValue, id, userId];
+      }
+
+      const result = await client.query(queryText, params);
+
+      if (result.rowCount === 0) {
+        throw new Error("Förval hittades inte eller du saknar behörighet");
+      }
+    } finally {
+      client.release();
     }
   } catch (error) {
     console.error("❌ uppdateraFörval error:", error);

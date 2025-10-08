@@ -1,6 +1,6 @@
 import { auth } from "../../_lib/better-auth";
 import { headers } from "next/headers";
-import { query } from "../../_utils/dbUtils";
+import { pool } from "../../_lib/db";
 import type { AnvandarInfo, ForetagsProfil } from "../types/types";
 
 export async function hämtaAnvändarInfo(): Promise<AnvandarInfo | null> {
@@ -31,14 +31,20 @@ export async function hämtaFöretagsprofil(): Promise<ForetagsProfil | null> {
     const userId = session?.user?.id;
     if (!userId) return null;
 
-    const res = await query(
-      `SELECT 
+    const client = await pool.connect();
+    let res;
+    try {
+      res = await client.query(
+        `SELECT 
         företagsnamn, adress, postnummer, stad, 
         organisationsnummer, momsregistreringsnummer, 
         telefonnummer, epost, webbplats 
        FROM företagsprofil WHERE id = $1`,
-      [userId]
-    );
+        [userId]
+      );
+    } finally {
+      client.release();
+    }
 
     if (res.rows.length === 0) {
       return {

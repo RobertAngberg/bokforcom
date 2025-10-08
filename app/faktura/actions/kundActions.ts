@@ -4,7 +4,6 @@ import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
-import { withDatabase } from "../../_utils/dbUtils";
 import type { KundListItem } from "../types/types";
 
 export async function sparaNyKund(formData: FormData) {
@@ -31,7 +30,9 @@ export async function sparaNyKund(formData: FormData) {
     return { success: false, error: "Ogiltigt personnummer (format: YYMMDD-XXXX)" };
   }
 
-  const result = await withDatabase(async (client) => {
+  let result;
+  const client = await pool.connect();
+  try {
     // Säker parametriserad query med saniterade värden
     const res = await client.query(
       `INSERT INTO kunder (
@@ -51,8 +52,14 @@ export async function sparaNyKund(formData: FormData) {
         kundEmail,
       ]
     );
-    return { success: true, id: res.rows[0].id };
-  });
+    result = { success: true, id: res.rows[0].id };
+  } finally {
+    client.release();
+  }
+
+  if (!result) {
+    throw new Error("Kunden kunde inte sparas");
+  }
 
   if (result.success) {
     await revalidateTag("faktura-kunder");
@@ -162,7 +169,8 @@ export async function deleteKund(id: number) {
       return { success: false, error: "Ogiltigt kund-ID" };
     }
 
-    return withDatabase(async (client) => {
+    const client = await pool.connect();
+    try {
       // SÄKERHETSVALIDERING: Verifiera att kunden tillhör denna användare
       const verifyRes = await client.query(
         `SELECT id FROM kunder WHERE id = $1 AND "user_id" = $2`,
@@ -189,7 +197,9 @@ export async function deleteKund(id: number) {
       console.log(`✅ Säkert raderade kund ${id} för user ${userId}`);
       await revalidateTag("faktura-kunder");
       return { success: true };
-    });
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error("❌ Säkerhetsfel vid radering av kund:", err);
     return { success: false, error: "Kunde inte radera kund säkert" };

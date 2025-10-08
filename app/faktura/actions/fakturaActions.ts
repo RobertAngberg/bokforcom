@@ -3,7 +3,6 @@
 import { pool } from "../../_lib/db";
 import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { ensureSession } from "../../_utils/session";
-import { withDatabase, withTransaction } from "../../_utils/dbUtils";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
 import { logError, createError } from "../../_utils/errorUtils";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
@@ -98,7 +97,8 @@ export async function saveInvoiceInternal(formData: FormData) {
   }
 
   // Använd utils istället för manuell databas och datum-hantering
-  return withDatabase(async (client) => {
+  const client = await pool.connect();
+  try {
     // Använd utils för säker datum-hantering
     const fakturadatum = dateTillÅÅÅÅMMDD(stringTillDate(formData.get("fakturadatum")?.toString()));
     const forfallodatum = dateTillÅÅÅÅMMDD(
@@ -266,7 +266,9 @@ export async function saveInvoiceInternal(formData: FormData) {
 
       return { success: true, id: newId };
     }
-  });
+  } finally {
+    client.release();
+  }
 }
 
 export async function hämtaNästaFakturanummer() {
@@ -449,7 +451,10 @@ export async function deleteFaktura(id: number) {
     return { success: false, error: "Ogiltigt faktura-ID" };
   }
 
-  return withTransaction(async (client) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
     // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
     const verifyRes = await client.query(
       `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
@@ -457,6 +462,7 @@ export async function deleteFaktura(id: number) {
     );
 
     if (verifyRes.rows.length === 0) {
+      await client.query("ROLLBACK");
       logError(
         createError("Försök att radera faktura som inte ägs", {
           userId,
@@ -490,8 +496,11 @@ export async function deleteFaktura(id: number) {
     ]);
 
     if (deleteRes.rowCount === 0) {
+      await client.query("ROLLBACK");
       throw new Error("Fakturan kunde inte raderas - ägarskapsvalidering misslyckades");
     }
+
+    await client.query("COMMIT");
 
     console.log(`✅ Säkert raderade faktura ${id} för user ${userId}`);
     if (transaktionsId) {
@@ -499,13 +508,23 @@ export async function deleteFaktura(id: number) {
     }
 
     return { success: true };
-  });
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("❌ ROLLBACK misslyckades i deleteFaktura:", rollbackError);
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getAllInvoices() {
   const { userId } = await ensureSession();
 
-  return withDatabase(async (client) => {
+  const client = await pool.connect();
+  try {
     const res = await client.query(`SELECT * FROM fakturor WHERE "user_id" = $1 ORDER BY id DESC`, [
       userId,
     ]);
@@ -520,7 +539,9 @@ export async function getAllInvoices() {
     }
 
     return { success: true, invoices: fakturor };
-  });
+  } finally {
+    client.release();
+  }
 }
 
 // EXPORTS (rate limiting moved to middleware)

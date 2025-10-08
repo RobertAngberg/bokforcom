@@ -1,16 +1,18 @@
 "use server";
 
+import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { withTransaction } from "../../_utils/dbUtils";
 import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../../_types/common";
-import type { PoolClient } from "pg";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
   try {
     const { userId } = await ensureSession();
 
-    await withTransaction(async (client: PoolClient) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
       await client.query(
         "DELETE FROM transaktionsposter WHERE transaktions_id IN (SELECT id FROM transaktioner WHERE anvandare_id = $1)",
         [userId]
@@ -19,7 +21,18 @@ export async function raderaFöretag(): Promise<AktionsResultat> {
       await client.query("DELETE FROM fakturor WHERE anvandare_id = $1", [userId]);
       await client.query("DELETE FROM företagsprofil WHERE id = $1", [userId]);
       await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
-    });
+
+      await client.query("COMMIT");
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("❌ ROLLBACK misslyckades i raderaFöretag:", rollbackError);
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
 
     return { success: true };
   } catch (error) {
