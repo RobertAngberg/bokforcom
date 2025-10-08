@@ -21,7 +21,6 @@ import {
 import { formatSEK } from "../../_utils/format";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { stringTillDate } from "../../_utils/datum";
-import { safeAsync, createError } from "../../_utils/errorUtils";
 import {
   UseLeverantorFlikReturn,
   UseNyLeverantorModalReturn,
@@ -92,33 +91,22 @@ export function useLeverantörer(): UseLeverantörerReturn {
   const [error, setError] = useState<string | null>(null);
 
   const loadLeverantörer = useCallback(async () => {
-    const result = await safeAsync(
-      async () => {
-        const apiResult = await getLeverantörer();
+    try {
+      const apiResult = await getLeverantörer();
 
-        if (!apiResult.success) {
-          throw createError("API returned success: false", {
-            code: "API_ERROR",
-            context: { apiResult },
-          });
-        }
-
-        return apiResult.leverantörer || [];
-      },
-      {
-        operationName: "loadLeverantörer",
-        fallback: [],
+      if (!apiResult.success) {
+        throw new Error("API returned success: false");
       }
-    );
 
-    if (result) {
-      setLeverantörer(result);
+      setLeverantörer(apiResult.leverantörer || []);
       setError(null);
-    } else {
+    } catch (error) {
+      console.error("[useLeverantörer] loadLeverantörer misslyckades", error);
+      setLeverantörer([]);
       setError("Kunde inte ladda leverantörer");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, []);
 
   // Initial load

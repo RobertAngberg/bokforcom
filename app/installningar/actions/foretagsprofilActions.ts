@@ -5,7 +5,6 @@ import { ensureSession } from "../../_utils/session";
 import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
-import { logError } from "../../_utils/errorUtils";
 
 export async function uppdateraFöretagsprofilAdmin(
   payload: ForetagsProfil
@@ -65,7 +64,7 @@ export async function uppdateraFöretagsprofilAdmin(
     revalidatePath("/installningar");
     return { success: true, data: updated || undefined };
   } catch (error) {
-    logError(error as Error, "uppdateraFöretagsprofilAdmin");
+    console.error("[uppdateraFöretagsprofilAdmin] Fel vid uppdatering", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }

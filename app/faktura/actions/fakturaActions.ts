@@ -4,7 +4,6 @@ import { pool } from "../../_lib/db";
 import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { ensureSession } from "../../_utils/session";
 import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
-import { logError, createError } from "../../_utils/errorUtils";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
 
 function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
@@ -441,13 +440,10 @@ export async function deleteFaktura(id: number) {
 
   // SÄKERHETSVALIDERING: Validera faktura-ID
   if (!validateAmount(id) || id <= 0) {
-    logError(
-      createError("Ogiltigt faktura-ID vid radering", {
-        userId,
-        context: { fakturaId: id },
-      }),
-      "deleteFaktura"
-    );
+    console.error("[deleteFaktura] Ogiltigt faktura-ID vid radering", {
+      userId,
+      fakturaId: id,
+    });
     return { success: false, error: "Ogiltigt faktura-ID" };
   }
 
@@ -463,13 +459,10 @@ export async function deleteFaktura(id: number) {
 
     if (verifyRes.rows.length === 0) {
       await client.query("ROLLBACK");
-      logError(
-        createError("Försök att radera faktura som inte ägs", {
-          userId,
-          context: { fakturaId: id },
-        }),
-        "deleteFaktura"
-      );
+      console.error("[deleteFaktura] Försök att radera faktura som inte ägs", {
+        userId,
+        fakturaId: id,
+      });
       return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
     }
 

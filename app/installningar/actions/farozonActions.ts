@@ -2,7 +2,6 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { logError } from "../../_utils/errorUtils";
 import type { AktionsResultat } from "../../_types/common";
 
 export async function raderaFöretag(): Promise<AktionsResultat> {
@@ -36,7 +35,7 @@ export async function raderaFöretag(): Promise<AktionsResultat> {
 
     return { success: true };
   } catch (error) {
-    logError(error as Error, "raderaFöretag");
+    console.error("[raderaFöretag] Fel vid radering", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Ett fel uppstod vid radering",
