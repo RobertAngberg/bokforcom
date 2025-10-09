@@ -1,31 +1,36 @@
 import type { SieDiagnosticEntry, DecodeSieFileOptions, SieDecodingResult } from "../types/types";
+import { decodeCP850 } from "./cp850";
 
 const DEFAULT_ENCODINGS = ["utf-8", "iso-8859-1", "windows-1252", "cp850"] as const;
 
 function decodeWithEncoding(uint8Array: Uint8Array, encoding: string) {
+  // Använd manuell CP850-decoder om encoding är cp850
+  if (encoding.toLowerCase() === "cp850") {
+    return decodeCP850(uint8Array);
+  }
+
   const decoder = new TextDecoder(encoding, { fatal: false });
   return decoder.decode(uint8Array);
 }
 
 function normaliseContent(content: string) {
-  return content
-    .replace(/â€™/g, "'")
-    .replace(/â€œ/g, '"')
-    .replace(/â€\u009d/g, '"')
-    .replace(/â€"/g, "–")
-    .replace(/â€"/g, "—")
-    .replace(/Ã¤/g, "ä")
-    .replace(/Ã¥/g, "å")
-    .replace(/Ã¶/g, "ö")
-    .replace(/Ã„/g, "Ä")
-    .replace(/Ã…/g, "Å")
-    .replace(/Ã–/g, "Ö")
-    .replace(/™/g, "ö")
-    .replace(/„/g, "ä")
-    .replace(/†/g, "å")
-    .replace(/"/g, "ä")
-    .replace(/'/g, "å")
-    .replace(/�/g, "");
+  return (
+    content
+      // Common UTF-8 mojibake patterns (behåll dessa för säkerhets skull)
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, '"')
+      .replace(/â€\u009d/g, '"')
+      .replace(/â€"/g, "–")
+      .replace(/â€"/g, "—")
+      .replace(/Ã¤/g, "ä")
+      .replace(/Ã¥/g, "å")
+      .replace(/Ã¶/g, "ö")
+      .replace(/Ã„/g, "Ä")
+      .replace(/Ã…/g, "Å")
+      .replace(/Ã–/g, "Ö")
+      // Ta bort replacement characters
+      .replace(/�/g, "")
+  );
 }
 
 export function decodeSieFile(
