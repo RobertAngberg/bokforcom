@@ -3,11 +3,11 @@ import { Resend } from "resend";
 import EmailTemplate from "./EmailTemplate";
 import { auth } from "../../../_lib/better-auth";
 import { headers } from "next/headers";
+import { validateEmail } from "../../../_utils/validationUtils";
 
-// Säker email-validering
+// Säker email-validering (använder centraliserad funktion)
 function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
+  return validateEmail(email) && email.length <= 254;
 }
 
 // Säker text-sanitization för HTML-innehåll

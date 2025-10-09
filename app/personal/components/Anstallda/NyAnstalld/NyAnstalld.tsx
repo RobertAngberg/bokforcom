@@ -6,6 +6,7 @@ import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
 import Dropdown from "../../../../_components/Dropdown";
 import { sanitizeFormInput } from "../../../../_utils/validationUtils";
+import { dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 import { useAnstallda } from "../../../hooks/useAnstallda";
 import type { NyAnstalldProps } from "../../../types/types";
 
@@ -129,7 +130,11 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
               <input
                 type="hidden"
                 name="startdatum"
-                value={nyAnställdFormulär.startdatum?.toISOString().split("T")[0] || ""}
+                value={
+                  nyAnställdFormulär.startdatum
+                    ? dateTillÅÅÅÅMMDD(nyAnställdFormulär.startdatum)
+                    : ""
+                }
               />
             </div>
 
@@ -137,15 +142,20 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
               <label className="mb-2 block text-sm font-medium text-white">Förnya kontrakt</label>
               <DatePicker
                 selected={nyAnställdFormulär.slutdatum}
-                onChange={(date) => updateNyAnställdFormulär({ slutdatum: date || undefined })}
+                onChange={(date) => {
+                  updateNyAnställdFormulär({ slutdatum: date || undefined });
+                }}
+                className="w-full rounded border border-gray-700 bg-slate-900 p-2 text-white focus:border-cyan-600 focus:outline-none"
+                locale="sv"
                 dateFormat="yyyy-MM-dd"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-transparent focus:ring-2 focus:ring-cyan-500"
               />
               {/* Hidden input för FormData */}
               <input
                 type="hidden"
                 name="slutdatum"
-                value={nyAnställdFormulär.slutdatum?.toISOString().split("T")[0] || ""}
+                value={
+                  nyAnställdFormulär.slutdatum ? dateTillÅÅÅÅMMDD(nyAnställdFormulär.slutdatum) : ""
+                }
               />
             </div>
 

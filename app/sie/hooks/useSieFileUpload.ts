@@ -16,6 +16,7 @@ import { decodeSieFile } from "../utils/encoding";
 import { parseSieContent } from "../utils/parser";
 import { analyzeAccounts } from "../utils/validation";
 import { uploadSieFile } from "../actions/actions";
+import { validateFileSize as validateFileSizeUtil, MAX_FILE_SIZES } from "../../_utils/fileUtils";
 import type { SieData, Analys } from "../types/types";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -25,16 +26,9 @@ const debugSie = (...args: Parameters<typeof console.debug>) => {
   }
 };
 
-// Validering
+// Validering med centraliserade funktioner
 const validateFileSize = (file: File): { valid: boolean; error?: string } => {
-  const maxSize = 50 * 1024 * 1024; // 50MB max för SIE-filer
-  if (file.size > maxSize) {
-    return {
-      valid: false,
-      error: `Filen är för stor (${Math.round(file.size / 1024 / 1024)}MB). Max 50MB tillåtet.`,
-    };
-  }
-  return { valid: true };
+  return validateFileSizeUtil(file.size, MAX_FILE_SIZES.sie);
 };
 
 const isValidSieFile = (filename: string): boolean => {

@@ -3,6 +3,7 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/datum";
+import { sanitizeInput } from "../../_utils/validationUtils";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
@@ -62,8 +63,8 @@ export async function saveTransaction(formData: FormData) {
   const leverantorId = formData.get("leverantorId")?.toString();
   const { userId } = await ensureSession();
 
-  const transaktionsdatum = formData.get("transaktionsdatum")?.toString().trim() || "";
-  const kommentar = formData.get("kommentar")?.toString().trim() || "";
+  const transaktionsdatum = formData.get("transaktionsdatum")?.toString() || "";
+  const kommentar = sanitizeInput(formData.get("kommentar")?.toString() || "", 500);
   const fil = formData.get("fil") as File | null;
   const bilageUrl = formData.get("bilageUrl")?.toString(); // Den uppladdade blob URL:en
   const belopp = Number(formData.get("belopp")?.toString() || 0);

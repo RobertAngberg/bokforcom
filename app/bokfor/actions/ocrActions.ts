@@ -2,15 +2,15 @@
 
 import OpenAI from "openai";
 import { ensureSession } from "../../_utils/session";
+import { sanitizeInput } from "../../_utils/validationUtils";
 
 function sanitizeOCRText(text: string): string {
   if (!text || typeof text !== "string") return "";
 
-  return text
-    .replace(/[<>'"&{}]/g, "") // Ta bort potentiellt farliga tecken
+  // Använd centraliserad sanitization med förstärkt längdbegränsning för OCR
+  return sanitizeInput(text, 2000)
     .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 2000); // Begränsa längd för API-anrop
+    .replace(/[{}]/g, ""); // Ta bort även klammerparenteser för OCR-säkerhet
 }
 
 export async function extractDataFromOCR(text: string) {

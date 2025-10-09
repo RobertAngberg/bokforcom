@@ -10,6 +10,7 @@ import RotRutForm from "./RotRutForm";
 import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
 import { showToast } from "../../../../_components/Toast";
+import { dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 
 export default function ProdukterTjanster() {
   const {
@@ -397,7 +398,7 @@ export default function ProdukterTjanster() {
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
                           {valtArtikel.rotRutStartdatum instanceof Date
-                            ? valtArtikel.rotRutStartdatum.toISOString().split("T")[0]
+                            ? dateTillÅÅÅÅMMDD(valtArtikel.rotRutStartdatum)
                             : valtArtikel.rotRutStartdatum || "Ej angiven"}
                         </div>
                       </div>
@@ -407,7 +408,7 @@ export default function ProdukterTjanster() {
                         </label>
                         <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
                           {valtArtikel.rotRutSlutdatum instanceof Date
-                            ? valtArtikel.rotRutSlutdatum.toISOString().split("T")[0]
+                            ? dateTillÅÅÅÅMMDD(valtArtikel.rotRutSlutdatum)
                             : valtArtikel.rotRutSlutdatum || "Ej angiven"}
                         </div>
                       </div>

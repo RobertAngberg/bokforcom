@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { put } from "@vercel/blob";
-import { validateId, sanitizeInput } from "../../_utils/validationUtils";
+import { validateId, sanitizeInput, validateYear } from "../../_utils/validationUtils";
 import { ensureSession } from "../../_utils/session";
 import type { FörvalFilter, SaveInvoiceData, UploadResult, DeleteResult } from "../types/types";
 
@@ -131,7 +131,7 @@ export async function fetchRawYearData(year: string) {
     // Validera och sanitera år
     const sanitizedYear = sanitizeInput(year);
     const yearNum = parseInt(sanitizedYear);
-    if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
+    if (!validateYear(yearNum)) {
       throw new Error("Ogiltigt år");
     }
 

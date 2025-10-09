@@ -2,6 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import { createTransaktion } from "../../_utils/transactions";
 
 export async function registreraKundfakturaBetalning(
@@ -44,7 +45,7 @@ export async function registreraKundfakturaBetalning(
 
     const bankKonto = kontoklass === "1930" ? "1930" : "1910";
     const today = new Date();
-    const todayISO = today.toISOString().split("T")[0];
+    const todayISO = dateTillÅÅÅÅMMDD(today);
     const kommentarSuffix = harRotRut ? " (kundens del)" : "";
 
     let transaktionsId: number | undefined;
@@ -163,7 +164,7 @@ export async function registreraRotRutBetalning(
     }
 
     const today = new Date();
-    const todayISO = today.toISOString().split("T")[0];
+    const todayISO = dateTillÅÅÅÅMMDD(today);
     let transaktionsId: number | undefined;
 
     try {

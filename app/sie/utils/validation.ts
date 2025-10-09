@@ -5,19 +5,20 @@
  */
 
 import { BAS_STANDARD_KONTON } from "./accounts";
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+import {
+  validateFileSize as validateFileSizeUtil,
+  validateSieFileType as validateSieFileTypeUtil,
+  MAX_FILE_SIZES,
+} from "../../_utils/fileUtils";
 
 /**
- * Validerar filstorlek
+ * Validerar filstorlek för SIE-filer
  * @param size Filstorlek i bytes
  * @returns Error-meddelande eller null om valid
  */
 export function validateFileSize(size: number): string | null {
-  if (size > MAX_FILE_SIZE) {
-    return `Filen är för stor (${Math.round(size / 1024 / 1024)}MB). Max ${MAX_FILE_SIZE / 1024 / 1024}MB tillåtet.`;
-  }
-  return null;
+  const result = validateFileSizeUtil(size, MAX_FILE_SIZES.sie);
+  return result.valid ? null : result.error || "Filen är för stor";
 }
 
 /**
@@ -26,19 +27,8 @@ export function validateFileSize(size: number): string | null {
  * @returns Error-meddelande eller null om valid
  */
 export function validateSieFileType(type: string): string | null {
-  // SIE-filer kan ha olika MIME-typer beroende på system
-  const validTypes = [
-    "text/plain",
-    "application/octet-stream",
-    "application/x-sie",
-    "", // Tomma typer accepteras också
-  ];
-
-  if (!validTypes.includes(type)) {
-    return `Ogiltig filtyp: ${type}. Endast SIE-filer är tillåtna.`;
-  }
-
-  return null;
+  const result = validateSieFileTypeUtil(type);
+  return result.valid ? null : result.error || "Ogiltig filtyp";
 }
 
 /**

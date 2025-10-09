@@ -1,6 +1,7 @@
 "use client";
 
 import { ForvalKortProps } from "../types/types";
+import { formatSEK } from "../../_utils/format";
 
 export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKortProps) {
   const getCardClassName = (isHighlighted: boolean) => {
@@ -14,7 +15,7 @@ export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKo
   const formatKontoValue = (value: number | boolean | null | undefined) => {
     if (value === true) return "✓";
     if (value === false || value === null || value === undefined) return "-";
-    if (typeof value === "number") return value.toLocaleString("sv-SE");
+    if (typeof value === "number") return formatSEK(value);
     return "-";
   };
 

@@ -2,10 +2,10 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import type { AktionsResultat, AnvandarInfo } from "../../_types/common";
+import type { AktionsResultat, AnvandarInfo } from "../types/types";
 import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
-import { sanitizeFormInput, requireValid } from "../../_utils/validationUtils";
+import { sanitizeFormInput, requireValid, validateEmail } from "../../_utils/validationUtils";
 
 export async function uppdateraAnvändarInfo(
   payload: UppdateraAnvandarPayload
@@ -21,7 +21,7 @@ export async function uppdateraAnvändarInfo(
     }
 
     try {
-      requireValid(email, (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Ogiltig email-format");
+      requireValid(email, validateEmail, "Ogiltig email-format");
     } catch {
       return { success: false, error: "Ogiltig email-format" };
     }

@@ -81,7 +81,7 @@ export async function saveInvoiceInternal(formData: FormData) {
 
   // SÄKERHETSVALIDERING: Validera kunduppgifter
   const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
-  const kundEmail = formData.get("kundemail")?.toString() || "";
+  const kundEmail = sanitizeInput(formData.get("kundemail")?.toString() || "", 255);
 
   if (!kundnamn || kundnamn.length < 2) {
     return { success: false, error: "Giltigt kundnamn krävs" };
@@ -177,10 +177,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
             rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum
-              ? new Date(rad.rotRutStartdatum).toISOString().split("T")[0]
-              : null,
-            rad.rotRutSlutdatum ? new Date(rad.rotRutSlutdatum).toISOString().split("T")[0] : null,
+            rad.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutStartdatum)) : null,
+            rad.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutSlutdatum)) : null,
             rad.rotRutPersonnummer ?? null,
             rad.rotRutFastighetsbeteckning ?? null,
             rad.rotRutBoendeTyp ?? null,
@@ -250,10 +248,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
             rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum
-              ? new Date(rad.rotRutStartdatum).toISOString().split("T")[0]
-              : null,
-            rad.rotRutSlutdatum ? new Date(rad.rotRutSlutdatum).toISOString().split("T")[0] : null,
+            rad.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutStartdatum)) : null,
+            rad.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutSlutdatum)) : null,
             rad.rotRutPersonnummer ?? null,
             rad.rotRutFastighetsbeteckning ?? null,
             rad.rotRutBoendeTyp ?? null,

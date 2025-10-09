@@ -1,5 +1,6 @@
 import { pool } from "../_lib/db";
 import { ensureSession } from "./session";
+import { dateTillÅÅÅÅMMDD } from "./datum";
 
 export interface TransaktionsPostInput {
   kontonummer: string;
@@ -64,8 +65,8 @@ export async function createTransaktion(data: SkapaTransaktionInput) {
 
     const datumISO =
       data.datum instanceof Date
-        ? data.datum.toISOString().split("T")[0]
-        : data.datum || new Date().toISOString().split("T")[0];
+        ? dateTillÅÅÅÅMMDD(data.datum)
+        : data.datum || dateTillÅÅÅÅMMDD(new Date());
 
     const belopp =
       data.autoBelopp === false ? null : data.poster.reduce((s, p) => s + (p.debet || 0), 0);

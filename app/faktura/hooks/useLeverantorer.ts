@@ -9,6 +9,7 @@ import {
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
 import { showToast } from "../../_components/Toast";
+import { validateEmail, sanitizeInput } from "../../_utils/validationUtils";
 import { hamtaTransaktionsposter } from "../actions/alternativActions";
 import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
 import { hämtaSparadeFakturor } from "../actions/fakturaActions";
@@ -43,16 +44,12 @@ import { useRouter } from "next/navigation";
 // Business Logic Functions for NyLeverantorModal
 function sanitizeLeverantörInput(input: string): string {
   if (!input) return "";
-  return input
-    .trim()
-    .replace(/[<>]/g, "") // Ta bort potentiellt farliga tecken
-    .substring(0, 255); // Begränsa längd
+  return sanitizeInput(input, 255);
 }
 
 function validateLeverantörEmail(email: string): boolean {
   if (!email) return true; // Email är valfritt
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+  return validateEmail(email);
 }
 
 function validateLeverantörData(formData: LeverantörFormData): {

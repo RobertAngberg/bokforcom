@@ -5,6 +5,7 @@
  */
 
 import { ValidationResult, AuthSecurityConfig } from "../types/types";
+import { validateEmail as validateEmailUtil } from "../../_utils/validationUtils";
 
 /**
  * Validerar svenskt organisationsnummer
@@ -157,9 +158,7 @@ export const validateProductionSecurity = (): boolean => {
  */
 export const validateEmail = (email: string): boolean => {
   if (!email) return false;
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 255;
+  return validateEmailUtil(email) && email.length <= 255;
 };
 
 /**
@@ -168,9 +167,7 @@ export const validateEmail = (email: string): boolean => {
 export const validateEmailDetailed = (email: string): ValidationResult => {
   if (!email) return { valid: false, error: "E-post krävs" };
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
+  if (!validateEmailUtil(email)) {
     return { valid: false, error: "Ogiltig e-postadress" };
   }
 

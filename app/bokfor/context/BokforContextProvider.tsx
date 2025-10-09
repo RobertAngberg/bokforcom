@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useBokfor } from "../hooks/useBokfor";
 import { BokforContextType, BokforProviderProps } from "../types/types";
+import { formatSEK } from "../../_utils/format";
 
 const BokforContext = createContext<BokforContextType | null>(null);
 
@@ -215,7 +216,7 @@ export function BokforProvider({ children }: BokforProviderProps) {
       },
       formatKontoValue: (value: number | boolean | null | undefined) => {
         if (!value || value === true) return "-";
-        if (typeof value === "number") return value.toLocaleString("sv-SE");
+        if (typeof value === "number") return formatSEK(value);
         return "-";
       },
     }),

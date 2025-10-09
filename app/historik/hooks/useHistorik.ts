@@ -8,6 +8,7 @@ import {
 import { HistoryItem, TransactionDetail, UnbalancedResult } from "../types/types";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import { showToast } from "../../_components/Toast";
+import { validateYear } from "../../_utils/validationUtils";
 
 // Business Logic - Migrated from page.tsx
 function sanitizeHistorikInput(text: string): string {
@@ -22,7 +23,7 @@ function sanitizeHistorikInput(text: string): string {
 function validateYearInput(year: string): boolean {
   if (!year || typeof year !== "string") return false;
   const yearNum = parseInt(year);
-  return !isNaN(yearNum) && yearNum >= 2020 && yearNum <= 2030;
+  return validateYear(yearNum);
 }
 
 function filterTransactionsBySearch(items: HistoryItem[], searchTerm: string): HistoryItem[] {

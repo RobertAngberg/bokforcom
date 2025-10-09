@@ -9,9 +9,9 @@ export async function sparaNyKund(formData: FormData) {
 
   // SÄKERHETSVALIDERING: Sanitera och validera all kundinformation
   const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
-  const kundEmail = formData.get("kundemail")?.toString() || "";
-  const orgNummer = formData.get("kundorgnummer")?.toString() || "";
-  const personnummer = formData.get("personnummer")?.toString() || "";
+  const kundEmail = sanitizeInput(formData.get("kundemail")?.toString() || "", 255);
+  const orgNummer = sanitizeInput(formData.get("kundorgnummer")?.toString() || "");
+  const personnummer = sanitizeInput(formData.get("personnummer")?.toString() || "");
 
   // Validera obligatoriska fält
   if (!kundnamn || kundnamn.length < 2) {
@@ -77,9 +77,9 @@ export async function uppdateraKund(id: number, formData: FormData) {
 
     // SÄKERHETSVALIDERING: Sanitera alla input-värden
     const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
-    const kundEmail = formData.get("kundemail")?.toString() || "";
-    const orgNummer = formData.get("kundorgnummer")?.toString() || "";
-    const personnummer = formData.get("personnummer")?.toString() || "";
+    const kundEmail = sanitizeInput(formData.get("kundemail")?.toString() || "", 255);
+    const orgNummer = sanitizeInput(formData.get("kundorgnummer")?.toString() || "");
+    const personnummer = sanitizeInput(formData.get("personnummer")?.toString() || "");
 
     // Validera obligatoriska fält
     if (!kundnamn || kundnamn.length < 2) {

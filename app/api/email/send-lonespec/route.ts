@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { auth } from "../../../_lib/better-auth";
 import { headers } from "next/headers";
+import { validateEmail } from "../../../_utils/validationUtils";
+import { validateFileSize, MAX_FILE_SIZES } from "../../../_utils/fileUtils";
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
-// Säker email-validering
+// Säker email-validering (använder centraliserad funktion)
 function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
+  return validateEmail(email) && email.length <= 254;
 }
 
 // Säker text-sanitization
@@ -67,10 +68,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Giltig PDF-fil krävs" }, { status: 400 });
     }
 
-    // Begränsa PDF-storlek (8MB efter komprimering)
-    if (pdfFile.size > 8 * 1024 * 1024) {
+    // Validera PDF-storlek med centraliserad funktion
+    const sizeValidation = validateFileSize(pdfFile.size, MAX_FILE_SIZES.email);
+    if (!sizeValidation.valid) {
       console.error("PDF too large:", pdfFile.size);
-      return NextResponse.json({ error: "PDF-fil för stor (max 8MB)" }, { status: 400 });
+      return NextResponse.json({ error: sizeValidation.error }, { status: 400 });
     }
 
     const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());

@@ -2,6 +2,8 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { sanitizeInput } from "../../_utils/validationUtils";
 import { revalidatePath } from "next/cache";
 import type { AnställdInput, FormActionState, Företagsprofil } from "../types/types";
 
@@ -57,42 +59,45 @@ export async function sparaNyAnställdFormAction(
 ): Promise<FormActionState> {
   try {
     // Endast förnamn och efternamn krävs!
-    const förnamn = formData.get("förnamn") as string;
-    const efternamn = formData.get("efternamn") as string;
+    const förnamn = sanitizeInput((formData.get("förnamn") as string) || "", 100);
+    const efternamn = sanitizeInput((formData.get("efternamn") as string) || "", 100);
 
     if (!förnamn || !efternamn) {
       return { success: false, message: "Förnamn och efternamn är obligatoriska" };
     }
 
-    // Extrahera alla fält från FormData (med fallback till tomma strängar)
+    // Extrahera alla fält från FormData med sanitering
     const data: AnställdInput = {
       förnamn,
       efternamn,
       namn: `${förnamn} ${efternamn}`.trim(),
-      personnummer: (formData.get("personnummer") as string) || "",
-      jobbtitel: (formData.get("jobbtitel") as string) || "",
-      mail: (formData.get("mail") as string) || "",
-      clearingnummer: (formData.get("clearingnummer") as string) || "",
-      bankkonto: (formData.get("bankkonto") as string) || "",
-      adress: (formData.get("adress") as string) || "",
-      postnummer: (formData.get("postnummer") as string) || "",
-      ort: (formData.get("ort") as string) || "",
-      startdatum: (formData.get("startdatum") as string) || new Date().toISOString().split("T")[0],
+      personnummer: sanitizeInput((formData.get("personnummer") as string) || "", 50),
+      jobbtitel: sanitizeInput((formData.get("jobbtitel") as string) || "", 100),
+      mail: sanitizeInput((formData.get("mail") as string) || "", 255),
+      clearingnummer: sanitizeInput((formData.get("clearingnummer") as string) || "", 10),
+      bankkonto: sanitizeInput((formData.get("bankkonto") as string) || "", 50),
+      adress: sanitizeInput((formData.get("adress") as string) || "", 200),
+      postnummer: sanitizeInput((formData.get("postnummer") as string) || "", 10),
+      ort: sanitizeInput((formData.get("ort") as string) || "", 100),
+      startdatum: (formData.get("startdatum") as string) || dateTillÅÅÅÅMMDD(new Date()),
       slutdatum:
         (formData.get("slutdatum") as string) ||
-        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      anställningstyp: (formData.get("anställningstyp") as string) || "",
-      löneperiod: (formData.get("löneperiod") as string) || "",
-      ersättningPer: (formData.get("ersättningPer") as string) || "",
-      kompensation: (formData.get("kompensation") as string) || "",
-      arbetsvecka_timmar: (formData.get("arbetsvecka") as string) || "",
-      arbetsbelastning: (formData.get("arbetsbelastning") as string) || "",
-      deltidProcent: (formData.get("deltidProcent") as string) || "",
-      tjänsteställeAdress: (formData.get("tjänsteställeAdress") as string) || "",
-      tjänsteställeOrt: (formData.get("tjänsteställeOrt") as string) || "",
+        dateTillÅÅÅÅMMDD(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
+      anställningstyp: sanitizeInput((formData.get("anställningstyp") as string) || "", 50),
+      löneperiod: sanitizeInput((formData.get("löneperiod") as string) || "", 50),
+      ersättningPer: sanitizeInput((formData.get("ersättningPer") as string) || "", 50),
+      kompensation: sanitizeInput((formData.get("kompensation") as string) || "", 50),
+      arbetsvecka_timmar: sanitizeInput((formData.get("arbetsvecka") as string) || "", 10),
+      arbetsbelastning: sanitizeInput((formData.get("arbetsbelastning") as string) || "", 50),
+      deltidProcent: sanitizeInput((formData.get("deltidProcent") as string) || "", 10),
+      tjänsteställeAdress: sanitizeInput(
+        (formData.get("tjänsteställeAdress") as string) || "",
+        200
+      ),
+      tjänsteställeOrt: sanitizeInput((formData.get("tjänsteställeOrt") as string) || "", 100),
       skattetabell: parseInt((formData.get("skattetabell") as string) || "0", 10),
       skattekolumn: parseInt((formData.get("skattekolumn") as string) || "0", 10),
-      epost: (formData.get("epost") as string) || undefined,
+      epost: sanitizeInput((formData.get("epost") as string) || "", 255) || undefined,
     };
 
     // Anropa befintlig funktion

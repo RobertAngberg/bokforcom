@@ -13,6 +13,7 @@
 import { useState } from "react";
 import { exporteraSieData } from "../actions/actions";
 import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { validateYear } from "../../_utils/validationUtils";
 
 const isDev = process.env.NODE_ENV !== "production";
 const debugSie = (...args: Parameters<typeof console.debug>) => {
@@ -31,9 +32,7 @@ export function useSieExport() {
 
     try {
       // Frontend validering innan server call
-      const currentYear = new Date().getFullYear();
-
-      if (exportYear < 2020 || exportYear > currentYear + 2) {
+      if (!validateYear(exportYear)) {
         setExportError("Ogiltigt år för export");
         return;
       }

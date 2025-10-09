@@ -8,7 +8,7 @@ import Knapp from "../../../../_components/Knapp";
 import DatePicker from "react-datepicker";
 import LaddaUppFil from "../LaddaUppFil";
 import Forhandsgranskning from "../Forhandsgranskning";
-import { datePickerValue } from "../../../../_utils/datum";
+import { datePickerValue, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
 import { useBokforContext } from "../../../context/BokforContextProvider";
 import { RepresentationProps, RepresentationsTypLocal } from "../../../types/types";
 
@@ -114,7 +114,7 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
                 selected={datePickerValue(state.transaktionsdatum)}
                 onChange={(date) => {
-                  const dateStr = date ? date.toISOString().split("T")[0] : "";
+                  const dateStr = date ? dateTillÅÅÅÅMMDD(date) : "";
                   actions.setTransaktionsdatum(dateStr);
                 }}
                 locale="sv"
