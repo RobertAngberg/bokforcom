@@ -1,10 +1,12 @@
-import AnimeradeStjarnor from "./components/AnimeradeStjarnor";
-import Header from "./components/Header";
-import HuvudSektion from "./components/HuvudSektion";
-import FunktionsKort from "./components/FunktionsKort";
-import PrisSektion from "./components/PrisSektion";
-import FordelarSektion from "./components/FordelarSektion";
-import Footer from "./components/Footer";
+"use client";
+
+import AnimeradeStjarnor from "./_components/AnimeradeStjarnor";
+import Header from "./_components/Header";
+import HuvudSektion from "./_components/HuvudSektion";
+import FunktionsKort from "./_components/FunktionsKort";
+import PrisSektion from "./_components/PrisSektion";
+import FordelarSektion from "./_components/FordelarSektion";
+import Footer from "./_components/Footer";
 
 export default function Startsidan() {
   return (

@@ -1,4 +1,4 @@
-import { PrisKortProps } from "../types/types";
+import { PrisKortProps } from "../_types/types";
 
 export default function PricingCard({
   title,

@@ -27,25 +27,25 @@ export default function Header() {
         {/* Menylänkar */}
         <nav className="hidden md:flex items-center space-x-12 mt-2">
           <a
-            href="/utsidan/priser"
+            href="/priser"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Priser
           </a>
           <a
-            href="/utsidan/funktioner"
+            href="/funktioner"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Funktioner
           </a>
           <a
-            href="/utsidan/om-oss"
+            href="/om-oss"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Om oss
           </a>
           <a
-            href="/utsidan/kontakt"
+            href="/kontakt"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Kontakt

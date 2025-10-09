@@ -48,8 +48,9 @@ export default function Navbar() {
     return null;
   }
 
-  // Dölj navbar på alla utsidan-sidor (marknadsföringssidor)
-  if (pathname.startsWith("/utsidan")) {
+  // Dölj navbar på alla publika marknadsföringssidor
+  const publicRoutes = ["/priser", "/funktioner", "/om-oss", "/kontakt"];
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return null;
   }
 

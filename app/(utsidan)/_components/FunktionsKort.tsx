@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { useScrollAnimering } from "../hooks/useScrollAnimering";
-import { FunktionsKortProps } from "../types/types";
+import { useScrollAnimering } from "../_hooks/useScrollAnimering";
+import { FunktionsKortProps } from "../_types/types";
 
 export default function FeatureShowcase({
   title,
