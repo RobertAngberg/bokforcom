@@ -33,18 +33,6 @@ function generateFilename(prefix: string, date: Date, extension: string): string
 }
 
 /**
- * Centraliserad filnamn-sanitization
- * Konsoliderar olika versioner från hela applikationen
- */
-export function sanitizeFilename(filename: string): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken
-    .replace(/_{2,}/g, "_") // Sammanslå flera understreck
-    .substring(0, 100) // Begränsa längd
-    .toLowerCase();
-}
-
-/**
  * Förkonfigurerade download-funktioner för vanliga användningsfall
  */
 const downloadCSV = (content: string, filename: string) =>

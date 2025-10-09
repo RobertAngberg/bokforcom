@@ -1,6 +1,5 @@
 import { pool } from "../_lib/db";
 import { ensureSession } from "./session";
-import type { UserId } from "../_types/common";
 
 export interface TransaktionsPostInput {
   kontonummer: string;
@@ -16,6 +15,39 @@ export interface SkapaTransaktionInput {
   poster: TransaktionsPostInput[];
   autoBelopp?: boolean;
   skipBalanceCheck?: boolean;
+}
+
+export interface TransaktionspostStandard {
+  id: number;
+  kontonummer: string;
+  kontobeskrivning: string;
+  debet: number;
+  kredit: number;
+}
+
+export interface TransaktionspostMedMeta extends TransaktionspostStandard {
+  transaktionsdatum: string;
+  transaktionskommentar: string | null;
+  transaktionId: number;
+}
+
+interface HamtaPosterOptions {
+  meta?: boolean;
+}
+
+export interface TransactionWithEntries {
+  id: number;
+  datum: string;
+  beskrivning: string | null;
+  summa_debet: number | null;
+  summa_kredit: number | null;
+  blob_url: string | null;
+  poster: Array<{
+    konto: string;
+    beskrivning: string;
+    debet: number | null;
+    kredit: number | null;
+  }>;
 }
 
 export async function createTransaktion(data: SkapaTransaktionInput) {
@@ -65,24 +97,6 @@ export async function createTransaktion(data: SkapaTransaktionInput) {
   } finally {
     client.release();
   }
-}
-
-export interface TransaktionspostStandard {
-  id: number;
-  kontonummer: string;
-  kontobeskrivning: string;
-  debet: number;
-  kredit: number;
-}
-
-export interface TransaktionspostMedMeta extends TransaktionspostStandard {
-  transaktionsdatum: string;
-  transaktionskommentar: string | null;
-  transaktionId: number;
-}
-
-interface HamtaPosterOptions {
-  meta?: boolean;
 }
 
 export async function hamtaTransaktionsposter(
@@ -146,67 +160,6 @@ async function hamtaKontoIdMap(kontonummerLista: string[]) {
       [unika]
     );
     return Object.fromEntries(rows.map((r) => [r.kontonummer, r.id])) as Record<string, number>;
-  } finally {
-    client.release();
-  }
-}
-
-export interface TransactionWithEntries {
-  id: number;
-  datum: string;
-  beskrivning: string | null;
-  summa_debet: number | null;
-  summa_kredit: number | null;
-  blob_url: string | null;
-  poster: Array<{
-    konto: string;
-    beskrivning: string;
-    debet: number | null;
-    kredit: number | null;
-  }>;
-}
-
-export async function fetchTransactionWithEntries(
-  userId: UserId,
-  transactionId: number
-): Promise<TransactionWithEntries | null> {
-  if (!transactionId || Number.isNaN(transactionId) || transactionId <= 0) {
-    return null;
-  }
-
-  const client = await pool.connect();
-  try {
-    const { rows } = await client.query<TransactionWithEntries>(
-      `
-      SELECT 
-        t.id,
-        t.transaktionsdatum AS datum,
-        t.kontobeskrivning AS beskrivning,
-        t.summa_debet,
-        t.summa_kredit,
-        t.blob_url,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'konto', k.kontonummer || '',
-              'beskrivning', k.beskrivning || '',
-              'debet', tp.debet,
-              'kredit', tp.kredit
-            )
-            ORDER BY k.kontonummer
-          ) FILTER (WHERE tp.id IS NOT NULL),
-          '[]'::json
-        ) AS poster
-      FROM transaktioner t
-      LEFT JOIN transaktionsposter tp ON tp.transaktions_id = t.id
-      LEFT JOIN konton k ON k.id = tp.konto_id
-      WHERE t.id = $1 AND t."user_id" = $2
-      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.summa_debet, t.summa_kredit, t.blob_url
-      `,
-      [transactionId, userId]
-    );
-
-    return rows[0] || null;
   } finally {
     client.release();
   }

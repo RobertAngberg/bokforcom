@@ -1,6 +1,3 @@
-/**
- * Validerar årtal för bokföringsoperationer
- */
 export function validateYear(year: number | string): boolean {
   const yearNum = typeof year === "string" ? parseInt(year) : year;
   const currentYear = new Date().getFullYear();
@@ -8,9 +5,6 @@ export function validateYear(year: number | string): boolean {
   return !isNaN(yearNum) && yearNum >= 2020 && yearNum <= currentYear + 1;
 }
 
-/**
- * Validerar period (YYYY format)
- */
 export function validatePeriod(period: string): boolean {
   const yearPattern = /^\d{4}$/;
   if (!yearPattern.test(period)) return false;
@@ -18,31 +12,11 @@ export function validatePeriod(period: string): boolean {
   return validateYear(parseInt(period));
 }
 
-/**
- * Validerar databas-ID (positiva integers)
- */
 export function validateId(id: number | string): boolean {
   const idNum = typeof id === "string" ? parseInt(id) : id;
   return !isNaN(idNum) && idNum > 0 && Number.isInteger(idNum);
 }
 
-/**
- * Validerar kontonummer (4-siffriga koden)
- */
-export function validateKontonummer(kontonummer: string): boolean {
-  const pattern = /^\d{4}$/;
-  return pattern.test(kontonummer);
-}
-
-/**
- * UNIFIED INPUT SANITIZATION SYSTEM
- * Centraliserad och konsistent sanitisering över hela applikationen
- */
-
-/**
- * Universal sanitisering med konfigurerbar längdgräns
- * Filtrerar farliga tecken och begränsar längd
- */
 export function sanitizeInput(input: string, maxLength: number = 1000): string {
   if (!input) return "";
 
@@ -52,37 +26,15 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
     .slice(0, maxLength);
 }
 
-/**
- * Sanitisering för formulärdata (ex. signup, kontaktformulär)
- * Kortare gräns för formulärfält
- */
 export function sanitizeFormInput(input: string): string {
   return sanitizeInput(input, 200);
 }
 
-/**
- * Validerar belopp (positiva decimaler)
- */
 export function validateAmount(amount: number | string): boolean {
   const amountNum = typeof amount === "string" ? parseFloat(amount) : amount;
   return !isNaN(amountNum) && amountNum >= 0 && isFinite(amountNum);
 }
 
-/**
- * Kombinerad validator som kastar specifika fel
- */
-export function requireValid<T>(value: T, validator: (val: T) => boolean, errorMessage: string): T {
-  if (!validator(value)) {
-    throw new Error(errorMessage);
-  }
-  return value;
-}
-
-/**
- * Validerar svenskt personnummer (YYMMDD-XXXX eller YYYYMMDD-XXXX format)
- * Stöder både 10-siffriga (YYMMDD-XXXX) och 12-siffriga (YYYYMMDD-XXXX) format
- * Personnummer är valfritt - returnerar true för tomma strängar
- */
 export function validatePersonnummer(personnummer: string): boolean {
   if (!personnummer) return true; // Personnummer är valfritt
 
@@ -96,10 +48,25 @@ export function validatePersonnummer(personnummer: string): boolean {
   return pattern10.test(cleaned) || pattern12.test(cleaned);
 }
 
-/**
- * Validerar email-adress
- */
 export function validateEmail(email: string): boolean {
   if (!email) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Validerar kontonummer, alltså BAS
+ */
+export function validateKontonummer(kontonummer: string): boolean {
+  const pattern = /^\d{4}$/;
+  return pattern.test(kontonummer);
+}
+
+/**
+ * Kombinerad validator som kastar specifika fel
+ */
+export function requireValid<T>(value: T, validator: (val: T) => boolean, errorMessage: string): T {
+  if (!validator(value)) {
+    throw new Error(errorMessage);
+  }
+  return value;
 }
