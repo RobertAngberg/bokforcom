@@ -702,7 +702,7 @@ export function useFaktura() {
         }
         showSuccess("Kund sparad");
       } else {
-        showError("error" in result ? result.error : "Fel vid sparande av kund");
+        showError("error" in result && result.error ? result.error : "Fel vid sparande av kund");
       }
 
       return result;

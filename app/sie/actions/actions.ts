@@ -24,6 +24,8 @@ import type {
   SieData,
   ImportSettings,
   Verification,
+  Transaction,
+  BalansPost,
   SieDiagnosticEntry,
   TransactionRow,
   CompanyInfo,
@@ -377,14 +379,14 @@ ${duplicatesList}
       if (settings.skapaKonton) {
         // Samla alla konton som faktiskt används i SIE-filen
         const anvandaKonton = new Set<string>();
-        sieData.verifikationer.forEach((ver) => {
-          ver.transaktioner.forEach((trans) => {
+        sieData.verifikationer.forEach((ver: Verification) => {
+          ver.transaktioner.forEach((trans: Transaction) => {
             anvandaKonton.add(trans.konto);
           });
         });
-        sieData.balanser.ingående.forEach((b) => anvandaKonton.add(b.konto));
-        sieData.balanser.utgående.forEach((b) => anvandaKonton.add(b.konto));
-        sieData.resultat.forEach((r) => anvandaKonton.add(r.konto));
+        sieData.balanser.ingående.forEach((b: BalansPost) => anvandaKonton.add(b.konto));
+        sieData.balanser.utgående.forEach((b: BalansPost) => anvandaKonton.add(b.konto));
+        sieData.resultat.forEach((r: BalansPost) => anvandaKonton.add(r.konto));
 
         // Kontrollera vilka av dessa som saknas i databasen
         const { rows } = await client.query<{ kontonummer: string }>(
@@ -398,7 +400,9 @@ ${duplicatesList}
 
         // Skapa ALLA använda saknade konton (både BAS-standard och specialkonton)
         for (const kontonummer of allaAnvandaSaknade) {
-          const kontoInfo = sieData.konton.find((k) => k.nummer === kontonummer);
+          const kontoInfo = sieData.konton.find(
+            (k: { nummer: string; namn: string }) => k.nummer === kontonummer
+          );
           const kontoNamn = kontoInfo?.namn || `Konto ${kontonummer}`;
 
           const { kontoklass, kategori } = classifyAccount(kontonummer);

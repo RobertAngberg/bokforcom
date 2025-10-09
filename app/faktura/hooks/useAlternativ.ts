@@ -794,7 +794,8 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       });
 
       if (result.success) {
-        const message = "message" in result ? result.message : "Bokföring genomförd";
+        const message: string =
+          "message" in result && result.message ? result.message : "Bokföring genomförd";
         showToast(message, "success");
         // Skicka event för att uppdatera fakturaslistan
         window.dispatchEvent(new Event("reloadFakturor"));
