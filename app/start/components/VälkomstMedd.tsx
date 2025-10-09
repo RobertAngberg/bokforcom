@@ -1,8 +1,6 @@
 "use client";
 
-interface VälkomstMeddProps {
-  onClose: () => void;
-}
+import type { VälkomstMeddProps } from "../types/types";
 
 export default function VälkomstMedd({ onClose }: VälkomstMeddProps) {
   return (

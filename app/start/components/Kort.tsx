@@ -1,9 +1,5 @@
 import React from "react";
-
-interface FrontCardProps {
-  title: string;
-  data: number;
-}
+import type { FrontCardProps } from "../types/types";
 
 export default function Card({ title, data }: FrontCardProps) {
   return (

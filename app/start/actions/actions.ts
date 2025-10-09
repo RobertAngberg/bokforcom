@@ -1,9 +1,10 @@
 "use server";
 
-import { pool } from "../_lib/db";
+import { pool } from "../../_lib/db";
 import { put } from "@vercel/blob";
-import { validateId, sanitizeInput } from "../_utils/validationUtils";
-import { ensureSession } from "../_utils/session";
+import { validateId, sanitizeInput } from "../../_utils/validationUtils";
+import { ensureSession } from "../../_utils/session";
+import type { FörvalFilter, SaveInvoiceData, UploadResult, DeleteResult } from "../types/types";
 
 // 🎉 VÄLKOMSTMEDDELANDE FUNKTIONER
 export async function checkWelcomeStatus(): Promise<boolean> {
@@ -63,7 +64,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
   }
 }
 
-export async function fetchAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
+export async function fetchAllaForval(filters?: FörvalFilter) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -237,7 +238,7 @@ export async function getAllInvoices() {
   }
 }
 
-export async function deleteInvoice(fakturaId: number) {
+export async function deleteInvoice(fakturaId: number): Promise<DeleteResult> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -297,11 +298,7 @@ export async function updateFakturanummer(id: number, nyttNummer: string) {
   }
 }
 
-export async function saveInvoice(data: {
-  fakturanummer: string;
-  kundnamn: string;
-  total: number;
-}) {
+export async function saveInvoice(data: SaveInvoiceData) {
   const client = await pool.connect();
   try {
     await client.query(
@@ -535,7 +532,7 @@ export async function fetchForvalMedFel() {
   }
 }
 
-export async function uploadPDF(formData: FormData) {
+export async function uploadPDF(formData: FormData): Promise<UploadResult> {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();

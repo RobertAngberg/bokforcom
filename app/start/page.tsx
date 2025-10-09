@@ -1,68 +1,17 @@
-//#region: Huvud
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { fetchRawYearData, checkWelcomeStatus, markWelcomeAsShown } from "./actions";
-import { processYearData } from "../_utils/format";
-import Kort from "./Kort";
-import Chart from "./Chart";
+import Kort from "./components/Kort";
+import Chart from "./components/Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
-import VälkomstMedd from "./VälkomstMedd";
-
-type YearSummary = {
-  totalInkomst: number;
-  totalUtgift: number;
-  totalResultat: number;
-  yearData: YearDataPoint[];
-};
-
-type YearDataPoint = {
-  month: string;
-  inkomst: number;
-  utgift: number;
-};
+import VälkomstMedd from "./components/VälkomstMedd";
+import { useStart } from "./hooks/useStart";
 
 export default function StartPage() {
-  const [year, setYear] = useState("2025");
-  const { data, isLoading } = useFetchYearSummary(year);
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  // Kolla välkomstmeddelande-status när komponenten laddar
-  useEffect(() => {
-    checkWelcomeStatus().then(setShowWelcome);
-  }, []);
-
-  // Stäng välkomstmeddelande och markera som visat
-  const handleWelcomeClose = async () => {
-    setShowWelcome(false);
-    await markWelcomeAsShown();
-  };
-
-  function useFetchYearSummary(year: string) {
-    const [data, setData] = useState<YearSummary | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-      setIsLoading(true);
-      fetchRawYearData(year)
-        .then((rawData) => {
-          const processedData = processYearData(rawData);
-          setData(processedData);
-        })
-        .catch((error) => {
-          console.error("Error fetching year data:", error);
-          setData(null);
-        })
-        .finally(() => setIsLoading(false));
-    }, [year]);
-
-    return { data, isLoading };
-  }
+  const { year, setYear, data, isLoading, showWelcome, handleWelcomeClose } = useStart();
 
   return (
     <MainLayout>
-      {/* Välkomstmeddelande för nya användare */}
       {showWelcome && <VälkomstMedd onClose={handleWelcomeClose} />}
 
       <div className="flex flex-wrap justify-center gap-4 mb-8 text-center">

@@ -1,12 +1,8 @@
 "use client";
 
-import Modal from "../_components/Modal";
+import Modal from "../../_components/Modal";
 import { useState } from "react";
-
-interface AnvändaravtalModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import type { AnvändaravtalModalProps } from "../types/types";
 
 export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalModalProps) {
   return (
