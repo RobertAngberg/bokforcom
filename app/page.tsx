@@ -1,4 +1,4 @@
-import Startsidan from "./(utsidan)/Startsidan";
+import Startsidan from "./(publikt)/Startsidan";
 
 export default function Page() {
   // Visa alltid landing page direkt för maximal hastighet
