@@ -1,6 +1,8 @@
-import { HuvudsektionProps } from "../types/types";
+"use client";
 
-export default function HeroSection({ isLoading, onGetStarted }: HuvudsektionProps) {
+import StartaKnapp from "./StartaKnapp";
+
+export default function HeroSection() {
   return (
     <section className="text-center py-24">
       <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 mt-8">
@@ -10,13 +12,7 @@ export default function HeroSection({ isLoading, onGetStarted }: HuvudsektionPro
         Bokföring, fakturering & lön - gratis för alltid!
       </p>
       <div className="space-x-4">
-        <button
-          onClick={onGetStarted}
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors disabled:opacity-50"
-        >
-          {isLoading ? "Startar..." : "🚀 Starta gratis"}
-        </button>
+        <StartaKnapp />
         <button
           onClick={() => (window.location.href = "/login")}
           className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"

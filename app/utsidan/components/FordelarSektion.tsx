@@ -1,6 +1,8 @@
-import { FordelarSektionProps } from "../types/types";
+"use client";
 
-export default function BenefitsSection({ isLoading, onGetStarted }: FordelarSektionProps) {
+import StartaKnapp from "./StartaKnapp";
+
+export default function BenefitsSection() {
   const benefits = [
     {
       title: "Svenska regler",
@@ -44,13 +46,7 @@ export default function BenefitsSection({ isLoading, onGetStarted }: FordelarSek
           <p className="text-slate-300 mb-6">
             Skapa ditt konto och börja bokföra på mindre än 5 minuter.
           </p>
-          <button
-            onClick={onGetStarted}
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
-          >
-            {isLoading ? "Startar..." : "Skapa gratis konto"}
-          </button>
+          <StartaKnapp fullWidth />
           <p className="text-slate-400 text-sm mt-3 text-center">
             Inget kreditkort krävs • Kom igång direkt
           </p>

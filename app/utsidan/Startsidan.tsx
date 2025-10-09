@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import AnimeradeStjarnor from "./components/AnimeradeStjarnor";
 import Header from "./components/Header";
 import HuvudSektion from "./components/HuvudSektion";
@@ -10,15 +7,6 @@ import FordelarSektion from "./components/FordelarSektion";
 import Footer from "./components/Footer";
 
 export default function Startsidan() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleGetStarted = () => {
-    setIsLoading(true);
-    // TODO: Update for better-auth social providers
-    // signIn("google", { callbackUrl: "/signup" });
-    window.location.href = "/login";
-  };
-
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden"
@@ -33,12 +21,12 @@ export default function Startsidan() {
     >
       <AnimeradeStjarnor />
 
-      <Header isLoading={isLoading} onGetStarted={handleGetStarted} />
+      <Header />
 
       {/* Hero Section */}
       <main className="px-6">
         <div className="max-w-7xl mx-auto">
-          <HuvudSektion isLoading={isLoading} onGetStarted={handleGetStarted} />
+          <HuvudSektion />
 
           <FunktionsKort
             title="Bokföring med förval"
@@ -78,7 +66,7 @@ export default function Startsidan() {
 
           <PrisSektion />
 
-          <FordelarSektion isLoading={isLoading} onGetStarted={handleGetStarted} />
+          <FordelarSektion />
         </div>
       </main>
 

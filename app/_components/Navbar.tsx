@@ -48,6 +48,11 @@ export default function Navbar() {
     return null;
   }
 
+  // Dölj navbar på alla utsidan-sidor (marknadsföringssidor)
+  if (pathname.startsWith("/utsidan")) {
+    return null;
+  }
+
   return (
     <div className="sticky top-0 z-50 flex items-center justify-center w-full h-20 px-4 bg-cyan-950">
       <nav className="relative flex gap-3">

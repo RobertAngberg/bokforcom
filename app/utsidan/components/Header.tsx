@@ -1,39 +1,51 @@
-import { HeaderProps } from "../types/types";
+"use client";
 
-export default function LandingHeader({ isLoading, onGetStarted }: HeaderProps) {
+import { useState } from "react";
+
+export default function Header() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGetStarted = () => {
+    setIsLoading(true);
+    window.location.href = "/login";
+  };
+
   return (
     <header className="px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <a
+          href="/"
+          className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">B</span>
           </div>
           <span className="text-2xl font-bold text-white">Bokföringsapp</span>
-        </div>
+        </a>
 
         {/* Menylänkar */}
         <nav className="hidden md:flex items-center space-x-12 mt-2">
           <a
-            href="#priser"
+            href="/utsidan/priser"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Priser
           </a>
           <a
-            href="#funktioner"
+            href="/utsidan/funktioner"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Funktioner
           </a>
           <a
-            href="#om-oss"
+            href="/utsidan/om-oss"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Om oss
           </a>
           <a
-            href="#kontakt"
+            href="/utsidan/kontakt"
             className="text-slate-300 hover:text-white transition-colors text-lg font-bold"
           >
             Kontakt
@@ -49,7 +61,7 @@ export default function LandingHeader({ isLoading, onGetStarted }: HeaderProps) 
             Logga in
           </button>
           <button
-            onClick={onGetStarted}
+            onClick={handleGetStarted}
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
           >

@@ -1,4 +1,19 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 export default function AnimatedStars() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Rendera ingenting på server-sidan för att undvika hydration mismatch
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       {/* Animated Stars */}
