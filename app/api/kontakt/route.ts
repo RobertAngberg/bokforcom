@@ -25,10 +25,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ogiltig email-adress" }, { status: 400 });
     }
 
-    // Skicka email till info@bokför.com
+    // Skicka email till info@bokför.com (Punycode: xn--bokfr-mua.com)
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
-      to: "info@bokför.com",
+      to: "info@xn--bokfr-mua.com",
       replyTo: email,
       subject: `Kontakt från ${name} - BokförPunktCom`,
       html: `
