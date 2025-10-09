@@ -165,3 +165,50 @@ async function hamtaKontoIdMap(kontonummerLista: string[]) {
     client.release();
   }
 }
+
+export async function fetchTransactionWithEntries(
+  userId: number,
+  transaktionsId: number
+): Promise<TransactionWithEntries | null> {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT 
+        t.id,
+        t.transaktionsdatum AS datum,
+        t.kontobeskrivning AS beskrivning,
+        t.belopp AS summa_debet,
+        t.belopp AS summa_kredit,
+        t.blob_url,
+        json_agg(
+          json_build_object(
+            'konto', k.kontonummer,
+            'beskrivning', k.beskrivning,
+            'debet', tp.debet,
+            'kredit', tp.kredit
+          ) ORDER BY tp.id
+        ) AS poster
+      FROM transaktioner t
+      LEFT JOIN transaktionsposter tp ON t.id = tp.transaktions_id
+      LEFT JOIN konton k ON tp.konto_id = k.id
+      WHERE t.id = $1 AND t.user_id = $2
+      GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.belopp, t.blob_url`,
+      [transaktionsId, userId]
+    );
+
+    if (rows.length === 0) return null;
+
+    const row = rows[0];
+    return {
+      id: row.id,
+      datum: row.datum,
+      beskrivning: row.beskrivning,
+      summa_debet: row.summa_debet ? parseFloat(row.summa_debet) : null,
+      summa_kredit: row.summa_kredit ? parseFloat(row.summa_kredit) : null,
+      blob_url: row.blob_url,
+      poster: row.poster || [],
+    };
+  } finally {
+    client.release();
+  }
+}
