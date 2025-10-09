@@ -1,12 +1,13 @@
 "use server";
 
-import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import type { Företagsprofil } from "../types/types";
 
-const fetchFöretagsprofil = unstable_cache(
-  async (userId: string): Promise<Företagsprofil | null> => {
+export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
+  const { userId } = await ensureSession();
+
+  try {
     const { rows } = await pool.query(
       `
       SELECT
@@ -58,16 +59,6 @@ const fetchFöretagsprofil = unstable_cache(
       logo: row.logo_url ?? "",
       logoWidth: undefined,
     } satisfies Företagsprofil;
-  },
-  ["faktura-företagsprofil"],
-  { revalidate: 60, tags: ["faktura-företagsprofil"] }
-);
-
-export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
-  const { userId } = await ensureSession();
-
-  try {
-    return await fetchFöretagsprofil(String(userId));
   } catch (error) {
     console.error("Fel vid hämtning av företagsprofil:", error);
     return null;
@@ -123,8 +114,6 @@ export async function sparaFöretagsprofil(data: Företagsprofil): Promise<{ suc
         data.logo ?? null,
       ]
     );
-
-    await revalidateTag("faktura-företagsprofil");
 
     return { success: true };
   } catch (error) {

@@ -1,6 +1,4 @@
 "use server";
-
-import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
@@ -59,10 +57,6 @@ export async function sparaNyKund(formData: FormData) {
 
   if (!result) {
     throw new Error("Kunden kunde inte sparas");
-  }
-
-  if (result.success) {
-    await revalidateTag("faktura-kunder");
   }
 
   return result;
@@ -142,7 +136,6 @@ export async function uppdateraKund(id: number, formData: FormData) {
       );
 
       console.log(`✅ Kund ${id} uppdaterad säkert för user ${userId}`);
-      await revalidateTag("faktura-kunder");
       return { success: true };
     } catch (err) {
       console.error("❌ Databasfel vid uppdatering av kund:", err);
@@ -195,7 +188,6 @@ export async function deleteKund(id: number) {
       }
 
       console.log(`✅ Säkert raderade kund ${id} för user ${userId}`);
-      await revalidateTag("faktura-kunder");
       return { success: true };
     } finally {
       client.release();
@@ -206,8 +198,10 @@ export async function deleteKund(id: number) {
   }
 }
 
-const fetchSparadeKunder = unstable_cache(
-  async (userId: string): Promise<KundListItem[]> => {
+export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
+  const { userId } = await ensureSession();
+
+  try {
     const res = await pool.query<KundListItem>(
       `SELECT
          id,
@@ -228,16 +222,6 @@ const fetchSparadeKunder = unstable_cache(
     );
 
     return res.rows;
-  },
-  ["faktura-kunder"],
-  { revalidate: 60, tags: ["faktura-kunder"] }
-);
-
-export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
-  const { userId } = await ensureSession();
-
-  try {
-    return await fetchSparadeKunder(String(userId));
   } catch (err) {
     console.error("❌ hämtaSparadeKunder error:", err);
     return [];

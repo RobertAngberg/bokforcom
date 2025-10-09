@@ -1,6 +1,4 @@
 "use server";
-
-import { unstable_cache, revalidateTag } from "next/cache";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { Artikel, FavoritArtikel, FavoritArtikelRow } from "../types/types";
@@ -84,8 +82,6 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
       ]
     );
 
-    await revalidateTag("faktura-artiklar");
-
     return { success: true };
   } catch (err) {
     console.error("❌ Kunde inte spara favoritartikel:", err);
@@ -151,8 +147,6 @@ export async function updateFavoritArtikel(id: number, artikel: Artikel) {
       ]
     );
 
-    await revalidateTag("faktura-artiklar");
-
     return { success: true };
   } catch (err) {
     console.error("❌ Kunde inte uppdatera favoritartikel:", err);
@@ -169,7 +163,6 @@ export async function deleteFavoritArtikel(id: number) {
       id,
       userId,
     ]);
-    await revalidateTag("faktura-artiklar");
     return { success: true };
   } catch (err) {
     console.error("❌ deleteFavoritArtikel error:", err);
@@ -224,8 +217,10 @@ const mapFavoritArtiklar = (rows: FavoritArtikelRow[]): FavoritArtikel[] =>
     } satisfies FavoritArtikel;
   });
 
-const fetchSparadeArtiklar = unstable_cache(
-  async (userId: string): Promise<FavoritArtikel[]> => {
+export async function hämtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
+  const { userId } = await ensureSession();
+
+  try {
     const res = await pool.query(
       `
       SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
@@ -242,16 +237,6 @@ const fetchSparadeArtiklar = unstable_cache(
     );
 
     return mapFavoritArtiklar(res.rows as FavoritArtikelRow[]);
-  },
-  ["faktura-artiklar"],
-  { revalidate: 60, tags: ["faktura-artiklar"] }
-);
-
-export async function hämtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
-  const { userId } = await ensureSession();
-
-  try {
-    return await fetchSparadeArtiklar(String(userId));
   } catch (err) {
     console.error("❌ Kunde inte hämta sparade artiklar:", err);
     return [];
