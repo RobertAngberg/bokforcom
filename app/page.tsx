@@ -2,7 +2,7 @@
 
 import { useSession } from "../app/_lib/auth-client";
 import StartPage from "./start/page";
-import Startsidan from "./_components/pages/Startsidan";
+import Startsidan from "./utsidan/Startsidan";
 
 export default function Page() {
   const { data: session, isPending } = useSession();

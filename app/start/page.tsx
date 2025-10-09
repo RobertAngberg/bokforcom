@@ -7,7 +7,7 @@ import Dropdown from "../_components/Dropdown";
 import VälkomstMedd from "./components/VälkomstMedd";
 import { useStart } from "./hooks/useStart";
 
-export default function StartPage() {
+export default function Start() {
   const { year, setYear, data, isLoading, showWelcome, handleWelcomeClose } = useStart();
 
   return (
