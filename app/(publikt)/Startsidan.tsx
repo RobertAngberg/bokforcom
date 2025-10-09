@@ -1,7 +1,5 @@
 "use client";
 
-// asdf
-
 import AnimeradeStjarnor from "./_components/AnimeradeStjarnor";
 import Header from "./_components/Header";
 import HuvudSektion from "./_components/HuvudSektion";
