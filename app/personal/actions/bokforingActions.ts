@@ -19,7 +19,7 @@ export async function hamtaTransaktionsposter(transaktionsId: number) {
   return await hamtaTransaktionsposterCore(transaktionsId);
 }
 
-export async function bokförLöneskatter({
+export async function bokforLoneskatter({
   socialaAvgifter,
   personalskatt,
   datum,
@@ -66,12 +66,12 @@ export async function bokförLöneskatter({
     revalidatePath("/historik");
     return { success: true, message: "Löneskatter bokförda!" };
   } catch (error) {
-    console.error("❌ bokförLöneskatter error:", error);
+    console.error("❌ bokforLoneskatter error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }
 
-export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData) {
+export async function bokforLoneutbetalning(data: BokförLöneUtbetalningData) {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();
@@ -155,7 +155,7 @@ export async function bokförLöneutbetalning(data: BokförLöneUtbetalningData)
       bokföringsPoster,
     };
   } catch (error) {
-    console.error("❌ bokförLöneutbetalning error:", error);
+    console.error("❌ bokforLoneutbetalning error:", error);
     throw error;
   } finally {
     client.release();

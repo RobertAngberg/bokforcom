@@ -23,7 +23,7 @@ import {
 } from "../actions/lonespecarActions";
 import { hamtaAllaAnstallda, hamtaForetagsprofil } from "../actions/anstalldaActions";
 import { hamtaUtlagg } from "../actions/utlaggActions";
-import { bokförLöneskatter } from "../actions/bokforingActions";
+import { bokforLoneskatter } from "../actions/bokforingActions";
 import {
   Lönekörning,
   LonekorningHookProps,
@@ -295,7 +295,7 @@ export const useLonekorning = ({
     setSkatteBokförPågår(true);
     try {
       const datum = skatteDatum?.toISOString() || new Date().toISOString();
-      const result = await bokförLöneskatter({
+      const result = await bokforLoneskatter({
         socialaAvgifter: skatteData.socialaAvgifter,
         personalskatt: skatteData.personalskatt,
         datum,

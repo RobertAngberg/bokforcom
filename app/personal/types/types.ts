@@ -652,7 +652,7 @@ export interface SkatteManagerProps {
   skatteDatum: Date | null;
   setSkatteBokförPågår: (loading: boolean) => void;
   setSkatteModalOpen: (open: boolean) => void;
-  bokförLöneskatter: (data: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  bokforLoneskatter: (data: Record<string, unknown>) => Promise<Record<string, unknown>>;
   onSkatteComplete?: () => void;
 }
 

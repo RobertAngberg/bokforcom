@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
-import { bokförLöneutbetalning } from "../actions/bokforingActions";
+import { bokforLoneutbetalning } from "../actions/bokforingActions";
 import type { WizardBokföringsPost, UseBokforingProps } from "../types/types";
 import { showToast } from "../../_components/Toast";
 
@@ -349,7 +349,7 @@ export function useBokforing({
     try {
       // Skicka hela arrayen med bokföringsposter till backend
       const poster = analyseraBokföringsposter();
-      const result = await bokförLöneutbetalning({
+      const result = await bokforLoneutbetalning({
         lönespecId: lönespec.id,
         bokföringsPoster: poster,
         extrarader,

@@ -8,7 +8,7 @@ import {
   sparaAnstalld,
   sparaNyAnstalldFormAction,
 } from "../actions/anstalldaActions";
-import { taBortLönespec } from "../actions/lonespecarActions";
+import { taBortLonespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
 import { showToast } from "../../_components/Toast";
 import type {
@@ -350,7 +350,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
 
     setTaBortLaddning((prev) => ({ ...prev, [deleteLönespecId]: true }));
     try {
-      const resultat = await taBortLönespec(deleteLönespecId);
+      const resultat = await taBortLonespec(deleteLönespecId);
       if (resultat.success) {
         showToast("Lönespecifikation borttagen!", "success");
         onLönespecUppdaterad?.(); // Uppdatera listan
