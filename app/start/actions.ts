@@ -34,7 +34,7 @@ export async function markWelcomeAsShown(): Promise<void> {
 
 // 🔒 ENTERPRISE SÄKERHETSFUNKTIONER FÖR START-MODUL
 
-export async function hämtaTransaktionsposter(transaktionsId: number) {
+export async function hamtaTransaktionsposter(transaktionsId: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -58,7 +58,7 @@ export async function hämtaTransaktionsposter(transaktionsId: number) {
 
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaTransaktionsposter error:", error);
+    console.error("❌ hamtaTransaktionsposter error:", error);
     return [];
   }
 }
@@ -166,7 +166,7 @@ export async function fetchRawYearData(year: string) {
   }
 }
 
-export async function hämtaAllaTransaktioner() {
+export async function hamtaAllaTransaktioner() {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -197,7 +197,7 @@ export async function hämtaAllaTransaktioner() {
       client.release();
     }
   } catch (error) {
-    console.error("❌ hämtaAllaTransaktioner error:", error);
+    console.error("❌ hamtaAllaTransaktioner error:", error);
     return [];
   }
 }
@@ -313,7 +313,7 @@ export async function saveInvoice(data: {
   }
 }
 
-export async function hämtaFörvalMedSökning(sök: string, offset: number, limit: number) {
+export async function hamtaForvalMedSokning(sök: string, offset: number, limit: number) {
   const client = await pool.connect();
 
   try {
@@ -335,14 +335,14 @@ export async function hämtaFörvalMedSökning(sök: string, offset: number, lim
       sökord: Array.isArray(row.sökord) ? row.sökord : [],
     }));
   } catch (err) {
-    console.error("❌ hämtaFörvalMedSökning error:", err);
+    console.error("❌ hamtaForvalMedSokning error:", err);
     return [];
   } finally {
     client.release();
   }
 }
 
-export async function räknaFörval(sök?: string) {
+export async function raknaForval(sök?: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -364,12 +364,12 @@ export async function räknaFörval(sök?: string) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ räknaFörval error:", error);
+    console.error("❌ raknaForval error:", error);
     return 0;
   }
 }
 
-export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: string) {
+export async function uppdateraForval(id: number, kolumn: string, nyttVärde: string) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -430,12 +430,12 @@ export async function uppdateraFörval(id: number, kolumn: string, nyttVärde: s
       client.release();
     }
   } catch (error) {
-    console.error("❌ uppdateraFörval error:", error);
+    console.error("❌ uppdateraForval error:", error);
     throw error;
   }
 }
 
-export async function taBortFörval(id: number) {
+export async function taBortForval(id: number) {
   try {
     // 🔒 SÄKERHETSVALIDERING - Session
     const { userId } = await ensureSession();
@@ -459,7 +459,7 @@ export async function taBortFörval(id: number) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ taBortFörval error:", error);
+    console.error("❌ taBortForval error:", error);
     throw error;
   }
 }
