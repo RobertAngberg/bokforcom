@@ -6,7 +6,7 @@ import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
 import Dropdown from "../../../../_components/Dropdown";
 import { sanitizeFormInput } from "../../../../_utils/validationUtils";
-import { dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
+import { dateToYyyyMmDd } from "../../../../_utils/datum";
 import { useAnstallda } from "../../../hooks/useAnstallda";
 import type { NyAnstalldProps } from "../../../types/types";
 
@@ -131,9 +131,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
                 type="hidden"
                 name="startdatum"
                 value={
-                  nyAnställdFormulär.startdatum
-                    ? dateTillÅÅÅÅMMDD(nyAnställdFormulär.startdatum)
-                    : ""
+                  nyAnställdFormulär.startdatum ? dateToYyyyMmDd(nyAnställdFormulär.startdatum) : ""
                 }
               />
             </div>
@@ -154,7 +152,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
                 type="hidden"
                 name="slutdatum"
                 value={
-                  nyAnställdFormulär.slutdatum ? dateTillÅÅÅÅMMDD(nyAnställdFormulär.slutdatum) : ""
+                  nyAnställdFormulär.slutdatum ? dateToYyyyMmDd(nyAnställdFormulär.slutdatum) : ""
                 }
               />
             </div>

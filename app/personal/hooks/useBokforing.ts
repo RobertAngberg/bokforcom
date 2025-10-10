@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { bokforLoneutbetalning } from "../actions/bokforingActions";
 import type { WizardBokföringsPost, UseBokforingProps } from "../types/types";
@@ -356,7 +356,7 @@ export function useBokforing({
         beräknadeVärden,
         anställdNamn,
         period: lönespec.månad && lönespec.år ? `${lönespec.månad}/${lönespec.år}` : "",
-        utbetalningsdatum: dateTillÅÅÅÅMMDD(new Date()),
+        utbetalningsdatum: dateToYyyyMmDd(new Date()),
       });
 
       showToast(result.message || "Bokföring genomförd", "success");

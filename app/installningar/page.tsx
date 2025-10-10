@@ -1,11 +1,11 @@
 import MainLayout from "../_components/MainLayout";
 import Admin from "./components/Admin";
-import { hämtaAnvändarInfo, hämtaFöretagsprofil } from "./actions/data";
+import { hamtaAnvandarInfo, hamtaForetagsprofil } from "./actions/data";
 
 export default async function AdminPage() {
   const [användarInfo, företagsInfo] = await Promise.all([
-    hämtaAnvändarInfo(),
-    hämtaFöretagsprofil(),
+    hamtaAnvandarInfo(),
+    hamtaForetagsprofil(),
   ]);
 
   return (

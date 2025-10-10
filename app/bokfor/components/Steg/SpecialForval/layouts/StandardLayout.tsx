@@ -6,7 +6,7 @@ import Forhandsgranskning from "../../Forhandsgranskning";
 import TextFalt from "../../../../../_components/TextFalt";
 import Knapp from "../../../../../_components/Knapp";
 import TillbakaPil from "../../../../../_components/TillbakaPil";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../../_utils/datum";
+import { yyyyMmDdToDate, dateToYyyyMmDd } from "../../../../../_utils/datum";
 import { useBokforContext } from "../../../../context/BokforContextProvider";
 import type { StandardLayoutProps } from "../../../../types/types";
 
@@ -72,8 +72,8 @@ export default function StandardLayout({
             <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
             <DatePicker
               className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-              selected={transaktionsdatum ? ÅÅÅÅMMDDTillDate(transaktionsdatum) : null}
-              onChange={(d) => setTransaktionsdatum(d ? dateTillÅÅÅÅMMDD(d) : "")}
+              selected={transaktionsdatum ? yyyyMmDdToDate(transaktionsdatum) : null}
+              onChange={(d) => setTransaktionsdatum(d ? dateToYyyyMmDd(d) : "")}
               dateFormat="yyyy-MM-dd"
               locale="sv"
             />

@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 import { ensureSession } from "../../_utils/session";
-import { dateTillÅÅÅÅMMDD, stringTillDate } from "../../_utils/datum";
+import { dateToYyyyMmDd, stringTillDate } from "../../_utils/datum";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
 
 function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
@@ -99,16 +99,12 @@ export async function saveInvoiceInternal(formData: FormData) {
   const client = await pool.connect();
   try {
     // Använd utils för säker datum-hantering
-    const fakturadatum = dateTillÅÅÅÅMMDD(stringTillDate(formData.get("fakturadatum")?.toString()));
-    const forfallodatum = dateTillÅÅÅÅMMDD(
-      stringTillDate(formData.get("forfallodatum")?.toString())
-    );
+    const fakturadatum = dateToYyyyMmDd(stringTillDate(formData.get("fakturadatum")?.toString()));
+    const forfallodatum = dateToYyyyMmDd(stringTillDate(formData.get("forfallodatum")?.toString()));
     const fakturaId = isUpdate ? parseInt(fakturaIdRaw!.toString(), 10) : undefined;
 
     // För nya fakturor: sätt dagens datum som default om inget fakturadatum anges
-    const fakturaDateString = isUpdate
-      ? fakturadatum
-      : fakturadatum || dateTillÅÅÅÅMMDD(new Date());
+    const fakturaDateString = isUpdate ? fakturadatum : fakturadatum || dateToYyyyMmDd(new Date());
 
     // För nya fakturor: sätt 30 dagar från idag som default för förfallodatum om inget anges
     const forfalloDatumsString = isUpdate
@@ -117,7 +113,7 @@ export async function saveInvoiceInternal(formData: FormData) {
         (() => {
           const d = new Date();
           d.setDate(d.getDate() + 30);
-          return dateTillÅÅÅÅMMDD(d);
+          return dateToYyyyMmDd(d);
         })();
 
     if (isUpdate && fakturaId) {
@@ -177,8 +173,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
             rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutStartdatum)) : null,
-            rad.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutSlutdatum)) : null,
+            rad.rotRutStartdatum ? dateToYyyyMmDd(new Date(rad.rotRutStartdatum)) : null,
+            rad.rotRutSlutdatum ? dateToYyyyMmDd(new Date(rad.rotRutSlutdatum)) : null,
             rad.rotRutPersonnummer ?? null,
             rad.rotRutFastighetsbeteckning ?? null,
             rad.rotRutBoendeTyp ?? null,
@@ -248,8 +244,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
             rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
             rad.rotRutBeskrivning ?? null,
-            rad.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutStartdatum)) : null,
-            rad.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(rad.rotRutSlutdatum)) : null,
+            rad.rotRutStartdatum ? dateToYyyyMmDd(new Date(rad.rotRutStartdatum)) : null,
+            rad.rotRutSlutdatum ? dateToYyyyMmDd(new Date(rad.rotRutSlutdatum)) : null,
             rad.rotRutPersonnummer ?? null,
             rad.rotRutFastighetsbeteckning ?? null,
             rad.rotRutBoendeTyp ?? null,

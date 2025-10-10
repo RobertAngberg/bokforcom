@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { pool } from "../../_lib/db";
 import type { AnvandarInfo, ForetagsProfil } from "../types/types";
 
-export async function hämtaAnvändarInfo(): Promise<AnvandarInfo | null> {
+export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -23,7 +23,7 @@ export async function hämtaAnvändarInfo(): Promise<AnvandarInfo | null> {
   }
 }
 
-export async function hämtaFöretagsprofil(): Promise<ForetagsProfil | null> {
+export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),

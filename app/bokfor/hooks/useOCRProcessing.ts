@@ -7,7 +7,7 @@ import {
   extractDataFromOCRLevFakt,
 } from "../actions/ocrActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 
 interface UseOCRProcessingProps {
   bokförSomFaktura: boolean;
@@ -116,7 +116,7 @@ export function useOCRProcessing({
         }
 
         // Använd fakturadatum om tillgängligt, annars dagens datum
-        const datum = fakturadatum || dateTillÅÅÅÅMMDD(new Date());
+        const datum = fakturadatum || dateToYyyyMmDd(new Date());
 
         const blobResult = await uploadReceiptImage(file, {
           beskrivning,

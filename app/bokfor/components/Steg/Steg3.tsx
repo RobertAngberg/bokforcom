@@ -6,7 +6,7 @@ import Knapp from "../../../_components/Knapp";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Tabell from "../../../_components/Tabell";
 import { formatCurrency } from "../../../_utils/format";
-import { dateTillÅÅÅÅMMDD, ÅÅÅÅMMDDTillDate } from "../../../_utils/datum";
+import { dateToYyyyMmDd, yyyyMmDdToDate } from "../../../_utils/datum";
 import { useBokforContext } from "../../context/BokforContextProvider";
 
 export default function Steg3() {
@@ -32,7 +32,7 @@ export default function Steg3() {
         {state.valtFörval ? state.valtFörval.namn : ""}
       </p>
       <p className="text-center text-gray-300 mb-6">
-        {state.transaktionsdatum ? dateTillÅÅÅÅMMDD(ÅÅÅÅMMDDTillDate(state.transaktionsdatum)) : ""}
+        {state.transaktionsdatum ? dateToYyyyMmDd(yyyyMmDdToDate(state.transaktionsdatum)) : ""}
       </p>
       {state.levfaktMode && state.leverantör && (
         <div className="text-center mb-6">

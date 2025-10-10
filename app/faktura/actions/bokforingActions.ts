@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { validateKontonummer, sanitizeInput } from "../../_utils/validationUtils";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import {
   createTransaktion,
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
@@ -142,7 +142,7 @@ export async function bokforFaktura(data: BokförFakturaData) {
           const harBankKonto = data.poster.some((p) => p.konto === "1930" || p.konto === "1910");
           const harKundfordringar = data.poster.some((p) => p.konto === "1510");
           const ärBetalning = harBankKonto && harKundfordringar && data.poster.length === 2;
-          const todayISO = dateTillÅÅÅÅMMDD(new Date());
+          const todayISO = dateToYyyyMmDd(new Date());
 
           if (ärBetalning) {
             const rotRutCheck = await client.query(

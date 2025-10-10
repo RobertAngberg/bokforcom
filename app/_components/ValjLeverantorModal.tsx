@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import Knapp from "./Knapp";
 import LoadingSpinner from "./LoadingSpinner";
-import { getLeverantörer } from "../faktura/actions/leverantorActions";
+import { getLeverantorer } from "../faktura/actions/leverantorActions";
 import { type Leverantör } from "../faktura/types/types";
 
 interface VäljLeverantörModalProps {
@@ -27,7 +27,7 @@ export default function ValjLeverantorModal({
 
   const loadLeverantörer = async () => {
     setLoading(true);
-    const result = await getLeverantörer();
+    const result = await getLeverantorer();
     if (result.success) {
       setLeverantörer(result.leverantörer || []);
     }

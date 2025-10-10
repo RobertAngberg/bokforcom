@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { dateTillÅÅÅÅMMDD, datumTillPostgreSQL } from "../../_utils/datum";
+import { dateToYyyyMmDd, datumTillPostgreSQL } from "../../_utils/datum";
 import { sanitizeInput } from "../../_utils/validationUtils";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
@@ -99,7 +99,7 @@ export async function saveTransaction(formData: FormData) {
   } else if (fil) {
     // Fallback för gammal kod som skickar fil direkt
     try {
-      const datum = dateTillÅÅÅÅMMDD(new Date(transaktionsdatum));
+      const datum = dateToYyyyMmDd(new Date(transaktionsdatum));
       const fileExtension = fil.name.split(".").pop() || "";
       const timestamp = Date.now();
       const originalName = sanitizeFilename(fil.name.split(".")[0]);

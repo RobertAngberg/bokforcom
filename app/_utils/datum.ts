@@ -1,5 +1,5 @@
 // Konverterar "2024-05-07" (sträng) till Date-objekt - SÄKERT
-export function ÅÅÅÅMMDDTillDate(datum: string | null | undefined): Date | null {
+export function yyyyMmDdToDate(datum: string | null | undefined): Date | null {
   if (!datum) return null;
 
   const [år, månad, dag] = datum.split("-").map(Number);
@@ -11,7 +11,7 @@ export function ÅÅÅÅMMDDTillDate(datum: string | null | undefined): Date | n
 }
 
 // Konverterar ett Date-objekt till "2024-05-07" (sträng) - SÄKERT
-export function dateTillÅÅÅÅMMDD(date: Date | null): string {
+export function dateToYyyyMmDd(date: Date | null): string {
   if (!date) return "";
 
   // Använd lokala getter-metoder istället för toISOString()
@@ -25,7 +25,7 @@ export function dateTillÅÅÅÅMMDD(date: Date | null): string {
 // Säker konvertering från sträng till Date med null-hantering
 export function stringTillDate(dateString: string | null | undefined): Date | null {
   if (!dateString) return null;
-  const date = ÅÅÅÅMMDDTillDate(dateString);
+  const date = yyyyMmDdToDate(dateString);
   return date && !isNaN(date.getTime()) ? date : null;
 }
 
@@ -36,7 +36,7 @@ export function datePickerValue(dateString: string | null | undefined): Date | n
 
 // Helper för DatePicker onChange - konverterar Date till sträng
 export function datePickerOnChange(date: Date | null): string {
-  return dateTillÅÅÅÅMMDD(date);
+  return dateToYyyyMmDd(date);
 }
 
 // Timezone-säker formattering för PostgreSQL TIMESTAMP WITH TIME ZONE

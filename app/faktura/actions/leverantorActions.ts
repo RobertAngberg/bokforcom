@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
 
-export async function saveLeverantör(formData: FormData) {
+export async function saveLeverantor(formData: FormData) {
   const { userId } = await ensureSession();
 
   const namn = sanitizeInput(formData.get("namn")?.toString() || "");
@@ -48,7 +48,7 @@ export async function saveLeverantör(formData: FormData) {
   }
 }
 
-export async function getLeverantörer() {
+export async function getLeverantorer() {
   const { userId } = await ensureSession();
   const client = await pool.connect();
 
@@ -67,7 +67,7 @@ export async function getLeverantörer() {
   }
 }
 
-export async function updateLeverantör(
+export async function updateLeverantor(
   id: number,
   data: {
     namn: string;
@@ -114,7 +114,7 @@ export async function updateLeverantör(
   }
 }
 
-export async function deleteLeverantör(id: number) {
+export async function deleteLeverantor(id: number) {
   const { userId } = await ensureSession();
   const client = await pool.connect();
 

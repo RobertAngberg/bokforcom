@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
 
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { sanitizeFormInput, sanitizeInput } from "../../_utils/validationUtils";
 
 import { useFakturaArtikelContext } from "../context/FakturaArtikelContext";
@@ -400,7 +400,7 @@ export function useProdukterTjanster() {
   const handleRotRutDateChange = useCallback(
     (field: string, date: Date | null) => {
       if (date) {
-        setFormData({ [field]: dateTillÅÅÅÅMMDD(date) });
+        setFormData({ [field]: dateToYyyyMmDd(date) });
       }
     },
     [setFormData]

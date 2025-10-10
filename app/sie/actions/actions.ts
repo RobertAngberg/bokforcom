@@ -2,7 +2,7 @@
 
 import { Pool } from "pg";
 import { ensureSession } from "../../_utils/session";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { decodeSieFile } from "../utils/encoding";
 import { classifyAccount } from "../utils/accounts";
 import { sieDateToISO } from "../utils/dateFormatting";
@@ -330,7 +330,7 @@ export async function importeraSieData(
           const duplicatesList = duplicateRows
             .map(
               (row: { kontobeskrivning: string; transaktionsdatum: Date }) =>
-                `• ${row.kontobeskrivning} (${dateTillÅÅÅÅMMDD(row.transaktionsdatum)})`
+                `• ${row.kontobeskrivning} (${dateToYyyyMmDd(row.transaktionsdatum)})`
             )
             .join("\n");
 

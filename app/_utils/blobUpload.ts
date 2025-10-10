@@ -2,7 +2,7 @@
 
 import { put } from "@vercel/blob";
 import { ensureSession } from "./session";
-import { dateTillÅÅÅÅMMDD } from "./datum";
+import { dateToYyyyMmDd } from "./datum";
 
 export type UploadResult = {
   success: boolean;
@@ -180,7 +180,7 @@ async function compressImage(file: File, options: UploadOptions): Promise<File> 
 
 function createSmartFileName(originalName: string, options: UploadOptions): string {
   const fileExt = originalName.split(".").pop()?.toLowerCase() || "";
-  const datum = options.datum || dateTillÅÅÅÅMMDD(new Date()); // YYYY-MM-DD
+  const datum = options.datum || dateToYyyyMmDd(new Date()); // YYYY-MM-DD
 
   let filename = datum; // Börja med datum
 

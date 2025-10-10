@@ -4,7 +4,7 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import type { KontraktPeriodProps } from "../../../types/types";
-import { dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
+import { dateToYyyyMmDd } from "../../../../_utils/datum";
 // #endregion
 
 export default function KontraktPeriod({
@@ -20,8 +20,8 @@ export default function KontraktPeriod({
         <div className="space-y-3">
           {[
             ["Anställningstyp", anställd?.anställningstyp],
-            ["Från", anställd?.startdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.startdatum)) : null],
-            ["Till", anställd?.slutdatum ? dateTillÅÅÅÅMMDD(new Date(anställd.slutdatum)) : null],
+            ["Från", anställd?.startdatum ? dateToYyyyMmDd(new Date(anställd.startdatum)) : null],
+            ["Till", anställd?.slutdatum ? dateToYyyyMmDd(new Date(anställd.slutdatum)) : null],
           ].map(([label, value]) => (
             <div key={label}>
               <span className="text-gray-400">{label}:</span>

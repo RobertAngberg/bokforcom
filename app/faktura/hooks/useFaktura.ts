@@ -20,7 +20,7 @@ import {
   validatePersonnummer,
   validateEmail,
 } from "../../_utils/validationUtils";
-import { stringTillDate, dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { stringTillDate, dateToYyyyMmDd } from "../../_utils/datum";
 import { showToast } from "../../_components/Toast";
 import type { FakturaFormData, KundListItem, KundSaveResponse } from "../types/types";
 
@@ -163,7 +163,7 @@ export function useFaktura() {
     lifecycle.current.harInitDefaults = true;
 
     const initializeDefaults = async () => {
-      const todayISO = dateTillÅÅÅÅMMDD(new Date());
+      const todayISO = dateToYyyyMmDd(new Date());
 
       const currentFormData = formDataRef.current;
       const defaultFakturadatum = stringTillDate(currentFormData.fakturadatum);
@@ -184,9 +184,9 @@ export function useFaktura() {
         forfallodatum:
           currentFormData.forfallodatum ||
           (defaultFakturadatum
-            ? dateTillÅÅÅÅMMDD(
+            ? dateToYyyyMmDd(
                 addDays(
-                  defaultFakturadatum,
+                  defaultFakturadatum!,
                   parseInt(currentFormData.betalningsvillkor || "30", 10)
                 )
               )
@@ -208,7 +208,7 @@ export function useFaktura() {
     if (!fakturadatumDate || formData.forfallodatum) return;
 
     const days = parseInt(formData.betalningsvillkor || "30", 10);
-    const calc = dateTillÅÅÅÅMMDD(addDays(fakturadatumDate, isNaN(days) ? 30 : days));
+    const calc = dateToYyyyMmDd(addDays(fakturadatumDate!, isNaN(days) ? 30 : days));
     lifecycle.current.harAutoBeraknatForfallo = true;
     setFormData({ forfallodatum: calc });
   }, [
@@ -305,7 +305,7 @@ export function useFaktura() {
 
         const toDateString = (value: unknown): string => {
           if (value instanceof Date) {
-            return dateTillÅÅÅÅMMDD(value);
+            return dateToYyyyMmDd(value);
           }
           return typeof value === "string" ? value : "";
         };
@@ -452,8 +452,8 @@ export function useFaktura() {
       const forfallodatum = addDays(fakturadatum, days);
 
       setFormData({
-        fakturadatum: dateTillÅÅÅÅMMDD(fakturadatum),
-        forfallodatum: dateTillÅÅÅÅMMDD(forfallodatum),
+        fakturadatum: dateToYyyyMmDd(fakturadatum),
+        forfallodatum: dateToYyyyMmDd(forfallodatum),
       });
     },
     [setFormData]
@@ -464,7 +464,7 @@ export function useFaktura() {
     (field: "fakturadatum" | "forfallodatum") => {
       return (d: Date | null) =>
         setFormData({
-          [field]: d ? dateTillÅÅÅÅMMDD(d) : "",
+          [field]: d ? dateToYyyyMmDd(d) : "",
         });
     },
     [setFormData]

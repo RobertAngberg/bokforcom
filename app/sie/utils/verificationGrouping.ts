@@ -5,7 +5,7 @@
  */
 
 import { isoToSieDate } from "./dateFormatting";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { sieEscape } from "./formatting";
 import type { TransactionRowForGrouping, VerificationForExport } from "../types/types";
 
@@ -35,7 +35,7 @@ export function groupTransactionsByVerification(
 
     if (!verifikationer.has(transId)) {
       const datum = new Date(row.transaktionsdatum);
-      const datumStr = isoToSieDate(dateTillÅÅÅÅMMDD(datum));
+      const datumStr = isoToSieDate(dateToYyyyMmDd(datum));
       const beskrivning = sieEscape(row.kommentar || row.kontobeskrivning || "Transaktion");
 
       verifikationer.set(transId, {

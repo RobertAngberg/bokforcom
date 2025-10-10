@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { dateTillÅÅÅÅMMDD } from "./datum";
+import { dateToYyyyMmDd } from "./datum";
 
 /**
  * =================================================================
@@ -158,7 +158,7 @@ function downloadFile(
  * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
  */
 function generateFilename(prefix: string, date: Date, extension: string): string {
-  const dateStr = dateTillÅÅÅÅMMDD(date);
+  const dateStr = dateToYyyyMmDd(date);
   return `${prefix}_${dateStr}.${extension}`;
 }
 

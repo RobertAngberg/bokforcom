@@ -6,7 +6,7 @@
 
 import { sieEscape, formatOrganizationNumber } from "./formatting";
 import { isoToSieDate } from "./dateFormatting";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import type { CompanyInfo, AccountInfo } from "../types/types";
 
 /**
@@ -33,7 +33,7 @@ export function buildSieHeader(
   yearRange: number = 7
 ): string {
   const idag = new Date();
-  const datumSträng = isoToSieDate(dateTillÅÅÅÅMMDD(idag));
+  const datumSträng = isoToSieDate(dateToYyyyMmDd(idag));
 
   let sieContent = "";
 

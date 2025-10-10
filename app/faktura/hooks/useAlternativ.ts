@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { useFaktura } from "./useFaktura";
 import { saveInvoice } from "../actions/fakturaActions";
 import { showToast } from "../../_components/Toast";
@@ -409,7 +409,7 @@ export function useAlternativ() {
     laddaNerHUSFil({
       fakturanummer: formData.fakturanummer,
       kundPersonnummer: personnummer!,
-      betalningsdatum: dateTillÅÅÅÅMMDD(new Date()),
+      betalningsdatum: dateToYyyyMmDd(new Date()),
       prisForArbete: Math.round(rotRutTjänsterInkMoms), // Bara tjänster
       betaltBelopp: Math.round(totalInkMoms), // Total kostnad
       begartBelopp: begartBelopp, // Avdrag bara på tjänster

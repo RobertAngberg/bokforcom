@@ -1,7 +1,7 @@
 "use server";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { Artikel, FavoritArtikel, FavoritArtikelRow } from "../types/types";
 
 export async function sparaFavoritArtikel(artikel: Artikel) {
@@ -69,8 +69,8 @@ export async function sparaFavoritArtikel(artikel: Artikel) {
         artikel.antal ?? null, // Använd antal istället för rotRutAntalTimmar
         artikel.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
         artikel.rotRutBeskrivning ?? null,
-        artikel.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(artikel.rotRutStartdatum)) : null,
-        artikel.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(artikel.rotRutSlutdatum)) : null,
+        artikel.rotRutStartdatum ? dateToYyyyMmDd(new Date(artikel.rotRutStartdatum)) : null,
+        artikel.rotRutSlutdatum ? dateToYyyyMmDd(new Date(artikel.rotRutSlutdatum)) : null,
         artikel.rotRutPersonnummer ?? null,
         artikel.rotRutFastighetsbeteckning ?? null,
         artikel.rotRutBoendeTyp ?? null,
@@ -128,8 +128,8 @@ export async function updateFavoritArtikel(id: number, artikel: Artikel) {
         artikel.antal ?? null, // Använd antal istället för rotRutAntalTimmar
         artikel.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
         artikel.rotRutBeskrivning ?? null,
-        artikel.rotRutStartdatum ? dateTillÅÅÅÅMMDD(new Date(artikel.rotRutStartdatum)) : null,
-        artikel.rotRutSlutdatum ? dateTillÅÅÅÅMMDD(new Date(artikel.rotRutSlutdatum)) : null,
+        artikel.rotRutStartdatum ? dateToYyyyMmDd(new Date(artikel.rotRutStartdatum)) : null,
+        artikel.rotRutSlutdatum ? dateToYyyyMmDd(new Date(artikel.rotRutSlutdatum)) : null,
         artikel.rotRutPersonnummer ?? null,
         artikel.rotRutFastighetsbeteckning ?? null,
         artikel.rotRutBoendeTyp ?? null,

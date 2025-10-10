@@ -8,7 +8,7 @@ import Knapp from "../../../../_components/Knapp";
 import { parseNumber } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
 import Steg3 from "../Steg3";
-import { ÅÅÅÅMMDDTillDate, dateTillÅÅÅÅMMDD } from "../../../../_utils/datum";
+import { yyyyMmDdToDate, dateToYyyyMmDd } from "../../../../_utils/datum";
 import TillbakaPil from "../../../../_components/TillbakaPil";
 import { useBokforContext } from "../../../context/BokforContextProvider";
 import { MilersattningEnskildFirmaProps } from "../../../types/types";
@@ -112,8 +112,8 @@ export default function MilersattningEnskildFirma({ mode }: MilersattningEnskild
               <label className="block text-sm font-medium text-white mb-2">Betaldatum</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded bg-slate-900 text-white border border-gray-700"
-                selected={ÅÅÅÅMMDDTillDate(state.transaktionsdatum ?? "")}
-                onChange={(date) => actions.setTransaktionsdatum(dateTillÅÅÅÅMMDD(date))}
+                selected={yyyyMmDdToDate(state.transaktionsdatum ?? "")}
+                onChange={(date) => actions.setTransaktionsdatum(dateToYyyyMmDd(date))}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 required

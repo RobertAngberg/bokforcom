@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { createTransaktion } from "../../_utils/transactions";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 
 export async function registreraBetalning(leverantörsfakturaId: number, belopp: number) {
   const { userId } = await ensureSession();
@@ -33,7 +33,7 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
       return { success: false, error: "Fakturan är redan betald" };
     }
 
-    const todayISO = dateTillÅÅÅÅMMDD(new Date());
+    const todayISO = dateToYyyyMmDd(new Date());
     let transaktionsId: number | null = null;
 
     try {
@@ -83,7 +83,7 @@ export async function registreraBetalning(leverantörsfakturaId: number, belopp:
 }
 
 // Betala och bokför en leverantörsfaktura i ett steg
-export async function betalaOchBokförLeverantörsfaktura(
+export async function betalaOchBokforLeverantorsfaktura(
   leverantörsfakturaId: number,
   belopp: number
 ) {
@@ -110,7 +110,7 @@ export async function betalaOchBokförLeverantörsfaktura(
       return { success: false, error: "Fakturan är redan bokförd" };
     }
 
-    const todayISO = dateTillÅÅÅÅMMDD(new Date());
+    const todayISO = dateToYyyyMmDd(new Date());
     let transaktionsId: number | null = null;
 
     try {
@@ -173,7 +173,7 @@ export async function registreraBetalningEnkel(
     }
 
     const today = new Date();
-    const todayISO = dateTillÅÅÅÅMMDD(today);
+    const todayISO = dateToYyyyMmDd(today);
     let transId: number | null = null;
 
     try {
@@ -216,7 +216,7 @@ export async function registreraBetalningEnkel(
 }
 
 // Ta bort en leverantörsfaktura
-export async function taBortLeverantörsfaktura(leverantörsfakturaId: number) {
+export async function taBortLeverantorsfaktura(leverantörsfakturaId: number) {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();

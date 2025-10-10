@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import type { EditData, AnställdData, AnställdListItem } from "../types/types";
 import { sparaAnstalld } from "../actions/anstalldaActions";
 
@@ -188,8 +188,8 @@ export function useKontrakt(initial?: AnställdListItem) {
       const payload: AnställdData = {
         ...visningsAnställd,
         anställningstyp: editData.anställningstyp,
-        startdatum: dateTillÅÅÅÅMMDD(editData.startdatum),
-        slutdatum: dateTillÅÅÅÅMMDD(editData.slutdatum),
+        startdatum: dateToYyyyMmDd(editData.startdatum),
+        slutdatum: dateToYyyyMmDd(editData.slutdatum),
         jobbtitel: editData.jobbtitel,
         ersättningPer: editData.ersättningPer,
         kompensation: editData.kompensation,

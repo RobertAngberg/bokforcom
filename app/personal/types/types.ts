@@ -518,7 +518,7 @@ export interface AGIGeneratorProps {
   extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
   session: { userId: string };
-  hämtaFöretagsprofil: (userId: string) => Promise<Record<string, unknown>>;
+  hamtaForetagsprofil: (userId: string) => Promise<Record<string, unknown>>;
   onAGIComplete?: () => void; // Callback för när AGI är genererad
 }
 
@@ -748,7 +748,7 @@ export type GenerateAGIArgs = {
   extrarader: Record<string, ExtraradData[]>;
   utbetalningsdatum: string | null;
   session: { userId: string };
-  hämtaFöretagsprofil: (userId: string) => Promise<Record<string, unknown>>;
+  hamtaForetagsprofil: (userId: string) => Promise<Record<string, unknown>>;
   onAGIComplete?: () => void;
 };
 

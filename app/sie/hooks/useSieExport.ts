@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { exporteraSieData } from "../actions/actions";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { validateYear } from "../../_utils/validationUtils";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -51,7 +51,7 @@ export function useSieExport() {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `export_${dateTillÅÅÅÅMMDD(new Date())}.se4`;
+        link.download = `export_${dateToYyyyMmDd(new Date())}.se4`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

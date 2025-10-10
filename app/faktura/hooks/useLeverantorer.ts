@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  getLeverantörer,
-  deleteLeverantör,
-  saveLeverantör,
-  updateLeverantör,
+  getLeverantorer,
+  deleteLeverantor,
+  saveLeverantor,
+  updateLeverantor,
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
 import { showToast } from "../../_components/Toast";
@@ -16,8 +16,8 @@ import { hamtaSparadeFakturor } from "../actions/fakturaActions";
 import { hamtaSparadeKunder } from "../actions/kundActions";
 import { hamtaSparadeArtiklar } from "../actions/artikelActions";
 import {
-  betalaOchBokförLeverantörsfaktura,
-  taBortLeverantörsfaktura,
+  betalaOchBokforLeverantorsfaktura,
+  taBortLeverantorsfaktura,
 } from "../actions/leverantorsfakturorActions";
 import { formatSEK } from "../../_utils/format";
 import { ColumnDefinition } from "../../_components/Tabell";
@@ -89,7 +89,7 @@ export function useLeverantörer(): UseLeverantörerReturn {
 
   const loadLeverantörer = useCallback(async () => {
     try {
-      const apiResult = await getLeverantörer();
+      const apiResult = await getLeverantorer();
 
       if (!apiResult.success) {
         throw new Error("API returned success: false");
@@ -146,7 +146,7 @@ export function useLeverantorFlik({
 
   const loadLeverantörer = async () => {
     setLoading(true);
-    const result = await getLeverantörer();
+    const result = await getLeverantorer();
     if (result.success) {
       setLeverantörer(result.leverantörer || []);
     }
@@ -181,7 +181,7 @@ export function useLeverantorFlik({
     if (!deleteModal.leverantör) return;
 
     setDeleteLoading(true);
-    const result = await deleteLeverantör(deleteModal.leverantör.id!);
+    const result = await deleteLeverantor(deleteModal.leverantör.id!);
 
     if (result.success) {
       setDeleteModal({ show: false });
@@ -304,7 +304,7 @@ export function useNyLeverantorModal({
           telefon: sanitizedData.telefon || undefined,
           email: formData.epost?.trim() || undefined,
         };
-        const result = await updateLeverantör(editLeverantör.id!, data);
+        const result = await updateLeverantor(editLeverantör.id!, data);
 
         if (result.success) {
           onSaved();
@@ -323,7 +323,7 @@ export function useNyLeverantorModal({
         if (sanitizedData.telefon) submitData.append("telefon", sanitizedData.telefon);
         if (formData.epost) submitData.append("email", formData.epost.trim());
 
-        const result = await saveLeverantör(submitData);
+        const result = await saveLeverantor(submitData);
 
         if (result.success) {
           onSaved();
@@ -624,7 +624,7 @@ export function useBokfordaFakturor() {
     setShowDeleteFakturaModal(false);
 
     try {
-      const result = await taBortLeverantörsfaktura(deleteFakturaId);
+      const result = await taBortLeverantorsfaktura(deleteFakturaId);
 
       if (result.success) {
         // Ta bort från listan lokalt
@@ -642,7 +642,7 @@ export function useBokfordaFakturor() {
 
   const utförBokföring = async (faktura: BokfordFaktura) => {
     try {
-      const result = await betalaOchBokförLeverantörsfaktura(faktura.id, faktura.belopp);
+      const result = await betalaOchBokforLeverantorsfaktura(faktura.id, faktura.belopp);
 
       if (result.success) {
         showToast("Leverantörsfaktura bokförd!", "success");

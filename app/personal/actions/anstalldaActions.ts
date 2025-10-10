@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
+import { dateToYyyyMmDd } from "../../_utils/datum";
 import { sanitizeInput } from "../../_utils/validationUtils";
 import { revalidatePath } from "next/cache";
 import type { AnställdInput, FormActionState, Företagsprofil } from "../types/types";
@@ -79,10 +79,10 @@ export async function sparaNyAnstalldFormAction(
       adress: sanitizeInput((formData.get("adress") as string) || "", 200),
       postnummer: sanitizeInput((formData.get("postnummer") as string) || "", 10),
       ort: sanitizeInput((formData.get("ort") as string) || "", 100),
-      startdatum: (formData.get("startdatum") as string) || dateTillÅÅÅÅMMDD(new Date()),
+      startdatum: (formData.get("startdatum") as string) || dateToYyyyMmDd(new Date()),
       slutdatum:
         (formData.get("slutdatum") as string) ||
-        dateTillÅÅÅÅMMDD(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
+        dateToYyyyMmDd(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
       anställningstyp: sanitizeInput((formData.get("anställningstyp") as string) || "", 50),
       löneperiod: sanitizeInput((formData.get("löneperiod") as string) || "", 50),
       ersättningPer: sanitizeInput((formData.get("ersättningPer") as string) || "", 50),
