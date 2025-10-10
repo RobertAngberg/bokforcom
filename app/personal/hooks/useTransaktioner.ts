@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { hämtaSemesterTransaktioner } from "../actions/semesterActions";
+import { hamtaSemesterTransaktioner } from "../actions/semesterActions";
 import type { Transaktion } from "../types/types";
 
 export const useTransaktioner = (anställdId?: number) => {
@@ -24,7 +24,7 @@ export const useTransaktioner = (anställdId?: number) => {
     setError(null);
 
     try {
-      const data = await hämtaSemesterTransaktioner(anställdId);
+      const data = await hamtaSemesterTransaktioner(anställdId);
       setTransaktioner(data);
     } catch (err) {
       console.error("Fel vid hämtning av transaktioner:", err);
