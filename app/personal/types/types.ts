@@ -1,25 +1,3 @@
-// === SEMESTER TYPES ===
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: string; // Uppdaterat för Better Auth UUID
-}
-
-export interface SemesterSummary {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-}
-
 // === EXTRARAD TYPES ===
 export interface ExtraradData {
   id?: number;
@@ -128,32 +106,6 @@ export interface Lönekörning {
   aktivt_steg?: number;
 }
 
-export interface LönespecifikationMedLönekörning {
-  id: number;
-  anställd_id: number;
-  grundlön: number;
-  bruttolön: number;
-  skatt: number;
-  sociala_avgifter: number;
-  nettolön: number;
-  skapad: Date;
-  uppdaterad: Date;
-  skapad_av: string; // Better Auth UUID
-  utbetalningsdatum: Date;
-  status: string;
-  bankgiro_exporterad: boolean;
-  bankgiro_exporterad_datum?: Date;
-  mailad: boolean;
-  mailad_datum?: Date;
-  bokförd: boolean;
-  bokförd_datum?: Date;
-  agi_genererad: boolean;
-  agi_genererad_datum?: Date;
-  skatter_bokförda: boolean;
-  skatter_bokförda_datum?: Date;
-  lönekorning_id?: number;
-}
-
 export type AnställdData = {
   id: number; // Gör required för kompatibilitet med AnställdListItem
   namn: string; // Gör required för kompatibilitet med AnställdListItem
@@ -238,60 +190,8 @@ export interface AnställdListItem {
   växaStöd?: boolean;
 }
 
-export interface AnställdaRadProps {
-  anställd: AnställdListItem;
-}
-
 export interface PersonalContentProps {
   initialAnställda: AnställdData[];
-}
-
-export interface UtlaggBokforModalProps {
-  utlägg: UtläggData;
-  previewRows: UtlaggBokföringsRad[];
-  onClose: () => void;
-  onBokför: () => void;
-}
-
-export interface NyAnställdFormular {
-  förnamn: string;
-  efternamn: string;
-  personnummer: string;
-  jobbtitel: string;
-  clearingnummer: string;
-  bankkonto: string;
-  mail: string;
-  adress: string;
-  postnummer: string;
-  ort: string;
-  startdatum: Date;
-  slutdatum: Date;
-  anställningstyp: string;
-  löneperiod: string;
-  ersättningPer: string;
-  kompensation: string;
-  arbetsvecka: string;
-  arbetsbelastning: string;
-  deltidProcent: string;
-  tjänsteställeAdress: string;
-  tjänsteställeOrt: string;
-  skattetabell: string;
-  skattekolumn: string;
-  växaStöd: boolean;
-}
-
-export interface NyAnstalldHandlers {
-  döljNyAnställd: () => void;
-  hanteraNyAnställdSparad: () => Promise<void>;
-}
-
-export interface NyAnstalldProps {
-  handlers: NyAnstalldHandlers;
-}
-
-export interface UseNyAnstalldOptions {
-  onSaved?: () => void | Promise<void>;
-  onCancel?: () => void | Promise<void>;
 }
 
 export interface UtlaggBokföringsRad {
@@ -299,90 +199,6 @@ export interface UtlaggBokföringsRad {
   beskrivning: string;
   debet: number;
   kredit: number;
-}
-
-export interface UtläggBokföringModalState {
-  isOpen: boolean;
-  utlägg: UtläggData | null;
-  previewRows: UtlaggBokföringsRad[];
-  loading: boolean;
-}
-
-export interface PersonalStoreState {
-  anställda: AnställdListItem[];
-  valdAnställd: AnställdData | null;
-  anställdaLoading: boolean;
-  anställdLoading: boolean;
-  anställdLoadingId: number | null;
-  anställdaError: string | null;
-  nyAnställdFormulär: NyAnställdFormular;
-  nyAnställdLoading: boolean;
-  visaNyAnställdFormulär: boolean;
-  utlägg: UtläggData[];
-  utläggLoading: boolean;
-  utläggBokföringModal: UtläggBokföringModalState;
-  utbetalningsdatum?: Date | null;
-  // Lönekörning / Lönespec slice
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  lönespecar: Record<string | number, Lönespec>;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | number | null;
-  förhandsgranskaData: Record<string, unknown>;
-  agiDebugData: Record<string, unknown>;
-  visaAGIDebug: boolean;
-  // Actions
-  setAnställda: (anställda: AnställdListItem[]) => void;
-  setValdAnställd: (anställd: AnställdData | null) => void;
-  setAnställdaLoading: (loading: boolean) => void;
-  setAnställdLoading: (loading: boolean) => void;
-  setAnställdLoadingId: (id: number | null) => void;
-  setAnställdaError: (error: string | null) => void;
-  addAnställd: (anställd: AnställdListItem) => void;
-  removeAnställd: (id: number) => void;
-  updateAnställd: (id: number, updatedData: Partial<AnställdListItem>) => void;
-  setNyAnställdFormulär: (formulär: NyAnställdFormular) => void;
-  updateNyAnställdFormulär: (updates: Partial<NyAnställdFormular>) => void;
-  handleSanitizedChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  resetNyAnställdFormulär: () => void;
-  setNyAnställdLoading: (loading: boolean) => void;
-  setVisaNyAnställdFormulär: (visa: boolean) => void;
-  showToast: (message: string, type?: "success" | "error" | "info") => void;
-  hideToast: () => void;
-  setUtlägg: (utlägg: UtläggData[]) => void;
-  setUtläggLoading: (loading: boolean) => void;
-  openUtläggBokföringModal: (utlägg: UtläggData, previewRows: UtlaggBokföringsRad[]) => void;
-  closeUtläggBokföringModal: () => void;
-  setUtläggBokföringLoading: (loading: boolean) => void;
-  setLaddaLönespecar: (loading: boolean) => void;
-  setLöneperiod: (period: { månad: number; år: number } | null) => void;
-  setLönespecar: (map: Record<string | number, Lönespec>) => void;
-  setSparar: (id: string | number, value: boolean) => void;
-  setTaBort: (id: string | number, value: boolean) => void;
-  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
-  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
-  openFörhandsgranskning: (anställd: AnställdListItem) => void;
-  closeFörhandsgranskning: () => void;
-  setAgiDebugData: (data: Record<string, unknown>) => void;
-  openAGIDebug: (data?: Record<string, unknown>) => void;
-  closeAGIDebug: () => void;
-  clearToast: () => void;
-  generateAGI: (args: Record<string, unknown>) => Promise<void>;
-  setUtbetalningsdatum?: (datum: Date | null) => void;
-  initStore: (data: {
-    anställda?: AnställdListItem[];
-    valdAnställd?: AnställdData | null;
-    utlägg?: UtläggData[];
-    utbetalningsdatum?: Date | null;
-  }) => void;
-}
-
-export interface StoreInitProps {
-  anställda?: AnställdListItem[];
-  valdAnställd?: AnställdData | null;
-  utlägg?: UtläggData[];
-  utbetalningsdatum?: Date | null;
 }
 
 export interface BokföringsPost {
@@ -402,11 +218,6 @@ export interface BokförLöneUtbetalningData {
   utbetalningsdatum: string;
   kommentar?: string;
   bokföringsPoster?: BokföringsPost[];
-}
-
-export interface PersonalinformationProps {
-  anställd?: AnställdListItem;
-  onRedigera?: () => void;
 }
 
 export interface AnställningstypProps {
@@ -505,12 +316,6 @@ export interface EditData {
 // ===============================
 // Lönekörning: komponent-props
 // ===============================
-export interface AGIDebugModalProps {
-  visaDebug: boolean;
-  setVisaDebug: (show: boolean) => void;
-  agiDebugData: Record<string, unknown>;
-}
-
 export interface AGIGeneratorProps {
   valdaSpecar: Lönespec[];
   anstallda: AnställdListItem[];
@@ -531,39 +336,6 @@ export interface BankgiroExportProps {
   onExportComplete?: () => void; // Callback när export är klar
   showButton?: boolean; // Om knappen ska visas
   direktNedladdning?: boolean; // Om nedladdning ska ske direkt
-}
-
-export interface BokförProps {
-  anställda: AnställdListItem[];
-  utbetalningsdatum?: Date | null;
-  lönespecar: Record<string, Lönespec>;
-}
-
-export interface LöneKnapparProps {
-  lönespec: Lönespec;
-  anställd: AnställdListItem;
-  företagsprofil: Företagsprofil;
-  extrarader: ExtraradData[];
-  beräknadeVärden: BeräknadeVärden;
-  onForhandsgranskning: (id: string) => void;
-  onTaBortLönespec: () => void;
-  taBortLoading: boolean;
-}
-
-export interface LöneBatchKnapparProps {
-  lönespecar: Lönespec[];
-  anställda: AnställdListItem[];
-  företagsprofil: Företagsprofil;
-  extrarader: Record<string, ExtraradData[]>[];
-  beräknadeVärden: Record<string, BeräknadeVärden>;
-  onMaila: () => void;
-  onBankgiroClick: () => void;
-  onBokförClick: () => void;
-}
-
-export interface LönedatumProps {
-  utbetalningsdatum: Date | null;
-  setUtbetalningsdatum: (date: Date | null) => void;
 }
 
 export interface LonekorningListaProps {
@@ -592,19 +364,6 @@ export interface LonespecListaProps {
   onRefreshData?: () => Promise<void>;
   period?: string;
   onLönekörningUppdaterad?: (uppdateradLönekörning: Lönekörning) => void;
-}
-
-export interface LonespecManagerProps {
-  valdaSpecar: Lönespec[];
-  setValdaSpecar: (value: string | number[] | ((prev: Lönespec[]) => Lönespec[])) => void;
-  specarPerDatum: Record<string, Lönespec[]>;
-  setSpecarPerDatum: (
-    value: string | number | ((prev: Record<string, Lönespec[]>) => Record<string, Lönespec[]>)
-  ) => void;
-  datumLista: string[];
-  setDatumLista: (value: string[] | ((prev: string[]) => string[])) => void;
-  utbetalningsdatum: string | null;
-  setUtbetalningsdatum: (value: string | null) => void;
 }
 
 export interface NyLonekorningModalProps {
@@ -646,21 +405,6 @@ export interface SkatteBokforingModalProps {
   onHämtaBankgiro?: () => void;
 }
 
-export interface SkatteManagerProps {
-  valdaSpecar: Lönespec[];
-  beräknadeVärden: Record<string, BeräknadeVärden>;
-  skatteDatum: Date | null;
-  setSkatteBokförPågår: (loading: boolean) => void;
-  setSkatteModalOpen: (open: boolean) => void;
-  bokforLoneskatter: (data: Record<string, unknown>) => Promise<Record<string, unknown>>;
-  onSkatteComplete?: () => void;
-}
-
-export interface PersonalAction {
-  type: string;
-  payload?: Record<string, unknown>;
-}
-
 // ===========================================
 // HOOK TYPES - Migrerade från individuella hooks
 // ===========================================
@@ -670,26 +414,6 @@ export interface PersonalAction {
 // useUtlagg types
 
 // useUtlagg types
-export type UtläggBokföringModal = {
-  isOpen: boolean;
-  utlägg: UtläggData | null;
-  previewRows: UtlaggBokföringsRad[];
-  loading: boolean;
-};
-
-// useSemester types
-export type SemesterBokförModal = {
-  isOpen: boolean;
-  loading: boolean;
-};
-
-export type SemesterData = {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-};
-
 // useAnstallda types
 export type PersonalEditData = {
   förnamn: string;
@@ -736,162 +460,6 @@ export interface Lönespec {
   bankgiro_exporterad?: boolean;
   mailad?: boolean;
   bokförd?: boolean;
-}
-
-// useLonekorning types
-export type ToastType = "success" | "error" | "info";
-
-export type GenerateAGIArgs = {
-  valdaSpecar: Lönespec[];
-  anstallda: AnställdListItem[];
-  beräknadeVärden: Record<string, BeräknadeVärden>;
-  extrarader: Record<string, ExtraradData[]>;
-  utbetalningsdatum: string | null;
-  session: { userId: string };
-  hamtaForetagsprofil: (userId: string) => Promise<Record<string, unknown>>;
-  onAGIComplete?: () => void;
-};
-
-export type UseLonekorningInit = {
-  anställda?: AnställdListItem[];
-  utbetalningsdatum?: Date | null;
-  onLonespecarChange?: (specar: Record<string, Lönespec>) => void;
-};
-
-export interface LonekorningState {
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | null;
-  förhandsgranskaData: Record<string, unknown>;
-  toast: { type: ToastType; message: string } | null;
-  utbetalningsdatum: Date | null;
-  anställda: AnställdListItem[];
-  anställdaLoading: boolean;
-  harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => Lönespec | undefined;
-}
-
-export interface LonekorningHandlers {
-  setUtbetalningsdatum: (d: Date | null) => void;
-  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
-  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
-  openFörhandsgranskning: (anställd: AnställdListItem) => void;
-  closeFörhandsgranskning: () => void;
-  clearToast: () => void;
-  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
-}
-
-export interface UseLonekorningReturn {
-  state: LonekorningState;
-  handlers: LonekorningHandlers;
-  // Deprecated: direkt-access (tillfällig bakåtkompabilitet)
-  laddaLönespecar: boolean;
-  löneperiod: { månad: number; år: number } | null;
-  sparar: Record<string | number, boolean>;
-  taBort: Record<string | number, boolean>;
-  förhandsgranskaId: string | null;
-  förhandsgranskaData: Record<string, unknown>;
-  toast: { type: ToastType; message: string } | null;
-  utbetalningsdatum: Date | null;
-  setUtbetalningsdatum: (d: Date | null) => void;
-  anställda: AnställdListItem[];
-  anställdaLoading: boolean;
-  harLönespec: (anställdId: string | number) => boolean;
-  getLönespec: (anställdId: string | number) => Lönespec | undefined;
-  skapaNyLönespec: (anställd: AnställdListItem) => Promise<void>;
-  taBortLönespec: (anställd: AnställdListItem) => Promise<void>;
-  openFörhandsgranskning: (anställd: AnställdListItem) => void;
-  closeFörhandsgranskning: () => void;
-  clearToast: () => void;
-  generateAGI: (args: GenerateAGIArgs) => Promise<void>;
-}
-
-// Semester types (moved from semesterTypes.ts)
-export interface SemesterSummary {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-}
-
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: string; // Better Auth UUID (duplicate interface)
-}
-
-export interface InformationState {
-  valdAnställd: AnställdData | null;
-  personalIsEditing: boolean;
-  personalHasChanges: boolean;
-  personalErrorMessage: string | null;
-  personalEditData: PersonalEditData;
-}
-
-export interface InformationHandlers {
-  personalOnEdit: () => void;
-  personalOnSave: () => void;
-  personalOnCancel: () => void;
-  personalOnChange: (name: string, value: string) => void;
-}
-
-export interface AnställdaListaState {
-  anställda: AnställdListItem[];
-}
-
-export interface AnställdaListaHandlers {
-  hanteraAnställdKlick: (id: number) => void;
-  taBortAnställdFrånLista: (id: number) => void;
-  [key: string]: unknown; // Additional flexible handlers
-}
-
-export interface AnställdaListaProps {
-  state: AnställdaListaState;
-  handlers: AnställdaListaHandlers;
-}
-
-export interface AnställdaRadPropsWithHandlers extends AnställdaRadProps {
-  handlers: AnställdaListaHandlers;
-}
-
-export interface InformationProps {
-  state: InformationState;
-  handlers: InformationHandlers;
-}
-
-// Lonespecar interfaces
-export interface LonespecContextType {
-  lönespecar: Lönespec[];
-  setLonespecar: (lönespecar: Lönespec[]) => void;
-  extrarader: Record<string, ExtraradData[]>;
-  setExtrarader: (id: string, extrarader: ExtraradData[]) => void;
-  beräknadeVärden: Record<string, BeräknadeVärden>;
-  setBeräknadeVärden: (id: string, värden: BeräknadeVärden) => void;
-}
-
-export interface ExtraRad {
-  id: string;
-  typ: string;
-  antal: number;
-  belopp: number;
-  tillagd: boolean;
-}
-
-export interface SimpleBokföringsPost {
-  konto: string;
-  kontoNamn: string;
-  debet: number;
-  kredit: number;
 }
 
 export interface LonespecListProps {
@@ -952,20 +520,6 @@ export interface ExtraraderGridProps {
   toggleDropdown: (key: string) => void;
   toggleCheckbox: (id: string, label: string) => void;
   onRemoveRow?: (id: string) => void;
-}
-
-export interface ExtraraderField {
-  label: string;
-  name: string;
-  type: "text" | "number" | "select";
-  value: string | null | undefined;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  required?: boolean;
-  placeholder?: string;
-  step?: string;
-  min?: string;
-  hidden?: boolean;
-  options?: string[];
 }
 
 export interface ExtraraderModalProps {
@@ -1124,16 +678,6 @@ export interface ModernSemesterProps {
     tjänstegrad?: number;
   };
   userId: number;
-}
-
-export interface SemesterdataProps {
-  editData?: Partial<AnställdListItem>;
-  handleChange?: (name: string, value: string | number) => void;
-  isEditing?: boolean;
-}
-
-export interface TransaktionerProps {
-  anställd?: AnställdListItem;
 }
 
 export interface Transaktion {
@@ -1309,29 +853,6 @@ export interface RadKonfiguration {
   };
 }
 
-export type RadKonfigurationType = RadKonfiguration;
-
-export interface SemesterRecord {
-  id?: number;
-  anställd_id: number;
-  datum: string;
-  typ: "Förskott" | "Sparade" | "Obetald" | "Betalda" | "Intjänat";
-  antal: number;
-  från_datum?: string;
-  till_datum?: string;
-  beskrivning?: string;
-  lönespecifikation_id?: number;
-  bokfört: boolean;
-  skapad_av: string; // Better Auth UUID (third duplicate)
-}
-
-export interface SemesterSummary {
-  betalda_dagar: number;
-  sparade_dagar: number;
-  skuld: number;
-  komp_dagar: number;
-}
-
 export interface BokföringsRad {
   konto: string;
   kontoNamn: string;
@@ -1346,27 +867,6 @@ export interface BokföringsSummering {
   totalDebet: number;
   totalKredit: number;
   balanserar: boolean;
-}
-
-export interface UtilsSemesterBokföring {
-  anställdId: number;
-  anställdNamn: string;
-  typ: "uttag" | "avsättning" | "avstämning" | "uppsägning";
-  datum: string;
-  dagar: number;
-  månadslön: number;
-  kommentar?: string;
-}
-
-export interface LöneBeräkning {
-  grundlön: number;
-  tillägg: number;
-  avdrag: number;
-  bruttolön: number;
-  socialaAvgifter: number;
-  skatt: number;
-  nettolön: number;
-  totalLönekostnad: number;
 }
 
 export interface LöneKontrakt {
@@ -1385,28 +885,6 @@ export interface DagAvdrag {
 }
 
 export type BilTyp = "bensinDiesel" | "el";
-
-export interface UtilsExtrarad {
-  kolumn1: string;
-  kolumn2: string;
-  kolumn3: string;
-  kolumn4?: string;
-}
-
-export interface SemesterIntjäning {
-  intjänandeår: string;
-  intjänadeDagar: number;
-  intjänadPengaTillägg: number;
-  återstående: number;
-  uttagna: number;
-}
-
-export interface SemesterBeräkning {
-  månadslön: number;
-  anställningsdatum: Date;
-  heltid: boolean;
-  tjänstegrad: number;
-}
 
 // Lonekorning component types
 export interface LonekorningProps {
@@ -1531,12 +1009,6 @@ export interface AnställdFlikProps {
 }
 
 // NyAnstalldModal.tsx
-export interface NyAnstalldModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  handlers: NyAnstalldProps["handlers"];
-}
-
 // ExtraraderModal.tsx
 export interface FormField {
   name: string;
@@ -1582,7 +1054,7 @@ export interface MappedExtrarad {
 }
 
 // useWizard.ts
-export type WizardStepStatus = "disabled" | "available" | "completed";
+type WizardStepStatus = "disabled" | "available" | "completed";
 
 export interface WizardStep {
   id: string;
@@ -1685,21 +1157,6 @@ export interface UseBankgiroExportProps {
   lönespecar: Record<string | number, Lönespec>;
   onExportComplete?: () => void;
   onClose?: () => void;
-}
-
-// useLonespecar.ts
-export interface FormField {
-  name: string;
-  value: string | null | undefined;
-  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  hidden?: boolean;
-  type?: string;
-  label?: string;
-  required?: boolean;
-  options?: string[];
-  placeholder?: string;
-  step?: string;
-  min?: string;
 }
 
 export interface UseLonespecProps {
