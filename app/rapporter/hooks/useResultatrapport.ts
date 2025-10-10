@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { exportResultatrapportPDF, exportResultatrapportCSV } from "../../_utils/fileUtils";
-import { hamtaResultatrapport, fetchFöretagsprofil } from "../actions/resultatrapportActions";
+import { hamtaResultatrapport, fetchForetagsprofil } from "../actions/resultatrapportActions";
 import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/types";
 
 export const useResultatrapport = () => {
@@ -32,7 +32,7 @@ export const useResultatrapport = () => {
         setLoading(true);
         const [resultData, profilData] = await Promise.all([
           hamtaResultatrapport(), // TODO: Uppdatera för att ta selectedYear som parameter
-          fetchFöretagsprofil(),
+          fetchForetagsprofil(),
         ]);
 
         // Typ-konvertering från actions till ResultatData

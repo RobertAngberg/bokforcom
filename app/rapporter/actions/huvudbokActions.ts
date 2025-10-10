@@ -99,7 +99,7 @@ export async function fetchHuvudbok() {
   }
 }
 
-export async function fetchFöretagsprofil(userId?: string) {
+export async function fetchForetagsprofil(userId?: string) {
   const { userId: sessionUserId } = await ensureSession();
 
   // Använd sessionUserId om inget userId skickades
@@ -121,7 +121,7 @@ export async function fetchFöretagsprofil(userId?: string) {
     client.release();
     return res.rows[0] || null;
   } catch (error) {
-    console.error("❌ fetchFöretagsprofil error:", error);
+    console.error("❌ fetchForetagsprofil error:", error);
     return null;
   }
 }

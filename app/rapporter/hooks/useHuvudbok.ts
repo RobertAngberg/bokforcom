@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchHuvudbokMedAllaTransaktioner, fetchFöretagsprofil } from "../actions/huvudbokActions";
+import { fetchHuvudbokMedAllaTransaktioner, fetchForetagsprofil } from "../actions/huvudbokActions";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
 import { HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
 
@@ -32,7 +32,7 @@ export function useHuvudbok() {
 
         // Försök ladda företagsprofil
         try {
-          const profileResult = await fetchFöretagsprofil();
+          const profileResult = await fetchForetagsprofil();
           if (profileResult) {
             setFöretagsnamn(profileResult.företagsnamn || "");
             setOrganisationsnummer(profileResult.organisationsnummer || "");

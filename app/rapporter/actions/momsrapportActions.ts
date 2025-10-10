@@ -138,7 +138,7 @@ export async function getMomsrapport(year: string, kvartal?: string) {
     .sort((a, b) => Number(a.fält) - Number(b.fält));
 }
 
-export async function fetchFöretagsprofil() {
+export async function fetchForetagsprofil() {
   const { userId } = await ensureSession();
 
   try {
@@ -153,7 +153,7 @@ export async function fetchFöretagsprofil() {
     client.release();
     return res.rows[0] || null;
   } catch (error) {
-    console.error("❌ fetchFöretagsprofil error:", error);
+    console.error("❌ fetchForetagsprofil error:", error);
     return null;
   }
 }

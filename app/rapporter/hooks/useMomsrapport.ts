@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
-import { getMomsrapport, fetchFöretagsprofil } from "../actions/momsrapportActions";
+import { getMomsrapport, fetchForetagsprofil } from "../actions/momsrapportActions";
 import { MomsRad } from "../types/types";
 
 export const useMomsrapport = () => {
@@ -31,7 +31,7 @@ export const useMomsrapport = () => {
 
         const [momsData, profilData] = await Promise.all([
           getMomsrapport(år),
-          fetchFöretagsprofil(),
+          fetchForetagsprofil(),
         ]);
 
         // Validera data

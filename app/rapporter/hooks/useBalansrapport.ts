@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { fetchBalansData, fetchFöretagsprofil } from "../actions/balansrapportActions";
+import { fetchBalansData, fetchForetagsprofil } from "../actions/balansrapportActions";
 import {
   BalansData,
   Konto,
@@ -41,7 +41,7 @@ export function useBalansrapport() {
         setExportMessage(null); // Clear export messages on new load
         const [balansData, profilData] = await Promise.all([
           fetchBalansData(selectedYear, selectedMonth),
-          fetchFöretagsprofil(),
+          fetchForetagsprofil(),
         ]);
 
         setInitialData(balansData);
