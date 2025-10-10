@@ -12,9 +12,9 @@ import { showToast } from "../../_components/Toast";
 import { validateEmail, sanitizeInput } from "../../_utils/validationUtils";
 import { hamtaTransaktionsposter } from "../actions/alternativActions";
 import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
-import { hämtaSparadeFakturor } from "../actions/fakturaActions";
-import { hämtaSparadeKunder } from "../actions/kundActions";
-import { hämtaSparadeArtiklar } from "../actions/artikelActions";
+import { hamtaSparadeFakturor } from "../actions/fakturaActions";
+import { hamtaSparadeKunder } from "../actions/kundActions";
+import { hamtaSparadeArtiklar } from "../actions/artikelActions";
 import {
   betalaOchBokförLeverantörsfaktura,
   taBortLeverantörsfaktura,
@@ -442,9 +442,9 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
     try {
       setLoading(true);
       const [kunder, fakturor, artiklar] = await Promise.all([
-        hämtaSparadeKunder(),
-        hämtaSparadeFakturor(),
-        hämtaSparadeArtiklar(),
+        hamtaSparadeKunder(),
+        hamtaSparadeFakturor(),
+        hamtaSparadeArtiklar(),
       ]);
       setData({
         kunder,
@@ -744,7 +744,7 @@ export function useVerifikatModal({
   const [poster, setPoster] = useState<TransaktionsPost[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const hämtaPoster = useCallback(async () => {
+  const hamtaPoster = useCallback(async () => {
     if (!transaktionId) return;
 
     setLoading(true);
@@ -765,9 +765,9 @@ export function useVerifikatModal({
   // Data fetching effect
   useEffect(() => {
     if (isOpen && transaktionId) {
-      hämtaPoster();
+      hamtaPoster();
     }
-  }, [isOpen, transaktionId, hämtaPoster]);
+  }, [isOpen, transaktionId, hamtaPoster]);
 
   // Column definitions for table (without JSX render functions)
   const columns: ColumnDefinition<TransaktionsPost>[] = [
@@ -808,6 +808,6 @@ export function useVerifikatModal({
     headerTitle,
 
     // Actions
-    hämtaPoster,
+    hamtaPoster,
   };
 }

@@ -1,15 +1,15 @@
 import { FakturaProvider } from "./context/FakturaContextProvider";
 import FakturaNavigation from "./components/FakturaNavigation";
 import MainLayout from "../_components/MainLayout";
-import { hämtaFöretagsprofil } from "./actions/foretagActions";
-import { hämtaSparadeKunder } from "./actions/kundActions";
-import { hämtaSparadeArtiklar } from "./actions/artikelActions";
+import { hamtaForetagsprofil } from "./actions/foretagActions";
+import { hamtaSparadeKunder } from "./actions/kundActions";
+import { hamtaSparadeArtiklar } from "./actions/artikelActions";
 
 export default async function FakturaPage() {
   const [foretagsprofil, kunder, artiklar] = await Promise.all([
-    hämtaFöretagsprofil(),
-    hämtaSparadeKunder(),
-    hämtaSparadeArtiklar(),
+    hamtaForetagsprofil(),
+    hamtaSparadeKunder(),
+    hamtaSparadeArtiklar(),
   ]);
 
   const initialData = {

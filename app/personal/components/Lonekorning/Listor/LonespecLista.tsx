@@ -5,7 +5,7 @@ import Wizard from "../Wizard/Wizard";
 import { LonespecListaProps } from "../../../types/types";
 import { useLonekorning } from "../../../hooks/useLonekorning";
 import { useWizard } from "../../../hooks/useWizard";
-import { markeraStegFärdigt } from "../../../actions/lonekorningActions";
+import { markeraStegFardigt } from "../../../actions/lonekorningActions";
 
 export default function LonespecLista({
   valdaSpecar,
@@ -44,7 +44,7 @@ export default function LonespecLista({
   // Hantera "Markera färdig"-klick
   const handleMarkeraFärdig = async (lönekörningId: number) => {
     try {
-      const result = await markeraStegFärdigt(lönekörningId);
+      const result = await markeraStegFardigt(lönekörningId);
       if (!result.success) {
         console.error("Kunde inte markera steg som färdigt:", result.error);
       } else if (result.data && onLönekörningUppdaterad) {

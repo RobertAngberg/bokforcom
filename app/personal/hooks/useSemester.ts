@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  hämtaSemesterTransaktioner,
+  hamtaSemesterTransaktioner,
   sparaSemesterTransaktion,
-  bokförSemester,
+  bokforSemester,
 } from "../actions/semesterActions";
 import { beräknaSemesterpenning } from "../utils/semesterBerakningar";
 import type {
@@ -37,10 +37,10 @@ export function useSemester({
   const [bokforRows, setBokforRows] = useState<BokföringsRad[]>([]);
 
   // Hämta data vid laddning
-  const hämtaData = useCallback(async () => {
+  const hamtaData = useCallback(async () => {
     setLoading(true);
     try {
-      const transaktioner = await hämtaSemesterTransaktioner(anställdId);
+      const transaktioner = await hamtaSemesterTransaktioner(anställdId);
       // Förväntar oss EN rad per anställd
       const t = transaktioner[0] || {};
       const newSummary = {
@@ -62,7 +62,7 @@ export function useSemester({
 
   // Ladda data vid ändring av anställdId
   useEffect(() => {
-    hämtaData();
+    hamtaData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anställdId]);
 
@@ -223,13 +223,13 @@ export function useSemester({
     async (kommentar: string) => {
       setLoading(true);
       try {
-        // Mappa om bokforRows till rätt format för bokförSemester
+        // Mappa om bokforRows till rätt format för bokforSemester
         const rader = bokforRows.map((row) => ({
           kontobeskrivning: `${row.konto} ${row.kontoNamn}`,
           belopp: row.debet !== 0 ? row.debet : -row.kredit, // Debet positivt, Kredit negativt
         }));
 
-        const res = await bokförSemester({
+        const res = await bokforSemester({
           userId,
           rader,
           kommentar,
@@ -268,7 +268,7 @@ export function useSemester({
     bokforRows,
 
     // Actions
-    hämtaData,
+    hamtaData,
     handleEditField,
     handleSaveEdit,
     handleCancelEdit,

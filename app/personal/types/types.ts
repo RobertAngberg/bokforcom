@@ -1629,7 +1629,7 @@ export interface UseSemesterReturn {
   bokforRows: BokföringsRad[];
 
   // Actions
-  hämtaData: () => Promise<void>;
+  hamtaData: () => Promise<void>;
   handleEditField: (fieldName: SemesterBoxField, currentValue: number) => void;
   handleSaveEdit: () => Promise<void>;
   handleCancelEdit: () => void;

@@ -424,7 +424,7 @@ export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
 
     return fakturorMedTotaler;
   } catch (err) {
-    console.error("❌ hämtaSparadeFakturor error:", err);
+    console.error("❌ hamtaSparadeFakturor error:", err);
     return [];
   } finally {
     client.release();

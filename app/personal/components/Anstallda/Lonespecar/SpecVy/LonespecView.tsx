@@ -10,7 +10,7 @@ import { showToast } from "../../../../../_components/Toast";
 import { useState, useMemo } from "react";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
 import { useLonespec } from "../../../../hooks/useLonespecar";
-import { uppdateraLönespec } from "../../../../actions/lonespecarActions";
+import { uppdateraLonespec } from "../../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
 import type {
   LönespecViewProps,
@@ -142,7 +142,7 @@ export default function LönespecView({
 
     setSparar(true);
     try {
-      const result = await uppdateraLönespec({
+      const result = await uppdateraLonespec({
         lönespecId: lönespec.id,
         bruttolön: Number(värdentAttSpara.bruttolön) || undefined,
         skatt: Number(värdentAttSpara.skatt) || undefined,

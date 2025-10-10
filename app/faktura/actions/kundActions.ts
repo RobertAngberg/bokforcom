@@ -198,7 +198,7 @@ export async function deleteKund(id: number) {
   }
 }
 
-export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
+export async function hamtaSparadeKunder(): Promise<KundListItem[]> {
   const { userId } = await ensureSession();
 
   try {
@@ -223,7 +223,7 @@ export async function hämtaSparadeKunder(): Promise<KundListItem[]> {
 
     return res.rows;
   } catch (err) {
-    console.error("❌ hämtaSparadeKunder error:", err);
+    console.error("❌ hamtaSparadeKunder error:", err);
     return [];
   }
 }

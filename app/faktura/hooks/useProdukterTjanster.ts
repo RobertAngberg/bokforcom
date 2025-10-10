@@ -13,7 +13,7 @@ import {
   useFakturaLifecycle,
 } from "../context/FakturaFormContext";
 import {
-  hämtaSparadeArtiklar,
+  hamtaSparadeArtiklar,
   deleteFavoritArtikel,
   sparaFavoritArtikel,
 } from "../actions/artikelActions";
@@ -161,7 +161,7 @@ export function useProdukterTjanster() {
 
   const laddaSparadeArtiklar = useCallback(async () => {
     try {
-      const artiklar = await hämtaSparadeArtiklar();
+      const artiklar = await hamtaSparadeArtiklar();
       setFavoritArtiklar(artiklar || []);
     } catch (error) {
       console.error("Fel vid laddning av artiklar:", error);

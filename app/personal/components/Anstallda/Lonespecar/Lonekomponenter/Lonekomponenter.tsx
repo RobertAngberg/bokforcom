@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { hämtaExtrarader, taBortExtrarad } from "../../../../actions/lonespecarActions";
+import { hamtaExtrarader, taBortExtrarad } from "../../../../actions/lonespecarActions";
 import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../../../utils/loneberakningar";
@@ -27,7 +27,7 @@ export default function Lonekomponenter({
     if (lönespecNumeriskId === undefined || currentExtrarader) return;
 
     let isMounted = true;
-    hämtaExtrarader(lönespecNumeriskId).then((rader) => {
+    hamtaExtrarader(lönespecNumeriskId).then((rader) => {
       if (isMounted) {
         setExtrarader(lönespecNumeriskId.toString(), rader);
       }
@@ -61,7 +61,7 @@ export default function Lonekomponenter({
         onTaBortExtrarad={async (extraradId) => {
           await taBortExtrarad(extraradId);
           if (lönespecNumeriskId === undefined || !lönespecKey) return;
-          hämtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
+          hamtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
         }}
       />
 
@@ -70,7 +70,7 @@ export default function Lonekomponenter({
           lönespecId={lönespec.id}
           onNyRad={async () => {
             if (lönespecNumeriskId === undefined || !lönespecKey) return;
-            hämtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
+            hamtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
           }}
           grundlön={grundlön}
           anstalldId={anstalldId}
