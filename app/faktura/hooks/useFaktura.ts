@@ -7,14 +7,14 @@ import { useSession } from "../../_lib/auth-client";
 import { useFakturaClient, useFakturaInitialData } from "../context/FakturaContextProvider";
 import { useProdukterTjanster } from "./useProdukterTjanster";
 import { useFakturaLifecycle } from "../context/FakturaFormContext";
-import { hämtaFakturaMedRader } from "../actions/fakturaActions";
+import { hamtaFakturaMedRader } from "../actions/fakturaActions";
 import {
-  hämtaFöretagsprofil,
-  sparaFöretagsprofil,
+  hamtaForetagsprofil,
+  sparaForetagsprofil as sparaForetagsprofilAction,
   uploadLogoAction,
 } from "../actions/foretagActions";
 import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
-import { hämtaSenasteBetalningsmetod } from "../actions/alternativActions";
+import { hamtaSenasteBetalningsmetod } from "../actions/alternativActions";
 import {
   sanitizeFormInput,
   validatePersonnummer,
@@ -172,7 +172,7 @@ export function useFaktura() {
       let senasteBetalning = { betalningsmetod: null, nummer: null };
 
       if (session?.user?.id) {
-        senasteBetalning = await hämtaSenasteBetalningsmetod(session.user.id);
+        senasteBetalning = await hamtaSenasteBetalningsmetod(session.user.id);
       }
 
       setFormData({
@@ -294,7 +294,7 @@ export function useFaktura() {
   const laddaFakturaData = useCallback(
     async (fakturaId: number): Promise<boolean> => {
       try {
-        const data = await hämtaFakturaMedRader(fakturaId);
+        const data = await hamtaFakturaMedRader(fakturaId);
 
         if (!data || !data.faktura) {
           showError("Kunde inte hämta faktura");
@@ -516,7 +516,7 @@ export function useFaktura() {
   // Samma guard-tanke: hämta och applicera bara första gången.
   const loadForetagsprofil = useCallback(async () => {
     try {
-      const data = await hämtaFöretagsprofil();
+      const data = await hamtaForetagsprofil();
       if (data) {
         const safeData = {
           företagsnamn: data.företagsnamn || "",
@@ -569,7 +569,7 @@ export function useFaktura() {
         logoWidth: formData.logoWidth,
       };
 
-      const result = await sparaFöretagsprofil(profilData);
+      const result = await sparaForetagsprofilAction(profilData);
       if (result.success) {
         showSuccess("Företagsprofil sparad");
       } else {

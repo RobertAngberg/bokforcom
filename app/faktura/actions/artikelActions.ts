@@ -210,7 +210,7 @@ const mapFavoritArtiklar = (rows: FavoritArtikelRow[]): FavoritArtikel[] =>
     } satisfies FavoritArtikel;
   });
 
-export async function hämtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
+export async function hamtaSparadeArtiklar(): Promise<FavoritArtikel[]> {
   const { userId } = await ensureSession();
 
   try {

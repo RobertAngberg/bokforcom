@@ -9,7 +9,7 @@ import type {
   UseUtlaggProps,
 } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
-import { hämtaUtlägg, taBortUtlägg } from "../actions/utlaggActions";
+import { hamtaUtlagg, taBortUtlagg } from "../actions/utlaggActions";
 import { showToast } from "../../_components/Toast";
 
 // Use the shared Utlägg interface from types
@@ -54,7 +54,7 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
   const laddaUtläggFörAnställd = useCallback(async (anställdId: number) => {
     setUtläggLoading(true);
     try {
-      const utläggData = await hämtaUtlägg(anställdId);
+      const utläggData = await hamtaUtlagg(anställdId);
       setUtlägg(utläggData || []);
     } catch (error) {
       console.error("Fel vid laddning av utlägg:", error);
@@ -114,7 +114,7 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
     setShowDeleteModal(false);
 
     try {
-      await taBortUtlägg(deleteUtläggId);
+      await taBortUtlagg(deleteUtläggId);
 
       // Uppdatera listan genom att ladda om utlägg för vald anställd
       if (anställdId) {

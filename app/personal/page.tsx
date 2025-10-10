@@ -1,9 +1,9 @@
 import MainLayout from "../_components/MainLayout";
 import Personal from "./components/Personal";
-import { hämtaPersonalInitialData } from "./actions/data";
+import { hamtaPersonalInitialData } from "./actions/data";
 
 export default async function PersonalPage() {
-  const initialData = await hämtaPersonalInitialData();
+  const initialData = await hamtaPersonalInitialData();
 
   return (
     <MainLayout>

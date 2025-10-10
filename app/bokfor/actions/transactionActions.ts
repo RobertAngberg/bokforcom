@@ -7,7 +7,7 @@ import { sanitizeInput } from "../../_utils/validationUtils";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
-export async function invalidateBokförCache() {
+export async function invalidateBokforCache() {
   revalidatePath("/historik");
   revalidatePath("/rapporter");
 }
@@ -215,7 +215,7 @@ export async function saveTransaction(formData: FormData) {
       );
     }
 
-    await invalidateBokförCache();
+    await invalidateBokforCache();
     return { success: true, id: transaktionsId, blobUrl };
   } catch (err) {
     console.error("❌ saveTransaction error:", err);
@@ -225,7 +225,7 @@ export async function saveTransaction(formData: FormData) {
   }
 }
 
-export async function bokförUtlägg(utläggId: number) {
+export async function bokforUtlagg(utläggId: number) {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();
@@ -280,7 +280,7 @@ export async function bokförUtlägg(utläggId: number) {
       utläggId,
     ]);
 
-    await invalidateBokförCache();
+    await invalidateBokforCache();
     return { success: true, transaktionsId };
   } catch (err) {
     console.error("❌ bokförUtlägg error:", err);

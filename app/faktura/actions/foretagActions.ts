@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import type { Företagsprofil } from "../types/types";
 
-export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
+export async function hamtaForetagsprofil(): Promise<Företagsprofil | null> {
   const { userId } = await ensureSession();
 
   try {
@@ -65,7 +65,7 @@ export async function hämtaFöretagsprofil(): Promise<Företagsprofil | null> {
   }
 }
 
-export async function sparaFöretagsprofil(data: Företagsprofil): Promise<{ success: boolean }> {
+export async function sparaForetagsprofil(data: Företagsprofil): Promise<{ success: boolean }> {
   const { userId } = await ensureSession();
 
   try {

@@ -6,7 +6,7 @@ import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { sanitizeFormInput } from "../../_utils/validationUtils";
 
-export async function uppdateraFöretagsprofilAdmin(
+export async function uppdateraForetagsprofilAdmin(
   payload: ForetagsProfil
 ): Promise<AktionsResultat<ForetagsProfil>> {
   try {
@@ -64,7 +64,7 @@ export async function uppdateraFöretagsprofilAdmin(
     revalidatePath("/installningar");
     return { success: true, data: updated || undefined };
   } catch (error) {
-    console.error("[uppdateraFöretagsprofilAdmin] Fel vid uppdatering", error);
+    console.error("[uppdateraForetagsprofilAdmin] Fel vid uppdatering", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }

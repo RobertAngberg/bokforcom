@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  hämtaLönespecifikationer,
-  skapaNyLönespec,
-  läggTillUtläggSomExtrarad,
+  hamtaLonespecifikationer,
+  skapaNyLonespec,
+  laggTillUtlaggSomExtrarad,
 } from "../actions/lonespecarActions";
-import { uppdateraUtläggStatus, hämtaUtlägg } from "../actions/utlaggActions";
-import { hämtaBetaldaSemesterdagar } from "../actions/semesterActions";
+import { uppdateraUtlaggStatus, hamtaUtlagg } from "../actions/utlaggActions";
+import { hamtaBetaldaSemesterdagar } from "../actions/semesterActions";
 import { showToast } from "../../_components/Toast";
 import type {
   Lönespec,
@@ -94,7 +94,7 @@ export function useLonespec({
           // Om utlägget är markerat som "Inkluderat" men inte finns i extrarader
           if (utlägg.status === "Inkluderat i lönespec" && !finnsIExtrarader) {
             // Återställ till "Väntande" i databasen
-            await uppdateraUtläggStatus(utlägg.id, "Väntande");
+            await uppdateraUtlaggStatus(utlägg.id, "Väntande");
             return { ...utlägg, status: "Väntande" };
           }
 
@@ -114,9 +114,9 @@ export function useLonespec({
   useEffect(() => {
     if (!enableUtlaggMode || !anställdId) return;
 
-    const hämtaAllaUtlägg = async () => {
+    const hamtaAllaUtlagg = async () => {
       try {
-        const allUtlägg = await hämtaUtlägg(anställdId);
+        const allUtlägg = await hamtaUtlagg(anställdId);
 
         // Kombinera lönespec-specifika utlägg med alla väntande utlägg
         const kombineradeUtlägg = [
@@ -132,7 +132,7 @@ export function useLonespec({
       }
     };
 
-    hämtaAllaUtlägg();
+    hamtaAllaUtlagg();
   }, [enableUtlaggMode, anställdId, lönespecUtlägg]);
 
   const handleLäggTillUtlägg = async () => {
@@ -153,9 +153,9 @@ export function useLonespec({
       const extraradResults: ExtraradResult[] = [];
       for (const utlägg of väntandeUtlägg) {
         // Enkel, tydlig funktion - spara resultatet
-        const result = await läggTillUtläggSomExtrarad(lönespecId, utlägg);
+        const result = await laggTillUtlaggSomExtrarad(lönespecId, utlägg);
         extraradResults.push(result);
-        await uppdateraUtläggStatus(utlägg.id, "Inkluderat i lönespec");
+        await uppdateraUtlaggStatus(utlägg.id, "Inkluderat i lönespec");
       }
       showToast(`${väntandeUtlägg.length} utlägg tillagda!`, "success");
 
@@ -178,8 +178,8 @@ export function useLonespec({
     try {
       setLoading(true);
       const [lönespecarData, utläggData] = await Promise.all([
-        hämtaLönespecifikationer(anställdId),
-        hämtaUtlägg(anställdId),
+        hamtaLonespecifikationer(anställdId),
+        hamtaUtlagg(anställdId),
       ]);
       setLonespecar(lönespecarData);
       setUtlägg(utläggData as Utlägg[]);
@@ -205,8 +205,8 @@ export function useLonespec({
       try {
         setLoading(true);
         const [lönespecarData, utläggData] = await Promise.all([
-          hämtaLönespecifikationer(anställdId),
-          hämtaUtlägg(anställdId),
+          hamtaLonespecifikationer(anställdId),
+          hamtaUtlagg(anställdId),
         ]);
         setLonespecar(lönespecarData);
         setUtlägg(utläggData as Utlägg[]);
@@ -231,7 +231,7 @@ export function useLonespec({
       extraraderModalTitle === "Betald semester" &&
       anställdId
     ) {
-      hämtaBetaldaSemesterdagar(anställdId).then(setBetaldaDagar);
+      hamtaBetaldaSemesterdagar(anställdId).then(setBetaldaDagar);
     }
   }, [enableExtraraderModal, extraraderModalOpen, extraraderModalTitle, anställdId]);
 
@@ -334,7 +334,7 @@ export function useLonespec({
     }
 
     try {
-      const res = await skapaNyLönespec({
+      const res = await skapaNyLonespec({
         anställd_id: parseInt(valdAnställd),
         utbetalningsdatum,
       });

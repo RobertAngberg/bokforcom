@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { hämtaAllaAnställda } from "../../personal/actions/anstalldaActions";
+import { hamtaAllaAnstallda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../actions/transactionActions";
 import { showToast } from "../../_components/Toast";
 import { Förval, Anstalld, UtlaggAnställd } from "../types/types";
@@ -138,7 +138,7 @@ export function useBokfor() {
   // Hämta anställda för utläggs-mode
   useEffect(() => {
     if (utlaggMode) {
-      hämtaAllaAnställda().then((res: Anstalld[]) => {
+      hamtaAllaAnstallda().then((res: Anstalld[]) => {
         setAnstallda(res);
         if (res.length === 1) setAnstalldId(res[0].id.toString());
       });

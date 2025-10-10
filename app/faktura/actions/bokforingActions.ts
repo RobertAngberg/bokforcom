@@ -11,7 +11,7 @@ import {
 } from "../../_utils/transactions";
 import { BokförFakturaData } from "../types/types";
 
-export async function hämtaFakturaStatus(fakturaId: number): Promise<{
+export async function hamtaFakturaStatus(fakturaId: number): Promise<{
   status_betalning?: string;
   status_bokförd?: string;
   betaldatum?: string;
@@ -30,7 +30,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   }
 }
 
-export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
+export async function sparaBokforingsmetod(metod: "kontantmetoden" | "fakturametoden") {
   const { userId } = await ensureSession();
 
   try {
@@ -43,7 +43,7 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
   }
 }
 
-export async function bokförFaktura(data: BokförFakturaData) {
+export async function bokforFaktura(data: BokförFakturaData) {
   const { userId } = await ensureSession();
 
   try {

@@ -266,7 +266,7 @@ export async function saveInvoiceInternal(formData: FormData) {
   }
 }
 
-export async function hämtaNästaFakturanummer() {
+export async function hamtaNastaFakturanummer() {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();
@@ -281,7 +281,7 @@ export async function hämtaNästaFakturanummer() {
   }
 }
 
-export async function hämtaFakturaMedRader(id: number) {
+export async function hamtaFakturaMedRader(id: number) {
   const client = await pool.connect();
   try {
     // Hämta faktura + kunduppgifter
@@ -366,7 +366,7 @@ export async function hämtaFakturaMedRader(id: number) {
   }
 }
 
-export async function hämtaSparadeFakturor(): Promise<SparadFaktura[]> {
+export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();

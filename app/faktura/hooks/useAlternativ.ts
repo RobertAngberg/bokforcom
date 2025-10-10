@@ -4,9 +4,9 @@ import { useFaktura } from "./useFaktura";
 import { saveInvoice } from "../actions/fakturaActions";
 import { showToast } from "../../_components/Toast";
 import {
-  hämtaFakturaStatus,
-  bokförFaktura,
-  hämtaBokföringsmetod,
+  hamtaFakturaStatus,
+  bokforFaktura,
+  hamtaBokforingsmetod,
   uppdateraRotRutStatus,
 } from "../actions/alternativActions";
 import { laddaNerHUSFil } from "../utils/husFilGenerator";
@@ -93,13 +93,13 @@ export function useAlternativ() {
 
   // Hämta användarens bokföringsmetod när komponenten laddas
   useEffect(() => {
-    hämtaBokföringsmetod().then(setBokföringsmetod);
+    hamtaBokforingsmetod().then(setBokföringsmetod);
   }, []);
 
   // Hämta fakturaSTATUS när ID ändras
   useEffect(() => {
     if (formData.id) {
-      hämtaFakturaStatus(parseInt(formData.id)).then(setFakturaStatus);
+      hamtaFakturaStatus(parseInt(formData.id)).then(setFakturaStatus);
     } else {
       setFakturaStatus({});
     }
@@ -208,7 +208,7 @@ export function useAlternativ() {
   const genomförBokföring = async (fakturaId: string) => {
     try {
       // Hämta bokföringsmetod
-      const bokföringsmetod = await hämtaBokföringsmetod();
+      const bokföringsmetod = await hamtaBokforingsmetod();
       const ärKontantmetod = bokföringsmetod === "kontantmetoden";
 
       // Beräkna totalt belopp
@@ -288,7 +288,7 @@ export function useAlternativ() {
       }
 
       // Genomför bokföringen
-      const result = await bokförFaktura({
+      const result = await bokforFaktura({
         fakturaId: parseInt(fakturaId),
         fakturanummer: formData.fakturanummer,
         kundnamn: formData.kundnamn,
@@ -301,7 +301,7 @@ export function useAlternativ() {
         const message = "message" in result ? result.message : "Bokföring genomförd";
         showToast(`Fakturan har sparats och bokförts!\n\n${message}`, "success");
         // Uppdatera fakturasstatus
-        const status = await hämtaFakturaStatus(parseInt(fakturaId));
+        const status = await hamtaFakturaStatus(parseInt(fakturaId));
         setFakturaStatus(status);
       } else {
         const error = "error" in result ? result.error : "Okänt fel";
@@ -552,12 +552,12 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     if (isOpen && formData.id !== lastLoadedId) {
       setStatusLoaded(false);
       setLastLoadedId(formData.id);
-      hämtaBokföringsmetod().then(setBokföringsmetod);
+      hamtaBokforingsmetod().then(setBokföringsmetod);
 
       // Hämta fakturaSTATUS om ID finns
       if (formData.id) {
         console.log("🔍 Hämtar status för faktura ID:", formData.id);
-        hämtaFakturaStatus(parseInt(formData.id)).then((status) => {
+        hamtaFakturaStatus(parseInt(formData.id)).then((status) => {
           console.log("📊 Fakturasstatus:", status);
           setFakturaStatus(status);
           setStatusLoaded(true);
@@ -786,7 +786,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
         return;
       }
 
-      const result = await bokförFaktura(bokföringsData);
+      const result = await bokforFaktura(bokföringsData);
 
       console.log("🔥 BOKFÖR DATA:", {
         fakturaId: formData.id ? parseInt(formData.id) : undefined,

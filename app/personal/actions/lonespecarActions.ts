@@ -3,10 +3,10 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
-import { uppdateraLönekörningStatus } from "./lonekorningActions";
+import { uppdateraLonekorningStatus } from "./lonekorningActions";
 import type { ExtraradData, ExtraradResult, UtläggData } from "../types/types";
 
-export async function läggTillUtläggSomExtrarad(
+export async function laggTillUtlaggSomExtrarad(
   lönespecId: number,
   utlägg: UtläggData
 ): Promise<ExtraradResult> {
@@ -22,7 +22,7 @@ export async function läggTillUtläggSomExtrarad(
   return sparaExtrarad(extraradData);
 }
 
-export async function hämtaLönespecifikationer(anställdId: number) {
+export async function hamtaLonespecifikationer(anställdId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -77,7 +77,7 @@ export async function hämtaLönespecifikationer(anställdId: number) {
 
     return lönespecarMedExtrarader;
   } catch (error) {
-    console.error("❌ hämtaLönespecifikationer error:", error);
+    console.error("❌ hamtaLonespecifikationer error:", error);
     return [];
   }
 }
@@ -119,7 +119,7 @@ export async function sparaExtrarad(data: ExtraradData): Promise<ExtraradResult>
   }
 }
 
-export async function hämtaExtrarader(lönespecifikation_id: number) {
+export async function hamtaExtrarader(lönespecifikation_id: number) {
   try {
     const client = await pool.connect();
     const result = await client.query(
@@ -129,12 +129,12 @@ export async function hämtaExtrarader(lönespecifikation_id: number) {
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaExtrarader error:", error);
+    console.error("❌ hamtaExtrarader error:", error);
     return [];
   }
 }
 
-export async function läggTillUtläggILönespec(lönespecId: number) {
+export async function laggTillUtlaggILonespec(lönespecId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -204,7 +204,7 @@ export async function läggTillUtläggILönespec(lönespecId: number) {
 
     return { success: true, count: utläggResult.rows.length };
   } catch (error) {
-    console.error("❌ läggTillUtläggILönespec error:", error);
+    console.error("❌ laggTillUtlaggILonespec error:", error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
@@ -234,7 +234,7 @@ export async function taBortExtrarad(extraradId: number) {
   }
 }
 
-export async function skapaNyLönespec(data: {
+export async function skapaNyLonespec(data: {
   anställd_id: number;
   utbetalningsdatum: string; // YYYY-MM-DD
 }) {
@@ -296,12 +296,12 @@ export async function skapaNyLönespec(data: {
 
     return insertResult.rows[0];
   } catch (error) {
-    console.error("❌ skapaNyLönespec error:", error);
+    console.error("❌ skapaNyLonespec error:", error);
     throw new Error("Kunde inte skapa lönespecifikation");
   }
 }
 
-export async function uppdateraLönespec(data: {
+export async function uppdateraLonespec(data: {
   lönespecId: number;
   bruttolön?: number;
   skatt?: number;
@@ -374,7 +374,7 @@ export async function uppdateraLönespec(data: {
       lönespec: result.rows[0],
     };
   } catch (error) {
-    console.error("❌ uppdateraLönespec error:", error);
+    console.error("❌ uppdateraLonespec error:", error);
     throw error;
   }
 }
@@ -423,7 +423,7 @@ export async function markeraBankgiroExporterad(lönespecId: number) {
       const { total, exporterade } = allaResult.rows[0];
 
       if (parseInt(total) === parseInt(exporterade)) {
-        await uppdateraLönekörningStatus(lönekorning_id, "bankgiro_exporterad");
+        await uppdateraLonekorningStatus(lönekorning_id, "bankgiro_exporterad");
       }
     }
 
@@ -471,7 +471,7 @@ export async function markeraMailad(lönespecId: number) {
   }
 }
 
-export async function markeraBokförd(lönespecId: number) {
+export async function markeraBokford(lönespecId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -502,7 +502,7 @@ export async function markeraBokförd(lönespecId: number) {
 
     return { success: true, lönespec: result.rows[0] };
   } catch (error) {
-    console.error("❌ markeraBokförd error:", error);
+    console.error("❌ markeraBokford error:", error);
     throw error;
   }
 }
@@ -547,7 +547,7 @@ export async function markeraAGIGenererad(lönespecId: number) {
   }
 }
 
-export async function markeraSkatternaBokförda(lönespecId: number) {
+export async function markeraSkatternaBokforda(lönespecId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -582,12 +582,12 @@ export async function markeraSkatternaBokförda(lönespecId: number) {
 
     return { success: true, lönespec: result.rows[0] };
   } catch (error) {
-    console.error("❌ markeraSkatternaBokförda error:", error);
+    console.error("❌ markeraSkatternaBokforda error:", error);
     throw error;
   }
 }
 
-export async function taBortLönespec(lönespecId: number) {
+export async function taBortLonespec(lönespecId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -618,12 +618,12 @@ export async function taBortLönespec(lönespecId: number) {
 
     return { success: true, message: "Lönespec borttagen!" };
   } catch (error) {
-    console.error("❌ taBortLönespec error:", error);
+    console.error("❌ taBortLonespec error:", error);
     throw error;
   }
 }
 
-export async function hämtaAllaLönespecarFörUser() {
+export async function hamtaAllaLonespecarForUser() {
   const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
@@ -638,12 +638,12 @@ export async function hämtaAllaLönespecarFörUser() {
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaAllaLönespecarFörUser error:", error);
+    console.error("❌ hamtaAllaLonespecarForUser error:", error);
     return [];
   }
 }
 
-export async function hämtaUtbetalningsdatumLista() {
+export async function hamtaUtbetalningsdatumLista() {
   const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
@@ -659,7 +659,7 @@ export async function hämtaUtbetalningsdatumLista() {
     // Returnera som array av datumsträngar
     return result.rows.map((row) => row.utbetalningsdatum);
   } catch (error) {
-    console.error("❌ hämtaUtbetalningsdatumLista error:", error);
+    console.error("❌ hamtaUtbetalningsdatumLista error:", error);
     return [];
   }
 }

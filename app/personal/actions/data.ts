@@ -1,13 +1,13 @@
 "use server";
 
-import { hämtaAllaAnställda } from "./anstalldaActions";
+import { hamtaAllaAnstallda } from "./anstalldaActions";
 import type { AnställdData } from "../types/types";
 
 // Hämta initial data för personal-sidan
-export async function hämtaPersonalInitialData() {
+export async function hamtaPersonalInitialData() {
   try {
     // Hämta alla anställda med full data direkt
-    const anställdaData = await hämtaAllaAnställda();
+    const anställdaData = await hamtaAllaAnstallda();
 
     // Returnera full AnställdData array så vi har all info tillgänglig
     const fullAnställdaData: AnställdData[] = anställdaData as AnställdData[];

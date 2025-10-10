@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { signOut } from "../../_lib/auth-client";
-import { uppdateraAnvändarInfo } from "../actions/anvandarprofilActions";
-import { uppdateraFöretagsprofilAdmin } from "../actions/foretagsprofilActions";
-import { raderaFöretag } from "../actions/farozonActions";
+import { uppdateraAnvandarInfo } from "../actions/anvandarprofilActions";
+import { uppdateraForetagsprofilAdmin } from "../actions/foretagsprofilActions";
+import { raderaForetag } from "../actions/farozonActions";
 import { TOM_FORETAG } from "../types/types";
 import type {
   AnvandarInfo,
@@ -65,7 +65,7 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
 
     setIsSaving(true);
     try {
-      const result = await uppdateraAnvändarInfo({
+      const result = await uppdateraAnvandarInfo({
         name: localEditForm.name.trim(),
         email: localEditForm.email.trim(),
       });
@@ -106,7 +106,7 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   const onSaveCompany = async () => {
     setIsSavingCompany(true);
     try {
-      const result = await uppdateraFöretagsprofilAdmin({ ...localForetagsProfil });
+      const result = await uppdateraForetagsprofilAdmin({ ...localForetagsProfil });
       if (result.success) {
         setForetagsInfo(localForetagsProfil);
         setIsEditingCompany(false);
@@ -170,7 +170,7 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   const onDeleteCompany = async () => {
     setIsDeleting(true);
     try {
-      const result = await raderaFöretag();
+      const result = await raderaForetag();
 
       if (result.success) {
         await signOut();

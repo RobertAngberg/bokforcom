@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useActionState } from "react";
 import {
-  hämtaAllaAnställda,
-  hämtaAnställd,
-  taBortAnställd,
-  sparaAnställd,
-  sparaNyAnställdFormAction,
+  hamtaAllaAnstallda,
+  hamtaAnstalld,
+  taBortAnstalld,
+  sparaAnstalld,
+  sparaNyAnstalldFormAction,
 } from "../actions/anstalldaActions";
 import { taBortLönespec } from "../actions/lonespecarActions";
 import { useLonespec } from "./useLonespecar";
@@ -109,7 +109,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
 
   // NY ANSTÄLLD form action - always call hook, use result conditionally
   const [actionState, formAction, isPending] = useActionState(
-    sparaNyAnställdFormAction,
+    sparaNyAnstalldFormAction,
     initialActionResult
   );
 
@@ -204,7 +204,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
         ort: personalEditData.ort,
       } as AnställdData;
 
-      const result = await sparaAnställd(payload, valdAnställd.id);
+      const result = await sparaAnstalld(payload, valdAnställd.id);
       if (result?.success) {
         setValdAnställd(payload);
         setPersonalOriginalData(personalEditData);
@@ -235,7 +235,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
     setAnställdaLoading(true);
     setAnställdaError(null);
     try {
-      const anställdaData = await hämtaAllaAnställda();
+      const anställdaData = await hamtaAllaAnstallda();
       const anställdaLista = mapAnställdaDataToListItems(anställdaData);
       setAnställda(anställdaLista);
     } catch (error) {
@@ -267,7 +267,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
     setAnställdLoadingId(anställdId);
     setAnställdLoading(true);
     try {
-      const fullData = await hämtaAnställd(anställdId);
+      const fullData = await hamtaAnstalld(anställdId);
       setValdAnställd(fullData);
       return fullData;
     } catch (error) {
@@ -307,7 +307,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
     setShowDeleteAnställdModal(false);
 
     try {
-      const result = await taBortAnställd(deleteAnställdId);
+      const result = await taBortAnstalld(deleteAnställdId);
       if (result.success) {
         removeAnställd(deleteAnställdId);
         // Om den borttagna anställda var vald, rensa valet

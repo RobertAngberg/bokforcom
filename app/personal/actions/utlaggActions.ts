@@ -5,7 +5,7 @@ import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type { UtläggQueryResult, UtläggCreateParams, UtläggActionResult } from "../types/types";
 
-export async function hämtaUtlägg(anställdId: number): Promise<UtläggQueryResult[]> {
+export async function hamtaUtlagg(anställdId: number): Promise<UtläggQueryResult[]> {
   const { userId } = await ensureSession();
 
   try {
@@ -49,12 +49,12 @@ export async function hämtaUtlägg(anställdId: number): Promise<UtläggQueryRe
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaUtlägg error:", error);
+    console.error("❌ hamtaUtlagg error:", error);
     return [];
   }
 }
 
-export async function uppdateraUtläggStatus(
+export async function uppdateraUtlaggStatus(
   utläggId: number,
   status: string
 ): Promise<UtläggActionResult> {
@@ -73,7 +73,7 @@ export async function uppdateraUtläggStatus(
 
     return { success: true };
   } catch (error) {
-    console.error("❌ uppdateraUtläggStatus error:", error);
+    console.error("❌ uppdateraUtlaggStatus error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Ett fel uppstod",
@@ -81,7 +81,7 @@ export async function uppdateraUtläggStatus(
   }
 }
 
-export async function sparaUtlägg(params: UtläggCreateParams): Promise<UtläggActionResult> {
+export async function sparaUtlagg(params: UtläggCreateParams): Promise<UtläggActionResult> {
   const { belopp, datum, beskrivning, kategori, anställd_id, kvitto_fil, kvitto_filtyp } = params;
   const { userId } = await ensureSession();
   try {
@@ -108,12 +108,12 @@ export async function sparaUtlägg(params: UtläggCreateParams): Promise<Utlägg
     revalidatePath("/personal/Utlagg");
     return { success: true, id: result.rows[0].id };
   } catch (error) {
-    console.error("❌ sparaUtlägg error:", error);
+    console.error("❌ sparaUtlagg error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }
 
-export async function taBortUtlägg(utläggId: number): Promise<UtläggActionResult> {
+export async function taBortUtlagg(utläggId: number): Promise<UtläggActionResult> {
   const { userId } = await ensureSession();
 
   try {
@@ -151,7 +151,7 @@ export async function taBortUtlägg(utläggId: number): Promise<UtläggActionRes
     client.release();
     return { success: true };
   } catch (error) {
-    console.error("❌ taBortUtlägg error:", error);
+    console.error("❌ taBortUtlagg error:", error);
     throw error;
   }
 }

@@ -9,7 +9,7 @@ import {
 import type { BokförFakturaData } from "../types/types";
 
 // === BETALNINGSMETOD (från alternativActions.ts) ===
-export async function hämtaSenasteBetalningsmetod(userId: string) {
+export async function hamtaSenasteBetalningsmetod(userId: string) {
   try {
     const result = await pool.query(
       `
@@ -82,7 +82,7 @@ export async function registreraRotRutBetalning(
 }
 
 // === BOKFÖRING (från bokforingActions.ts) ===
-export async function hämtaBokföringsmetod() {
+export async function hamtaBokforingsmetod() {
   const { userId } = await ensureSession();
 
   try {
@@ -95,7 +95,7 @@ export async function hämtaBokföringsmetod() {
   }
 }
 
-export async function hämtaFakturaStatus(fakturaId: number): Promise<{
+export async function hamtaFakturaStatus(fakturaId: number): Promise<{
   status_betalning?: string;
   status_bokförd?: string;
   betaldatum?: string;
@@ -114,7 +114,7 @@ export async function hämtaFakturaStatus(fakturaId: number): Promise<{
   }
 }
 
-export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturametoden") {
+export async function sparaBokforingsmetod(metod: "kontantmetoden" | "fakturametoden") {
   const { userId } = await ensureSession();
 
   try {
@@ -129,7 +129,7 @@ export async function sparaBokföringsmetod(metod: "kontantmetoden" | "fakturame
 
 // Bokföringsfunktioner
 
-export async function bokförFaktura(data: BokförFakturaData) {
+export async function bokforFaktura(data: BokförFakturaData) {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();

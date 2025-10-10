@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { dateTillÅÅÅÅMMDD } from "../../_utils/datum";
 import type { EditData, AnställdData, AnställdListItem } from "../types/types";
-import { sparaAnställd } from "../actions/anstalldaActions";
+import { sparaAnstalld } from "../actions/anstalldaActions";
 
 const initialEditData: EditData = {
   anställningstyp: "",
@@ -202,7 +202,7 @@ export function useKontrakt(initial?: AnställdListItem) {
         tjänsteställeOrt: editData.tjänsteställeOrt,
       } as AnställdData;
 
-      const result = await sparaAnställd(payload, visningsAnställd.id as number);
+      const result = await sparaAnstalld(payload, visningsAnställd.id as number);
       if (result?.success && valdAnställd) {
         // Uppdatera store med sparade värden
         setValdAnställd({

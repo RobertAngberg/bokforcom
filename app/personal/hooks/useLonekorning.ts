@@ -17,12 +17,12 @@ import { useState, useEffect } from "react";
 import { useSession } from "../../_lib/auth-client";
 import { showToast } from "../../_components/Toast";
 import {
-  hämtaAllaLönespecarFörUser,
+  hamtaAllaLonespecarForUser,
   markeraAGIGenererad,
-  markeraSkatternaBokförda,
+  markeraSkatternaBokforda,
 } from "../actions/lonespecarActions";
-import { hämtaAllaAnställda, hämtaFöretagsprofil } from "../actions/anstalldaActions";
-import { hämtaUtlägg } from "../actions/utlaggActions";
+import { hamtaAllaAnstallda, hamtaForetagsprofil } from "../actions/anstalldaActions";
+import { hamtaUtlagg } from "../actions/utlaggActions";
 import { bokförLöneskatter } from "../actions/bokforingActions";
 import {
   Lönekörning,
@@ -32,12 +32,12 @@ import {
   UtläggData,
 } from "../types/types";
 import {
-  hämtaLönespecifikationerFörLönekörning,
-  uppdateraLönekörningSteg,
-  taBortLönekörning,
-  hämtaAllaLönekörningar,
-  skapaLönekörning,
-  skapaLönespecifikationerFörLönekörning,
+  hamtaLonespecifikationerForLonekorning,
+  uppdateraLonekorningSteg,
+  taBortLonekorning,
+  hamtaAllaLonekorningar,
+  skapaLonekorning,
+  skapaLonespecifikationerForLonekorning,
 } from "../actions/lonekorningActions";
 import {
   valideraFlertalsAnställda,
@@ -174,7 +174,7 @@ export const useLonekorning = ({
 
     try {
       setLoading(true);
-      const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
+      const result = await hamtaLonespecifikationerForLonekorning(valdLonekorning.id);
 
       if (result.success && result.data) {
         setLönekörningSpecar(result.data);
@@ -203,7 +203,7 @@ export const useLonekorning = ({
 
     try {
       setTaBortLoading(true);
-      const result = await taBortLönekörning(valdLonekorning.id);
+      const result = await taBortLonekorning(valdLonekorning.id);
 
       if (result.success) {
         setValdLonekorning(null);
@@ -247,12 +247,12 @@ export const useLonekorning = ({
 
     try {
       const [specar, anstallda] = await Promise.all([
-        hämtaAllaLönespecarFörUser(),
-        hämtaAllaAnställda(),
+        hamtaAllaLonespecarForUser(),
+        hamtaAllaAnstallda(),
       ]);
       setLocalAnställda(anstallda);
 
-      const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+      const utlaggPromises = anstallda.map((a) => hamtaUtlagg(a.id));
       const utlaggResults = await Promise.all(utlaggPromises);
       const utlaggMap: Record<number, UtläggData[]> = {};
       anstallda.forEach((a, idx) => {
@@ -310,7 +310,7 @@ export const useLonekorning = ({
           const uppdateradeSpecar: number[] = [];
           for (const spec of lönekörningSpecar) {
             if (!spec.skatter_bokförda) {
-              await markeraSkatternaBokförda(spec.id);
+              await markeraSkatternaBokforda(spec.id);
               uppdateradeSpecar.push(spec.id);
             }
           }
@@ -356,7 +356,7 @@ export const useLonekorning = ({
         prev ? { ...prev, aktuellt_steg: 2, mailade_datum: new Date() } : prev
       );
       try {
-        await uppdateraLönekörningSteg(valdLonekorning.id, 2);
+        await uppdateraLonekorningSteg(valdLonekorning.id, 2);
       } catch (error) {
         console.error("❌ Fel vid uppdatering av workflow:", error);
       }
@@ -370,7 +370,7 @@ export const useLonekorning = ({
         prev ? { ...prev, aktuellt_steg: 3, bokford_datum: new Date() } : prev
       );
       try {
-        await uppdateraLönekörningSteg(valdLonekorning.id, 3);
+        await uppdateraLonekorningSteg(valdLonekorning.id, 3);
       } catch (error) {
         console.error("❌ Fel vid uppdatering av workflow:", error);
       }
@@ -399,7 +399,7 @@ export const useLonekorning = ({
         // ===== SÄKERSTÄLL ATT FÖRETAGSPROFIL FINNS =====
         let profil = företagsprofil;
         if (!profil && session?.user?.id) {
-          profil = await hämtaFöretagsprofil(session.user.id);
+          profil = await hamtaForetagsprofil(session.user.id);
           if (!profil) {
             showToast("Kunde inte hämta företagsprofil för AGI-generering", "error");
             return;
@@ -419,7 +419,7 @@ export const useLonekorning = ({
 
         // ===== HÄMTA FULLSTÄNDIG ANSTÄLLDDATA =====
         // Behöver komplett data med personnummer, adresser etc för XML-generering
-        const fullAnställdaData = await hämtaAllaAnställda();
+        const fullAnställdaData = await hamtaAllaAnstallda();
 
         // ===== IMPORT AV AGI-FUNKTIONER =====
         // Dynamisk import för att undvika beroendeproblem
@@ -457,7 +457,7 @@ export const useLonekorning = ({
         setValdLonekorning((prev) =>
           prev ? { ...prev, aktuellt_steg: 4, agi_genererad_datum: new Date() } : prev
         );
-        await uppdateraLönekörningSteg(valdLonekorning.id, 4);
+        await uppdateraLonekorningSteg(valdLonekorning.id, 4);
 
         // ===== BEKRÄFTA FRAMGÅNG =====
         showToast(
@@ -490,7 +490,7 @@ export const useLonekorning = ({
           : prev
       );
       try {
-        await uppdateraLönekörningSteg(valdLonekorning.id, 5);
+        await uppdateraLonekorningSteg(valdLonekorning.id, 5);
       } catch (error) {
         console.error("❌ Fel vid uppdatering av workflow:", error);
       }
@@ -511,12 +511,12 @@ export const useLonekorning = ({
         setLoading(true);
         try {
           const [specar, anstallda] = await Promise.all([
-            hämtaAllaLönespecarFörUser(),
-            hämtaAllaAnställda(),
+            hamtaAllaLonespecarForUser(),
+            hamtaAllaAnstallda(),
           ]);
           setLocalAnställda(anstallda);
 
-          const utlaggPromises = anstallda.map((a) => hämtaUtlägg(a.id));
+          const utlaggPromises = anstallda.map((a) => hamtaUtlagg(a.id));
           const utlaggResults = await Promise.all(utlaggPromises);
           const utlaggMap: Record<number, UtläggData[]> = {};
           anstallda.forEach((a, idx) => {
@@ -569,7 +569,7 @@ export const useLonekorning = ({
     const loadSpecar = async () => {
       try {
         setLoading(true);
-        const result = await hämtaLönespecifikationerFörLönekörning(valdLonekorning.id);
+        const result = await hamtaLonespecifikationerForLonekorning(valdLonekorning.id);
 
         if (result.success && result.data) {
           setLönekörningSpecar(result.data);
@@ -595,7 +595,7 @@ export const useLonekorning = ({
     const loadLonekorningar = async () => {
       try {
         setListLoading(true);
-        const result = await hämtaAllaLönekörningar();
+        const result = await hamtaAllaLonekorningar();
 
         if (result.success && result.data) {
           setLonekorningar(result.data);
@@ -624,7 +624,7 @@ export const useLonekorning = ({
   useEffect(() => {
     const loadFöretagsprofil = async () => {
       try {
-        const profile = await hämtaFöretagsprofil(session?.user?.id || "");
+        const profile = await hamtaForetagsprofil(session?.user?.id || "");
         setFöretagsprofil(profile);
       } catch (error) {
         console.error("Kunde inte ladda företagsprofil:", error);
@@ -682,7 +682,7 @@ export const useLonekorning = ({
 
     try {
       setListLoading(true);
-      const result = await hämtaAllaLönekörningar();
+      const result = await hamtaAllaLonekorningar();
 
       if (result.success && result.data) {
         setLonekorningar(result.data);
@@ -913,7 +913,7 @@ export const useLonekorning = ({
     try {
       // Skapa lönekörning med period baserat på utbetalningsdatum
       const period = newLonekorningUtbetalningsdatum.toISOString().substring(0, 7); // YYYY-MM
-      const lönekörningResult = await skapaLönekörning(period);
+      const lönekörningResult = await skapaLonekorning(period);
 
       if (!lönekörningResult.success) {
         showToast(lönekörningResult.error || "Kunde inte skapa lönekörning", "error");
@@ -921,7 +921,7 @@ export const useLonekorning = ({
       }
 
       // Skapa lönespecifikationer för valda anställda
-      const lönespecResult = await skapaLönespecifikationerFörLönekörning(
+      const lönespecResult = await skapaLonespecifikationerForLonekorning(
         lönekörningResult.data!.id,
         newLonekorningUtbetalningsdatum,
         newLonekorningValdaAnstallda

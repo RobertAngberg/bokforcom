@@ -26,7 +26,7 @@ function formatHistoryData(
   }));
 }
 
-export async function hämtaHistorikData(): Promise<HistoryItem[]> {
+export async function hamtaHistorikData(): Promise<HistoryItem[]> {
   try {
     const result = await fetchTransaktioner();
 

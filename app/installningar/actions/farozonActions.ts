@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import type { AktionsResultat } from "../../_types/common";
 
-export async function raderaFöretag(): Promise<AktionsResultat> {
+export async function raderaForetag(): Promise<AktionsResultat> {
   try {
     const { userId } = await ensureSession();
 
@@ -26,7 +26,7 @@ export async function raderaFöretag(): Promise<AktionsResultat> {
       try {
         await client.query("ROLLBACK");
       } catch (rollbackError) {
-        console.error("❌ ROLLBACK misslyckades i raderaFöretag:", rollbackError);
+        console.error("❌ ROLLBACK misslyckades i raderaForetag:", rollbackError);
       }
       throw error;
     } finally {
@@ -35,7 +35,7 @@ export async function raderaFöretag(): Promise<AktionsResultat> {
 
     return { success: true };
   } catch (error) {
-    console.error("[raderaFöretag] Fel vid radering", error);
+    console.error("[raderaForetag] Fel vid radering", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Ett fel uppstod vid radering",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { normalize } from "../../_utils/textUtils";
-import { loggaFavoritförval } from "../actions/actions";
+import { loggaFavoritforval } from "../actions/actions";
 import type { Förval, KontoRad } from "../types/types";
 
 interface UseForvalSokProps {
@@ -143,7 +143,7 @@ export function useForvalSok({
 
   const väljFörval = useCallback(
     (f: Förval) => {
-      loggaFavoritförval(f.id);
+      loggaFavoritforval(f.id);
 
       const huvudkonto = f.konton.find(
         (k: KontoRad) => k.kontonummer !== "1930" && (k.kredit || k.debet) && !!k.kontonummer

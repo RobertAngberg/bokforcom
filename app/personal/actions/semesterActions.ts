@@ -4,7 +4,7 @@ import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 
-export async function hämtaSemesterTransaktioner(anställdId: number) {
+export async function hamtaSemesterTransaktioner(anställdId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -31,7 +31,7 @@ export async function hämtaSemesterTransaktioner(anställdId: number) {
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaSemesterTransaktioner error:", error);
+    console.error("❌ hamtaSemesterTransaktioner error:", error);
     return [];
   }
 }
@@ -207,7 +207,7 @@ export async function uppdateraSemesterdata(
   }
 }
 
-export async function bokförSemester({
+export async function bokforSemester({
   rader,
   kommentar,
   datum,
@@ -259,12 +259,12 @@ export async function bokförSemester({
     revalidatePath("/personal");
     return { success: true, message: "Bokföringsrader sparade!" };
   } catch (error) {
-    console.error("❌ bokförSemester error:", error);
+    console.error("❌ bokforSemester error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }
 
-export async function hämtaBetaldaSemesterdagar(anställdId: number) {
+export async function hamtaBetaldaSemesterdagar(anställdId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -299,7 +299,7 @@ export async function hämtaBetaldaSemesterdagar(anställdId: number) {
 
     return 0;
   } catch (error) {
-    console.error("❌ hämtaBetaldaSemesterdagar error:", error);
+    console.error("❌ hamtaBetaldaSemesterdagar error:", error);
     return 0;
   }
 }

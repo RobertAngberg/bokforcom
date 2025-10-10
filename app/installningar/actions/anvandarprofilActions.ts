@@ -7,7 +7,7 @@ import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
 import { sanitizeFormInput, requireValid, validateEmail } from "../../_utils/validationUtils";
 
-export async function uppdateraAnvändarInfo(
+export async function uppdateraAnvandarInfo(
   payload: UppdateraAnvandarPayload
 ): Promise<AktionsResultat<AnvandarInfo>> {
   try {
@@ -46,7 +46,7 @@ export async function uppdateraAnvändarInfo(
     revalidatePath("/installningar");
     return { success: true, user: updated, data: updated };
   } catch (error) {
-    console.error("[uppdateraAnvändarInfo] Fel vid uppdatering", error);
+    console.error("[uppdateraAnvandarInfo] Fel vid uppdatering", error);
     return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" };
   }
 }

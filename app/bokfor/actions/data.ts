@@ -4,7 +4,7 @@ import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { Förval } from "../types/types";
 
 // Bokföringsmetod data
-export async function hämtaBokföringsmetod(): Promise<string> {
+export async function hamtaBokforingsmetod(): Promise<string> {
   const { userId } = await ensureSession();
 
   try {
@@ -24,7 +24,7 @@ export async function hämtaBokföringsmetod(): Promise<string> {
 }
 
 // Favoritförval data
-export async function hämtaFavoritförval(): Promise<Förval[]> {
+export async function hamtaFavoritforval(): Promise<Förval[]> {
   const { userId } = await ensureSession();
 
   try {
@@ -48,7 +48,7 @@ export async function hämtaFavoritförval(): Promise<Förval[]> {
 }
 
 // Alla förval data
-export async function hämtaAllaFörval(filters?: { sök?: string; kategori?: string; typ?: string }) {
+export async function hamtaAllaForval(filters?: { sök?: string; kategori?: string; typ?: string }) {
   let query = "SELECT * FROM förval";
   const values: (string | number)[] = [];
   const conditions: string[] = [];
@@ -84,7 +84,7 @@ export async function hämtaAllaFörval(filters?: { sök?: string; kategori?: st
 }
 
 // Anställda data
-export async function hämtaAnställda() {
+export async function hamtaAnstallda() {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();

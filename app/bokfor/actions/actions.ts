@@ -3,7 +3,7 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 
-export async function loggaFavoritförval(forvalId: number) {
+export async function loggaFavoritforval(forvalId: number) {
   const { userId } = await ensureSession();
 
   try {

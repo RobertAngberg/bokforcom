@@ -7,7 +7,7 @@ import { sanitizeInput } from "../../_utils/validationUtils";
 import { revalidatePath } from "next/cache";
 import type { AnställdInput, FormActionState, Företagsprofil } from "../types/types";
 
-export async function hämtaAllaAnställda() {
+export async function hamtaAllaAnstallda() {
   const { userId } = await ensureSession();
 
   try {
@@ -23,12 +23,12 @@ export async function hämtaAllaAnställda() {
     client.release();
     return result.rows;
   } catch (error) {
-    console.error("❌ hämtaAllaAnställda error:", error);
+    console.error("❌ hamtaAllaAnstallda error:", error);
     return [];
   }
 }
 
-export async function hämtaAnställd(anställdId: number) {
+export async function hamtaAnstalld(anställdId: number) {
   const { userId } = await ensureSession();
 
   try {
@@ -47,13 +47,13 @@ export async function hämtaAnställd(anställdId: number) {
     client.release();
     return result.rows[0] || null;
   } catch (error) {
-    console.error("❌ hämtaAnställd error:", error);
+    console.error("❌ hamtaAnstalld error:", error);
     return null;
   }
 }
 
 // React 19 Form Action - tar emot FormData direkt
-export async function sparaNyAnställdFormAction(
+export async function sparaNyAnstalldFormAction(
   prevState: FormActionState,
   formData: FormData
 ): Promise<FormActionState> {
@@ -101,7 +101,7 @@ export async function sparaNyAnställdFormAction(
     };
 
     // Anropa befintlig funktion
-    const result = await sparaAnställd(data);
+    const result = await sparaAnstalld(data);
 
     if (result.success) {
       return { success: true, message: "Ny anställd sparad!" };
@@ -114,7 +114,7 @@ export async function sparaNyAnställdFormAction(
   }
 }
 
-export async function sparaAnställd(data: AnställdInput, anställdId?: number | null) {
+export async function sparaAnstalld(data: AnställdInput, anställdId?: number | null) {
   const { userId } = await ensureSession();
 
   try {
@@ -248,7 +248,7 @@ export async function sparaAnställd(data: AnställdInput, anställdId?: number 
       };
     }
   } catch (error) {
-    console.error("❌ sparaAnställd error:", error);
+    console.error("❌ sparaAnstalld error:", error);
     return {
       success: false,
       error: "Kunde inte spara anställd: " + (error instanceof Error ? error.message : "Okänt fel"),
@@ -256,7 +256,7 @@ export async function sparaAnställd(data: AnställdInput, anställdId?: number 
   }
 }
 
-export async function taBortAnställd(anställdId: number) {
+export async function taBortAnstalld(anställdId: number) {
   const { userId } = await ensureSession();
   try {
     const client = await pool.connect();
@@ -276,7 +276,7 @@ export async function taBortAnställd(anställdId: number) {
       message: "Anställd borttagen!",
     };
   } catch (error) {
-    console.error("❌ taBortAnställd error:", error);
+    console.error("❌ taBortAnstalld error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Ett fel uppstod",
@@ -284,7 +284,7 @@ export async function taBortAnställd(anställdId: number) {
   }
 }
 
-export async function hämtaFöretagsprofil(userId: string): Promise<Företagsprofil | null> {
+export async function hamtaForetagsprofil(userId: string): Promise<Företagsprofil | null> {
   try {
     const { rows } = await pool.query(
       `
@@ -307,7 +307,7 @@ export async function hämtaFöretagsprofil(userId: string): Promise<Företagspr
 
     return rows[0] || null;
   } catch (error) {
-    console.error("Fel vid hämtning av företagsprofil:", error);
+    console.error("Fel vid hamtning av foretagsprofil:", error);
     return null;
   }
 }

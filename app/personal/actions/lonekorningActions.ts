@@ -5,7 +5,7 @@ import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
 import type { Lönekörning, LönespecData } from "../types/types";
 
-export async function skapaLönekörning(period: string): Promise<{
+export async function skapaLonekorning(period: string): Promise<{
   success: boolean;
   data?: Lönekörning;
   error?: string;
@@ -59,7 +59,7 @@ export async function skapaLönekörning(period: string): Promise<{
   }
 }
 
-export async function hämtaAktivLönekörning(period: string): Promise<{
+export async function hamtaAktivLonekorning(period: string): Promise<{
   success: boolean;
   data?: Lönekörning;
   error?: string;
@@ -110,7 +110,7 @@ export async function hämtaAktivLönekörning(period: string): Promise<{
   }
 }
 
-export async function uppdateraLönekörningStatus(
+export async function uppdateraLonekorningStatus(
   lönekörningId: number,
   statusTyp: "bankgiro_exporterad" | "mailade" | "bokford" | "agi_genererad" | "skatter_bokforda",
   avslutad: boolean = false
@@ -171,7 +171,7 @@ export async function uppdateraLönekörningStatus(
   }
 }
 
-export async function uppdateraLönekörningSteg(
+export async function uppdateraLonekorningSteg(
   lönekörningId: number,
   nyttSteg: number // 1=maila, 2=bokför, 3=agi, 4=skatter, 5=komplett
 ): Promise<{
@@ -254,7 +254,7 @@ export async function uppdateraLönekörningSteg(
   }
 }
 
-export async function markeraStegFärdigt(lönekörningId: number): Promise<{
+export async function markeraStegFardigt(lönekörningId: number): Promise<{
   success: boolean;
   data?: Lönekörning;
   error?: string;
@@ -327,7 +327,7 @@ export async function markeraStegFärdigt(lönekörningId: number): Promise<{
   }
 }
 
-export async function uppdateraLönekörningTotaler(lönekörningId: number): Promise<{
+export async function uppdateraLonekorningTotaler(lönekörningId: number): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -378,7 +378,7 @@ export async function uppdateraLönekörningTotaler(lönekörningId: number): Pr
   }
 }
 
-export async function hämtaAllaLönekörningar(): Promise<{
+export async function hamtaAllaLonekorningar(): Promise<{
   success: boolean;
   data?: Lönekörning[];
   error?: string;
@@ -421,7 +421,7 @@ export async function hämtaAllaLönekörningar(): Promise<{
   }
 }
 
-export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id: number): Promise<{
+export async function hamtaLonespecifikationerForLonekorning(lonekorning_id: number): Promise<{
   success: boolean;
   data?: LönespecData[];
   error?: string;
@@ -444,12 +444,12 @@ export async function hämtaLönespecifikationerFörLönekörning(lonekorning_id
       data: result.rows,
     };
   } catch (error) {
-    console.error("❌ Fel vid hämtning av lönespecifikationer för lönekörning:", error);
+    console.error("❌ Fel vid hamtning av lonespecifikationer for lonekorning:", error);
     return { success: false, error: "Kunde inte hämta lönespecifikationer" };
   }
 }
 
-export async function koppLaLönespecTillLönekörning(
+export async function kopplaLonespecTillLonekorning(
   lönespecId: number,
   lönekörningId: number
 ): Promise<{
@@ -468,7 +468,7 @@ export async function koppLaLönespecTillLönekörning(
     await pool.query(query, [lönespecId, lönekörningId]);
 
     // Uppdatera totaler för lönekörningen
-    await uppdateraLönekörningTotaler(lönekörningId);
+    await uppdateraLonekorningTotaler(lönekörningId);
 
     return { success: true };
   } catch (error) {
@@ -477,7 +477,7 @@ export async function koppLaLönespecTillLönekörning(
   }
 }
 
-export async function markeraLönekörningSteg(
+export async function markeraLonekorningSteg(
   period: string,
   statusTyp: "bankgiro_exporterad" | "mailade" | "bokford" | "agi_genererad" | "skatter_bokforda"
 ): Promise<{
@@ -488,10 +488,10 @@ export async function markeraLönekörningSteg(
     await ensureSession();
 
     // Hitta eller skapa lönekörning för perioden
-    let lönekörningResult = await hämtaAktivLönekörning(period);
+    let lönekörningResult = await hamtaAktivLonekorning(period);
     if (!lönekörningResult.success) {
       // Skapa ny lönekörning om ingen finns
-      lönekörningResult = await skapaLönekörning(period);
+      lönekörningResult = await skapaLonekorning(period);
       if (!lönekörningResult.success) {
         return lönekörningResult;
       }
@@ -547,10 +547,10 @@ export async function markeraLönekörningSteg(
       parseInt(stats.agi_klara) === total &&
       parseInt(stats.skatter_klara) === total;
 
-    await uppdateraLönekörningStatus(lönekörning.id, statusTyp, allaKlara);
+    await uppdateraLonekorningStatus(lönekörning.id, statusTyp, allaKlara);
 
     // Uppdatera totaler
-    await uppdateraLönekörningTotaler(lönekörning.id);
+    await uppdateraLonekorningTotaler(lönekörning.id);
 
     revalidatePath("/personal");
 
@@ -561,7 +561,7 @@ export async function markeraLönekörningSteg(
   }
 }
 
-export async function skapaLönespecifikationerFörLönekörning(
+export async function skapaLonespecifikationerForLonekorning(
   lönekörningId: number,
   utbetalningsdatum: Date,
   anställdaIds: number[]
@@ -628,7 +628,7 @@ export async function skapaLönespecifikationerFörLönekörning(
     }
 
     // Uppdatera totaler för lönekörningen
-    await uppdateraLönekörningTotaler(lönekörningId);
+    await uppdateraLonekorningTotaler(lönekörningId);
 
     revalidatePath("/personal");
 
@@ -642,7 +642,7 @@ export async function skapaLönespecifikationerFörLönekörning(
   }
 }
 
-export async function taBortLönekörning(lönekörningId: number): Promise<{
+export async function taBortLonekorning(lönekörningId: number): Promise<{
   success: boolean;
   error?: string;
 }> {
