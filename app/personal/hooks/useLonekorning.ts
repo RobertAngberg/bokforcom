@@ -42,7 +42,7 @@ import {
 import {
   valideraFlertalsAnställda,
   skapaValideringsFelmeddelande,
-} from "../utils/anställdValidering";
+} from "../utils/anstalldValidering";
 
 export const useLonekorning = ({
   anställda: propsAnställda,

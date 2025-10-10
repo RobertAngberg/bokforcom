@@ -4,7 +4,7 @@ import Kort from "./components/Kort";
 import Chart from "./components/Chart";
 import MainLayout from "../_components/MainLayout";
 import Dropdown from "../_components/Dropdown";
-import VälkomstMedd from "./components/VälkomstMedd";
+import ValkomstMedd from "./components/ValkomstMedd";
 import { useStart } from "./hooks/useStart";
 
 export default function Start() {
@@ -12,7 +12,7 @@ export default function Start() {
 
   return (
     <MainLayout>
-      {showWelcome && <VälkomstMedd onClose={handleWelcomeClose} />}
+      {showWelcome && <ValkomstMedd onClose={handleWelcomeClose} />}
 
       <div className="flex flex-wrap justify-center gap-4 mb-8 text-center">
         <Kort title="Intäkter" data={data?.totalInkomst || 0} />

@@ -1,10 +1,14 @@
 "use client";
 
-import Modal from "../../_components/Modal";
+import Modal from "../_components/Modal";
 import { useState } from "react";
-import type { AnvändaravtalModalProps } from "../types/types";
 
-export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalModalProps) {
+interface AnvandaravtalModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AnvandaravtalModal({ isOpen, onClose }: AnvandaravtalModalProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -395,7 +399,7 @@ export default function AnvändaravtalModal({ isOpen, onClose }: AnvändaravtalM
 }
 
 // Hook för att använda modalen
-export function useAnvändaravtalModal() {
+export function useAnvandaravtalModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = () => setIsOpen(true);
@@ -405,8 +409,8 @@ export function useAnvändaravtalModal() {
     isOpen,
     openModal,
     closeModal,
-    AnvändaravtalModal: (props: Omit<AnvändaravtalModalProps, "isOpen" | "onClose">) => (
-      <AnvändaravtalModal {...props} isOpen={isOpen} onClose={closeModal} />
+    AnvandaravtalModal: (props: Omit<AnvandaravtalModalProps, "isOpen" | "onClose">) => (
+      <AnvandaravtalModal {...props} isOpen={isOpen} onClose={closeModal} />
     ),
   };
 }

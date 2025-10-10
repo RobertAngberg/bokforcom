@@ -6,7 +6,7 @@ import {
   sparaSemesterTransaktion,
   bokförSemester,
 } from "../actions/semesterActions";
-import { beräknaSemesterpenning } from "../utils/semesterBeräkningar";
+import { beräknaSemesterpenning } from "../utils/semesterBerakningar";
 import type {
   SemesterBoxField,
   SemesterBoxSummary,

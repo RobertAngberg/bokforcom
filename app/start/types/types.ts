@@ -16,7 +16,7 @@ export interface FrontCardProps {
   data: number;
 }
 
-export interface VälkomstMeddProps {
+export interface ValkomstMeddProps {
   onClose: () => void;
 }
 
@@ -39,7 +39,7 @@ export type ProcessedChartData = {
   resultData: number[];
 };
 
-export interface AnvändaravtalModalProps {
+export interface AnvandaravtalModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
