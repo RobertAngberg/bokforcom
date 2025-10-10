@@ -9,7 +9,7 @@ export default function SemesterInfo({ lönespec, anställd, formatNoDecimals }:
         <div className="text-center">
           <div className="font-semibold text-black">Betalda</div>
           <div className="text-sm font-bold text-black">
-            {formatNoDecimals(parseFloat(lönespec?.semester_uttag || 0))}
+            {formatNoDecimals(lönespec?.semester_uttag ?? 0)}
           </div>
         </div>
         <div className="text-center">

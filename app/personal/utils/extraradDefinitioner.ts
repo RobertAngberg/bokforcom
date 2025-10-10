@@ -7,7 +7,22 @@ import {
   beräknaObetaldDag,
   beräknaSemesterLön,
 } from "./loneberakningar";
-import { RadKonfiguration } from "../types/types";
+import { ModalFields, RadKonfiguration } from "../types/types";
+
+const resolveModalNumber = (
+  modalFields: number | ModalFields | null | undefined,
+  property: keyof ModalFields = "kolumn2",
+  fallback = 0
+): number => {
+  if (typeof modalFields === "number") return modalFields;
+  const raw = modalFields?.[property];
+  if (typeof raw === "number") return raw;
+  if (typeof raw === "string") {
+    const parsed = parseFloat(raw.replace(",", "."));
+    return Number.isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
+};
 
 export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
   karensavdrag: {
@@ -444,8 +459,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
-    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
+    beräknaVärde: (grundlön, modalFields) => resolveModalNumber(modalFields, "kolumn2", 0),
+    beräknaTotalt: (grundlön, modalFields) => resolveModalNumber(modalFields, "kolumn2", 0),
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",
@@ -472,8 +487,8 @@ export const RAD_KONFIGURATIONER: Record<string, RadKonfiguration> = {
     enhet: "kr",
     skattepliktig: true,
     läggTillIBruttolön: true,
-    beräknaVärde: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
-    beräknaTotalt: (grundlön, modalFields) => parseFloat(modalFields?.kolumn2 || "0") || 0,
+    beräknaVärde: (grundlön, modalFields) => resolveModalNumber(modalFields, "kolumn2", 0),
+    beräknaTotalt: (grundlön, modalFields) => resolveModalNumber(modalFields, "kolumn2", 0),
     fält: {
       antalLabel: "Summa",
       antalPlaceholder: "Ange summa i kronor",

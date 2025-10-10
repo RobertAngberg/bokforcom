@@ -167,7 +167,7 @@ async function hamtaKontoIdMap(kontonummerLista: string[]) {
 }
 
 export async function fetchTransactionWithEntries(
-  userId: number,
+  userId: number | string,
   transaktionsId: number
 ): Promise<TransactionWithEntries | null> {
   const client = await pool.connect();

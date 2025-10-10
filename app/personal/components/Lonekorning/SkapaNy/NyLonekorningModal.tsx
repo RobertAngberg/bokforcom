@@ -12,6 +12,13 @@ export default function NyLonekorningModal({
   onClose,
   onLonekorningCreated,
 }: NyLonekorningModalProps) {
+  // Suck... sjuk spaghetti nedan...
+  const formatKompensation = (value?: string | number | null) => {
+    const num = typeof value === "number" ? value : Number(value ?? "");
+    if (!Number.isFinite(num)) return value ?? "";
+    return num.toLocaleString("sv-SE");
+  };
+
   const {
     newLonekorningUtbetalningsdatum: utbetalningsdatum,
     setNewLonekorningUtbetalningsdatum: setUtbetalningsdatum,
@@ -104,8 +111,7 @@ export default function NyLonekorningModal({
                         {anställd.förnamn} {anställd.efternamn}
                       </div>
                       <div className="text-sm text-slate-400">
-                        {anställd.jobbtitel} • {anställd.kompensation?.toLocaleString("sv-SE")}{" "}
-                        kr/mån
+                        {anställd.jobbtitel} • {formatKompensation(anställd.kompensation)} kr/mån
                       </div>
                     </label>
                   </div>

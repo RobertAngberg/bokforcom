@@ -7,6 +7,9 @@ export default function Lönetabell({
   extraraderMapped,
   formatNoDecimals,
 }: LönetabellProps) {
+  const övertidBelopp = lönespec?.övertid ?? 0;
+  const övertidTimmar = lönespec?.övertid_timmar ?? 0;
+
   return (
     <div className="mb-6">
       <table className="w-full border-collapse border border-gray-400">
@@ -39,17 +42,17 @@ export default function Lönetabell({
               {formatNoDecimals(bruttolön)} kr
             </td>
           </tr>
-          {parseFloat(lönespec?.övertid || 0) > 0 && (
+          {övertidBelopp > 0 && (
             <tr>
               <td className="border border-gray-400 px-3 py-2 text-black text-xs">Övertid</td>
               <td className="border border-gray-400 px-3 py-2 text-center text-black text-xs">
-                {parseFloat(lönespec.övertid_timmar || 0)} h
+                {övertidTimmar} h
               </td>
               <td className="border border-gray-400 px-3 py-2 text-right text-black text-xs">
-                {formatNoDecimals(parseFloat(lönespec.övertid))} kr
+                {formatNoDecimals(övertidBelopp)} kr
               </td>
               <td className="border border-gray-400 px-3 py-2 text-right font-semibold text-black text-xs">
-                {formatNoDecimals(parseFloat(lönespec.övertid))} kr
+                {formatNoDecimals(övertidBelopp)} kr
               </td>
             </tr>
           )}

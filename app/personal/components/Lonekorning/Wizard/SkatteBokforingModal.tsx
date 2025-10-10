@@ -16,6 +16,14 @@ export default function SkatteBokforingModal({
   skatteBokförPågår,
   onHämtaBankgiro,
 }: SkatteBokforingModalProps) {
+  const { socialaAvgifter = 0, personalskatt = 0, totaltSkatter = 0 } = skatteData;
+
+  const formatCurrency = (value: number) =>
+    Number(value || 0).toLocaleString("sv-SE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   return (
     <Modal
       isOpen={skatteModalOpen}
@@ -35,14 +43,14 @@ export default function SkatteBokforingModal({
                 id: "2731",
                 konto: "2731",
                 beskrivning: "Avräkning sociala avgifter",
-                debet: skatteData.socialaAvgifter.toFixed(2).replace(".", ",") + " kr",
+                debet: `${formatCurrency(socialaAvgifter)} kr`,
                 kredit: "",
               },
               {
                 id: "2710",
                 konto: "2710",
                 beskrivning: "Personalskatt",
-                debet: skatteData.personalskatt.toFixed(2).replace(".", ",") + " kr",
+                debet: `${formatCurrency(personalskatt)} kr`,
                 kredit: "",
               },
               {
@@ -50,7 +58,7 @@ export default function SkatteBokforingModal({
                 konto: "1930",
                 beskrivning: "Företagskonto",
                 debet: "",
-                kredit: skatteData.totaltSkatter.toFixed(2).replace(".", ",") + " kr",
+                kredit: `${formatCurrency(totaltSkatter)} kr`,
               },
             ]}
             columns={[
@@ -108,10 +116,7 @@ export default function SkatteBokforingModal({
             <button
               className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               onClick={hanteraBokförSkatter}
-              disabled={
-                skatteBokförPågår ||
-                (skatteData.socialaAvgifter === 0 && skatteData.personalskatt === 0)
-              }
+              disabled={skatteBokförPågår || (socialaAvgifter === 0 && personalskatt === 0)}
             >
               {skatteBokförPågår ? (
                 <>

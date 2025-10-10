@@ -31,7 +31,6 @@ export default function BankgiroExport({
   } = useBankgiroExport({
     anställda,
     utbetalningsdatum,
-    // @ts-expect-error - Type mismatch between Lönespec interfaces from different imports
     lönespecar,
     onExportComplete,
     onClose,
@@ -112,7 +111,7 @@ export default function BankgiroExport({
                     <tbody>
                       {anställdaMedLönespec.map((anställd) => {
                         const lönespec = lönespecar[anställd.id];
-                        const nettolön = parseFloat(lönespec?.nettolön || 0);
+                        const nettolön = Number(lönespec?.nettolön ?? 0);
 
                         return (
                           <tr key={anställd.id}>

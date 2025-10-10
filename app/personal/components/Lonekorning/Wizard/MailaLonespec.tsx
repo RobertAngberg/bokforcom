@@ -35,7 +35,6 @@ export default function MailaLonespec({
     batchMode,
     onMailComplete,
     onClose,
-    // @ts-expect-error - Component type mismatch
     ForhandsgranskningComponent: Forhandsgranskning,
     open,
   });

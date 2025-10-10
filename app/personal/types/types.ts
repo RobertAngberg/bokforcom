@@ -525,7 +525,7 @@ export interface AGIGeneratorProps {
 export interface BankgiroExportProps {
   anställda: AnställdListItem[];
   utbetalningsdatum: Date | null;
-  lönespecar: Record<string, Lönespec>;
+  lönespecar: Record<string | number, Lönespec>;
   open?: boolean;
   onClose?: () => void;
   onExportComplete?: () => void; // Callback när export är klar
@@ -633,7 +633,11 @@ export interface SkatteBokforingModalProps {
   skatteModalOpen: boolean;
   setSkatteModalOpen: (open: boolean) => void;
   valdaSpecar: LönespecData[];
-  skatteData: Record<string, unknown>;
+  skatteData: {
+    socialaAvgifter: number;
+    personalskatt: number;
+    totaltSkatter: number;
+  };
   utbetalningsdatum: string | null;
   skatteDatum: Date | null;
   setSkatteDatum: (date: Date | null) => void;
@@ -724,6 +728,9 @@ export interface Lönespec {
   övertid?: number;
   arbetstimmarPerVecka?: number;
   semester_uttag?: number;
+  arbetade_timmar?: number | null;
+  övertid_timmar?: number | null;
+  sjukfrånvaro_dagar?: number | null;
 
   // Status flags
   bankgiro_exporterad?: boolean;
@@ -1675,7 +1682,7 @@ export interface UseMailaLonespecProps {
 export interface UseBankgiroExportProps {
   anställda: AnställdListItem[];
   utbetalningsdatum: Date | null;
-  lönespecar: Record<string, Lönespec>;
+  lönespecar: Record<string | number, Lönespec>;
   onExportComplete?: () => void;
   onClose?: () => void;
 }
