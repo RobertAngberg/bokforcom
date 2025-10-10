@@ -13,7 +13,7 @@ import {
   sparaForetagsprofil as sparaForetagsprofilAction,
   uploadLogoAction,
 } from "../actions/foretagActions";
-import { sparaNyKund, deleteKund, hämtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
+import { sparaNyKund, deleteKund, hamtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
 import { hamtaSenasteBetalningsmetod } from "../actions/alternativActions";
 import {
   sanitizeFormInput,
@@ -229,7 +229,7 @@ export function useFaktura() {
 
     const laddaKunder = async () => {
       try {
-        const sparade = await hämtaSparadeKunder();
+        const sparade = await hamtaSparadeKunder();
         setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
       } catch (error) {
         console.log("Fel vid hämtning av kunder", error);
@@ -783,7 +783,7 @@ export function useFaktura() {
         showToast("Kund sparad! ✅", "success");
 
         // Ladda om kunder
-        const sparade = await hämtaSparadeKunder();
+        const sparade = await hamtaSparadeKunder();
         setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
       } else {
         showError("Kunde inte spara kund");
@@ -837,7 +837,7 @@ export function useFaktura() {
       await deleteKund(parseInt(formData.kundId, 10));
       resetKund();
       setKundStatus("none");
-      const sparade = await hämtaSparadeKunder();
+      const sparade = await hamtaSparadeKunder();
       setKunder(sparade.sort((a, b) => a.kundnamn.localeCompare(b.kundnamn)));
       showSuccess("Kund raderad");
     } catch (error) {
