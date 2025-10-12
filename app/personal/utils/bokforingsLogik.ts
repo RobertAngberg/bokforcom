@@ -8,12 +8,13 @@ import type {
 } from "../types/types";
 import {
   klassificeraExtrarader,
-  beräknaSkattTabell34,
+  beräknaSkattMedTabell,
   beräknaSocialaAvgifter,
   beräknaDaglön,
 } from "./loneberakningar";
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
 import { beräknaSumma } from "./extraraderUtils";
+import { hämtaSkattFrånTabell } from "./skattetabeller";
 
 export function genereraBokföringsrader(
   lönespecar: Record<
@@ -72,7 +73,14 @@ export function genereraBokföringsrader(
     const bruttolönKorr = grundlön + tillaggBruttolon - totalAvdrag;
 
     // Skatt och sociala avgifter på korrigerad bruttolön
-    const skatt = beräknaSkattTabell34(bokioBruttolon);
+    const valdSkattetabell = anställd?.skattetabell ?? 34;
+    const valdSkattekolumn = anställd?.skattekolumn ?? 1;
+    const skattFrånTabell = hämtaSkattFrånTabell(
+      bokioBruttolon,
+      valdSkattetabell,
+      valdSkattekolumn
+    );
+    const skatt = skattFrånTabell ?? beräknaSkattMedTabell(bokioBruttolon, valdSkattetabell);
     const socialaAvgifter = beräknaSocialaAvgifter(bokioBruttolon, socialaAvgifterSats);
 
     // Bokföringsrader

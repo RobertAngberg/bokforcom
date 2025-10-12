@@ -1,5 +1,5 @@
 import { RAD_KONFIGURATIONER } from "./extraradDefinitioner";
-import { SKATTETABELL_34_1_2025 } from "./skattetabell34";
+import { hämtaSkattFrånTabell } from "./skattetabeller";
 import type {
   LöneKontrakt,
   DagAvdrag,
@@ -380,16 +380,18 @@ export function beräknaSkattMedTabell(bruttolön: number, skattetabell?: number
   return Math.round(bruttolön * skattesats);
 }
 
-function beräknaSkattFörTabell(skattunderlag: number, skattetabell?: number): number {
+function beräknaSkattFörTabell(
+  skattunderlag: number,
+  skattetabell?: number,
+  skattekolumn?: number
+): number {
   if (!skattetabell) {
     return beräknaSkatt(skattunderlag);
   }
 
-  if (skattetabell === 34) {
-    const tabellSkatt = beräknaSkattTabell34(skattunderlag);
-    if (tabellSkatt > 0) {
-      return tabellSkatt;
-    }
+  const tabellSkatt = hämtaSkattFrånTabell(skattunderlag, skattetabell, skattekolumn);
+  if (tabellSkatt != null) {
+    return tabellSkatt;
   }
 
   return beräknaSkattMedTabell(skattunderlag, skattetabell);
@@ -450,7 +452,7 @@ export function beräknaKomplett(
   const bruttolön = kontantlön + skattepliktigaFörmåner;
 
   const skattunderlag = bruttolön; // Skattepliktiga förmåner redan inkluderade i bruttolön
-  const skatt = beräknaSkattFörTabell(skattunderlag, kontrakt.skattetabell);
+  const skatt = beräknaSkattFörTabell(skattunderlag, kontrakt.skattetabell, kontrakt.skattekolumn);
   const nettolön = kontantlön - skatt + skattefriaErsättningar;
   //  + nettolönejustering;
 
@@ -569,12 +571,12 @@ export function beräknaLonekomponenter(
   };
 }
 
-export function beräknaSkattTabell34(bruttolön: number): number {
-  const entry = SKATTETABELL_34_1_2025.find((row) => bruttolön >= row.from && bruttolön <= row.to);
-  if (entry) {
-    return entry.skatt;
+export function beräknaSkattTabell34(bruttolön: number, kolumn: number = 1): number {
+  const skatt = hämtaSkattFrånTabell(bruttolön, 34, kolumn);
+  if (skatt != null) {
+    return skatt;
   }
-  console.log("Ingen rad hittad för bruttolön:", bruttolön);
+  console.log("Ingen rad hittad för bruttolön i tabell 34:", { bruttolön, kolumn });
   return 0;
 }
 
