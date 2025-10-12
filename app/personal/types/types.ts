@@ -1035,6 +1035,27 @@ export interface AnställdaListaProps {
   handlers: AnställdaListaHandlers;
 }
 
+export interface InformationProps {
+  state: {
+    valdAnställd: AnställdData | null;
+    personalIsEditing: boolean;
+    personalHasChanges: boolean;
+    personalErrorMessage: string | null;
+    personalEditData: PersonalEditData;
+    [key: string]: unknown;
+  };
+  handlers: {
+    personalOnEdit: () => void;
+    personalOnSave: () => void | Promise<void>;
+    personalOnCancel: () => void;
+    personalOnChange: (
+      name: keyof PersonalEditData | string,
+      value: string | number | boolean
+    ) => void;
+    [key: string]: unknown;
+  };
+}
+
 // NyAnstalldModal.tsx
 // ExtraraderModal.tsx
 export interface FormField {
