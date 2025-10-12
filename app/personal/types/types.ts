@@ -1028,13 +1028,6 @@ export interface AnställdaRadPropsWithHandlers {
   handlers: AnställdaListaHandlers;
 }
 
-export interface AnställdaListaProps {
-  state: {
-    anställda: AnställdListItem[];
-  };
-  handlers: AnställdaListaHandlers;
-}
-
 export interface InformationProps {
   state: {
     valdAnställd: AnställdData | null;
@@ -1054,6 +1047,28 @@ export interface InformationProps {
     ) => void;
     [key: string]: unknown;
   };
+}
+
+export interface NyAnstalldHandlers {
+  döljNyAnställd: () => void;
+  hanteraNyAnställdSparad: () => Promise<void> | void;
+}
+
+export interface NyAnstalldProps {
+  handlers: NyAnstalldHandlers;
+}
+
+export interface NyAnstalldModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  handlers: NyAnstalldHandlers;
+}
+
+export interface AnställdaListaProps {
+  state: {
+    anställda: AnställdListItem[];
+  };
+  handlers: AnställdaListaHandlers;
 }
 
 // NyAnstalldModal.tsx
@@ -1128,6 +1143,13 @@ export interface UseWizardProps {
 export interface UseUtlaggProps {
   anställdId?: number | null;
   enableFlikMode?: boolean;
+}
+
+export interface UtläggBokföringModal {
+  isOpen: boolean;
+  utlägg: UtläggQueryResult | null;
+  previewRows: UtlaggBokföringsRad[];
+  loading: boolean;
 }
 
 // useSemester.ts

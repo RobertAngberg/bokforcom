@@ -6,7 +6,7 @@ import {
   beräknaDaglön,
   beräknaObetaldDag,
   beräknaSemesterLön,
-} from "../loneberakningar";
+} from "../../../../utils/loneberakningar";
 import { ModalFields } from "../../../../types/types";
 
 export interface RadKonfiguration {
