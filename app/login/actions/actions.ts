@@ -2,7 +2,6 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { sanitizeFormInput } from "../../_utils/validationUtils";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { validateEmail, validatePassword } from "../utils/loginValidation";
@@ -224,14 +223,13 @@ export async function saveSignupData(formData: FormData) {
       return { success: false, error: "Saknade obligatoriska fält" };
     }
 
-    // Sanitera all input
-    const organisationsnummer = sanitizeFormInput(rawOrganisationsnummer);
-    const företagsnamn = sanitizeFormInput(rawFöretagsnamn);
-    const momsperiod = sanitizeFormInput(rawMomsperiod);
-    const bokföringsmetod = sanitizeFormInput(rawBokföringsmetod);
-    const första_bokslut = sanitizeFormInput(rawFörsta_bokslut);
-    const startdatum = rawStartdatum ? sanitizeFormInput(rawStartdatum) : null;
-    const slutdatum = rawSlutdatum ? sanitizeFormInput(rawSlutdatum) : null;
+    const organisationsnummer = rawOrganisationsnummer.trim();
+    const företagsnamn = rawFöretagsnamn.trim();
+    const momsperiod = rawMomsperiod.trim();
+    const bokföringsmetod = rawBokföringsmetod.trim();
+    const första_bokslut = rawFörsta_bokslut.trim();
+    const startdatum = rawStartdatum ? rawStartdatum.trim() : null;
+    const slutdatum = rawSlutdatum ? rawSlutdatum.trim() : null;
 
     // Säkerhetskontroller för tillåtna värden (även om frontend validerat)
     const allowedMomsperiods = ["månadsvis", "kvartalsvis", "årsvis"];

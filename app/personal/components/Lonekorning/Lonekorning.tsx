@@ -1,13 +1,14 @@
 //#region Imports
 "use client";
 
+import { useMemo } from "react";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { useLonespec } from "../../hooks/useLonespecar";
 import { useLonekorning } from "../../hooks/useLonekorning";
 import { useAnstallda } from "../../hooks/useAnstallda";
-import type { LonekorningProps } from "../../types/types";
+import type { LonekorningProps, Lönespec } from "../../types/types";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
 import NyLonekorningModal from "./SkapaNy/NyLonekorningModal";
 import LonekorningLista from "./Listor/LonekorningLista";
@@ -15,6 +16,7 @@ import LonespecLista from "./Listor/LonespecLista";
 import MailaLonespec from "./Wizard/MailaLonespec";
 import BokforLoner from "./Wizard/BokforLoner";
 import SkatteBokforingModal from "./Wizard/SkatteBokforingModal";
+import BankgiroExport from "./Wizard/BankgiroExport";
 
 //#endregion
 
@@ -44,6 +46,7 @@ export default function Lonekorning({
     setBatchMailModalOpen,
     bokforModalOpen,
     setBokforModalOpen,
+    bankgiroModalOpen,
     setBankgiroModalOpen,
     skatteModalOpen,
     setSkatteModalOpen,
@@ -55,6 +58,7 @@ export default function Lonekorning({
     anstallda,
     utlaggMap,
     batchData,
+    utbetalningsdatum,
     deletePeriodLabel,
     // Business logic
     // Lista mode data
@@ -71,6 +75,7 @@ export default function Lonekorning({
     hanteraAGI,
     showDeleteLönekorningModal,
     confirmDeleteLönekorning,
+    specListHandleHämtaBankgiro,
   } = useLonekorning({
     anställda: combinedAnstallda,
     anställdaLoading: propsAnställdaLoading,
@@ -79,6 +84,35 @@ export default function Lonekorning({
     beräknadeVärden,
     enableListMode: true, // Aktivera lista mode så vi får lönekörning-data
   });
+
+  const bankgiroUtbetalningsdatum = useMemo(() => {
+    if (typeof utbetalningsdatum === "string" && utbetalningsdatum.length > 0) {
+      const parsed = new Date(`${utbetalningsdatum}T00:00:00`);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    const datumKälla = lönekörningSpecar.find((spec) => spec.utbetalningsdatum)?.utbetalningsdatum;
+    if (!datumKälla) {
+      return null;
+    }
+    if (datumKälla instanceof Date) {
+      return datumKälla;
+    }
+    const parsed = new Date(`${datumKälla}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [utbetalningsdatum, lönekörningSpecar]);
+
+  const bankgiroLönespecar = useMemo(() => {
+    return lönekörningSpecar.reduce<Record<string | number, Lönespec>>((acc, spec) => {
+      const anställdId = Number(spec.anställd_id);
+      if (!Number.isNaN(anställdId)) {
+        acc[anställdId] = { ...spec } as Lönespec;
+      }
+      return acc;
+    }, {});
+  }, [lönekörningSpecar]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -132,7 +166,7 @@ export default function Lonekorning({
               utlaggMap={utlaggMap}
               lönekörning={valdLonekorning}
               onTaBortSpec={hanteraTaBortSpec}
-              onHämtaBankgiro={() => setBankgiroModalOpen(true)}
+              onHämtaBankgiro={specListHandleHämtaBankgiro}
               onMailaSpecar={() => setBatchMailModalOpen(true)}
               onBokför={() => setBokforModalOpen(true)}
               onGenereraAGI={hanteraAGI}
@@ -223,7 +257,22 @@ export default function Lonekorning({
             setSkatteDatum={setSkatteDatum}
             hanteraBokförSkatter={hanteraBokförSkatter}
             skatteBokförPågår={false}
-            onHämtaBankgiro={() => {}}
+            onHämtaBankgiro={specListHandleHämtaBankgiro}
+          />
+        )}
+
+        {bankgiroModalOpen && (
+          <BankgiroExport
+            anställda={anstallda || []}
+            utbetalningsdatum={bankgiroUtbetalningsdatum}
+            lönespecar={bankgiroLönespecar}
+            open={bankgiroModalOpen}
+            onClose={() => setBankgiroModalOpen(false)}
+            onExportComplete={() => {
+              void refreshData();
+              setBankgiroModalOpen(false);
+            }}
+            showButton={false}
           />
         )}
 

@@ -1,6 +1,5 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { sanitizeFormInput } from "../../_utils/validationUtils";
 import { Förval } from "../types/types";
 
 // Bokföringsmetod data
@@ -54,7 +53,7 @@ export async function hamtaAllaForval(filters?: { sök?: string; kategori?: stri
   const conditions: string[] = [];
 
   if (filters?.sök) {
-    const safeSearch = sanitizeFormInput(filters.sök);
+    const safeSearch = filters.sök.trim();
     if (safeSearch) {
       conditions.push(
         `(LOWER(namn) LIKE $${values.length + 1} OR LOWER(beskrivning) LIKE $${values.length + 1})`

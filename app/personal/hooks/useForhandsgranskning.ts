@@ -97,7 +97,6 @@ export const useForhandsgranskning = (
   const bruttolön = beräknadeVärden.bruttolön ?? lönespec?.bruttolön ?? 0;
   const skatt = beräknadeVärden.skatt ?? lönespec?.skatt ?? 0;
   const socialaAvgifter = beräknadeVärden.socialaAvgifter ?? lönespec?.sociala_avgifter ?? 0;
-  const totalLönekostnad = beräknadeVärden.lönekostnad ?? bruttolön + socialaAvgifter;
   const nettolön = beräknadeVärden.nettolön ?? lönespec?.nettolön ?? 0;
 
   const utbetalningsDatum = new Date(lönespec?.år ?? 2025, (lönespec?.månad ?? 1) - 1, 25);
@@ -165,7 +164,6 @@ export const useForhandsgranskning = (
     bruttolön,
     skatt,
     socialaAvgifter,
-    totalLönekostnad,
     nettolön,
     utbetalningsDatum,
     periodStart,

@@ -1,17 +1,22 @@
 "use server";
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { sanitizeInput, validateEmail } from "../../_utils/validationUtils";
+import { validateEmail } from "../../_utils/validationUtils";
 import type { KundListItem } from "../types/types";
 
 export async function sparaNyKund(formData: FormData) {
   const { userId } = await ensureSession();
 
   // SÄKERHETSVALIDERING: Sanitera och validera all kundinformation
-  const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
-  const kundEmail = sanitizeInput(formData.get("kundemail")?.toString() || "", 255);
-  const orgNummer = sanitizeInput(formData.get("kundorgnummer")?.toString() || "");
-  const personnummer = sanitizeInput(formData.get("personnummer")?.toString() || "");
+  const kundnamn = formData.get("kundnamn")?.toString() || "";
+  const kundEmail = formData.get("kundemail")?.toString() || "";
+  const orgNummer = formData.get("kundorgnummer")?.toString() || "";
+  const personnummer = formData.get("personnummer")?.toString() || "";
+  const kundnummer = formData.get("kundnummer")?.toString() || "";
+  const kundmomsnummer = formData.get("kundmomsnummer")?.toString() || "";
+  const kundadress1 = formData.get("kundadress1")?.toString() || "";
+  const kundpostnummer = formData.get("kundpostnummer")?.toString() || "";
+  const kundstad = formData.get("kundstad")?.toString() || "";
 
   // Validera obligatoriska fält
   if (!kundnamn || kundnamn.length < 2) {
@@ -41,12 +46,12 @@ export async function sparaNyKund(formData: FormData) {
       [
         userId,
         kundnamn,
-        sanitizeInput(orgNummer),
-        sanitizeInput(formData.get("kundnummer")?.toString() || ""),
-        sanitizeInput(formData.get("kundmomsnummer")?.toString() || ""),
-        sanitizeInput(formData.get("kundadress1")?.toString() || ""),
-        sanitizeInput(formData.get("kundpostnummer")?.toString() || ""),
-        sanitizeInput(formData.get("kundstad")?.toString() || ""),
+        orgNummer,
+        kundnummer,
+        kundmomsnummer,
+        kundadress1,
+        kundpostnummer,
+        kundstad,
         kundEmail,
       ]
     );
@@ -76,10 +81,15 @@ export async function uppdateraKund(id: number, formData: FormData) {
     }
 
     // SÄKERHETSVALIDERING: Sanitera alla input-värden
-    const kundnamn = sanitizeInput(formData.get("kundnamn")?.toString() || "");
-    const kundEmail = sanitizeInput(formData.get("kundemail")?.toString() || "", 255);
-    const orgNummer = sanitizeInput(formData.get("kundorgnummer")?.toString() || "");
-    const personnummer = sanitizeInput(formData.get("personnummer")?.toString() || "");
+    const kundnamn = formData.get("kundnamn")?.toString() || "";
+    const kundEmail = formData.get("kundemail")?.toString() || "";
+    const orgNummer = formData.get("kundorgnummer")?.toString() || "";
+    const personnummer = formData.get("personnummer")?.toString() || "";
+    const kundnummer = formData.get("kundnummer")?.toString() || "";
+    const kundmomsnummer = formData.get("kundmomsnummer")?.toString() || "";
+    const kundadress1 = formData.get("kundadress1")?.toString() || "";
+    const kundpostnummer = formData.get("kundpostnummer")?.toString() || "";
+    const kundstad = formData.get("kundstad")?.toString() || "";
 
     // Validera obligatoriska fält
     if (!kundnamn || kundnamn.length < 2) {
@@ -123,12 +133,12 @@ export async function uppdateraKund(id: number, formData: FormData) {
         `,
         [
           kundnamn,
-          sanitizeInput(formData.get("kundnummer")?.toString() || ""),
-          sanitizeInput(orgNummer),
-          sanitizeInput(formData.get("kundmomsnummer")?.toString() || ""),
-          sanitizeInput(formData.get("kundadress1")?.toString() || ""),
-          sanitizeInput(formData.get("kundpostnummer")?.toString() || ""),
-          sanitizeInput(formData.get("kundstad")?.toString() || ""),
+          kundnummer,
+          orgNummer,
+          kundmomsnummer,
+          kundadress1,
+          kundpostnummer,
+          kundstad,
           kundEmail,
           id,
           userId,

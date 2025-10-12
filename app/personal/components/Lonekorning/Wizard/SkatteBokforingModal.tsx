@@ -17,6 +17,7 @@ export default function SkatteBokforingModal({
   onHämtaBankgiro,
 }: SkatteBokforingModalProps) {
   const { socialaAvgifter = 0, personalskatt = 0, totaltSkatter = 0 } = skatteData;
+  const totalBelopp = Math.round((socialaAvgifter + personalskatt) * 100) / 100;
 
   const formatCurrency = (value: number) =>
     Number(value || 0).toLocaleString("sv-SE", {
@@ -58,7 +59,7 @@ export default function SkatteBokforingModal({
                 konto: "1930",
                 beskrivning: "Företagskonto",
                 debet: "",
-                kredit: `${formatCurrency(totaltSkatter)} kr`,
+                kredit: `${formatCurrency(totalBelopp || totaltSkatter)} kr`,
               },
             ]}
             columns={[

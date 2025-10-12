@@ -444,10 +444,10 @@ export interface Lönespec {
   // Datum och period
   månad?: number;
   år?: number;
-  utbetalningsdatum?: string | Date;
-  period_start?: string | Date;
-  period_slut?: string | Date;
-  skapad?: string | Date;
+  utbetalningsdatum?: string | Date | null;
+  period_start?: string | Date | null;
+  period_slut?: string | Date | null;
+  skapad?: string | Date | null;
 
   // Övriga lönekomponenter
   övertid?: number;
@@ -492,7 +492,6 @@ export interface SammanfattningProps {
   bruttolön: number;
   skatt: number;
   socialaAvgifter: number;
-  totalLönekostnad: number;
   extraraderMapped: MappedExtrarad[];
   formatNoDecimals: (num: number) => string;
 }
@@ -980,6 +979,7 @@ export interface LönespecData {
   sociala_avgifter?: number;
   skatter_bokförda?: boolean;
   agi_genererad?: boolean;
+  utbetalningsdatum?: string | Date | null;
 }
 
 export interface BeräknadeVärden {

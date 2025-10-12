@@ -5,7 +5,7 @@ import { ensureSession } from "../../_utils/session";
 import type { AktionsResultat, AnvandarInfo } from "../types/types";
 import type { UppdateraAnvandarPayload } from "../types/types";
 import { revalidatePath } from "next/cache";
-import { sanitizeFormInput, requireValid, validateEmail } from "../../_utils/validationUtils";
+import { requireValid, validateEmail } from "../../_utils/validationUtils";
 
 export async function uppdateraAnvandarInfo(
   payload: UppdateraAnvandarPayload
@@ -13,8 +13,8 @@ export async function uppdateraAnvandarInfo(
   try {
     const { userId } = await ensureSession();
 
-    const name = sanitizeFormInput(payload.name || "").trim();
-    const email = sanitizeFormInput(payload.email || "").trim();
+    const name = (payload.name || "").trim();
+    const email = (payload.email || "").trim();
 
     if (!name || !email) {
       return { success: false, error: "Namn och email ar obligatoriska" };

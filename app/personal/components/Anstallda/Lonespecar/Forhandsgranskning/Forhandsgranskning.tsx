@@ -26,7 +26,6 @@ export default function Forhandsgranskning({
     bruttolön,
     skatt,
     socialaAvgifter,
-    totalLönekostnad,
     nettolön,
     utbetalningsDatum,
     periodStart,
@@ -77,7 +76,6 @@ export default function Forhandsgranskning({
           />
           <div className="grid grid-cols-2 gap-6 mb-6">
             <Sammanfattning
-              totalLönekostnad={totalLönekostnad}
               bruttolön={bruttolön}
               socialaAvgifter={socialaAvgifter}
               skatt={skatt}

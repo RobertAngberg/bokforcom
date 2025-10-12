@@ -9,7 +9,7 @@ import {
 } from "../actions/leverantorActions";
 import { Leverantör } from "../types/types";
 import { showToast } from "../../_components/Toast";
-import { validateEmail, sanitizeInput } from "../../_utils/validationUtils";
+import { validateEmail } from "../../_utils/validationUtils";
 import { hamtaTransaktionsposter } from "../actions/alternativActions";
 import { hamtaBokfordaFakturor } from "../actions/bokforingActions";
 import { hamtaSparadeFakturor } from "../actions/fakturaActions";
@@ -42,11 +42,6 @@ import {
 import { useRouter } from "next/navigation";
 
 // Business Logic Functions for NyLeverantorModal
-function sanitizeLeverantörInput(input: string): string {
-  if (!input) return "";
-  return sanitizeInput(input, 255);
-}
-
 function validateLeverantörEmail(email: string): boolean {
   if (!email) return true; // Email är valfritt
   return validateEmail(email);
@@ -57,7 +52,7 @@ function validateLeverantörData(formData: LeverantörFormData): {
   error?: string;
 } {
   // Validera obligatoriska fält
-  const namn = sanitizeLeverantörInput(formData.namn || "");
+  const namn = formData.namn || "";
   if (!namn || namn.length < 2) {
     return { isValid: false, error: "Leverantörsnamn krävs (minst 2 tecken)" };
   }
@@ -70,15 +65,15 @@ function validateLeverantörData(formData: LeverantörFormData): {
   return { isValid: true };
 }
 
-function sanitizeLeverantörFormData(formData: LeverantörFormData): LeverantörFormData {
+function mapLeverantorFormData(formData: LeverantörFormData): LeverantörFormData {
   return {
     ...formData,
-    namn: sanitizeLeverantörInput(formData.namn || ""),
-    organisationsnummer: sanitizeLeverantörInput(formData.organisationsnummer || ""),
-    adress: sanitizeLeverantörInput(formData.adress || ""),
-    postnummer: sanitizeLeverantörInput(formData.postnummer || ""),
-    stad: sanitizeLeverantörInput(formData.stad || ""),
-    telefon: sanitizeLeverantörInput(formData.telefon || ""),
+    namn: formData.namn ?? "",
+    organisationsnummer: formData.organisationsnummer ?? "",
+    adress: formData.adress ?? "",
+    postnummer: formData.postnummer ?? "",
+    stad: formData.stad ?? "",
+    telefon: formData.telefon ?? "",
   };
 }
 
@@ -291,18 +286,17 @@ export function useNyLeverantorModal({
         return;
       }
 
-      // Sanitera data
-      const sanitizedData = sanitizeLeverantörFormData(formData);
+      const preparedData = mapLeverantorFormData(formData);
 
       if (isEditing && editLeverantör) {
         const data = {
-          namn: sanitizedData.namn,
-          organisationsnummer: sanitizedData.organisationsnummer || undefined,
-          adress: sanitizedData.adress || undefined,
-          postnummer: sanitizedData.postnummer || undefined,
-          ort: sanitizedData.stad || undefined,
-          telefon: sanitizedData.telefon || undefined,
-          email: formData.epost?.trim() || undefined,
+          namn: preparedData.namn,
+          organisationsnummer: preparedData.organisationsnummer || undefined,
+          adress: preparedData.adress || undefined,
+          postnummer: preparedData.postnummer || undefined,
+          ort: preparedData.stad || undefined,
+          telefon: preparedData.telefon || undefined,
+          email: formData.epost || undefined,
         };
         const result = await updateLeverantor(editLeverantör.id!, data);
 
@@ -314,14 +308,14 @@ export function useNyLeverantorModal({
         }
       } else {
         const submitData = new FormData();
-        submitData.append("namn", sanitizedData.namn);
-        if (sanitizedData.organisationsnummer)
-          submitData.append("organisationsnummer", sanitizedData.organisationsnummer);
-        if (sanitizedData.adress) submitData.append("adress", sanitizedData.adress);
-        if (sanitizedData.postnummer) submitData.append("postnummer", sanitizedData.postnummer);
-        if (sanitizedData.stad) submitData.append("ort", sanitizedData.stad);
-        if (sanitizedData.telefon) submitData.append("telefon", sanitizedData.telefon);
-        if (formData.epost) submitData.append("email", formData.epost.trim());
+        submitData.append("namn", preparedData.namn);
+        if (preparedData.organisationsnummer)
+          submitData.append("organisationsnummer", preparedData.organisationsnummer);
+        if (preparedData.adress) submitData.append("adress", preparedData.adress);
+        if (preparedData.postnummer) submitData.append("postnummer", preparedData.postnummer);
+        if (preparedData.stad) submitData.append("ort", preparedData.stad);
+        if (preparedData.telefon) submitData.append("telefon", preparedData.telefon);
+        if (formData.epost) submitData.append("email", formData.epost);
 
         const result = await saveLeverantor(submitData);
 

@@ -15,21 +15,10 @@ import {
 } from "../actions/foretagActions";
 import { sparaNyKund, deleteKund, hamtaSparadeKunder, uppdateraKund } from "../actions/kundActions";
 import { hamtaSenasteBetalningsmetod } from "../actions/alternativActions";
-import {
-  sanitizeFormInput,
-  validatePersonnummer,
-  validateEmail,
-} from "../../_utils/validationUtils";
+import { validatePersonnummer, validateEmail } from "../../_utils/validationUtils";
 import { stringTillDate, dateToYyyyMmDd } from "../../_utils/datum";
 import { showToast } from "../../_components/Toast";
 import type { FakturaFormData, KundListItem, KundSaveResponse } from "../types/types";
-
-const sanitizePersonnummerValue = (value: string): string => {
-  if (!value) return "";
-  return sanitizeFormInput(value)
-    .replace(/[^\d-]/g, "")
-    .slice(0, 13);
-};
 
 /**
  * Huvudhook för alla faktura-relaterade funktioner
@@ -479,19 +468,7 @@ export function useFaktura() {
         return;
       }
 
-      let sanitizedValue = value;
-
-      if (name === "nummer") {
-        sanitizedValue = sanitizeFormInput(value)
-          .replace(/[^0-9A-Za-z-]/g, "")
-          .slice(0, 30);
-      } else if (name === "personnummer") {
-        sanitizedValue = sanitizePersonnummerValue(value);
-      } else {
-        sanitizedValue = sanitizeFormInput(value);
-      }
-
-      setFormData({ [name]: sanitizedValue });
+      setFormData({ [name]: value });
     },
     [setFormData]
   );
@@ -636,7 +613,7 @@ export function useFaktura() {
   // Validera kunddata
   const validateKundData = useCallback(
     (data: Partial<FakturaFormData>): { isValid: boolean; error?: string } => {
-      const kundnamn = sanitizeFormInput(data.kundnamn || "");
+      const kundnamn = data.kundnamn || "";
       if (!kundnamn || kundnamn.length < 2) {
         return { isValid: false, error: "Kundnamn krävs (minst 2 tecken)" };
       }
@@ -658,15 +635,15 @@ export function useFaktura() {
   const sanitizeKundFormData = useCallback((data: Partial<FakturaFormData>) => {
     return {
       ...data,
-      kundnamn: sanitizeFormInput(data.kundnamn || ""),
-      kundorganisationsnummer: sanitizeFormInput(data.kundorganisationsnummer || ""),
-      kundnummer: sanitizeFormInput(data.kundnummer || ""),
-      kundmomsnummer: sanitizeFormInput(data.kundmomsnummer || ""),
-      kundadress: sanitizeFormInput(data.kundadress || ""),
-      kundpostnummer: sanitizeFormInput(data.kundpostnummer || ""),
-      kundstad: sanitizeFormInput(data.kundstad || ""),
-      kundemail: sanitizeFormInput(data.kundemail || ""),
-      personnummer: sanitizePersonnummerValue(data.personnummer || ""),
+      kundnamn: data.kundnamn ?? "",
+      kundorganisationsnummer: data.kundorganisationsnummer ?? "",
+      kundnummer: data.kundnummer ?? "",
+      kundmomsnummer: data.kundmomsnummer ?? "",
+      kundadress: data.kundadress ?? "",
+      kundpostnummer: data.kundpostnummer ?? "",
+      kundstad: data.kundstad ?? "",
+      kundemail: data.kundemail ?? "",
+      personnummer: data.personnummer ?? "",
     };
   }, []);
 
@@ -729,19 +706,8 @@ export function useFaktura() {
   const handleKundChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      let sanitizedValue: string | boolean = value;
-
-      if (typeof value === "string") {
-        if (name === "kundemail") {
-          sanitizedValue = sanitizeFormInput(value.trim());
-        } else if (name === "personnummer") {
-          sanitizedValue = sanitizePersonnummerValue(value);
-        } else {
-          sanitizedValue = sanitizeFormInput(value);
-        }
-      }
-
-      updateFormField(name as keyof FakturaFormData, sanitizedValue);
+      const nextValue: string | boolean = value;
+      updateFormField(name as keyof FakturaFormData, nextValue);
       if (kundStatus === "loaded") setKundStatus("editing");
     },
     [updateFormField, kundStatus, setKundStatus]
@@ -808,8 +774,8 @@ export function useFaktura() {
         kundadress: valdKund.kundadress1 ?? "",
         kundpostnummer: valdKund.kundpostnummer ?? "",
         kundstad: valdKund.kundstad ?? "",
-        kundemail: sanitizeFormInput(valdKund.kundemail || ""),
-        personnummer: sanitizePersonnummerValue(valdKund.personnummer || ""),
+        kundemail: valdKund.kundemail || "",
+        personnummer: valdKund.personnummer || "",
       });
       setKundStatus("loaded");
     },

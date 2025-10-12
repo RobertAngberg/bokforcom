@@ -26,10 +26,6 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
     .slice(0, maxLength);
 }
 
-export function sanitizeFormInput(input: string): string {
-  return sanitizeInput(input, 200);
-}
-
 export function validateAmount(amount: number | string): boolean {
   const amountNum = typeof amount === "string" ? parseFloat(amount) : amount;
   return !isNaN(amountNum) && amountNum >= 0 && isFinite(amountNum);

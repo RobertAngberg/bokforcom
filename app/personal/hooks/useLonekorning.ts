@@ -28,6 +28,7 @@ import {
   Lönekörning,
   LonekorningHookProps,
   LönespecData,
+  AnställdData,
   AnställdListItem,
   UtläggData,
   BatchDataItem,
@@ -48,6 +49,35 @@ import {
 function forvaldUtbetalningsdag(now: Date = new Date()): Date {
   return new Date(now.getFullYear(), now.getMonth(), 25);
 }
+
+const mapAnställdaToListItems = (data: AnställdData[] = []): AnställdListItem[] =>
+  data
+    .filter((post): post is AnställdData & { id: number } => typeof post?.id === "number")
+    .map((post) => {
+      const förnamn = (post.förnamn ?? "").trim();
+      const efternamn = (post.efternamn ?? "").trim();
+      const fallbackNamn = (post.namn ?? post.mail ?? post.epost ?? "").trim();
+      const fullName = [förnamn, efternamn].filter(Boolean).join(" ").trim();
+
+      return {
+        id: post.id,
+        namn: fullName || fallbackNamn,
+        epost: post.mail || post.epost || "",
+        roll: post.jobbtitel || "",
+        förnamn,
+        efternamn,
+        personnummer: post.personnummer || "",
+        clearingnummer: post.clearingnummer || "",
+        bankkonto: post.bankkonto || "",
+        adress: post.adress || "",
+        postnummer: post.postnummer || "",
+        ort: post.ort || "",
+        skattetabell: post.skattetabell,
+        skattekolumn: post.skattekolumn,
+        sparade_dagar: post.sparade_dagar,
+        använda_förskott: post.använda_förskott,
+      };
+    });
 
 export const useLonekorning = ({
   anställda: propsAnställda,
@@ -148,6 +178,21 @@ export const useLonekorning = ({
 
   const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, anstallda || []);
 
+  const parseAmount = (value: unknown): number => {
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : 0;
+    }
+    if (typeof value === "string") {
+      const normalized = value
+        .replace(/\s+/g, "")
+        .replace(/[^\d,.-]/g, "")
+        .replace(/,/g, ".");
+      const parsed = Number(normalized);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
   // Business logic functions
   const beräknaSkatteData = () => {
     if (!lönekörningSpecar || lönekörningSpecar.length === 0) {
@@ -163,8 +208,8 @@ export const useLonekorning = ({
 
     lönekörningSpecar.forEach((spec) => {
       const beräkningar = beräknadeVärden?.[spec.id];
-      const socialaAvgifter = beräkningar?.socialaAvgifter ?? spec.sociala_avgifter ?? 0;
-      const skatt = beräkningar?.skatt ?? spec.skatt ?? 0;
+      const socialaAvgifter = parseAmount(beräkningar?.socialaAvgifter ?? spec.sociala_avgifter);
+      const skatt = parseAmount(beräkningar?.skatt ?? spec.skatt);
 
       totalSocialaAvgifter += isNaN(socialaAvgifter) ? 0 : socialaAvgifter;
       totalPersonalskatt += isNaN(skatt) ? 0 : skatt;
@@ -271,16 +316,17 @@ export const useLonekorning = ({
     }
 
     try {
-      const [specar, anstallda] = await Promise.all([
+      const [specar, anställdaData] = await Promise.all([
         hamtaAllaLonespecarForUser(),
         hamtaAllaAnstallda(),
       ]);
-      setLocalAnställda(anstallda);
+      const anställdaListItems = mapAnställdaToListItems(anställdaData);
+      setLocalAnställda(anställdaListItems);
 
-      const utlaggPromises = anstallda.map((a) => hamtaUtlagg(a.id));
+      const utlaggPromises = anställdaListItems.map((a) => hamtaUtlagg(a.id));
       const utlaggResults = await Promise.all(utlaggPromises);
       const utlaggMap: Record<number, UtläggData[]> = {};
-      anstallda.forEach((a, idx) => {
+      anställdaListItems.forEach((a, idx) => {
         utlaggMap[a.id] = utlaggResults[idx];
       });
       setUtlaggMap(utlaggMap);
@@ -426,7 +472,7 @@ export const useLonekorning = ({
         if (!profil && session?.user?.id) {
           profil = await hamtaForetagsprofil(session.user.id);
           if (!profil) {
-            showToast("Kunde inte hämta företagsprofil för AGI-generering", "error");
+            showToast("Företagsinfo saknas – fyll i under Inställningar", "error");
             return;
           }
           setFöretagsprofil(profil);
@@ -535,16 +581,17 @@ export const useLonekorning = ({
       const fetchData = async () => {
         setLoading(true);
         try {
-          const [specar, anstallda] = await Promise.all([
+          const [specar, anställdaData] = await Promise.all([
             hamtaAllaLonespecarForUser(),
             hamtaAllaAnstallda(),
           ]);
-          setLocalAnställda(anstallda);
+          const anställdaListItems = mapAnställdaToListItems(anställdaData);
+          setLocalAnställda(anställdaListItems);
 
-          const utlaggPromises = anstallda.map((a) => hamtaUtlagg(a.id));
+          const utlaggPromises = anställdaListItems.map((a) => hamtaUtlagg(a.id));
           const utlaggResults = await Promise.all(utlaggPromises);
           const utlaggMap: Record<number, UtläggData[]> = {};
-          anstallda.forEach((a, idx) => {
+          anställdaListItems.forEach((a, idx) => {
             utlaggMap[a.id] = utlaggResults[idx];
           });
           setUtlaggMap(utlaggMap);
@@ -773,6 +820,20 @@ export const useLonekorning = ({
   };
 
   const specListHandleHämtaBankgiro = () => {
+    if (!lönekörningSpecar.length) {
+      showToast("Det finns inga lönespecifikationer att exportera.", "info");
+      return;
+    }
+
+    const harDatum =
+      Boolean(utbetalningsdatum) ||
+      lönekörningSpecar.some((spec) => Boolean(spec.utbetalningsdatum));
+
+    if (!harDatum) {
+      showToast("Ange ett utbetalningsdatum innan du skapar Bankgirofil.", "error");
+      return;
+    }
+
     if (onSpecListHämtaBankgiro) {
       onSpecListHämtaBankgiro();
       return;

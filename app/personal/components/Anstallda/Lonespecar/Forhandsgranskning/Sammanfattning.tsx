@@ -2,7 +2,6 @@ import React from "react";
 import type { SammanfattningProps } from "../../../../types/types";
 
 export default function Sammanfattning({
-  totalLönekostnad,
   bruttolön,
   socialaAvgifter,
   skatt,
@@ -16,10 +15,6 @@ export default function Sammanfattning({
       <div className="border border-gray-400 rounded p-3">
         <h4 className="font-bold mb-2 text-sm text-black">Totalt</h4>
         <div className="space-y-1.5">
-          <div className="flex justify-between text-black text-xs">
-            <span className="font-semibold">Lönekostnad</span>
-            <span className="font-bold">{formatNoDecimals(totalLönekostnad)} kr</span>
-          </div>
           <div className="flex justify-between text-black text-xs">
             <span className="font-semibold">Bruttolön</span>
             <span className="font-bold">{formatNoDecimals(bruttolön)} kr</span>

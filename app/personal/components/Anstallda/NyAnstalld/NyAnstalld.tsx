@@ -5,7 +5,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
 import Dropdown from "../../../../_components/Dropdown";
-import { sanitizeFormInput } from "../../../../_utils/validationUtils";
 import { dateToYyyyMmDd } from "../../../../_utils/datum";
 import { useAnstallda } from "../../../hooks/useAnstallda";
 import type { NyAnstalldProps } from "../../../types/types";
@@ -253,7 +252,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
               value={nyAnställdFormulär.tjänsteställeAdress || ""}
               onChange={(e) =>
                 updateNyAnställdFormulär({
-                  tjänsteställeAdress: sanitizeFormInput(e.target.value),
+                  tjänsteställeAdress: e.target.value,
                 })
               }
               required={false}
@@ -265,7 +264,7 @@ export default function NyAnställd({ handlers }: NyAnstalldProps) {
               value={nyAnställdFormulär.tjänsteställeOrt || ""}
               onChange={(e) =>
                 updateNyAnställdFormulär({
-                  tjänsteställeOrt: sanitizeFormInput(e.target.value),
+                  tjänsteställeOrt: e.target.value,
                 })
               }
               required={false}

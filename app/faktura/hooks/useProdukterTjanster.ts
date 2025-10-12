@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
 
 import { dateToYyyyMmDd } from "../../_utils/datum";
-import { sanitizeFormInput, sanitizeInput } from "../../_utils/validationUtils";
 
 import { useFakturaArtikelContext } from "../context/FakturaArtikelContext";
 import {
@@ -139,16 +138,6 @@ function deriveArtikelMetrics(formData: FakturaFormData) {
   };
 }
 
-const sanitizeRotRutText = (text: string): string => {
-  if (!text || typeof text !== "string") return "";
-  return sanitizeInput(text, 500).replace(/\s+/g, " ").trim();
-};
-
-const sanitizeRotRutPersonnummer = (value: string): string => {
-  const sanitized = sanitizeFormInput(value).replace(/[^\d-]/g, "");
-  return sanitized.slice(0, 13);
-};
-
 export function useProdukterTjanster() {
   const { state, setState, setNyArtikel, resetNyArtikel, setFavoritArtiklar } =
     useFakturaArtikelContext();
@@ -236,13 +225,13 @@ export function useProdukterTjanster() {
   const sparaArtikelSomFavorit = useCallback(async () => {
     const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;
 
-    if (!beskrivning.trim() || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
+    if (!beskrivning || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
       showToast("Fyll i alla obligatoriska fält", "error");
       return;
     }
 
     const artikelData = {
-      beskrivning: beskrivning.trim(),
+      beskrivning,
       antal: Number(antal),
       prisPerEnhet: Number(prisPerEnhet),
       moms: Number(moms),
@@ -339,20 +328,6 @@ export function useProdukterTjanster() {
 
       if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
         finalValue = e.target.checked;
-      } else if (typeof value === "string") {
-        if (name === "personnummer") {
-          const personnummer = sanitizeRotRutPersonnummer(value);
-          finalValue = personnummer;
-        } else if (
-          name === "rotRutBeskrivning" ||
-          name === "fastighetsbeteckning" ||
-          name === "brfOrganisationsnummer" ||
-          name === "brfLagenhetsnummer"
-        ) {
-          finalValue = sanitizeRotRutText(value);
-        } else {
-          finalValue = sanitizeFormInput(value);
-        }
       }
 
       if (name === "rotRutAktiverat" && finalValue === false) {

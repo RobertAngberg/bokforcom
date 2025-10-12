@@ -4,7 +4,6 @@ import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import type { ForetagsProfil, AktionsResultat } from "../types/types";
 import { revalidatePath } from "next/cache";
-import { sanitizeFormInput } from "../../_utils/validationUtils";
 
 export async function uppdateraForetagsprofilAdmin(
   payload: ForetagsProfil
@@ -12,15 +11,15 @@ export async function uppdateraForetagsprofilAdmin(
   try {
     const { userId } = await ensureSession();
 
-    const foretagsnamn = sanitizeFormInput(payload.foretagsnamn || "");
-    const adress = sanitizeFormInput(payload.adress || "");
+    const foretagsnamn = (payload.foretagsnamn || "").trim();
+    const adress = (payload.adress || "").trim();
     const postnummer = payload.postnummer || "";
-    const stad = sanitizeFormInput(payload.stad || "");
+    const stad = (payload.stad || "").trim();
     const organisationsnummer = payload.organisationsnummer || "";
     const momsregistreringsnummer = payload.momsregistreringsnummer || "";
-    const telefonnummer = sanitizeFormInput(payload.telefonnummer || "");
-    const epost = sanitizeFormInput(payload.epost || "");
-    const webbplats = sanitizeFormInput(payload.webbplats || "");
+    const telefonnummer = (payload.telefonnummer || "").trim();
+    const epost = (payload.epost || "").trim();
+    const webbplats = (payload.webbplats || "").trim();
 
     const client = await pool.connect();
     let updated: ForetagsProfil | null = null;
