@@ -32,7 +32,7 @@ export const useTransaktioner = (anställdId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, [anställdId, startdatum, slutdatum, filterTyp, inkluderaBokfört]);
+  }, [anställdId]);
 
   useEffect(() => {
     loadTransaktioner();

@@ -104,7 +104,7 @@ export default function Steg3Import({
     return () => {
       isCancelled = true; // Cleanup function
     };
-  }, []); // Kör bara en gång när komponenten mountas
+  }, [selectedFile, sieData, saknadeKonton, settings, onComplete]);
 
   if (error) {
     return (

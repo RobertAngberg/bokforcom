@@ -138,7 +138,7 @@ export function useForvalSok({
         setLoading(false);
       }
     },
-    [allaFörval, levfaktMode, utlaggMode, favoritFörval]
+    [allaFörval, favoritFörval, filterByMode]
   );
 
   const väljFörval = useCallback(

@@ -1018,6 +1018,23 @@ export interface AnställdFlikProps {
   onTaBort: (id: number, namn: string) => void;
 }
 
+export interface AnställdaListaHandlers {
+  hanteraAnställdKlick: (anställdId: number) => void;
+  taBortAnställdFrånLista: (anställdId: number) => void;
+}
+
+export interface AnställdaRadPropsWithHandlers {
+  anställd: AnställdListItem;
+  handlers: AnställdaListaHandlers;
+}
+
+export interface AnställdaListaProps {
+  state: {
+    anställda: AnställdListItem[];
+  };
+  handlers: AnställdaListaHandlers;
+}
+
 // NyAnstalldModal.tsx
 // ExtraraderModal.tsx
 export interface FormField {
