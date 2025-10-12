@@ -9,6 +9,7 @@ export default function Utlägg({
   lönespecId,
   onUtläggAdded,
   anställdId,
+  extrarader,
 }: UtläggProps) {
   //#endregion
 
@@ -19,6 +20,7 @@ export default function Utlägg({
       lönespecId,
       anställdId,
       onUtläggAdded,
+      externaExtrarader: extrarader,
     });
 
   if (!synkroniseradeUtlägg || synkroniseradeUtlägg.length === 0) return null;

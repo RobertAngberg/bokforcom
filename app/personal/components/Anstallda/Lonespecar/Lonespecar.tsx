@@ -21,7 +21,7 @@ export default function Lonespecar({
   taBortLoading?: boolean;
   visaExtraRader?: boolean;
 }) {
-  const { utlägg, loading } = useLonespec({
+  const { lönespecar, utlägg, loading } = useLonespec({
     enableComponentMode: true,
     anställdId: anställd?.id,
     specificLönespec,
@@ -34,6 +34,7 @@ export default function Lonespecar({
   return (
     <LonespecList
       anställd={anställd}
+      lönespecar={lönespecar}
       utlägg={utlägg || []}
       ingenAnimering={ingenAnimering}
       onTaBortLönespec={onTaBortLönespec}

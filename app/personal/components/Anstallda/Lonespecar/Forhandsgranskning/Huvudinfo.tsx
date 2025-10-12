@@ -7,18 +7,28 @@ export default function Huvudinfo({
   periodStart,
   periodSlut,
 }: HuvudinfoProps) {
+  const clearing = anställd.clearingnummer?.toString().trim();
+  const konto = anställd.bankkonto?.toString().trim();
+  const bankkontoText =
+    clearing && konto ? `${clearing}-${konto}` : konto || clearing || "Ej angivet";
+  const personnummerText = anställd.personnummer?.toString().trim() || "Ej angivet";
+
   return (
     <>
       {/* Anställd info - Header högerställd */}
       <div className="text-right mb-6 pb-4">
         <div className="text-lg font-bold mb-2 text-black">
-          {anställd.efternamn?.toUpperCase()}, {anställd.förnamn?.toUpperCase()}
+          {[anställd.efternamn?.toUpperCase(), anställd.förnamn?.toUpperCase()]
+            .filter(Boolean)
+            .join(", ") ||
+            anställd.namn?.toUpperCase() ||
+            ""}
         </div>
         <div className="text-xs space-y-0.5 text-black">
-          <div>{anställd.adress}</div>
-          <div>
-            {anställd.postnummer} {anställd.ort}
-          </div>
+          {anställd.adress && <div>{anställd.adress}</div>}
+          {(anställd.postnummer || anställd.ort) && (
+            <div>{[anställd.postnummer, anställd.ort].filter(Boolean).join(" ")}</div>
+          )}
         </div>
       </div>
       {/* Lönespec titel och period */}
@@ -29,15 +39,11 @@ export default function Huvudinfo({
         <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto text-xs">
           <div className="text-center">
             <div className="font-semibold text-black">Personnummer</div>
-            <div className="text-black">({anställd.personnummer || "Ej angivet"})</div>
+            <div className="text-black">{personnummerText}</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-black">Bankkonto</div>
-            <div className="text-black">
-              {anställd?.clearingnummer && anställd?.bankkonto
-                ? `${anställd.clearingnummer}-${anställd.bankkonto}`
-                : "Ej angivet"}
-            </div>
+            <div className="text-black">{bankkontoText}</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-black">Löneperiod</div>

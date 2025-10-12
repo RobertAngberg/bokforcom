@@ -1,39 +1,28 @@
 "use client";
 
-//#region Huvud
 import LönespecView from "./LonespecView";
-import Knapp from "../../../../../_components/Knapp";
 import type { LonespecListProps } from "../../../../types/types";
+import { useLonespecList } from "../../../../hooks/useLonespecList";
 
 export default function LonespecList({
   anställd,
+  lönespecar,
   utlägg,
   ingenAnimering,
-  // onTaBortLönespec,
-  // taBortLoading,
-  // onLönespecUppdaterad,
+  onTaBortLönespec,
+  taBortLoading,
+  taBortLaddning,
   visaExtraRader = false,
 }: LonespecListProps) {
-  // TODO: Get this data from props instead of useAnstallda to avoid multiple hook instances
-  // const { state, handlers } = useAnstallda({
-  //   enableLonespecMode: true,
-  //   onLönespecUppdaterad,
-  // });
+  const { lista, hasItems, resolveTaBortLoading } = useLonespecList({
+    lönespecar,
+    taBortLaddning,
+    taBortLoading,
+  });
 
-  // const { lönespecar, taBortLaddning } = state;
-  // const { handleTaBortLönespec, handleNavigateToLonekorning } = handlers;
-
-  // Temporary fix - use empty arrays to prevent crashes
-  const lönespecar: Array<{ id: number }> = [];
-  const taBortLaddning: Record<number, boolean> = {};
-  const handleTaBortLönespec = async () => {};
-  const handleNavigateToLonekorning = () => {};
-  //#endregion
-
-  //#region Render
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
-      {lönespecar.length === 0 ? (
+      {!hasItems ? (
         <div className="text-center py-8 text-gray-400">
           <div className="mb-4">
             Inga slutförda lönespecifikationer hittades för {anställd.namn}.
@@ -41,25 +30,22 @@ export default function LonespecList({
           <div className="text-sm text-gray-500 mb-4">
             Lönespecifikationer kopplade till ej slutförda lönekörningar kan finnas.
           </div>
-          <div className="flex justify-center">
-            <Knapp text="Gå till Lönekörningar" onClick={handleNavigateToLonekorning} />
-          </div>
+          {/* Knapp borttagen tills lönekörningsflödet är redo */}
         </div>
       ) : (
-        lönespecar.map((lönespec) => (
+        lista.map((lönespec) => (
           <LönespecView
             key={lönespec.id}
             lönespec={lönespec}
             anställd={anställd}
             utlägg={utlägg}
             ingenAnimering={ingenAnimering}
-            onTaBortLönespec={() => handleTaBortLönespec()}
-            taBortLoading={taBortLaddning[lönespec.id] || false}
+            onTaBortLönespec={onTaBortLönespec}
+            taBortLoading={resolveTaBortLoading(lönespec.id)}
             visaExtraRader={visaExtraRader}
           />
         ))
       )}
     </div>
   );
-  //#endregion
 }

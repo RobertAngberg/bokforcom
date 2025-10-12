@@ -203,10 +203,10 @@ export function useKontrakt(initial?: AnställdListItem) {
       } as AnställdData;
 
       const result = await sparaAnstalld(payload, visningsAnställd.id as number);
-      if (result?.success && valdAnställd) {
-        // Uppdatera store med sparade värden
-        setValdAnställd({
-          ...valdAnställd,
+      if (result?.success) {
+        // Uppdatera lokal vy med sparade värden även när vi saknar tidigare cache
+        const uppdateradAnställd: AnställdData = {
+          ...(visningsAnställd as AnställdData),
           anställningstyp: editData.anställningstyp,
           startdatum: payload.startdatum,
           slutdatum: payload.slutdatum,
@@ -220,9 +220,10 @@ export function useKontrakt(initial?: AnställdListItem) {
           skattekolumn: parseInt(editData.skattekolumn, 10) || 0,
           tjänsteställeAdress: editData.tjänsteställeAdress,
           tjänsteställeOrt: editData.tjänsteställeOrt,
-        });
+        };
 
-        setOriginalData(editData);
+        setValdAnställd(uppdateradAnställd);
+        setOriginalData({ ...editData });
         setKontraktHasChanges(false);
         setKontraktIsEditing(false);
         setKontraktError(null);

@@ -1,4 +1,3 @@
-//#region
 import InfoTooltip from "../../../../../_components/InfoTooltip";
 import type { SpecVySammanfattningProps } from "../../../../types/types";
 
@@ -9,9 +8,12 @@ export default function Sammanfattning({
   anställd,
   bruttolön,
   skatt,
+  semesterSummary,
   onVisaBeräkningar,
 }: SpecVySammanfattningProps) {
-  //#endregion
+  const betaldaDagar = semesterSummary?.betalda_dagar ?? lönespec.semester_uttag ?? 0;
+  const sparadeDagar = semesterSummary?.sparade_dagar ?? anställd?.sparade_dagar ?? 0;
+  const förskottDagar = semesterSummary?.skuld ?? anställd?.använda_förskott ?? 0;
 
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
@@ -39,17 +41,15 @@ export default function Sammanfattning({
             <div className="grid grid-cols-3 gap-2 text-sm">
               <div>
                 <span className="text-gray-400">Betalda</span>
-                <div className="text-white font-medium">
-                  {parseFloat(String(lönespec.semester_uttag || 0))}
-                </div>
+                <div className="text-white font-medium">{betaldaDagar}</div>
               </div>
               <div>
                 <span className="text-gray-400">Sparade</span>
-                <div className="text-white font-medium">{anställd?.sparade_dagar || 0}</div>
+                <div className="text-white font-medium">{sparadeDagar}</div>
               </div>
               <div>
                 <span className="text-gray-400">Förskott</span>
-                <div className="text-white font-medium">{anställd?.använda_förskott || 0}</div>
+                <div className="text-white font-medium">{förskottDagar}</div>
               </div>
             </div>
           </div>
@@ -62,13 +62,17 @@ export default function Sammanfattning({
               <div>
                 <span className="text-gray-400">Skattetabell</span>
                 <div className="text-white font-medium">
-                  {anställd?.skattetabell || "Ej angiven"}
+                  {anställd?.skattetabell != null
+                    ? `Tabell ${anställd.skattetabell}`
+                    : "Ej angiven"}
                 </div>
               </div>
               <div>
                 <span className="text-gray-400">Skattekolumn</span>
                 <div className="text-white font-medium">
-                  {anställd?.skattekolumn || "Ej angiven"}
+                  {anställd?.skattekolumn != null
+                    ? `Kolumn ${anställd.skattekolumn}`
+                    : "Ej angiven"}
                 </div>
               </div>
             </div>

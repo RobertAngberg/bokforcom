@@ -1,4 +1,4 @@
-//#region Huvud
+//#region
 import AnimeradFlik from "../../../../../_components/AnimeradFlik";
 import ToppInfo from "./ToppInfo";
 import Lonekomponenter from "../Lonekomponenter/Lonekomponenter";
@@ -6,19 +6,11 @@ import Utlagg from "../Utlagg/Utlagg";
 import Sammanfattning from "./Sammanfattning";
 import Knapp from "../../../../../_components/Knapp";
 import StatusBadge from "./StatusBadge";
-import { showToast } from "../../../../../_components/Toast";
-import { useState, useMemo } from "react";
 import Forhandsgranskning from "../Forhandsgranskning/Forhandsgranskning";
-import { useLonespec } from "../../../../hooks/useLonespecar";
-import { uppdateraLonespec } from "../../../../actions/lonespecarActions";
 import FormelVisning from "./FormelVisning";
-import type {
-  LönespecViewProps,
-  UtläggData,
-  ExtraradResult,
-  ExtraradData,
-  BeräknadeVärden,
-} from "../../../../types/types";
+import type { LönespecViewProps, BeräknadeVärden } from "../../../../types/types";
+import { useLonespecView } from "../../../../hooks/useLonespecView";
+//#endregion
 
 export default function LönespecView({
   lönespec,
@@ -30,143 +22,32 @@ export default function LönespecView({
   företagsprofil,
   visaExtraRader = false,
 }: LönespecViewProps) {
-  const { beräknadeVärden, extrarader, setExtrarader } = useLonespec();
-
-  // Lokal state för utlägg så vi kan uppdatera UI direkt
-  const [lokalUtlägg, setLokalUtlägg] = useState(utlägg);
-  const [sparar, setSparar] = useState(false);
-
-  //#endregion
-
-  //#region Helper Functions
-  function getMånadsNamn(månad: number, år: number): string {
-    const månader = [
-      "Januari",
-      "Februari",
-      "Mars",
-      "April",
-      "Maj",
-      "Juni",
-      "Juli",
-      "Augusti",
-      "September",
-      "Oktober",
-      "November",
-      "December",
-    ];
-    return `${månader[månad - 1]} ${år}`;
-  }
-  //#endregion
-
-  //#region Data Processing
-  // Helper function för att konvertera värden till nummer
-  const toNumber = (
-    value: string | number | boolean | Date | null | undefined,
-    fallback: number = 0
-  ): number => {
-    if (typeof value === "number") return value;
-    if (typeof value === "string") return parseFloat(value) || fallback;
-    return fallback;
-  };
-
-  const månadsNamn = getMånadsNamn(toNumber(lönespec.månad, 1), toNumber(lönespec.år, 2025));
-
-  const grundlön = toNumber(lönespec.grundlön || lönespec.bruttolön, 0);
-  const övertid = toNumber(lönespec.övertid, 0);
-  const bruttolön = toNumber(lönespec.bruttolön, 0);
-  const socialaAvgifter = toNumber(lönespec.sociala_avgifter, 0);
-  const skatt = toNumber(lönespec.skatt, 0);
-  const nettolön = toNumber(lönespec.nettolön, 0);
-
-  // Fix: Use lönespec.utbetalningsdatum if available, otherwise fallback to old logic
-  const utbetalningsDatumValue = lönespec.utbetalningsdatum;
-  const år = toNumber(lönespec.år, 2025);
-  const månad = toNumber(lönespec.månad, 1);
-  const utbetalningsDatum =
-    utbetalningsDatumValue &&
-    (typeof utbetalningsDatumValue === "string" ||
-      typeof utbetalningsDatumValue === "number" ||
-      utbetalningsDatumValue instanceof Date)
-      ? new Date(utbetalningsDatumValue)
-      : new Date(år, månad - 1, 25);
-
-  // Hämta beräknade värden för denna lönespec
-  const aktuellBeräkning = beräknadeVärden[lönespec.id];
-
-  // Använd beräknade värden om de finns, annars fallback till originala
-  const visaBruttolön = aktuellBeräkning?.bruttolön ?? bruttolön;
-  const visaSkatt = aktuellBeräkning?.skatt ?? skatt;
-  const visaNettolön = aktuellBeräkning?.nettolön ?? nettolön;
-  const visaSocialaAvgifter = aktuellBeräkning?.socialaAvgifter ?? socialaAvgifter;
-  const visaLönekostnad = aktuellBeräkning?.lönekostnad ?? bruttolön + socialaAvgifter;
-
-  // Använd useMemo för att säkerställa att lönespecUtlägg uppdateras när lokalUtlägg ändras
-  // All utlägg passed in this component are already filtered for this lönespec
-  const lönespecUtlägg = useMemo(() => {
-    return lokalUtlägg;
-  }, [lokalUtlägg]);
-
-  // Callback för att uppdatera utlägg status i lokal state
-  const handleUtläggAdded = async (
-    tillagdaUtlägg: UtläggData[],
-    extraradResults: ExtraradResult[]
-  ) => {
-    // Uppdatera utlägg status
-    setLokalUtlägg((prevUtlägg: UtläggData[]) =>
-      prevUtlägg.map((utlägg: UtläggData) =>
-        tillagdaUtlägg.some((t) => t.id === utlägg.id)
-          ? { ...utlägg, status: "Inkluderat i lönespec" }
-          : utlägg
-      )
-    );
-
-    // Använd riktiga extrarader från databasen istället för temp-ID:n
-    if (extraradResults && extraradResults.length > 0) {
-      const nyaExtrarader = extraradResults
-        .filter((result) => result.success && result.data)
-        .map((result) => result.data!)
-        .filter((data): data is ExtraradData => data !== undefined);
-      setExtrarader(lönespec.id.toString(), [...(extrarader[lönespec.id] || []), ...nyaExtrarader]);
-    }
-  };
-
-  // Spara lönespec-ändringar till databas
-  const handleSparaLönespec = async () => {
-    // Använd beräknade värden om de finns, annars originalvärdena från lönespec
-    const värdentAttSpara = aktuellBeräkning || {
-      bruttolön: lönespec.bruttolön,
-      skatt: lönespec.skatt,
-      socialaAvgifter: lönespec.sociala_avgifter, // Rätt property name
-      nettolön: lönespec.nettolön,
-    };
-
-    setSparar(true);
-    try {
-      const result = await uppdateraLonespec({
-        lönespecId: lönespec.id,
-        bruttolön: Number(värdentAttSpara.bruttolön) || undefined,
-        skatt: Number(värdentAttSpara.skatt) || undefined,
-        socialaAvgifter: Number(värdentAttSpara.socialaAvgifter) || undefined,
-        nettolön: Number(värdentAttSpara.nettolön) || undefined,
-      });
-
-      if (result.success) {
-        showToast("Lönespec sparad!", "success");
-      } else {
-        showToast(result.error || "Kunde inte spara lönespec", "error");
-      }
-    } catch (error) {
-      console.error("❌ Fel vid sparning av lönespec:", error);
-      showToast("Kunde inte spara lönespec", "error");
-    } finally {
-      setSparar(false);
-    }
-  };
-  //#endregion
-
-  //#region Render Content
-  const [visaForhandsgranskning, setVisaForhandsgranskning] = useState(false);
-  const [visaBeräkningar, setVisaBeräkningar] = useState(false);
+  const {
+    lönespecKey,
+    månadsNamn,
+    grundlön,
+    övertid,
+    visaBruttolön,
+    visaSkatt,
+    visaNettolön,
+    visaSocialaAvgifter,
+    visaLönekostnad,
+    utbetalningsDatum,
+    lönespecUtlägg,
+    beräknadeVärden,
+    extrarader,
+    sparar,
+    visaForhandsgranskning,
+    visaBeräkningar,
+    semesterSummary,
+    setBeräknadeVärden,
+    handleUtläggAdded,
+    handleExtraraderChange,
+    handleSparaLönespec,
+    openForhandsgranskning,
+    closeForhandsgranskning,
+    toggleVisaBeräkningar,
+  } = useLonespecView({ lönespec, anställd, utlägg });
 
   const innehåll = (
     <div className="space-y-6">
@@ -183,6 +64,11 @@ export default function LönespecView({
         lönespec={lönespec}
         visaExtraRader={visaExtraRader}
         anstalldId={anställd?.id}
+        skattetabell={anställd?.skattetabell}
+        skattekolumn={anställd?.skattekolumn}
+        extrarader={extrarader[lönespecKey]}
+        onExtraraderChange={handleExtraraderChange}
+        setBeräknadeVärden={setBeräknadeVärden}
       />
 
       <Utlagg
@@ -190,7 +76,7 @@ export default function LönespecView({
         getStatusBadge={(status: string) => <StatusBadge status={status} type="utlägg" />}
         lönespecId={lönespec?.id}
         onUtläggAdded={handleUtläggAdded}
-        extrarader={extrarader[lönespec.id] || []}
+        extrarader={extrarader[lönespecKey] || []}
         anställdId={anställd?.id}
       />
 
@@ -203,13 +89,14 @@ export default function LönespecView({
         skatt={Number(visaSkatt) || 0}
         socialaAvgifter={Number(visaSocialaAvgifter) || 0}
         lönekostnad={Number(visaLönekostnad) || 0}
-        onVisaBeräkningar={() => setVisaBeräkningar(!visaBeräkningar)}
+        semesterSummary={semesterSummary}
+        onVisaBeräkningar={toggleVisaBeräkningar}
       />
 
       {visaBeräkningar && (
         <FormelVisning
-          beräknadeVärden={beräknadeVärden[lönespec.id] || ({} as BeräknadeVärden)}
-          extrarader={extrarader[lönespec.id] || []}
+          beräknadeVärden={beräknadeVärden[lönespecKey] || ({} as BeräknadeVärden)}
+          extrarader={extrarader[lönespecKey] || []}
           lönespec={lönespec}
         />
       )}
@@ -218,7 +105,7 @@ export default function LönespecView({
       <div className="bg-slate-700 text-white p-4 rounded-lg mb-4">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Åtgärder</h3>
         <div className="flex justify-between items-center flex-wrap gap-3">
-          <Knapp text="👁️ Förhandsgranska / PDF" onClick={() => setVisaForhandsgranskning(true)} />
+          <Knapp text="👁️ Förhandsgranska / PDF" onClick={openForhandsgranskning} />
           <div className="flex gap-3">
             <Knapp
               text={sparar ? "💾 Sparar..." : "💾 Spara"}
@@ -241,7 +128,7 @@ export default function LönespecView({
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
             <button
               className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-              onClick={() => setVisaForhandsgranskning(false)}
+              onClick={closeForhandsgranskning}
               aria-label="Stäng"
             >
               ×
@@ -250,9 +137,10 @@ export default function LönespecView({
               lönespec={lönespec}
               anställd={anställd}
               företagsprofil={företagsprofil!}
-              extrarader={extrarader[lönespec.id] || []}
-              beräknadeVärden={beräknadeVärden[lönespec.id] || ({} as BeräknadeVärden)}
-              onStäng={() => setVisaForhandsgranskning(false)}
+              extrarader={extrarader[lönespecKey] || []}
+              beräknadeVärden={beräknadeVärden[lönespecKey] || ({} as BeräknadeVärden)}
+              semesterSummary={semesterSummary}
+              onStäng={closeForhandsgranskning}
             />
           </div>
         </div>

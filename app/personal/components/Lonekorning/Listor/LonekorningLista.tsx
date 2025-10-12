@@ -2,6 +2,7 @@
 
 import { LonekorningListaProps } from "../../../types/types";
 import LoadingSpinner from "../../../../_components/LoadingSpinner";
+import Knapp from "../../../../_components/Knapp";
 
 export default function LonekorningLista({
   onValjLonekorning,
@@ -11,7 +12,8 @@ export default function LonekorningLista({
   hasLonekorningar = false,
   listLoading = false,
   formatPeriodName = (period: string) => period,
-  getItemClassName = () => "p-4 border rounded-lg cursor-pointer hover:bg-gray-50",
+  onTaBortLonekorning,
+  taBortLoading = false,
 }: LonekorningListaProps) {
   // Now using data from props instead of duplicate useLonekorning hook
 
@@ -39,31 +41,49 @@ export default function LonekorningLista({
         <div
           key={lonekorning.id}
           onClick={() => onValjLonekorning(lonekorning)}
-          className={getItemClassName(lonekorning, valdLonekorning || undefined)}
+          className={[
+            "p-4 rounded-lg border-2 cursor-pointer transition-all",
+            valdLonekorning?.id === lonekorning.id
+              ? "border-cyan-500 bg-slate-700"
+              : "border-slate-600 bg-slate-800 hover:border-cyan-500 hover:bg-slate-700",
+          ].join(" ")}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="flex items-center gap-3 sm:flex-1">
               <span className="text-xl">💰</span>
               <div>
                 <h4 className="font-semibold text-white">{formatPeriodName(lonekorning.period)}</h4>
+                {lonekorning.antal_anstallda && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {lonekorning.antal_anstallda} anställda
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="text-right">
-              <div className="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-white bg-cyan-600">
+            <div className="flex flex-col items-start gap-2 text-left">
+              <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white bg-cyan-600">
                 {lonekorning.status.toUpperCase()}
               </div>
 
-              {lonekorning.antal_anstallda && (
-                <p className="text-xs text-gray-400 mt-1">
-                  {lonekorning.antal_anstallda} anställda
+              {lonekorning.total_bruttolön && (
+                <p className="text-[11px] text-gray-300 font-medium">
+                  {lonekorning.total_bruttolön.toLocaleString("sv-SE")} kr
                 </p>
               )}
 
-              {lonekorning.total_bruttolön && (
-                <p className="text-xs text-gray-300 font-medium">
-                  {lonekorning.total_bruttolön.toLocaleString("sv-SE")} kr
-                </p>
+              {onTaBortLonekorning && (
+                <Knapp
+                  text="🗑️ Ta bort"
+                  onClick={(event) => {
+                    event?.stopPropagation();
+                    onTaBortLonekorning(lonekorning);
+                  }}
+                  disabled={taBortLoading}
+                  loading={taBortLoading}
+                  loadingText="Tar bort..."
+                  className="px-3 py-1 text-sm"
+                />
               )}
             </div>
           </div>

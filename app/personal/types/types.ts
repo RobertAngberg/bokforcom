@@ -347,7 +347,8 @@ export interface LonekorningListaProps {
   hasLonekorningar?: boolean;
   listLoading?: boolean;
   formatPeriodName?: (period: string) => string;
-  getItemClassName?: (lonekorning: Lönekörning, valdLonekorningItem?: Lönekörning) => string;
+  onTaBortLonekorning?: (lonekorning: Lönekörning) => void;
+  taBortLoading?: boolean;
 }
 
 export interface LonespecListaProps {
@@ -464,11 +465,13 @@ export interface Lönespec {
 
 export interface LonespecListProps {
   anställd: AnställdListItem;
+  lönespecar: Lönespec[];
   utlägg: UtläggData[];
   ingenAnimering?: boolean;
   onTaBortLönespec?: () => void;
   taBortLoading?: boolean;
   onLönespecUppdaterad?: () => void;
+  taBortLaddning?: Record<number, boolean>;
   visaExtraRader?: boolean;
 }
 
@@ -505,6 +508,7 @@ export interface SpecVySammanfattningProps {
   socialaAvgifter?: number;
   lönekostnad?: number;
   onVisaBeräkningar?: () => void;
+  semesterSummary?: SemesterBoxSummary | null;
 }
 
 export interface StatusBadgeProps {
@@ -554,6 +558,7 @@ export interface ForhandsgranskningProps {
   företagsprofil: Företagsprofil | null;
   extrarader: ExtraradData[];
   beräknadeVärden?: BeräknadeVärden;
+  semesterSummary?: SemesterBoxSummary | null;
   onStäng: () => void;
 }
 
@@ -608,7 +613,7 @@ export interface LönetabellProps {
 export interface SemesterInfoProps {
   lönespec: Lönespec;
   anställd: AnställdListItem;
-  formatNoDecimals: (value: number) => string;
+  semesterSummary?: SemesterBoxSummary | null;
 }
 
 export interface SkatteInfoProps {
@@ -649,6 +654,11 @@ export type LonekomponenterProps = {
   övertid?: number;
   visaExtraRader?: boolean;
   anstalldId?: number;
+  skattetabell?: number;
+  skattekolumn?: number;
+  extrarader?: ExtraradData[];
+  onExtraraderChange: (rader: ExtraradData[]) => void;
+  setBeräknadeVärden: (lönespecKey: string, värden: BeräknadeVärden) => void;
 };
 
 // Semester interfaces
@@ -1166,6 +1176,7 @@ export interface UseLonespecProps {
   lönespecId?: number;
   anställdId?: number;
   onUtläggAdded?: (utlägg: Utlägg[], extraradResults: ExtraradResult[]) => Promise<void>;
+  externaExtrarader?: ExtraradData[];
 
   // Component mode props
   enableComponentMode?: boolean;

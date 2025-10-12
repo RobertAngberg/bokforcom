@@ -6,7 +6,6 @@ import { hamtaExtrarader, taBortExtrarad } from "../../../../actions/lonespecarA
 import ExtraRader from "../Extrarader/Extrarader";
 import LöneTabell from "./LoneTabell";
 import { beräknaLonekomponenter } from "../../../../utils/loneberakningar";
-import { useLonespec } from "../../../../hooks/useLonespecar";
 import type { LonekomponenterProps } from "../../../../types/types";
 
 export default function Lonekomponenter({
@@ -15,33 +14,40 @@ export default function Lonekomponenter({
   övertid,
   visaExtraRader = false,
   anstalldId,
+  skattetabell,
+  skattekolumn,
+  extrarader,
+  onExtraraderChange,
+  setBeräknadeVärden,
 }: LonekomponenterProps) {
-  const { extrarader, setExtrarader, setBeräknadeVärden } = useLonespec();
   const lönespecNumeriskId = lönespec?.id;
   const lönespecKey = lönespecNumeriskId !== undefined ? lönespecNumeriskId.toString() : undefined;
-  const currentExtrarader = lönespecKey ? extrarader[lönespecKey] : undefined;
+  const currentExtrarader = useMemo(() => extrarader ?? [], [extrarader]);
 
   //#region Effects
   // Hämta extrarader från context
   useEffect(() => {
-    if (lönespecNumeriskId === undefined || currentExtrarader) return;
+    if (lönespecNumeriskId === undefined || extrarader !== undefined) return;
 
     let isMounted = true;
     hamtaExtrarader(lönespecNumeriskId).then((rader) => {
       if (isMounted) {
-        setExtrarader(lönespecNumeriskId.toString(), rader);
+        onExtraraderChange(rader);
       }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [lönespecNumeriskId, currentExtrarader, setExtrarader]);
+  }, [lönespecNumeriskId, extrarader, onExtraraderChange]);
 
   // Beräkna värden
   const beräknadeVärden = useMemo(() => {
-    return beräknaLonekomponenter(grundlön ?? 0, övertid ?? 0, lönespec, currentExtrarader ?? []);
-  }, [grundlön, övertid, lönespec, currentExtrarader]);
+    return beräknaLonekomponenter(grundlön ?? 0, övertid ?? 0, lönespec, currentExtrarader, {
+      skattetabell,
+      skattekolumn,
+    });
+  }, [grundlön, övertid, lönespec, currentExtrarader, skattetabell, skattekolumn]);
 
   // Spara i context när beräknadeVärden ändras
   useEffect(() => {
@@ -56,12 +62,13 @@ export default function Lonekomponenter({
 
       <LöneTabell
         beräknadeVärden={beräknadeVärden}
-        extrarader={currentExtrarader ?? []}
+        extrarader={currentExtrarader}
         grundlön={grundlön}
         onTaBortExtrarad={async (extraradId) => {
           await taBortExtrarad(extraradId);
-          if (lönespecNumeriskId === undefined || !lönespecKey) return;
-          hamtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
+          if (lönespecNumeriskId === undefined) return;
+          const rader = await hamtaExtrarader(lönespecNumeriskId);
+          onExtraraderChange(rader);
         }}
       />
 
@@ -69,8 +76,9 @@ export default function Lonekomponenter({
         <ExtraRader
           lönespecId={lönespec.id}
           onNyRad={async () => {
-            if (lönespecNumeriskId === undefined || !lönespecKey) return;
-            hamtaExtrarader(lönespecNumeriskId).then((rader) => setExtrarader(lönespecKey, rader));
+            if (lönespecNumeriskId === undefined) return;
+            const rader = await hamtaExtrarader(lönespecNumeriskId);
+            onExtraraderChange(rader);
           }}
           grundlön={grundlön}
           anstalldId={anstalldId}

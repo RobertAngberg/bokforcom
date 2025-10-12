@@ -54,18 +54,6 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
                 id: anställd.id || 0,
                 namn: anställdNamn,
                 epost: anställd.mail,
-                sparade_dagar:
-                  typeof anställd.sparade_dagar === "string"
-                    ? parseFloat(anställd.sparade_dagar)
-                    : anställd.sparade_dagar,
-                använda_förskott:
-                  typeof anställd.använda_förskott === "string"
-                    ? parseFloat(anställd.använda_förskott)
-                    : anställd.använda_förskott,
-                skattekolumn:
-                  typeof anställd.skattekolumn === "string"
-                    ? parseInt(anställd.skattekolumn, 10)
-                    : anställd.skattekolumn,
               }}
             />
           </AnimeradFlik>
@@ -76,6 +64,10 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
                 id: anställd.id || 0,
                 namn: anställdNamn,
                 epost: anställd.mail,
+                skattetabell: anställd.skattetabell,
+                skattekolumn: anställd.skattekolumn,
+                sparade_dagar: anställd.sparade_dagar,
+                använda_förskott: anställd.använda_förskott,
               }}
             />
           </AnimeradFlik>

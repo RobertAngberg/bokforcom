@@ -10,6 +10,24 @@ export default function ToppInfo({ månadsNamn, lönespec, anställd }: ToppInfo
     return new Date(); // Fallback till nu
   };
 
+  const bankkontoText = (() => {
+    const clearing = anställd?.clearingnummer?.toString().trim();
+    const konto = anställd?.bankkonto?.toString().trim();
+
+    if (clearing && konto) {
+      return `${clearing}-${konto}`;
+    }
+    if (konto) {
+      return konto;
+    }
+    if (clearing) {
+      return clearing;
+    }
+    return "Ej angivet";
+  })();
+
+  const personnummerText = anställd?.personnummer?.toString().trim();
+
   return (
     <div className="bg-slate-700 p-4 rounded-lg">
       <div className="flex justify-between items-start mb-4">
@@ -32,16 +50,15 @@ export default function ToppInfo({ månadsNamn, lönespec, anställd }: ToppInfo
         <div>
           <span className="font-semibold text-white">Bankkonto:</span>
           <br />
-          <span className="text-gray-300">
-            {anställd?.clearingnummer && anställd?.bankkonto
-              ? `${anställd.clearingnummer}-${anställd.bankkonto}`
-              : "Ej angivet"}
-          </span>
+          <span className="text-gray-300">{bankkontoText}</span>
         </div>
         <div>
           <span className="font-semibold text-white">Lönespec ID:</span>
           <br />
           <span className="text-gray-300">#{lönespec.id}</span>
+        </div>
+        <div className="md:col-span-3 text-gray-400 text-sm">
+          Personnummer: {personnummerText || "Ej angivet"}
         </div>
       </div>
     </div>

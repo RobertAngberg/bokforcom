@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   hamtaLonespecifikationer,
   skapaNyLonespec,
@@ -25,6 +25,7 @@ export function useLonespec({
   lönespecId,
   anställdId,
   onUtläggAdded,
+  externaExtrarader,
 
   // Component mode props
   enableComponentMode = false,
@@ -63,6 +64,7 @@ export function useLonespec({
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [semesterDagar, setSemesterDagar] = useState<number>(0);
+  const lastSemesterDagarRef = useRef<number>(0);
 
   const setExtrarader = useCallback((id: string, extrarader: ExtraradData[]) => {
     setExtraraderState((prev) => ({ ...prev, [id]: extrarader }));
@@ -76,12 +78,15 @@ export function useLonespec({
   useEffect(() => {
     if (!enableUtlaggMode) return;
 
+    const specKey = lönespecId?.toString() || "";
+    const relevantaExtrarader = externaExtrarader ?? extrarader[specKey];
+
+    if (lönespecUtlägg.length === 0 || relevantaExtrarader === undefined) return;
+
     const synkronisera = async () => {
       const uppdateradeUtlägg = await Promise.all(
         lönespecUtlägg.map(async (utlägg) => {
-          // Kolla om utlägget faktiskt finns i extrarader
-          const finnsIExtrarader = extrarader[lönespecId?.toString() || ""]?.some((extrarad) => {
-            // Matcha baserat på beskrivning och belopp
+          const finnsIExtrarader = relevantaExtrarader.some((extrarad) => {
             const beskrivningsMatch =
               extrarad.kolumn1?.includes(utlägg.beskrivning) ||
               extrarad.kolumn1?.includes(`Utlägg - ${utlägg.datum}`);
@@ -91,9 +96,7 @@ export function useLonespec({
             return beskrivningsMatch && beloppMatch;
           });
 
-          // Om utlägget är markerat som "Inkluderat" men inte finns i extrarader
           if (utlägg.status === "Inkluderat i lönespec" && !finnsIExtrarader) {
-            // Återställ till "Väntande" i databasen
             await uppdateraUtlaggStatus(utlägg.id, "Väntande");
             return { ...utlägg, status: "Väntande" };
           }
@@ -105,10 +108,8 @@ export function useLonespec({
       setSynkroniseradeUtlägg(uppdateradeUtlägg);
     };
 
-    if (lönespecUtlägg.length > 0 && extrarader[lönespecId?.toString() || ""]) {
-      synkronisera();
-    }
-  }, [enableUtlaggMode, lönespecUtlägg, extrarader, lönespecId]);
+    synkronisera();
+  }, [enableUtlaggMode, lönespecUtlägg, extrarader, externaExtrarader, lönespecId]);
 
   // Hämta alla anställdens utlägg för att visa väntande utlägg (only when enableUtlaggMode is true)
   useEffect(() => {
@@ -237,33 +238,47 @@ export function useLonespec({
 
   // Beräkna semesterdagar effect
   useEffect(() => {
-    if (
-      enableExtraraderModal &&
-      startDate &&
-      endDate &&
-      extraraderModalTitle === "Betald semester"
-    ) {
-      // Inline beräknaArbetsdagar
-      let count = 0;
-      const current = new Date(startDate);
-      while (current <= endDate) {
-        const dayOfWeek = current.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          count++;
-        }
-        current.setDate(current.getDate() + 1);
+    const updateSemesterDagar = (value: number) => {
+      if (lastSemesterDagarRef.current === value) {
+        return;
       }
-
-      // Inline updateSemesterDagar
-      setSemesterDagar(count);
+      lastSemesterDagarRef.current = value;
+      setSemesterDagar(value);
       const antalField = extraraderFields.find((field) => field.name === "kolumn2");
       if (antalField) {
         antalField.onChange({
-          target: { value: count.toString() },
+          target: { value: value.toString() },
         } as React.ChangeEvent<HTMLInputElement>);
       }
+    };
+
+    if (!enableExtraraderModal || extraraderModalTitle !== "Betald semester") {
+      updateSemesterDagar(0);
+      return;
     }
-  }, [enableExtraraderModal, startDate, endDate, extraraderModalTitle, extraraderFields]);
+
+    if (!startDate || !endDate) {
+      updateSemesterDagar(0);
+      return;
+    }
+
+    if (endDate < startDate) {
+      updateSemesterDagar(0);
+      return;
+    }
+
+    let count = 0;
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dayOfWeek = current.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    updateSemesterDagar(count);
+  }, [enableExtraraderModal, extraraderModalTitle, startDate, endDate, extraraderFields]);
 
   // Modal handler functions
   const handleStartDateChange = (date: Date | null) => {

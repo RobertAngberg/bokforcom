@@ -30,6 +30,7 @@ import {
   LönespecData,
   AnställdListItem,
   UtläggData,
+  BatchDataItem,
 } from "../types/types";
 import {
   hamtaLonespecifikationerForLonekorning,
@@ -43,6 +44,10 @@ import {
   valideraFlertalsAnställda,
   skapaValideringsFelmeddelande,
 } from "../utils/anstalldValidering";
+
+function forvaldUtbetalningsdag(now: Date = new Date()): Date {
+  return new Date(now.getFullYear(), now.getMonth(), 25);
+}
 
 export const useLonekorning = ({
   anställda: propsAnställda,
@@ -101,7 +106,7 @@ export const useLonekorning = ({
 
   // New lönekörning modal states (only active when enableNewLonekorningModal is true)
   const [newLonekorningUtbetalningsdatum, setNewLonekorningUtbetalningsdatum] =
-    useState<Date | null>(new Date());
+    useState<Date | null>(forvaldUtbetalningsdag());
   const [newLonekorningLoading, setNewLonekorningLoading] = useState(false);
   const [newLonekorningValdaAnstallda, setNewLonekorningValdaAnstallda] = useState<number[]>([]);
   const [newLonekorningSteg, setNewLonekorningSteg] = useState<"datum" | "anställda">("datum");
@@ -113,6 +118,7 @@ export const useLonekorning = ({
   const [showDeleteLönekorningModal, setShowDeleteLönekorningModal] = useState(false);
   const [showDeleteLönespecModal, setShowDeleteLönespecModal] = useState(false);
   const [deleteLönespecId, setDeleteLönespecId] = useState<number | null>(null);
+  const [lönekörningAttTaBort, setLönekörningAttTaBort] = useState<Lönekörning | null>(null);
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
 
   // Data states
@@ -139,6 +145,8 @@ export const useLonekorning = ({
   // Computed values
   const anstallda = propsAnställda || localAnställda;
   const anställdaLoading = propsAnställdaLoading || loading;
+
+  const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, anstallda || []);
 
   // Business logic functions
   const beräknaSkatteData = () => {
@@ -190,23 +198,33 @@ export const useLonekorning = ({
     }
   };
 
-  const handleTaBortLönekörning = async () => {
-    if (!valdLonekorning) return;
+  const handleTaBortLönekörning = (target?: Lönekörning) => {
+    const kandidat = target ?? valdLonekorning;
+    if (!kandidat) return;
 
+    setLönekörningAttTaBort(kandidat);
     setShowDeleteLönekorningModal(true);
   };
 
+  const handleTaBortLönekörningFrånLista = (target: Lönekörning) => {
+    handleTaBortLönekörning(target);
+  };
+
   const confirmDeleteLönekorning = async () => {
-    if (!valdLonekorning) return;
+    const kandidat = lönekörningAttTaBort ?? valdLonekorning;
+    if (!kandidat) return;
 
     setShowDeleteLönekorningModal(false);
 
     try {
       setTaBortLoading(true);
-      const result = await taBortLonekorning(valdLonekorning.id);
+      const result = await taBortLonekorning(kandidat.id);
 
       if (result.success) {
-        setValdLonekorning(null);
+        if (valdLonekorning?.id === kandidat.id) {
+          setValdLonekorning(null);
+        }
+        setLonekorningar((prev) => prev.filter((l) => l.id !== kandidat.id));
         setInternalRefreshTrigger((prev) => prev + 1);
       } else {
         showToast(`Fel vid borttagning: ${result.error}`, "error");
@@ -216,7 +234,14 @@ export const useLonekorning = ({
       showToast("Ett oväntat fel uppstod vid borttagning", "error");
     } finally {
       setTaBortLoading(false);
+      setLönekörningAttTaBort(null);
     }
+  };
+
+  const cancelDeleteLönekorning = () => {
+    if (taBortLoading) return;
+    setShowDeleteLönekorningModal(false);
+    setLönekörningAttTaBort(null);
   };
 
   const hanteraTaBortSpec = async (specId: number) => {
@@ -638,7 +663,7 @@ export const useLonekorning = ({
   const skatteData = beräknaSkatteData();
 
   // Prepare batch data for mailing
-  const prepareBatchData = (specData: LönespecData[], allEmployees: AnställdListItem[]) => {
+  function prepareBatchData(specData: LönespecData[], allEmployees: AnställdListItem[]) {
     return specData
       .map((spec) => {
         const anställd = allEmployees.find((a) => a.id === spec.anställd_id);
@@ -657,7 +682,7 @@ export const useLonekorning = ({
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-  };
+  }
 
   // Spec lista mode computed values
   const specListCurrentStep = specListLönekörning?.aktuellt_steg || 0;
@@ -717,16 +742,9 @@ export const useLonekorning = ({
     return `${månadsNamn[parseInt(månad) - 1]} ${år}`;
   };
 
-  const getItemClassName = (lonekorning: Lönekörning, valdLonekorningItem?: Lönekörning | null) => {
-    return `
-      p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-cyan-500
-      ${
-        valdLonekorningItem?.id === lonekorning.id
-          ? "border-cyan-500 bg-slate-700"
-          : "border-slate-600 bg-slate-800 hover:bg-slate-700"
-      }
-    `;
-  };
+  const deletePeriodLabel = lönekörningAttTaBort?.period
+    ? formatPeriodName(lönekörningAttTaBort.period)
+    : "";
 
   // Spec lista mode functions
   const specListHandleTaBortLönespec = async (spec: LönespecData) => {
@@ -933,7 +951,7 @@ export const useLonekorning = ({
       }
 
       // Reset state for next time
-      setNewLonekorningUtbetalningsdatum(new Date());
+      setNewLonekorningUtbetalningsdatum(forvaldUtbetalningsdag());
       setNewLonekorningSteg("datum");
       setNewLonekorningValdaAnstallda([]);
 
@@ -1034,6 +1052,7 @@ export const useLonekorning = ({
     setLonekorningar,
     listLoading,
     setListLoading,
+    lönekörningAttTaBort,
     // Spec lista mode states
     specListTaBortLaddning,
     setSpecListTaBortLaddning,
@@ -1051,16 +1070,19 @@ export const useLonekorning = ({
     skatteData,
     session,
     hasLonekorningar: lonekorningar.length > 0,
+    batchData,
+    deletePeriodLabel,
     // Functions
     beräknaSkatteData,
     hanteraBokförSkatter,
     hanteraTaBortSpec,
     loadLönekörningSpecar,
     handleTaBortLönekörning,
+    handleTaBortLönekörningFrånLista,
     confirmDeleteLönekorning,
+    cancelDeleteLönekorning,
     confirmDeleteLönespec,
     refreshData,
-    prepareBatchData,
     handleMailaSpecar,
     handleBokför,
     handleGenereraAGI,
@@ -1070,7 +1092,6 @@ export const useLonekorning = ({
     // Lista mode functions
     loadLonekorningar,
     formatPeriodName,
-    getItemClassName,
     // Spec lista mode functions
     specListHandleTaBortLönespec,
     specListHandleHämtaBankgiro,

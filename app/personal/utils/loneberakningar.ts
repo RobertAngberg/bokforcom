@@ -380,6 +380,21 @@ export function beräknaSkattMedTabell(bruttolön: number, skattetabell?: number
   return Math.round(bruttolön * skattesats);
 }
 
+function beräknaSkattFörTabell(skattunderlag: number, skattetabell?: number): number {
+  if (!skattetabell) {
+    return beräknaSkatt(skattunderlag);
+  }
+
+  if (skattetabell === 34) {
+    const tabellSkatt = beräknaSkattTabell34(skattunderlag);
+    if (tabellSkatt > 0) {
+      return tabellSkatt;
+    }
+  }
+
+  return beräknaSkattMedTabell(skattunderlag, skattetabell);
+}
+
 /**
  * Beräknar skattunderlag med alla skattepliktiga tillägg
  */
@@ -435,7 +450,7 @@ export function beräknaKomplett(
   const bruttolön = kontantlön + skattepliktigaFörmåner;
 
   const skattunderlag = bruttolön; // Skattepliktiga förmåner redan inkluderade i bruttolön
-  const skatt = beräknaSkattTabell34(skattunderlag);
+  const skatt = beräknaSkattFörTabell(skattunderlag, kontrakt.skattetabell);
   const nettolön = kontantlön - skatt + skattefriaErsättningar;
   //  + nettolönejustering;
 
@@ -470,7 +485,11 @@ export function beräknaLonekomponenter(
   grundlön: number,
   övertid: number,
   lönespec: Lönespec | null,
-  extrarader: ExtraradData[]
+  extrarader: ExtraradData[],
+  options: {
+    skattetabell?: number;
+    skattekolumn?: number;
+  } = {}
 ) {
   const originalGrundlön = grundlön ?? lönespec?.grundlön ?? lönespec?.bruttolön ?? 35000;
   const originalÖvertid = övertid ?? lönespec?.övertid ?? 0;
@@ -479,8 +498,8 @@ export function beräknaLonekomponenter(
   const kontrakt: LöneKontrakt = {
     månadslön: originalGrundlön,
     arbetstimmarPerVecka: 40,
-    skattetabell: 34,
-    skattekolumn: 1,
+    skattetabell: options.skattetabell ?? 34,
+    skattekolumn: options.skattekolumn ?? 1,
     kommunalSkatt: 32,
     socialaAvgifterSats: 0.3142,
   };

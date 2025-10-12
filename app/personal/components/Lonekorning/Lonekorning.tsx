@@ -2,11 +2,12 @@
 "use client";
 
 import Knapp from "../../../_components/Knapp";
+import Modal from "../../../_components/Modal";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { useLonespec } from "../../hooks/useLonespecar";
 import { useLonekorning } from "../../hooks/useLonekorning";
 import { useAnstallda } from "../../hooks/useAnstallda";
-import type { LonekorningProps, BatchDataItem } from "../../types/types";
+import type { LonekorningProps } from "../../types/types";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
 import NyLonekorningModal from "./SkapaNy/NyLonekorningModal";
 import LonekorningLista from "./Listor/LonekorningLista";
@@ -17,7 +18,6 @@ import SkatteBokforingModal from "./Wizard/SkatteBokforingModal";
 
 //#endregion
 
-//#region Component
 export default function Lonekorning({
   anställda: propsAnställda,
   anställdaLoading: propsAnställdaLoading,
@@ -27,6 +27,7 @@ export default function Lonekorning({
 
   // Get all employees to ensure we have complete data
   const { state: anstalldaState } = useAnstallda();
+  const combinedAnstallda = anstalldaState.anställda || propsAnställda;
 
   const {
     // State
@@ -53,32 +54,31 @@ export default function Lonekorning({
     // Computed
     anstallda,
     utlaggMap,
+    batchData,
+    deletePeriodLabel,
     // Business logic
-    prepareBatchData,
     // Lista mode data
     lonekorningar,
     hasLonekorningar,
     listLoading,
     formatPeriodName,
-    getItemClassName,
     // Functions
     hanteraTaBortSpec,
     handleTaBortLönekörning,
+    handleTaBortLönekörningFrånLista,
+    cancelDeleteLönekorning,
     refreshData,
     hanteraAGI,
+    showDeleteLönekorningModal,
+    confirmDeleteLönekorning,
   } = useLonekorning({
-    anställda: propsAnställda,
+    anställda: combinedAnstallda,
     anställdaLoading: propsAnställdaLoading,
     onAnställdaRefresh,
     extrarader,
     beräknadeVärden,
     enableListMode: true, // Aktivera lista mode så vi får lönekörning-data
   });
-
-  const allAnstallda = anstalldaState.anställda || anstallda;
-
-  // Prepare batch data for mailing using hook
-  const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, allAnstallda);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -117,7 +117,8 @@ export default function Lonekorning({
             hasLonekorningar={hasLonekorningar}
             listLoading={listLoading}
             formatPeriodName={formatPeriodName}
-            getItemClassName={getItemClassName}
+            onTaBortLonekorning={handleTaBortLönekörningFrånLista}
+            taBortLoading={taBortLoading}
           />
         ) : (
           <div className="space-y-6">
@@ -127,7 +128,7 @@ export default function Lonekorning({
 
             <LonespecLista
               valdaSpecar={lönekörningSpecar}
-              anstallda={allAnstallda}
+              anstallda={anstallda}
               utlaggMap={utlaggMap}
               lönekörning={valdLonekorning}
               onTaBortSpec={hanteraTaBortSpec}
@@ -142,9 +143,11 @@ export default function Lonekorning({
             {/* Ta bort lönekörning knapp längst ner till höger */}
             <div className="flex justify-end mt-6">
               <Knapp
-                text={taBortLoading ? "🗑️ Tar bort..." : "🗑️ Ta bort lönekörning"}
-                onClick={handleTaBortLönekörning}
+                text="🗑️ Ta bort lönekörning"
+                onClick={() => handleTaBortLönekörning()}
                 disabled={taBortLoading}
+                loading={taBortLoading}
+                loadingText="Tar bort..."
               />
             </div>
           </div>
@@ -223,8 +226,38 @@ export default function Lonekorning({
             onHämtaBankgiro={() => {}}
           />
         )}
+
+        <Modal
+          isOpen={showDeleteLönekorningModal}
+          onClose={cancelDeleteLönekorning}
+          title="Bekräfta borttagning"
+          maxWidth="md"
+        >
+          <div className="space-y-6">
+            <p className="text-gray-300 text-center">
+              Är du säker på att du vill ta bort lönekörningen
+              {deletePeriodLabel && (
+                <span className="font-semibold text-white"> {deletePeriodLabel}</span>
+              )}
+              ? Detta går inte att ångra.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Knapp
+                text="Avbryt"
+                onClick={() => cancelDeleteLönekorning()}
+                className="!bg-slate-600 hover:!bg-slate-500"
+              />
+              <Knapp
+                text="🗑️ Ta bort"
+                onClick={confirmDeleteLönekorning}
+                loading={taBortLoading}
+                loadingText="Tar bort..."
+                className="!bg-red-700 hover:!bg-red-800"
+              />
+            </div>
+          </div>
+        </Modal>
       </div>
     </>
   );
 }
-//#endregion

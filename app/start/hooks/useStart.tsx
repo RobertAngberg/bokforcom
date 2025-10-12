@@ -9,12 +9,30 @@ export function useStart() {
   const { data, isLoading } = useFetchYearSummary(year);
 
   useEffect(() => {
-    checkWelcomeStatus().then(setShowWelcome);
+    let cancelled = false;
+
+    async function loadWelcomeState() {
+      try {
+        const shouldShow = await checkWelcomeStatus();
+
+        if (!cancelled && shouldShow) {
+          setShowWelcome(true);
+          await markWelcomeAsShown();
+        }
+      } catch (error) {
+        console.error("checkWelcomeStatus failed", error);
+      }
+    }
+
+    loadWelcomeState();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleWelcomeClose = useCallback(async () => {
+  const handleWelcomeClose = useCallback(() => {
     setShowWelcome(false);
-    await markWelcomeAsShown();
   }, []);
 
   return {

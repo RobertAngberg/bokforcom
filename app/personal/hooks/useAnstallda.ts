@@ -74,6 +74,18 @@ const mapAnställdaDataToListItems = (data: AnställdData[] = []): AnställdList
         namn: fullName || a.namn || a.mail || "",
         epost: a.mail || a.epost || "",
         roll: a.jobbtitel || "",
+        förnamn: a.förnamn || "",
+        efternamn: a.efternamn || "",
+        personnummer: a.personnummer || "",
+        clearingnummer: a.clearingnummer || "",
+        bankkonto: a.bankkonto || "",
+        adress: a.adress || "",
+        postnummer: a.postnummer || "",
+        ort: a.ort || "",
+        skattetabell: a.skattetabell,
+        skattekolumn: a.skattekolumn,
+        sparade_dagar: a.sparade_dagar,
+        använda_förskott: a.använda_förskott,
       };
     });
 };

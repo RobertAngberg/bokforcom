@@ -15,6 +15,7 @@ export default function Forhandsgranskning({
   företagsprofil,
   extrarader,
   beräknadeVärden = {},
+  semesterSummary,
   onStäng,
 }: ForhandsgranskningProps) {
   const {
@@ -89,7 +90,7 @@ export default function Forhandsgranskning({
               <SemesterInfo
                 lönespec={lönespec}
                 anställd={anställd}
-                formatNoDecimals={formatNoDecimals}
+                semesterSummary={semesterSummary}
               />
               <SkatteInfo anställd={anställd} />
             </div>
