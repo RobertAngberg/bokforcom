@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Förval } from "../types/types";
+import type { Leverantör } from "../../faktura/types/types";
 
 interface UseNavigationStepsProps {
   // State setters for resetting fields
@@ -15,7 +16,7 @@ interface UseNavigationStepsProps {
   setTransaktionsdatum: (value: string | null) => void;
   setValtFörval: (value: Förval | null) => void;
   setExtrafält: (value: Record<string, { label: string; debet: number; kredit: number }>) => void;
-  setLeverantör: (value: { namn: string; organisationsnummer?: string } | null) => void;
+  setLeverantör: Dispatch<SetStateAction<Leverantör | null>>;
   setFakturanummer: (value: string | null) => void;
   setFakturadatum: (value: string | null) => void;
   setFörfallodatum: (value: string | null) => void;

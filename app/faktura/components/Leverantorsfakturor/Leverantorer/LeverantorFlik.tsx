@@ -5,7 +5,7 @@ import Knapp from "../../../../_components/Knapp";
 import NyLeverantorModal from "./NyLeverantorModal";
 import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
 import { LeverantorFlikProps } from "../../../types/types";
-import { useLeverantorFlik } from "../../../hooks/useLeverantorer";
+import { useLeverantorFlik, useLeverantorNavigation } from "../../../hooks/useLeverantorer";
 
 export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlikProps) {
   const {
@@ -23,6 +23,7 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
     setShowModal,
     setDeleteModal,
   } = useLeverantorFlik({ onLeverantörUpdated });
+  const { navigateToBokforing } = useLeverantorNavigation();
 
   return (
     <>
@@ -95,6 +96,14 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 ml-4">
+                      <Knapp
+                        text="📄 Registrera faktura"
+                        onClick={() =>
+                          leverantör.id &&
+                          navigateToBokforing({ leverantorId: leverantör.id, levfakt: true })
+                        }
+                        className="bg-emerald-800 hover:bg-emerald-700 text-sm px-2 py-1"
+                      />
                       <Knapp
                         text="✏️ Redigera"
                         onClick={() => handleEditLeverantör(leverantör)}

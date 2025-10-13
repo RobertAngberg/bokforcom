@@ -235,6 +235,7 @@ export async function hamtaBokfordaFakturor() {
       SELECT DISTINCT
         t.id as transaktion_id,
         lf.id,
+        lf.leverantor_id,
         t.transaktionsdatum as datum,
         t.belopp,
         t.kommentar,
@@ -258,6 +259,8 @@ export async function hamtaBokfordaFakturor() {
       return {
         id: row.id, // Nu leverantörsfaktura.id istället för transaktion.id
         transaktionId: row.transaktion_id, // För verifikat-modal
+        leverantor_id: row.leverantor_id ? Number(row.leverantor_id) : undefined,
+        leverantorId: row.leverantor_id ? Number(row.leverantor_id) : undefined,
         datum: row.datum,
         belopp: parseFloat(row.belopp),
         kommentar: row.kommentar || "",

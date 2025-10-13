@@ -14,11 +14,13 @@ import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
 import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useBokforContext } from "../../context/BokforContextProvider";
+import { getLeverantorer } from "../../../faktura/actions/leverantorActions";
 
 registerLocale("sv", sv);
 
 export default function Steg2Levfakt() {
   const { state, actions, handlers } = useBokforContext();
+  const leverantorNamn = state.leverantör?.namn?.trim();
 
   // State för dynamiskt laddade specialkomponenter
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +86,62 @@ export default function Steg2Levfakt() {
   }, [state.valtFörval?.specialtyp]);
   const levfaktHelper = handlers.useSteg2LevfaktHelper();
 
+  useEffect(() => {
+    let aborted = false;
+
+    const autoSelectLeverantor = async () => {
+      if (state.leverantör || state.visaLeverantorModal) return;
+      try {
+        const result = await getLeverantorer();
+        if (!result.success || !result.leverantörer || result.leverantörer.length === 0) {
+          return;
+        }
+
+        if (aborted) return;
+
+        const params =
+          typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const leverantorIdParam = params?.get("leverantorId");
+
+        const hittaOchSättLeverantor = (leverantorData: (typeof result.leverantörer)[number]) => {
+          if (aborted) return;
+          actions.setLeverantör({
+            id: leverantorData.id,
+            namn: leverantorData.namn || "",
+            organisationsnummer: leverantorData.organisationsnummer || undefined,
+            adress: leverantorData.adress || undefined,
+            postnummer: leverantorData.postnummer || undefined,
+            ort: leverantorData.ort || undefined,
+            telefon: leverantorData.telefon || undefined,
+            email: leverantorData.email || undefined,
+            skapad: leverantorData.skapad || undefined,
+            uppdaterad: leverantorData.uppdaterad || undefined,
+          });
+        };
+
+        if (leverantorIdParam) {
+          const leverantorId = Number(leverantorIdParam);
+          const match = result.leverantörer.find((lev) => lev.id === leverantorId);
+          if (match) {
+            hittaOchSättLeverantor(match);
+            return;
+          }
+        }
+
+        if (result.leverantörer.length === 1) {
+          hittaOchSättLeverantor(result.leverantörer[0]);
+        }
+      } catch (error) {
+        console.error("Kunde inte autovälja leverantör:", error);
+      }
+    };
+
+    autoSelectLeverantor();
+
+    return () => {
+      aborted = true;
+    };
+  }, [actions, state.leverantör, state.visaLeverantorModal]);
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;
 
@@ -143,8 +201,10 @@ export default function Steg2Levfakt() {
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => actions.setCurrentStep(1)} />
 
-        <h1 className="mb-6 text-3xl text-center text-white">Steg 2: Leverantörsfaktura</h1>
-        <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
+        <h1 className="mb-6 text-3xl text-center text-white">
+          {`Steg 2: Leverantörsfaktura${leverantorNamn ? ` - ${leverantorNamn}` : ""}`}
+        </h1>
+        <div className="flex flex-col-reverse justify-between gap-6 h-auto md:flex-row md:items-start">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil
               fil={state.fil || null}
@@ -157,27 +217,6 @@ export default function Steg2Levfakt() {
               setFörfallodatum={levfaktHelper.actions.setFörfallodatum}
               setFakturanummer={levfaktHelper.actions.setFakturanummer}
             />
-            {state.leverantör && (
-              <div className="mt-4 mb-4 rounded-lg border border-cyan-600/40 bg-cyan-900/20 p-3 text-sm flex items-center justify-between gap-4">
-                <div>
-                  <div className="font-semibold text-cyan-300">Leverantör vald</div>
-                  <div className="text-cyan-100/80 mt-1 break-all">{state.leverantör.namn}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    actions.setLeverantör(null);
-                    if (levfaktHelper.handlers.exitLevfaktMode) {
-                      levfaktHelper.handlers.exitLevfaktMode();
-                    }
-                  }}
-                  className="text-[11px] px-2 py-1 rounded bg-red-700/40 hover:bg-red-700/60 border border-red-500/40"
-                >
-                  Ta bort
-                </button>
-              </div>
-            )}
-
             {/* Fakturadatum */}
             <div className="mb-4">
               <label className="block mb-2 text-white">Fakturadatum:</label>
@@ -249,7 +288,9 @@ export default function Steg2Levfakt() {
               }
             />
           </div>
-          <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
+          <div className="w-full md:w-[58%] md:mt-0">
+            <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
+          </div>
         </div>
       </div>
       <ValjLeverantorModal

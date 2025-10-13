@@ -36,7 +36,7 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
 
   return (
     <>
-      <div className="relative flex flex-col items-center justify-center w-full h-auto border-2 border-dashed border-gray-700 bg-slate-900 rounded-xl p-4 md:w-4/5 md:ml-4 mb-4 md:mb-0 transition">
+      <div className="relative flex flex-col items-center justify-center w-full h-auto border-2 border-dashed border-gray-700 bg-slate-900 rounded-xl p-4 mb-4 md:mb-0 transition">
         {!hasFile && (
           <p className="text-gray-500 text-center">Ditt underlag kommer att visas här</p>
         )}

@@ -218,5 +218,9 @@ export async function compressImageFile(file: File, options: UploadOptions = {})
     return file; // Returnera oförändrad om inte bild
   }
 
+  if (typeof document === "undefined") {
+    return file;
+  }
+
   return await compressImage(file, options);
 }

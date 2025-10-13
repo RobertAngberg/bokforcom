@@ -619,6 +619,8 @@ export type BokfordFaktura = {
   belopp: number;
   kommentar: string;
   leverantör?: string;
+  leverantor_id?: number;
+  leverantorId?: number;
   fakturanummer?: string;
   fakturadatum?: string;
   förfallodatum?: string;

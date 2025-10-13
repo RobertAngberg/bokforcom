@@ -34,7 +34,7 @@ export default function LaddaUppFil(props: FileUploadProps) {
         {props.fil
           ? `📎 ${props.fil.name}`
           : isLevfaktMode
-            ? "Ladda upp leverantörsfaktura"
+            ? "Ladda upp faktura"
             : "Ladda upp underlag"}
       </label>
 

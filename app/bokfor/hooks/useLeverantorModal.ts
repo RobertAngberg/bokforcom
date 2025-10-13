@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import type { Leverantör } from "../../faktura/types/types";
 
 interface UseLeverantorModalProps {
-  setLeverantör: (leverantör: { namn: string; organisationsnummer?: string } | null) => void;
+  setLeverantör: (leverantör: Leverantör | null) => void;
 }
 
 export function useLeverantorModal({ setLeverantör }: UseLeverantorModalProps) {
@@ -46,7 +47,7 @@ export function useLeverantorModal({ setLeverantör }: UseLeverantorModalProps) 
   }, [setLeverantör]);
 
   const handleLeverantorSelected = useCallback(
-    (leverantörData: { namn: string; organisationsnummer?: string }) => {
+    (leverantörData: Leverantör) => {
       setLeverantör(leverantörData);
       setVisaLeverantorModal(false);
     },

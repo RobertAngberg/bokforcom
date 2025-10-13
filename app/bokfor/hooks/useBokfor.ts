@@ -12,6 +12,7 @@ import { useOCRProcessing } from "./useOCRProcessing";
 import { useNavigationSteps } from "./useNavigationSteps";
 import { useLeverantorModal } from "./useLeverantorModal";
 import { useFormValidation } from "./useFormValidation";
+import type { Leverantör } from "../../faktura/types/types";
 
 export function useBokfor() {
   // ====================================================
@@ -38,10 +39,7 @@ export function useBokfor() {
   >({});
 
   // Leverantörsfaktura-fält
-  const [leverantör, setLeverantör] = useState<{
-    namn: string;
-    organisationsnummer?: string;
-  } | null>(null);
+  const [leverantör, setLeverantör] = useState<Leverantör | null>(null);
   const [fakturanummer, setFakturanummer] = useState<string | null>(null);
   const [fakturadatum, setFakturadatum] = useState<string | null>(null);
   const [förfallodatum, setFörfallodatum] = useState<string | null>(null);
@@ -153,9 +151,10 @@ export function useBokfor() {
 
   // Kolla om det är försäljning (både i vanlig bokföring och leverantörsfaktura-mode)
   const ärFörsäljning =
-    valtFörval?.namn?.toLowerCase().includes("försäljning") ||
-    valtFörval?.typ?.toLowerCase().includes("intäkt") ||
-    valtFörval?.kategori?.toLowerCase().includes("försäljning");
+    !levfaktMode &&
+    (valtFörval?.namn?.toLowerCase().includes("försäljning") ||
+      valtFörval?.typ?.toLowerCase().includes("intäkt") ||
+      valtFörval?.kategori?.toLowerCase().includes("försäljning"));
 
   // ====================================================
   // BERÄKNINGSFUNKTIONER
@@ -283,6 +282,10 @@ export function useBokfor() {
       if (utlaggMode) formData.set("utlaggMode", "true");
       if (levfaktMode) formData.set("levfaktMode", "true");
       if (anstalldId) formData.set("anstalldId", anstalldId.toString());
+
+      if (levfaktMode && leverantör?.id) {
+        formData.set("leverantorId", leverantör.id.toString());
+      }
 
       // Lägg till kundfaktura-specifika fält
       if (bokförSomFaktura) {
@@ -445,8 +448,10 @@ export function useBokfor() {
     setFakturanummer,
     setFakturadatum,
     handleFakturadatumChange: formValidation.handleFakturadatumChange,
-    setFörfallodatum: formValidation.handleFörfallodatumChange,
-    setBetaldatum: formValidation.handleBetaldatumChange,
+    setFörfallodatum,
+    handleFörfallodatumChange: formValidation.handleFörfallodatumChange,
+    setBetaldatum,
+    handleBetaldatumChange: formValidation.handleBetaldatumChange,
     setBokförSomFaktura,
     setKundfakturadatum,
     setCurrentStep: navigation.setCurrentStep,

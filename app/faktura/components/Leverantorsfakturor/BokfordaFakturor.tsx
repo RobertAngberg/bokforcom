@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { formatSEK } from "../../../_utils/format";
 import VerifikatModal from "../../../_components/VerifikatModal";
 import Knapp from "../../../_components/Knapp";
@@ -9,6 +10,7 @@ import Tabell from "../../../_components/Tabell";
 import { useBokfordaFakturor } from "../../hooks/useLeverantorer";
 
 export default function BokfordaFakturor() {
+  const router = useRouter();
   const {
     // State
     fakturor,
@@ -59,6 +61,7 @@ export default function BokfordaFakturor() {
             <tr className="border-b border-gray-700">
               <th className="text-center text-gray-300 pb-2">Datum</th>
               <th className="text-center text-gray-300 pb-2">Leverantör/Kund</th>
+              <th className="text-center text-gray-300 pb-2">Registrera</th>
               <th className="text-center text-gray-300 pb-2">Fakturanr</th>
               <th className="text-center text-gray-300 pb-2">Belopp</th>
               <th className="text-center text-gray-300 pb-2">Status</th>
@@ -73,6 +76,22 @@ export default function BokfordaFakturor() {
               <tr key={faktura.id} className="border-b border-gray-800">
                 <td className="py-2 text-white text-center">{formateraDatum(faktura.datum)}</td>
                 <td className="py-2 text-gray-300 text-center">{faktura.leverantör || "-"}</td>
+                <td className="py-2 text-center">
+                  <Knapp
+                    text="+ Registrera faktura"
+                    onClick={() => {
+                      const leverantorId = faktura.leverantor_id ?? faktura.leverantorId;
+                      const searchParams = new URLSearchParams({ levfakt: "true" });
+
+                      if (leverantorId) {
+                        searchParams.set("leverantorId", String(leverantorId));
+                      }
+
+                      router.push(`/bokfor?${searchParams.toString()}`);
+                    }}
+                    className="text-xs px-3 py-1"
+                  />
+                </td>
                 <td className="py-2 text-gray-300 text-center">{faktura.fakturanummer || "-"}</td>
                 <td className="py-2 text-white text-center">{formatSEK(faktura.belopp)}</td>
                 <td className="py-2 text-center">

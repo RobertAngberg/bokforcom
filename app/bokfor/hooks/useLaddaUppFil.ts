@@ -201,9 +201,6 @@ export function useLaddaUppFil({
 
         // Leverantörsfaktura specific fields
         if (isLevfaktMode && parsed) {
-          if (parsed.leverantör && setLeverantör) {
-            setLeverantör(parsed.leverantör);
-          }
           if (parsed.fakturadatum && setFakturadatum) {
             setFakturadatum(parsed.fakturadatum);
           }
