@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR, extractDataFromOCRLevFakt } from "../actions/ocrActions";
+import { extractDataFromOCR } from "../actions/ocrActions";
 import { compressImageFile } from "../../_utils/blobUpload";
 import { validateFile, sanitizeFilename } from "../../_utils/fileUtils";
 import Tesseract from "tesseract.js";
@@ -71,6 +71,10 @@ export function useLaddaUppFil({
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
 
+    const isLevfaktMode = Boolean(
+      setLeverantör && setFakturadatum && setFörfallodatum && setFakturanummer
+    );
+
     // Säker filvalidering
     const validation = validateFile(originalFile);
     if (!validation.valid) {
@@ -131,6 +135,14 @@ export function useLaddaUppFil({
       // Skapa temporär URL för förhandsvisning
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
+
+      if (isLevfaktMode) {
+        clearTimeout(timeout);
+        setRecognizedText("");
+        setIsLoading(false);
+        setTimeoutTriggered(false);
+        return;
+      }
     } catch (error) {
       console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);
@@ -187,9 +199,12 @@ export function useLaddaUppFil({
           setFakturanummer
         );
 
-        const parsed = isLevfaktMode
-          ? await extractDataFromOCRLevFakt(recognizedText)
-          : await extractDataFromOCR(recognizedText);
+        if (isLevfaktMode) {
+          setIsLoading(false);
+          return;
+        }
+
+        const parsed = await extractDataFromOCR(recognizedText);
 
         if (parsed?.datum) {
           setTransaktionsdatum(parsed.datum);

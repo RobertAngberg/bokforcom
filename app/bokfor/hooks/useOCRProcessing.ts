@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  extractDataFromOCRKundfaktura,
-  extractDataFromOCR,
-  extractDataFromOCRLevFakt,
-} from "../actions/ocrActions";
+import { extractDataFromOCRKundfaktura, extractDataFromOCR } from "../actions/ocrActions";
 import { uploadReceiptImage } from "../../_utils/blobUpload";
 import { dateToYyyyMmDd } from "../../_utils/datum";
 
@@ -164,15 +160,6 @@ export function useOCRProcessing({
     }
   }, []);
 
-  const extractDataFromOCRLeverantorsfaktura = useCallback(async (text: string) => {
-    try {
-      return await extractDataFromOCRLevFakt(text);
-    } catch (error) {
-      console.error("❌ Fel vid OCR-extraktion för leverantörsfaktura:", error);
-      throw error;
-    }
-  }, []);
-
   // ====================================================
   // FILE MANAGEMENT
   // ====================================================
@@ -237,6 +224,5 @@ export function useOCRProcessing({
     // OCR Extraction Methods
     extractDataFromOCRKund,
     extractDataFromOCRGeneral,
-    extractDataFromOCRLeverantorsfaktura,
   };
 }
