@@ -86,6 +86,7 @@ const mapAnställdaDataToListItems = (data: AnställdData[] = []): AnställdList
         skattekolumn: a.skattekolumn,
         sparade_dagar: a.sparade_dagar,
         använda_förskott: a.använda_förskott,
+        kompensation: a.kompensation,
       };
     });
 };

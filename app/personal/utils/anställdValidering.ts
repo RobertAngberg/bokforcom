@@ -36,7 +36,7 @@ export function valideraAnställdFörLönespec(
   }
 
   // Personnummer behövs för förhandsgranskning/PDF
-  const personnummer = (anställd as AnställdData).personnummer;
+  const personnummer = anställd.personnummer || (anställd as AnställdData).personnummer;
   if (!personnummer || personnummer.trim() === "") {
     saknadeFält.push("Personnummer");
   }
@@ -51,8 +51,8 @@ export function valideraAnställdFörLönespec(
     saknadeFält.push("Skattekolumn");
   }
 
-  // Kompensation behövs för löneberäkning
-  const kompensation = (anställd as AnställdData).kompensation;
+  // Kompensation behövs för löneberäkning - kolla både AnställdListItem och AnställdData
+  const kompensation = anställd.kompensation || (anställd as AnställdData).kompensation;
   if (!kompensation || kompensation === "" || parseFloat(kompensation) === 0) {
     saknadeFält.push("Kompensation/Grundlön");
   }

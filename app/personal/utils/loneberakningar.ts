@@ -234,7 +234,7 @@ export function klassificeraExtrarader(extrarader: ExtraradData[]) {
   let skattepliktigaFörmåner = 0;
   let skattefriaErsättningar = 0;
   let övrigaTillägg = 0;
-  let kontantlönAvdrag = 0; // Lägg till denna variabel
+  let kontantlönAvdrag = 0;
   let nettolönejustering = 0; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   extrarader.forEach((rad) => {
@@ -243,7 +243,7 @@ export function klassificeraExtrarader(extrarader: ExtraradData[]) {
 
     // Hantera avdrag som ska dras från kontantlön
     if (konfig?.negativtBelopp || belopp < 0) {
-      kontantlönAvdrag += Math.abs(belopp); // Lägg till som positivt tal för avdrag
+      kontantlönAvdrag += Math.abs(belopp);
       return;
     }
 
@@ -265,8 +265,7 @@ export function klassificeraExtrarader(extrarader: ExtraradData[]) {
     skattepliktigaFörmåner,
     skattefriaErsättningar,
     övrigaTillägg,
-    kontantlönAvdrag, // Nytt: returnera avdrag
-    // nettolönejustering,
+    kontantlönAvdrag,
   };
 }
 
@@ -426,7 +425,6 @@ export function beräknaKomplett(
     skattefriaErsättningar,
     övrigaTillägg,
     kontantlönAvdrag,
-    // nettolönejustering,
   } = klassificeraExtrarader(extrarader);
 
   // Beräkna kontantlön först (som ska på 7210) - UTAN förmåner men MED extrarad-avdrag

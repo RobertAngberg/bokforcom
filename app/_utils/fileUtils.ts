@@ -83,7 +83,8 @@ export function sanitizeFilename(filename: string, maxLength: number = 100): str
 }
 
 /**
- * Komplett filvalidering för bokföringsbilagor
+ * npm run devlett filvalidering för bokföringsbilagor
+ *
  */
 export function validateFile(
   file: File,

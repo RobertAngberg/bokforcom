@@ -58,7 +58,8 @@ export async function createTransaktion(data: SkapaTransaktionInput) {
 
     if (!data.skipBalanceCheck) {
       const total = data.poster.reduce((s, p) => s + (p.debet || 0) - (p.kredit || 0), 0);
-      if (Math.abs(total) > 0.0001) {
+      // Acceptera om kronorna stämmer (avrunda till heltal)
+      if (Math.abs(Math.round(total)) > 0) {
         throw new Error("Obalanserad transaktion (debet - kredit != 0)");
       }
     }

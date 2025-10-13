@@ -2,6 +2,7 @@ import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { beräknaSumma } from "../utils/extraraderUtils";
+import { RAD_KONFIGURATIONER } from "../utils/extraradDefinitioner";
 import { showToast } from "../../_components/Toast";
 import type {
   Lönespec,
@@ -35,7 +36,12 @@ export const useForhandsgranskning = (
   // Mappa extrarader till rätt format
   const extraraderMapped: MappedExtrarad[] = (extrarader ?? []).map((rad) => {
     const benämning = rad.kolumn1 ?? "";
-    const antal = rad.kolumn2 ?? "";
+
+    // För kr-enheter (övertid, ob-tillägg, etc.) ska antal inte visas
+    // eftersom kolumn2 innehåller summan, inte antal
+    const config = RAD_KONFIGURATIONER[rad.typ];
+    const antal = config?.enhet === "kr" ? "" : (rad.kolumn2 ?? "");
+
     let kostnad = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
     let summa = parseFloat((rad.kolumn3 ?? "0").toString().replace(",", "."));
 
@@ -90,7 +96,7 @@ export const useForhandsgranskning = (
         );
       }
     }
-    return { benämning, antal, kostnad, summa };
+    return { benämning, antal, kostnad, summa, kommentar: rad.kolumn4 ?? "" };
   });
 
   // Använd beräknade värden om de finns, annars fall back till lönespec
@@ -126,7 +132,7 @@ export const useForhandsgranskning = (
         removeContainer: false,
       });
 
-      const imageData = canvas.toDataURL("image/png");
+      const imageData = canvas.toDataURL("image/jpeg", 0.85);
       if (
         imageData ===
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
@@ -134,11 +140,16 @@ export const useForhandsgranskning = (
         throw new Error("Canvas är tom!");
       }
 
-      const pdf = new jsPDF("portrait", "mm", "a4");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
       const pdfWidth = 210;
       const imgWidth = pdfWidth - 15;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imageData, "PNG", 7.5, 5, imgWidth, imgHeight);
+      pdf.addImage(imageData, "JPEG", 7.5, 5, imgWidth, imgHeight, undefined, "FAST");
       pdf.save(
         `lonespec-${anställd?.förnamn}-${anställd?.efternamn}-${månadsNamn.replace(" ", "-")}.pdf`
       );

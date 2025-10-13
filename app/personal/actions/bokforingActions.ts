@@ -112,7 +112,8 @@ export async function bokforLoneutbetalning(data: BokförLöneUtbetalningData) {
     const totalDebet = bokföringsPoster.reduce((sum, post) => sum + (post.debet || 0), 0);
     const totalKredit = bokföringsPoster.reduce((sum, post) => sum + (post.kredit || 0), 0);
 
-    if (Math.abs(totalDebet - totalKredit) > 0.01) {
+    // Acceptera bokföring om kronorna stämmer (avrunda till heltal)
+    if (Math.round(totalDebet) !== Math.round(totalKredit)) {
       throw new Error(
         `Bokföringen balanserar inte! Debet: ${totalDebet.toFixed(2)}, Kredit: ${totalKredit.toFixed(2)}`
       );

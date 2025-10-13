@@ -32,10 +32,12 @@ export default function SkatteBokforingModal({
       title="💰 Bokför skatter"
       maxWidth="4xl"
     >
-      <div className="mb-8"></div>
+      <div className="mb-8 text-center">
+        <div className="mb-2">
+          Det är nu dags att betala in {formatCurrency(totalBelopp)} till Skatteverket.
+        </div>
+      </div>
       <div className="space-y-6">
-        {/* Sammanfattning - REMOVED */}
-
         {/* Bokföringsposter */}
         <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
           <Tabell

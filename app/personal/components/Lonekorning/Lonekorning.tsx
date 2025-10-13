@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
 import TillbakaPil from "../../../_components/TillbakaPil";
-import { useLonespec } from "../../hooks/useLonespecar";
 import { useLonekorning } from "../../hooks/useLonekorning";
 import { useAnstallda } from "../../hooks/useAnstallda";
 import type { LonekorningProps, Lönespec } from "../../types/types";
@@ -25,8 +24,6 @@ export default function Lonekorning({
   anställdaLoading: propsAnställdaLoading,
   onAnställdaRefresh,
 }: LonekorningProps = {}) {
-  const { extrarader, beräknadeVärden } = useLonespec();
-
   // Local state för mail modal
   const [mailModalOpen, setMailModalOpen] = useState(false);
 
@@ -81,8 +78,6 @@ export default function Lonekorning({
     anställda: combinedAnstallda,
     anställdaLoading: propsAnställdaLoading,
     onAnställdaRefresh,
-    extrarader,
-    beräknadeVärden,
     enableListMode: true, // Aktivera lista mode så vi får lönekörning-data
   });
 
@@ -247,8 +242,9 @@ export default function Lonekorning({
                   );
                 })}
               </div>
+
               <button
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors mt-4"
                 onClick={() => setMailModalOpen(false)}
               >
                 Stäng

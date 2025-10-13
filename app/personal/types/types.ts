@@ -30,6 +30,7 @@ export interface MappedExtrarad {
   antal: string;
   kostnad: number;
   summa: number;
+  kommentar: string;
 }
 
 export interface UtläggData {
@@ -605,6 +606,7 @@ export interface LönetabellProps {
     antal?: string | number;
     kostnad: number;
     summa: number;
+    kommentar: string;
   }>;
   formatNoDecimals: (value: number) => string;
 }
@@ -912,8 +914,6 @@ export interface LonekorningHookProps {
   anställda?: AnställdListItem[];
   anställdaLoading?: boolean;
   onAnställdaRefresh?: () => void;
-  extrarader?: Record<string, ExtraradData[]>;
-  beräknadeVärden?: Record<string, BeräknadeVärden>;
   // Lista mode props
   enableListMode?: boolean;
   refreshTrigger?: number;

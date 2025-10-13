@@ -150,7 +150,7 @@ export function generateAGIXML(agiData: AGIData): string {
   
   <!-- AVSÄNDARE: Information om vem som skickar filen -->
   <agd:Avsandare>
-    <agd:Programnamn>BokförCom AGI Generator</agd:Programnamn>
+    <agd:Programnamn>BokforComAGIGenerator</agd:Programnamn>
     <agd:Organisationsnummer>${agiData.organisationsnummer}</agd:Organisationsnummer>
     <agd:TekniskKontaktperson>
       <agd:Namn>${agiData.tekniskKontakt.namn}</agd:Namn>

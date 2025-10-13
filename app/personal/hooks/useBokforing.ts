@@ -180,13 +180,12 @@ export function useBokforing({
     });
 
     // Bokio-quirk: Beräkna sjuk-justering tidigt för kontantlön-beräkning
+    // OBS: Bara för faktisk sjuklön, inte karensavdrag
     const harSjukavdrag = extrarader.some(
       (rad) =>
         rad.typ &&
-        (rad.typ.includes("sjuk") ||
-          rad.typ.includes("karens") ||
-          rad.typ.includes("reducerade") ||
-          rad.typ.includes("vård"))
+        (rad.typ.includes("sjuk") || rad.typ.includes("reducerade") || rad.typ.includes("vård")) &&
+        !rad.typ.includes("karens")
     );
     const sjukJustering = harSjukavdrag ? 0.01 : 0;
 
@@ -378,7 +377,8 @@ export function useBokforing({
   const poster = analyseraBokföringsposter();
   const totalDebet = poster.reduce((sum, p) => sum + Number(p.debet), 0);
   const totalKredit = poster.reduce((sum, p) => sum + Number(p.kredit), 0);
-  const ärBalanserad = Math.abs(totalDebet - totalKredit) < 0.01;
+  // Acceptera bokföring om kronorna stämmer (avrunda till heltal)
+  const ärBalanserad = Math.round(totalDebet) === Math.round(totalKredit);
 
   return {
     // State

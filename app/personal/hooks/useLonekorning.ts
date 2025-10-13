@@ -20,6 +20,7 @@ import { markeraAGIGenererad, markeraSkatternaBokforda } from "../actions/lonesp
 import { hamtaAllaAnstallda, hamtaForetagsprofil } from "../actions/anstalldaActions";
 import { hamtaUtlagg } from "../actions/utlaggActions";
 import { bokforLoneskatter } from "../actions/bokforingActions";
+import { beräknaLonekomponenter } from "../utils/loneberakningar";
 import {
   Lönekörning,
   LonekorningHookProps,
@@ -28,6 +29,7 @@ import {
   AnställdListItem,
   UtläggData,
   BatchDataItem,
+  BeräknadeVärden,
 } from "../types/types";
 import {
   hamtaLonespecifikationerForLonekorning,
@@ -72,6 +74,7 @@ const mapAnställdaToListItems = (data: AnställdData[] = []): AnställdListItem
         skattekolumn: post.skattekolumn,
         sparade_dagar: post.sparade_dagar,
         använda_förskott: post.använda_förskott,
+        kompensation: post.kompensation,
       };
     });
 
@@ -79,8 +82,6 @@ export const useLonekorning = ({
   anställda: propsAnställda,
   anställdaLoading: propsAnställdaLoading,
   onAnställdaRefresh,
-  extrarader,
-  beräknadeVärden,
   enableListMode = false,
   specListValdaSpecar = [],
   specListLönekörning,
@@ -168,8 +169,6 @@ export const useLonekorning = ({
   const anstallda = propsAnställda || localAnställda;
   const anställdaLoading = propsAnställdaLoading || loading;
 
-  const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, anstallda || []);
-
   const parseAmount = (value: unknown): number => {
     if (typeof value === "number") {
       return Number.isFinite(value) ? value : 0;
@@ -185,9 +184,11 @@ export const useLonekorning = ({
     return 0;
   };
 
+  const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, anstallda || []);
+
   // Business logic functions
   const beräknaSkatteData = () => {
-    if (!lönekörningSpecar || lönekörningSpecar.length === 0) {
+    if (!batchData.length) {
       return {
         socialaAvgifter: 0,
         personalskatt: 0,
@@ -198,13 +199,14 @@ export const useLonekorning = ({
     let totalSocialaAvgifter = 0;
     let totalPersonalskatt = 0;
 
-    lönekörningSpecar.forEach((spec) => {
-      const beräkningar = beräknadeVärden?.[spec.id];
-      const socialaAvgifter = parseAmount(beräkningar?.socialaAvgifter ?? spec.sociala_avgifter);
-      const skatt = parseAmount(beräkningar?.skatt ?? spec.skatt);
+    batchData.forEach(({ lönespec, beräknadeVärden }) => {
+      const socialaAvgifter = parseAmount(
+        beräknadeVärden?.socialaAvgifter ?? lönespec?.sociala_avgifter
+      );
+      const skatt = parseAmount(beräknadeVärden?.skatt ?? lönespec?.skatt);
 
-      totalSocialaAvgifter += isNaN(socialaAvgifter) ? 0 : socialaAvgifter;
-      totalPersonalskatt += isNaN(skatt) ? 0 : skatt;
+      totalSocialaAvgifter += Number.isNaN(socialaAvgifter) ? 0 : socialaAvgifter;
+      totalPersonalskatt += Number.isNaN(skatt) ? 0 : skatt;
     });
 
     return {
@@ -636,16 +638,41 @@ export const useLonekorning = ({
           return null;
         }
 
-        // ✅ Extrarader kommer nu direkt från databasen via lönespec
-        // Fallback till extrarader prop om den finns (för kompatibilitet)
-        const specExtrarader = spec.extrarader || extrarader?.[spec.id] || [];
+        // ✅ Extrarader kommer från databasen via spec.extrarader
+        const specExtrarader = spec.extrarader || [];
+
+        const grundlön = parseAmount(spec.grundlön ?? spec.bruttolön ?? 0);
+        const övertidBelopp = 0;
+
+        const råBeräknade = beräknaLonekomponenter(grundlön, övertidBelopp, spec, specExtrarader, {
+          skattetabell: anställd.skattetabell ?? 34,
+          skattekolumn: anställd.skattekolumn ?? 1,
+        });
+
+        // Säkerställ att grundläggande värden alltid är satta
+        const beräknade: BeräknadeVärden = {
+          ...råBeräknade,
+          grundlön,
+          bruttolön: parseAmount(råBeräknade.bruttolön ?? spec.bruttolön ?? grundlön),
+          socialaAvgifter: parseAmount(råBeräknade.socialaAvgifter ?? spec.sociala_avgifter ?? 0),
+          skatt: parseAmount(råBeräknade.skatt ?? spec.skatt ?? 0),
+          nettolön: parseAmount(råBeräknade.nettolön ?? spec.nettolön ?? 0),
+          kontantlön: parseAmount(råBeräknade.kontantlön ?? råBeräknade.bruttolön ?? grundlön),
+          lönekostnad: parseAmount(råBeräknade.lönekostnad ?? 0),
+          extraradsSumma: parseAmount(råBeräknade.extraradsSumma ?? 0),
+          övertid: parseAmount(råBeräknade.övertid ?? övertidBelopp),
+          timlön: parseAmount(råBeräknade.timlön ?? 0),
+          daglön: parseAmount(råBeräknade.daglön ?? 0),
+          skattunderlag: parseAmount(råBeräknade.skattunderlag ?? 0),
+          dagavdrag: råBeräknade.dagavdrag,
+        };
 
         return {
           lönespec: spec,
           anställd,
           företagsprofil,
           extrarader: specExtrarader,
-          beräknadeVärden: beräknadeVärden?.[spec.id] || {},
+          beräknadeVärden: beräknade,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);

@@ -74,7 +74,7 @@ export default function Modal({
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} shadow-2xl flex flex-col mt-8 ${
+        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} shadow-2xl flex flex-col ${
           containerClassName || ""
         }`}
         style={
