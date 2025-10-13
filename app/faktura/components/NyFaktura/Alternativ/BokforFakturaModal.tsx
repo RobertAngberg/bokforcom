@@ -3,6 +3,7 @@
 import Tabell from "../../../../_components/Tabell";
 import Modal from "../../../../_components/Modal";
 import { useBokforFakturaModal } from "../../../hooks/useAlternativ";
+import { formatCurrency } from "../../../../_utils/format";
 import { BokforFakturaModalProps } from "../../../types/types";
 
 export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaModalProps) {
@@ -86,7 +87,7 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
           </div>
           <div>
             <span className="text-gray-400">Totalt inkl. moms:</span>
-            <span className="text-white ml-2">{beräknaTotalbelopp().toFixed(2)} kr</span>
+            <span className="text-white ml-2">{formatCurrency(beräknaTotalbelopp())}</span>
           </div>
         </div>
       </div>

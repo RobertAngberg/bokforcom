@@ -5,10 +5,20 @@ import { useSparadeFakturorPage } from "../../hooks/useLeverantorer";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { formatCurrency } from "../../../_utils/format";
 import type { SparadeProps, SparadFaktura } from "../../types/types";
+import Modal from "../../../_components/Modal";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 
 export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
-  const { data } = useSparadeFakturorPage();
-  const { loadingInvoiceId, handleSelectInvoice, handleDeleteInvoice } = useSparade();
+  const { data, loading } = useSparadeFakturorPage();
+  const {
+    loadingInvoiceId,
+    handleSelectInvoice,
+    handleDeleteInvoice,
+    confirmDeleteFaktura,
+    showDeleteModal,
+    setShowDeleteModal,
+    deleteFakturaId,
+  } = useSparade();
 
   const fakturor: SparadFaktura[] = data?.fakturor ?? [];
 
@@ -20,7 +30,9 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
       </div>
 
       <div className="text-white">
-        {fakturor.length === 0 ? (
+        {loading ? (
+          <LoadingSpinner />
+        ) : fakturor.length === 0 ? (
           <p className="text-gray-400 italic">Inga fakturor hittades.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -118,6 +130,37 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="🗑️ Ta bort faktura"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-white">
+            Är du säker på att du vill ta bort faktura #{" "}
+            <span className="font-semibold">
+              {fakturor.find((f) => f.id === deleteFakturaId)?.fakturanummer || deleteFakturaId}
+            </span>
+            ? Detta går inte att ångra.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={() => confirmDeleteFaktura()}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Ta bort
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

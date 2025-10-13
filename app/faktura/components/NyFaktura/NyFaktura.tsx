@@ -13,24 +13,22 @@ import { NyFakturaProps } from "../../types/types";
 import TillbakaPil from "../../../_components/TillbakaPil";
 
 export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
-  const { formData, showPreview, openPreview, closePreview, reloadFaktura, isLoadingFaktura } =
+  const { showPreview, openPreview, closePreview, reloadFaktura, isLoadingFaktura, fakturaTitle } =
     useFaktura();
+
+  const titleContent = isLoadingFaktura ? (
+    <span className="text-blue-400">🔄 Laddar faktura...</span>
+  ) : (
+    fakturaTitle
+  );
 
   return (
     <>
       <div className="relative mb-8 flex items-center justify-center">
-        <TillbakaPil onClick={onBackToMenu} />
-        <h1 className="text-2xl text-center w-full">
-          {isLoadingFaktura ? (
-            <span className="text-blue-400">🔄 Laddar faktura...</span>
-          ) : formData.fakturanummer && formData.kundnamn ? (
-            `🧾 Faktura #${formData.fakturanummer} - ${formData.kundnamn}`
-          ) : formData.fakturanummer ? (
-            `🧾 Faktura #${formData.fakturanummer}`
-          ) : (
-            "Ny Faktura"
-          )}
-        </h1>
+        <TillbakaPil onClick={onBackToMenu} ariaLabel="Tillbaka" className="gap-0 px-2 py-2">
+          {null}
+        </TillbakaPil>
+        <h1 className="text-2xl text-center w-full">{titleContent}</h1>
       </div>
 
       <AnimeradFlik title="Avsändare" icon="🧑‍💻">

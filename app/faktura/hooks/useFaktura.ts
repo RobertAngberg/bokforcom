@@ -7,7 +7,7 @@ import { useSession } from "../../_lib/auth-client";
 import { useFakturaClient, useFakturaInitialData } from "../context/FakturaContextProvider";
 import { useProdukterTjanster } from "./useProdukterTjanster";
 import { useFakturaLifecycle } from "../context/FakturaFormContext";
-import { hamtaFakturaMedRader } from "../actions/fakturaActions";
+import { hamtaFakturaMedRader, hamtaNastaFakturanummer } from "../actions/fakturaActions";
 import {
   hamtaForetagsprofil,
   sparaForetagsprofil as sparaForetagsprofilAction,
@@ -30,6 +30,7 @@ export function useFaktura() {
     formData,
     kundStatus,
     userSettings,
+    navigationState,
     setFormData,
     resetFormData,
     setKundStatus,
@@ -99,6 +100,33 @@ export function useFaktura() {
     ]
   );
   const lifecycle = useFakturaLifecycle();
+
+  // Avgör om vi redigerar en sparad faktura och tar fram titel/fakturanummer för vyn.
+  const editFakturaId = navigationState.editFakturaId;
+  const isEditingView = navigationState.currentView === "ny" && Boolean(editFakturaId);
+  const displayFakturanummer =
+    (formData.fakturanummer || "").trim() || (editFakturaId ? String(editFakturaId) : "");
+  const displayKundnamn = (formData.kundnamn || "").trim();
+
+  const fakturaTitle = useMemo(() => {
+    if (isEditingView) {
+      if (displayFakturanummer && displayKundnamn) {
+        return `✏️ Redigerar Faktura #${displayFakturanummer} - ${displayKundnamn}`;
+      }
+      if (displayFakturanummer) {
+        return `✏️ Redigerar Faktura #${displayFakturanummer}`;
+      }
+      return "✏️ Redigerar Faktura";
+    }
+
+    if (displayFakturanummer && displayKundnamn) {
+      return `🧾 Faktura #${displayFakturanummer} - ${displayKundnamn}`;
+    }
+    if (displayFakturanummer) {
+      return `🧾 Faktura #${displayFakturanummer}`;
+    }
+    return "Ny Faktura";
+  }, [isEditingView, displayFakturanummer, displayKundnamn]);
 
   // External hooks
   const { data: session } = useSession();
@@ -299,6 +327,8 @@ export function useFaktura() {
           return typeof value === "string" ? value : "";
         };
 
+        const previous = formDataRef.current;
+
         setFormData({
           id: faktura.id,
           fakturanummer: faktura.fakturanummer ?? "",
@@ -317,18 +347,19 @@ export function useFaktura() {
           kundpostnummer: faktura.kundpostnummer ?? "",
           kundstad: faktura.kundstad ?? "",
           kundemail: faktura.kundemail ?? "",
-          företagsnamn: faktura.företagsnamn ?? "",
-          epost: faktura.epost ?? "",
-          adress: faktura.adress ?? "",
-          postnummer: faktura.postnummer ?? "",
-          stad: faktura.stad ?? "",
-          organisationsnummer: faktura.organisationsnummer ?? "",
-          momsregistreringsnummer: faktura.momsregistreringsnummer ?? "",
-          telefonnummer: faktura.telefonnummer ?? "",
-          bankinfo: faktura.bankinfo ?? "",
-          webbplats: faktura.webbplats ?? "",
-          logo: faktura.logo ?? "",
-          logoWidth: faktura.logo_width ?? 200,
+          företagsnamn: faktura.företagsnamn ?? previous.företagsnamn ?? "",
+          epost: faktura.epost ?? previous.epost ?? "",
+          adress: faktura.adress ?? previous.adress ?? "",
+          postnummer: faktura.postnummer ?? previous.postnummer ?? "",
+          stad: faktura.stad ?? previous.stad ?? "",
+          organisationsnummer: faktura.organisationsnummer ?? previous.organisationsnummer ?? "",
+          momsregistreringsnummer:
+            faktura.momsregistreringsnummer ?? previous.momsregistreringsnummer ?? "",
+          telefonnummer: faktura.telefonnummer ?? previous.telefonnummer ?? "",
+          bankinfo: faktura.bankinfo ?? previous.bankinfo ?? "",
+          webbplats: faktura.webbplats ?? previous.webbplats ?? "",
+          logo: faktura.logo ?? previous.logo ?? "",
+          logoWidth: faktura.logo_width ?? previous.logoWidth ?? 200,
           artiklar: artiklar.map((rad) => ({
             beskrivning: rad.beskrivning,
             antal: Number(rad.antal),
@@ -424,6 +455,87 @@ export function useFaktura() {
     },
     [laddaFakturaData]
   );
+
+  // Hämtar sparad faktura när användaren går in i redigeringsläget.
+  useEffect(() => {
+    if (!isEditingView || !editFakturaId) {
+      return;
+    }
+
+    if (Number(formData.id) === Number(editFakturaId)) {
+      return;
+    }
+
+    const fetchInvoice = async () => {
+      try {
+        await laddaFakturaDataMedLoading(editFakturaId);
+      } catch (error) {
+        console.error("Kunde inte ladda faktura för redigering", error);
+      }
+    };
+
+    void fetchInvoice();
+  }, [isEditingView, editFakturaId, formData.id, laddaFakturaDataMedLoading]);
+
+  useEffect(() => {
+    if (navigationState.currentView !== "ny" || editFakturaId) {
+      lifecycle.current.harInitNyFaktura = false;
+      return;
+    }
+
+    if (lifecycle.current.harInitNyFaktura) {
+      return;
+    }
+
+    lifecycle.current.harInitNyFaktura = true;
+
+    const today = new Date();
+    const todayIso = dateToYyyyMmDd(today);
+    const villkor = formData.betalningsvillkor || "30";
+    const villkorDays = parseInt(villkor, 10);
+    const defaultForfallo = dateToYyyyMmDd(addDays(today, isNaN(villkorDays) ? 30 : villkorDays));
+
+    resetKund();
+    resetNyArtikel();
+
+    setFormData({
+      id: "",
+      artiklar: [],
+      fakturanummer: "",
+      fakturadatum: todayIso,
+      forfallodatum: defaultForfallo,
+      nummer: "",
+      rotRutAktiverat: false,
+      rotRutTyp: "ROT",
+      rotRutKategori: "",
+      avdragProcent: 0,
+      avdragBelopp: 0,
+      arbetskostnadExMoms: 0,
+      materialkostnadExMoms: 0,
+      rotRutBeskrivning: "",
+      rotRutStartdatum: "",
+      rotRutSlutdatum: "",
+    });
+
+    const fetchNextNumber = async () => {
+      try {
+        const nextNr = await hamtaNastaFakturanummer();
+        setFormData({ fakturanummer: nextNr.toString() });
+      } catch (error) {
+        console.error("Kunde inte hämta nästa fakturanummer", error);
+      }
+    };
+
+    void fetchNextNumber();
+  }, [
+    navigationState.currentView,
+    editFakturaId,
+    resetKund,
+    resetNyArtikel,
+    setFormData,
+    formData.betalningsvillkor,
+    lifecycle,
+  ]);
 
   // =============================================================================
   // BETALNING FUNCTIONS
@@ -828,10 +940,14 @@ export function useFaktura() {
     nyArtikel,
     produkterTjansterState,
     userSettings,
+    navigationState,
     showPreview,
     kunder,
     showDeleteKundModal,
     setShowDeleteKundModal,
+    editFakturaId,
+    isEditingView,
+    fakturaTitle,
 
     // Context actions
     setFormData,

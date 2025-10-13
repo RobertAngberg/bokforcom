@@ -51,7 +51,8 @@ export function useSkickaEpost() {
   const skickaEpost = useCallback(
     async (customProps?: Partial<SkickaEpostProps>) => {
       // Validering
-      if (!validateEmailAddress(mottagareEmail)) {
+      const trimmedEmail = mottagareEmail.trim();
+      if (!validateEmailAddress(trimmedEmail)) {
         return;
       }
 
@@ -66,12 +67,17 @@ export function useSkickaEpost() {
         // Generera PDF som base64
         const pdfBase64 = await generatePDFAsBase64();
 
+        const safeFilename = formData.fakturanummer?.trim()
+          ? `faktura-${formData.fakturanummer.trim()}.pdf`
+          : "faktura.pdf";
+
         const payload = {
-          fakturaData: {
+          faktura: {
             ...formData,
-            kundemail: mottagareEmail, // Använd det angivna e-postfältet
+            kundemail: trimmedEmail, // Använd det angivna e-postfältet
           },
-          pdfData: pdfBase64,
+          pdfAttachment: pdfBase64,
+          filename: safeFilename,
           customMessage: egetMeddelande.trim(), // Skicka med det egna meddelandet
         };
 

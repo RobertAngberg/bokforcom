@@ -113,7 +113,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
     <div className={getToastStyles()} onClick={handleManualClose}>
       <div className="flex items-center">
         {getIcon()}
-        <span className="font-medium text-base">{message}</span>
+        <span className="font-medium text-base whitespace-pre-line">{message}</span>
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ import { useFakturaClient } from "../context/FakturaContextProvider";
 export default function FakturaNavigation() {
   const { navigationState, navigateToView, navigateToEdit, navigateBack } = useFakturaClient();
   const activeView = navigationState.currentView;
-  const editFakturaId = navigationState.editFakturaId;
 
   const handleCreateNew = () => {
     navigateToEdit("ny");
@@ -69,9 +68,7 @@ export default function FakturaNavigation() {
   // Renderera specifika vyer
   return (
     <>
-      {activeView === "ny" && (
-        <NyFaktura onBackToMenu={handleBackToOverview} editFakturaId={editFakturaId} />
-      )}
+      {activeView === "ny" && <NyFaktura onBackToMenu={handleBackToOverview} />}
       {activeView === "sparade" && (
         <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}

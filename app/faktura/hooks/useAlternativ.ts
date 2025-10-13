@@ -12,6 +12,7 @@ import {
 import { laddaNerHUSFil } from "../utils/husFilGenerator";
 import { BokforingsPost, BokföringsData } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
+import { formatCurrency } from "../../_utils/format";
 
 // Validation functions - flyttad från useBokforFakturaModal
 function validateBokföringsPost(post: BokforingsPost): { isValid: boolean; error?: string } {
@@ -839,12 +840,14 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     {
       key: "debet",
       label: "Debet",
-      render: (value: unknown) => (typeof value === "number" && value > 0 ? value.toFixed(2) : ""),
+      render: (value: unknown) =>
+        typeof value === "number" && value > 0 ? formatCurrency(value) : "",
     },
     {
       key: "kredit",
       label: "Kredit",
-      render: (value: unknown) => (typeof value === "number" && value > 0 ? value.toFixed(2) : ""),
+      render: (value: unknown) =>
+        typeof value === "number" && value > 0 ? formatCurrency(value) : "",
     },
   ];
 

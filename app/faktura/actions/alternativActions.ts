@@ -7,6 +7,7 @@ import {
   registreraRotRutBetalning as registreraRotRutBetalningBase,
 } from "./betalningActions";
 import type { BokförFakturaData } from "../types/types";
+import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
 
 // === BETALNINGSMETOD (från alternativActions.ts) ===
 export async function hamtaSenasteBetalningsmetod(userId: string) {
@@ -81,6 +82,10 @@ export async function registreraRotRutBetalning(
   return registreraRotRutBetalningBase(fakturaId);
 }
 
+export async function bokforFaktura(data: BokförFakturaData) {
+  return bokforFakturaBase(data);
+}
+
 // === BOKFÖRING (från bokforingActions.ts) ===
 export async function hamtaBokforingsmetod() {
   const { userId } = await ensureSession();
@@ -128,45 +133,6 @@ export async function sparaBokforingsmetod(metod: "kontantmetoden" | "fakturamet
 }
 
 // Bokföringsfunktioner
-
-export async function bokforFaktura(data: BokförFakturaData) {
-  const { userId } = await ensureSession();
-
-  const client = await pool.connect();
-  try {
-    // Uppdatera fakturastatus
-    await client.query(
-      `UPDATE fakturor 
-         SET 
-           status_bokförd = 'Bokförd',
-           uppdaterad = CURRENT_TIMESTAMP
-         WHERE id = $1 AND user_id = $2`,
-      [data.fakturaId, userId]
-    );
-
-    // Spara bokföringsposter om de finns
-    if (data.poster && data.poster.length > 0) {
-      for (const post of data.poster) {
-        await client.query(
-          `INSERT INTO bokforing_poster (
-              user_id, faktura_id, konto, beskrivning, debet, kredit
-            ) VALUES ($1, $2, $3, $4, $5, $6)`,
-          [userId, data.fakturaId, post.konto, post.beskrivning, post.debet || 0, post.kredit || 0]
-        );
-      }
-    }
-
-    return {
-      success: true,
-      message: `Faktura ${data.fakturanummer} har bokförts för ${data.kundnamn}`,
-    };
-  } catch (error) {
-    console.error("Bokföringsfel:", error);
-    return { success: false, error: "Databasfel vid bokföring" };
-  } finally {
-    client.release();
-  }
-}
 
 export async function hamtaBokfordaFakturor() {
   const { userId } = await ensureSession();

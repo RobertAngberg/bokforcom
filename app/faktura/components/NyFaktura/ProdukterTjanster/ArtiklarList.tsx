@@ -87,7 +87,7 @@ export default function ArtiklarList() {
               <div className="text-gray-400 text-sm">
                 {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
                 {a.rotRutMaterial ? " — ROT/RUT-material" : ""}
-                {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
+                {formData.rotRutAktiverat && a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
               </div>
             </div>
             <div className="flex gap-2">

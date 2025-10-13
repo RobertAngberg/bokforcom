@@ -1,5 +1,7 @@
 import Knapp from "../../../../_components/Knapp";
+import Modal from "../../../../_components/Modal";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { useFaktura } from "../../../hooks/useFaktura";
 import { Artikel } from "../../../types/types";
 
 export default function FavoritArtiklarList() {
@@ -10,7 +12,12 @@ export default function FavoritArtiklarList() {
     setShowFavoritArtiklar,
     taBortFavoritArtikel,
     laddaFavoritArtikel,
+    showDeleteFavoritModal,
+    setShowDeleteFavoritModal,
+    deleteFavoritId,
+    confirmDeleteFavorit,
   } = useProdukterTjanster();
+  const { formData } = useFaktura();
 
   // Handler functions
   const handleSelectFavorit = (artikel: Artikel) => {
@@ -71,7 +78,7 @@ export default function FavoritArtiklarList() {
                   </div>
                   <div className="text-gray-400 text-sm">
                     ({a.moms}% moms) — {a.typ}
-                    {a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
+                    {formData.rotRutAktiverat && a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
                   </div>
                 </div>
               </div>
@@ -79,6 +86,38 @@ export default function FavoritArtiklarList() {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={showDeleteFavoritModal}
+        onClose={() => setShowDeleteFavoritModal(false)}
+        title="🗑️ Ta bort favoritartikel"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-white">
+            Vill du ta bort favoritartikeln{" "}
+            <span className="font-semibold">
+              {favoritArtiklar.find((f) => f.id === deleteFavoritId)?.beskrivning ||
+                "denna artikel"}
+            </span>
+            ? Detta kan inte ångras.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowDeleteFavoritModal(false)}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={() => confirmDeleteFavorit()}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Ta bort
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

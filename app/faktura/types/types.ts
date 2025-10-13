@@ -779,6 +779,7 @@ export interface FakturaLifecycleFlags {
   harLastatForetagsprofil: boolean;
   harLastatKunder: boolean;
   harLastatFavoritArtiklar: boolean;
+  harInitNyFaktura: boolean;
 }
 
 export type FakturaFormAction =
@@ -839,5 +840,4 @@ export interface FakturaContextInnerProps {
 
 export interface NyFakturaProps {
   onBackToMenu: () => void;
-  editFakturaId?: number;
 }

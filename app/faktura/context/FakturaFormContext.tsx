@@ -29,6 +29,7 @@ const lifecycleDefaults: FakturaLifecycleFlags = {
   harLastatForetagsprofil: false,
   harLastatKunder: false,
   harLastatFavoritArtiklar: false,
+  harInitNyFaktura: false,
 };
 
 const defaultFormTemplate: FakturaFormData = {

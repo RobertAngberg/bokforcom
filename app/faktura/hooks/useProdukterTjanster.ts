@@ -230,27 +230,39 @@ export function useProdukterTjanster() {
       return;
     }
 
-    const artikelData = {
+    const artikelData: Artikel = {
       beskrivning,
       antal: Number(antal),
       prisPerEnhet: Number(prisPerEnhet),
       moms: Number(moms),
       valuta,
       typ,
-      rotRutTyp: formData.rotRutTyp || undefined,
-      rotRutKategori: formData.rotRutKategori || undefined,
-      avdragProcent: formData.avdragProcent || undefined,
-      arbetskostnadExMoms: Number(formData.arbetskostnadExMoms) || undefined,
+      rotRutTyp: undefined,
+      rotRutKategori: undefined,
+      avdragProcent: undefined,
+      arbetskostnadExMoms: undefined,
     };
+
+    if (
+      formData.rotRutAktiverat &&
+      (formData.rotRutTyp === "ROT" || formData.rotRutTyp === "RUT")
+    ) {
+      artikelData.rotRutTyp = formData.rotRutTyp;
+      artikelData.rotRutKategori = formData.rotRutKategori || undefined;
+      artikelData.avdragProcent = formData.avdragProcent || undefined;
+      artikelData.arbetskostnadExMoms = Number(formData.arbetskostnadExMoms) || undefined;
+    }
 
     try {
       const result = await sparaFavoritArtikel(artikelData);
       if (result.success) {
-        if (result.alreadyExists) {
-          showToast("Artikeln finns redan som favorit! 📌", "info");
-        } else {
-          showToast("Artikel sparad som favorit! 📌", "success");
-        }
+        const message = `${
+          result.alreadyExists
+            ? "Artikeln finns redan som favorit! 📌"
+            : "Artikel sparad som favorit! 📌"
+        }\nDu måste fortfarande klicka på knappen ✚ Lägg till artikel.`;
+
+        showToast(message, result.alreadyExists ? "info" : "success");
         setState({ artikelSparadSomFavorit: true });
         await laddaSparadeArtiklar();
       } else {
