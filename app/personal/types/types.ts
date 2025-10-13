@@ -765,15 +765,12 @@ export interface SingleLönespec {
 }
 
 export interface MailaLonespecProps {
-  // For single mode
+  // Single mode only
   lönespec?: Lönespec;
   anställd?: AnställdListItem;
   företagsprofil?: Företagsprofil;
   extrarader?: ExtraradData[];
   beräknadeVärden?: BeräknadeVärden;
-  // For batch mode
-  batch?: SingleLönespec[];
-  batchMode?: boolean;
   open?: boolean;
   onClose?: () => void;
   onMailComplete?: () => void;
@@ -980,6 +977,7 @@ export interface LönespecData {
   skatter_bokförda?: boolean;
   agi_genererad?: boolean;
   utbetalningsdatum?: string | Date | null;
+  extrarader?: ExtraradData[]; // ✅ Extrarader laddas från databasen
 }
 
 export interface BeräknadeVärden {
@@ -1205,15 +1203,12 @@ export interface ForhandsgranskningComponent {
 }
 
 export interface UseMailaLonespecProps {
-  // Single mode props
+  // Single mode only
   lönespec?: Lönespec;
   anställd?: AnställdListItem;
   företagsprofil?: Företagsprofil;
   extrarader?: ExtraradData[];
   beräknadeVärden?: BeräknadeVärden;
-  // Batch mode props
-  batch?: SingleLönespec[];
-  batchMode?: boolean;
   open?: boolean;
   onClose?: () => void;
   onMailComplete?: () => void;

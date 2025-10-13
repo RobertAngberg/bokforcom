@@ -1,7 +1,7 @@
 //#region Imports
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
 import TillbakaPil from "../../../_components/TillbakaPil";
@@ -27,6 +27,9 @@ export default function Lonekorning({
 }: LonekorningProps = {}) {
   const { extrarader, beräknadeVärden } = useLonespec();
 
+  // Local state för mail modal
+  const [mailModalOpen, setMailModalOpen] = useState(false);
+
   // Get all employees to ensure we have complete data
   const { state: anstalldaState } = useAnstallda();
   const combinedAnstallda = anstalldaState.anställda || propsAnställda;
@@ -42,8 +45,6 @@ export default function Lonekorning({
     lönekörningSpecar,
     taBortLoading,
     loading,
-    batchMailModalOpen,
-    setBatchMailModalOpen,
     bokforModalOpen,
     setBokforModalOpen,
     bankgiroModalOpen,
@@ -167,7 +168,7 @@ export default function Lonekorning({
               lönekörning={valdLonekorning}
               onTaBortSpec={hanteraTaBortSpec}
               onHämtaBankgiro={specListHandleHämtaBankgiro}
-              onMailaSpecar={() => setBatchMailModalOpen(true)}
+              onMailaSpecar={() => setMailModalOpen(true)}
               onBokför={() => setBokforModalOpen(true)}
               onGenereraAGI={hanteraAGI}
               onBokförSkatter={() => setSkatteModalOpen(true)}
@@ -199,17 +200,61 @@ export default function Lonekorning({
           />
         )}
 
-        {batchMailModalOpen && batchData.length > 0 && (
-          <MailaLonespec
-            batchMode={true}
-            batch={batchData}
-            open={batchMailModalOpen}
-            onClose={() => setBatchMailModalOpen(false)}
-            onMailComplete={() => {
-              setBatchMailModalOpen(false);
-              refreshData();
-            }}
-          />
+        {/* Mail modal - lista lönespecar att välja från */}
+        {mailModalOpen && batchData.length > 0 && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full p-6 relative border border-slate-700">
+              <button
+                className="absolute top-2 right-2 text-2xl text-slate-300 hover:text-white"
+                onClick={() => setMailModalOpen(false)}
+                aria-label="Stäng"
+              >
+                ×
+              </button>
+              <h2 className="text-xl font-bold mb-4 text-white">Välj lönespec att maila</h2>
+              <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                {batchData.map((item, index) => {
+                  const anställdNamn =
+                    item.anställd?.namn ||
+                    `${item.anställd?.förnamn || ""} ${item.anställd?.efternamn || ""}`.trim() ||
+                    "Okänd anställd";
+                  const email =
+                    item.anställd?.mail ||
+                    item.anställd?.epost ||
+                    item.anställd?.email ||
+                    "Ingen e-post";
+
+                  return (
+                    <div key={index} className="bg-slate-700 p-3 rounded-lg">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="text-white font-semibold">{anställdNamn}</div>
+                          <div className="text-slate-300 text-sm">{email}</div>
+                        </div>
+                        <MailaLonespec
+                          lönespec={item.lönespec}
+                          anställd={item.anställd}
+                          företagsprofil={item.företagsprofil || undefined}
+                          extrarader={item.extrarader || []}
+                          beräknadeVärden={item.beräknadeVärden}
+                          onMailComplete={() => {
+                            setMailModalOpen(false);
+                            refreshData();
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+                onClick={() => setMailModalOpen(false)}
+              >
+                Stäng
+              </button>
+            </div>
+          </div>
         )}
 
         {bokforModalOpen &&

@@ -241,18 +241,8 @@ export function klassificeraExtrarader(extrarader: ExtraradData[]) {
     const konfig = RAD_KONFIGURATIONER[rad.typ];
     const belopp = parseFloat(rad.kolumn3 || "0") || 0;
 
-    // DEBUG: Logga klassificering
-    console.log(`📝 Klassificerar ${rad.typ}: ${belopp} kr`, {
-      konfig,
-      läggTillINettolön: konfig?.läggTillINettolön,
-      läggTillIBruttolön: konfig?.läggTillIBruttolön,
-      skattepliktig: konfig?.skattepliktig,
-      negativtBelopp: konfig?.negativtBelopp,
-    });
-
     // Hantera avdrag som ska dras från kontantlön
     if (konfig?.negativtBelopp || belopp < 0) {
-      console.log(`📉 Avdrag från kontantlön ${rad.typ}: ${belopp} kr`);
       kontantlönAvdrag += Math.abs(belopp); // Lägg till som positivt tal för avdrag
       return;
     }

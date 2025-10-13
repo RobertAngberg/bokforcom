@@ -4,7 +4,6 @@ import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import type {
-  SingleLönespec,
   AnställdListItem,
   ExtraradData,
   Lönespec,
@@ -21,25 +20,13 @@ export function useMailaLonespec({
   företagsprofil,
   extrarader = [],
   beräknadeVärden = {},
-  batch = [],
-  batchMode = false,
   onMailComplete,
   onClose,
   ForhandsgranskningComponent,
-  open,
 }: UseMailaLonespecProps) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [visaModal, setVisaModal] = useState(false);
-
-  // Helper for single or batch - ensure we have proper SingleLönespec array
-  const lönespecList: SingleLönespec[] =
-    batchMode && batch
-      ? batch
-      : lönespec && anställd && företagsprofil && beräknadeVärden
-        ? [{ lönespec, anställd, företagsprofil, extrarader: extrarader || [], beräknadeVärden }]
-        : [];
 
   // PDF generation logic - moved to external function to avoid JSX in .ts file
   const generatePDF = async (
@@ -158,37 +145,7 @@ export function useMailaLonespec({
     }
   };
 
-  // Batch mail logic
-  const handleBatchMaila = async (ForhandsgrankningComponent: ForhandsgranskningComponent) => {
-    setLoading(true);
-    setError(null);
-    let sentCount = 0;
-
-    try {
-      for (const item of lönespecList) {
-        const pdfBlob = await generatePDF(item, ForhandsgrankningComponent);
-        await sendEmail(item, pdfBlob);
-        sentCount++;
-      }
-
-      setSent(true);
-      showToast(`${sentCount} lönespecar skickade!`, "success");
-
-      // Close modal after showing toast
-      setTimeout(() => {
-        onMailComplete?.();
-        closeModal();
-      }, 2000);
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Något gick fel vid utskick av lönespecar.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Single mail logic
+  // Mail logic - single lönespec only
   const handleMaila = async (ForhandsgrankningComponent: ForhandsgranskningComponent) => {
     setLoading(true);
     setError(null);
@@ -206,6 +163,7 @@ export function useMailaLonespec({
         extrarader: extrarader || [],
         beräknadeVärden,
       };
+
       const pdfBlob = await generatePDF(singleItem, ForhandsgrankningComponent);
       await sendEmail(singleItem, pdfBlob);
 
@@ -215,7 +173,7 @@ export function useMailaLonespec({
       // Close modal after showing toast
       setTimeout(() => {
         onMailComplete?.();
-        closeModal();
+        onClose?.();
       }, 2000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Något gick fel.";
@@ -225,44 +183,19 @@ export function useMailaLonespec({
     }
   };
 
-  // Modal control
-  const closeModal = () => {
-    setVisaModal(false);
-    onClose?.();
-  };
-
-  const openModal = () => {
-    setVisaModal(true);
-    setError(null);
-    setSent(false);
-  };
-
-  // Ready-to-use handlers with component bound
-  const handleBatchMailaWithComponent = ForhandsgranskningComponent
-    ? () => handleBatchMaila(ForhandsgranskningComponent)
-    : () => {};
-
+  // Ready-to-use handler with component bound
   const handleMailaWithComponent = ForhandsgranskningComponent
     ? () => handleMaila(ForhandsgranskningComponent)
     : () => {};
-
-  const showModal = open !== undefined ? open : visaModal;
 
   return {
     // State
     loading,
     sent,
     error,
-    showModal,
-
-    // Computed values
-    lönespecList,
 
     // Actions
-    handleBatchMaila: handleBatchMailaWithComponent,
     handleMaila: handleMailaWithComponent,
-    closeModal,
-    openModal,
 
     // Utilities
     generatePDF,

@@ -16,11 +16,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "../../_lib/auth-client";
 import { showToast } from "../../_components/Toast";
-import {
-  hamtaAllaLonespecarForUser,
-  markeraAGIGenererad,
-  markeraSkatternaBokforda,
-} from "../actions/lonespecarActions";
+import { markeraAGIGenererad, markeraSkatternaBokforda } from "../actions/lonespecarActions";
 import { hamtaAllaAnstallda, hamtaForetagsprofil } from "../actions/anstalldaActions";
 import { hamtaUtlagg } from "../actions/utlaggActions";
 import { bokforLoneskatter } from "../actions/bokforingActions";
@@ -142,7 +138,6 @@ export const useLonekorning = ({
   const [newLonekorningSteg, setNewLonekorningSteg] = useState<"datum" | "anställda">("datum");
 
   // Modal states
-  const [batchMailModalOpen, setBatchMailModalOpen] = useState(false);
   const [bokforModalOpen, setBokforModalOpen] = useState(false);
   const [bankgiroModalOpen, setBankgiroModalOpen] = useState(false);
   const [showDeleteLönekorningModal, setShowDeleteLönekorningModal] = useState(false);
@@ -152,9 +147,6 @@ export const useLonekorning = ({
   const [skatteModalOpen, setSkatteModalOpen] = useState(false);
 
   // Data states
-  const [specarPerDatum, setSpecarPerDatum] = useState<Record<string, LönespecData[]>>({});
-  const [datumLista, setDatumLista] = useState<string[]>([]);
-  const [valdaSpecar, setValdaSpecar] = useState<LönespecData[]>([]);
   const [localAnställda, setLocalAnställda] = useState<AnställdListItem[]>([]);
   const [utlaggMap, setUtlaggMap] = useState<Record<number, UtläggData[]>>({});
   const [taBortLaddning, setTaBortLaddning] = useState<Record<string, boolean>>({});
@@ -301,7 +293,6 @@ export const useLonekorning = ({
         throw new Error("Failed to delete lönespec");
       }
 
-      setValdaSpecar((prev) => prev.filter((spec) => spec.id !== specId));
       showToast("Lönespec borttagen", "success");
     } catch (error) {
       console.error("Error deleting lönespec:", error);
@@ -316,10 +307,7 @@ export const useLonekorning = ({
     }
 
     try {
-      const [specar, anställdaData] = await Promise.all([
-        hamtaAllaLonespecarForUser(),
-        hamtaAllaAnstallda(),
-      ]);
+      const anställdaData = await hamtaAllaAnstallda();
       const anställdaListItems = mapAnställdaToListItems(anställdaData);
       setLocalAnställda(anställdaListItems);
 
@@ -330,26 +318,6 @@ export const useLonekorning = ({
         utlaggMap[a.id] = utlaggResults[idx];
       });
       setUtlaggMap(utlaggMap);
-
-      const grupperat: Record<string, LönespecData[]> = {};
-      specar.forEach((spec) => {
-        if (spec.utbetalningsdatum) {
-          if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-          grupperat[spec.utbetalningsdatum].push(spec);
-        }
-      });
-      const grupperatUtanTomma = Object.fromEntries(
-        Object.entries(grupperat).filter(([, list]) => list.length > 0)
-      );
-      const datumSort = Object.keys(grupperatUtanTomma).sort(
-        (a, b) => new Date(b).getTime() - new Date(a).getTime()
-      );
-      setDatumLista(datumSort);
-      setSpecarPerDatum(grupperatUtanTomma);
-
-      if (utbetalningsdatum && grupperatUtanTomma[utbetalningsdatum]) {
-        setValdaSpecar(grupperatUtanTomma[utbetalningsdatum]);
-      }
     } catch (error) {
       console.error("❌ Fel vid refresh av data:", error);
     }
@@ -395,12 +363,6 @@ export const useLonekorning = ({
                 : spec;
 
             setLönekörningSpecar((prev) => prev.map(markeraSkatter));
-            setValdaSpecar((prev) => prev.map(markeraSkatter));
-            setSpecarPerDatum((prev) =>
-              Object.fromEntries(
-                Object.entries(prev).map(([datum, lista]) => [datum, lista.map(markeraSkatter)])
-              )
-            );
           }
         }, 2000);
       } else {
@@ -421,20 +383,6 @@ export const useLonekorning = ({
   };
 
   // Workflow handlers
-  const handleMailaSpecar = async () => {
-    if (valdLonekorning?.id) {
-      setValdLonekorning((prev) =>
-        prev ? { ...prev, aktuellt_steg: 2, mailade_datum: new Date() } : prev
-      );
-      try {
-        await uppdateraLonekorningSteg(valdLonekorning.id, 2);
-      } catch (error) {
-        console.error("❌ Fel vid uppdatering av workflow:", error);
-      }
-    }
-    setBatchMailModalOpen(true);
-  };
-
   const handleBokför = async () => {
     if (valdLonekorning?.id) {
       setValdLonekorning((prev) =>
@@ -581,10 +529,7 @@ export const useLonekorning = ({
       const fetchData = async () => {
         setLoading(true);
         try {
-          const [specar, anställdaData] = await Promise.all([
-            hamtaAllaLonespecarForUser(),
-            hamtaAllaAnstallda(),
-          ]);
+          const anställdaData = await hamtaAllaAnstallda();
           const anställdaListItems = mapAnställdaToListItems(anställdaData);
           setLocalAnställda(anställdaListItems);
 
@@ -595,30 +540,6 @@ export const useLonekorning = ({
             utlaggMap[a.id] = utlaggResults[idx];
           });
           setUtlaggMap(utlaggMap);
-
-          const grupperat: Record<string, LönespecData[]> = {};
-          specar.forEach((spec) => {
-            if (spec.utbetalningsdatum) {
-              if (!grupperat[spec.utbetalningsdatum]) grupperat[spec.utbetalningsdatum] = [];
-              grupperat[spec.utbetalningsdatum].push(spec);
-            }
-          });
-          const grupperatUtanTomma = Object.fromEntries(
-            Object.entries(grupperat).filter(([, list]) => list.length > 0)
-          );
-          const datumSort = Object.keys(grupperatUtanTomma).sort(
-            (a, b) => new Date(b).getTime() - new Date(a).getTime()
-          );
-          setDatumLista(datumSort);
-          setSpecarPerDatum(grupperatUtanTomma);
-
-          if (datumSort.length > 0) {
-            setUtbetalningsdatum(datumSort[0]);
-            setValdaSpecar(grupperatUtanTomma[datumSort[0]]);
-          } else {
-            setUtbetalningsdatum(null);
-            setValdaSpecar([]);
-          }
         } catch (error) {
           console.error("❌ Fel vid laddning av lönekörning:", error);
         } finally {
@@ -628,12 +549,6 @@ export const useLonekorning = ({
       fetchData();
     }
   }, [propsAnställda]);
-
-  useEffect(() => {
-    if (utbetalningsdatum && specarPerDatum[utbetalningsdatum]) {
-      setValdaSpecar(specarPerDatum[utbetalningsdatum]);
-    }
-  }, [utbetalningsdatum, specarPerDatum]);
 
   useEffect(() => {
     if (!valdLonekorning) return;
@@ -720,11 +635,16 @@ export const useLonekorning = ({
           );
           return null;
         }
+
+        // ✅ Extrarader kommer nu direkt från databasen via lönespec
+        // Fallback till extrarader prop om den finns (för kompatibilitet)
+        const specExtrarader = spec.extrarader || extrarader?.[spec.id] || [];
+
         return {
           lönespec: spec,
           anställd,
           företagsprofil,
-          extrarader: extrarader?.[spec.id] || [],
+          extrarader: specExtrarader,
           beräknadeVärden: beräknadeVärden?.[spec.id] || {},
         };
       })
@@ -890,7 +810,7 @@ export const useLonekorning = ({
       description: "Skicka lönespecar",
       completed: !!specListLönekörning?.mailade_datum,
       buttonText: "✉️ Maila lönespecar",
-      onClick: onSpecListMailaSpecar || handleMailaSpecar,
+      onClick: onSpecListMailaSpecar || (() => {}), // Callback hanteras nu av parent komponent
       enabled: true,
     },
     {
@@ -947,12 +867,6 @@ export const useLonekorning = ({
           : spec;
 
       setLönekörningSpecar((prev) => prev.map(markeraAgi));
-      setValdaSpecar((prev) => prev.map(markeraAgi));
-      setSpecarPerDatum((prev) =>
-        Object.fromEntries(
-          Object.entries(prev).map(([datum, lista]) => [datum, lista.map(markeraAgi)])
-        )
-      );
     }
   };
 
@@ -1075,16 +989,8 @@ export const useLonekorning = ({
     setLoading,
     utbetalningsdatum,
     setUtbetalningsdatum,
-    batchMailModalOpen,
-    setBatchMailModalOpen,
     bokforModalOpen,
     setBokforModalOpen,
-    specarPerDatum,
-    setSpecarPerDatum,
-    datumLista,
-    setDatumLista,
-    valdaSpecar,
-    setValdaSpecar,
     localAnställda,
     setLocalAnställda,
     utlaggMap,
@@ -1144,7 +1050,6 @@ export const useLonekorning = ({
     cancelDeleteLönekorning,
     confirmDeleteLönespec,
     refreshData,
-    handleMailaSpecar,
     handleBokför,
     handleGenereraAGI,
     handleBokförSkatter,

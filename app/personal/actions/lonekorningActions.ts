@@ -439,9 +439,38 @@ export async function hamtaLonespecifikationerForLonekorning(lonekorning_id: num
 
     const result = await pool.query(query, [lonekorning_id, userId]);
 
+    // ✅ LADDA EXTRARADER FÖR VARJE LÖNESPEC (samma som hamtaLonespecifikationer gör)
+    const lönespecarMedExtrarader = await Promise.all(
+      result.rows.map(async (lönespec) => {
+        try {
+          const extraradQuery = `
+            SELECT * FROM lönespec_extrarader 
+            WHERE lönespecifikation_id = $1 
+            ORDER BY id
+          `;
+          const extraradResult = await pool.query(extraradQuery, [lönespec.id]);
+
+          console.log(
+            `✅ Laddade ${extraradResult.rows.length} extrarader för lönespec ${lönespec.id}`
+          );
+
+          return {
+            ...lönespec,
+            extrarader: extraradResult.rows,
+          };
+        } catch (error) {
+          console.error("❌ Fel vid laddning av extrarader för lönespec", lönespec.id, error);
+          return {
+            ...lönespec,
+            extrarader: [],
+          };
+        }
+      })
+    );
+
     return {
       success: true,
-      data: result.rows,
+      data: lönespecarMedExtrarader,
     };
   } catch (error) {
     console.error("❌ Fel vid hamtning av lonespecifikationer for lonekorning:", error);
