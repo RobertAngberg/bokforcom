@@ -5,12 +5,14 @@ import { showToast } from "../../_components/Toast";
 import { useLonespec } from "./useLonespecar";
 import { uppdateraLonespec } from "../actions/lonespecarActions";
 import { hamtaSemesterTransaktioner } from "../actions/semesterActions";
+import { beräknaLonekomponenter } from "../utils/loneberakningar";
 import type {
   AnställdListItem,
   BeräknadeVärden,
   ExtraradData,
   ExtraradResult,
   Lönespec,
+  LönespecData,
   SemesterBoxSummary,
   UtläggData,
 } from "../types/types";
@@ -34,6 +36,10 @@ interface UseLonespecViewOptions {
   lönespec: Lönespec;
   anställd?: AnställdListItem;
   utlägg: UtläggData[];
+  onSpecDataChange?: (
+    lönespecId: number,
+    uppdateringar: Partial<LönespecData> & { extrarader?: ExtraradData[] }
+  ) => void;
 }
 
 interface UseLonespecViewResult {
@@ -82,6 +88,7 @@ export function useLonespecView({
   lönespec,
   anställd,
   utlägg,
+  onSpecDataChange,
 }: UseLonespecViewOptions): UseLonespecViewResult {
   const { beräknadeVärden, extrarader, setExtrarader, setBeräknadeVärden } = useLonespec();
   const lönespecKey = useMemo(() => lönespec.id.toString(), [lönespec.id]);
@@ -158,17 +165,65 @@ export function useLonespecView({
         .filter((data): data is ExtraradData => data !== undefined);
 
       if (nyaExtrarader.length > 0) {
-        setExtrarader(lönespecKey, [...(extrarader[lönespecKey] || []), ...nyaExtrarader]);
+        const uppdateradeExtrarader = [...(extrarader[lönespecKey] || []), ...nyaExtrarader];
+        setExtrarader(lönespecKey, uppdateradeExtrarader);
+        const nyaBeräkningar = beräknaLonekomponenter(
+          grundlön,
+          övertid,
+          lönespec,
+          uppdateradeExtrarader,
+          {
+            skattetabell: anställd?.skattetabell,
+            skattekolumn: anställd?.skattekolumn,
+          }
+        );
+        onSpecDataChange?.(lönespec.id, {
+          extrarader: uppdateradeExtrarader,
+          bruttolön: nyaBeräkningar.bruttolön,
+          skatt: nyaBeräkningar.skatt,
+          nettolön: nyaBeräkningar.nettolön,
+          sociala_avgifter: nyaBeräkningar.socialaAvgifter,
+        });
       }
     },
-    [extrarader, lönespecKey, setExtrarader]
+    [
+      anställd?.skattekolumn,
+      anställd?.skattetabell,
+      extrarader,
+      grundlön,
+      lönespec,
+      lönespecKey,
+      onSpecDataChange,
+      övertid,
+      setExtrarader,
+    ]
   );
 
   const handleExtraraderChange = useCallback(
     (rader: ExtraradData[]) => {
       setExtrarader(lönespecKey, rader);
+      const nyaBeräkningar = beräknaLonekomponenter(grundlön, övertid, lönespec, rader, {
+        skattetabell: anställd?.skattetabell,
+        skattekolumn: anställd?.skattekolumn,
+      });
+      onSpecDataChange?.(lönespec.id, {
+        extrarader: rader,
+        bruttolön: nyaBeräkningar.bruttolön,
+        skatt: nyaBeräkningar.skatt,
+        nettolön: nyaBeräkningar.nettolön,
+        sociala_avgifter: nyaBeräkningar.socialaAvgifter,
+      });
     },
-    [lönespecKey, setExtrarader]
+    [
+      anställd?.skattekolumn,
+      anställd?.skattetabell,
+      grundlön,
+      lönespec,
+      lönespecKey,
+      onSpecDataChange,
+      övertid,
+      setExtrarader,
+    ]
   );
 
   useEffect(() => {

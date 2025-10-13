@@ -74,6 +74,7 @@ export default function Lonekorning({
     showDeleteLönekorningModal,
     confirmDeleteLönekorning,
     specListHandleHämtaBankgiro,
+    uppdateraLönespecLokalt,
   } = useLonekorning({
     anställda: combinedAnstallda,
     anställdaLoading: propsAnställdaLoading,
@@ -168,6 +169,7 @@ export default function Lonekorning({
               onGenereraAGI={hanteraAGI}
               onBokförSkatter={() => setSkatteModalOpen(true)}
               onLönekörningUppdaterad={setValdLonekorning}
+              onSpecLocalUpdate={uppdateraLönespecLokalt}
             />
 
             {/* Ta bort lönekörning knapp längst ner till höger */}

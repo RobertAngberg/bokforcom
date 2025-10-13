@@ -21,6 +21,7 @@ export default function LönespecView({
   taBortLoading = false,
   företagsprofil,
   visaExtraRader = false,
+  onLönespecDataChange,
 }: LönespecViewProps) {
   const {
     lönespecKey,
@@ -47,7 +48,7 @@ export default function LönespecView({
     openForhandsgranskning,
     closeForhandsgranskning,
     toggleVisaBeräkningar,
-  } = useLonespecView({ lönespec, anställd, utlägg });
+  } = useLonespecView({ lönespec, anställd, utlägg, onSpecDataChange: onLönespecDataChange });
 
   const innehåll = (
     <div className="space-y-6">

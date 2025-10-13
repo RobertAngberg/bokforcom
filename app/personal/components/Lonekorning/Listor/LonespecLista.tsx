@@ -19,6 +19,7 @@ export default function LonespecLista({
   onGenereraAGI,
   onBokförSkatter,
   onLönekörningUppdaterad,
+  onSpecLocalUpdate,
 }: LonespecListaProps) {
   // Behåll bara logiken för att ta bort lönespecar från gamla hooken
   const {
@@ -78,6 +79,7 @@ export default function LonespecLista({
               ingenAnimering={false}
               taBortLoading={taBortLaddning[Number(spec.id)] || false}
               visaExtraRader={true}
+              onLönespecDataChange={onSpecLocalUpdate}
               onTaBortLönespec={() => {
                 // Convert Lönespec to LönespecData format
                 const specData = {

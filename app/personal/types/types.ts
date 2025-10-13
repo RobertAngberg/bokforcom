@@ -366,6 +366,10 @@ export interface LonespecListaProps {
   onRefreshData?: () => Promise<void>;
   period?: string;
   onLönekörningUppdaterad?: (uppdateradLönekörning: Lönekörning) => void;
+  onSpecLocalUpdate?: (
+    lönespecId: number,
+    uppdateringar: Partial<LönespecData> & { extrarader?: ExtraradData[] }
+  ) => void;
 }
 
 export interface NyLonekorningModalProps {
@@ -485,6 +489,10 @@ export interface LönespecViewProps {
   taBortLoading?: boolean;
   företagsprofil?: Företagsprofil;
   visaExtraRader?: boolean;
+  onLönespecDataChange?: (
+    lönespecId: number,
+    uppdateringar: Partial<LönespecData> & { extrarader?: ExtraradData[] }
+  ) => void;
 }
 
 export interface SammanfattningProps {

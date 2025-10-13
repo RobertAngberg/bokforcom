@@ -13,7 +13,7 @@
  * @file useLonekorning.ts - Huvudhook för lönekörning och AGI-funktioner
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "../../_lib/auth-client";
 import { showToast } from "../../_components/Toast";
 import { markeraAGIGenererad, markeraSkatternaBokforda } from "../actions/lonespecarActions";
@@ -30,6 +30,7 @@ import {
   UtläggData,
   BatchDataItem,
   BeräknadeVärden,
+  ExtraradData,
 } from "../types/types";
 import {
   hamtaLonespecifikationerForLonekorning,
@@ -185,6 +186,29 @@ export const useLonekorning = ({
   };
 
   const batchData: BatchDataItem[] = prepareBatchData(lönekörningSpecar, anstallda || []);
+
+  const uppdateraLönespecLokalt = useCallback(
+    (
+      lönespecId: number,
+      uppdateringar: Partial<LönespecData> & { extrarader?: ExtraradData[] }
+    ) => {
+      setLönekörningSpecar((prev) =>
+        prev.map((spec) =>
+          spec.id === lönespecId
+            ? {
+                ...spec,
+                ...uppdateringar,
+                extrarader:
+                  uppdateringar.extrarader !== undefined
+                    ? uppdateringar.extrarader
+                    : spec.extrarader,
+              }
+            : spec
+        )
+      );
+    },
+    []
+  );
 
   // Business logic functions
   const beräknaSkatteData = () => {
@@ -1091,6 +1115,7 @@ export const useLonekorning = ({
     specListHandleBokför,
     specListHandleGenereraAGI,
     specListHandleBokförSkatter,
+    uppdateraLönespecLokalt,
     // New lönekörning modal state (only when enableNewLonekorningModal is true)
     newLonekorningUtbetalningsdatum,
     setNewLonekorningUtbetalningsdatum,
