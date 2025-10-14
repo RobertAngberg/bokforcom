@@ -94,7 +94,6 @@ export function BokforProvider({ children }: BokforProviderProps) {
         uploadFileToBlob: bokforData.uploadFileToBlob,
         extractDataFromOCRKund: bokforData.extractDataFromOCRKund,
         extractDataFromOCRGeneral: bokforData.extractDataFromOCRGeneral,
-        extractDataFromOCRLeverantorsfaktura: bokforData.extractDataFromOCRLeverantorsfaktura,
         handleLeverantorCheckboxChange: bokforData.handleLeverantorCheckboxChange,
         handleLeverantorRemove: bokforData.handleLeverantorRemove,
         handleLeverantorSelected: bokforData.handleLeverantorSelected,

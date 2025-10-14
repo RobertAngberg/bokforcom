@@ -1,10 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import Knapp from "../../_components/Knapp";
-import NyFaktura from "./NyFaktura/NyFaktura";
-import Sparade from "./Sparade/Sparade";
-import Leverantorsfakturor from "./Leverantorsfakturor/Leverantorsfakturor";
+import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useFakturaClient } from "../context/FakturaContextProvider";
+
+// Ladda de tyngre vyerna vid behov så vi slipper skeppa all fakturalogik direkt på första rendern.
+// Med ssr: false hålls vyerna helt klientrenderade och klipps bort från initiala serverresponsen.
+const NyFaktura = dynamic(() => import("./NyFaktura/NyFaktura"), {
+  loading: () => <LoadingSpinner />,
+  ssr: false,
+});
+
+const Sparade = dynamic(() => import("./Sparade/Sparade"), {
+  loading: () => <LoadingSpinner />,
+  ssr: false,
+});
+
+const Leverantorsfakturor = dynamic(() => import("./Leverantorsfakturor/Leverantorsfakturor"), {
+  loading: () => <LoadingSpinner />,
+  ssr: false,
+});
 
 export default function FakturaNavigation() {
   const { navigationState, navigateToView, navigateToEdit, navigateBack } = useFakturaClient();
@@ -68,12 +85,20 @@ export default function FakturaNavigation() {
   // Renderera specifika vyer
   return (
     <>
-      {activeView === "ny" && <NyFaktura onBackToMenu={handleBackToOverview} />}
+      {activeView === "ny" && (
+        <Suspense fallback={<LoadingSpinner />}>
+          <NyFaktura onBackToMenu={handleBackToOverview} />
+        </Suspense>
+      )}
       {activeView === "sparade" && (
-        <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
+        </Suspense>
       )}
       {activeView === "leverantorsfakturor" && (
-        <Leverantorsfakturor onBackToMenu={handleBackToOverview} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Leverantorsfakturor onBackToMenu={handleBackToOverview} />
+        </Suspense>
       )}
     </>
   );

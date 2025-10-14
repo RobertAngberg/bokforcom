@@ -477,7 +477,6 @@ export function useBokfor() {
     uploadFileToBlob: ocr.uploadFileToBlob,
     extractDataFromOCRKund: ocr.extractDataFromOCRKund,
     extractDataFromOCRGeneral: ocr.extractDataFromOCRGeneral,
-    extractDataFromOCRLeverantorsfaktura: ocr.extractDataFromOCRLeverantorsfaktura,
 
     // Leverantör Modal Functions
     handleLeverantorCheckboxChange: leverantorModal.handleLeverantorCheckboxChange,

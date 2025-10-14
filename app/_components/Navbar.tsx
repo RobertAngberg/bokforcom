@@ -90,28 +90,35 @@ function useActivePathMarker(
   pathname: string,
   router: ReturnType<typeof useRouter>
 ) {
-  const [selectedPath, setSelectedPath] = useState(pathname);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [markerStyle, setMarkerStyle] = useState({ left: 0, width: 0 });
   const linksRef = useRef<Record<string, HTMLAnchorElement | null>>({});
 
-  // Synka selectedPath med pathname direkt
-  const currentPath = selectedPath === pathname ? selectedPath : pathname;
-
   useEffect(() => {
-    const activeEl = linksRef.current[currentPath];
+    const pathToUse =
+      (selectedPath && linksRef.current[selectedPath] ? selectedPath : null) ?? pathname;
+    const activeEl = linksRef.current[pathToUse];
     if (activeEl) {
       const { offsetLeft, offsetWidth } = activeEl;
       setMarkerStyle({ left: offsetLeft, width: offsetWidth });
     }
-  }, [currentPath, currentLinks.length]);
+  }, [selectedPath, pathname, currentLinks.length]);
+
+  useEffect(() => {
+    setSelectedPath(null);
+  }, [pathname]);
 
   const handleClick = (path: string) => {
     setSelectedPath(path);
 
-    // Om användaren klickar på samma sida som de redan är på, gör en "mjuk refresh"
+    const activeEl = linksRef.current[path];
+    if (activeEl) {
+      const { offsetLeft, offsetWidth } = activeEl;
+      setMarkerStyle({ left: offsetLeft, width: offsetWidth });
+    }
+
     if (path === pathname) {
       router.push(path);
-      // Alternativt: window.location.reload() för en hårdare refresh
     }
   };
 
