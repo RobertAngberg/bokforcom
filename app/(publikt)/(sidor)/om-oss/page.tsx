@@ -1,6 +1,6 @@
-import AnimeradeStjarnor from "../../_components/AnimeradeStjarnor";
-import Header from "../../_components/Header";
-import BokforComInfo from "../../_components/BokforComInfo";
+import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Header from "../../components/Header";
+import BokforComInfo from "../../components/BokforComInfo";
 
 export default function OmOssPage() {
   return (

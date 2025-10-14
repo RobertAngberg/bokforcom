@@ -1,6 +1,6 @@
-import AnimeradeStjarnor from "../../_components/AnimeradeStjarnor";
-import Header from "../../_components/Header";
-import PrisSektion from "../../_components/PrisSektion";
+import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Header from "../../components/Header";
+import PrisSektion from "../../components/PrisSektion";
 
 export default function PriserPage() {
   return (

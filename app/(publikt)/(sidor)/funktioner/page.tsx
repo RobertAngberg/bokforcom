@@ -1,5 +1,5 @@
-import AnimeradeStjarnor from "../../_components/AnimeradeStjarnor";
-import Header from "../../_components/Header";
+import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Header from "../../components/Header";
 
 export default function FunktionerPage() {
   return (

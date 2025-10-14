@@ -1,7 +1,7 @@
-import AnimeradeStjarnor from "../../_components/AnimeradeStjarnor";
-import Header from "../../_components/Header";
-import BokforComInfo from "../../_components/BokforComInfo";
-import KontaktFormular from "../../_components/KontaktFormular";
+import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Header from "../../components/Header";
+import BokforComInfo from "../../components/BokforComInfo";
+import KontaktFormular from "../../components/KontaktFormular";
 
 export default function KontaktPage() {
   return (
