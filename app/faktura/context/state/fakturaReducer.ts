@@ -1,4 +1,7 @@
-import type { FakturaState, FakturaAction, ViewType } from "../types/types";
+// Här definieras vilket startläge fakturaflödet har och hur state ska ändras när olika actions kommer in.
+// Reducern är bara en stor switch-sats: den tar emot en action och returnerar ett nytt state-objekt.
+
+import type { FakturaState, FakturaAction, ViewType } from "../../types/types";
 
 const defaultUserSettings = {
   bokföringsmetod: "kontantmetoden" as "kontantmetoden" | "fakturametoden",
@@ -14,6 +17,7 @@ export const initialFakturaState: FakturaState = {
   userSettings: defaultUserSettings,
 };
 
+// Reducern tar emot en action och lämnar tillbaka hur hela fakturastatet ska se ut efter den händelsen.
 export function fakturaReducer(state: FakturaState, action: FakturaAction): FakturaState {
   switch (action.type) {
     case "SET_KUND_STATUS":

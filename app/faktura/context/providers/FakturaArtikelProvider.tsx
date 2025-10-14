@@ -1,51 +1,34 @@
+// Den här komponenten är “motorn” som håller ordning på artikel-state och delar ut det via context.
+// Lägg dina barnkomponenter här inne så får de samma artikeldata och uppdateringsfunktioner.
+
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import type {
   FavoritArtikel,
   NyArtikel,
   FakturaArtikelState,
   FakturaArtikelAction,
-  FakturaArtikelContextValue,
   FakturaArtikelProviderProps,
-} from "../types/types";
+} from "../../types/types";
+import { FakturaArtikelContext } from "../hooks/FakturaArtikelContext";
+import {
+  createDefaultFakturaArtikelState,
+  createDefaultNyArtikel,
+  withFavoritArtiklar,
+} from "../defaults/FakturaArtikelDefaults";
 
-const defaultNyArtikel: NyArtikel = {
-  beskrivning: "",
-  antal: "",
-  prisPerEnhet: "",
-  moms: "25",
-  valuta: "SEK",
-  typ: "tjänst",
-};
-
-const defaultState: FakturaArtikelState = {
-  nyArtikel: defaultNyArtikel,
-  favoritArtiklar: [],
-  showFavoritArtiklar: false,
-  blinkIndex: null,
-  visaRotRutForm: false,
-  visaArtikelForm: false,
-  visaArtikelModal: false,
-  redigerarIndex: null,
-  favoritArtikelVald: false,
-  ursprungligFavoritId: null,
-  artikelSparadSomFavorit: false,
-  valtArtikel: null,
-  showDeleteFavoritModal: false,
-  deleteFavoritId: null,
-};
-
+// Reducern översätter små action-objekt till hur artikelstatet faktiskt ska förändras.
 function reducer(state: FakturaArtikelState, action: FakturaArtikelAction): FakturaArtikelState {
   switch (action.type) {
     case "SET_STATE":
       return { ...state, ...action.payload };
     case "RESET_STATE":
-      return defaultState;
+      return createDefaultFakturaArtikelState();
     case "SET_NY_ARTIKEL":
       return { ...state, nyArtikel: { ...state.nyArtikel, ...action.payload } };
     case "RESET_NY_ARTIKEL":
-      return { ...state, nyArtikel: defaultNyArtikel };
+      return { ...state, nyArtikel: createDefaultNyArtikel() };
     case "SET_FAVORIT_ARTIKLAR":
       return { ...state, favoritArtiklar: action.payload };
     default:
@@ -53,16 +36,14 @@ function reducer(state: FakturaArtikelState, action: FakturaArtikelAction): Fakt
   }
 }
 
-const FakturaArtikelContext = createContext<FakturaArtikelContextValue | undefined>(undefined);
-
+// Själva providern packar in barnen och ger dem tillgång till artikelstate och uppdaterare.
 export function FakturaArtikelProvider({
   children,
   initialFavoritArtiklar,
 }: FakturaArtikelProviderProps) {
-  const [state, dispatch] = useReducer(reducer, initialFavoritArtiklar, (favoriter) => ({
-    ...defaultState,
-    favoritArtiklar: Array.isArray(favoriter) ? favoriter : [],
-  }));
+  const [state, dispatch] = useReducer(reducer, initialFavoritArtiklar, (favoriter) =>
+    withFavoritArtiklar(createDefaultFakturaArtikelState(), favoriter)
+  );
 
   const setState = useCallback((updates: Partial<FakturaArtikelState>) => {
     dispatch({ type: "SET_STATE", payload: updates });
@@ -97,12 +78,4 @@ export function FakturaArtikelProvider({
   );
 
   return <FakturaArtikelContext.Provider value={value}>{children}</FakturaArtikelContext.Provider>;
-}
-
-export function useFakturaArtikelContext() {
-  const context = useContext(FakturaArtikelContext);
-  if (!context) {
-    throw new Error("useFakturaArtikelContext must be used within a FakturaArtikelProvider");
-  }
-  return context;
 }

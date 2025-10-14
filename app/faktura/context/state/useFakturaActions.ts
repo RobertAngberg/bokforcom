@@ -1,16 +1,20 @@
-import { useCallback, useMemo } from "react";
-import type { FakturaContextType, FakturaDispatch, FakturaState, ViewType } from "../types/types";
-import { useFakturaFormActions } from "./FakturaFormContext";
+// För att slippa skriva dispatch-logik överallt paketerar vi den här i enkla, namngivna hjälpfunktioner.
+// Du anropar bara en action-funktion (t.ex. navigateToView) och så sköts resten automatiskt under huven.
 
-/**
- * Binder faktura-reducerarens `dispatch` till en uppsättning praktiska helpers
- * och bäddar samtidigt in de sidoeffekter som behöver samköra med formulärkontexten.
- * Resultatet matchar den publika API:n som exponeras från `FakturaContext`.
- */
+import { useCallback, useMemo } from "react";
+import type {
+  FakturaContextType,
+  FakturaDispatch,
+  FakturaState,
+  ViewType,
+} from "../../types/types";
+import { useFakturaFormActions } from "../hooks/FakturaFormContext";
+
+// Huvudhooken kopplar dispatch till färdiga actions så resten av appen kan ropa på dem enkelt.
 export function useFakturaActions(dispatch: FakturaDispatch) {
   const { setFormData } = useFakturaFormActions();
 
-  // Uppdaterar endast kundstatusflaggan i state – inga sidoeffekter utöver dispatch.
+  // Uppdaterar kundstatus utan att röra något annat i state.
   const setKundStatus = useCallback(
     (status: FakturaState["kundStatus"]) => {
       dispatch({ type: "SET_KUND_STATUS", payload: status });
@@ -18,7 +22,7 @@ export function useFakturaActions(dispatch: FakturaDispatch) {
     [dispatch]
   );
 
-  // Tömmer kundrelaterade formfält innan kundstatus återställs till "none".
+  // Nollställer kundrelaterade fält och flaggan när du vill börja om.
   const resetKund = useCallback(() => {
     setFormData({
       kundId: "",
@@ -34,7 +38,7 @@ export function useFakturaActions(dispatch: FakturaDispatch) {
     dispatch({ type: "RESET_KUND" });
   }, [dispatch, setFormData]);
 
-  // Slår ihop inkommande navigation med befintligt läge (fritt för partiella uppdateringar).
+  // Blandar in nya navigation-värden i det som redan finns.
   const setNavigation = useCallback(
     (navigation: Partial<FakturaState["navigationState"]>) => {
       dispatch({ type: "SET_NAVIGATION", payload: navigation });
@@ -42,7 +46,7 @@ export function useFakturaActions(dispatch: FakturaDispatch) {
     [dispatch]
   );
 
-  // Växlar till angiven vy utan att spara tidigare edit-id.
+  // Byter vy när du vill visa ett annat steg i flödet.
   const navigateToView = useCallback(
     (view: ViewType) => {
       dispatch({ type: "NAVIGATE_TO_VIEW", payload: view });
@@ -50,7 +54,7 @@ export function useFakturaActions(dispatch: FakturaDispatch) {
     [dispatch]
   );
 
-  // Kombinerar vybyte med valfri faktura att redigera.
+  // Byter vy och talar om vilken faktura som ska redigeras.
   const navigateToEdit = useCallback(
     (view: ViewType, fakturaId?: number) => {
       dispatch({ type: "NAVIGATE_TO_EDIT", payload: { view, fakturaId } });
@@ -58,12 +62,12 @@ export function useFakturaActions(dispatch: FakturaDispatch) {
     [dispatch]
   );
 
-  // Backar till huvudmenyn – används när editflödet ska avslutas.
+  // Hoppar tillbaka till menyläget när användaren är klar.
   const navigateBack = useCallback(() => {
     dispatch({ type: "NAVIGATE_BACK" });
   }, [dispatch]);
 
-  // Sätter användarens bokföringsmetodspreferens (kontant- eller fakturametoden).
+  // Sparar vilken bokföringsmetod användaren har valt.
   const setBokföringsmetod = useCallback(
     (metod: "kontantmetoden" | "fakturametoden") => {
       dispatch({ type: "SET_BOKFÖRINGSMETOD", payload: metod });

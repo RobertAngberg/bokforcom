@@ -723,13 +723,6 @@ export interface FakturaArtikelState {
   deleteFavoritId: number | null;
 }
 
-export type FakturaArtikelAction =
-  | { type: "SET_STATE"; payload: Partial<FakturaArtikelState> }
-  | { type: "RESET_STATE" }
-  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
-  | { type: "RESET_NY_ARTIKEL" }
-  | { type: "SET_FAVORIT_ARTIKLAR"; payload: FavoritArtikel[] };
-
 export interface FakturaArtikelContextValue {
   state: FakturaArtikelState;
   setState: (updates: Partial<FakturaArtikelState>) => void;
@@ -738,6 +731,13 @@ export interface FakturaArtikelContextValue {
   setFavoritArtiklar: (artiklar: FavoritArtikel[]) => void;
   resetState: () => void;
 }
+
+export type FakturaArtikelAction =
+  | { type: "SET_STATE"; payload: Partial<FakturaArtikelState> }
+  | { type: "RESET_STATE" }
+  | { type: "SET_NY_ARTIKEL"; payload: Partial<NyArtikel> }
+  | { type: "RESET_NY_ARTIKEL" }
+  | { type: "SET_FAVORIT_ARTIKLAR"; payload: FavoritArtikel[] };
 
 export interface FakturaArtikelProviderProps {
   children: React.ReactNode;

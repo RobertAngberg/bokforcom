@@ -1,4 +1,4 @@
-import { FakturaProvider } from "./context/FakturaContextProvider";
+import { FakturaProvider } from "./context/FakturaProvider";
 import FakturaNavigation from "./components/FakturaNavigation";
 import MainLayout from "../_components/MainLayout";
 import { hamtaFakturaInitialData } from "./actions/initialDataActions";

@@ -5,12 +5,12 @@ import type { ChangeEvent } from "react";
 
 import { dateToYyyyMmDd } from "../../_utils/datum";
 
-import { useFakturaArtikelContext } from "../context/FakturaArtikelContext";
+import { useFakturaArtikelContext } from "../context/hooks/FakturaArtikelContext";
 import {
   useFakturaForm,
   useFakturaFormActions,
   useFakturaLifecycle,
-} from "../context/FakturaFormContext";
+} from "../context/hooks/FakturaFormContext";
 import {
   hamtaSparadeArtiklar,
   deleteFavoritArtikel,

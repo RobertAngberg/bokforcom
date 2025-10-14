@@ -1,94 +1,25 @@
+// Tänk den här providern som en liten kontrollpanel som styr formulärets dataflöde och “kom-ihåg”-flaggor.
+// Flaggorna är bara booleaner i lifecycle-objektet som bockar av engångssteg (t.ex. har vi laddat kunder?);
+// panelen ser även till att varje uppdatering sparas i contexten så att alla barnkomponenter får färska värden.
+
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type {
+  FakturaFormContextValue,
   FakturaFormData,
-  ServerData,
+  FakturaFormProviderProps,
   FakturaLifecycleFlags,
   FakturaFormAction,
-  FakturaFormSelector,
-  FakturaFormContextValue,
-  FakturaFormProviderProps,
-} from "../types/types";
+  ServerData,
+} from "../../types/types";
+import { FakturaFormContext } from "../hooks/FakturaFormContext";
+import {
+  createDefaultFakturaFormData,
+  createLifecycleDefaults,
+} from "../defaults/FakturaFormDefaults";
 
-const FakturaFormContext = createContext<FakturaFormContextValue | null>(null);
-
-const lifecycleDefaults: FakturaLifecycleFlags = {
-  lastDefaultsSessionId: null,
-  harInitDefaults: false,
-  harAutoBeraknatForfallo: false,
-  harLastatForetagsprofil: false,
-  harLastatKunder: false,
-  harLastatFavoritArtiklar: false,
-  harInitNyFaktura: false,
-};
-
-const defaultFormTemplate: FakturaFormData = {
-  id: "",
-  fakturanummer: "",
-  fakturadatum: "",
-  forfallodatum: "",
-  betalningsmetod: "",
-  betalningsvillkor: "",
-  drojsmalsranta: "",
-  kundId: "",
-  nummer: "",
-  personnummer: "",
-  fastighetsbeteckning: "",
-  rotBoendeTyp: "fastighet",
-  brfOrganisationsnummer: "",
-  brfLagenhetsnummer: "",
-  kundnamn: "",
-  kundnummer: "",
-  kundorganisationsnummer: "",
-  kundmomsnummer: "",
-  kundadress: "",
-  kundpostnummer: "",
-  kundstad: "",
-  kundemail: "",
-  företagsnamn: "",
-  adress: "",
-  postnummer: "",
-  stad: "",
-  organisationsnummer: "",
-  momsregistreringsnummer: "",
-  telefonnummer: "",
-  bankinfo: "",
-  epost: "",
-  webbplats: "",
-  logo: "",
-  logoWidth: 200,
-  rotRutAktiverat: false,
-  rotRutTyp: "ROT",
-  rotRutKategori: "",
-  avdragProcent: 0,
-  avdragBelopp: 0,
-  arbetskostnadExMoms: 0,
-  materialkostnadExMoms: 0,
-  rotRutBeskrivning: "",
-  rotRutStartdatum: "",
-  rotRutSlutdatum: "",
-  artiklar: [],
-};
-
-// Returnerar en ny kopia av standardformulärets startvärden
-export function createDefaultFakturaFormData(): FakturaFormData {
-  return {
-    ...defaultFormTemplate,
-    artiklar: [],
-  };
-}
-
-// Jämför två värden rekursivt för att se om de är identiska
+// Hjälpfunktionen jämför två värden och säger om de är identiska ned på minsta nivå.
 function areValuesDeepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
 
@@ -121,11 +52,8 @@ function areValuesDeepEqual(a: unknown, b: unknown): boolean {
   return false;
 }
 
-// Samlar ihop vilka fält som faktiskt ändrats mellan två formtillstånd
-function collectChangedKeys(
-  previous: FakturaFormData,
-  updates: Partial<FakturaFormData>
-): string[] {
+// Plockar fram vilka fält som faktiskt ändrats så vi slipper uppdatera i onödan.
+function collectChangedKeys(previous: FakturaFormData, updates: Partial<FakturaFormData>) {
   return Object.entries(updates).reduce<string[]>((acc, [key, value]) => {
     const previousValue = previous[key as keyof FakturaFormData];
     if (!areValuesDeepEqual(previousValue, value)) {
@@ -135,7 +63,7 @@ function collectChangedKeys(
   }, []);
 }
 
-// Reducer som hanterar uppdateringar av fakturaformulärets state
+// Själva reducer-motorn bestämmer hur formulärstate ska ändras för varje action.
 function formReducer(state: FakturaFormData, action: FakturaFormAction): FakturaFormData {
   switch (action.type) {
     case "SET_FORM_DATA": {
@@ -167,7 +95,7 @@ function formReducer(state: FakturaFormData, action: FakturaFormAction): Faktura
   }
 }
 
-// Mappar serverns företagsprofil till relevanta formulärfält
+// Översätter serverns företagsprofil till de fält vi använder i formuläret.
 function mapForetagsprofil(data: ServerData["foretagsprofil"]): Partial<FakturaFormData> {
   if (!data) {
     return {};
@@ -190,12 +118,12 @@ function mapForetagsprofil(data: ServerData["foretagsprofil"]): Partial<FakturaF
   };
 }
 
-// Provider som exponerar formulärstate och åtgärder via context
+// Providern kopplar ihop reducer, lifecycleflaggor och context så barnkomponenter får allt i ett paket.
 export function FakturaFormProvider({ children, initialData }: FakturaFormProviderProps) {
   const [formData, dispatch] = useReducer(formReducer, undefined, createDefaultFakturaFormData);
   const listenersRef = useRef(new Set<() => void>());
   const formDataRef = useRef(formData);
-  const lifecycle = useRef<FakturaLifecycleFlags>({ ...lifecycleDefaults });
+  const lifecycle = useRef<FakturaLifecycleFlags>(createLifecycleDefaults());
 
   useEffect(() => {
     formDataRef.current = formData;
@@ -232,11 +160,11 @@ export function FakturaFormProvider({ children, initialData }: FakturaFormProvid
 
   useEffect(() => {
     return () => {
-      lifecycle.current = { ...lifecycleDefaults };
+      lifecycle.current = createLifecycleDefaults();
     };
   }, []);
 
-  const value = useMemo<FakturaFormContextValue>(
+  const value: FakturaFormContextValue = useMemo(
     () => ({
       subscribe,
       getSnapshot,
@@ -249,43 +177,4 @@ export function FakturaFormProvider({ children, initialData }: FakturaFormProvid
   );
 
   return <FakturaFormContext.Provider value={value}>{children}</FakturaFormContext.Provider>;
-}
-
-// Hämtar och validerar context-värdet för fakturaformuläret
-function useFakturaFormContextValue(): FakturaFormContextValue {
-  const context = useContext(FakturaFormContext);
-  if (!context) {
-    throw new Error("useFakturaFormContext must be used within a FakturaFormProvider");
-  }
-  return context;
-}
-
-// Prenumererar på hela formulärstate via useSyncExternalStore
-export function useFakturaForm(): FakturaFormData {
-  const { subscribe, getSnapshot } = useFakturaFormContextValue();
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-// Returnerar ett selekterat utdrag av formuläret utan onödiga rerenders
-export function useFakturaFormSelector<T>(selector: FakturaFormSelector<T>): T {
-  const { subscribe, getSnapshot } = useFakturaFormContextValue();
-  const getSelectedSnapshot = useCallback(() => selector(getSnapshot()), [selector, getSnapshot]);
-  return useSyncExternalStore(subscribe, getSelectedSnapshot, getSelectedSnapshot);
-}
-
-// Hämtar ett enskilt formulärfält som hålls uppdaterat
-export function useFakturaFormField<K extends keyof FakturaFormData>(field: K): FakturaFormData[K] {
-  return useFakturaFormSelector((state) => state[field]);
-}
-
-// Ger tillgång till funktioner för att uppdatera eller återställa formuläret
-export function useFakturaFormActions() {
-  const { setFormData, resetFormData, hydrateFromServer } = useFakturaFormContextValue();
-  return { setFormData, resetFormData, hydrateFromServer };
-}
-
-// Exponerar lifecycle-flaggorna som delar engångsguards mellan hooks
-export function useFakturaLifecycle() {
-  const { lifecycle } = useFakturaFormContextValue();
-  return lifecycle;
 }

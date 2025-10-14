@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
-import { useFakturaClient } from "../context/FakturaContextProvider";
+import { useFakturaClient } from "../context/hooks/FakturaContext";
 
 // Ladda de tyngre vyerna vid behov så vi slipper skeppa all fakturalogik direkt på första rendern.
 // Med ssr: false hålls vyerna helt klientrenderade och klipps bort från initiala serverresponsen.
