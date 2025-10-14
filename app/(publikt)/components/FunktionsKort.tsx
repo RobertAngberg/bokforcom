@@ -1,6 +1,8 @@
+"use client";
+
 import Image from "next/image";
-import { useScrollAnimering } from "../_hooks/useScrollAnimering";
-import { FunktionsKortProps } from "../_types/types";
+import { useScrollAnimering } from "../hooks/useScrollAnimering";
+import type { FunktionsKortProps } from "../types/types";
 
 export default function FeatureShowcase({
   title,
@@ -9,6 +11,7 @@ export default function FeatureShowcase({
   imageAlt,
   borderColor,
   animationDirection,
+  priority = false,
 }: FunktionsKortProps) {
   const animation = useScrollAnimering();
 
@@ -30,7 +33,14 @@ export default function FeatureShowcase({
             <div
               className={`relative rounded-xl border-4 ${borderColor} shadow-2xl h-[600px] overflow-hidden`}
             >
-              <Image src={imageSrc} alt={imageAlt} fill className="object-contain" priority />
+              <Image
+                src={imageSrc}
+                alt={imageAlt}
+                fill
+                className="object-contain"
+                priority={priority}
+                loading={priority ? "eager" : "lazy"}
+              />
             </div>
           </div>
         </div>

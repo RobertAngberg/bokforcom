@@ -1,12 +1,19 @@
 "use client";
 
-import AnimeradeStjarnor from "./_components/AnimeradeStjarnor";
-import Header from "./_components/Header";
-import HuvudSektion from "./_components/HuvudSektion";
-import FunktionsKort from "./_components/FunktionsKort";
-import PrisSektion from "./_components/PrisSektion";
-import FordelarSektion from "./_components/FordelarSektion";
-import Footer from "./_components/Footer";
+import dynamic from "next/dynamic";
+
+import Header from "./components/Header";
+import HuvudSektion from "./components/HuvudSektion";
+
+const AnimeradeStjarnor = dynamic(() => import("./components/AnimeradeStjarnor"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const FunktionsKort = dynamic(() => import("./components/FunktionsKort"));
+const PrisSektion = dynamic(() => import("./components/PrisSektion"));
+const FordelarSektion = dynamic(() => import("./components/FordelarSektion"));
+const Footer = dynamic(() => import("./components/Footer"));
 
 export default function Startsidan() {
   return (
@@ -37,6 +44,7 @@ export default function Startsidan() {
             imageAlt="Gratis bokföring demo"
             borderColor="border-blue-500"
             animationDirection="right"
+            priority
           />
 
           <FunktionsKort

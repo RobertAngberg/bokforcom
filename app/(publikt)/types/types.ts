@@ -15,6 +15,7 @@ export interface FunktionsKortProps {
   imageAlt: string;
   borderColor: string;
   animationDirection: "left" | "right";
+  priority?: boolean;
 }
 
 export interface PrisKortProps {
