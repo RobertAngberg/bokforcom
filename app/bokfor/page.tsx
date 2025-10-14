@@ -1,31 +1,20 @@
 import MainLayout from "../_components/MainLayout";
 import { BokforProvider } from "./context/BokforContextProvider";
 import Bokfor from "./components/Bokfor";
-import {
-  hamtaFavoritforval,
-  hamtaAllaForval,
-  hamtaBokforingsmetod,
-  hamtaAnstallda,
-} from "./actions/data";
+import { hamtaBokforInitialData } from "./actions/initialData";
 
 export default async function BokforPage() {
-  // Hämta initial data på server-sidan
-  const [favoritFörval, allaFörval, bokföringsmetod, anställda] = await Promise.all([
-    hamtaFavoritforval(),
-    hamtaAllaForval(),
-    hamtaBokforingsmetod(),
-    hamtaAnstallda(),
-  ]);
+  const initialData = await hamtaBokforInitialData();
 
   return (
     <MainLayout>
       <BokforProvider>
         <Bokfor
           initialData={{
-            favoritFörval,
-            allaFörval,
-            bokföringsmetod,
-            anställda,
+            favoritFörval: initialData.favoritFörval,
+            allaFörval: initialData.allaFörval,
+            bokföringsmetod: initialData.bokföringsmetod,
+            anställda: initialData.anställda,
           }}
         />
       </BokforProvider>
