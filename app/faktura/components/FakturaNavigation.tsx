@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useFakturaClient } from "../context/FakturaContextProvider";
@@ -85,20 +84,12 @@ export default function FakturaNavigation() {
   // Renderera specifika vyer
   return (
     <>
-      {activeView === "ny" && (
-        <Suspense fallback={<LoadingSpinner />}>
-          <NyFaktura onBackToMenu={handleBackToOverview} />
-        </Suspense>
-      )}
+      {activeView === "ny" && <NyFaktura onBackToMenu={handleBackToOverview} />}
       {activeView === "sparade" && (
-        <Suspense fallback={<LoadingSpinner />}>
-          <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
-        </Suspense>
+        <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}
       {activeView === "leverantorsfakturor" && (
-        <Suspense fallback={<LoadingSpinner />}>
-          <Leverantorsfakturor onBackToMenu={handleBackToOverview} />
-        </Suspense>
+        <Leverantorsfakturor onBackToMenu={handleBackToOverview} />
       )}
     </>
   );
