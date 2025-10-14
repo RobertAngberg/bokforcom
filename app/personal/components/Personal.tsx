@@ -1,14 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import Knapp from "../../_components/Knapp";
 import AnimeradFlik from "../../_components/AnimeradFlik";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import Modal from "../../_components/Modal";
 import Anstallda from "./Anstallda/Anstallda";
-import NyAnstalldModal from "./Anstallda/NyAnstalld/NyAnstalldModal";
-import Lonekorning from "./Lonekorning/Lonekorning";
 import { useAnstallda } from "../hooks/useAnstallda";
-import type { PersonalContentProps } from "../types/types";
+import type { PersonalContentProps, NyAnstalldModalProps, LonekorningProps } from "../types/types";
+
+const NyAnstalldModal = dynamic<NyAnstalldModalProps>(
+  () => import("./Anstallda/NyAnstalld/NyAnstalldModal"),
+  {
+    loading: () => null,
+  }
+);
+
+const Lonekorning = dynamic<LonekorningProps>(() => import("./Lonekorning/Lonekorning"), {
+  loading: () => (
+    <div className="flex justify-center py-6">
+      <LoadingSpinner />
+    </div>
+  ),
+});
 
 export default function Personal({ initialAnställda }: PersonalContentProps) {
   const { state, actions, handlers } = useAnstallda({ initialAnstallda: initialAnställda });
@@ -47,14 +62,12 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
           </div>
         )}
 
-        {/* Modal för ny anställd */}
         <NyAnstalldModal
           isOpen={state.visaNyAnställdFormulär}
           onClose={handlers.döljNyAnställd}
           handlers={handlers}
         />
 
-        {/* Modal för att bekräfta borttagning av anställd */}
         <Modal
           isOpen={state.showDeleteAnställdModal}
           onClose={() => handlers.setShowDeleteAnställdModal(false)}
@@ -73,10 +86,8 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
         </Modal>
       </div>
 
-      {/* Subtil HR mellan anställda och lönekörning */}
       <hr className="border-slate-600/30 my-8" />
 
-      {/* Lönekörning sektion - återaktiverad med mock data */}
       <div className="mb-8">
         <AnimeradFlik title="Lönekörning" icon="💰">
           <Lonekorning
