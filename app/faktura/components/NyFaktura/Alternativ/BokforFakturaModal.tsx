@@ -2,6 +2,7 @@
 
 import Tabell from "../../../../_components/Tabell";
 import Modal from "../../../../_components/Modal";
+import Knapp from "../../../../_components/Knapp";
 import { useBokforFakturaModal } from "../../../hooks/useAlternativ";
 import { formatCurrency } from "../../../../_utils/format";
 import { BokforFakturaModalProps } from "../../../types/types";
@@ -125,19 +126,14 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
           )}
 
           <div className="flex justify-end gap-4 sm:ml-auto">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              ❌ Avbryt
-            </button>
-            <button
+            <Knapp onClick={onClose} text="❌ Avbryt" />
+            <Knapp
               onClick={hanteraBokför}
-              disabled={loading || poster.length === 0}
-              className="px-6 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? "⏳ Bokför..." : "💼 Bokför"}
-            </button>
+              text="💼 Bokför"
+              loading={loading}
+              loadingText="⏳ Bokför..."
+              disabled={poster.length === 0}
+            />
           </div>
         </div>
       </div>

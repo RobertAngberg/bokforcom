@@ -1,7 +1,6 @@
 import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
-import { useFaktura } from "../../../hooks/useFaktura";
 import { Artikel } from "../../../types/types";
 
 export default function FavoritArtiklarList() {
@@ -16,9 +15,7 @@ export default function FavoritArtiklarList() {
     setShowDeleteFavoritModal,
     deleteFavoritId,
     confirmDeleteFavorit,
-    harBlandadeArtikelTyper,
   } = useProdukterTjanster();
-  const { formData } = useFaktura();
 
   // Handler functions
   const handleSelectFavorit = (artikel: Artikel) => {
@@ -52,12 +49,6 @@ export default function FavoritArtiklarList() {
       {/* Artiklar som expanderar nedåt */}
       {showFavoritArtiklar && (
         <div className="p-4">
-          {harBlandadeArtikelTyper && (
-            <p className="mb-4 text-sm text-slate-300">
-              Fakturan innehåller både varor och tjänster. ROT/RUT-avdraget beräknas fortfarande
-              bara på tjänsterna.
-            </p>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {favoritArtiklar.map((a) => (
               <div
@@ -83,10 +74,7 @@ export default function FavoritArtiklarList() {
                     {a.antal} × {a.prisPerEnhet} {a.valuta} ={" "}
                     {(a.antal * a.prisPerEnhet).toLocaleString("sv-SE")} {a.valuta}
                   </div>
-                  <div className="text-gray-400 text-sm">
-                    ({a.moms}% moms)
-                    {formData.rotRutAktiverat && a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
-                  </div>
+                  <div className="text-gray-400 text-sm">({a.moms}% moms)</div>
                 </div>
               </div>
             ))}
@@ -112,7 +100,7 @@ export default function FavoritArtiklarList() {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setShowDeleteFavoritModal(false)}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="px-4 py-2 bg-cyan-700 text-white rounded hover:bg-cyan-800"
             >
               Avbryt
             </button>

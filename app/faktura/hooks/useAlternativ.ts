@@ -307,20 +307,12 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     formData.rotRutTyp ||
     (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
   const visaHusFilKnapp = (formData.rotRutAktiverat && !!rotRutTyp) || harROTRUTArtiklar;
-  const harPersonnummer =
-    (formData.personnummer && formData.personnummer.trim() !== "") ||
-    (formData.artiklar &&
-      formData.artiklar.some(
-        (artikel) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
-      ));
-  const husFilDisabled = !harPersonnummer || !formData.fakturanummer;
+  const husFilDisabled = !formData.fakturanummer;
   const husFilDisabledInfo = !visaHusFilKnapp
     ? null
-    : !harPersonnummer
-      ? "Personnummer saknas för ROT/RUT-fil"
-      : !formData.fakturanummer
-        ? "Spara fakturan först"
-        : null;
+    : !formData.fakturanummer
+      ? "Spara fakturan först"
+      : null;
   const husFilKnappText = "Ladda ner ROT/RUT-fil XML";
 
   // Analysera fakturan och föreslå bokföringsposter
@@ -361,13 +353,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     if (harOkändTyp) {
       varningar.push(
         "⚠️ Minst en rad saknar giltig typ (vara/tjänst). Komplettera innan du bokför fakturan."
-      );
-      return { poster, varningar };
-    }
-
-    if (ärKontantmetod && harVaror && harTjänster) {
-      varningar.push(
-        "⚠️ Fakturan innehåller både varor och tjänster. Dela upp den i separata fakturor innan du markerar den som betald."
       );
       return { poster, varningar };
     }
@@ -418,9 +403,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
         if (harRotRutArtiklar) {
           varningar.push("✅ Fakturan är redan bokförd och betald.");
-          varningar.push(
-            "För ROT/RUT-utbetalning från SKV: ändra ROT/RUT-status till 'Väntar på SKV' och använd sen ROT/RUT-betalningsknappen."
-          );
         } else {
           varningar.push("✅ Fakturan är redan bokförd och betald.");
         }
@@ -508,10 +490,16 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       return;
     }
 
+    const kundOrganisationsnummer = formData.kundorganisationsnummer
+      ? formData.kundorganisationsnummer.replace(/\D/g, "")
+      : "";
+
     const personnummer =
-      formData.personnummer ||
+      (formData.personnummer && formData.personnummer.trim()) ||
       (formData.artiklar &&
-        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer);
+        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer) ||
+      kundOrganisationsnummer ||
+      null;
 
     const rotRutKategori =
       formData.rotRutKategori ||

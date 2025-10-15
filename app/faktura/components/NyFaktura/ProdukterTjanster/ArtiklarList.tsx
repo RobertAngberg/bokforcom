@@ -57,10 +57,6 @@ export default function ArtiklarList() {
       {/* Artikellista */}
       <div className="divide-y divide-slate-600">
         {artiklar.map((a, idx) => {
-          const isRotRutArbete =
-            typeof a.rotRutArbete === "boolean"
-              ? a.rotRutArbete
-              : a.typ === "tjänst" && a.rotRutMaterial !== true;
           const isRotRutMaterial = typeof a.rotRutMaterial === "boolean" ? a.rotRutMaterial : false;
 
           return (
@@ -84,9 +80,6 @@ export default function ArtiklarList() {
                 <div className="text-gray-400 text-sm">
                   {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms)
                   {isRotRutMaterial ? " — ROT/RUT-material" : ""}
-                  {formData.rotRutAktiverat && a.rotRutTyp && isRotRutArbete
-                    ? ` — ${a.rotRutTyp}`
-                    : ""}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -126,7 +119,7 @@ export default function ArtiklarList() {
         <div className="flex gap-3 justify-end">
           <button
             onClick={() => setShowDeleteModal(false)}
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
+            className="px-4 py-2 bg-cyan-700 text-white rounded hover:bg-cyan-800"
           >
             Avbryt
           </button>

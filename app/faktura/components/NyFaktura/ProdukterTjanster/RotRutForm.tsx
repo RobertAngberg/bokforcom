@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 import "react-datepicker/dist/react-datepicker.css";
-import type { Artikel, RotRutFormProps } from "../../../types/types";
+import type { RotRutFormProps } from "../../../types/types";
 registerLocale("sv", sv);
 
 export default function RotRutForm({ disabled = false }: RotRutFormProps) {
@@ -20,197 +20,62 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
     handleRotRutChange,
     handleRotRutBoendeTypChange,
     handleRotRutDateChange,
-    artiklar,
     rotRutSummary,
-    uppdateraArtikelRotRutArbete,
-    uppdateraArtikelRotRutMaterial,
   } = useProdukterTjanster();
 
   const startDateValue = datePickerValue(formData.rotRutStartdatum);
   const endDateValue = datePickerValue(formData.rotRutSlutdatum);
-  const rotRutArtiklar = artiklar
-    .map((artikel, index) => ({ artikel, index }))
-    .filter(({ artikel }) => Boolean(artikel.rotRutTyp));
-  const arbeteSumExkl = rotRutSummary.rotRutTjänsterSumExkl ?? 0;
-  const materialSumExkl = rotRutSummary.rotRutMaterialSumExkl ?? 0;
-  const rotRutTotalExkl = arbeteSumExkl + materialSumExkl;
   const beraknatAvdrag = Number(formData.avdragBelopp ?? rotRutSummary.rotRutAvdrag ?? 0);
 
-  const arRotRutArbete = (artikel: Artikel) => {
-    if (!artikel.rotRutTyp) return false;
-    if (typeof artikel.rotRutArbete === "boolean") {
-      return artikel.rotRutArbete;
-    }
-    return artikel.typ === "tjänst" && artikel.rotRutMaterial !== true;
-  };
-
-  const arRotRutMaterial = (artikel: Artikel) => {
-    if (!artikel.rotRutTyp) return false;
-    if (typeof artikel.rotRutMaterial === "boolean") {
-      return artikel.rotRutMaterial;
-    }
-    return false;
-  };
-
   return (
-    <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+    <div className="space-y-4">
       {formData.rotRutAktiverat && (
         <>
-          <div className="text-white">
-            <label className="block mb-1">Typ av avdrag</label>
-            <select
-              name="rotRutTyp"
-              value={formData.rotRutTyp ?? ""}
-              onChange={handleRotRutChange}
-              disabled={disabled}
-              className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
-                disabled ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              <option value="">Välj typ</option>
-              <option value="ROT">ROT</option>
-              <option value="RUT">RUT</option>
-            </select>
-          </div>
-
-          {formData.rotRutTyp && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="text-white">
-              <label className="block mb-1">Välj kategori</label>
+              <label className="block mb-1">Typ av avdrag</label>
               <select
-                name="rotRutKategori"
-                value={formData.rotRutKategori ?? ""}
+                name="rotRutTyp"
+                value={formData.rotRutTyp ?? ""}
                 onChange={handleRotRutChange}
                 disabled={disabled}
                 className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                <option value="">Välj kategori</option>
-                {(formData.rotRutTyp === "ROT" ? ROT_KATEGORIER : RUT_KATEGORIER).map(
-                  (kategori: string) => (
-                    <option key={kategori} value={kategori}>
-                      {kategori}
-                    </option>
-                  )
-                )}
+                <option value="">Välj typ</option>
+                <option value="ROT">ROT</option>
+                <option value="RUT">RUT</option>
               </select>
-              {/* DEBUG: Checking if något renderas här */}
             </div>
-          )}
+
+            {formData.rotRutTyp && (
+              <div className="text-white">
+                <label className="block mb-1">Välj kategori</label>
+                <select
+                  name="rotRutKategori"
+                  value={formData.rotRutKategori ?? ""}
+                  onChange={handleRotRutChange}
+                  disabled={disabled}
+                  className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                    disabled ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <option value="">Välj kategori</option>
+                  {(formData.rotRutTyp === "ROT" ? ROT_KATEGORIER : RUT_KATEGORIER).map(
+                    (kategori: string) => (
+                      <option key={kategori} value={kategori}>
+                        {kategori}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            )}
+          </div>
 
           {/* ROT/RUT-specifika fält */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {rotRutArtiklar.length > 0 && (
-              <div className="md:col-span-2 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="rounded bg-slate-700 p-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-300">
-                      Arbete (avdrag)
-                    </div>
-                    <div className="text-lg font-semibold text-white">
-                      {formatCurrency(arbeteSumExkl)}
-                    </div>
-                  </div>
-                  <div className="rounded bg-slate-700 p-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-300">
-                      Material (rapporteras)
-                    </div>
-                    <div className="text-lg font-semibold text-white">
-                      {formatCurrency(materialSumExkl)}
-                    </div>
-                  </div>
-                  <div className="rounded bg-slate-700 p-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-300">
-                      Totalt ROT/RUT
-                    </div>
-                    <div className="text-lg font-semibold text-white">
-                      {formatCurrency(rotRutTotalExkl)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {rotRutArtiklar.map(({ artikel, index }) => {
-                    const radTotalExkl =
-                      Number(artikel.antal || 0) * Number(artikel.prisPerEnhet || 0);
-                    const arbeteChecked = arRotRutArbete(artikel);
-                    const materialChecked = arRotRutMaterial(artikel);
-
-                    return (
-                      <div
-                        key={`${artikel.beskrivning || "artikel"}-${index}`}
-                        className="flex flex-col gap-3 rounded border border-slate-700 bg-slate-900/40 p-3 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <div className="text-sm font-semibold text-white">
-                            {artikel.beskrivning || `Artikel ${index + 1}`}
-                          </div>
-                          <div className="text-xs text-slate-300">
-                            {Number(artikel.antal) || 0} st ×{" "}
-                            {formatCurrency(Number(artikel.prisPerEnhet) || 0)} ={" "}
-                            {formatCurrency(radTotalExkl)}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6 text-sm text-white">
-                          {artikel.typ === "tjänst" && (
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={arbeteChecked}
-                                onChange={(e) =>
-                                  uppdateraArtikelRotRutArbete(index, e.target.checked)
-                                }
-                                disabled={disabled}
-                                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span>Arbete</span>
-                            </label>
-                          )}
-                          {artikel.typ === "vara" && (
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={materialChecked}
-                                onChange={(e) =>
-                                  uppdateraArtikelRotRutMaterial(index, e.target.checked)
-                                }
-                                disabled={disabled}
-                                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span>Material</span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {rotRutArtiklar.length === 0 && (
-              <div className="md:col-span-2 rounded bg-slate-700 p-3 text-sm text-slate-200">
-                Koppla artiklar till ROT/RUT genom att markera dem i artikel-listan.
-              </div>
-            )}
-
-            {/* ROT/RUT-beskrivning - tar hela bredden */}
-            <div className="md:col-span-2">
-              <TextFalt
-                label={`Beskrivning av ${formData.rotRutTyp}-tjänst *`}
-                name="rotRutBeskrivning"
-                value={formData.rotRutBeskrivning ?? ""}
-                onChange={handleRotRutChange}
-                placeholder="Beskriv de avdraggivna tjänsterna..."
-                disabled={disabled}
-                className={`${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Ex: &ldquo;Målning av sovrum och vardagsrum&rdquo;, &ldquo;Städning av hela
-                bostaden&rdquo;
-              </p>
-            </div>
-
             {/* Period för arbetet */}
             <div>
               <label className="block text-white font-semibold mb-1">
@@ -266,6 +131,18 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
               required={true}
               disabled={disabled}
             />
+
+            <div>
+              <TextFalt
+                label={`Beskrivning av ${formData.rotRutTyp}-tjänst *`}
+                name="rotRutBeskrivning"
+                value={formData.rotRutBeskrivning ?? ""}
+                onChange={handleRotRutChange}
+                placeholder="Beskriv de avdraggivna tjänsterna..."
+                disabled={disabled}
+                className={`${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+            </div>
 
             {formData.rotRutTyp === "ROT" && (
               <div className="md:col-span-2">

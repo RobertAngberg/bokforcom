@@ -38,7 +38,6 @@ export default function ProdukterTjanster() {
     setVisaRotRutForm,
     setVisaArtikelForm,
     sparaArtikelSomFavorit,
-    harBlandadeArtikelTyper,
   } = useProdukterTjanster();
 
   // Destructure nested state
@@ -123,12 +122,6 @@ export default function ProdukterTjanster() {
           {/* Formulär som expanderar nedåt */}
           {visaArtikelForm && (
             <div className="p-4 space-y-4">
-              {harBlandadeArtikelTyper && (
-                <p className="text-sm text-slate-300">
-                  Fakturan innehåller både varor och tjänster. ROT/RUT-avdrag beräknas endast på
-                  tjänstedelen.
-                </p>
-              )}
               <ArtikelForm
                 beskrivning={beskrivning}
                 antal={parseFloat(antal) || 0}
@@ -178,7 +171,7 @@ export default function ProdukterTjanster() {
 
               {/* ROT/RUT formulär */}
               {visaRotRutForm && (
-                <div className="border border-slate-500 rounded-lg mt-4">
+                <div className="mt-4">
                   <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
                 </div>
               )}
@@ -200,7 +193,7 @@ export default function ProdukterTjanster() {
               </div>
 
               {/* Lägg till artikel knapp */}
-              <div className="border-t border-slate-600 pt-4 flex justify-end">
+              <div className="mt-3 flex justify-end">
                 <Knapp
                   onClick={handleAdd}
                   text="✚ Lägg till artikel"
@@ -254,12 +247,12 @@ export default function ProdukterTjanster() {
 
             {/* Visa RotRutForm endast om användaren själv aktiverat det */}
             {visaRotRutForm && (
-              <div className="border border-slate-500 rounded-lg mt-4">
+              <div className="mt-4">
                 <RotRutForm showCheckbox={false} />
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+            <div className="flex items-center justify-between mt-4">
               <Knapp onClick={() => handleResetForm()} text="❌ Avbryt redigering" />
               <Knapp onClick={handleAdd} text="💾 Uppdatera artikel" disabled={addButtonDisabled} />
             </div>

@@ -186,8 +186,6 @@ export function useProdukterTjanster() {
 
   const metrics = useMemo(() => deriveArtikelMetrics(formData), [formData]);
   const artiklar = metrics.artiklar;
-  const harBlandadeArtikelTyper =
-    artiklar.some((rad) => rad.typ === "vara") && artiklar.some((rad) => rad.typ === "tjänst");
 
   const laddaSparadeArtiklar = useCallback(async () => {
     try {
@@ -244,7 +242,8 @@ export function useProdukterTjanster() {
 
     const aktivRotRutTyp = formData.rotRutTyp;
     const rotRutAktiv = Boolean(
-      (formData.rotRutAktiverat || aktivRotRutTyp) &&
+      state.visaRotRutForm &&
+        aktivRotRutTyp &&
         (aktivRotRutTyp === "ROT" || aktivRotRutTyp === "RUT")
     );
 
@@ -289,8 +288,8 @@ export function useProdukterTjanster() {
           rotRutFastighetsbeteckning: undefined,
           rotRutBrfOrg: undefined,
           rotRutBrfLagenhet: undefined,
-          rotRutArbete: undefined,
-          rotRutMaterial: undefined,
+          rotRutArbete: false,
+          rotRutMaterial: false,
         };
 
     if (state.redigerarIndex !== null) {
@@ -320,9 +319,23 @@ export function useProdukterTjanster() {
         idx === index ? uppdateradArtikel : artikel
       );
 
-      const harRotRutEfter = uppdateradeArtiklar.some((rad) => Boolean(rad.rotRutTyp));
+      const firstRotRutArtikel = uppdateradeArtiklar.find((rad) => Boolean(rad.rotRutTyp));
+      const harRotRutEfter = Boolean(firstRotRutArtikel);
 
-      setFormData({ artiklar: uppdateradeArtiklar, rotRutAktiverat: harRotRutEfter });
+      setFormData({
+        artiklar: uppdateradeArtiklar,
+        rotRutAktiverat: harRotRutEfter,
+        rotRutTyp: firstRotRutArtikel?.rotRutTyp,
+        rotRutKategori: firstRotRutArtikel?.rotRutKategori,
+        rotRutBeskrivning: firstRotRutArtikel?.rotRutBeskrivning,
+        rotRutStartdatum: firstRotRutArtikel?.rotRutStartdatum,
+        rotRutSlutdatum: firstRotRutArtikel?.rotRutSlutdatum,
+        personnummer: firstRotRutArtikel?.rotRutPersonnummer,
+        rotBoendeTyp: firstRotRutArtikel?.rotRutBoendeTyp as "fastighet" | "brf" | undefined,
+        fastighetsbeteckning: firstRotRutArtikel?.rotRutFastighetsbeteckning,
+        brfOrganisationsnummer: firstRotRutArtikel?.rotRutBrfOrg,
+        brfLagenhetsnummer: firstRotRutArtikel?.rotRutBrfLagenhet,
+      });
       resetNyArtikel();
       setState({
         redigerarIndex: null,
@@ -330,6 +343,7 @@ export function useProdukterTjanster() {
         ursprungligFavoritId: null,
         artikelSparadSomFavorit: false,
         blinkIndex: index,
+        visaRotRutForm: false,
       });
       showToast("Artikel uppdaterad", "success");
       return;
@@ -349,9 +363,23 @@ export function useProdukterTjanster() {
     };
 
     const uppdateradeArtiklar = [...artiklar, nyArtikelData];
-    const harRotRutEfter = uppdateradeArtiklar.some((rad) => Boolean(rad.rotRutTyp));
+    const firstRotRutArtikel = uppdateradeArtiklar.find((rad) => Boolean(rad.rotRutTyp));
+    const harRotRutEfter = Boolean(firstRotRutArtikel);
 
-    setFormData({ artiklar: uppdateradeArtiklar, rotRutAktiverat: harRotRutEfter });
+    setFormData({
+      artiklar: uppdateradeArtiklar,
+      rotRutAktiverat: harRotRutEfter,
+      rotRutTyp: firstRotRutArtikel?.rotRutTyp,
+      rotRutKategori: firstRotRutArtikel?.rotRutKategori,
+      rotRutBeskrivning: firstRotRutArtikel?.rotRutBeskrivning,
+      rotRutStartdatum: firstRotRutArtikel?.rotRutStartdatum,
+      rotRutSlutdatum: firstRotRutArtikel?.rotRutSlutdatum,
+      personnummer: firstRotRutArtikel?.rotRutPersonnummer,
+      rotBoendeTyp: firstRotRutArtikel?.rotRutBoendeTyp as "fastighet" | "brf" | undefined,
+      fastighetsbeteckning: firstRotRutArtikel?.rotRutFastighetsbeteckning,
+      brfOrganisationsnummer: firstRotRutArtikel?.rotRutBrfOrg,
+      brfLagenhetsnummer: firstRotRutArtikel?.rotRutBrfLagenhet,
+    });
     resetNyArtikel();
     setState({
       visaArtikelForm: false,
@@ -359,6 +387,7 @@ export function useProdukterTjanster() {
       ursprungligFavoritId: null,
       artikelSparadSomFavorit: false,
       blinkIndex: uppdateradeArtiklar.length - 1,
+      visaRotRutForm: false,
     });
     showToast("Artikel tillagd", "success");
   }, [
@@ -369,7 +398,6 @@ export function useProdukterTjanster() {
     setFormData,
     resetNyArtikel,
     setState,
-    formData.rotRutAktiverat,
     formData.rotRutTyp,
     formData.rotRutKategori,
     formData.rotRutBeskrivning,
@@ -380,6 +408,7 @@ export function useProdukterTjanster() {
     formData.fastighetsbeteckning,
     formData.brfOrganisationsnummer,
     formData.brfLagenhetsnummer,
+    state.visaRotRutForm,
   ]);
 
   const startRedigeraArtikel = useCallback(
@@ -867,7 +896,6 @@ export function useProdukterTjanster() {
     totals: metrics.totals,
     rotRutSummary: metrics.rotRutSummary,
     standardValuta: artiklar[0]?.valuta ?? "SEK",
-    harBlandadeArtikelTyper,
 
     // Constants
     RUT_KATEGORIER,
