@@ -77,6 +77,37 @@ function mapLeverantorFormData(formData: LeverantörFormData): LeverantörFormDa
   };
 }
 
+function ensureLeverantorskonto(poster: TransaktionsPost[]): TransaktionsPost[] {
+  if (!poster.length) {
+    return poster;
+  }
+
+  const hasLeverantorskonto = poster.some((post) => post.kontonummer === "2440");
+  const totalDebet = poster.reduce((sum, post) => sum + (post.debet ?? 0), 0);
+  const totalKredit = poster.reduce((sum, post) => sum + (post.kredit ?? 0), 0);
+  const diff = Number((totalDebet - totalKredit).toFixed(2));
+
+  if (hasLeverantorskonto || Math.abs(diff) < 0.01) {
+    return poster;
+  }
+
+  const datum = poster[0].transaktionsdatum ?? "";
+  const kommentar = poster[0].transaktionskommentar ?? "";
+
+  return [
+    ...poster,
+    {
+      id: Number.MAX_SAFE_INTEGER,
+      kontonummer: "2440",
+      kontobeskrivning: "Leverantörsskulder",
+      debet: diff < 0 ? Math.abs(diff) : 0,
+      kredit: diff > 0 ? diff : 0,
+      transaktionsdatum: datum,
+      transaktionskommentar: kommentar,
+    },
+  ];
+}
+
 export function useLeverantörer(): UseLeverantörerReturn {
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
   const [loading, setLoading] = useState(true);
@@ -577,30 +608,7 @@ export function useBokfordaFakturor() {
     if (faktura.transaktionId) {
       try {
         const poster = await hamtaTransaktionsposter(faktura.transaktionId);
-        let rows = Array.isArray(poster) ? [...poster] : [];
-
-        if (rows.length > 0) {
-          const hasLeverantorskonto = rows.some((post) => post.kontonummer === "2440");
-          const totalDebet = rows.reduce((sum, post) => sum + (post.debet || 0), 0);
-          const totalKredit = rows.reduce((sum, post) => sum + (post.kredit || 0), 0);
-          const diff = Number((totalDebet - totalKredit).toFixed(2));
-
-          if (!hasLeverantorskonto && diff !== 0) {
-            rows = [
-              ...rows,
-              {
-                id: Number.MAX_SAFE_INTEGER,
-                kontonummer: "2440",
-                kontobeskrivning: "Leverantörsskulder",
-                debet: diff < 0 ? Math.abs(diff) : 0,
-                kredit: diff > 0 ? diff : 0,
-                transaktionsdatum: rows[0].transaktionsdatum,
-                transaktionskommentar: rows[0].transaktionskommentar,
-              },
-            ];
-          }
-        }
-
+        const rows = ensureLeverantorskonto(Array.isArray(poster) ? poster : []);
         setBekraftelseModal((prev) => ({
           ...prev,
           transaktionsposter: rows,
@@ -770,7 +778,8 @@ export function useVerifikatModal({
       const result = await hamtaTransaktionsposter(transaktionId);
       console.log("📝 Verifikat-resultat:", result);
       if (Array.isArray(result)) {
-        setPoster(result as TransaktionsPost[]);
+        const rows = ensureLeverantorskonto(result as TransaktionsPost[]);
+        setPoster(rows);
       }
     } catch (error) {
       console.error("Fel vid hämtning av transaktionsposter:", error);
