@@ -569,18 +569,41 @@ export function useBokfordaFakturor() {
   const handleBetalaOchBokför = async (faktura: BokfordFaktura) => {
     setBekraftelseModal({
       isOpen: true,
-      faktura: faktura,
+      faktura,
       transaktionsposter: [],
       loadingPoster: true,
     });
 
-    // Hämta transaktionsposter för att visa debet/kredit
     if (faktura.transaktionId) {
       try {
         const poster = await hamtaTransaktionsposter(faktura.transaktionId);
+        let rows = Array.isArray(poster) ? [...poster] : [];
+
+        if (rows.length > 0) {
+          const hasLeverantorskonto = rows.some((post) => post.kontonummer === "2440");
+          const totalDebet = rows.reduce((sum, post) => sum + (post.debet || 0), 0);
+          const totalKredit = rows.reduce((sum, post) => sum + (post.kredit || 0), 0);
+          const diff = Number((totalDebet - totalKredit).toFixed(2));
+
+          if (!hasLeverantorskonto && diff !== 0) {
+            rows = [
+              ...rows,
+              {
+                id: Number.MAX_SAFE_INTEGER,
+                kontonummer: "2440",
+                kontobeskrivning: "Leverantörsskulder",
+                debet: diff < 0 ? Math.abs(diff) : 0,
+                kredit: diff > 0 ? diff : 0,
+                transaktionsdatum: rows[0].transaktionsdatum,
+                transaktionskommentar: rows[0].transaktionskommentar,
+              },
+            ];
+          }
+        }
+
         setBekraftelseModal((prev) => ({
           ...prev,
-          transaktionsposter: Array.isArray(poster) ? poster : [],
+          transaktionsposter: rows,
           loadingPoster: false,
         }));
       } catch (error) {
@@ -768,14 +791,20 @@ export function useVerifikatModal({
     {
       key: "kontonummer",
       label: "Konto",
+      render: (_value, row) =>
+        `${row.kontonummer}${row.kontobeskrivning ? ` - ${row.kontobeskrivning}` : ""}`,
     },
     {
       key: "debet",
       label: "Debet",
+      className: "text-right",
+      render: (_value, row) => (row.debet > 0 ? formatSEK(row.debet) : "—"),
     },
     {
       key: "kredit",
       label: "Kredit",
+      className: "text-right",
+      render: (_value, row) => (row.kredit > 0 ? formatSEK(row.kredit) : "—"),
     },
   ];
 

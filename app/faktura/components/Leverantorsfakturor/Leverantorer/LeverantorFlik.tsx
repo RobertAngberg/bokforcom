@@ -33,14 +33,13 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
         visaSummaDirekt={`${leverantörer.length} st`}
         forcedOpen={true}
       >
-        <div className="space-y-4">
-          <div className="flex justify-end">
+        <div className="space-y-6">
+          <div className="flex justify-end mb-4">
             <Knapp text="+ Lägg till leverantör" onClick={() => setShowModal(true)} />
           </div>
 
           {loading ? (
             <div className="text-center py-8">
-              <div className="text-2xl mb-2">⏳</div>
               <p className="text-gray-400">Laddar leverantörer...</p>
             </div>
           ) : leverantörer.length === 0 ? (
@@ -52,17 +51,17 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {leverantörer.map((leverantör) => (
                 <div
                   key={leverantör.id}
-                  className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors"
+                  className="bg-slate-800 rounded-lg p-5 border border-slate-700 hover:border-slate-600 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h4 className="text-white font-medium text-lg">{leverantör.namn}</h4>
 
-                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                         {leverantör.organisationsnummer && (
                           <div className="text-gray-300">
                             <span className="text-gray-400">Org-nr:</span>{" "}
@@ -87,7 +86,7 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
                       </div>
 
                       {leverantör.adress && (
-                        <div className="mt-2 text-sm text-gray-300">
+                        <div className="mt-3 text-sm text-gray-300">
                           <span className="text-gray-400">Adress:</span> {leverantör.adress}
                           {leverantör.postnummer && `, ${leverantör.postnummer}`}
                           {leverantör.ort && ` ${leverantör.ort}`}
@@ -95,7 +94,7 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
                       )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 ml-4">
+                    <div className="flex flex-col sm:flex-row gap-2 ml-4 mt-4 sm:mt-0">
                       <Knapp
                         text="📄 Registrera faktura"
                         onClick={() =>

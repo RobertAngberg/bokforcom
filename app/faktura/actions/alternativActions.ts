@@ -3,10 +3,14 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import {
+  hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
+  TransaktionspostMedMeta,
+} from "../../_utils/transactions";
+import {
   registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
   registreraRotRutBetalning as registreraRotRutBetalningBase,
 } from "./betalningActions";
-import type { BokförFakturaData } from "../types/types";
+import type { BokförFakturaData, TransaktionsPost } from "../types/types";
 import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
 
 // === BETALNINGSMETOD (från alternativActions.ts) ===
@@ -151,29 +155,22 @@ export async function hamtaBokfordaFakturor() {
   }
 }
 
-export async function hamtaTransaktionsposter(fakturaId?: number) {
-  const { userId } = await ensureSession();
-
-  const client = await pool.connect();
-  try {
-    let query = `
-      SELECT t.*, f.fakturanummer, f.belopp 
-      FROM transaktioner t
-      LEFT JOIN fakturor f ON t.faktura_id = f.id
-      WHERE t.user_id = $1
-    `;
-    const params: (string | number)[] = [userId];
-
-    if (fakturaId) {
-      query += " AND t.faktura_id = $2";
-      params.push(fakturaId);
-    }
-
-    query += " ORDER BY t.datum DESC";
-
-    const result = await client.query(query, params);
-    return { success: true, data: result.rows };
-  } finally {
-    client.release();
+export async function hamtaTransaktionsposter(transaktionId?: number): Promise<TransaktionsPost[]> {
+  if (!transaktionId) {
+    return [];
   }
+
+  const poster = (await hamtaTransaktionsposterUtil(transaktionId, {
+    meta: true,
+  })) as TransaktionspostMedMeta[];
+
+  return poster.map<TransaktionsPost>((rad) => ({
+    id: rad.id,
+    kontonummer: rad.kontonummer,
+    kontobeskrivning: rad.kontobeskrivning,
+    debet: rad.debet,
+    kredit: rad.kredit,
+    transaktionsdatum: rad.transaktionsdatum,
+    transaktionskommentar: rad.transaktionskommentar ?? "",
+  }));
 }
