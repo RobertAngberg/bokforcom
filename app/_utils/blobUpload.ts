@@ -21,10 +21,12 @@ export type UploadOptions = {
   datum?: string; // Datum i format YYYY-MM-DD
 };
 
+const THREE_MB = 3 * 1024 * 1024;
+
 const ALLOWED_FILE_TYPES = {
-  "image/jpeg": { ext: "jpg", maxSize: 1024 * 1024 }, // 1MB
-  "image/png": { ext: "png", maxSize: 1024 * 1024 }, // 1MB
-  "application/pdf": { ext: "pdf", maxSize: 1024 * 1024 }, // 1MB
+  "image/jpeg": { ext: "jpg", maxSize: THREE_MB },
+  "image/png": { ext: "png", maxSize: THREE_MB },
+  "application/pdf": { ext: "pdf", maxSize: THREE_MB },
 } as const;
 
 async function uploadBlob(file: File, options: UploadOptions = {}): Promise<UploadResult> {

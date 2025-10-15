@@ -245,7 +245,7 @@ export default function Foretagsprofil({ company }: ForetagsprofilProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/gif,image/webp"
+              accept="image/png,image/jpeg"
               className="hidden"
               onChange={onFileChange}
             />
@@ -268,9 +268,7 @@ export default function Foretagsprofil({ company }: ForetagsprofilProps) {
           </div>
         </div>
 
-        <p className="text-sm text-gray-400 mb-4">
-          PNG, JPG, GIF eller WebP. Max 1 MB. Loggan delas med faktura-flödet.
-        </p>
+        <p className="text-sm text-gray-400 mb-4">PNG eller JPG. Max 3 MB.</p>
 
         <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 flex items-center justify-center min-h-[160px]">
           {state.foretagsProfil.logo ? (

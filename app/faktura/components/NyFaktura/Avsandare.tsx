@@ -107,11 +107,11 @@ export default function Avsandare() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg"
               onChange={hanteraLoggaUpload}
               className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-cyan-600 file:text-white hover:file:bg-cyan-700"
             />
-            <p className="text-sm text-gray-500 mt-1">PNG, JPG, GIF eller WebP. Max 5MB.</p>
+            <p className="text-sm text-gray-500 mt-1">PNG eller JPG. Max 3 MB.</p>
           </div>
         </div>
       </div>
