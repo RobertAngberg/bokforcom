@@ -20,6 +20,7 @@ export async function uppdateraForetagsprofilAdmin(
     const telefonnummer = (payload.telefonnummer || "").trim();
     const epost = (payload.epost || "").trim();
     const webbplats = (payload.webbplats || "").trim();
+    const logo = payload.logo || "";
 
     const client = await pool.connect();
     let updated: ForetagsProfil | null = null;
@@ -28,8 +29,8 @@ export async function uppdateraForetagsprofilAdmin(
       const result = await client.query<ForetagsProfil>(
         `INSERT INTO företagsprofil 
        (id, företagsnamn, adress, postnummer, stad, organisationsnummer, 
-        momsregistreringsnummer, telefonnummer, epost, webbplats) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        momsregistreringsnummer, telefonnummer, epost, webbplats, logo_url) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (id) 
        DO UPDATE SET 
          företagsnamn = EXCLUDED.företagsnamn,
@@ -40,8 +41,9 @@ export async function uppdateraForetagsprofilAdmin(
          momsregistreringsnummer = EXCLUDED.momsregistreringsnummer,
          telefonnummer = EXCLUDED.telefonnummer,
          epost = EXCLUDED.epost,
-         webbplats = EXCLUDED.webbplats
-       RETURNING företagsnamn as foretagsnamn, adress, postnummer, stad, organisationsnummer, momsregistreringsnummer, telefonnummer, epost, webbplats`,
+         webbplats = EXCLUDED.webbplats,
+         logo_url = EXCLUDED.logo_url
+       RETURNING företagsnamn as foretagsnamn, adress, postnummer, stad, organisationsnummer, momsregistreringsnummer, telefonnummer, epost, webbplats, logo_url as logo`,
         [
           userId,
           foretagsnamn,
@@ -53,6 +55,7 @@ export async function uppdateraForetagsprofilAdmin(
           telefonnummer,
           epost,
           webbplats,
+          logo || null,
         ]
       );
       updated = (result.rows[0] as ForetagsProfil | undefined) ?? null;

@@ -38,7 +38,7 @@ export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
         `SELECT 
         företagsnamn, adress, postnummer, stad, 
         organisationsnummer, momsregistreringsnummer, 
-        telefonnummer, epost, webbplats 
+        telefonnummer, epost, webbplats, logo_url 
        FROM företagsprofil WHERE id = $1`,
         [userId]
       );
@@ -57,6 +57,8 @@ export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
         telefonnummer: "",
         epost: "",
         webbplats: "",
+        logo: "",
+        logoWidth: 200,
       };
     }
 
@@ -70,6 +72,7 @@ export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
       telefonnummer?: string;
       epost?: string;
       webbplats?: string;
+      logo_url?: string | null;
     }
     const dbRow = res.rows[0] as DbRow;
     return {
@@ -82,6 +85,8 @@ export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
       telefonnummer: dbRow.telefonnummer || "",
       epost: dbRow.epost || "",
       webbplats: dbRow.webbplats || "",
+      logo: dbRow.logo_url || "",
+      logoWidth: 200,
     };
   } catch (error) {
     console.error("Failed to fetch företagsprofil:", error);

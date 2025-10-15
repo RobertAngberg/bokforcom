@@ -674,16 +674,39 @@ export function useFaktura() {
   const handleLogoUpload = useCallback(
     async (file: File) => {
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const result = await uploadLogoAction(formData);
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        const result = await uploadLogoAction(uploadFormData);
 
-        if (result.success && result.url) {
-          setFormData({ logo: result.url });
-          showSuccess("Logotype uppladdad");
-        } else {
+        if (!result.success || !result.url) {
           showError(result.error || "Fel vid uppladdning");
+          return;
         }
+
+        const nästaFormState = { ...formDataRef.current, logo: result.url };
+        setFormData({ logo: result.url });
+
+        const saveResult = await sparaForetagsprofilAction({
+          företagsnamn: nästaFormState.företagsnamn,
+          adress: nästaFormState.adress,
+          postnummer: nästaFormState.postnummer,
+          stad: nästaFormState.stad,
+          organisationsnummer: nästaFormState.organisationsnummer,
+          momsregistreringsnummer: nästaFormState.momsregistreringsnummer,
+          telefonnummer: nästaFormState.telefonnummer,
+          epost: nästaFormState.epost,
+          bankinfo: nästaFormState.bankinfo,
+          webbplats: nästaFormState.webbplats,
+          logo: nästaFormState.logo,
+          logoWidth: nästaFormState.logoWidth,
+        });
+
+        if (!saveResult.success) {
+          showError("Logotypen kunde inte sparas permanent");
+          return;
+        }
+
+        showSuccess("Logotyp uppladdad och sparad");
       } catch (error) {
         console.error("Upload error:", error);
         showError("Fel vid uppladdning av logotype");

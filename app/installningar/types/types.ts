@@ -11,6 +11,8 @@ export interface ForetagsProfil {
   telefonnummer: string;
   epost: string;
   webbplats: string;
+  logo: string;
+  logoWidth?: number | null;
 }
 
 export interface MeddelandeTillstand {
@@ -67,12 +69,14 @@ export interface AdminCompanySection {
     isEditingCompany: boolean;
     isSavingCompany: boolean;
     companyMessage: MeddelandeTillstand | null;
+    isUploadingLogo: boolean;
   };
   actions: {
     setForetagsProfil: (profil: ForetagsProfil) => void;
     setIsEditingCompany: (editing: boolean) => void;
     setIsSavingCompany: (saving: boolean) => void;
     setCompanyMessage: (message: MeddelandeTillstand | null) => void;
+    setIsUploadingLogo: (uploading: boolean) => void;
   };
   handlers: {
     onEditCompany: () => void;
@@ -80,6 +84,8 @@ export interface AdminCompanySection {
     onSaveCompany: () => Promise<void>;
     onChangeCompany: (field: keyof ForetagsProfil, value: string) => void;
     clearCompanyMessage: () => void;
+    onUploadLogo: (file: File) => Promise<void>;
+    onRemoveLogo: () => Promise<void>;
   };
 }
 
@@ -124,4 +130,6 @@ export const TOM_FORETAG: ForetagsProfil = {
   telefonnummer: "",
   epost: "",
   webbplats: "",
+  logo: "",
+  logoWidth: 200,
 };

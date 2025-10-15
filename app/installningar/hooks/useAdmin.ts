@@ -5,6 +5,7 @@ import { signOut } from "../../_lib/auth-client";
 import { uppdateraAnvandarInfo } from "../actions/anvandarprofilActions";
 import { uppdateraForetagsprofilAdmin } from "../actions/foretagsprofilActions";
 import { raderaForetag } from "../actions/farozonActions";
+import { uploadLogoAction } from "../../faktura/actions/foretagActions";
 import { TOM_FORETAG } from "../types/types";
 import type {
   AnvandarInfo,
@@ -32,6 +33,7 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<MeddelandeTillstand | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Derive company profile from foretagsInfo
   const foretagsProfil: ForetagsProfil = foretagsInfo || TOM_FORETAG;
@@ -103,23 +105,38 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
     setCompanyMessage(null);
   };
 
-  const onSaveCompany = async () => {
-    setIsSavingCompany(true);
+  const persistCompanyProfile = async (profil: ForetagsProfil) => {
     try {
-      const result = await uppdateraForetagsprofilAdmin({ ...localForetagsProfil });
+      const result = await uppdateraForetagsprofilAdmin({ ...profil });
       if (result.success) {
-        setForetagsInfo(localForetagsProfil);
-        setIsEditingCompany(false);
-        setCompanyMessage({ type: "success", text: "Foretagsprofil uppdaterad!" });
-      } else {
-        setCompanyMessage({
-          type: "error",
-          text: result.error || "Kunde inte uppdatera foretagsprofil",
-        });
+        const uppdaterad = {
+          ...profil,
+          ...(result.data ?? {}),
+          logoWidth: profil.logoWidth ?? result.data?.logoWidth ?? 200,
+        };
+        setForetagsInfo(uppdaterad);
+        return { success: true as const, data: uppdaterad };
       }
+      setCompanyMessage({
+        type: "error",
+        text: result.error || "Kunde inte uppdatera företagsprofil",
+      });
+      return { success: false as const, data: null };
     } catch (error) {
       console.error("Error updating company profile:", error);
       setCompanyMessage({ type: "error", text: "Ett fel uppstod vid uppdatering" });
+      return { success: false as const, data: null };
+    }
+  };
+
+  const onSaveCompany = async () => {
+    setIsSavingCompany(true);
+    try {
+      const result = await persistCompanyProfile({ ...localForetagsProfil });
+      if (result.success) {
+        setIsEditingCompany(false);
+        setCompanyMessage({ type: "success", text: "Företagsprofil uppdaterad!" });
+      }
     } finally {
       setIsSavingCompany(false);
     }
@@ -157,6 +174,74 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
   };
 
   const clearCompanyMessage = () => setCompanyMessage(null);
+
+  const onUploadLogo = async (file: File) => {
+    setIsUploadingLogo(true);
+    setCompanyMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadResult = await uploadLogoAction(formData);
+      if (!uploadResult.success || !uploadResult.url) {
+        setCompanyMessage({
+          type: "error",
+          text: uploadResult.error || "Kunde inte ladda upp logotyp",
+        });
+        return;
+      }
+
+      const persistedProfil = foretagsInfo || TOM_FORETAG;
+      const uppdateradProfil: ForetagsProfil = {
+        ...persistedProfil,
+        logo: uploadResult.url,
+        logoWidth: persistedProfil.logoWidth ?? 200,
+      };
+
+      const success = await persistCompanyProfile(uppdateradProfil);
+      if (!success.success || !success.data) {
+        return;
+      }
+
+      setLocalForetagsProfil((prev) => ({ ...prev, logo: uploadResult.url ?? "" }));
+      setCompanyMessage({ type: "success", text: "Logotyp uppdaterad!" });
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      setCompanyMessage({ type: "error", text: "Ett fel uppstod vid uppladdning" });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const onRemoveLogo = async () => {
+    if (!foretagsInfo?.logo) {
+      setCompanyMessage({ type: "error", text: "Ingen logotyp att ta bort" });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    setCompanyMessage(null);
+    try {
+      const persistedProfil = foretagsInfo || TOM_FORETAG;
+      const uppdateradProfil: ForetagsProfil = {
+        ...persistedProfil,
+        logo: "",
+      };
+
+      const success = await persistCompanyProfile(uppdateradProfil);
+      if (!success.success) {
+        return;
+      }
+
+      setLocalForetagsProfil((prev) => ({ ...prev, logo: "" }));
+      setCompanyMessage({ type: "success", text: "Logotyp borttagen" });
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      setCompanyMessage({ type: "error", text: "Ett fel uppstod vid borttagning" });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   // Danger zone handlers
   const onConfirmDelete = () => {
@@ -217,12 +302,14 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
         isEditingCompany,
         isSavingCompany,
         companyMessage,
+        isUploadingLogo,
       },
       actions: {
         setForetagsProfil: setLocalForetagsProfil,
         setIsEditingCompany,
         setIsSavingCompany,
         setCompanyMessage,
+        setIsUploadingLogo,
       },
       handlers: {
         onEditCompany,
@@ -230,6 +317,8 @@ export function useAdmin({ initialUser, initialForetagsInfo }: UseAdminProps) {
         onSaveCompany,
         onChangeCompany,
         clearCompanyMessage,
+        onUploadLogo,
+        onRemoveLogo,
       },
     },
 
