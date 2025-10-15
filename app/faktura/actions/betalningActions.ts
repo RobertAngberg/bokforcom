@@ -138,8 +138,6 @@ export async function registreraRotRutBetalning(
       return { success: false, error: "Faktura hittades inte" };
     }
 
-    const faktura = fakturaResult.rows[0];
-
     // Kolla om fakturan har ROT/RUT-artiklar
     const artiklarResult = await pool.query(
       "SELECT * FROM faktura_artiklar WHERE faktura_id = $1 AND rot_rut_typ IS NOT NULL",
@@ -165,42 +163,12 @@ export async function registreraRotRutBetalning(
 
     const today = new Date();
     const todayISO = dateToYyyyMmDd(today);
-    let transaktionsId: number | undefined;
+    await pool.query(
+      'UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3 AND "user_id" = $4',
+      ["Betald", todayISO, fakturaId, userId]
+    );
 
-    try {
-      const { transaktionsId: createdId } = await createTransaktion({
-        datum: today,
-        beskrivning: `ROT/RUT-betalning faktura ${faktura.fakturanummer}`,
-        kommentar: `ROT/RUT-utbetalning från Skatteverket för faktura ${faktura.fakturanummer}`,
-        userId,
-        poster: [
-          { kontonummer: "1930", debet: rotRutBelopp, kredit: 0 },
-          { kontonummer: "1513", debet: 0, kredit: rotRutBelopp },
-        ],
-      });
-
-      transaktionsId = createdId;
-
-      await pool.query(
-        'UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3 AND "user_id" = $4',
-        ["Betald", todayISO, fakturaId, userId]
-      );
-
-      return { success: true };
-    } catch (error) {
-      if (transaktionsId !== undefined) {
-        try {
-          await pool.query('DELETE FROM transaktioner WHERE id = $1 AND "user_id" = $2', [
-            transaktionsId,
-            userId,
-          ]);
-        } catch (cleanupError) {
-          console.error("⚠️ Kunde inte rulla tillbaka ROT/RUT-transaktion:", cleanupError);
-        }
-      }
-
-      throw error;
-    }
+    return { success: true };
   } catch (error) {
     console.error("Fel vid registrering av ROT/RUT-betalning:", error);
     return { success: false, error: "Kunde inte registrera ROT/RUT-betalning" };

@@ -33,7 +33,7 @@ export default function ArtikelForm({
         disabled={disabled}
       />
       <TextFalt
-        label="Pris per enhet"
+        label="Pris per enhet exkl. moms"
         name="prisPerEnhet"
         value={prisPerEnhet.toString()}
         onChange={(e) => onChangePrisPerEnhet(parseFloat(e.target.value))}

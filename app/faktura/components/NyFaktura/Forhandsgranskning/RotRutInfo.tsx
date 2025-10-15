@@ -12,7 +12,16 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
     rotRutTotalTimmar,
     rotRutGenomsnittsPris,
     rotRutAvdragProcent,
+    rotRutTjänsterSumExkl,
   } = forhandsgranskningCalcs;
+
+  const arbetskostnadExMoms = harROTRUTArtiklar
+    ? rotRutTjänsterSumExkl
+    : parseNumberSafe(formData.arbetskostnadExMoms);
+  const arbetskostnadDisplay =
+    arbetskostnadExMoms && arbetskostnadExMoms > 0 ? formatCurrency(arbetskostnadExMoms) : "—";
+  const beraknatAvdragDisplay =
+    beraknatAvdrag > 0 || harROTRUTArtiklar ? formatCurrency(beraknatAvdrag) : "—";
 
   if (!shouldShowRotRut) {
     return null;
@@ -24,30 +33,25 @@ export default function RotRutInfo({ formData, beraknatAvdrag = 0 }: RotRutInfoP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           {/* Visa information från ROT/RUT-artiklar */}
-          {harROTRUTArtiklar ? (
+          <div>
+            <span className="font-semibold">Arbetskostnad exkl. moms:</span> {arbetskostnadDisplay}
+          </div>
+          {harROTRUTArtiklar && (
             <>
               <div>
                 <span className="font-semibold">Antal timmar:</span> {rotRutTotalTimmar} h
               </div>
               <div>
-                <span className="font-semibold">Genomsnittligt pris per timme exkl. moms:</span>{" "}
+                <span className="font-semibold">Pris per enhet:</span>{" "}
                 {formatCurrency(rotRutGenomsnittsPris)}
               </div>
             </>
-          ) : (
-            <div>
-              <span className="font-semibold">Arbetskostnad exkl. moms:</span>{" "}
-              {formData.arbetskostnadExMoms
-                ? formatCurrency(parseNumberSafe(formData.arbetskostnadExMoms))
-                : "—"}
-            </div>
           )}
           <div>
             <span className="font-semibold">Avdrag (%):</span> {rotRutAvdragProcent}
           </div>
           <div>
-            <span className="font-semibold">Beräknat avdrag:</span>{" "}
-            {beraknatAvdrag > 0 ? formatCurrency(beraknatAvdrag) : "—"}
+            <span className="font-semibold">Beräknat avdrag:</span> {beraknatAvdragDisplay}
           </div>
         </div>
         <div>

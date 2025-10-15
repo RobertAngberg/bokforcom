@@ -13,8 +13,7 @@ import { NyFakturaProps } from "../../types/types";
 import TillbakaPil from "../../../_components/TillbakaPil";
 
 export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
-  const { showPreview, openPreview, closePreview, reloadFaktura, isLoadingFaktura, fakturaTitle } =
-    useFaktura();
+  const { showPreview, openPreview, closePreview, isLoadingFaktura, fakturaTitle } = useFaktura();
 
   const titleContent = isLoadingFaktura ? (
     <span className="text-blue-400">🔄 Laddar faktura...</span>
@@ -48,7 +47,7 @@ export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
       </AnimeradFlik>
 
       <AnimeradFlik title="Alternativ" icon="⚙️">
-        <Alternativ onReload={reloadFaktura} onPreview={openPreview} />
+        <Alternativ onPreview={openPreview} />
       </AnimeradFlik>
 
       <div id="print-area" className="hidden print:block">

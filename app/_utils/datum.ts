@@ -23,15 +23,22 @@ export function dateToYyyyMmDd(date: Date | null): string {
 }
 
 // Säker konvertering från sträng till Date med null-hantering
-export function stringTillDate(dateString: string | null | undefined): Date | null {
-  if (!dateString) return null;
-  const date = yyyyMmDdToDate(dateString);
+export function stringTillDate(dateInput: string | Date | null | undefined): Date | null {
+  if (!dateInput) return null;
+
+  if (dateInput instanceof Date) {
+    return Number.isNaN(dateInput.getTime()) ? null : dateInput;
+  }
+
+  if (typeof dateInput !== "string") return null;
+
+  const date = yyyyMmDdToDate(dateInput);
   return date && !isNaN(date.getTime()) ? date : null;
 }
 
 // Helper för DatePicker - konverterar sträng till Date eller null
-export function datePickerValue(dateString: string | null | undefined): Date | null {
-  return dateString ? stringTillDate(dateString) : null;
+export function datePickerValue(dateInput: string | Date | null | undefined): Date | null {
+  return dateInput ? stringTillDate(dateInput) : null;
 }
 
 // Helper för DatePicker onChange - konverterar Date till sträng

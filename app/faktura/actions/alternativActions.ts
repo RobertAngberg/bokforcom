@@ -6,10 +6,7 @@ import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
 } from "../../_utils/transactions";
-import {
-  registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
-  registreraRotRutBetalning as registreraRotRutBetalningBase,
-} from "./betalningActions";
+import { registreraKundfakturaBetalning as registreraKundfakturaBetalningBase } from "./betalningActions";
 import type { BokförFakturaData, TransaktionsPost } from "../types/types";
 import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
 
@@ -52,38 +49,6 @@ export async function registreraKundfakturaBetalning(
   kontoklass: string
 ): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
   return registreraKundfakturaBetalningBase(fakturaId, betalningsbelopp, kontoklass);
-}
-
-export async function uppdateraRotRutStatus(
-  fakturaId: number,
-  status: "ej_inskickad" | "väntar" | "godkänd"
-) {
-  const { userId } = await ensureSession();
-  const client = await pool.connect();
-
-  try {
-    const result = await client.query(
-      `UPDATE fakturor SET rot_rut_status = $1 WHERE id = $2 AND "user_id" = $3`,
-      [status, fakturaId, userId]
-    );
-
-    if (result.rowCount === 0) {
-      return { success: false, error: "Faktura hittades inte" };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Fel vid uppdatering av ROT/RUT status:", error);
-    return { success: false, error: "Kunde inte uppdatera status" };
-  } finally {
-    client.release();
-  }
-}
-
-export async function registreraRotRutBetalning(
-  fakturaId: number
-): Promise<{ success: boolean; error?: string }> {
-  return registreraRotRutBetalningBase(fakturaId);
 }
 
 export async function bokforFaktura(data: BokförFakturaData) {

@@ -7,7 +7,6 @@ import {
   hamtaFakturaStatus,
   bokforFaktura,
   hamtaBokforingsmetod,
-  uppdateraRotRutStatus,
 } from "../actions/alternativActions";
 import { laddaNerHUSFil } from "../utils/husFilGenerator";
 import { BokforingsPost, BokföringsData } from "../types/types";
@@ -82,7 +81,6 @@ function validateBokföringsData(data: BokföringsData): { isValid: boolean; err
 export function useAlternativ() {
   const { formData, updateFormField } = useFaktura();
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
-  const [rotRutModalOpen, setRotRutModalOpen] = useState(false);
   const [sparaLoading, setSparaLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
   const [bokföringsmetod, setBokföringsmetod] = useState<string>("fakturametoden");
@@ -94,7 +92,11 @@ export function useAlternativ() {
 
   // Hämta användarens bokföringsmetod när komponenten laddas
   useEffect(() => {
-    hamtaBokforingsmetod().then(setBokföringsmetod);
+    hamtaBokforingsmetod().then((metod) => {
+      const normalized =
+        (metod || "").toLowerCase() === "kontantmetoden" ? "kontantmetoden" : "fakturametoden";
+      setBokföringsmetod(normalized);
+    });
   }, []);
 
   // Hämta fakturaSTATUS när ID ändras
@@ -108,7 +110,6 @@ export function useAlternativ() {
 
   const hanteraSpara = async () => {
     console.log("🔍 hanteraSpara kallad!", {
-      kanSpara,
       harKund,
       harArtiklar,
       kundId: formData.kundId,
@@ -153,7 +154,8 @@ export function useAlternativ() {
         window.dispatchEvent(new Event("reloadFakturor"));
       } else {
         console.log("❌ saveInvoice misslyckades:", res);
-        showToast("Kunde inte spara fakturan.", "error");
+        const errorMessage = (res as { error?: string }).error;
+        showToast(errorMessage || "Kunde inte spara fakturan.", "error");
       }
     } catch (error) {
       console.log("❌ Fel i hanteraSpara:", error);
@@ -169,9 +171,7 @@ export function useAlternativ() {
 
     setBokförLoading(true);
     try {
-      // Om fakturan inte är sparad, spara den först
       if (!formData.id) {
-        // SPARA FÖRST
         const fd = new FormData();
         try {
           fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
@@ -181,15 +181,12 @@ export function useAlternativ() {
           const res = await saveInvoice(fd);
 
           if (res.success && "id" in res && res.id) {
-            // UPPDATERA FORMDATA MED NYTT ID!
             updateFormField("id", res.id.toString());
-            // Trigga reload event så Fakturor.tsx uppdaterar sin lista
             window.dispatchEvent(new Event("reloadFakturor"));
-
-            // NU BOKFÖR AUTOMATISKT
-            await genomförBokföring(res.id.toString());
+            setBokförModalOpen(true);
           } else {
-            showToast("Kunde inte spara fakturan innan bokföring.", "error");
+            const errorMessage = (res as { error?: string }).error;
+            showToast(errorMessage || "Kunde inte spara fakturan innan bokföring.", "error");
             return;
           }
         } catch {
@@ -197,7 +194,6 @@ export function useAlternativ() {
           return;
         }
       } else {
-        // Fakturan är redan sparad, öppna bara modalen
         setBokförModalOpen(true);
       }
     } finally {
@@ -205,301 +201,34 @@ export function useAlternativ() {
     }
   };
 
-  // Hjälpfunktion för att genomföra bokföringen
-  const genomförBokföring = async (fakturaId: string) => {
-    try {
-      // Hämta bokföringsmetod
-      const bokföringsmetod = await hamtaBokforingsmetod();
-      const ärKontantmetod = bokföringsmetod === "kontantmetoden";
-
-      // Beräkna totalt belopp
-      const totalInkMoms =
-        formData.artiklar?.reduce(
-          (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet * (1 + artikel.moms / 100),
-          0
-        ) || 0;
-
-      // Skapa bokföringsposter (samma logik som i modalen)
-      const poster: BokforingsPost[] = [];
-
-      // Avgör om det är vara eller tjänst
-      const varor = formData.artiklar?.filter((a) => a.typ === "vara").length || 0;
-      const tjänster = formData.artiklar?.filter((a) => a.typ === "tjänst").length || 0;
-
-      const intäktskonto = varor > tjänster ? "3001" : "3011";
-      const kontoNamn = varor > tjänster ? "Försäljning varor" : "Försäljning tjänster";
-
-      // Beräkna belopp
-      const totalExMoms =
-        formData.artiklar?.reduce(
-          (sum, artikel) => sum + artikel.antal * artikel.prisPerEnhet,
-          0
-        ) || 0;
-
-      const totalMoms =
-        formData.artiklar?.reduce(
-          (sum, artikel) => sum + (artikel.antal * artikel.prisPerEnhet * artikel.moms) / 100,
-          0
-        ) || 0;
-
-      // Kolla om det finns ROT/RUT-artiklar
-      const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
-      const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
-      const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
-
-      // 1. Kundfordran eller Bank/Kassa (kundens del)
-      const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
-      poster.push({
-        konto: skuld_tillgångskonto,
-        kontoNamn: ärKontantmetod ? "Bank/Kassa" : "Kundfordringar",
-        debet: kundBelopp,
-        kredit: 0,
-        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
-      });
-
-      // 1b. ROT/RUT-fordran (SKV:s del) - om det finns ROT/RUT
-      if (harRotRutArtiklar && rotRutBelopp > 0) {
-        poster.push({
-          konto: "1513",
-          kontoNamn: "Kundfordringar – delad faktura",
-          debet: rotRutBelopp,
-          kredit: 0,
-          beskrivning: `ROT/RUT-del faktura ${formData.fakturanummer}`,
-        });
-      }
-
-      // 2. Intäkt
-      poster.push({
-        konto: intäktskonto,
-        kontoNamn: kontoNamn,
-        debet: 0,
-        kredit: totalExMoms,
-        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
-      });
-
-      // 3. Moms
-      if (totalMoms > 0) {
-        poster.push({
-          konto: "2610",
-          kontoNamn: "Utgående moms 25%",
-          debet: 0,
-          kredit: totalMoms,
-          beskrivning: `Moms faktura ${formData.fakturanummer}`,
-        });
-      }
-
-      // Genomför bokföringen
-      const result = await bokforFaktura({
-        fakturaId: parseInt(fakturaId),
-        fakturanummer: formData.fakturanummer,
-        kundnamn: formData.kundnamn,
-        totaltBelopp: totalInkMoms,
-        poster: poster,
-        kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
-      });
-
-      if (result.success) {
-        const message = "message" in result ? result.message : "Bokföring genomförd";
-        showToast(`Fakturan har sparats och bokförts!\n\n${message}`, "success");
-        // Uppdatera fakturasstatus
-        const status = await hamtaFakturaStatus(parseInt(fakturaId));
-        setFakturaStatus(status);
-      } else {
-        const error = "error" in result ? result.error : "Okänt fel";
-        showToast(`Bokföringsfel: ${error}`, "error");
-      }
-    } catch (error) {
-      console.error("Fel vid automatisk bokföring:", error);
-      showToast("Fel vid automatisk bokföring", "error");
-    }
-  };
-
-  const hanteraHUSFil = () => {
-    // Kolla om ROT/RUT finns antingen i formData eller i artiklar
-    const harROTRUTArtiklar =
-      formData.artiklar && formData.artiklar.some((artikel) => artikel.rotRutTyp);
-    const rotRutTyp =
-      formData.rotRutTyp ||
-      (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
-
-    if (!formData.rotRutAktiverat && !harROTRUTArtiklar) {
-      console.log("🔍 Ingen ROT/RUT-data hittad");
-      return;
-    }
-    if (!rotRutTyp) {
-      console.log("🔍 Ingen ROT/RUT-typ hittad");
-      return;
-    }
-
-    // Hämta personnummer från formData eller artiklar
-    const personnummer =
-      formData.personnummer ||
-      (formData.artiklar &&
-        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer);
-
-    // Hämta ROT/RUT-kategori från formData eller artiklar
-    const rotRutKategori =
-      formData.rotRutKategori ||
-      (formData.artiklar &&
-        formData.artiklar.find((artikel) => artikel.rotRutKategori)?.rotRutKategori) ||
-      "Städa";
-
-    // Validera att nödvändiga fält finns
-    if (!formData.fakturanummer || !personnummer) {
-      console.log("🔍 HUS-fil validering misslyckades:", {
-        fakturanummer: formData.fakturanummer,
-        personnummer: personnummer,
-        rotRutAktiverat: formData.rotRutAktiverat,
-        rotRutTyp: rotRutTyp,
-        harROTRUTArtiklar: harROTRUTArtiklar,
-      });
-      showToast("Fakturanummer och personnummer krävs för HUS-fil", "error");
-      return;
-    }
-
-    // Beräkna total kostnad för alla artiklar
-    const totalInkMoms =
-      formData.artiklar?.reduce((sum, artikel) => {
-        return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
-      }, 0) ?? 0;
-
-    // Beräkna kostnad för endast ROT/RUT-tjänster (för avdragsberäkning)
-    const rotRutTjänsterInkMoms =
-      formData.artiklar?.reduce((sum, artikel) => {
-        // Bara tjänster med ROT/RUT, inte material
-        console.log("Tjänst-check:", {
-          beskrivning: artikel.beskrivning,
-          typ: artikel.typ,
-          rotRutTyp: artikel.rotRutTyp,
-          rotRutMaterial: artikel.rotRutMaterial,
-          matchesCondition:
-            artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial,
-        });
-        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
-          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
-        }
-        return sum;
-      }, 0) ?? 0;
-
-    // Beräkna material kostnad separat
-    const rotRutMaterialKostnad =
-      formData.artiklar?.reduce((sum, artikel) => {
-        console.log("Material-check:", {
-          beskrivning: artikel.beskrivning,
-          rotRutMaterial: artikel.rotRutMaterial,
-          matchesCondition: !!artikel.rotRutMaterial,
-        });
-        if (artikel.rotRutMaterial) {
-          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
-        }
-        return sum;
-      }, 0) ?? 0;
-
-    // Beräkna totala timmar från ROT/RUT-tjänster (inte material)
-    const totalTimmar =
-      formData.artiklar?.reduce((sum, artikel) => {
-        // Om det är en tjänst med ROT/RUT (inte material), använd antal som timmar
-        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
-          return sum + artikel.antal;
-        }
-        return sum;
-      }, 0) ?? 0;
-
-    const begartBelopp = Math.round(rotRutTjänsterInkMoms * 0.5); // 50% avdrag bara på tjänster
-
-    laddaNerHUSFil({
-      fakturanummer: formData.fakturanummer,
-      kundPersonnummer: personnummer!,
-      betalningsdatum: dateToYyyyMmDd(new Date()),
-      prisForArbete: Math.round(rotRutTjänsterInkMoms), // Bara tjänster
-      betaltBelopp: Math.round(totalInkMoms), // Total kostnad
-      begartBelopp: begartBelopp, // Avdrag bara på tjänster
-      rotRutTyp: rotRutTyp,
-      rotRutKategori: rotRutKategori,
-      materialKostnad: Math.round(rotRutMaterialKostnad), // Material separat
-      fastighetsbeteckning: formData.fastighetsbeteckning,
-      lägenhetsNummer: formData.brfLagenhetsnummer,
-      brfOrgNummer: formData.brfOrganisationsnummer,
-      antalTimmar: totalTimmar, // Skicka faktiska timmar
-    });
-  };
-
-  const hanteraRotRutStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!formData.id) return;
-
-    const nyStatus = e.target.value as "ej_inskickad" | "väntar" | "godkänd";
-
-    const result = await uppdateraRotRutStatus(parseInt(formData.id), nyStatus);
-    if (result.success) {
-      setFakturaStatus((prev) => ({ ...prev, rot_rut_status: nyStatus }));
-    } else {
-      showToast("Kunde inte uppdatera status", "error");
-    }
-  };
-
-  const hanteraRotRutBetalning = async () => {
-    if (!formData.id) return;
-    setRotRutModalOpen(true);
-  };
-
-  const hanteraRotRutSuccess = (nyStatus: { rot_rut_status: string; status_betalning: string }) => {
-    setFakturaStatus((prev) => ({ ...prev, ...nyStatus }));
-  };
-
   // Beräknade värden
   const harKund = !!(formData.kundId && formData.kundId.trim() !== "");
   const artiklarLength = formData.artiklar?.length ?? 0;
   const harArtiklar = artiklarLength > 0;
-  const kanSpara = harKund && harArtiklar;
   const ärFakturanBetald = fakturaStatus.status_betalning === "Betald";
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
   const ärNyFaktura = !formData.id;
-  const doljBokförKnapp = ärKontantmetod && ärNyFaktura;
+  const doljBokförKnapp = false;
 
   // Knapptexter
-  const sparaKnappText = sparaLoading ? "💾 Sparar..." : "💾 Spara faktura";
+  const sparaKnappText = sparaLoading ? "💾 Sparar..." : "💾 Spara";
+  const registerButtonLabel = (() => {
+    const normalized = (bokföringsmetod || "").toLowerCase();
+    return normalized === "kontantmetoden" ? "💰 Markera betald" : "📨 Markera skickad";
+  })();
   const bokförKnappText = bokförLoading
-    ? "📊 Sparar & Bokför..."
+    ? "⏳ Registrerar..."
     : ärFakturanBetald
       ? "✅ Redan betald"
-      : formData.id
-        ? "📊 Bokför"
-        : "📊 Spara & Bokför";
+      : registerButtonLabel;
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
-  const granskKnappText = "👁️ Granska";
-  const pdfKnappText = "📤 Spara PDF";
+  const granskKnappText = "👁️ Förhandsgranska";
+  const pdfKnappText = "📤 Ladda ner PDF";
 
   // ROT/RUT-relaterade beräkningar
-  const harROTRUTArtiklar =
-    formData.artiklar && formData.artiklar.some((artikel) => artikel.rotRutTyp);
-  const ärROTRUTFaktura = (formData.rotRutAktiverat && formData.rotRutTyp) || harROTRUTArtiklar;
-  const harPersonnummer =
-    (formData.personnummer && formData.personnummer.trim() !== "") ||
-    (formData.artiklar &&
-      formData.artiklar.some(
-        (artikel) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
-      ));
-
-  const rotRutTyp =
-    formData.rotRutTyp ||
-    (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
-
-  const husFilKnappText = !harPersonnummer
-    ? "📄 Personnummer saknas"
-    : !formData.fakturanummer
-      ? "📄 Spara fakturan först"
-      : `📄 Ladda ner HUS-fil (${rotRutTyp})`;
-
-  const getDisabledReason = () => {
-    if (!harKund) return "Välj kund först";
-    if (!harArtiklar) return "Lägg till artiklar först";
-    return "";
-  };
-
   return {
     // State
     bokförModalOpen,
-    rotRutModalOpen,
     sparaLoading,
     bokförLoading,
     bokföringsmetod,
@@ -507,9 +236,6 @@ export function useAlternativ() {
     formData,
 
     // Computed values
-    harKund,
-    harArtiklar,
-    kanSpara,
     ärFakturanBetald,
     ärKontantmetod,
     ärNyFaktura,
@@ -519,22 +245,11 @@ export function useAlternativ() {
     återställKnappText,
     granskKnappText,
     pdfKnappText,
-    harROTRUTArtiklar,
-    ärROTRUTFaktura,
-    harPersonnummer,
-    rotRutTyp,
-    husFilKnappText,
 
     // Actions
     setBokförModalOpen,
-    setRotRutModalOpen,
     hanteraSpara,
     hanteraBokför,
-    hanteraHUSFil,
-    hanteraRotRutStatusChange,
-    hanteraRotRutBetalning,
-    hanteraRotRutSuccess,
-    getDisabledReason,
   };
 }
 
@@ -553,7 +268,11 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     if (isOpen && formData.id !== lastLoadedId) {
       setStatusLoaded(false);
       setLastLoadedId(formData.id);
-      hamtaBokforingsmetod().then(setBokföringsmetod);
+      hamtaBokforingsmetod().then((metod) => {
+        const normalized =
+          (metod || "").toLowerCase() === "kontantmetoden" ? "kontantmetoden" : "fakturametoden";
+        setBokföringsmetod(normalized);
+      });
 
       // Hämta fakturaSTATUS om ID finns
       if (formData.id) {
@@ -583,6 +302,27 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
   const ärKontantmetod = userSettings.bokföringsmetod === "kontantmetoden";
 
+  const harROTRUTArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) ?? false;
+  const rotRutTyp =
+    formData.rotRutTyp ||
+    (formData.artiklar && formData.artiklar.find((artikel) => artikel.rotRutTyp)?.rotRutTyp);
+  const visaHusFilKnapp = (formData.rotRutAktiverat && !!rotRutTyp) || harROTRUTArtiklar;
+  const harPersonnummer =
+    (formData.personnummer && formData.personnummer.trim() !== "") ||
+    (formData.artiklar &&
+      formData.artiklar.some(
+        (artikel) => artikel.rotRutPersonnummer && artikel.rotRutPersonnummer.trim() !== ""
+      ));
+  const husFilDisabled = !harPersonnummer || !formData.fakturanummer;
+  const husFilDisabledInfo = !visaHusFilKnapp
+    ? null
+    : !harPersonnummer
+      ? "Personnummer saknas för ROT/RUT-fil"
+      : !formData.fakturanummer
+        ? "Spara fakturan först"
+        : null;
+  const husFilKnappText = "Ladda ner ROT/RUT-fil XML";
+
   // Analysera fakturan och föreslå bokföringsposter
   const analyseraBokföring = (): { poster: BokforingsPost[]; varningar: string[] } => {
     const varningar: string[] = [];
@@ -609,6 +349,26 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
     if (totalInkMoms <= 0) {
       varningar.push("Fakturans totalbelopp är 0 eller negativt");
+      return { poster, varningar };
+    }
+
+    const harVaror = formData.artiklar.some((artikel) => artikel.typ === "vara");
+    const harTjänster = formData.artiklar.some((artikel) => artikel.typ === "tjänst");
+    const harOkändTyp = formData.artiklar.some(
+      (artikel) => artikel.typ !== "vara" && artikel.typ !== "tjänst"
+    );
+
+    if (harOkändTyp) {
+      varningar.push(
+        "⚠️ Minst en rad saknar giltig typ (vara/tjänst). Komplettera innan du bokför fakturan."
+      );
+      return { poster, varningar };
+    }
+
+    if (ärKontantmetod && harVaror && harTjänster) {
+      varningar.push(
+        "⚠️ Fakturan innehåller både varor och tjänster. Dela upp den i separata fakturor innan du markerar den som betald."
+      );
       return { poster, varningar };
     }
 
@@ -671,32 +431,43 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     }
 
     // NORMAL BOKFÖRING (om ej bokförd)
-    // Avgör om det är vara eller tjänst (majoriteten)
-    const varor = formData.artiklar.filter((a) => a.typ === "vara").length;
-    const tjänster = formData.artiklar.filter((a) => a.typ === "tjänst").length;
-
     let intäktskonto: string;
     let kontoNamn: string;
 
-    if (varor > tjänster) {
-      intäktskonto = "3001";
-      kontoNamn = "Försäljning varor";
-    } else if (tjänster > varor) {
-      intäktskonto = "3011";
-      kontoNamn = "Försäljning tjänster";
-    } else {
-      varningar.push("Oklart om det är varor eller tjänster - lika många av varje typ");
-      intäktskonto = "3011"; // Default till tjänster
-      kontoNamn = "Försäljning tjänster";
+    if (!harVaror && !harTjänster) {
+      varningar.push("Fakturan saknar typinformation för artiklarna och kan inte bokföras.");
+      return { poster, varningar };
     }
 
-    // Kolla om det finns ROT/RUT-artiklar
-    const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
-    const rotRutBelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : 0; // 50% av totalen
-    const kundBelopp = harRotRutArtiklar ? totalInkMoms - rotRutBelopp : totalInkMoms;
+    if (ärKontantmetod) {
+      if (harVaror) {
+        intäktskonto = "3001";
+        kontoNamn = "Försäljning varor inom Sverige, 25 % moms";
+      } else {
+        intäktskonto = "3011";
+        kontoNamn = "Försäljning tjänster inom Sverige, 25 % moms";
+      }
+    } else {
+      const antalVaror = formData.artiklar.filter((a) => a.typ === "vara").length;
+      const antalTjänster = formData.artiklar.filter((a) => a.typ === "tjänst").length;
+
+      if (antalVaror > antalTjänster) {
+        intäktskonto = "3001";
+        kontoNamn = "Försäljning varor";
+      } else if (antalTjänster > antalVaror) {
+        intäktskonto = "3011";
+        kontoNamn = "Försäljning tjänster";
+      } else {
+        varningar.push("Oklart om det är varor eller tjänster - lika många av varje typ");
+        intäktskonto = "3011"; // Default till tjänster
+        kontoNamn = "Försäljning tjänster";
+      }
+    }
+
+    const kundBelopp = totalInkMoms;
 
     // Skapa bokföringsposter
-    // 1. Kundfordran eller Bank/Kassa beroende på metod (kundens del)
+    // 1. Kundfordran eller Bank/Kassa beroende på metod
     const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
     const skuld_tillgångsnamn = ärKontantmetod ? "Bank/Kassa" : "Kundfordringar";
 
@@ -707,17 +478,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       kredit: 0,
       beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
     });
-
-    // 1b. ROT/RUT-fordran (SKV:s del) - om det finns ROT/RUT
-    if (harRotRutArtiklar && rotRutBelopp > 0) {
-      poster.push({
-        konto: "1513",
-        kontoNamn: "Kundfordringar – delad faktura",
-        debet: rotRutBelopp,
-        kredit: 0,
-        beskrivning: `ROT/RUT-del faktura ${formData.fakturanummer}`,
-      });
-    }
 
     // 2. Intäkt (kredit)
     poster.push({
@@ -740,6 +500,83 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     }
 
     return { poster, varningar };
+  };
+
+  const hanteraHUSFil = () => {
+    if (!visaHusFilKnapp || !rotRutTyp) {
+      console.log("🔍 Ingen ROT/RUT-data hittades för ROT/RUT-fil");
+      return;
+    }
+
+    const personnummer =
+      formData.personnummer ||
+      (formData.artiklar &&
+        formData.artiklar.find((artikel) => artikel.rotRutPersonnummer)?.rotRutPersonnummer);
+
+    const rotRutKategori =
+      formData.rotRutKategori ||
+      (formData.artiklar &&
+        formData.artiklar.find((artikel) => artikel.rotRutKategori)?.rotRutKategori) ||
+      "Städa";
+
+    if (!formData.fakturanummer || !personnummer) {
+      console.log("🔍 ROT/RUT-fil validering misslyckades:", {
+        fakturanummer: formData.fakturanummer,
+        personnummer: personnummer,
+        rotRutAktiverat: formData.rotRutAktiverat,
+        rotRutTyp: rotRutTyp,
+        harROTRUTArtiklar,
+      });
+      showToast("Fakturanummer och personnummer krävs för ROT/RUT-fil", "error");
+      return;
+    }
+
+    const totalInkMoms =
+      formData.artiklar?.reduce((sum, artikel) => {
+        return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+      }, 0) ?? 0;
+
+    const rotRutTjänsterInkMoms =
+      formData.artiklar?.reduce((sum, artikel) => {
+        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
+          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+        }
+        return sum;
+      }, 0) ?? 0;
+
+    const rotRutMaterialKostnad =
+      formData.artiklar?.reduce((sum, artikel) => {
+        if (artikel.rotRutMaterial) {
+          return sum + artikel.antal * artikel.prisPerEnhet * (1 + (artikel.moms || 0) / 100);
+        }
+        return sum;
+      }, 0) ?? 0;
+
+    const totalTimmar =
+      formData.artiklar?.reduce((sum, artikel) => {
+        if (artikel.typ === "tjänst" && artikel.rotRutTyp && !artikel.rotRutMaterial) {
+          return sum + artikel.antal;
+        }
+        return sum;
+      }, 0) ?? 0;
+
+    const begartBelopp = Math.round(rotRutTjänsterInkMoms * 0.5);
+
+    laddaNerHUSFil({
+      fakturanummer: formData.fakturanummer,
+      kundPersonnummer: personnummer!,
+      betalningsdatum: dateToYyyyMmDd(new Date()),
+      prisForArbete: Math.round(rotRutTjänsterInkMoms),
+      betaltBelopp: Math.round(totalInkMoms),
+      begartBelopp: begartBelopp,
+      rotRutTyp: rotRutTyp,
+      rotRutKategori: rotRutKategori,
+      materialKostnad: Math.round(rotRutMaterialKostnad),
+      fastighetsbeteckning: formData.fastighetsbeteckning,
+      lägenhetsNummer: formData.brfLagenhetsnummer,
+      brfOrgNummer: formData.brfOrganisationsnummer,
+      antalTimmar: totalTimmar,
+    });
   };
 
   const hanteraBokförModal = async () => {
@@ -863,14 +700,18 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     bokföringsmetod: userSettings.bokföringsmetod,
     fakturaStatus,
     statusLoaded,
-    ärKontantmetod,
     formData,
     poster,
     varningar,
     columns,
+    visaHusFilKnapp,
+    husFilKnappText,
+    husFilDisabled,
+    husFilDisabledInfo,
 
     // Actions
     hanteraBokför: hanteraBokförModal,
+    hanteraHUSFil,
     beräknaTotalbelopp,
   };
 }

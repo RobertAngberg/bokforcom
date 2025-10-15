@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { useFaktura } from "../../../hooks/useFaktura";
 import Modal from "../../../../_components/Modal";
-
-// Type for artikel based on usage in component
-type ArtikelType = {
-  beskrivning: string;
-  antal: number;
-  prisPerEnhet: number;
-  valuta: string;
-  moms: number;
-  typ: string;
-  rotRutMaterial?: boolean;
-  rotRutTyp?: string;
-};
+import type { Artikel, FavoritArtikel } from "../../../types/types";
 
 export default function ArtiklarList() {
-  const { formData, produkterTjansterState, taBortArtikel } = useFaktura();
+  const {
+    formData,
+    produkterTjansterState,
+    taBortArtikel,
+    startRedigeraArtikel,
+    setVisaArtikelModal,
+    setValtArtikel,
+  } = useFaktura();
   const { blinkIndex } = produkterTjansterState;
 
   // Modal state
@@ -39,14 +35,13 @@ export default function ArtiklarList() {
     setDeleteArtikelName("");
   };
 
-  const handleEdit = (artikel: ArtikelType, index: number) => {
-    // TODO: Implement edit functionality
-    console.log("Edit artikel not implemented yet", artikel, index);
+  const handleEdit = (artikel: Artikel, index: number) => {
+    startRedigeraArtikel(artikel, index);
   };
 
-  const handleShowArtikelDetaljer = (artikel: ArtikelType) => {
-    // TODO: Implement show artikel detaljer functionality
-    console.log("Show artikel detaljer not implemented yet", artikel);
+  const handleShowArtikelDetaljer = (artikel: Artikel) => {
+    setValtArtikel(artikel as FavoritArtikel);
+    setVisaArtikelModal(true);
   };
 
   const artiklar = formData.artiklar || [];
@@ -71,11 +66,6 @@ export default function ArtiklarList() {
             <div
               className="flex-1 cursor-pointer"
               onClick={() => {
-                console.log("🔍 ArtiklarList: Klick registrerat på artikel:", a);
-                console.log(
-                  "🔍 ArtiklarList: handleShowArtikelDetaljer finns?",
-                  !!handleShowArtikelDetaljer
-                );
                 handleShowArtikelDetaljer(a);
               }}
               title="Klicka för att visa detaljer"
@@ -117,6 +107,8 @@ export default function ArtiklarList() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         title="Bekräfta borttagning"
+        maxWidth="sm"
+        containerClassName="w-full"
       >
         <p className="text-gray-300 mb-4">
           Är du säker på att du vill ta bort artikeln &quot;{deleteArtikelName}&quot;?

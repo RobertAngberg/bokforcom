@@ -3,6 +3,7 @@
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import TextFalt from "../../../../_components/TextFalt";
+import { datePickerValue } from "../../../../_utils/datum";
 import { formatCurrency } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
@@ -23,6 +24,8 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
   } = useProdukterTjanster();
 
   const { antal, prisPerEnhet } = nyArtikel;
+  const startDateValue = datePickerValue(formData.rotRutStartdatum);
+  const endDateValue = datePickerValue(formData.rotRutSlutdatum);
 
   return (
     <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
@@ -66,7 +69,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                   )
                 )}
               </select>
-              {/* DEBUG: Checking if something renders here */}
+              {/* DEBUG: Checking if något renderas här */}
             </div>
           )}
 
@@ -105,15 +108,17 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 Startdatum för arbetet *
               </label>
               <DatePicker
-                selected={
-                  formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : new Date()
-                }
+                selected={startDateValue}
                 onChange={(date) => handleRotRutDateChange("rotRutStartdatum", date)}
+                selectsStart
+                startDate={startDateValue}
+                endDate={endDateValue}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 placeholderText="Välj startdatum"
                 disabled={disabled}
-                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                isClearable
+                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 required
@@ -123,16 +128,18 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
             <div>
               <label className="block text-white font-semibold mb-1">Slutdatum för arbetet *</label>
               <DatePicker
-                selected={formData.rotRutSlutdatum ? new Date(formData.rotRutSlutdatum) : null}
+                selected={endDateValue}
                 onChange={(date) => handleRotRutDateChange("rotRutSlutdatum", date)}
+                selectsEnd
+                startDate={startDateValue}
+                endDate={endDateValue}
+                minDate={startDateValue ?? undefined}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
                 placeholderText="Välj slutdatum"
-                minDate={
-                  formData.rotRutStartdatum ? new Date(formData.rotRutStartdatum) : undefined
-                }
                 disabled={disabled}
-                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                isClearable
+                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 required

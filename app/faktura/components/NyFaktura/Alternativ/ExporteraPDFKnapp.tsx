@@ -6,7 +6,7 @@ import { useForhandsgranskning } from "../../../hooks/useForhandsgranskning";
 
 export default function ExporteraPDFKnapp({
   disabled = false,
-  text = "📤 Spara PDF",
+  text = "📤 Ladda ner PDF",
   className = "",
 }: ExporteraPDFKnappProps) {
   const { handleExportPDF } = useForhandsgranskning();

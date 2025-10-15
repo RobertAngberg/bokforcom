@@ -3,6 +3,7 @@
 import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import TextFalt from "../../../_components/TextFalt";
+import Modal from "../../../_components/Modal";
 import { useFaktura } from "../../hooks/useFaktura";
 
 type Kund = {
@@ -21,6 +22,9 @@ export default function KundUppgifter() {
     handleCreateNewCustomer,
     handleDeleteCustomer,
     handleEditCustomer,
+    showDeleteKundModal,
+    setShowDeleteKundModal,
+    confirmDeleteKund,
   } = useFaktura();
 
   return (
@@ -142,6 +146,36 @@ export default function KundUppgifter() {
           </div>
         </>
       )}
+
+      <Modal
+        isOpen={showDeleteKundModal}
+        onClose={() => setShowDeleteKundModal(false)}
+        title="🗑️ Ta bort kund"
+        maxWidth="md"
+      >
+        <div className="space-y-6">
+          <p className="text-slate-200">
+            Är du säker på att du vill ta bort kunden
+            {formData.kundnamn ? ` "${formData.kundnamn}"` : ""}? Den här åtgärden går inte att
+            ångra.
+          </p>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowDeleteKundModal(false)}
+              className="px-4 py-2 rounded border border-slate-500 text-slate-200 hover:bg-slate-700 transition"
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={confirmDeleteKund}
+              className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
+            >
+              Ta bort kunden
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

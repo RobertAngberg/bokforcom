@@ -2,7 +2,6 @@
 
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
-import { Artikel } from "../../../types/types";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";
@@ -15,7 +14,6 @@ import { dateToYyyyMmDd } from "../../../../_utils/datum";
 export default function ProdukterTjanster() {
   const {
     // State från useFaktura
-    formData,
     nyArtikel,
     produkterTjansterState,
 
@@ -28,6 +26,9 @@ export default function ProdukterTjanster() {
 
     // Handlers från useFaktura
     läggTillArtikel,
+    avbrytRedigering,
+    setVisaArtikelModal,
+    setValtArtikel,
     updateFormField,
   } = useFaktura();
 
@@ -57,6 +58,10 @@ export default function ProdukterTjanster() {
   };
 
   const handleToggleArtikelForm = () => {
+    if (!visaArtikelForm) {
+      avbrytRedigering();
+      setVisaRotRutForm(false);
+    }
     setVisaArtikelForm(!visaArtikelForm);
   };
 
@@ -64,165 +69,132 @@ export default function ProdukterTjanster() {
     sparaArtikelSomFavorit();
   };
 
-  const handleResetForm = () => {
-    // TODO: Implement reset form functionality
-    console.log("Reset form not implemented yet");
+  const handleResetForm = (openNewForm = false) => {
+    avbrytRedigering();
+    setVisaRotRutForm(false);
+    if (openNewForm) {
+      setVisaArtikelForm(true);
+    }
   };
 
   const handleCloseArtikelModal = () => {
-    // TODO: Implement close artikel modal functionality
-    console.log("Close artikel modal not implemented yet");
+    setVisaArtikelModal(false);
+    setValtArtikel(null);
   };
 
   return (
     <div className="space-y-4">
-      <FavoritArtiklarList />
-
-      {/* ROT/RUT infobox - visas under favoriter men innan ny artikel */}
-      {formData.rotRutAktiverat &&
-        formData.artiklar &&
-        formData.artiklar.length > 0 &&
-        formData.artiklar.some((artikel: Artikel) => artikel.rotRutTyp) && (
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-white">
-                  {formData.rotRutTyp || "ROT/RUT"} är aktiverat
-                </h3>
-                <div className="mt-1 text-sm text-slate-300">
-                  <p>
-                    Tjänster/arbete berättigar 50% avdrag. Lägg till eventuell materialkostnad som
-                    en separat artikel.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      {redigerarIndex === null && <FavoritArtiklarList />}
 
       {/* Knapp för att visa/dölja artikelformuläret */}
-      <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-        {/* Knapp som header */}
-        <div className="border-b border-slate-600">
-          {visaArtikelForm ? (
-            <Knapp
-              onClick={handleToggleArtikelForm}
-              text="❌ Avsluta lägg till ny artikel"
-              className="w-full rounded-none border-none"
-            />
-          ) : (
-            <Knapp
-              onClick={handleToggleArtikelForm}
-              text="✚ Lägg till ny artikel"
-              className="w-full rounded-none border-none"
-            />
-          )}
-        </div>
-
-        {/* Formulär som expanderar nedåt */}
-        {visaArtikelForm && (
-          <div className="p-4 space-y-4">
-            <ArtikelForm
-              beskrivning={beskrivning}
-              antal={parseFloat(antal) || 0}
-              prisPerEnhet={parseFloat(prisPerEnhet) || 0}
-              moms={parseFloat(moms) || 0}
-              typ={typ}
-              onChangeBeskrivning={setBeskrivning}
-              onChangeAntal={setAntal}
-              onChangePrisPerEnhet={setPrisPerEnhet}
-              onChangeMoms={setMoms}
-              onChangeTyp={setTyp}
-              disabled={favoritArtikelVald}
-            />
-
-            {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
-            <div className="mb-4">
+      {redigerarIndex === null && (
+        <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+          {/* Knapp som header */}
+          <div className="border-b border-slate-600">
+            {visaArtikelForm ? (
               <Knapp
-                onClick={() => {
-                  if (typ === "vara") {
-                    showToast(
-                      "ROT/RUT-avdrag är endast tillåtet för tjänster, inte varor",
-                      "error"
-                    );
-                    return;
-                  }
-
-                  const newValue = !visaRotRutForm;
-                  setVisaRotRutForm(newValue);
-                  if (newValue) {
-                    setTyp("tjänst");
-                    // Aktivera ROT/RUT i formData så att formuläret visas
-                    updateFormField("rotRutAktiverat", true);
-                  } else {
-                    // Avaktivera ROT/RUT när formuläret stängs
-                    updateFormField("rotRutAktiverat", false);
-                  }
-                }}
-                text={
-                  visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Lägg till ROT/RUT-avdrag"
-                }
-                disabled={typ === "vara"}
-                className={typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}
+                onClick={handleToggleArtikelForm}
+                text="❌ Avsluta lägg till ny artikel"
+                className="w-full rounded-none border-none"
               />
-            </div>
-
-            {/* ROT/RUT formulär */}
-            {visaRotRutForm && (
-              <div className="border border-slate-500 rounded-lg mt-4">
-                <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
-              </div>
+            ) : (
+              <Knapp
+                onClick={handleToggleArtikelForm}
+                text="✚ Lägg till ny artikel"
+                className="w-full rounded-none border-none"
+              />
             )}
-
-            {/* Spara som favorit knapp */}
-            <div className="mb-4">
-              <Knapp
-                onClick={handleSaveAsFavorite}
-                text="📌 Lägg till som favoritartikel"
-                disabled={
-                  !beskrivning.trim() ||
-                  !antal ||
-                  !prisPerEnhet ||
-                  Number(prisPerEnhet) <= 0 ||
-                  favoritArtikelVald ||
-                  artikelSparadSomFavorit
-                }
-              />
-            </div>
-
-            {/* Lägg till artikel knapp */}
-            <div className="border-t border-slate-600 pt-4 flex justify-end">
-              <Knapp
-                onClick={handleAdd}
-                text="✚ Lägg till artikel"
-                disabled={!beskrivning.trim()}
-              />
-            </div>
           </div>
-        )}
-      </div>
 
-      {/* Visa "Lägg till artikel"-knapp när man redigerar */}
-      {redigerarIndex !== null && (
-        <div className="text-center">
-          <Knapp onClick={handleResetForm} text="✚ Lägg till en till artikel" />
+          {/* Formulär som expanderar nedåt */}
+          {visaArtikelForm && (
+            <div className="p-4 space-y-4">
+              <ArtikelForm
+                beskrivning={beskrivning}
+                antal={parseFloat(antal) || 0}
+                prisPerEnhet={parseFloat(prisPerEnhet) || 0}
+                moms={parseFloat(moms) || 0}
+                typ={typ}
+                onChangeBeskrivning={setBeskrivning}
+                onChangeAntal={setAntal}
+                onChangePrisPerEnhet={setPrisPerEnhet}
+                onChangeMoms={setMoms}
+                onChangeTyp={setTyp}
+                disabled={favoritArtikelVald}
+              />
+
+              {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
+              <div className="mb-4">
+                <Knapp
+                  onClick={() => {
+                    if (typ === "vara") {
+                      showToast(
+                        "ROT/RUT-avdrag är endast tillåtet för tjänster, inte varor",
+                        "error"
+                      );
+                      return;
+                    }
+
+                    const newValue = !visaRotRutForm;
+                    setVisaRotRutForm(newValue);
+                    if (newValue) {
+                      setTyp("tjänst");
+                      // Aktivera ROT/RUT i formData så att formuläret visas
+                      updateFormField("rotRutAktiverat", true);
+                    } else {
+                      // Avaktivera ROT/RUT när formuläret stängs
+                      updateFormField("rotRutAktiverat", false);
+                    }
+                  }}
+                  text={
+                    visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Lägg till ROT/RUT-avdrag"
+                  }
+                  disabled={typ === "vara"}
+                  className={typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}
+                />
+              </div>
+
+              {/* ROT/RUT formulär */}
+              {visaRotRutForm && (
+                <div className="border border-slate-500 rounded-lg mt-4">
+                  <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
+                </div>
+              )}
+
+              {/* Spara som favorit knapp */}
+              <div className="mb-4">
+                <Knapp
+                  onClick={handleSaveAsFavorite}
+                  text="📌 Lägg till som favoritartikel"
+                  disabled={
+                    !beskrivning.trim() ||
+                    !antal ||
+                    !prisPerEnhet ||
+                    Number(prisPerEnhet) <= 0 ||
+                    favoritArtikelVald ||
+                    artikelSparadSomFavorit
+                  }
+                />
+              </div>
+
+              {/* Lägg till artikel knapp */}
+              <div className="border-t border-slate-600 pt-4 flex justify-end">
+                <Knapp
+                  onClick={handleAdd}
+                  text="✚ Lägg till artikel"
+                  disabled={!beskrivning.trim()}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Artikellista - visas längst ner */}
-      <ArtiklarList />
+      {/* Artikellista - döljs under redigering */}
+      {redigerarIndex === null && <ArtiklarList />}
 
       {/* Visa "Lägg till artikel"-knapp när favoritartikel är vald */}
-      {favoritArtikelVald && (
+      {favoritArtikelVald && redigerarIndex === null && (
         <div className="mb-4">
           <Knapp
             onClick={handleAdd}
@@ -255,30 +227,7 @@ export default function ProdukterTjanster() {
               onChangeTyp={setTyp}
             />
 
-            <div className="mb-4">
-              <Knapp
-                onClick={() => {
-                  // Blockera ROT/RUT för varor
-                  if (typ === "vara") {
-                    return;
-                  }
-
-                  const newValue = !visaRotRutForm;
-                  setVisaRotRutForm(newValue);
-                  // Sätt automatiskt typ till "tjänst" när ROT/RUT aktiveras
-                  if (newValue) {
-                    setTyp("tjänst");
-                  }
-                }}
-                text={
-                  visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Aktivera ROT/RUT-avdrag"
-                }
-                disabled={typ === "vara" || redigerarIndex !== null}
-                className={
-                  typ === "vara" || redigerarIndex !== null ? "opacity-50 cursor-not-allowed" : ""
-                }
-              />
-            </div>
+            {/* Skippa ROT/RUT-toggle-knapp i redigeringsläge */}
 
             {/* Visa RotRutForm endast om användaren själv aktiverat det */}
             {visaRotRutForm && (
@@ -288,11 +237,7 @@ export default function ProdukterTjanster() {
             )}
 
             <div className="flex items-center justify-between pt-6 border-t border-slate-600">
-              <Knapp
-                onClick={handleResetForm}
-                text="❌ Avbryt redigering"
-                className="bg-red-600 hover:bg-red-700"
-              />
+              <Knapp onClick={() => handleResetForm()} text="❌ Avbryt redigering" />
               <Knapp
                 onClick={handleAdd}
                 text="💾 Uppdatera artikel"
@@ -308,6 +253,7 @@ export default function ProdukterTjanster() {
         isOpen={visaArtikelModal && !!valtArtikel}
         onClose={handleCloseArtikelModal}
         title="Artikeldetaljer"
+        maxWidth="xl"
       >
         {valtArtikel && (
           <div className="space-y-4">
@@ -331,7 +277,7 @@ export default function ProdukterTjanster() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Pris per enhet
+                    Pris per enhet exkl. moms
                   </label>
                   <div className="bg-slate-700 px-3 py-2 rounded border border-slate-600 text-white">
                     {valtArtikel.prisPerEnhet} {valtArtikel.valuta}

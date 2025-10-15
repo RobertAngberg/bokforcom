@@ -56,6 +56,8 @@ export function useFaktura() {
     showDeleteFavoritModal,
     deleteFavoritId,
     läggTillArtikel,
+    startRedigeraArtikel,
+    avbrytRedigering,
     taBortArtikel,
     setBeskrivning,
     setAntal,
@@ -65,6 +67,8 @@ export function useFaktura() {
     setTyp,
     updateArtikel,
     resetNyArtikel,
+    setVisaArtikelModal,
+    setValtArtikel,
   } = artikelContext;
 
   const produkterTjansterState = useMemo(
@@ -295,11 +299,6 @@ export function useFaktura() {
   // Preview functions
   const openPreview = useCallback(() => setShowPreview(true), []);
   const closePreview = useCallback(() => setShowPreview(false), []);
-
-  // Reload function
-  const reloadFaktura = useCallback(() => {
-    window.location.reload();
-  }, []);
 
   // =============================================================================
   // DATA LOADING FUNCTIONS
@@ -995,7 +994,6 @@ export function useFaktura() {
     // UI helper functions
     openPreview,
     closePreview,
-    reloadFaktura,
     isLoadingFaktura,
 
     // Local state setters
@@ -1039,7 +1037,11 @@ export function useFaktura() {
 
     // Basic artikel functions (för bakåtkompatibilitet)
     läggTillArtikel,
+    startRedigeraArtikel,
+    avbrytRedigering,
     taBortArtikel,
+    setVisaArtikelModal,
+    setValtArtikel,
 
     // Refs
     fileInputRef,

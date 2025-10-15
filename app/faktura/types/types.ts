@@ -581,7 +581,6 @@ export interface BokforingsPost {
 
 // Alternativ component types
 export interface AlternativProps {
-  onReload: () => void;
   onPreview: () => void;
 }
 
@@ -669,25 +668,6 @@ export interface PDFGenerationOptions {
   quality?: number;
   backgroundColor?: string;
 }
-
-// === ROT/RUT BETALNING ===
-export interface RotRutBetalningModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fakturaId: number;
-  fakturanummer: string;
-  kundnamn: string;
-  totalBelopp: number;
-  bokföringsmetod: string;
-  onSuccess: (nyStatus: { rot_rut_status: string; status_betalning: string }) => void;
-}
-
-export type RotRutStatusPayload = Parameters<RotRutBetalningModalProps["onSuccess"]>[0];
-
-export type UseRotRutOptions = Pick<
-  RotRutBetalningModalProps,
-  "fakturaId" | "totalBelopp" | "bokföringsmetod" | "onSuccess" | "onClose"
->;
 
 // === HUS FIL GENERATION ===
 export interface HUSFilData {

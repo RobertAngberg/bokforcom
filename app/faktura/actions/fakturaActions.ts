@@ -445,7 +445,7 @@ export async function deleteFaktura(id: number) {
 
     // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
     const verifyRes = await client.query(
-      `SELECT id, transaktions_id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+      `SELECT id, transaktions_id, status_betalning, status_bokförd FROM fakturor WHERE id = $1 AND "user_id" = $2`,
       [id, userId]
     );
 
@@ -456,6 +456,20 @@ export async function deleteFaktura(id: number) {
         fakturaId: id,
       });
       return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
+    }
+
+    const statusBetalning = verifyRes.rows[0]?.status_betalning as string | null;
+
+    if (statusBetalning && statusBetalning.toLowerCase() === "betald") {
+      await client.query("ROLLBACK");
+      return { success: false, error: "Det går inte att radera betalda fakturor" };
+    }
+
+    const statusBokford = verifyRes.rows[0]?.status_bokförd as string | null;
+
+    if (statusBokford && statusBokford.toLowerCase() !== "ej bokförd") {
+      await client.query("ROLLBACK");
+      return { success: false, error: "Bokförda fakturor kan ej tas bort" };
     }
 
     const transaktionsId = verifyRes.rows[0]?.transaktions_id;
