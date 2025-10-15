@@ -170,9 +170,6 @@ export function useBokfor() {
       if (bokförSomFaktura && kontonummer === "1510") {
         return safeBelopp; // Kundfordringar ska få hela beloppet som debet
       }
-      if (levfaktMode && !ärFörsäljning && kontonummer === "2440") {
-        return safeBelopp; // Leverantörsskulder ska få hela beloppet som debet
-      }
       if (levfaktMode && ärFörsäljning && kontonummer === "1510") {
         return safeBelopp; // Kundfordringar vid försäljning
       }
@@ -190,8 +187,14 @@ export function useBokfor() {
     if (utlaggMode && kontonummer === "2890") {
       return safeBelopp;
     }
+    if (levfaktMode && !ärFörsäljning && kontonummer === "2440") {
+      return safeBelopp;
+    }
     if (klass === "1") return safeBelopp;
     if (klass === "2") {
+      if (kontonummer === "2440") {
+        return safeBelopp;
+      }
       return ärFörsäljning ? moms : 0; // Utgående moms vid försäljning
     }
     if (klass === "3") return beloppUtanMoms; // Intäktskonton

@@ -15,6 +15,9 @@ export default function BokfordaFakturor() {
     loading,
     verifikatModal,
     bekraftelseModal,
+    showDeleteFakturaModal,
+    setShowDeleteFakturaModal,
+    deleteFakturaId,
 
     // Computed data
     transaktionskolumner,
@@ -26,8 +29,13 @@ export default function BokfordaFakturor() {
     handleBetalaOchBokför,
     stängBekraftelseModal,
     taBortFaktura,
+    confirmDeleteFaktura,
     utförBokföring,
   } = useBokfordaFakturor();
+
+  const fakturaSomTasBort = deleteFakturaId
+    ? fakturor.find((faktura) => faktura.id === deleteFakturaId)
+    : undefined;
 
   if (loading) {
     return (
@@ -57,6 +65,7 @@ export default function BokfordaFakturor() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-700">
+              <th className="text-center text-gray-300 pb-2">ID</th>
               <th className="text-center text-gray-300 pb-2">Datum</th>
               <th className="text-center text-gray-300 pb-2">Leverantör/Kund</th>
               <th className="text-center text-gray-300 pb-2">Belopp</th>
@@ -70,6 +79,7 @@ export default function BokfordaFakturor() {
           <tbody>
             {fakturor.map((faktura) => (
               <tr key={faktura.id} className="border-b border-gray-800">
+                <td className="py-2 text-white text-center">{faktura.id}</td>
                 <td className="py-2 text-white text-center">{formateraDatum(faktura.datum)}</td>
                 <td className="py-2 text-gray-300 text-center">{faktura.leverantör || "-"}</td>
                 <td className="py-2 text-white text-center">{formatSEK(faktura.belopp)}</td>
@@ -173,6 +183,56 @@ export default function BokfordaFakturor() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Bekräfta borttagning */}
+      <Modal
+        isOpen={showDeleteFakturaModal}
+        onClose={() => setShowDeleteFakturaModal(false)}
+        title="Ta bort leverantörsfaktura"
+        maxWidth="md"
+      >
+        <div className="space-y-4 text-gray-200">
+          <p>
+            Bekräfta att du vill ta bort den här leverantörsfakturan. Den kopplade transaktionen och
+            dess verifikat tas bort samtidigt, vilket innebär att posten försvinner ur historiken.
+            Åtgärden går inte att ångra.
+          </p>
+
+          {fakturaSomTasBort && (
+            <div className="rounded border border-red-700 bg-red-900/40 p-3 text-sm">
+              <p>
+                <span className="text-red-300">Faktura-ID:</span> {fakturaSomTasBort.id}
+              </p>
+              <p>
+                <span className="text-red-300">Leverantör:</span>{" "}
+                {fakturaSomTasBort.leverantör || "-"}
+              </p>
+              <p>
+                <span className="text-red-300">Belopp:</span> {formatSEK(fakturaSomTasBort.belopp)}
+              </p>
+              {fakturaSomTasBort.transaktionId && (
+                <p>
+                  <span className="text-red-300">Transaktion-ID:</span>{" "}
+                  {fakturaSomTasBort.transaktionId}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Knapp
+              text="❌ Avbryt"
+              onClick={() => setShowDeleteFakturaModal(false)}
+              className="px-5 py-2"
+            />
+            <Knapp
+              text="Ta bort"
+              onClick={confirmDeleteFaktura}
+              className="bg-red-700 hover:bg-red-600 px-5 py-2"
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -222,50 +222,71 @@ export async function taBortLeverantorsfaktura(leverantörsfakturaId: number) {
   const client = await pool.connect();
 
   try {
-    // Först, kolla om leverantörsfakturan tillhör användaren
-    const { rows: checkRows } = await client.query(
-      `
-      SELECT lf.id, t.user_id 
-      FROM leverantörsfakturor lf
-      JOIN transaktioner t ON lf.transaktions_id = t.id
-      WHERE lf.id = $1
-      `,
+    await client.query("BEGIN");
+
+    // Säkerställ att fakturan existerar och tillhör användaren innan borttagning
+    const { rows: fakturaRows } = await client.query(
+      `SELECT id, "user_id", transaktions_id, fakturanummer FROM leverantörsfakturor WHERE id = $1 FOR UPDATE`,
       [leverantörsfakturaId]
     );
 
-    if (checkRows.length === 0) {
+    if (fakturaRows.length === 0) {
+      await client.query("ROLLBACK");
       return { success: false, error: "Leverantörsfaktura hittades inte" };
     }
 
-    if (checkRows[0].user_id !== userId) {
+    const faktura = fakturaRows[0];
+    if (faktura.user_id !== userId) {
+      await client.query("ROLLBACK");
       return { success: false, error: "Ej behörig att ta bort denna leverantörsfaktura" };
     }
 
-    const transaktionsId = await client.query(
-      `SELECT transaktions_id FROM leverantörsfakturor WHERE id = $1`,
-      [leverantörsfakturaId]
-    );
+    // Samla alla relaterade transaktioner (primär + eventuella betalningar/bokföringar)
+    const relateradeTransaktioner = new Set<number>();
 
-    if (transaktionsId.rows.length === 0) {
-      return { success: false, error: "Transaktions-ID hittades inte" };
+    if (faktura.transaktions_id) {
+      relateradeTransaktioner.add(Number(faktura.transaktions_id));
     }
 
-    const transId = transaktionsId.rows[0].transaktions_id;
+    const likeMönster: string[] = [`%leverantörsfaktura ${leverantörsfakturaId}%`];
+    if (faktura.fakturanummer) {
+      likeMönster.push(`%leverantörsfaktura ${faktura.fakturanummer}%`);
+    }
 
-    // Ta bort leverantörsfakturan
+    const { rows: extraTransaktioner } = await client.query(
+      `SELECT id FROM transaktioner
+       WHERE "user_id" = $1 AND (
+         kontobeskrivning ILIKE ANY($2::text[])
+         OR kommentar ILIKE ANY($2::text[])
+       )`,
+      [userId, likeMönster]
+    );
+
+    for (const row of extraTransaktioner) {
+      relateradeTransaktioner.add(Number(row.id));
+    }
+
+    // Ta bort fakturan först för att undvika dangling references
     await client.query(`DELETE FROM leverantörsfakturor WHERE id = $1`, [leverantörsfakturaId]);
 
-    // Ta bort relaterade transaktionsposter
-    await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [transId]);
+    if (relateradeTransaktioner.size > 0) {
+      const transaktionsLista = Array.from(relateradeTransaktioner);
 
-    // Ta bort transaktionen
-    await client.query(`DELETE FROM transaktioner WHERE id = $1 AND user_id = $2`, [
-      transId,
-      userId,
-    ]);
+      await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = ANY($1::int[])`, [
+        transaktionsLista,
+      ]);
+
+      await client.query(`DELETE FROM transaktioner WHERE id = ANY($1::int[]) AND "user_id" = $2`, [
+        transaktionsLista,
+        userId,
+      ]);
+    }
+
+    await client.query("COMMIT");
 
     return { success: true };
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Fel vid borttagning av leverantörsfaktura:", error);
     return {
       success: false,

@@ -598,35 +598,35 @@ export function useBokfordaFakturor() {
   };
 
   const handleBetalaOchBokför = async (faktura: BokfordFaktura) => {
+    const belopp = Math.abs(faktura.belopp || 0);
+
+    const planeradePoster: TransaktionsPost[] = [
+      {
+        id: Number.MAX_SAFE_INTEGER - 1,
+        kontonummer: "2440",
+        kontobeskrivning: "Leverantörsskulder",
+        debet: belopp,
+        kredit: 0,
+        transaktionsdatum: "",
+        transaktionskommentar: "",
+      },
+      {
+        id: Number.MAX_SAFE_INTEGER,
+        kontonummer: "1930",
+        kontobeskrivning: "Företagskonto",
+        debet: 0,
+        kredit: belopp,
+        transaktionsdatum: "",
+        transaktionskommentar: "",
+      },
+    ];
+
     setBekraftelseModal({
       isOpen: true,
       faktura,
-      transaktionsposter: [],
-      loadingPoster: true,
+      transaktionsposter: planeradePoster,
+      loadingPoster: false,
     });
-
-    if (faktura.transaktionId) {
-      try {
-        const poster = await hamtaTransaktionsposter(faktura.transaktionId);
-        const rows = ensureLeverantorskonto(Array.isArray(poster) ? poster : []);
-        setBekraftelseModal((prev) => ({
-          ...prev,
-          transaktionsposter: rows,
-          loadingPoster: false,
-        }));
-      } catch (error) {
-        console.error("Fel vid hämtning av transaktionsposter:", error);
-        setBekraftelseModal((prev) => ({
-          ...prev,
-          loadingPoster: false,
-        }));
-      }
-    } else {
-      setBekraftelseModal((prev) => ({
-        ...prev,
-        loadingPoster: false,
-      }));
-    }
   };
 
   const stängBekraftelseModal = () => {
