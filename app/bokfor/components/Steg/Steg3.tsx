@@ -62,29 +62,31 @@ export default function Steg3() {
 
       <form id="bokforingForm" className="space-y-6">
         {/* Display tabell med transaktioner */}
-        <Tabell
-          data={state.fallbackRows}
-          columns={[
-            {
-              key: "konto",
-              label: "Konto",
-              render: (value, row) => row.konto,
-            },
-            {
-              key: "debet",
-              label: "Debet",
-              className: "text-right",
-              render: (value, row) => (row.debet > 0 ? formatCurrency(row.debet) : ""),
-            },
-            {
-              key: "kredit",
-              label: "Kredit",
-              className: "text-right",
-              render: (value, row) => (row.kredit > 0 ? formatCurrency(row.kredit) : ""),
-            },
-          ]}
-          getRowId={(row) => `${row.konto}-${row.debet}-${row.kredit}`}
-        />
+        <div className="max-w-3xl mx-auto">
+          <Tabell
+            data={state.fallbackRows}
+            columns={[
+              {
+                key: "konto",
+                label: "Konto",
+                render: (value, row) => row.konto,
+              },
+              {
+                key: "debet",
+                label: "Debet",
+                className: "text-right",
+                render: (value, row) => (row.debet > 0 ? formatCurrency(row.debet) : ""),
+              },
+              {
+                key: "kredit",
+                label: "Kredit",
+                className: "text-right",
+                render: (value, row) => (row.kredit > 0 ? formatCurrency(row.kredit) : ""),
+              },
+            ]}
+            getRowId={(row) => `${row.konto}-${row.debet}-${row.kredit}`}
+          />
+        </div>
 
         {/* Utlägg: Visa anställd-dropdown */}
         {state.utlaggMode && (
@@ -108,7 +110,7 @@ export default function Steg3() {
                   ? state.ärFörsäljning
                     ? "📤 Slutför kundfaktura"
                     : "📥 Slutför leverantörsfaktura"
-                  : "✓ Bokför"
+                  : "Bokför"
             }
             loadingText={
               state.utlaggMode
@@ -122,7 +124,7 @@ export default function Steg3() {
             loading={state.loadingSteg3}
             onClick={handlers.handleButtonClick}
             disabled={state.loadingSteg3}
-            className="px-8 py-4 text-xl"
+            className="px-10 py-4 text-lg min-w-[220px]"
           />
         </div>
       </form>
