@@ -56,50 +56,60 @@ export default function ArtiklarList() {
 
       {/* Artikellista */}
       <div className="divide-y divide-slate-600">
-        {artiklar.map((a, idx) => (
-          <div
-            key={idx}
-            className={`flex justify-between items-center p-4 hover:bg-slate-700 transition-colors ${
-              blinkIndex === idx ? "background-pulse" : ""
-            }`}
-          >
+        {artiklar.map((a, idx) => {
+          const isRotRutArbete =
+            typeof a.rotRutArbete === "boolean"
+              ? a.rotRutArbete
+              : a.typ === "tjänst" && a.rotRutMaterial !== true;
+          const isRotRutMaterial = typeof a.rotRutMaterial === "boolean" ? a.rotRutMaterial : false;
+
+          return (
             <div
-              className="flex-1 cursor-pointer"
-              onClick={() => {
-                handleShowArtikelDetaljer(a);
-              }}
-              title="Klicka för att visa detaljer"
+              key={idx}
+              className={`flex justify-between items-center p-4 hover:bg-slate-700 transition-colors ${
+                blinkIndex === idx ? "background-pulse" : ""
+              }`}
             >
-              <div className="text-white font-semibold flex items-center">
-                <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
-                {a.beskrivning}
-              </div>
-              <div className="text-gray-400 text-sm">
-                {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms) — {a.typ}
-                {a.rotRutMaterial ? " — ROT/RUT-material" : ""}
-                {formData.rotRutAktiverat && a.rotRutTyp ? ` — ${a.rotRutTyp}` : ""}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(a, idx)}
-                className="text-blue-400 hover:text-blue-600 p-1"
-                title="Redigera artikel"
-              >
-                ✏️
-              </button>
-              <button
+              <div
+                className="flex-1 cursor-pointer"
                 onClick={() => {
-                  handleRemove(idx, a.beskrivning);
+                  handleShowArtikelDetaljer(a);
                 }}
-                className="text-red-400 hover:text-red-600 p-1"
-                title="Ta bort artikel"
+                title="Klicka för att visa detaljer"
               >
-                🗑️
-              </button>
+                <div className="text-white font-semibold flex items-center">
+                  <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                  {a.beskrivning}
+                </div>
+                <div className="text-gray-400 text-sm">
+                  {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms)
+                  {isRotRutMaterial ? " — ROT/RUT-material" : ""}
+                  {formData.rotRutAktiverat && a.rotRutTyp && isRotRutArbete
+                    ? ` — ${a.rotRutTyp}`
+                    : ""}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(a, idx)}
+                  className="text-blue-400 hover:text-blue-600 p-1"
+                  title="Redigera artikel"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => {
+                    handleRemove(idx, a.beskrivning);
+                  }}
+                  className="text-red-400 hover:text-red-600 p-1"
+                  title="Ta bort artikel"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Delete confirmation modal */}

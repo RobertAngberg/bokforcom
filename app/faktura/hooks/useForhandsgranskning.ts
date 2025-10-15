@@ -6,7 +6,7 @@ import { generatePDFFromElement } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
 
 // Types
-import type { ForhandsgranskningCalculations } from "../types/types";
+import type { Artikel, ForhandsgranskningCalculations } from "../types/types";
 
 /**
  * Hook för förhandsgranskning, beräkningar och PDF/email funktionalitet
@@ -68,9 +68,25 @@ export function useForhandsgranskning() {
         : undefined);
 
     // Beräkna arbetskostnad bara för ROT/RUT-tjänster (inte material)
+    const ärRotRutArbete = (rad: Artikel) => {
+      if (!rad.rotRutTyp) return false;
+      if (typeof rad.rotRutArbete === "boolean") {
+        return rad.rotRutArbete;
+      }
+      return rad.typ === "tjänst" && rad.rotRutMaterial !== true;
+    };
+
+    const ärRotRutMaterial = (rad: Artikel) => {
+      if (!rad.rotRutTyp) return false;
+      if (typeof rad.rotRutMaterial === "boolean") {
+        return rad.rotRutMaterial;
+      }
+      return false;
+    };
+
     const rotRutTjänsterSumExkl =
       formData.artiklar?.reduce((acc, rad) => {
-        if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
+        if (ärRotRutArbete(rad)) {
           const antal = parseFloat(String(rad.antal) || "0");
           const pris = parseFloat(String(rad.prisPerEnhet) || "0");
           return acc + antal * pris;
@@ -80,7 +96,7 @@ export function useForhandsgranskning() {
 
     const rotRutTjänsterMoms =
       formData.artiklar?.reduce((acc, rad) => {
-        if (rad.typ === "tjänst" && rad.rotRutTyp && !rad.rotRutMaterial) {
+        if (ärRotRutArbete(rad)) {
           const antal = parseFloat(String(rad.antal) || "0");
           const pris = parseFloat(String(rad.prisPerEnhet) || "0");
           const moms = parseFloat(String(rad.moms) || "0");
@@ -90,6 +106,28 @@ export function useForhandsgranskning() {
       }, 0) || 0;
 
     const rotRutTjänsterInklMoms = rotRutTjänsterSumExkl + rotRutTjänsterMoms;
+    const rotRutMaterialSumExkl =
+      formData.artiklar?.reduce((acc, rad) => {
+        if (ärRotRutMaterial(rad)) {
+          const antal = parseFloat(String(rad.antal) || "0");
+          const pris = parseFloat(String(rad.prisPerEnhet) || "0");
+          return acc + antal * pris;
+        }
+        return acc;
+      }, 0) || 0;
+
+    const rotRutMaterialMoms =
+      formData.artiklar?.reduce((acc, rad) => {
+        if (ärRotRutMaterial(rad)) {
+          const antal = parseFloat(String(rad.antal) || "0");
+          const pris = parseFloat(String(rad.prisPerEnhet) || "0");
+          const moms = parseFloat(String(rad.moms) || "0");
+          return acc + antal * pris * (moms / 100);
+        }
+        return acc;
+      }, 0) || 0;
+
+    const rotRutMaterialInklMoms = rotRutMaterialSumExkl + rotRutMaterialMoms;
     const arbetskostnadInklMoms = sumExkl + totalMoms;
 
     // Avdrag bara på tjänstekostnaden, inte material
@@ -116,10 +154,12 @@ export function useForhandsgranskning() {
     );
 
     const rotRutArtiklar = formData.artiklar?.filter((a) => a.rotRutTyp) || [];
-    const rotRutTotalTimmar = rotRutArtiklar.reduce((sum, a) => sum + (a.antal || 0), 0);
+    const rotRutArbetsrader = rotRutArtiklar.filter(ärRotRutArbete);
+    const rotRutTotalTimmar = rotRutArbetsrader.reduce((sum, a) => sum + (a.antal || 0), 0);
     const rotRutGenomsnittsPris =
-      rotRutArtiklar.length > 0
-        ? rotRutArtiklar.reduce((sum, a) => sum + (a.prisPerEnhet || 0), 0) / rotRutArtiklar.length
+      rotRutArbetsrader.length > 0
+        ? rotRutArbetsrader.reduce((sum, a) => sum + (a.prisPerEnhet || 0), 0) /
+          rotRutArbetsrader.length
         : 0;
 
     const rotRutAvdragProcent = rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—";
@@ -142,8 +182,12 @@ export function useForhandsgranskning() {
       rotRutTjänsterSumExkl,
       rotRutTjänsterMoms,
       rotRutTjänsterInklMoms,
+      rotRutMaterialSumExkl,
+      rotRutMaterialMoms,
+      rotRutMaterialInklMoms,
       arbetskostnadInklMoms,
       rotRutAvdrag,
+      rotRutArtiklarAntal: rotRutArtiklar.length,
       rotRutPersonnummer,
       rotRutTotalTimmar,
       rotRutGenomsnittsPris,

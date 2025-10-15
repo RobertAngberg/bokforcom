@@ -1,7 +1,7 @@
 // Här ligger små hjälpfunktioner som skapar ett “grundpaket” av artikeldata åt oss.
 // När du kallar dem får du ett färdigifyllt objekt, så du slipper skriva alla startvärden för hand.
 
-import type { FavoritArtikel, FakturaArtikelState, NyArtikel } from "../types/types";
+import type { FavoritArtikel, FakturaArtikelState, NyArtikel } from "../../types/types";
 
 const baseNyArtikel: NyArtikel = {
   beskrivning: "",
@@ -10,6 +10,8 @@ const baseNyArtikel: NyArtikel = {
   moms: "25",
   valuta: "SEK",
   typ: "tjänst",
+  rotRutArbete: true,
+  rotRutMaterial: false,
 };
 
 // Ger dig ett tomt artikelobjekt så du kan börja fylla i det utan att oroa dig för startvärden.

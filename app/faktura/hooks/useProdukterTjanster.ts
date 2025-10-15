@@ -66,22 +66,37 @@ function deriveArtikelMetrics(formData: FakturaFormData) {
 
   const sumInkl = sumExkl + totalMoms;
 
-  const rotRutArtiklar = rows.filter((rad) => Boolean(rad.rotRutTyp));
+  const ärRotRutArbete = (rad: Artikel) => {
+    if (!rad.rotRutTyp) return false;
+    if (typeof rad.rotRutArbete === "boolean") {
+      return rad.rotRutArbete;
+    }
+    return rad.typ === "tjänst" && rad.rotRutMaterial !== true;
+  };
+
+  const ärRotRutMaterial = (rad: Artikel) => {
+    if (!rad.rotRutTyp) return false;
+    if (typeof rad.rotRutMaterial === "boolean") {
+      return rad.rotRutMaterial;
+    }
+    return false;
+  };
+
+  const rotRutArtiklar = rows.filter((rad) => ärRotRutArbete(rad) || ärRotRutMaterial(rad));
   const harRotRutArtiklar = rotRutArtiklar.length > 0;
   const rotRutAktiverat = Boolean(formData.rotRutAktiverat || harRotRutArtiklar);
-  const rotRutTyp = formData.rotRutTyp ?? rotRutArtiklar.find((rad) => rad.rotRutTyp)?.rotRutTyp;
+  const rotRutTyp = formData.rotRutTyp ?? rotRutArtiklar[0]?.rotRutTyp;
 
-  const rotRutTjänster = rotRutArtiklar.filter(
-    (rad) => rad.typ === "tjänst" && !rad.rotRutMaterial
-  );
+  const rotRutArbeteRader = rotRutArtiklar.filter(ärRotRutArbete);
+  const rotRutMaterialRader = rotRutArtiklar.filter(ärRotRutMaterial);
 
-  const rotRutTjänsterSumExkl = rotRutTjänster.reduce((acc, rad) => {
+  const rotRutTjänsterSumExkl = rotRutArbeteRader.reduce((acc, rad) => {
     const antal = Number(rad.antal) || 0;
     const pris = Number(rad.prisPerEnhet) || 0;
     return acc + antal * pris;
   }, 0);
 
-  const rotRutTjänsterMoms = rotRutTjänster.reduce((acc, rad) => {
+  const rotRutTjänsterMoms = rotRutArbeteRader.reduce((acc, rad) => {
     const antal = Number(rad.antal) || 0;
     const pris = Number(rad.prisPerEnhet) || 0;
     const moms = Number(rad.moms) || 0;
@@ -89,6 +104,21 @@ function deriveArtikelMetrics(formData: FakturaFormData) {
   }, 0);
 
   const rotRutTjänsterInklMoms = rotRutTjänsterSumExkl + rotRutTjänsterMoms;
+
+  const rotRutMaterialSumExkl = rotRutMaterialRader.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    return acc + antal * pris;
+  }, 0);
+
+  const rotRutMaterialMoms = rotRutMaterialRader.reduce((acc, rad) => {
+    const antal = Number(rad.antal) || 0;
+    const pris = Number(rad.prisPerEnhet) || 0;
+    const moms = Number(rad.moms) || 0;
+    return acc + antal * pris * (moms / 100);
+  }, 0);
+
+  const rotRutMaterialInklMoms = rotRutMaterialSumExkl + rotRutMaterialMoms;
 
   const rotRutAvdrag =
     rotRutAktiverat && (rotRutTyp === "ROT" || rotRutTyp === "RUT")
@@ -99,14 +129,19 @@ function deriveArtikelMetrics(formData: FakturaFormData) {
 
   const rotRutPersonnummer =
     formData.personnummer ||
-    rotRutArtiklar.find((rad) => rad.rotRutPersonnummer)?.rotRutPersonnummer ||
+    rotRutArbeteRader.find((rad) => rad.rotRutPersonnummer)?.rotRutPersonnummer ||
+    rotRutMaterialRader.find((rad) => rad.rotRutPersonnummer)?.rotRutPersonnummer ||
     "";
 
-  const rotRutTotalTimmar = rotRutArtiklar.reduce((sum, rad) => sum + (Number(rad.antal) || 0), 0);
+  const rotRutTotalTimmar = rotRutArbeteRader.reduce(
+    (sum, rad) => sum + (Number(rad.antal) || 0),
+    0
+  );
+
   const rotRutGenomsnittsPris =
-    rotRutArtiklar.length > 0
-      ? rotRutArtiklar.reduce((sum, rad) => sum + (Number(rad.prisPerEnhet) || 0), 0) /
-        rotRutArtiklar.length
+    rotRutArbeteRader.length > 0
+      ? rotRutArbeteRader.reduce((sum, rad) => sum + (Number(rad.prisPerEnhet) || 0), 0) /
+        rotRutArbeteRader.length
       : 0;
 
   const rotRutAvdragProcent = rotRutTyp === "ROT" || rotRutTyp === "RUT" ? "50%" : "—";
@@ -128,11 +163,15 @@ function deriveArtikelMetrics(formData: FakturaFormData) {
       rotRutTjänsterSumExkl,
       rotRutTjänsterMoms,
       rotRutTjänsterInklMoms,
+      rotRutMaterialSumExkl,
+      rotRutMaterialMoms,
+      rotRutMaterialInklMoms,
       rotRutAvdrag,
       rotRutPersonnummer,
       rotRutTotalTimmar,
       rotRutGenomsnittsPris,
       rotRutAvdragProcent,
+      rotRutArtiklarAntal: rotRutArtiklar.length,
       shouldShowRotRut,
     },
   };
@@ -147,6 +186,8 @@ export function useProdukterTjanster() {
 
   const metrics = useMemo(() => deriveArtikelMetrics(formData), [formData]);
   const artiklar = metrics.artiklar;
+  const harBlandadeArtikelTyper =
+    artiklar.some((rad) => rad.typ === "vara") && artiklar.some((rad) => rad.typ === "tjänst");
 
   const laddaSparadeArtiklar = useCallback(async () => {
     try {
@@ -176,7 +217,16 @@ export function useProdukterTjanster() {
   }, [state.favoritArtiklar.length, laddaSparadeArtiklar, lifecycle]);
 
   const läggTillArtikel = useCallback(() => {
-    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;
+    const {
+      beskrivning,
+      antal,
+      prisPerEnhet,
+      moms,
+      valuta,
+      typ,
+      rotRutArbete: nyArtikelRotRutArbete,
+      rotRutMaterial: nyArtikelRotRutMaterial,
+    } = state.nyArtikel;
 
     if (!beskrivning?.trim() || !antal?.toString().trim() || !prisPerEnhet?.toString().trim()) {
       showToast("Fyll i alla obligatoriska fält", "error");
@@ -205,6 +255,9 @@ export function useProdukterTjanster() {
     const brfOrg = (formData.brfOrganisationsnummer || "").toString().trim();
     const brfLgh = (formData.brfLagenhetsnummer || "").toString().trim();
 
+    const rotRutArbeteFlag = typ === "tjänst" ? (nyArtikelRotRutArbete ?? true) : false;
+    const rotRutMaterialFlag = typ === "vara" ? Boolean(nyArtikelRotRutMaterial) : false;
+
     const rotRutAktivaFält: Partial<Artikel> = rotRutAktiv
       ? {
           rotRutTyp: aktivRotRutTyp as "ROT" | "RUT",
@@ -218,7 +271,8 @@ export function useProdukterTjanster() {
             formData.rotBoendeTyp === "brf" ? undefined : fastighetsbeteckning || undefined,
           rotRutBrfOrg: formData.rotBoendeTyp === "brf" ? brfOrg || undefined : undefined,
           rotRutBrfLagenhet: formData.rotBoendeTyp === "brf" ? brfLgh || undefined : undefined,
-          rotRutMaterial: typ === "vara" ? true : undefined,
+          rotRutArbete: rotRutArbeteFlag,
+          rotRutMaterial: rotRutMaterialFlag,
         }
       : {};
 
@@ -235,6 +289,7 @@ export function useProdukterTjanster() {
           rotRutFastighetsbeteckning: undefined,
           rotRutBrfOrg: undefined,
           rotRutBrfLagenhet: undefined,
+          rotRutArbete: undefined,
           rotRutMaterial: undefined,
         };
 
@@ -257,6 +312,8 @@ export function useProdukterTjanster() {
         typ,
         ursprungligFavoritId: tidigareArtikel.ursprungligFavoritId,
         ...(rotRutAktiv ? rotRutAktivaFält : rotRutInaktivaFält),
+        rotRutArbete: rotRutAktiv ? rotRutArbeteFlag : false,
+        rotRutMaterial: rotRutAktiv ? rotRutMaterialFlag : false,
       };
 
       const uppdateradeArtiklar = artiklar.map((artikel, idx) =>
@@ -287,6 +344,8 @@ export function useProdukterTjanster() {
       typ,
       ursprungligFavoritId: state.ursprungligFavoritId ?? undefined,
       ...rotRutAktivaFält,
+      rotRutArbete: rotRutAktiv ? rotRutArbeteFlag : false,
+      rotRutMaterial: rotRutAktiv ? rotRutMaterialFlag : false,
     };
 
     const uppdateradeArtiklar = [...artiklar, nyArtikelData];
@@ -332,6 +391,11 @@ export function useProdukterTjanster() {
         moms: artikel.moms?.toString() ?? "",
         valuta: artikel.valuta ?? "SEK",
         typ: artikel.typ ?? "tjänst",
+        rotRutArbete:
+          artikel.typ === "tjänst"
+            ? (artikel.rotRutArbete ?? true)
+            : (artikel.rotRutArbete ?? false),
+        rotRutMaterial: artikel.rotRutMaterial ?? false,
       });
 
       const rotRutAktiv = Boolean(artikel.rotRutTyp);
@@ -383,8 +447,69 @@ export function useProdukterTjanster() {
     [artiklar, setFormData, setState]
   );
 
+  const uppdateraArtikelRotRutArbete = useCallback(
+    (index: number, checked: boolean) => {
+      const aktuellaArtiklar = formData.artiklar ?? [];
+      if (!aktuellaArtiklar[index]) {
+        return;
+      }
+
+      const uppdateradeArtiklar = aktuellaArtiklar.map((artikel, idx) => {
+        if (idx !== index) {
+          return artikel;
+        }
+
+        const uppdaterad: Artikel = {
+          ...artikel,
+          rotRutArbete: checked,
+          rotRutMaterial: checked ? false : artikel.rotRutMaterial,
+        };
+
+        return uppdaterad;
+      });
+
+      setFormData({ artiklar: uppdateradeArtiklar });
+    },
+    [formData.artiklar, setFormData]
+  );
+
+  const uppdateraArtikelRotRutMaterial = useCallback(
+    (index: number, checked: boolean) => {
+      const aktuellaArtiklar = formData.artiklar ?? [];
+      if (!aktuellaArtiklar[index]) {
+        return;
+      }
+
+      const uppdateradeArtiklar = aktuellaArtiklar.map((artikel, idx) => {
+        if (idx !== index) {
+          return artikel;
+        }
+
+        const uppdaterad: Artikel = {
+          ...artikel,
+          rotRutMaterial: checked,
+          rotRutArbete: checked ? false : artikel.rotRutArbete,
+        };
+
+        return uppdaterad;
+      });
+
+      setFormData({ artiklar: uppdateradeArtiklar });
+    },
+    [formData.artiklar, setFormData]
+  );
+
   const sparaArtikelSomFavorit = useCallback(async () => {
-    const { beskrivning, antal, prisPerEnhet, moms, valuta, typ } = state.nyArtikel;
+    const {
+      beskrivning,
+      antal,
+      prisPerEnhet,
+      moms,
+      valuta,
+      typ,
+      rotRutArbete: nyArtikelRotRutArbete,
+      rotRutMaterial: nyArtikelRotRutMaterial,
+    } = state.nyArtikel;
 
     if (!beskrivning || !antal || !prisPerEnhet || Number(prisPerEnhet) <= 0) {
       showToast("Fyll i alla obligatoriska fält", "error");
@@ -398,6 +523,8 @@ export function useProdukterTjanster() {
       moms: Number(moms),
       valuta,
       typ,
+      rotRutArbete: Boolean(nyArtikelRotRutArbete ?? typ === "tjänst"),
+      rotRutMaterial: Boolean(nyArtikelRotRutMaterial && typ === "vara"),
       rotRutTyp: undefined,
       rotRutKategori: undefined,
       avdragProcent: undefined,
@@ -473,6 +600,8 @@ export function useProdukterTjanster() {
         valuta: artikel.valuta || "SEK",
         typ: artikel.typ || "vara",
         ursprungligFavoritId: artikel.id,
+        rotRutArbete: artikel.rotRutArbete ?? artikel.typ === "tjänst",
+        rotRutMaterial: artikel.rotRutMaterial ?? false,
       };
 
       if (artikel.rotRutTyp) {
@@ -694,7 +823,24 @@ export function useProdukterTjanster() {
   );
 
   const setTyp = useCallback(
-    (value: "vara" | "tjänst") => updateArtikel({ typ: value }),
+    (value: "vara" | "tjänst") => {
+      const updates: Partial<NyArtikel> = {
+        typ: value,
+        rotRutArbete: value === "tjänst" ? (state.nyArtikel.rotRutArbete ?? true) : false,
+        rotRutMaterial: value === "vara" ? (state.nyArtikel.rotRutMaterial ?? false) : false,
+      };
+      setNyArtikel(updates);
+    },
+    [setNyArtikel, state.nyArtikel.rotRutArbete, state.nyArtikel.rotRutMaterial]
+  );
+
+  const setRotRutArbete = useCallback(
+    (value: boolean) => updateArtikel({ rotRutArbete: value }),
+    [updateArtikel]
+  );
+
+  const setRotRutMaterial = useCallback(
+    (value: boolean) => updateArtikel({ rotRutMaterial: value }),
     [updateArtikel]
   );
 
@@ -721,6 +867,7 @@ export function useProdukterTjanster() {
     totals: metrics.totals,
     rotRutSummary: metrics.rotRutSummary,
     standardValuta: artiklar[0]?.valuta ?? "SEK",
+    harBlandadeArtikelTyper,
 
     // Constants
     RUT_KATEGORIER,
@@ -740,6 +887,8 @@ export function useProdukterTjanster() {
     handleRotRutChange,
     handleRotRutBoendeTypChange,
     handleRotRutDateChange,
+    uppdateraArtikelRotRutArbete,
+    uppdateraArtikelRotRutMaterial,
 
     // State setters
     setShowFavoritArtiklar,
@@ -762,6 +911,8 @@ export function useProdukterTjanster() {
     setMoms,
     setValuta,
     setTyp,
+    setRotRutArbete,
+    setRotRutMaterial,
     updateArtikel,
     resetNyArtikel,
   };

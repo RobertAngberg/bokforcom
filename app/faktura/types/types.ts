@@ -111,6 +111,7 @@ export type Artikel = {
   moms: number;
   valuta: string;
   typ: "tjänst" | "vara";
+  rotRutArbete?: boolean;
   rotRutMaterial?: boolean;
   rotRutTyp?: "ROT" | "RUT";
   rotRutKategori?: string;
@@ -136,6 +137,8 @@ export type NyArtikel = {
   moms: string;
   valuta: string;
   typ: "tjänst" | "vara";
+  rotRutArbete?: boolean;
+  rotRutMaterial?: boolean;
 };
 
 export type FavoritArtikel = Omit<
@@ -258,13 +261,11 @@ export interface ArtikelFormProps {
   prisPerEnhet: number;
   moms: number;
   typ: "vara" | "tjänst";
-  rotRutMaterial?: boolean;
   onChangeBeskrivning: (v: string) => void;
   onChangeAntal: (v: number) => void;
   onChangePrisPerEnhet: (v: number) => void;
   onChangeMoms: (v: number) => void;
   onChangeTyp: (v: "vara" | "tjänst") => void;
-  onChangeRotRutMaterial?: (v: boolean) => void;
   disabled?: boolean;
 }
 
@@ -446,8 +447,12 @@ export interface ForhandsgranskningCalculations {
   rotRutTjänsterSumExkl: number;
   rotRutTjänsterMoms: number;
   rotRutTjänsterInklMoms: number;
+  rotRutMaterialSumExkl: number;
+  rotRutMaterialMoms: number;
+  rotRutMaterialInklMoms: number;
   arbetskostnadInklMoms: number;
   rotRutAvdrag: number;
+  rotRutArtiklarAntal: number;
 
   // ROT/RUT display data
   rotRutPersonnummer: string | undefined;

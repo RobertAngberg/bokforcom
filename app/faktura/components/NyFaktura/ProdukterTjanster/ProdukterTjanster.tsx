@@ -1,5 +1,4 @@
 "use client";
-
 import { useFaktura } from "../../../hooks/useFaktura";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import ArtikelForm from "./ArtikelForm";
@@ -23,6 +22,8 @@ export default function ProdukterTjanster() {
     setPrisPerEnhet,
     setMoms,
     setTyp,
+    setRotRutArbete,
+    setRotRutMaterial,
 
     // Handlers från useFaktura
     läggTillArtikel,
@@ -37,6 +38,7 @@ export default function ProdukterTjanster() {
     setVisaRotRutForm,
     setVisaArtikelForm,
     sparaArtikelSomFavorit,
+    harBlandadeArtikelTyper,
   } = useProdukterTjanster();
 
   // Destructure nested state
@@ -51,6 +53,18 @@ export default function ProdukterTjanster() {
   } = produkterTjansterState;
 
   const { beskrivning, antal, prisPerEnhet, moms, typ } = nyArtikel;
+
+  const parsedAntal = Number(antal);
+  const parsedPris = Number(prisPerEnhet);
+  const parsedMoms = Number(moms);
+
+  const addButtonDisabled =
+    !beskrivning.trim() ||
+    Number.isNaN(parsedAntal) ||
+    Number.isNaN(parsedPris) ||
+    Number.isNaN(parsedMoms) ||
+    parsedAntal <= 0 ||
+    parsedPris <= 0;
 
   // Handler functions
   const handleAdd = () => {
@@ -109,6 +123,12 @@ export default function ProdukterTjanster() {
           {/* Formulär som expanderar nedåt */}
           {visaArtikelForm && (
             <div className="p-4 space-y-4">
+              {harBlandadeArtikelTyper && (
+                <p className="text-sm text-slate-300">
+                  Fakturan innehåller både varor och tjänster. ROT/RUT-avdrag beräknas endast på
+                  tjänstedelen.
+                </p>
+              )}
               <ArtikelForm
                 beskrivning={beskrivning}
                 antal={parseFloat(antal) || 0}
@@ -139,6 +159,8 @@ export default function ProdukterTjanster() {
                     setVisaRotRutForm(newValue);
                     if (newValue) {
                       setTyp("tjänst");
+                      setRotRutArbete(true);
+                      setRotRutMaterial(false);
                       // Aktivera ROT/RUT i formData så att formuläret visas
                       updateFormField("rotRutAktiverat", true);
                     } else {
@@ -182,7 +204,7 @@ export default function ProdukterTjanster() {
                 <Knapp
                   onClick={handleAdd}
                   text="✚ Lägg till artikel"
-                  disabled={!beskrivning.trim()}
+                  disabled={addButtonDisabled}
                 />
               </div>
             </div>
@@ -200,6 +222,7 @@ export default function ProdukterTjanster() {
             onClick={handleAdd}
             text="✚ Lägg till artikel"
             className="w-full bg-green-800 hover:bg-green-700"
+            disabled={addButtonDisabled}
           />
         </div>
       )}
@@ -238,11 +261,7 @@ export default function ProdukterTjanster() {
 
             <div className="flex items-center justify-between pt-6 border-t border-slate-600">
               <Knapp onClick={() => handleResetForm()} text="❌ Avbryt redigering" />
-              <Knapp
-                onClick={handleAdd}
-                text="💾 Uppdatera artikel"
-                disabled={!beskrivning.trim()}
-              />
+              <Knapp onClick={handleAdd} text="💾 Uppdatera artikel" disabled={addButtonDisabled} />
             </div>
           </div>
         </div>

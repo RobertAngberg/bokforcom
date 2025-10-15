@@ -11,6 +11,7 @@ type KnappProps = {
   loadingText?: string;
   pendingText?: string;
   fullWidth?: boolean;
+  title?: string;
 };
 
 export default function Knapp({
@@ -22,6 +23,7 @@ export default function Knapp({
   loadingText,
   pendingText,
   fullWidth = false,
+  title,
   className = "",
 }: KnappProps & { className?: string }) {
   const { pending } = useFormStatus();
@@ -52,6 +54,7 @@ export default function Knapp({
       type={fullWidth ? "submit" : type}
       onClick={onClick}
       disabled={isDisabled}
+      title={title}
       className={`${baseStyles} ${widthStyles} ${className}`}
     >
       {(loading || isFormPending) && (

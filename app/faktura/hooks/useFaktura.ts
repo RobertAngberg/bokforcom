@@ -65,6 +65,8 @@ export function useFaktura() {
     setMoms,
     setValuta,
     setTyp,
+    setRotRutArbete,
+    setRotRutMaterial,
     updateArtikel,
     resetNyArtikel,
     setVisaArtikelModal,
@@ -1006,6 +1008,8 @@ export function useFaktura() {
     setMoms,
     setValuta,
     setTyp,
+    setRotRutArbete,
+    setRotRutMaterial,
 
     // Betalning functions
     addDays,
