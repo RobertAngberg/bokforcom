@@ -8,7 +8,6 @@ import { formatCurrency } from "../../../../_utils/format";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
-import "react-datepicker/dist/react-datepicker.css";
 import type { RotRutFormProps } from "../../../types/types";
 registerLocale("sv", sv);
 
@@ -39,7 +38,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 value={formData.rotRutTyp ?? ""}
                 onChange={handleRotRutChange}
                 disabled={disabled}
-                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white mb-4 ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
@@ -57,7 +56,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                   value={formData.rotRutKategori ?? ""}
                   onChange={handleRotRutChange}
                   disabled={disabled}
-                  className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white ${
+                  className={`w-full p-2 rounded bg-slate-900 border border-slate-700 text-white mb-4 ${
                     disabled ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
@@ -92,7 +91,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 placeholderText="Välj startdatum"
                 disabled={disabled}
                 isClearable
-                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 ${
+                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 mb-4 ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 required
@@ -113,7 +112,7 @@ export default function RotRutForm({ disabled = false }: RotRutFormProps) {
                 placeholderText="Välj slutdatum"
                 disabled={disabled}
                 isClearable
-                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 ${
+                className={`w-full px-3 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 mb-4 ${
                   disabled ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 required

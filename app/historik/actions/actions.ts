@@ -252,7 +252,13 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
 
       // Kolla om det är en faktura-transaktion
       const kommentar = ownerCheck.rows[0].kommentar || "";
-      if (kommentar.includes("Bokföring av faktura")) {
+      const ärFakturakommentar =
+        kommentar.includes("Bokföring av faktura") ||
+        /^Faktura\s.+\s.+(?:,\s(kundfordran|betalning|ROT\/RUT-utbetalning|kontantmetod))?$/i.test(
+          kommentar
+        );
+
+      if (ärFakturakommentar) {
         await client.query("ROLLBACK");
         return {
           success: false,

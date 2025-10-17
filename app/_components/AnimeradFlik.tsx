@@ -68,7 +68,7 @@ export default function AnimeradFlik({
         style={{
           height: height,
           transition: "height 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-          overflow: "hidden",
+          overflow: open ? "visible" : "hidden",
         }}
       >
         <div className="p-4 bg-slate-900">{children}</div>

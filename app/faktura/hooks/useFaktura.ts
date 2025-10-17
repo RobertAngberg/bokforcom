@@ -490,19 +490,55 @@ export function useFaktura() {
 
     lifecycle.current.harInitNyFaktura = true;
 
+    const previousFormData = formDataRef.current;
     const today = new Date();
     const todayIso = dateToYyyyMmDd(today);
-    const villkor = formData.betalningsvillkor || "30";
-    const villkorDays = parseInt(villkor, 10);
-    const defaultForfallo = dateToYyyyMmDd(addDays(today, isNaN(villkorDays) ? 30 : villkorDays));
+    const previousVillkor = (previousFormData.betalningsvillkor || "30").toString();
+    const villkorDays = parseInt(previousVillkor, 10);
+    const defaultForfallo = dateToYyyyMmDd(
+      addDays(today, Number.isFinite(villkorDays) ? villkorDays : 30)
+    );
 
+    const previousFakturanummer = parseInt(previousFormData.fakturanummer ?? "", 10);
+    const predictedNextFakturanummer = Number.isFinite(previousFakturanummer)
+      ? (previousFakturanummer + 1).toString()
+      : "";
+
+    const preservedCompanyFields = {
+      företagsnamn: previousFormData.företagsnamn || "",
+      adress: previousFormData.adress || "",
+      postnummer: previousFormData.postnummer || "",
+      stad: previousFormData.stad || "",
+      organisationsnummer: previousFormData.organisationsnummer || "",
+      momsregistreringsnummer: previousFormData.momsregistreringsnummer || "",
+      telefonnummer: previousFormData.telefonnummer || "",
+      bankinfo: previousFormData.bankinfo || "",
+      epost: previousFormData.epost || "",
+      webbplats: previousFormData.webbplats || "",
+      logo: previousFormData.logo || "",
+      logoWidth:
+        typeof previousFormData.logoWidth === "number" &&
+        Number.isFinite(previousFormData.logoWidth)
+          ? previousFormData.logoWidth
+          : 200,
+    };
+
+    const preservedPaymentFields = {
+      betalningsvillkor: previousVillkor,
+      drojsmalsranta: (previousFormData.drojsmalsranta || "12").toString(),
+      betalningsmetod: previousFormData.betalningsmetod || "",
+    };
+
+    resetFormData();
     resetKund();
     resetNyArtikel();
 
     setFormData({
+      ...preservedCompanyFields,
+      ...preservedPaymentFields,
       id: "",
       artiklar: [],
-      fakturanummer: "",
+      fakturanummer: predictedNextFakturanummer,
       fakturadatum: todayIso,
       forfallodatum: defaultForfallo,
       nummer: "",
@@ -531,10 +567,10 @@ export function useFaktura() {
   }, [
     navigationState.currentView,
     editFakturaId,
+    resetFormData,
     resetKund,
     resetNyArtikel,
     setFormData,
-    formData.betalningsvillkor,
     lifecycle,
   ]);
 

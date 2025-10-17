@@ -189,8 +189,8 @@ export async function registreraBetalningEnkel(
 
       transId = transaktionsId;
 
-      await pool.query("UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3", [
-        "Betald",
+      await pool.query("UPDATE fakturor SET status = $1, betaldatum = $2 WHERE id = $3", [
+        "Färdig",
         todayISO,
         fakturaId,
       ]);

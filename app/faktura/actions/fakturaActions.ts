@@ -6,6 +6,110 @@ import { ensureSession } from "../../_utils/session";
 import { dateToYyyyMmDd, stringTillDate } from "../../_utils/datum";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
 
+const normalizeStatus = (status: string | null | undefined) => {
+  const normalized = (status || "").trim().toLowerCase();
+  return normalized === "delvis betald" ? "skickad" : normalized;
+};
+
+const mapStatusToLegacy = (status: string | null | undefined) => {
+  const normalized = normalizeStatus(status);
+
+  if (normalized === "färdig") {
+    return { status_bokförd: "Bokförd", status_betalning: "Betald" } as const;
+  }
+
+  if (normalized === "skickad") {
+    return { status_bokförd: "Bokförd", status_betalning: "Obetald" } as const;
+  }
+
+  return { status_bokförd: "Ej bokförd", status_betalning: "Obetald" } as const;
+};
+
+const isStatusAtLeastSkickad = (status: string | null | undefined) => {
+  const normalized = normalizeStatus(status);
+  return normalized === "skickad" || normalized === "färdig";
+};
+
+type SanitizedArtikel = {
+  beskrivning: string;
+  antal: number;
+  prisPerEnhet: number;
+  moms: number;
+  valuta: string;
+  typ: "tjänst" | "vara";
+  rotRutTyp: "ROT" | "RUT" | null;
+  rotRutKategori: string | null;
+  avdragProcent: number | null;
+  arbetskostnadExMoms: number | null;
+  rotRutBeskrivning: string | null;
+  rotRutStartdatum: string | null;
+  rotRutSlutdatum: string | null;
+  rotRutPersonnummer: string | null;
+  rotRutFastighetsbeteckning: string | null;
+  rotRutBoendeTyp: string | null;
+  rotRutBrfOrg: string | null;
+  rotRutBrfLagenhet: string | null;
+  rotRutAntalTimmar: number | null;
+  rotRutPrisPerTimme: number | null;
+};
+
+function sanitizeArtikelInput(row: ArtikelInput): SanitizedArtikel {
+  const typ = row.typ === "tjänst" ? "tjänst" : "vara";
+  const parseNumberStrict = (value: unknown, fallback: number | null = null) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+    return fallback;
+  };
+
+  const clampString = (value: unknown, maxLength: number): string | null => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (trimmed === "") return null;
+    return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
+  };
+
+  const antal = parseNumberStrict(row.antal, 0) ?? 0;
+  const prisPerEnhet = parseNumberStrict(row.prisPerEnhet, 0) ?? 0;
+  const moms = parseNumberStrict(row.moms, 0) ?? 0;
+  const valuta = typeof row.valuta === "string" && row.valuta.trim() !== "" ? row.valuta : "SEK";
+
+  const rawRotRutTyp =
+    typeof row.rotRutTyp === "string" ? row.rotRutTyp.trim().toUpperCase() : null;
+  const isValidRotRut = rawRotRutTyp === "ROT" || rawRotRutTyp === "RUT";
+  const isEligibleForRotRut = isValidRotRut && typ === "tjänst";
+  const rotRutTyp = isEligibleForRotRut ? (rawRotRutTyp as "ROT" | "RUT") : null;
+
+  const optionalNumber = (value: unknown) => parseNumberStrict(value, null);
+
+  return {
+    beskrivning: row.beskrivning,
+    antal,
+    prisPerEnhet,
+    moms,
+    valuta,
+    typ,
+    rotRutTyp,
+    rotRutKategori: isEligibleForRotRut ? clampString(row.rotRutKategori, 100) : null,
+    avdragProcent: isEligibleForRotRut ? optionalNumber(row.avdragProcent) : null,
+    arbetskostnadExMoms: isEligibleForRotRut ? optionalNumber(row.arbetskostnadExMoms) : null,
+    rotRutBeskrivning: isEligibleForRotRut ? clampString(row.rotRutBeskrivning, 500) : null,
+    rotRutStartdatum: isEligibleForRotRut ? clampString(row.rotRutStartdatum, 32) : null,
+    rotRutSlutdatum: isEligibleForRotRut ? clampString(row.rotRutSlutdatum, 32) : null,
+    rotRutPersonnummer: isEligibleForRotRut ? clampString(row.rotRutPersonnummer, 20) : null,
+    rotRutFastighetsbeteckning: isEligibleForRotRut
+      ? clampString(row.rotRutFastighetsbeteckning, 100)
+      : null,
+    rotRutBoendeTyp: isEligibleForRotRut ? clampString(row.rotRutBoendeTyp, 20) : null,
+    rotRutBrfOrg: isEligibleForRotRut ? clampString(row.rotRutBrfOrg, 20) : null,
+    rotRutBrfLagenhet: isEligibleForRotRut ? clampString(row.rotRutBrfLagenhet, 20) : null,
+    rotRutAntalTimmar: isEligibleForRotRut ? antal : null,
+    rotRutPrisPerTimme: isEligibleForRotRut ? prisPerEnhet : null,
+  } satisfies SanitizedArtikel;
+}
+
 function safeParseFakturaJSON(jsonString: string): ArtikelInput[] {
   try {
     if (!jsonString || typeof jsonString !== "string") return [];
@@ -65,6 +169,8 @@ export async function saveInvoiceInternal(formData: FormData) {
       return { success: false, error: "Ogiltig moms i artikel" };
     }
   }
+
+  const sanitizedArtiklar = artiklar.map(sanitizeArtikelInput);
 
   // Kolla om det är en uppdatering eller ny faktura
   const fakturaIdRaw = formData.get("id");
@@ -147,7 +253,7 @@ export async function saveInvoiceInternal(formData: FormData) {
         ]
       );
 
-      for (const rad of artiklar) {
+      for (const rad of sanitizedArtiklar) {
         await client.query(
           `INSERT INTO faktura_artiklar (
             faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
@@ -170,8 +276,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.rotRutKategori ?? null,
             rad.avdragProcent ?? null,
             rad.arbetskostnadExMoms ?? null,
-            rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
-            rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
+            rad.rotRutAntalTimmar ?? null,
+            rad.rotRutPrisPerTimme ?? null,
             rad.rotRutBeskrivning ?? null,
             rad.rotRutStartdatum ? dateToYyyyMmDd(new Date(rad.rotRutStartdatum)) : null,
             rad.rotRutSlutdatum ? dateToYyyyMmDd(new Date(rad.rotRutSlutdatum)) : null,
@@ -199,8 +305,8 @@ export async function saveInvoiceInternal(formData: FormData) {
         `INSERT INTO fakturor (
           "user_id", fakturanummer, fakturadatum, forfallodatum,
           betalningsmetod, betalningsvillkor, drojsmalsranta,
-          "kundId", nummer, logo_width
-        ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8, $9, $10)
+          "kundId", nummer, logo_width, status
+        ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id`,
         [
           userId,
@@ -213,12 +319,13 @@ export async function saveInvoiceInternal(formData: FormData) {
           formData.get("kundId") ? parseInt(formData.get("kundId")!.toString()) : null,
           formData.get("nummer"),
           formData.get("logoWidth") ? parseInt(formData.get("logoWidth")!.toString()) : 200,
+          "Oskickad",
         ]
       );
 
       const newId = insertF.rows[0].id;
 
-      for (const rad of artiklar) {
+      for (const rad of sanitizedArtiklar) {
         await client.query(
           `INSERT INTO faktura_artiklar (
             faktura_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
@@ -241,8 +348,8 @@ export async function saveInvoiceInternal(formData: FormData) {
             rad.rotRutKategori ?? null,
             rad.avdragProcent ?? null,
             rad.arbetskostnadExMoms ?? null,
-            rad.antal ?? null, // Använd antal istället för rotRutAntalTimmar
-            rad.prisPerEnhet ?? null, // Använd prisPerEnhet istället för rotRutPrisPerTimme
+            rad.rotRutAntalTimmar ?? null,
+            rad.rotRutPrisPerTimme ?? null,
             rad.rotRutBeskrivning ?? null,
             rad.rotRutStartdatum ? dateToYyyyMmDd(new Date(rad.rotRutStartdatum)) : null,
             rad.rotRutSlutdatum ? dateToYyyyMmDd(new Date(rad.rotRutSlutdatum)) : null,
@@ -371,7 +478,7 @@ export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
       `
       SELECT
         f.id, f.fakturanummer, f.fakturadatum, f."kundId",
-        f.status_betalning, f.status_bokförd, f.betaldatum,
+        f.status, f.betaldatum,
         f.transaktions_id, f.rot_rut_status, 'kund' as typ,
         k.kundnamn
       FROM fakturor f
@@ -409,11 +516,24 @@ export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
           rotRutTyp = "RUT";
         }
 
+        const legacy = mapStatusToLegacy(faktura.status);
+
         return {
-          ...faktura,
-          totalBelopp: Math.round(totalBelopp * 100) / 100, // Avrunda till 2 decimaler
+          id: faktura.id,
+          fakturanummer: faktura.fakturanummer,
+          fakturadatum: faktura.fakturadatum,
+          kundId: faktura.kundId,
+          status: faktura.status,
+          status_betalning: legacy.status_betalning,
+          status_bokförd: legacy.status_bokförd,
+          betaldatum: faktura.betaldatum,
+          transaktions_id: faktura.transaktions_id,
+          rot_rut_status: faktura.rot_rut_status,
+          typ: faktura.typ,
+          kundnamn: faktura.kundnamn,
+          totalBelopp: Math.round(totalBelopp * 100) / 100,
           antalArtiklar: artiklarRes.rows.length,
-          rotRutTyp, // ✅ Lägg till ROT/RUT-info
+          rotRutTyp,
         } as SparadFaktura;
       })
     );
@@ -445,7 +565,7 @@ export async function deleteFaktura(id: number) {
 
     // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
     const verifyRes = await client.query(
-      `SELECT id, transaktions_id, status_betalning, status_bokförd FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+      `SELECT id, transaktions_id, status FROM fakturor WHERE id = $1 AND "user_id" = $2`,
       [id, userId]
     );
 
@@ -458,18 +578,16 @@ export async function deleteFaktura(id: number) {
       return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
     }
 
-    const statusBetalning = verifyRes.rows[0]?.status_betalning as string | null;
+    const status = verifyRes.rows[0]?.status as string | null;
 
-    if (statusBetalning && statusBetalning.toLowerCase() === "betald") {
+    if (status && isStatusAtLeastSkickad(status)) {
       await client.query("ROLLBACK");
-      return { success: false, error: "Det går inte att radera betalda fakturor" };
-    }
-
-    const statusBokford = verifyRes.rows[0]?.status_bokförd as string | null;
-
-    if (statusBokford && statusBokford.toLowerCase() !== "ej bokförd") {
-      await client.query("ROLLBACK");
-      return { success: false, error: "Bokförda fakturor kan ej tas bort" };
+      const normalized = status.trim();
+      const errorMessage =
+        normalized === "Färdig"
+          ? "Det går inte att radera fakturor som är färdiga"
+          : "Skickade fakturor kan inte raderas";
+      return { success: false, error: errorMessage };
     }
 
     const transaktionsId = verifyRes.rows[0]?.transaktions_id;

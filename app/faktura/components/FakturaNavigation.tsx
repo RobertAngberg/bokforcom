@@ -23,10 +23,65 @@ const Leverantorsfakturor = dynamic(() => import("./Leverantorsfakturor/Leverant
 });
 
 export default function FakturaNavigation() {
-  const { navigationState, navigateToView, navigateToEdit, navigateBack } = useFakturaClient();
+  const {
+    formData,
+    navigateToView,
+    navigateToEdit,
+    navigateBack,
+    resetFormData,
+    resetKund,
+    setFormData,
+    navigationState,
+  } = useFakturaClient();
   const activeView = navigationState.currentView;
 
   const handleCreateNew = () => {
+    const preservedCompanyFields = {
+      företagsnamn: formData.företagsnamn || "",
+      adress: formData.adress || "",
+      postnummer: formData.postnummer || "",
+      stad: formData.stad || "",
+      organisationsnummer: formData.organisationsnummer || "",
+      momsregistreringsnummer: formData.momsregistreringsnummer || "",
+      telefonnummer: formData.telefonnummer || "",
+      bankinfo: formData.bankinfo || "",
+      epost: formData.epost || "",
+      webbplats: formData.webbplats || "",
+      logo: formData.logo || "",
+      logoWidth:
+        typeof formData.logoWidth === "number" && Number.isFinite(formData.logoWidth)
+          ? formData.logoWidth
+          : 200,
+    };
+
+    const preservedPaymentFields = {
+      betalningsvillkor: formData.betalningsvillkor || "30",
+      drojsmalsranta: formData.drojsmalsranta || "12",
+      betalningsmetod: formData.betalningsmetod || "",
+    };
+
+    resetFormData();
+    resetKund();
+    setFormData({
+      ...preservedCompanyFields,
+      ...preservedPaymentFields,
+      id: "",
+      artiklar: [],
+      fakturanummer: "",
+      fakturadatum: "",
+      forfallodatum: "",
+      nummer: "",
+      rotRutAktiverat: false,
+      rotRutTyp: "ROT",
+      rotRutKategori: "",
+      avdragProcent: 0,
+      avdragBelopp: 0,
+      arbetskostnadExMoms: 0,
+      materialkostnadExMoms: 0,
+      rotRutBeskrivning: "",
+      rotRutStartdatum: "",
+      rotRutSlutdatum: "",
+    });
     navigateToEdit("ny");
   };
 

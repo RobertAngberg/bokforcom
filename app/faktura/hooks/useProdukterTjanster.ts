@@ -545,6 +545,13 @@ export function useProdukterTjanster() {
       return;
     }
 
+    const rotRutTyp =
+      formData.rotRutTyp && (formData.rotRutTyp === "ROT" || formData.rotRutTyp === "RUT")
+        ? formData.rotRutTyp
+        : undefined;
+
+    const rotRutAktivFörNyArtikel = Boolean(state.visaRotRutForm && rotRutTyp);
+
     const artikelData: Artikel = {
       beskrivning,
       antal: Number(antal),
@@ -552,19 +559,20 @@ export function useProdukterTjanster() {
       moms: Number(moms),
       valuta,
       typ,
-      rotRutArbete: Boolean(nyArtikelRotRutArbete ?? typ === "tjänst"),
-      rotRutMaterial: Boolean(nyArtikelRotRutMaterial && typ === "vara"),
+      rotRutArbete: rotRutAktivFörNyArtikel
+        ? Boolean(nyArtikelRotRutArbete ?? typ === "tjänst")
+        : false,
+      rotRutMaterial: rotRutAktivFörNyArtikel
+        ? Boolean(nyArtikelRotRutMaterial && typ === "vara")
+        : false,
       rotRutTyp: undefined,
       rotRutKategori: undefined,
       avdragProcent: undefined,
       arbetskostnadExMoms: undefined,
     };
 
-    if (
-      formData.rotRutAktiverat &&
-      (formData.rotRutTyp === "ROT" || formData.rotRutTyp === "RUT")
-    ) {
-      artikelData.rotRutTyp = formData.rotRutTyp;
+    if (rotRutAktivFörNyArtikel && rotRutTyp) {
+      artikelData.rotRutTyp = rotRutTyp;
       artikelData.rotRutKategori = formData.rotRutKategori || undefined;
       artikelData.avdragProcent = formData.avdragProcent || undefined;
       artikelData.arbetskostnadExMoms = Number(formData.arbetskostnadExMoms) || undefined;
@@ -589,7 +597,7 @@ export function useProdukterTjanster() {
       console.error("Fel vid sparande av favoritartikel", error);
       showToast("Fel vid sparande av favorit", "error");
     }
-  }, [state.nyArtikel, formData, setState, laddaSparadeArtiklar]);
+  }, [state.nyArtikel, state.visaRotRutForm, formData, setState, laddaSparadeArtiklar]);
 
   const taBortFavoritArtikel = useCallback(
     (id: number) => {

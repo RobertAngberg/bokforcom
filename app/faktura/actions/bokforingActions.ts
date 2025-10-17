@@ -11,7 +11,32 @@ import {
 } from "../../_utils/transactions";
 import { BokförFakturaData } from "../types/types";
 
+const normalizeStatus = (status: string | null | undefined) => {
+  const normalized = (status || "").trim().toLowerCase();
+  return normalized === "delvis betald" ? "skickad" : normalized;
+};
+
+const mapStatusToLegacy = (status: string | null | undefined) => {
+  const normalized = normalizeStatus(status);
+
+  if (normalized === "färdig") {
+    return { status_bokförd: "Bokförd", status_betalning: "Betald" } as const;
+  }
+
+  if (normalized === "skickad") {
+    return { status_bokförd: "Bokförd", status_betalning: "Obetald" } as const;
+  }
+
+  return { status_bokförd: "Ej bokförd", status_betalning: "Obetald" } as const;
+};
+
+const isStatusSkickad = (status: string | null | undefined) =>
+  normalizeStatus(status) === "skickad";
+
+const isStatusFardig = (status: string | null | undefined) => normalizeStatus(status) === "färdig";
+
 export async function hamtaFakturaStatus(fakturaId: number): Promise<{
+  status?: string;
   status_betalning?: string;
   status_bokförd?: string;
   betaldatum?: string;
@@ -20,10 +45,21 @@ export async function hamtaFakturaStatus(fakturaId: number): Promise<{
 
   try {
     const result = await pool.query(
-      'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "user_id" = $2',
+      'SELECT status, betaldatum FROM fakturor WHERE id = $1 AND "user_id" = $2',
       [fakturaId, userId]
     );
-    return result.rows[0] || {};
+    if (result.rows.length === 0) {
+      return {};
+    }
+
+    const { status, betaldatum } = result.rows[0];
+    const legacy = mapStatusToLegacy(status);
+
+    return {
+      status,
+      betaldatum,
+      ...legacy,
+    };
   } catch (error) {
     console.error("Fel vid hämtning av fakturaSTATUS:", error);
     return {};
@@ -91,15 +127,19 @@ export async function bokforFaktura(data: BokförFakturaData) {
 
     try {
       // SÄKERHETSVALIDERING: Om fakturaId anges, verifiera ägarskap
+      let currentStatus: string | null = null;
+
       if (data.fakturaId) {
         const fakturaCheck = await pool.query(
-          `SELECT id FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+          `SELECT id, status FROM fakturor WHERE id = $1 AND "user_id" = $2`,
           [data.fakturaId, userId]
         );
 
         if (fakturaCheck.rows.length === 0) {
           throw new Error("Fakturan finns inte eller tillhör inte dig");
         }
+
+        currentStatus = fakturaCheck.rows[0]?.status ?? null;
       }
 
       // Validera att bokföringen balanserar
@@ -118,10 +158,29 @@ export async function bokforFaktura(data: BokförFakturaData) {
         kredit: Number(post.kredit) || 0,
       }));
 
+      const harBankKonto = data.poster.some(
+        (post) => post.konto === "1930" || post.konto === "1910"
+      );
+      const harKundfordringar = data.poster.some((post) => post.konto === "1510");
+      const ärBetalning = harBankKonto && harKundfordringar && data.poster.length === 2;
+      const harRotRutUtbetalning = data.poster.some((post) => post.konto === "2731");
+
+      let defaultKommentar = `Faktura ${sanitizedFakturanummer} ${sanitizedKundnamn}`;
+      if (ärBetalning) {
+        defaultKommentar = `${defaultKommentar}, betalning`;
+      } else if (harRotRutUtbetalning) {
+        defaultKommentar = `${defaultKommentar}, ROT/RUT-utbetalning`;
+      } else if (harKundfordringar) {
+        defaultKommentar = `${defaultKommentar}, kundfordran`;
+      } else if (harBankKonto) {
+        defaultKommentar = `${defaultKommentar}, kontantmetod`;
+      }
+
       const nu = new Date();
       const transaktionsKommentar =
-        sanitizedKommentar ||
-        `Bokföring av faktura ${sanitizedFakturanummer} för ${sanitizedKundnamn}`;
+        sanitizedKommentar && !/^bokföring av faktura/i.test(sanitizedKommentar)
+          ? sanitizedKommentar
+          : defaultKommentar;
 
       const { transaktionsId: createdId } = await createTransaktion({
         datum: nu,
@@ -139,9 +198,6 @@ export async function bokforFaktura(data: BokförFakturaData) {
         try {
           await client.query("BEGIN");
 
-          const harBankKonto = data.poster.some((p) => p.konto === "1930" || p.konto === "1910");
-          const harKundfordringar = data.poster.some((p) => p.konto === "1510");
-          const ärBetalning = harBankKonto && harKundfordringar && data.poster.length === 2;
           const todayISO = dateToYyyyMmDd(new Date());
 
           if (ärBetalning) {
@@ -150,18 +206,33 @@ export async function bokforFaktura(data: BokförFakturaData) {
               [data.fakturaId]
             );
 
-            let status = "Betald";
             const harRotRutArtiklar = parseInt(rotRutCheck.rows[0].count) > 0;
+            let nextStatus: string;
 
             if (harRotRutArtiklar) {
-              status = "Delvis betald";
+              if (isStatusFardig(currentStatus) || isStatusSkickad(currentStatus)) {
+                nextStatus = "Färdig";
+              } else {
+                nextStatus = "Skickad";
+              }
+            } else {
+              nextStatus = "Färdig";
             }
 
             await client.query(
-              'UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
-              [status, todayISO, transaktionsId, data.fakturaId, userId]
+              'UPDATE fakturor SET status = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
+              [nextStatus, todayISO, transaktionsId, data.fakturaId, userId]
             );
-            console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till ${status}`);
+            console.log(`💰 Uppdaterat faktura ${data.fakturaId} status till ${nextStatus}`);
+          } else if (harRotRutUtbetalning) {
+            // Skatteverket har betalat ut ROT/RUT-andelen
+            await client.query(
+              'UPDATE fakturor SET status = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
+              ["Färdig", todayISO, transaktionsId, data.fakturaId, userId]
+            );
+            console.log(
+              `🏦 Uppdaterat faktura ${data.fakturaId} status till Färdig efter ROT/RUT-utbetalning`
+            );
           } else {
             const harBankKontantmetod = data.poster.some((p) => p.konto === "1930");
             const harIngenKundfordringar = !data.poster.some((p) => p.konto === "1510");
@@ -169,18 +240,18 @@ export async function bokforFaktura(data: BokförFakturaData) {
 
             if (ärKontantmetod) {
               await client.query(
-                'UPDATE fakturor SET status_bokförd = $1, status_betalning = $2, betaldatum = $3, transaktions_id = $4 WHERE id = $5 AND "user_id" = $6',
-                ["Bokförd", "Betald", todayISO, transaktionsId, data.fakturaId, userId]
+                'UPDATE fakturor SET status = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
+                ["Färdig", todayISO, transaktionsId, data.fakturaId, userId]
               );
               console.log(
-                `💰📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd och Betald (kontantmetod)`
+                `💰📊 Uppdaterat faktura ${data.fakturaId} status till Färdig (kontantmetod)`
               );
             } else {
               await client.query(
-                'UPDATE fakturor SET status_bokförd = $1, transaktions_id = $2 WHERE id = $3 AND "user_id" = $4',
-                ["Bokförd", transaktionsId, data.fakturaId, userId]
+                'UPDATE fakturor SET status = $1, transaktions_id = $2 WHERE id = $3 AND "user_id" = $4',
+                ["Skickad", transaktionsId, data.fakturaId, userId]
               );
-              console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Bokförd`);
+              console.log(`📊 Uppdaterat faktura ${data.fakturaId} status till Skickad`);
             }
           }
 

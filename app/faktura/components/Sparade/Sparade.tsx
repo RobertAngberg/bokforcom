@@ -8,6 +8,43 @@ import type { SparadeProps, SparadFaktura } from "../../types/types";
 import Modal from "../../../_components/Modal";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
 
+// Normalize status functions (moved from utils/status.ts).. spaghetti...
+const normalizeStatus = (status: string | null | undefined) => {
+  const normalized = (status || "").trim().toLowerCase();
+  return normalized === "delvis betald" ? "skickad" : normalized;
+};
+
+const isStatusSkickad = (status: string | null | undefined) =>
+  normalizeStatus(status) === "skickad";
+
+const isStatusFardig = (status: string | null | undefined) => normalizeStatus(status) === "färdig";
+
+const resolveStatus = (
+  status: string | null | undefined,
+  legacy?: {
+    status_bokförd?: string | null | undefined;
+    status_betalning?: string | null | undefined;
+  }
+) => {
+  const normalized = normalizeStatus(status);
+  if (normalized) {
+    return status || normalized;
+  }
+
+  const bokford = (legacy?.status_bokförd || "").trim().toLowerCase();
+  const betalning = (legacy?.status_betalning || "").trim().toLowerCase();
+
+  if (betalning === "betald") {
+    return "Färdig";
+  }
+
+  if (bokford === "bokförd") {
+    return "Skickad";
+  }
+
+  return "Oskickad";
+};
+
 export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
   const { data, loading } = useSparadeFakturorPage();
   const {
@@ -47,14 +84,24 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
 
               const isLoading = loadingInvoiceId === faktura.id;
 
+              const status = resolveStatus(faktura.status, {
+                status_bokförd: faktura.status_bokförd,
+                status_betalning: faktura.status_betalning,
+              });
+
               let statusBadge: string | null = null;
               let statusColor = "text-white";
 
-              if (faktura.status_betalning === "Betald") {
-                statusBadge = "✅ Betald";
+              const harRegistreradKundbetalning = isStatusSkickad(status) && !!faktura.betaldatum;
+
+              if (isStatusFardig(status)) {
+                statusBadge = "✅ Bokförd & betald";
                 statusColor = "text-green-400";
-              } else if (faktura.status_bokförd && faktura.status_bokförd !== "Ej bokförd") {
-                statusBadge = "📊 Bokförd, ej betald";
+              } else if (harRegistreradKundbetalning) {
+                statusBadge = "💸 Kund betald";
+                statusColor = "text-blue-400";
+              } else if (isStatusSkickad(status)) {
+                statusBadge = "📊 Skickad";
                 statusColor = "text-white";
               } else {
                 statusBadge = "⏳ Ej bokförd";

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Navbar from "./_components/Navbar";
 import { ClientProviders } from "./_lib/providers";
 import "./globals.css";
+import "react-datepicker/dist/react-datepicker.css";
 import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });

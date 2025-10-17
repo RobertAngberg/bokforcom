@@ -12,8 +12,8 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
     loading,
     statusLoaded,
     formData,
+    bokföringsmetod,
     poster,
-    varningar,
     columns,
     hanteraBokför,
     beräknaTotalbelopp,
@@ -21,6 +21,8 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
     husFilKnappText,
     husFilDisabled,
     husFilDisabledInfo,
+    ärFakturanRedanBokförd,
+    ärFakturanBokfördOchBetald,
     hanteraHUSFil,
   } = useBokforFakturaModal(isOpen, onClose);
 
@@ -42,6 +44,22 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
     );
   }
 
+  const bokföringsmetodNormalized = (bokföringsmetod || "").toLowerCase();
+
+  const helperText = ärFakturanBokfördOchBetald
+    ? "Fakturan är redan bokförd och betald."
+    : ärFakturanRedanBokförd
+      ? "Här bokför du när fakturan betalats."
+      : bokföringsmetodNormalized === "kontantmetoden"
+        ? "Här bokför du fakturan när den betalats."
+        : "Här bokför du en skickad faktura som en kundfordran.";
+  const bokforKnappText = ärFakturanRedanBokförd
+    ? "💼 Bokför betald"
+    : bokföringsmetodNormalized === "kontantmetoden"
+      ? "💼 Bokför betald"
+      : "💼 Bokför skickad";
+  const bokforLoadingText = `${bokforKnappText.replace("💼", "⏳")}...`;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -49,31 +67,8 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
       title={`📊 Bokför faktura ${formData.fakturanummer}`}
       maxWidth="4xl"
     >
+      <p className="mt-2 text-sm text-slate-300 text-center">{helperText}</p>
       <div className="mt-6 space-y-6">
-        {/* Information */}
-        {varningar.length > 0 && (
-          <div className="p-4 bg-blue-900/30 border border-blue-500/50 rounded">
-            <h3 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
-              💡 Information:
-            </h3>
-            <ul className="text-blue-200 space-y-1">
-              {varningar.map((varning, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="text-blue-400 mt-0.5">•</span>
-                  <div>
-                    {varning
-                      .replace(/^⚠️\s*/, "")
-                      .split("\n")
-                      .map((line, lineIndex) => (
-                        <div key={lineIndex}>{line}</div>
-                      ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         {/* Faktura-info */}
         <div className="p-4 bg-slate-700 rounded">
           <h3 className="text-white font-semibold mb-4">Fakturauppgifter:</h3>
@@ -129,10 +124,10 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
             <Knapp onClick={onClose} text="❌ Avbryt" />
             <Knapp
               onClick={hanteraBokför}
-              text="💼 Bokför"
+              text={bokforKnappText}
               loading={loading}
-              loadingText="⏳ Bokför..."
-              disabled={poster.length === 0}
+              loadingText={bokforLoadingText}
+              disabled={poster.length === 0 || ärFakturanBokfördOchBetald}
             />
           </div>
         </div>

@@ -294,8 +294,9 @@ export interface SparadFaktura {
   fakturanummer: string;
   fakturadatum: string | Date | null;
   kundId: number | null;
-  status_betalning: string | null;
-  status_bokförd: string | null;
+  status: string | null;
+  status_betalning?: string | null;
+  status_bokförd?: string | null;
   betaldatum: string | Date | null;
   transaktions_id: number | null;
   rot_rut_status: string | null;

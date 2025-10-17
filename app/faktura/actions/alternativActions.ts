@@ -10,6 +10,25 @@ import { registreraKundfakturaBetalning as registreraKundfakturaBetalningBase } 
 import type { BokförFakturaData, TransaktionsPost } from "../types/types";
 import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
 
+const normalizeStatus = (status: string | null | undefined) => {
+  const normalized = (status || "").trim().toLowerCase();
+  return normalized === "delvis betald" ? "skickad" : normalized;
+};
+
+const mapStatusToLegacy = (status: string | null | undefined) => {
+  const normalized = normalizeStatus(status);
+
+  if (normalized === "färdig") {
+    return { status_bokförd: "Bokförd", status_betalning: "Betald" } as const;
+  }
+
+  if (normalized === "skickad") {
+    return { status_bokförd: "Bokförd", status_betalning: "Obetald" } as const;
+  }
+
+  return { status_bokförd: "Ej bokförd", status_betalning: "Obetald" } as const;
+};
+
 // === BETALNINGSMETOD (från alternativActions.ts) ===
 export async function hamtaSenasteBetalningsmetod(userId: string) {
   try {
@@ -70,6 +89,7 @@ export async function hamtaBokforingsmetod() {
 }
 
 export async function hamtaFakturaStatus(fakturaId: number): Promise<{
+  status?: string;
   status_betalning?: string;
   status_bokförd?: string;
   betaldatum?: string;
@@ -78,10 +98,21 @@ export async function hamtaFakturaStatus(fakturaId: number): Promise<{
 
   try {
     const result = await pool.query(
-      'SELECT status_betalning, status_bokförd, betaldatum FROM fakturor WHERE id = $1 AND "user_id" = $2',
+      'SELECT status, betaldatum FROM fakturor WHERE id = $1 AND "user_id" = $2',
       [fakturaId, userId]
     );
-    return result.rows[0] || {};
+    if (result.rows.length === 0) {
+      return {};
+    }
+
+    const { status, betaldatum } = result.rows[0];
+    const legacy = mapStatusToLegacy(status);
+
+    return {
+      status,
+      betaldatum,
+      ...legacy,
+    };
   } catch (error) {
     console.error("Fel vid hämtning av fakturaSTATUS:", error);
     return {};
@@ -110,7 +141,7 @@ export async function hamtaBokfordaFakturor() {
   try {
     const result = await client.query(
       `SELECT * FROM fakturor 
-       WHERE user_id = $1 AND status_bokförd = 'Bokförd'
+       WHERE user_id = $1 AND status IS NOT NULL AND status <> 'Oskickad'
        ORDER BY uppdaterad DESC`,
       [userId]
     );

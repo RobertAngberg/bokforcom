@@ -13,6 +13,28 @@ import { BokforingsPost, BokföringsData } from "../types/types";
 import { ColumnDefinition } from "../../_components/Tabell";
 import { formatCurrency } from "../../_utils/format";
 
+const normalizeStatus = (status: string | null | undefined) => {
+  const normalized = (status || "").trim().toLowerCase();
+  return normalized === "delvis betald" ? "skickad" : normalized;
+};
+
+const isStatusSkickad = (status: string | null | undefined) =>
+  normalizeStatus(status) === "skickad";
+
+const isStatusFardig = (status: string | null | undefined) => normalizeStatus(status) === "färdig";
+
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (value == null) {
+    return "";
+  }
+
+  return String(value).trim();
+};
+
 // Validation functions - flyttad från useBokforFakturaModal
 function validateBokföringsPost(post: BokforingsPost): { isValid: boolean; error?: string } {
   if (!post.konto || !/^\d{4}$/.test(post.konto.toString())) {
@@ -85,9 +107,8 @@ export function useAlternativ() {
   const [bokförLoading, setBokförLoading] = useState(false);
   const [bokföringsmetod, setBokföringsmetod] = useState<string>("fakturametoden");
   const [fakturaStatus, setFakturaStatus] = useState<{
-    status_betalning?: string;
-    status_bokförd?: string;
-    rot_rut_status?: string;
+    status?: string;
+    betaldatum?: string;
   }>({});
 
   // Hämta användarens bokföringsmetod när komponenten laddas
@@ -102,10 +123,42 @@ export function useAlternativ() {
   // Hämta fakturaSTATUS när ID ändras
   useEffect(() => {
     if (formData.id) {
-      hamtaFakturaStatus(parseInt(formData.id)).then(setFakturaStatus);
+      hamtaFakturaStatus(parseInt(formData.id)).then((status) =>
+        setFakturaStatus({ status: status.status, betaldatum: status.betaldatum })
+      );
     } else {
       setFakturaStatus({});
     }
+  }, [formData.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        fakturaId?: number;
+        status?: string;
+        betaldatum?: string;
+      }>;
+      const currentId = formData.id ? parseInt(formData.id, 10) : null;
+
+      if (!currentId || customEvent.detail?.fakturaId !== currentId) {
+        return;
+      }
+
+      setFakturaStatus((prev) => ({
+        status: customEvent.detail?.status ?? prev.status,
+        betaldatum: customEvent.detail?.betaldatum ?? prev.betaldatum,
+      }));
+    };
+
+    window.addEventListener("fakturaStatusUppdaterad", handler);
+
+    return () => {
+      window.removeEventListener("fakturaStatusUppdaterad", handler);
+    };
   }, [formData.id]);
 
   const hanteraSpara = async () => {
@@ -145,9 +198,13 @@ export function useAlternativ() {
         console.log("✅ Faktura sparad framgångsrikt!");
         showToast("Faktura sparad!", "success");
 
-        // UPPDATERA FORMDATA MED NYTT ID!
         if ("id" in res && res.id) {
           updateFormField("id", res.id.toString());
+          window.dispatchEvent(
+            new CustomEvent("fakturaSaved", {
+              detail: { id: res.id, fakturanummer: formData.fakturanummer },
+            })
+          );
         }
 
         // Trigga reload event så Fakturor.tsx uppdaterar sin lista
@@ -182,6 +239,11 @@ export function useAlternativ() {
 
           if (res.success && "id" in res && res.id) {
             updateFormField("id", res.id.toString());
+            window.dispatchEvent(
+              new CustomEvent("fakturaSaved", {
+                detail: { id: res.id, fakturanummer: formData.fakturanummer },
+              })
+            );
             window.dispatchEvent(new Event("reloadFakturor"));
             setBokförModalOpen(true);
           } else {
@@ -202,25 +264,36 @@ export function useAlternativ() {
   };
 
   // Beräknade värden
-  const harKund = !!(formData.kundId && formData.kundId.trim() !== "");
+  const harKund = toTrimmedString(formData.kundId) !== "";
   const artiklarLength = formData.artiklar?.length ?? 0;
   const harArtiklar = artiklarLength > 0;
-  const ärFakturanBetald = fakturaStatus.status_betalning === "Betald";
+  const ärFakturanSkickad = isStatusSkickad(fakturaStatus.status);
+  const ärFakturanFärdig = isStatusFardig(fakturaStatus.status);
+  const ärFakturanBetald = ärFakturanFärdig;
+  const ärFakturanBokfördOchBetald = ärFakturanFärdig;
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
   const ärNyFaktura = !formData.id;
   const doljBokförKnapp = false;
 
   // Knapptexter
   const sparaKnappText = sparaLoading ? "💾 Sparar..." : "💾 Spara";
+  const fakturaIdStr = toTrimmedString(formData.id);
+  const harFakturaId = fakturaIdStr !== "";
+  const statusLoading = harFakturaId && fakturaStatus.status == null;
   const registerButtonLabel = (() => {
     const normalized = (bokföringsmetod || "").toLowerCase();
-    return normalized === "kontantmetoden" ? "💰 Markera betald" : "📨 Markera skickad";
+    if (ärFakturanSkickad && !ärFakturanBokfördOchBetald) {
+      return "💼 Bokför betald";
+    }
+    return normalized === "kontantmetoden" ? "📨 Bokför betald" : "📨 Bokför skickad";
   })();
   const bokförKnappText = bokförLoading
-    ? "⏳ Registrerar..."
-    : ärFakturanBetald
-      ? "✅ Redan betald"
-      : registerButtonLabel;
+    ? "Registrerar..."
+    : statusLoading
+      ? "Hämtar status..."
+      : ärFakturanBokfördOchBetald
+        ? "☑️ Betald och klar"
+        : registerButtonLabel;
   const återställKnappText = ärFakturanBetald ? "🔒 Betald faktura" : "🔄 Återställ";
   const granskKnappText = "👁️ Förhandsgranska";
   const pdfKnappText = "📤 Ladda ner PDF";
@@ -239,6 +312,8 @@ export function useAlternativ() {
     ärFakturanBetald,
     ärKontantmetod,
     ärNyFaktura,
+    ärFakturanBokfördOchBetald,
+    statusLoading,
     doljBokförKnapp,
     sparaKnappText,
     bokförKnappText,
@@ -257,8 +332,8 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
   const { formData, userSettings, setBokföringsmetod } = useFaktura();
   const [loading, setLoading] = useState(false);
   const [fakturaStatus, setFakturaStatus] = useState<{
-    status_betalning?: string;
-    status_bokförd?: string;
+    status?: string;
+    betaldatum?: string;
   }>({});
   const [statusLoaded, setStatusLoaded] = useState(false);
   const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
@@ -279,7 +354,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
         console.log("🔍 Hämtar status för faktura ID:", formData.id);
         hamtaFakturaStatus(parseInt(formData.id)).then((status) => {
           console.log("📊 Fakturasstatus:", status);
-          setFakturaStatus(status);
+          setFakturaStatus({ status: status.status, betaldatum: status.betaldatum });
           setStatusLoaded(true);
         });
       } else {
@@ -314,6 +389,13 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       ? "Spara fakturan först"
       : null;
   const husFilKnappText = "Ladda ner ROT/RUT-fil XML";
+
+  const modalStatus = fakturaStatus.status;
+  const ärFakturanSkickadIModal = isStatusSkickad(modalStatus);
+  const ärFakturanFärdigIModal = isStatusFardig(modalStatus);
+  const ärKundbetalningRegistreradIModal = ärFakturanSkickadIModal && !!fakturaStatus.betaldatum;
+  const ärFakturanRedanBokförd = ärFakturanSkickadIModal || ärFakturanFärdigIModal;
+  const ärFakturanBokfördOchBetald = ärFakturanFärdigIModal;
 
   // Analysera fakturan och föreslå bokföringsposter
   const analyseraBokföring = (): { poster: BokforingsPost[]; varningar: string[] } => {
@@ -357,25 +439,27 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       return { poster, varningar };
     }
 
-    // KONTROLLERA OM FAKTURAN REDAN ÄR BOKFÖRD
+    // KONTROLLERA OM FAKTURAN HAR NÅTT SENARE STATUSSTEG
     console.log("🔍 Kollar fakturaStatus:", fakturaStatus);
-    if (fakturaStatus.status_bokförd && fakturaStatus.status_bokförd !== "Ej bokförd") {
-      // Fakturan är redan bokförd - visa bara betalningsregistrering
-      if (fakturaStatus.status_betalning !== "Betald") {
-        // Kolla om det finns ROT/RUT-artiklar för att beräkna kundens del
-        const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
-        const betalningsbelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : totalInkMoms; // Endast kundens del för ROT/RUT
+    if (ärFakturanRedanBokförd) {
+      const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
 
-        // Om det är "Delvis betald" (ROT/RUT där kunden redan betalat), visa inte betalningsregistrering
-        if (fakturaStatus.status_betalning === "Delvis betald") {
-          varningar.push(
-            "💰 Fakturan är delvis betald. Kunden har betalat sin del. Använd ROT/RUT-betalningsknappen för SKV:s del."
-          );
+      if (!ärFakturanFärdigIModal) {
+        const betalningsbelopp = harRotRutArtiklar ? totalInkMoms * 0.5 : totalInkMoms;
+
+        if (ärKundbetalningRegistreradIModal) {
+          if (harRotRutArtiklar) {
+            varningar.push(
+              "💰 Kundens betalning är redan registrerad. Registrera ROT/RUT-betalningen när Skatteverket betalar."
+            );
+          } else {
+            varningar.push("✅ Kundens betalning är redan registrerad.");
+          }
           return { poster, varningar };
         }
 
         poster.push({
-          konto: "1930", // Bank/Kassa
+          konto: "1930",
           kontoNamn: "Företagskonto/Bankkonto",
           beskrivning: `Betalning faktura ${formData.fakturanummer}`,
           debet: betalningsbelopp,
@@ -392,20 +476,13 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
         if (harRotRutArtiklar) {
           varningar.push(
-            "⚠️ Fakturan är redan bokförd. Detta registrerar KUNDENS betalning (50%). ROT/RUT-delen registreras separat när SKV betalar."
+            "⚠️ Fakturan är redan bokförd. Detta registrerar kundens betalning (50%). ROT/RUT-delen registreras när Skatteverket betalar."
           );
         } else {
-          varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalning.");
+          varningar.push("⚠️ Fakturan är redan bokförd. Detta registrerar betalningen.");
         }
       } else {
-        // Kolla om det finns ROT/RUT-artiklar för att visa rätt meddelande
-        const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
-
-        if (harRotRutArtiklar) {
-          varningar.push("✅ Fakturan är redan bokförd och betald.");
-        } else {
-          varningar.push("✅ Fakturan är redan bokförd och betald.");
-        }
+        varningar.push("✅ Fakturan är redan bokförd och betald.");
         return { poster, varningar };
       }
 
@@ -436,12 +513,9 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       if (antalVaror > antalTjänster) {
         intäktskonto = "3001";
         kontoNamn = "Försäljning varor";
-      } else if (antalTjänster > antalVaror) {
-        intäktskonto = "3011";
-        kontoNamn = "Försäljning tjänster";
       } else {
-        varningar.push("Oklart om det är varor eller tjänster - lika många av varje typ");
-        intäktskonto = "3011"; // Default till tjänster
+        // Defaulta till tjänst när lika många av varje typ
+        intäktskonto = "3011";
         kontoNamn = "Försäljning tjänster";
       }
     }
@@ -588,6 +662,26 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
       const { poster } = analyseraBokföring();
 
+      const harBankkonto = poster.some((rad) => rad.konto === "1930" || rad.konto === "1910");
+      const harKundfordringar = poster.some((rad) => rad.konto === "1510");
+      const harRotRutUtbetalning = poster.some((rad) => rad.konto === "2731");
+      const ärBetalning =
+        harBankkonto &&
+        harKundfordringar &&
+        poster.length === 2 &&
+        poster.every((rad) => rad.konto === "1930" || rad.konto === "1910" || rad.konto === "1510");
+
+      let standardKommentar = `Faktura ${formData.fakturanummer} ${formData.kundnamn}`;
+      if (ärBetalning) {
+        standardKommentar = `${standardKommentar}, betalning`;
+      } else if (harRotRutUtbetalning) {
+        standardKommentar = `${standardKommentar}, ROT/RUT-utbetalning`;
+      } else if (harKundfordringar) {
+        standardKommentar = `${standardKommentar}, kundfordran`;
+      } else if (harBankkonto) {
+        standardKommentar = `${standardKommentar}, kontantmetod`;
+      }
+
       // Frontend-validering med migerade funktioner
       const fakturaId = formData.id ? parseInt(formData.id) : null;
       if (!fakturaId) {
@@ -602,7 +696,7 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
         kundnamn: formData.kundnamn,
         totaltBelopp: totalInkMoms,
         poster: poster,
-        kommentar: `Bokföring av faktura ${formData.fakturanummer} för ${formData.kundnamn}`,
+        kommentar: standardKommentar,
       };
 
       const validation = validateBokföringsData(bokföringsData);
@@ -624,6 +718,24 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
         const message: string =
           "message" in result && result.message ? result.message : "Bokföring genomförd";
         showToast(message, "success");
+        if (fakturaId) {
+          const uppdateradStatus = await hamtaFakturaStatus(fakturaId);
+          setFakturaStatus({
+            status: uppdateradStatus.status,
+            betaldatum: uppdateradStatus.betaldatum,
+          });
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("fakturaStatusUppdaterad", {
+                detail: {
+                  fakturaId,
+                  status: uppdateradStatus.status,
+                  betaldatum: uppdateradStatus.betaldatum,
+                },
+              })
+            );
+          }
+        }
         // Skicka event för att uppdatera fakturaslistan
         window.dispatchEvent(new Event("reloadFakturor"));
         onClose();
@@ -696,6 +808,8 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     husFilKnappText,
     husFilDisabled,
     husFilDisabledInfo,
+    ärFakturanRedanBokförd,
+    ärFakturanBokfördOchBetald,
 
     // Actions
     hanteraBokför: hanteraBokförModal,

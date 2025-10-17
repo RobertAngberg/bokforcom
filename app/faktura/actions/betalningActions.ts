@@ -29,9 +29,9 @@ export async function registreraKundfakturaBetalning(
 
     const faktura = fakturaResult.rows[0];
 
-    // Kontrollera att fakturan är en kundfaktura och inte redan betald
-    const statusBetalning = (faktura.status_betalning || "").toLowerCase();
-    if (faktura.typ !== "kund" || statusBetalning === "betald") {
+    // Kontrollera att fakturan är en kundfaktura och inte redan avslutad
+    const status = (faktura.status || "").toLowerCase();
+    if (faktura.typ !== "kund" || status === "färdig") {
       return { success: false, error: "Fakturan kan inte betalas" };
     }
 
@@ -64,9 +64,11 @@ export async function registreraKundfakturaBetalning(
 
       transaktionsId = createdId;
 
+      const nextStatus = harRotRut ? "Skickad" : "Färdig";
+
       await pool.query(
-        'UPDATE fakturor SET status_betalning = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
-        ["Betald", todayISO, transaktionsId, fakturaId, userId]
+        'UPDATE fakturor SET status = $1, betaldatum = $2, transaktions_id = $3 WHERE id = $4 AND "user_id" = $5',
+        [nextStatus, todayISO, transaktionsId, fakturaId, userId]
       );
 
       return {
@@ -164,8 +166,8 @@ export async function registreraRotRutBetalning(
     const today = new Date();
     const todayISO = dateToYyyyMmDd(today);
     await pool.query(
-      'UPDATE fakturor SET status_betalning = $1, betaldatum = $2 WHERE id = $3 AND "user_id" = $4',
-      ["Betald", todayISO, fakturaId, userId]
+      'UPDATE fakturor SET status = $1, betaldatum = $2 WHERE id = $3 AND "user_id" = $4',
+      ["Färdig", todayISO, fakturaId, userId]
     );
 
     return { success: true };
