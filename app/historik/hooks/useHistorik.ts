@@ -10,16 +10,6 @@ import { ColumnDefinition } from "../../_components/TabellRad";
 import { showToast } from "../../_components/Toast";
 import { validateYear } from "../../_utils/validationUtils";
 
-// Business Logic - Migrated from page.tsx
-function sanitizeHistorikInput(text: string): string {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/[<>&"'{}()[\]]/g, "") // Ta bort XSS-farliga tecken
-    .replace(/\s+/g, " ") // Normalisera whitespace
-    .trim()
-    .substring(0, 100); // Begränsa längd
-}
-
 function validateYearInput(year: string): boolean {
   if (!year || typeof year !== "string") return false;
   const yearNum = parseInt(year);
@@ -29,17 +19,15 @@ function validateYearInput(year: string): boolean {
 function filterTransactionsBySearch(items: HistoryItem[], searchTerm: string): HistoryItem[] {
   if (!searchTerm) return items;
 
-  const sanitizedSearch = sanitizeHistorikInput(searchTerm).toLowerCase();
-  if (!sanitizedSearch) return items;
+  const normalizedSearch = searchTerm.toLowerCase();
+  if (!normalizedSearch) return items;
 
   return items.filter((item) => {
-    const matchesVerifikat = sanitizeHistorikInput(item.kontobeskrivning)
-      .toLowerCase()
-      .includes(sanitizedSearch);
-    const matchesComment = sanitizeHistorikInput(item.kommentar || "")
-      .toLowerCase()
-      .includes(sanitizedSearch);
-    const matchesId = item.transaktions_id.toString().includes(sanitizedSearch);
+    const verifikat = (item.kontobeskrivning || "").toLowerCase();
+    const kommentar = (item.kommentar || "").toLowerCase();
+    const matchesVerifikat = verifikat.includes(normalizedSearch);
+    const matchesComment = kommentar.includes(normalizedSearch);
+    const matchesId = item.transaktions_id.toString().includes(normalizedSearch);
 
     return matchesVerifikat || matchesComment || matchesId;
   });
@@ -113,7 +101,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
       return true;
     });
 
-    // Sedan filtrera på sökning med sanitering
+    // Sedan filtrera på sökning (input saneras centralt i TextFalt)
     let searchFiltered = filterTransactionsBySearch(dateFiltered, searchTerm);
 
     // Om vi bara ska visa obalanserade, filtrera på det
@@ -178,8 +166,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const sanitizedSearch = sanitizeHistorikInput(e.target.value);
-    setSearchTerm(sanitizedSearch);
+    setSearchTerm(e.target.value);
   };
 
   const handleRowClick = (id: string | number) => {
