@@ -485,6 +485,36 @@ export interface BokforContextType {
     [key: string]: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useSteg2LevfaktHelper: () => any;
+    useLevfaktLayoutHelper: (options?: {
+      title?: string;
+      onSubmit?: () => void;
+      isValid?: boolean;
+    }) => {
+      belopp: number | null;
+      transaktionsdatum: string | null;
+      kommentar: string | null;
+      fil: File | null;
+      pdfUrl: string | null;
+      leverantör: Leverantör | null;
+      fakturanummer: string | null;
+      fakturadatum: string | null;
+      förfallodatum: string | null;
+      betaldatum: string | null;
+      setBelopp: (v: number | null) => void;
+      setTransaktionsdatum: (v: string) => void;
+      setKommentar: (v: string | null) => void;
+      setFil: (f: File | null) => void;
+      setPdfUrl: (u: string | null) => void;
+      setLeverantör: (val: Leverantör | null) => void;
+      setFakturanummer: (val: string | null) => void;
+      setFakturadatum: (val: string | null) => void;
+      setFörfallodatum: (val: string | null) => void;
+      setBetaldatum: (val: string | null) => void;
+      setCurrentStep: (step: number) => void;
+      title: string;
+      onSubmit: () => void;
+      fullIsValid: boolean;
+    };
   };
   getCardClassName: (isHighlighted: boolean) => string;
   formatKontoValue: (value: number | boolean | null | undefined) => string;

@@ -16,6 +16,11 @@ export default function LaddaUppFil(props: FileUploadProps) {
     props.setFakturanummer
   );
 
+  const rawFileName = props.fil?.name;
+  const hasReadableName =
+    typeof rawFileName === "string" && rawFileName.trim().length > 0 && rawFileName !== "undefined";
+  const displayFileName = hasReadableName ? rawFileName : "Bifogad fil";
+
   return (
     <>
       <input
@@ -32,7 +37,7 @@ export default function LaddaUppFil(props: FileUploadProps) {
         className="flex items-center justify-center px-4 py-2 mb-6 font-bold text-white rounded cursor-pointer bg-cyan-600 hover:bg-cyan-700"
       >
         {props.fil
-          ? `📎 ${props.fil.name}`
+          ? `📎 ${displayFileName}`
           : isLevfaktMode
             ? "Ladda upp faktura"
             : "Ladda upp underlag"}

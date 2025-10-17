@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * LevfaktLayout - Återanvändbar layout för leverantörsfaktura-specialförval
  *
@@ -15,8 +17,6 @@
  * - Flexibilitet för framtida leverantörsfaktura-specialförval
  */
 
-"use client";
-
 import { datePickerValue, datePickerOnChange } from "../../../../../_utils/datum";
 import LaddaUppFil from "../../LaddaUppFil";
 import Kommentar from "../../Kommentar";
@@ -25,12 +25,17 @@ import TillbakaPil from "../../../../../_components/TillbakaPil";
 import Knapp from "../../../../../_components/Knapp";
 import TextFalt from "../../../../../_components/TextFalt";
 import { useBokforContext } from "../../../../context/BokforContextProvider";
+import type { StandardLayoutProps } from "../../../../types/types";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 
-export default function LevfaktLayout({ children }: { children?: React.ReactNode }) {
+type LevfaktLayoutProps = Pick<StandardLayoutProps, "title" | "onSubmit" | "isValid"> & {
+  children?: React.ReactNode;
+};
+
+export default function LevfaktLayout({ title, onSubmit, isValid, children }: LevfaktLayoutProps) {
   const { handlers } = useBokforContext();
   const {
     belopp,
@@ -52,17 +57,17 @@ export default function LevfaktLayout({ children }: { children?: React.ReactNode
     setFakturadatum,
     setFörfallodatum,
     setCurrentStep,
-    title,
-    onSubmit,
+    title: layoutTitle,
+    onSubmit: layoutOnSubmit,
     fullIsValid,
-  } = handlers.useLevfaktLayoutHelper();
+  } = handlers.useLevfaktLayoutHelper({ title, onSubmit, isValid });
 
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 relative">
         <TillbakaPil onClick={() => setCurrentStep(1)} />
 
-        <h1 className="mb-6 text-3xl text-center text-white">{title}</h1>
+        <h1 className="mb-6 text-3xl text-center text-white">{layoutTitle}</h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
           <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil
@@ -152,7 +157,7 @@ export default function LevfaktLayout({ children }: { children?: React.ReactNode
             <Kommentar kommentar={kommentar ?? ""} setKommentar={setKommentar} />
 
             {/* Submit knapp */}
-            <Knapp fullWidth text="Bokför" onClick={onSubmit} disabled={!fullIsValid} />
+            <Knapp fullWidth text="Bokför" onClick={layoutOnSubmit} disabled={!fullIsValid} />
           </div>
 
           <Forhandsgranskning fil={fil} pdfUrl={pdfUrl} />

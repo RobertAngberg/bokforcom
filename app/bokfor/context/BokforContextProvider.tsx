@@ -127,6 +127,54 @@ export function BokforProvider({ children }: BokforProviderProps) {
             exitLevfaktMode: bokforData.exitLevfaktMode,
           },
         }),
+        useLevfaktLayoutHelper: (options?: {
+          title?: string;
+          onSubmit?: () => void;
+          isValid?: boolean;
+        }) => {
+          const resolvedTitle =
+            options?.title ?? bokforData.valtFörval?.namn ?? "Leverantörsfaktura";
+
+          const resolvedIsValid =
+            options?.isValid ??
+            Boolean(
+              bokforData.belopp &&
+                bokforData.transaktionsdatum &&
+                bokforData.leverantör &&
+                bokforData.fakturanummer &&
+                bokforData.fakturadatum &&
+                bokforData.förfallodatum
+            );
+
+          const resolvedOnSubmit = options?.onSubmit ?? bokforData.handleButtonClick;
+
+          return {
+            belopp: bokforData.belopp,
+            transaktionsdatum: bokforData.transaktionsdatum,
+            kommentar: bokforData.kommentar,
+            fil: bokforData.fil,
+            pdfUrl: bokforData.pdfUrl,
+            leverantör: bokforData.leverantör,
+            fakturanummer: bokforData.fakturanummer,
+            fakturadatum: bokforData.fakturadatum,
+            förfallodatum: bokforData.förfallodatum,
+            betaldatum: bokforData.betaldatum,
+            setBelopp: bokforData.setBelopp,
+            setTransaktionsdatum: bokforData.setTransaktionsdatum,
+            setKommentar: bokforData.setKommentar,
+            setFil: bokforData.setFil,
+            setPdfUrl: bokforData.setPdfUrl,
+            setLeverantör: bokforData.setLeverantör,
+            setFakturanummer: bokforData.setFakturanummer,
+            setFakturadatum: bokforData.setFakturadatum,
+            setFörfallodatum: bokforData.setFörfallodatum,
+            setBetaldatum: bokforData.setBetaldatum,
+            setCurrentStep: bokforData.setCurrentStep,
+            title: resolvedTitle,
+            onSubmit: resolvedOnSubmit,
+            fullIsValid: resolvedIsValid,
+          };
+        },
         useInformationHelper: () => ({
           belopp: bokforData.belopp,
           handleBeloppChange: bokforData.handleBeloppChange,
