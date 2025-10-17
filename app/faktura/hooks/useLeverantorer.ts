@@ -108,12 +108,28 @@ function ensureLeverantorskonto(poster: TransaktionsPost[]): TransaktionsPost[] 
   ];
 }
 
-export function useLeverantörer(): UseLeverantörerReturn {
-  const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// =============================================================================
+// DELAD CACHE FÖR LEVERANTÖRSDATA
+// =============================================================================
+let leverantorerCache: Leverantör[] | null = null;
+let leverantorerPromise: Promise<Leverantör[] | null> | null = null;
+let leverantorerErrorCache: string | null = null;
 
-  const loadLeverantörer = useCallback(async () => {
+async function ensureLeverantorer(force = false): Promise<Leverantör[] | null> {
+  if (!force) {
+    if (leverantorerCache) {
+      return leverantorerCache;
+    }
+    if (leverantorerPromise) {
+      return leverantorerPromise;
+    }
+  }
+
+  if (force) {
+    resetLeverantorerCache();
+  }
+
+  const fetchPromise = (async () => {
     try {
       const apiResult = await getLeverantorer();
 
@@ -121,24 +137,129 @@ export function useLeverantörer(): UseLeverantörerReturn {
         throw new Error("API returned success: false");
       }
 
-      setLeverantörer(apiResult.leverantörer || []);
-      setError(null);
+      leverantorerCache = apiResult.leverantörer || [];
+      leverantorerErrorCache = null;
+      return leverantorerCache;
     } catch (error) {
-      console.error("[useLeverantörer] loadLeverantörer misslyckades", error);
-      setLeverantörer([]);
-      setError("Kunde inte ladda leverantörer");
+      leverantorerCache = [];
+      leverantorerErrorCache = "Kunde inte ladda leverantörer";
+      throw error;
     } finally {
-      setLoading(false);
+      leverantorerPromise = null;
     }
+  })();
+
+  leverantorerPromise = fetchPromise;
+  return fetchPromise;
+}
+
+function resetLeverantorerCache() {
+  leverantorerCache = null;
+  leverantorerErrorCache = null;
+}
+
+// =============================================================================
+// DELAD CACHE FÖR BOKFÖRDA LEVERANTÖRSFAKTUROR
+// =============================================================================
+let bokfordaFakturorCache: BokfordFaktura[] | null = null;
+let bokfordaFakturorPromise: Promise<BokfordFaktura[] | null> | null = null;
+
+async function ensureBokfordaFakturor(force = false): Promise<BokfordFaktura[] | null> {
+  if (!force) {
+    if (bokfordaFakturorCache) {
+      return bokfordaFakturorCache;
+    }
+    if (bokfordaFakturorPromise) {
+      return bokfordaFakturorPromise;
+    }
+  }
+
+  if (force) {
+    resetBokfordaCache();
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const result = await hamtaBokfordaFakturor();
+
+      if (!result.success) {
+        throw new Error("API returned success: false");
+      }
+
+      bokfordaFakturorCache = result.fakturor || [];
+      return bokfordaFakturorCache;
+    } catch (error) {
+      bokfordaFakturorCache = [];
+      throw error;
+    } finally {
+      bokfordaFakturorPromise = null;
+    }
+  })();
+
+  bokfordaFakturorPromise = fetchPromise;
+  return fetchPromise;
+}
+
+function resetBokfordaCache() {
+  bokfordaFakturorCache = null;
+}
+
+export function useLeverantörer(): UseLeverantörerReturn {
+  const [leverantörer, setLeverantörer] = useState<Leverantör[]>(() => leverantorerCache ?? []);
+  const [loading, setLoading] = useState(!leverantorerCache);
+  const [error, setError] = useState<string | null>(null);
+
+  const syncState = useCallback((data: Leverantör[] | null) => {
+    setLeverantörer(data ?? []);
+    setError(leverantorerErrorCache);
+    setLoading(false);
   }, []);
 
-  // Initial load
+  const loadLeverantörer = useCallback(
+    async (force = false) => {
+      setLoading(true);
+      try {
+        const data = await ensureLeverantorer(force);
+        syncState(data);
+      } catch (err) {
+        console.error("[useLeverantörer] loadLeverantörer misslyckades", err);
+        setLeverantörer([]);
+        setError("Kunde inte ladda leverantörer");
+        setLoading(false);
+      }
+    },
+    [syncState]
+  );
+
   useEffect(() => {
-    loadLeverantörer();
-  }, [loadLeverantörer]);
+    let cancelled = false;
+    if (leverantorerCache) {
+      syncState(leverantorerCache);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    ensureLeverantorer()
+      .then((data) => {
+        if (cancelled) return;
+        syncState(data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[useLeverantörer] initial load misslyckades", err);
+        setLeverantörer([]);
+        setError("Kunde inte ladda leverantörer");
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [syncState]);
 
   const refresh = useCallback(async () => {
-    await loadLeverantörer();
+    await loadLeverantörer(true);
   }, [loadLeverantörer]);
 
   const harLeverantörer = leverantörer.length > 0;
@@ -158,8 +279,8 @@ export function useLeverantörer(): UseLeverantörerReturn {
 export function useLeverantorFlik({
   onLeverantörUpdated,
 }: UseLeverantorFlikParams): UseLeverantorFlikReturn {
-  const [leverantörer, setLeverantörer] = useState<Leverantör[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [leverantörer, setLeverantörer] = useState<Leverantör[]>(() => leverantorerCache ?? []);
+  const [loading, setLoading] = useState(!leverantorerCache);
   const [showModal, setShowModal] = useState(false);
   const [editLeverantör, setEditLeverantör] = useState<Leverantör | undefined>();
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; leverantör?: Leverantör }>({
@@ -170,21 +291,41 @@ export function useLeverantorFlik({
     show: false,
   });
 
-  const loadLeverantörer = async () => {
+  const loadLeverantörer = useCallback(async (force = false) => {
     setLoading(true);
-    const result = await getLeverantorer();
-    if (result.success) {
-      setLeverantörer(result.leverantörer || []);
+    try {
+      const data = await ensureLeverantorer(force);
+      setLeverantörer(data ?? []);
+    } catch (error) {
+      console.error("[useLeverantorFlik] loadLeverantörer misslyckades", error);
+      setLeverantörer([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    loadLeverantörer();
+    let cancelled = false;
+    ensureLeverantorer()
+      .then((data) => {
+        if (cancelled) return;
+        setLeverantörer(data ?? []);
+        setLoading(false);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[useLeverantorFlik] initial load misslyckades", error);
+        setLeverantörer([]);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLeverantörAdded = () => {
-    loadLeverantörer();
+    loadLeverantörer(true);
     if (onLeverantörUpdated) {
       onLeverantörUpdated();
     }
@@ -211,7 +352,7 @@ export function useLeverantorFlik({
 
     if (result.success) {
       setDeleteModal({ show: false });
-      loadLeverantörer();
+      loadLeverantörer(true);
       if (onLeverantörUpdated) {
         onLeverantörUpdated();
       }
@@ -412,24 +553,40 @@ export function useValjLeverantorModal({
 // BOKFÖRDA FAKTUROR FLIK HOOK
 // =============================================================================
 export function useBokfordaFakturorFlik(): UseBokfordaFakturorFlikReturn {
-  const [fakturorAntal, setFakturorAntal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [fakturorAntal, setFakturorAntal] = useState(() => bokfordaFakturorCache?.length ?? 0);
+  const [loading, setLoading] = useState(!bokfordaFakturorCache);
 
-  const loadFakturorAntal = async () => {
+  const loadFakturorAntal = useCallback(async () => {
+    setLoading(true);
     try {
-      const result = await hamtaBokfordaFakturor();
-      if (result.success && result.fakturor) {
-        setFakturorAntal(result.fakturor.length);
-      }
+      const data = await ensureBokfordaFakturor(true);
+      setFakturorAntal(data?.length ?? 0);
     } catch (error) {
       console.error("Fel vid hämtning av fakturor:", error);
+      setFakturorAntal(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadFakturorAntal();
+    let cancelled = false;
+    ensureBokfordaFakturor()
+      .then((data) => {
+        if (cancelled) return;
+        setFakturorAntal(data?.length ?? 0);
+        setLoading(false);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Fel vid hämtning av fakturor:", error);
+        setFakturorAntal(0);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return {
@@ -504,8 +661,8 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
  */
 export function useBokfordaFakturor() {
   // State management
-  const [fakturor, setFakturor] = useState<BokfordFaktura[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fakturor, setFakturor] = useState<BokfordFaktura[]>(() => bokfordaFakturorCache ?? []);
+  const [loading, setLoading] = useState(!bokfordaFakturorCache);
   const [verifikatModal, setVerifikatModal] = useState<{
     isOpen: boolean;
     transaktionId: number;
@@ -562,22 +719,38 @@ export function useBokfordaFakturor() {
     },
   ];
 
+  const loadFakturor = useCallback(async (force = false) => {
+    setLoading(true);
+    try {
+      const data = await ensureBokfordaFakturor(force);
+      setFakturor(data ?? []);
+    } catch (error) {
+      console.error("Fel vid hämtning av bokförda fakturor:", error);
+      setFakturor([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Data fetching effect
   useEffect(() => {
-    async function hamtaFakturor() {
-      try {
-        const result = await hamtaBokfordaFakturor();
-        if (result.success && result.fakturor) {
-          setFakturor(result.fakturor);
-        }
-      } catch (error) {
-        console.error("Fel vid hämtning av bokförda fakturor:", error);
-      } finally {
+    let cancelled = false;
+    ensureBokfordaFakturor()
+      .then((data) => {
+        if (cancelled) return;
+        setFakturor(data ?? []);
         setLoading(false);
-      }
-    }
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Fel vid hämtning av bokförda fakturor:", error);
+        setFakturor([]);
+        setLoading(false);
+      });
 
-    hamtaFakturor();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Event handlers
@@ -652,8 +825,7 @@ export function useBokfordaFakturor() {
       const result = await taBortLeverantorsfaktura(deleteFakturaId);
 
       if (result.success) {
-        // Ta bort från listan lokalt
-        setFakturor((prev) => prev.filter((f) => f.id !== deleteFakturaId));
+        await loadFakturor(true);
 
         showToast("Leverantörsfaktura borttagen!", "success");
       } else {
@@ -672,10 +844,7 @@ export function useBokfordaFakturor() {
       if (result.success) {
         showToast("Leverantörsfaktura bokförd!", "success");
         // Ladda om data för att visa uppdaterad status
-        const updatedData = await hamtaBokfordaFakturor();
-        if (updatedData.success) {
-          setFakturor(updatedData.fakturor || []);
-        }
+        await loadFakturor(true);
       } else {
         showToast(`Fel vid bokföring: ${result.error}`, "error");
       }

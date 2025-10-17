@@ -500,7 +500,7 @@ export interface UseLeverantorFlikReturn {
   bokförModal: { show: boolean; leverantör?: Leverantör };
 
   // Actions
-  loadLeverantörer: () => Promise<void>;
+  loadLeverantörer: (force?: boolean) => Promise<void>;
   handleLeverantörAdded: () => void;
   handleEditLeverantör: (leverantör: Leverantör) => void;
   handleDeleteLeverantör: (leverantör: Leverantör) => void;
