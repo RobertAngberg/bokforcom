@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { normalize } from "../../_utils/textUtils";
 import { loggaFavoritforval } from "../actions/actions";
 import type { Förval, KontoRad } from "../types/types";
 
@@ -66,7 +65,7 @@ export function useForvalSok({
   // Sökfunktion
   const performSearch = useCallback(
     async (inputText: string) => {
-      const input = normalize(inputText);
+      const input = inputText.trim().toLowerCase();
 
       if (input.length < 2) {
         setResults(filterByMode(favoritFörval));
@@ -93,14 +92,14 @@ export function useForvalSok({
 
           poäng += basePointsMapping[f.namn] || 0;
 
-          const namn = normalize(f.namn);
+          const namn = f.namn.toLowerCase();
 
           if (namn === q) poäng += 500;
           else if (namn.startsWith(q)) poäng += 300;
           else if (namn.includes(q)) poäng += 100;
 
           for (const ord of f.sökord || []) {
-            const s = normalize(ord);
+            const s = ord.toLowerCase();
             if (s === q) poäng += 400;
             else if (s.startsWith(q)) poäng += 200;
             else if (s.includes(q)) poäng += 80;
@@ -112,11 +111,11 @@ export function useForvalSok({
           const popularitetsBonus = (f.användningar || 0) * 3;
           poäng += popularitetsBonus;
 
-          const desc = normalize(f.beskrivning);
+          const desc = (f.beskrivning || "").toLowerCase();
           if (desc.includes(q)) poäng += 30;
 
-          if (normalize(f.typ).includes(q)) poäng += 20;
-          if (normalize(f.kategori).includes(q)) poäng += 20;
+          if ((f.typ || "").toLowerCase().includes(q)) poäng += 20;
+          if ((f.kategori || "").toLowerCase().includes(q)) poäng += 20;
 
           return poäng;
         }
