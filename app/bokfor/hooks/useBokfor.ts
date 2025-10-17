@@ -221,19 +221,15 @@ export function useBokfor() {
     // Hantera extrafält först
     if (Object.keys(extrafält).length > 0) {
       for (const [nr, data] of Object.entries(extrafält)) {
-        let { debet = 0, kredit = 0 } = data;
         const transformedKonto = transformKontonummer(nr);
+        const debetBeloppRaw = Number(data.debet ?? 0);
+        const kreditBeloppRaw = Number(data.kredit ?? 0);
+        const debetBelopp = Number.isFinite(debetBeloppRaw) ? debetBeloppRaw : 0;
+        const kreditBelopp = Number.isFinite(kreditBeloppRaw) ? kreditBeloppRaw : 0;
 
-        if (debet > 0) {
-          debet = calculateBelopp(transformedKonto, "debet");
-        }
-        if (kredit > 0) {
-          kredit = calculateBelopp(transformedKonto, "kredit");
-        }
+        if (debetBelopp === 0 && kreditBelopp === 0) continue;
 
-        if (debet === 0 && kredit === 0) continue;
-
-        poster.push({ kontonummer: transformedKonto, debet, kredit });
+        poster.push({ kontonummer: transformedKonto, debet: debetBelopp, kredit: kreditBelopp });
       }
     }
 

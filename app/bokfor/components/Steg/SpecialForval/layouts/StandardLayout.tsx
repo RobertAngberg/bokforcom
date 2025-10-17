@@ -78,6 +78,8 @@ export default function StandardLayout({
               locale="sv"
             />
 
+            {children}
+
             <TextFalt
               label="Kommentar"
               name="kommentar"
@@ -85,8 +87,6 @@ export default function StandardLayout({
               onChange={(e) => setKommentar(e.target.value)}
               required={false}
             />
-
-            {children}
 
             <Knapp fullWidth text="Gå vidare" onClick={hookOnSubmit} disabled={!isValid} />
           </div>
