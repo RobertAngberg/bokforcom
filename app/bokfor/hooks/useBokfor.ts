@@ -10,7 +10,6 @@ import { Förval, Anstalld, UtlaggAnställd } from "../types/types";
 import { useForvalSok } from "./useForvalSok";
 import { useOCRProcessing } from "./useOCRProcessing";
 import { useNavigationSteps } from "./useNavigationSteps";
-import { useLeverantorModal } from "./useLeverantorModal";
 import { useFormValidation } from "./useFormValidation";
 import type { Leverantör } from "../../faktura/types/types";
 
@@ -83,11 +82,6 @@ export function useBokfor() {
     utlaggMode,
     setBelopp,
     setFakturadatum,
-  });
-
-  // Leverantörsmodal
-  const leverantorModal = useLeverantorModal({
-    setLeverantör,
   });
 
   // Förvalsök
@@ -416,7 +410,6 @@ export function useBokfor() {
     bokförSomFaktura,
     kundfakturadatum,
     ocrText: ocr.ocrText,
-    visaLeverantorModal: leverantorModal.visaLeverantorModal,
     anstallda,
     anstalldId,
     loadingSteg3,
@@ -476,17 +469,11 @@ export function useBokfor() {
     // OCR Functions
     handleOcrTextChange: ocr.handleOcrTextChange,
     handleReprocessTrigger: ocr.handleReprocessTrigger,
-    handleCheckboxChange: ocr.handleCheckboxChange,
     uploadFileToBlob: ocr.uploadFileToBlob,
     extractDataFromOCRKund: ocr.extractDataFromOCRKund,
     extractDataFromOCRGeneral: ocr.extractDataFromOCRGeneral,
 
     // Leverantör Modal Functions
-    handleLeverantorCheckboxChange: leverantorModal.handleLeverantorCheckboxChange,
-    handleLeverantorRemove: leverantorModal.handleLeverantorRemove,
-    handleLeverantorSelected: leverantorModal.handleLeverantorSelected,
-    handleLeverantorModalClose: leverantorModal.handleLeverantorModalClose,
-
     // Search Functions
     searchText: forvalSok.searchText,
     handleSearchChange: forvalSok.handleSearchChange,

@@ -12,7 +12,6 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
-// import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useBokforContext } from "../../context/BokforContextProvider";
 import { getLeverantorer } from "../../../faktura/actions/leverantorActions";
 
@@ -90,7 +89,7 @@ export default function Steg2Levfakt() {
     let aborted = false;
 
     const autoSelectLeverantor = async () => {
-      if (state.leverantör || state.visaLeverantorModal) return;
+      if (state.leverantör) return;
       try {
         const result = await getLeverantorer();
         if (!result.success || !result.leverantörer || result.leverantörer.length === 0) {
@@ -141,7 +140,7 @@ export default function Steg2Levfakt() {
     return () => {
       aborted = true;
     };
-  }, [actions, state.leverantör, state.visaLeverantorModal]);
+  }, [actions, state.leverantör]);
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;
 
@@ -292,15 +291,6 @@ export default function Steg2Levfakt() {
             <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
           </div>
         </div>
-        {/* </div>
-      <ValjLeverantorModal
-        isOpen={state.visaLeverantorModal}
-        skipNavigate
-        onSelected={(lev) => {
-          actions.setLeverantör(lev);
-        }}
-        onClose={handlers.handleLeverantorModalClose}
-      /> */}
       </div>
     </>
   );

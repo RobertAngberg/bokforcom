@@ -78,15 +78,6 @@ export function useOCRProcessing({
     setReprocessFile(() => reprocessFn);
   }, []);
 
-  const handleCheckboxChange = useCallback(
-    async (checked: boolean) => {
-      if (checked && reprocessFile) {
-        await reprocessFile();
-      }
-    },
-    [reprocessFile]
-  );
-
   // ====================================================
   // FILE UPLOAD HELPERS
   // ====================================================
@@ -211,8 +202,6 @@ export function useOCRProcessing({
     // OCR Handlers
     handleOcrTextChange,
     handleReprocessTrigger,
-    handleCheckboxChange,
-
     // File Management
     setFile,
     setPdfUrlValue,

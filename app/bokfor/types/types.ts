@@ -401,27 +401,6 @@ export interface UseLaddaUppFilProps {
   setFakturanummer?: (nummer: string) => void;
 }
 
-// useLaddaUppFilLevfakt
-export interface UseLaddaUppFilLevfaktProps {
-  setFil: (file: File) => void;
-  setPdfUrl: (url: string) => void;
-  setTransaktionsdatum: (datum: string) => void;
-  setBelopp: (belopp: number) => void;
-  fil: File | null;
-  setLeverantör: (leverantor: string) => void;
-  setFakturadatum: (datum: string) => void;
-  setFörfallodatum: (datum: string) => void;
-  setFakturanummer: (nummer: string) => void;
-}
-
-// useLevfaktLayout
-export interface UseLevfaktLayoutProps {
-  leverantör?: Leverantör | null;
-  fakturanummer?: string;
-  fakturadatum?: string;
-  isValid: boolean;
-}
-
 // ========================================
 // COMPONENT PROPS INTERFACES
 // ========================================
@@ -475,7 +454,6 @@ export interface BokforContextType {
     bokförSomFaktura: boolean;
     kundfakturadatum: string | null;
     ocrText: string;
-    visaLeverantorModal: boolean;
     anstallda: Anstalld[];
     anstalldId: string;
     loadingSteg3: boolean;
