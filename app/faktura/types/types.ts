@@ -208,6 +208,11 @@ export type ServerData = {
   foretagsprofil?: Partial<Företagsprofil>;
   kunder?: KundListItem[];
   artiklar?: FavoritArtikel[];
+  senasteBetalning?: {
+    betalningsmetod: string | null;
+    nummer: string | null;
+  };
+  bokforingsmetod?: "kontantmetoden" | "fakturametoden";
 };
 
 // Navigation types

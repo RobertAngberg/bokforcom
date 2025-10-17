@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { dateToYyyyMmDd } from "../../_utils/datum";
 import { useFaktura } from "./useFaktura";
+import { useFakturaInitialData } from "../context/hooks/FakturaContext";
 import { saveInvoice } from "../actions/fakturaActions";
 import { showToast } from "../../_components/Toast";
 import {
@@ -100,12 +101,25 @@ function validateBokföringsData(data: BokföringsData): { isValid: boolean; err
   return { isValid: true };
 }
 
+// Utility för att normalisera bokföringsmetod från både serverinitialiserade värden och klienthämtningar.
+const normalizeBokforingsmetod = (metod?: string | null) => {
+  const normalized = (metod || "").toLowerCase();
+  return normalized === "kontantmetoden" ? "kontantmetoden" : "fakturametoden";
+};
+
 export function useAlternativ() {
   const { formData, updateFormField } = useFaktura();
+  const initialData = useFakturaInitialData();
+  // Servern kan skicka med bokföringsmetoden; i så fall hoppar vi över första fetch och använder värdet direkt.
+  const initialNormalizedBokforingsmetod = initialData?.bokforingsmetod
+    ? normalizeBokforingsmetod(initialData.bokforingsmetod)
+    : undefined;
   const [bokförModalOpen, setBokförModalOpen] = useState(false);
   const [sparaLoading, setSparaLoading] = useState(false);
   const [bokförLoading, setBokförLoading] = useState(false);
-  const [bokföringsmetod, setBokföringsmetod] = useState<string>("fakturametoden");
+  const [bokföringsmetod, setBokföringsmetod] = useState<string>(
+    initialNormalizedBokforingsmetod ?? "fakturametoden"
+  );
   const [fakturaStatus, setFakturaStatus] = useState<{
     status?: string;
     betaldatum?: string;
@@ -113,12 +127,21 @@ export function useAlternativ() {
 
   // Hämta användarens bokföringsmetod när komponenten laddas
   useEffect(() => {
+    if (initialNormalizedBokforingsmetod) {
+      return;
+    }
+
+    let isMounted = true;
+
     hamtaBokforingsmetod().then((metod) => {
-      const normalized =
-        (metod || "").toLowerCase() === "kontantmetoden" ? "kontantmetoden" : "fakturametoden";
-      setBokföringsmetod(normalized);
+      if (!isMounted) return;
+      setBokföringsmetod(normalizeBokforingsmetod(metod));
     });
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialNormalizedBokforingsmetod]);
 
   // Hämta fakturaSTATUS när ID ändras
   useEffect(() => {

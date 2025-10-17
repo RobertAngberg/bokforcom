@@ -106,6 +106,10 @@ export function useFaktura() {
     ]
   );
   const lifecycle = useFakturaLifecycle();
+  // Servern skickar med den senast använda betalningsinformationen så att vi slipper ett extra server-anrop vid uppstart.
+  const initialSenasteBetalning = initialData?.senasteBetalning ?? null;
+  // Företagsprofilen kan också hydreras direkt från initialdata (om den finns) och då behöver vi inte hämta den igen klient-side.
+  const initialForetagsprofil = initialData?.foretagsprofil;
 
   // Avgör om vi redigerar en sparad faktura och tar fram titel/fakturanummer för vyn.
   const editFakturaId = navigationState.editFakturaId;
@@ -150,6 +154,20 @@ export function useFaktura() {
   if (!lifecycle.current.harLastatKunder && initialKunder.length > 0) {
     lifecycle.current.harLastatKunder = true;
   }
+  // Synka bokföringsmetod från serverinitialiserade data så Alternativ-flödet startar med korrekt läge utan att göra ett nytt fetch.
+  useEffect(() => {
+    const initialBokforingsmetod = initialData?.bokforingsmetod;
+    if (!initialBokforingsmetod) {
+      return;
+    }
+
+    const normalized =
+      initialBokforingsmetod === "kontantmetoden" ? "kontantmetoden" : "fakturametoden";
+
+    if (userSettings.bokföringsmetod !== normalized) {
+      setBokföringsmetod(normalized);
+    }
+  }, [initialData?.bokforingsmetod, setBokföringsmetod, userSettings.bokföringsmetod]);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,9 +210,10 @@ export function useFaktura() {
       const defaultFakturadatum = stringTillDate(currentFormData.fakturadatum);
 
       // Hämta senaste betalningsmetod för denna användare
-      let senasteBetalning = { betalningsmetod: null, nummer: null };
+      let senasteBetalning = initialSenasteBetalning;
 
-      if (session?.user?.id) {
+      // Om servern saknar värden (t.ex. ny användare) hämtar vi en fallback här.
+      if (!senasteBetalning && session?.user?.id) {
         senasteBetalning = await hamtaSenasteBetalningsmetod(session.user.id);
       }
 
@@ -202,8 +221,8 @@ export function useFaktura() {
         fakturadatum: currentFormData.fakturadatum || todayISO,
         betalningsvillkor: currentFormData.betalningsvillkor || "30",
         drojsmalsranta: currentFormData.drojsmalsranta || "12",
-        betalningsmetod: currentFormData.betalningsmetod || senasteBetalning.betalningsmetod || "",
-        nummer: currentFormData.nummer || senasteBetalning.nummer || "",
+        betalningsmetod: currentFormData.betalningsmetod || senasteBetalning?.betalningsmetod || "",
+        nummer: currentFormData.nummer || senasteBetalning?.nummer || "",
         forfallodatum:
           currentFormData.forfallodatum ||
           (defaultFakturadatum
@@ -218,7 +237,7 @@ export function useFaktura() {
     };
 
     initializeDefaults();
-  }, [session?.user?.id, setFormData, lifecycle]);
+  }, [session?.user?.id, setFormData, lifecycle, initialSenasteBetalning]);
 
   // Sätter förfallodatum automatiskt bara om det är tomt
   // Guarden säkerställer att vi inte triggar en ny render-loop när forfallodatum sätts.
@@ -666,16 +685,22 @@ export function useFaktura() {
     }
   }, [setFormData, showError]);
 
+  // Om servern redan fyllde företagsprofilen markerar vi det och hoppar över klientanropet.
   useEffect(() => {
-    // Har någon annan useFaktura redan laddat profilen? Hoppa över i så fall.
     if (lifecycle.current.harLastatForetagsprofil) {
       return;
     }
+
+    if (initialForetagsprofil) {
+      lifecycle.current.harLastatForetagsprofil = true;
+      return;
+    }
+
     lifecycle.current.harLastatForetagsprofil = true;
     loadForetagsprofil().catch((error) => {
       console.error("[useFaktura] loadForetagsprofil effect error", error);
     });
-  }, [loadForetagsprofil, lifecycle]);
+  }, [loadForetagsprofil, lifecycle, initialForetagsprofil]);
 
   // Spara företagsprofil
   const sparaForetagsprofil = useCallback(async () => {

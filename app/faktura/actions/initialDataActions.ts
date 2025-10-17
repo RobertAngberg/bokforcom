@@ -10,20 +10,29 @@ import type {
 } from "../types/types";
 import { mappaFavoritartiklar } from "../utils/mappaFavoritartiklar";
 
+// Samla ihop allt som Ny Faktura behöver redan på serversidan för att slippa flera separata POST-anrop vid första rendern.
 interface FakturaInitialData {
   foretagsprofil?: Partial<Företagsprofil>;
   kunder: KundListItem[];
   artiklar: FavoritArtikel[];
+  senasteBetalning?: {
+    betalningsmetod: string | null;
+    nummer: string | null;
+  };
+  bokforingsmetod?: "kontantmetoden" | "fakturametoden";
 }
 
+// Hämtar och paketerar basdata för fakturaflödet: företagsprofil, kundlista, favoritartiklar samt senast använda betal- och bokföringsinställningar.
 export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
   const { userId } = await ensureSession();
 
   const client = await pool.connect();
   try {
-    const [profilRes, kunderRes, artiklarRes] = await Promise.all([
-      client.query(
-        `
+    // Kör allt parallellt: varje SELECT är fristående men bidrar till samma initiala payload.
+    const [profilRes, kunderRes, artiklarRes, senasteBetalningRes, bokforingsmetodRes] =
+      await Promise.all([
+        client.query(
+          `
         SELECT
           företagsnamn,
           adress,
@@ -39,10 +48,10 @@ export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
         WHERE id = $1
         LIMIT 1
       `,
-        [userId]
-      ),
-      client.query<KundListItem>(
-        `
+          [userId]
+        ),
+        client.query<KundListItem>(
+          `
         SELECT
           id,
           kundnamn,
@@ -59,10 +68,10 @@ export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
           AND kundnamn <> ''
         ORDER BY LOWER(kundnamn), id
       `,
-        [userId]
-      ),
-      client.query<FavoritArtikelRow>(
-        `
+          [userId]
+        ),
+        client.query<FavoritArtikelRow>(
+          `
         SELECT id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
           rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
           rot_rut_antal_timmar, rot_rut_pris_per_timme, rot_rut_beskrivning,
@@ -73,9 +82,26 @@ export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
         WHERE user_id = $1
         ORDER BY beskrivning ASC
       `,
-        [userId]
-      ),
-    ]);
+          [userId]
+        ),
+        client.query(
+          `
+        SELECT 
+          betalningsmetod,
+          nummer
+        FROM fakturor
+        WHERE "user_id" = $1 
+          AND betalningsmetod IS NOT NULL
+          AND betalningsmetod <> ''
+          AND nummer IS NOT NULL
+          AND nummer <> ''
+        ORDER BY id DESC
+        LIMIT 1
+      `,
+          [userId]
+        ),
+        client.query('SELECT bokföringsmetod FROM "user" WHERE id = $1 LIMIT 1', [userId]),
+      ]);
 
     const profilRad = profilRes.rows[0] as
       | (Företagsprofil & { logo_url?: string | null })
@@ -100,10 +126,35 @@ export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
 
     const artiklar = mappaFavoritartiklar(artiklarRes.rows);
 
+    // Pullar den senast använda betalningsmetoden om det finns någon historik.
+    const senasteBetalningRad = senasteBetalningRes.rows[0] as
+      | { betalningsmetod: string | null; nummer: string | null }
+      | undefined;
+
+    const senasteBetalning = senasteBetalningRad
+      ? {
+          betalningsmetod: senasteBetalningRad.betalningsmetod,
+          nummer: senasteBetalningRad.nummer,
+        }
+      : undefined;
+
+    // Och hämta användarens bokföringsmetod så att klienten slipper fråga igen.
+    const bokforingsmetodRad = bokforingsmetodRes.rows[0] as
+      | { bokföringsmetod?: string | null }
+      | undefined;
+    const normalizedBokforingsmetod = (() => {
+      const raw = bokforingsmetodRad?.bokföringsmetod?.toLowerCase();
+      if (raw === "kontantmetoden") return "kontantmetoden" as const;
+      if (raw === "fakturametoden") return "fakturametoden" as const;
+      return undefined;
+    })();
+
     return {
       foretagsprofil,
       kunder: kunderRes.rows,
       artiklar,
+      senasteBetalning,
+      bokforingsmetod: normalizedBokforingsmetod,
     };
   } catch (error) {
     console.error("❌ hamtaFakturaInitialData error:", error);
@@ -111,6 +162,8 @@ export async function hamtaFakturaInitialData(): Promise<FakturaInitialData> {
       foretagsprofil: undefined,
       kunder: [],
       artiklar: [],
+      senasteBetalning: undefined,
+      bokforingsmetod: undefined,
     };
   } finally {
     client.release();
