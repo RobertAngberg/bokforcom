@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
-import { extractDataFromOCR } from "../actions/ocrActions";
+import { extractDataFromOCR, extractDataFromOCRLevFakt } from "../actions/ocrActions";
 import { compressImageFile } from "../../_utils/blobUpload";
 import { validateFile, sanitizeFilename } from "../../_utils/fileUtils";
 import Tesseract from "tesseract.js";
@@ -67,13 +67,13 @@ export function useLaddaUppFil({
   const [isLoading, setIsLoading] = useState(false);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
 
+  const isLevfaktMode = Boolean(
+    setLeverantör && setFakturadatum && setFörfallodatum && setFakturanummer
+  );
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = event.target.files?.[0];
     if (!originalFile) return;
-
-    const isLevfaktMode = Boolean(
-      setLeverantör && setFakturadatum && setFörfallodatum && setFakturanummer
-    );
 
     // Säker filvalidering
     const validation = validateFile(originalFile);
@@ -135,14 +135,6 @@ export function useLaddaUppFil({
       // Skapa temporär URL för förhandsvisning
       const tempUrl = URL.createObjectURL(file);
       setPdfUrl(tempUrl);
-
-      if (isLevfaktMode) {
-        clearTimeout(timeout);
-        setRecognizedText("");
-        setIsLoading(false);
-        setTimeoutTriggered(false);
-        return;
-      }
     } catch (error) {
       console.error("Fel vid hantering av fil:", error);
       setIsLoading(false);
@@ -192,18 +184,6 @@ export function useLaddaUppFil({
     (async () => {
       try {
         // Determine if this is leverantörsfaktura mode
-        const isLevfaktMode = !!(
-          setLeverantör &&
-          setFakturadatum &&
-          setFörfallodatum &&
-          setFakturanummer
-        );
-
-        if (isLevfaktMode) {
-          setIsLoading(false);
-          return;
-        }
-
         const parsed = await extractDataFromOCR(recognizedText);
 
         if (parsed?.datum) {
@@ -215,15 +195,21 @@ export function useLaddaUppFil({
         }
 
         // Leverantörsfaktura specific fields
-        if (isLevfaktMode && parsed) {
-          if (parsed.fakturadatum && setFakturadatum) {
-            setFakturadatum(parsed.fakturadatum);
+        if (isLevfaktMode) {
+          const levParsed = await extractDataFromOCRLevFakt(recognizedText);
+
+          if (levParsed?.belopp && levParsed.belopp > 0) {
+            setBelopp(levParsed.belopp);
           }
-          if (parsed.förfallodatum && setFörfallodatum) {
-            setFörfallodatum(parsed.förfallodatum);
+
+          if (levParsed?.fakturadatum && setFakturadatum) {
+            setFakturadatum(levParsed.fakturadatum);
           }
-          if (parsed.fakturanummer && setFakturanummer) {
-            setFakturanummer(parsed.fakturanummer);
+          if (levParsed?.förfallodatum && setFörfallodatum) {
+            setFörfallodatum(levParsed.förfallodatum);
+          }
+          if (levParsed?.fakturanummer && setFakturanummer) {
+            setFakturanummer(levParsed.fakturanummer);
           }
         }
 

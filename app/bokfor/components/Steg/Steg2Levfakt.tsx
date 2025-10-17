@@ -12,7 +12,7 @@ import Forhandsgranskning from "./Forhandsgranskning";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import Knapp from "../../../_components/Knapp";
 import TextFalt from "../../../_components/TextFalt";
-import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
+// import ValjLeverantorModal from "../../../_components/ValjLeverantorModal";
 import { useBokforContext } from "../../context/BokforContextProvider";
 import { getLeverantorer } from "../../../faktura/actions/leverantorActions";
 
@@ -292,7 +292,7 @@ export default function Steg2Levfakt() {
             <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
           </div>
         </div>
-      </div>
+        {/* </div>
       <ValjLeverantorModal
         isOpen={state.visaLeverantorModal}
         skipNavigate
@@ -300,7 +300,8 @@ export default function Steg2Levfakt() {
           actions.setLeverantör(lev);
         }}
         onClose={handlers.handleLeverantorModalClose}
-      />
+      /> */}
+      </div>
     </>
   );
 }
