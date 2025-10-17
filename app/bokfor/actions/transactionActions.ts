@@ -12,45 +12,6 @@ export async function invalidateBokforCache() {
   revalidatePath("/rapporter");
 }
 
-export async function taBortTransaktion(id: number) {
-  const client = await pool.connect();
-  try {
-    const { userId } = await ensureSession();
-
-    // Säkerhetskontroll: Kontrollera att transaktionen tillhör användaren
-    const ownerCheck = await client.query(`SELECT user_id FROM transaktioner WHERE id = $1`, [id]);
-
-    if (ownerCheck.rows.length === 0) {
-      throw new Error("Transaktionen hittades inte");
-    }
-
-    if (ownerCheck.rows[0].user_id !== userId) {
-      throw new Error("Otillåten åtkomst: Du äger inte denna transaktion");
-    }
-
-    // Ta bort transaktionen
-    await client.query(`DELETE FROM transaktioner WHERE id = $1`, [id]);
-  } finally {
-    client.release();
-  }
-}
-
-export async function fetchTransactionWithBlob(transactionId: number) {
-  const { userId } = await ensureSession();
-
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      `SELECT *, blob_url FROM transaktioner WHERE id = $1 AND "user_id" = $2`,
-      [transactionId, userId]
-    );
-
-    return result.rows[0] || null;
-  } finally {
-    client.release();
-  }
-}
-
 function sanitizeFilename(name: string): string {
   return name
     .replace(/[^a-z0-9åäöÅÄÖ.\-_]/gi, "")
@@ -219,71 +180,6 @@ export async function saveTransaction(formData: FormData) {
     return { success: true, id: transaktionsId, blobUrl };
   } catch (err) {
     console.error("❌ saveTransaction error:", err);
-    return { success: false, error: (err as Error).message };
-  } finally {
-    client.release();
-  }
-}
-
-export async function bokforUtlagg(utläggId: number) {
-  const { userId } = await ensureSession();
-
-  const client = await pool.connect();
-  try {
-    // Hämta utläggsraden
-    const { rows: utläggRows } = await client.query(
-      `SELECT * FROM utlägg WHERE id = $1 AND user_id = $2`,
-      [utläggId, userId]
-    );
-    if (!utläggRows.length) throw new Error("Utlägg hittades inte");
-    const utlägg = utläggRows[0];
-
-    // Skapa transaktion
-    const { rows: transRows } = await client.query(
-      `INSERT INTO transaktioner (
-        transaktionsdatum, kontobeskrivning, belopp, fil, kommentar, "user_id"
-      ) VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id`,
-      [
-        utlägg.datum,
-        utlägg.beskrivning || "Utlägg",
-        utlägg.belopp,
-        utlägg.kvitto_fil || null,
-        utlägg.kommentar || "",
-        userId,
-      ]
-    );
-    const transaktionsId = transRows[0].id;
-
-    // Hämta konto-id för 2890 och 1930
-    const kontoRes = await client.query(
-      `SELECT id, kontonummer FROM konton WHERE kontonummer IN ('2890','1930')`
-    );
-    const kontoMap = Object.fromEntries(
-      kontoRes.rows.map((r: { kontonummer: string; id: number }) => [r.kontonummer, r.id])
-    );
-    if (!kontoMap["2890"] || !kontoMap["1930"]) throw new Error("Konto 2890 eller 1930 saknas");
-
-    // Skapa transaktionsposter
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["2890"], utlägg.belopp, 0]
-    );
-    await client.query(
-      `INSERT INTO transaktionsposter (transaktions_id, konto_id, debet, kredit) VALUES ($1, $2, $3, $4)`,
-      [transaktionsId, kontoMap["1930"], 0, utlägg.belopp]
-    );
-
-    // Uppdatera utlägg med transaktion_id och status
-    await client.query(`UPDATE utlägg SET transaktion_id = $1, status = 'Bokförd' WHERE id = $2`, [
-      transaktionsId,
-      utläggId,
-    ]);
-
-    await invalidateBokforCache();
-    return { success: true, transaktionsId };
-  } catch (err) {
-    console.error("❌ bokförUtlägg error:", err);
     return { success: false, error: (err as Error).message };
   } finally {
     client.release();
