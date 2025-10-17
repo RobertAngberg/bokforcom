@@ -254,7 +254,7 @@ export default function Steg2Levfakt() {
                 type="text"
                 value={levfaktHelper.state.fakturanummer || ""}
                 onChange={(e) => levfaktHelper.actions.setFakturanummer(e.target.value)}
-                placeholder="Ange fakturanummer..."
+                placeholder="(Valfritt)"
               />
             </div>
 

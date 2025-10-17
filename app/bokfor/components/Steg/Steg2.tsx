@@ -85,7 +85,7 @@ export default function Steg2() {
           {state.utlaggMode ? "Steg 2: Fyll i uppgifter för utlägg" : "Steg 2: Fyll i uppgifter"}
         </h1>
         <div className="flex flex-col-reverse justify-between h-auto md:flex-row">
-          <div className="w-full mb-10 md:w-[40%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
+          <div className="w-full mb-10 md:w-[48%] md:mb-0 bg-slate-900 border border-gray-700 rounded-xl p-6 text-white">
             <LaddaUppFil
               fil={state.fil}
               setFil={actions.setFil}
