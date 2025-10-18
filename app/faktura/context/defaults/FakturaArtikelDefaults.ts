@@ -1,7 +1,17 @@
 // Här ligger små hjälpfunktioner som skapar ett “grundpaket” av artikeldata åt oss.
 // När du kallar dem får du ett färdigifyllt objekt, så du slipper skriva alla startvärden för hand.
 
-import type { FavoritArtikel, FakturaArtikelState, NyArtikel } from "../../types/types";
+import { createContext } from "react";
+import type {
+  FakturaArtikelContextValue,
+  FavoritArtikel,
+  FakturaArtikelState,
+  NyArtikel,
+} from "../../types/types";
+
+export const FakturaArtikelContext = createContext<FakturaArtikelContextValue | undefined>(
+  undefined
+);
 
 const baseNyArtikel: NyArtikel = {
   beskrivning: "",

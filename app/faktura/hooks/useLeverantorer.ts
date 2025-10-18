@@ -277,6 +277,12 @@ function resetSparadeFakturorPageCache() {
   sparadeFakturorPagePromise = null;
 }
 
+export function invalidateLeverantorsfakturaCaches() {
+  resetLeverantorerCache();
+  resetBokfordaCache();
+  resetSparadeFakturorPageCache();
+}
+
 export function useLeverantörer(): UseLeverantörerReturn {
   const [leverantörer, setLeverantörer] = useState<Leverantör[]>(() => leverantorerCache ?? []);
   const [loading, setLoading] = useState(!leverantorerCache);

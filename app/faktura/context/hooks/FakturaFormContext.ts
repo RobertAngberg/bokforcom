@@ -3,14 +3,13 @@
 
 "use client";
 
-import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
+import { useCallback, useContext, useSyncExternalStore } from "react";
 import type {
   FakturaFormContextValue,
   FakturaFormData,
   FakturaFormSelector,
 } from "../../types/types";
-
-export const FakturaFormContext = createContext<FakturaFormContextValue | null>(null);
+import { FakturaFormContext } from "../defaults/FakturaFormDefaults";
 
 // Hämtar själva context-objektet och slår larm om du glömt lägga till providern.
 export function useFakturaFormContextValue(): FakturaFormContextValue {

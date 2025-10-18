@@ -1,7 +1,14 @@
 // För att slippa hårdkoda startvärden överallt samlar vi dem här i enkla funktioner och konstanter.
 // Resultatet blir att formulärmotorn alltid får samma “nollställning” och vet vilka engångssteg som är gjorda.
 
-import type { FakturaFormData, FakturaLifecycleFlags } from "../../types/types";
+import { createContext } from "react";
+import type {
+  FakturaFormContextValue,
+  FakturaFormData,
+  FakturaLifecycleFlags,
+} from "../../types/types";
+
+export const FakturaFormContext = createContext<FakturaFormContextValue | null>(null);
 
 const lifecycleDefaults: FakturaLifecycleFlags = {
   lastDefaultsSessionId: null,

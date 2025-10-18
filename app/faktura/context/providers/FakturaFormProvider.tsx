@@ -13,7 +13,7 @@ import type {
   FakturaFormAction,
   ServerData,
 } from "../../types/types";
-import { FakturaFormContext } from "../hooks/FakturaFormContext";
+import { FakturaFormContext } from "../defaults/FakturaFormDefaults";
 import {
   createDefaultFakturaFormData,
   createLifecycleDefaults,

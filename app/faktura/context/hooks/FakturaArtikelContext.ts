@@ -3,12 +3,8 @@
 
 "use client";
 
-import { createContext, useContext } from "react";
-import type { FakturaArtikelContextValue } from "../../types/types";
-
-export const FakturaArtikelContext = createContext<FakturaArtikelContextValue | undefined>(
-  undefined
-);
+import { useContext } from "react";
+import { FakturaArtikelContext } from "../defaults/FakturaArtikelDefaults";
 
 // Anropa den här hooken när du vill hämta artikel-lådans innehåll från contexten.
 export function useFakturaArtikelContext() {

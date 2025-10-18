@@ -11,7 +11,7 @@ import type {
   FakturaArtikelAction,
   FakturaArtikelProviderProps,
 } from "../../types/types";
-import { FakturaArtikelContext } from "../hooks/FakturaArtikelContext";
+import { FakturaArtikelContext } from "../defaults/FakturaArtikelDefaults";
 import {
   createDefaultFakturaArtikelState,
   createDefaultNyArtikel,

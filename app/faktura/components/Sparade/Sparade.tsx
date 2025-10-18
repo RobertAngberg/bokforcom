@@ -70,7 +70,7 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
         {loading ? (
           <LoadingSpinner />
         ) : fakturor.length === 0 ? (
-          <p className="text-gray-400 italic">Inga fakturor hittades.</p>
+          <p className="text-gray-400 italic text-center">Inga fakturor hittades.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {fakturor.map((faktura) => {

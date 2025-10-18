@@ -105,20 +105,20 @@ export default function Steg3() {
           <Knapp
             text={
               state.utlaggMode
-                ? "💳 Slutför utlägg"
+                ? "💳 Bokför utlägg"
                 : state.levfaktMode
                   ? state.ärFörsäljning
-                    ? "📤 Slutför kundfaktura"
-                    : "📥 Slutför leverantörsfaktura"
+                    ? "📤 Bokför kundfaktura"
+                    : "📥 Bokför leverantörsfaktura"
                   : "Bokför"
             }
             loadingText={
               state.utlaggMode
-                ? "💳 Slutför utlägg..."
+                ? "💳 Bokför utlägg..."
                 : state.levfaktMode
                   ? state.ärFörsäljning
-                    ? "📤 Slutför kundfaktura..."
-                    : "📥 Slutför leverantörsfaktura..."
+                    ? "📤 Bokför kundfaktura..."
+                    : "📥 Bokför leverantörsfaktura..."
                   : "Bokför..."
             }
             loading={state.loadingSteg3}
