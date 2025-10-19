@@ -752,6 +752,23 @@ export interface BokföringsData {
   totaltBelopp: number;
 }
 
+// === ROT/RUT TYPES ===
+export type RotRutStatus = "ej_inskickad" | "väntar" | "godkänd";
+
+export interface RotRutStatusPayload {
+  rot_rut_status: RotRutStatus;
+  status_betalning: string;
+  betaldatum?: string | null;
+}
+
+export interface UseRotRutOptions {
+  fakturaId: number;
+  totalBelopp: number;
+  bokföringsmetod: "kontantmetoden" | "fakturametoden";
+  onSuccess: (payload: RotRutStatusPayload) => void | Promise<void>;
+  onClose: () => void;
+}
+
 // === CONTEXT TYPES ===
 export interface FakturaState {
   kundStatus: KundStatus;
