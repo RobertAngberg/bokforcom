@@ -22,7 +22,7 @@ export default function AdminContent({ användarInfo, företagsInfo }: AdminCont
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl text-center flex-1">Administration</h1>
         <Knapp
-          text="👋 Logga ut"
+          text="🚪 Logga ut"
           onClick={async () => {
             // FÖRST rensa remember me-preferensen
             clearRememberMePreference();
