@@ -1,6 +1,7 @@
 import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
-import Header from "../../components/Header";
 import BokforComInfo from "../../components/BokforComInfo";
+import Footer from "../../components/Footer";
+import Header from "../../components/Header";
 
 export default function OmOssPage() {
   return (
@@ -118,6 +119,8 @@ export default function OmOssPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

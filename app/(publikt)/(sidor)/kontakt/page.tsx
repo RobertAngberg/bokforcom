@@ -1,6 +1,7 @@
 import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
-import Header from "../../components/Header";
 import BokforComInfo from "../../components/BokforComInfo";
+import Footer from "../../components/Footer";
+import Header from "../../components/Header";
 import KontaktFormular from "../../components/KontaktFormular";
 
 export default function KontaktPage() {
@@ -42,6 +43,8 @@ export default function KontaktPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

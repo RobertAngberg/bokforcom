@@ -1,4 +1,5 @@
 import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import PrisSektion from "../../components/PrisSektion";
 
@@ -46,6 +47,8 @@ export default function PriserPage() {
           <PrisSektion />
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

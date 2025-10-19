@@ -1,4 +1,5 @@
 import AnimeradeStjarnor from "../../components/AnimeradeStjarnor";
+import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 
 export default function FunktionerPage() {
@@ -117,6 +118,8 @@ export default function FunktionerPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
