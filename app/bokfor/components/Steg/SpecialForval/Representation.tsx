@@ -180,16 +180,15 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                   Skatteverkets krav.
                 </p>
                 <p className="mt-2 text-blue-300">
-                  Avdraget för moms begränsas till 300 kr exkl. moms per person och tillfälle.
-                  Alkohol räknas aldrig som enklare förtäring och omfattas av särskilda regler.
+                  Avdraget för moms begränsas till 300kr per person och tillfälle.
                 </p>
               </div>
 
               {antal > 0 && totalBelopp > 0 && giltigtAlkohol && (
                 <div className="mb-4 rounded-lg border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                  <p className="font-medium">Beräkning enligt Skatteverket</p>
+                  <p className="font-medium mb-3">Beräkning enligt Skatteverket:</p>
                   <p>Mat och övrig dryck (inkl. moms): {matBelopp.toFixed(2)} kr</p>
-                  <p>Alkoholdrycker (inkl. moms): {alkoholFörBeräkning.toFixed(2)} kr</p>
+                  <p>Alkohol (inkl. moms): {alkoholFörBeräkning.toFixed(2)} kr</p>
                   <p>Moms att dra av (proportion): {kalkyl.momsAvdrag.toFixed(2)} kr</p>
                   {schablonMoms !== null && (
                     <p>
@@ -198,16 +197,8 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                     </p>
                   )}
                   <p>Ej avdragsgill kostnad: {kalkyl.ejAvdragsgill.toFixed(2)} kr</p>
-                  <p className="text-slate-400">
-                    Gränsen är 300 kr exkl. moms per person för mat och dryck. Vi använder
-                    proportionering så att resultatet matchar Skatteverkets räknesnurra. Schablonen
-                    anges endast som referens om du vill räkna om manuellt.
-                  </p>
                   {schablonÄrBättre && (
-                    <p className="text-slate-400">
-                      Vill du använda schablonvärdet behöver du justera beloppen manuellt i nästa
-                      steg.
-                    </p>
+                    <p className="text-slate-400">{/* Detta ska bort egentligen */}</p>
                   )}
                 </div>
               )}
