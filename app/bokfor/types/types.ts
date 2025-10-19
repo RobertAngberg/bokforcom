@@ -525,4 +525,4 @@ export interface BokforContextType {
 // TYPE UNIONS & LITERALS
 // ========================================
 
-export type RepresentationsTypLocal = "maltid_alkohol" | "enklare_fortaring";
+export type RepresentationsTypLocal = "lunch_middag" | "enklare_fortaring";

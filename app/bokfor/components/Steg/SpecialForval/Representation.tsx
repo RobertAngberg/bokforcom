@@ -11,74 +11,76 @@ import Forhandsgranskning from "../Forhandsgranskning";
 import { datePickerValue, dateToYyyyMmDd } from "../../../../_utils/datum";
 import { useBokforContext } from "../../../context/BokforContextProvider";
 import { RepresentationProps, RepresentationsTypLocal } from "../../../types/types";
-
-// Schablon beräkning enligt Skatteverket
-function beräknaSchablon(antalPersoner: number, typ: RepresentationsTypLocal, totalBelopp: number) {
-  // Bokio verkar använda samma beräkning för båda typerna
-  const schablon = antalPersoner * 46; // kr per person för båda typerna
-
-  // Avdragsgill del = minimum av faktisk kostnad och schablon
-  const avdragsgillDel = Math.min(totalBelopp, schablon);
-  const ejAvdragsgillDel = totalBelopp - avdragsgillDel;
-
-  return {
-    schablon,
-    avdragsgillDel,
-    ejAvdragsgillDel,
-    procent: totalBelopp > 0 ? (avdragsgillDel / totalBelopp) * 100 : 0,
-  };
-}
+import { calculateRepresentation } from "../../../../_utils/representation";
 
 export default function Representation({ mode, renderMode = "standard" }: RepresentationProps) {
   const { state, actions } = useBokforContext();
 
   const [antalPersoner, setAntalPersoner] = useState("");
+  const [alkoholBelopp, setAlkoholBelopp] = useState("");
   const [representationstyp, setRepresentationstyp] =
-    useState<RepresentationsTypLocal>("maltid_alkohol");
+    useState<RepresentationsTypLocal>("lunch_middag");
 
   // Använd totalt belopp för beräkningar
   const totalBelopp = state.belopp ?? 0;
+  const antal = Number(antalPersoner) || 0;
+  const alkoholBeloppTrim = alkoholBelopp.trim();
+  const alkoholBeloppNum = alkoholBeloppTrim === "" ? 0 : Number(alkoholBeloppTrim);
+  const alkoholÄrTal = alkoholBeloppTrim === "" || Number.isFinite(alkoholBeloppNum);
+  const alkoholNegativ = alkoholÄrTal && alkoholBeloppNum < 0;
+  const alkoholÖverstigerTotal = alkoholÄrTal && alkoholBeloppNum > totalBelopp;
+  const giltigtAlkohol = alkoholÄrTal && !alkoholNegativ && !alkoholÖverstigerTotal;
+  const alkoholFörBeräkning = alkoholÄrTal
+    ? Math.min(Math.max(alkoholBeloppNum, 0), totalBelopp)
+    : 0;
+  const matBelopp = Math.max(totalBelopp - alkoholFörBeräkning, 0);
+
+  const kalkyl = calculateRepresentation({
+    totalAmount: totalBelopp,
+    numberOfPeople: antal,
+    foodAmountIncl: matBelopp,
+    alcoholAmountIncl: alkoholFörBeräkning,
+  });
+  const schablonMoms = kalkyl.schablonMoms ?? null;
+  const schablonÄrBättre = schablonMoms !== null && schablonMoms > kalkyl.momsAvdrag;
 
   // Olika valideringslogik beroende på renderMode
   const giltigt =
     renderMode === "levfakt"
-      ? !!state.belopp && !!state.transaktionsdatum && !!state.leverantör && !!state.fakturadatum
-      : !!state.belopp && !!state.transaktionsdatum;
+      ? !!state.belopp &&
+        !!state.transaktionsdatum &&
+        !!state.leverantör &&
+        !!state.fakturadatum &&
+        antal > 0 &&
+        giltigtAlkohol
+      : !!state.belopp && !!state.transaktionsdatum && antal > 0 && giltigtAlkohol;
 
   function gåTillSteg3() {
-    // Beräkna schablon och bestäm avdragsgillhet
-    const schablon = beräknaSchablon(parseInt(antalPersoner) || 1, representationstyp, totalBelopp);
+    const momsAvdrag = kalkyl.momsAvdrag;
+    const ejAvdragsgill = kalkyl.ejAvdragsgill;
 
-    // Bokio-logik: Schablon på exkl-moms basis, sedan beräkna moms
-    const exklMoms = totalBelopp / 1.25; // Totalt exkl moms
-    const maxAvdragsgillExklMoms = Math.min(schablon.schablon, exklMoms); // Schablon begränsat till exkl moms
-    const avdragsgillMomsbelopp = maxAvdragsgillExklMoms * 0.25; // 25% moms på avdragsgill del
-    const kostnadEjAvdragsgill = totalBelopp - avdragsgillMomsbelopp; // Välj konto baserat på typ
-    const konto = representationstyp === "enklare_fortaring" ? "6071" : "6072";
-    const kontoBeskrivning =
-      representationstyp === "enklare_fortaring"
-        ? "Representation, avdragsgill"
-        : "Representation, ej avdragsgill";
+    const extrafältObj: Record<string, { label: string; debet: number; kredit: number }> = {};
+    const betalningskonto = renderMode === "levfakt" ? "2440" : "1930";
 
-    if (renderMode === "levfakt") {
-      // Leverantörsfaktura: Skuld mot leverantör
-      const extrafältObj: Record<string, { label: string; debet: number; kredit: number }> = {
-        "2440": { label: "Leverantörsskulder", debet: 0, kredit: totalBelopp },
-        "2640": { label: "Ingående moms", debet: avdragsgillMomsbelopp, kredit: 0 },
-        [konto]: { label: kontoBeskrivning, debet: kostnadEjAvdragsgill, kredit: 0 },
-      };
+    extrafältObj[betalningskonto] = {
+      label: renderMode === "levfakt" ? "Leverantörsskulder" : "Företagskonto / affärskonto",
+      debet: 0,
+      kredit: totalBelopp,
+    };
 
-      actions.setExtrafält(extrafältObj);
-    } else {
-      // Standard: Direkt betalning från företagskonto
-      const extrafältObj: Record<string, { label: string; debet: number; kredit: number }> = {
-        "1930": { label: "Företagskonto / affärskonto", debet: 0, kredit: totalBelopp },
-        "2640": { label: "Ingående moms", debet: avdragsgillMomsbelopp, kredit: 0 },
-        [konto]: { label: kontoBeskrivning, debet: kostnadEjAvdragsgill, kredit: 0 },
-      };
-
-      actions.setExtrafält(extrafältObj);
+    if (momsAvdrag > 0) {
+      extrafältObj["2640"] = { label: "Ingående moms", debet: momsAvdrag, kredit: 0 };
     }
+
+    if (ejAvdragsgill > 0) {
+      extrafältObj["6072"] = {
+        label: "Representation, ej avdragsgill",
+        debet: ejAvdragsgill,
+        kredit: 0,
+      };
+    }
+
+    actions.setExtrafält(extrafältObj);
     actions.setCurrentStep(3);
   }
 
@@ -106,6 +108,25 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                 onChange={(e) => actions.setBelopp(Number(e.target.value))}
                 required
               />
+
+              <TextFalt
+                label="Alkoholdrycker inkl. moms (om tillämpligt)"
+                name="alkohol"
+                value={alkoholBelopp}
+                onChange={(e) => setAlkoholBelopp(e.target.value)}
+                placeholder="0"
+              />
+              {!alkoholÄrTal && alkoholBeloppTrim !== "" && (
+                <p className="text-xs text-red-400 mb-2">Ange ett numeriskt belopp.</p>
+              )}
+              {alkoholNegativ && (
+                <p className="text-xs text-red-400 mb-2">Beloppet kan inte vara negativt.</p>
+              )}
+              {alkoholÖverstigerTotal && (
+                <p className="text-xs text-red-400 mb-2">
+                  Alkoholkostnaden kan inte överstiga totalbeloppet.
+                </p>
+              )}
 
               <label className="block text-sm font-medium text-white mb-2">
                 Betaldatum (ÅÅÅÅ‑MM‑DD)
@@ -140,7 +161,7 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                 value={representationstyp}
                 onChange={(e) => setRepresentationstyp(e.target.value as RepresentationsTypLocal)}
               >
-                <option value="maltid_alkohol">Måltid med alkohol</option>
+                <option value="lunch_middag">Måltid</option>
                 <option value="enklare_fortaring">Enklare förtäring</option>
               </select>
 
@@ -152,34 +173,48 @@ export default function Representation({ mode, renderMode = "standard" }: Repres
                 placeholder="Beskriv representationen..."
               />
 
+              <div className="mb-4 rounded-lg border border-blue-700 bg-blue-900 p-4 text-xs text-blue-100">
+                <p className="font-semibold text-blue-200">Dokumentera deltagare</p>
+                <p className="mt-1">
+                  Anteckna vilka som deltog på kvittot eller i kommentaren för att uppfylla
+                  Skatteverkets krav.
+                </p>
+                <p className="mt-2 text-blue-300">
+                  Avdraget för moms begränsas till 300 kr exkl. moms per person och tillfälle.
+                  Alkohol räknas aldrig som enklare förtäring och omfattas av särskilda regler.
+                </p>
+              </div>
+
+              {antal > 0 && totalBelopp > 0 && giltigtAlkohol && (
+                <div className="mb-4 rounded-lg border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                  <p className="font-medium">Beräkning enligt Skatteverket</p>
+                  <p>Mat och övrig dryck (inkl. moms): {matBelopp.toFixed(2)} kr</p>
+                  <p>Alkoholdrycker (inkl. moms): {alkoholFörBeräkning.toFixed(2)} kr</p>
+                  <p>Moms att dra av (proportion): {kalkyl.momsAvdrag.toFixed(2)} kr</p>
+                  {schablonMoms !== null && (
+                    <p>
+                      Schablon 46 kr/person: {schablonMoms.toFixed(2)} kr
+                      {schablonÄrBättre && " (högre)"}
+                    </p>
+                  )}
+                  <p>Ej avdragsgill kostnad: {kalkyl.ejAvdragsgill.toFixed(2)} kr</p>
+                  <p className="text-slate-400">
+                    Gränsen är 300 kr exkl. moms per person för mat och dryck. Vi använder
+                    proportionering så att resultatet matchar Skatteverkets räknesnurra. Schablonen
+                    anges endast som referens om du vill räkna om manuellt.
+                  </p>
+                  {schablonÄrBättre && (
+                    <p className="text-slate-400">
+                      Vill du använda schablonvärdet behöver du justera beloppen manuellt i nästa
+                      steg.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Knapp text="Gå vidare" onClick={gåTillSteg3} disabled={!giltigt} fullWidth />
             </div>
             <Forhandsgranskning fil={state.fil} pdfUrl={state.pdfUrl} />
-          </div>
-        </div>
-
-        {/* Info om representation */}
-        <div className="max-w-5xl mx-auto px-4 mt-6">
-          <div className="bg-blue-900 border border-blue-700 rounded-xl p-4 flex items-start space-x-3">
-            <svg
-              className="w-6 h-6 text-blue-300 mt-0.5 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div>
-              <p className="text-blue-100">
-                <strong>Dokumentera deltagare:</strong> Anteckna vilka som deltog på kvittot eller i
-                kommentaren för att uppfylla Skatteverkets krav.
-              </p>
-            </div>
           </div>
         </div>
       </>
