@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { hamtaAllaAnstallda } from "../../personal/actions/anstalldaActions";
 import { saveTransaction } from "../actions/transactionActions";
 import { showToast } from "../../_components/Toast";
@@ -150,6 +150,31 @@ export function useBokfor() {
       valtFörval?.typ?.toLowerCase().includes("intäkt") ||
       valtFörval?.kategori?.toLowerCase().includes("försäljning"));
 
+  const harIntäktskonto = useMemo(() => {
+    if (!valtFörval?.konton?.length) return false;
+
+    return valtFörval.konton.some((konto) => {
+      const kontoNummer = konto.kontonummer?.toString().trim();
+      if (!kontoNummer || kontoNummer.length === 0) {
+        return false;
+      }
+
+      const förstaSiffra = kontoNummer[0];
+      return förstaSiffra === "3";
+    });
+  }, [valtFörval]);
+
+  const kanBokförasSomFaktura = useMemo(() => {
+    const metod = (bokföringsmetod || "").toLowerCase();
+    return metod === "fakturametoden" && harIntäktskonto && !levfaktMode;
+  }, [bokföringsmetod, harIntäktskonto, levfaktMode]);
+
+  useEffect(() => {
+    if (!kanBokförasSomFaktura && bokförSomFaktura) {
+      setBokförSomFaktura(false);
+    }
+  }, [kanBokförasSomFaktura, bokförSomFaktura]);
+
   // ====================================================
   // BERÄKNINGSFUNKTIONER
   // ====================================================
@@ -166,6 +191,9 @@ export function useBokfor() {
       }
       if (levfaktMode && ärFörsäljning && kontonummer === "1510") {
         return safeBelopp; // Kundfordringar vid försäljning
+      }
+      if (/^20/.test(kontonummer)) {
+        return safeBelopp; // Eget kapital-konton ska få hela beloppet
       }
 
       if (klass === "1") return safeBelopp; // Tillgångar kan ha debet (ökning av tillgång)
@@ -187,6 +215,9 @@ export function useBokfor() {
     if (klass === "1") return safeBelopp;
     if (klass === "2") {
       if (kontonummer === "2440") {
+        return safeBelopp;
+      }
+      if (/^20/.test(kontonummer)) {
         return safeBelopp;
       }
       return ärFörsäljning ? moms : 0; // Utgående moms vid försäljning
@@ -419,6 +450,7 @@ export function useBokfor() {
     moms,
     beloppUtanMoms,
     ärFörsäljning,
+    kanBokförasSomFaktura,
     fallbackRows,
 
     // Actions

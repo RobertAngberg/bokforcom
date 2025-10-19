@@ -465,6 +465,7 @@ export interface BokforContextType {
     moms: number;
     beloppUtanMoms: number;
     ärFörsäljning: boolean | undefined;
+    kanBokförasSomFaktura: boolean;
     fallbackRows: Array<{
       key: number;
       konto: string;

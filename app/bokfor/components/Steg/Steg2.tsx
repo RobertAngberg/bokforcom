@@ -15,6 +15,8 @@ export default function Steg2() {
   // Visa bara på steg 2 och inte i levfakt mode
   if (state.currentStep !== 2 || state.levfaktMode) return null;
 
+  const visaBokförSomFaktura = state.kanBokförasSomFaktura;
+
   if (state.valtFörval?.specialtyp) {
     // Mapping från database specialtyp till komponentnamn
     const specialtypMapping: { [key: string]: string } = {
@@ -95,6 +97,18 @@ export default function Steg2() {
               onOcrTextChange={handlers.handleOcrTextChange}
               onReprocessTrigger={handlers.handleReprocessTrigger}
             />
+
+            {visaBokförSomFaktura && (
+              <label className="flex items-center gap-3 mb-6 text-white">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                  checked={state.bokförSomFaktura}
+                  onChange={(event) => actions.setBokförSomFaktura?.(event.target.checked)}
+                />
+                <span>Bokför som faktura</span>
+              </label>
+            )}
 
             <Information
               visaFakturadatum={state.bokförSomFaktura}
