@@ -9,6 +9,7 @@ import {
 import {
   registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
   registreraRotRutBetalning as registreraRotRutBetalningBase,
+  uppdateraRotRutStatus as uppdateraRotRutStatusBase,
 } from "./betalningActions";
 import type { BokförFakturaData, TransaktionsPost } from "../types/types";
 import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
@@ -75,6 +76,13 @@ export async function registreraKundfakturaBetalning(
 
 export async function registreraRotRutBetalning(fakturaId: number) {
   return registreraRotRutBetalningBase(fakturaId);
+}
+
+export async function uppdateraRotRutStatus(
+  fakturaId: number,
+  status: "ej_inskickad" | "väntar" | "godkänd"
+) {
+  return uppdateraRotRutStatusBase(fakturaId, status);
 }
 
 export async function bokforFaktura(data: BokförFakturaData) {
