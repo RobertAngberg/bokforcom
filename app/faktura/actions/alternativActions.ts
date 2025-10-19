@@ -6,7 +6,10 @@ import {
   hamtaTransaktionsposter as hamtaTransaktionsposterUtil,
   TransaktionspostMedMeta,
 } from "../../_utils/transactions";
-import { registreraKundfakturaBetalning as registreraKundfakturaBetalningBase } from "./betalningActions";
+import {
+  registreraKundfakturaBetalning as registreraKundfakturaBetalningBase,
+  registreraRotRutBetalning as registreraRotRutBetalningBase,
+} from "./betalningActions";
 import type { BokförFakturaData, TransaktionsPost } from "../types/types";
 import { bokforFaktura as bokforFakturaBase } from "./bokforingActions";
 
@@ -68,6 +71,10 @@ export async function registreraKundfakturaBetalning(
   kontoklass: string
 ): Promise<{ success: boolean; error?: string; transaktionsId?: number }> {
   return registreraKundfakturaBetalningBase(fakturaId, betalningsbelopp, kontoklass);
+}
+
+export async function registreraRotRutBetalning(fakturaId: number) {
+  return registreraRotRutBetalningBase(fakturaId);
 }
 
 export async function bokforFaktura(data: BokförFakturaData) {
