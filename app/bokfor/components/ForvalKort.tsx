@@ -19,8 +19,6 @@ export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKo
     return "-";
   };
 
-  // Skapa lokal state för denna komponent
-  const kontonSökord = förval.konton?.map((k) => k.kontonummer).join(", ") || "";
   const showEnterHint = isHighlighted;
 
   return (
@@ -30,13 +28,9 @@ export default function ForvalKort({ förval, isHighlighted, onClick }: ForvalKo
         {förval.beskrivning}
       </pre>
 
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-gray-400 mb-4">
         <strong>Typ:</strong> {förval.typ} &nbsp; | &nbsp;
         <strong>Kategori:</strong> {förval.kategori}
-      </p>
-
-      <p className="text-sm text-gray-500 mt-2 mb-4">
-        <strong>Sökord:</strong> {kontonSökord}
       </p>
 
       <table className="w-full border border-gray-700 text-sm text-gray-300">
