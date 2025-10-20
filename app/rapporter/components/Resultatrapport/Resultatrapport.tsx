@@ -10,7 +10,7 @@ import VerifikatModal from "../../../_components/VerifikatModal";
 import Modal from "../../../_components/Modal";
 import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
-import { KontoRad } from "../../types/types";
+import { KontoRad, ResultatTransaktion } from "../../types/types";
 import { useSession } from "../../../_lib/auth-client";
 
 export default function Resultatrapport() {
@@ -29,6 +29,8 @@ export default function Resultatrapport() {
     selectedKonto,
     verifikationer,
     loadingModal,
+    verifikatMeta,
+    setVerifikatMeta,
     isExportingPDF,
     isExportingCSV,
     exportMessage,
@@ -129,6 +131,19 @@ export default function Resultatrapport() {
       return acc;
     }, {});
 
+  const prepareVerifikatMeta = (trans: ResultatTransaktion) => {
+    const description = trans.beskrivning?.trim();
+    const verifikatNummer = trans.verifikatNummer?.trim();
+
+    const leverantorName =
+      description || (verifikatNummer ? `Verifikat ${verifikatNummer}` : undefined);
+
+    setVerifikatMeta({
+      leverantor: leverantorName,
+      fakturanummer: verifikatNummer,
+    });
+  };
+
   // Helper function for rendering tables
   const renderTabell = (grupperingar: KontoRad[], isIntakt: boolean = false) => {
     // Safety check - return empty array if no data or invalid years
@@ -202,9 +217,12 @@ export default function Resultatrapport() {
                                 <button
                                   type="button"
                                   className="text-cyan-400 hover:text-cyan-300 underline"
-                                  onClick={() =>
-                                    trans.transaktion_id && setVerifikatId(trans.transaktion_id)
-                                  }
+                                  onClick={() => {
+                                    if (trans.transaktion_id) {
+                                      prepareVerifikatMeta(trans);
+                                      setVerifikatId(trans.transaktion_id);
+                                    }
+                                  }}
                                 >
                                   {trans.verifikatNummer}
                                 </button>
@@ -346,7 +364,12 @@ export default function Resultatrapport() {
           <VerifikatModal
             isOpen={!!verifikatId}
             transaktionId={verifikatId as number}
-            onClose={() => setVerifikatId(null)}
+            leverantör={verifikatMeta?.leverantor}
+            fakturanummer={verifikatMeta?.fakturanummer}
+            onClose={() => {
+              setVerifikatId(null);
+              setVerifikatMeta(null);
+            }}
           />
         )}
 

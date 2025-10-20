@@ -49,45 +49,47 @@ export default function Historik({ initialData }: HistorikProps) {
 
   return (
     <>
-      <div className="text-center mb-8 space-y-4">
-        <h1 className="text-3xl">Historik</h1>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
-          <Dropdown
-            className="w-full sm:w-24"
-            value={year}
-            onChange={handleYearChange}
-            placeholder="År"
-            options={[
-              { label: "2025", value: "2025" },
-              { label: "2024", value: "2024" },
-              { label: "2023", value: "2023" },
-              { label: "2022", value: "2022" },
-              { label: "2021", value: "2021" },
-              { label: "2020", value: "2020" },
-            ]}
-          />
-          <Dropdown
-            className="w-full sm:w-28"
-            value={month}
-            onChange={handleMonthChange}
-            placeholder="Månad"
-            options={[
-              { label: "Alla", value: "" },
-              { label: "Jan", value: "01" },
-              { label: "Feb", value: "02" },
-              { label: "Mar", value: "03" },
-              { label: "Apr", value: "04" },
-              { label: "Maj", value: "05" },
-              { label: "Jun", value: "06" },
-              { label: "Jul", value: "07" },
-              { label: "Aug", value: "08" },
-              { label: "Sep", value: "09" },
-              { label: "Okt", value: "10" },
-              { label: "Nov", value: "11" },
-              { label: "Dec", value: "12" },
-            ]}
-          />
-          <div className="w-full sm:w-40">
+      <div className="mb-8 space-y-4">
+        <h1 className="text-3xl text-center">Historik</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Dropdown
+              className="w-full sm:w-32"
+              value={year}
+              onChange={handleYearChange}
+              placeholder="År"
+              options={[
+                { label: "2025", value: "2025" },
+                { label: "2024", value: "2024" },
+                { label: "2023", value: "2023" },
+                { label: "2022", value: "2022" },
+                { label: "2021", value: "2021" },
+                { label: "2020", value: "2020" },
+              ]}
+            />
+            <Dropdown
+              className="w-full sm:w-40"
+              value={month}
+              onChange={handleMonthChange}
+              placeholder="Månad"
+              options={[
+                { label: "Alla", value: "" },
+                { label: "Jan", value: "01" },
+                { label: "Feb", value: "02" },
+                { label: "Mar", value: "03" },
+                { label: "Apr", value: "04" },
+                { label: "Maj", value: "05" },
+                { label: "Jun", value: "06" },
+                { label: "Jul", value: "07" },
+                { label: "Aug", value: "08" },
+                { label: "Sep", value: "09" },
+                { label: "Okt", value: "10" },
+                { label: "Nov", value: "11" },
+                { label: "Dec", value: "12" },
+              ]}
+            />
+          </div>
+          <div className="w-full sm:w-48 sm:max-w-xs sm:ml-auto">
             <TextFalt
               label=""
               name="search"
@@ -96,7 +98,7 @@ export default function Historik({ initialData }: HistorikProps) {
               value={searchTerm}
               onChange={handleSearchChange}
               required={false}
-              className="!mb-0 sm:!mb-0"
+              className="!mb-0"
             />
           </div>
         </div>

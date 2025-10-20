@@ -19,6 +19,10 @@ export const useResultatrapport = () => {
   const [selectedKonto, setSelectedKonto] = useState("");
   const [verifikationer, setVerifikationer] = useState<Verifikation[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
+  const [verifikatMeta, setVerifikatMeta] = useState<{
+    leverantor?: string;
+    fakturanummer?: string;
+  } | null>(null);
 
   // Export state
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -274,6 +278,8 @@ export const useResultatrapport = () => {
     setVerifikationer,
     loadingModal,
     setLoadingModal,
+    verifikatMeta,
+    setVerifikatMeta,
     // Export state
     isExportingPDF,
     setIsExportingPDF,

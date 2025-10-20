@@ -326,12 +326,39 @@ export async function importeraSieData(
           [verifikationsNamn, userId]
         );
 
-        if (duplicateRows.length > 0) {
-          const duplicatesList = duplicateRows
-            .map(
-              (row: { kontobeskrivning: string; transaktionsdatum: Date }) =>
-                `• ${row.kontobeskrivning} (${dateToYyyyMmDd(row.transaktionsdatum)})`
-            )
+        const duplicatesByName = new Map<string, Set<string>>();
+
+        for (const row of duplicateRows as Array<{
+          kontobeskrivning: string;
+          transaktionsdatum: Date;
+        }>) {
+          const dateKey = dateToYyyyMmDd(row.transaktionsdatum);
+          if (!dateKey) continue;
+
+          if (!duplicatesByName.has(row.kontobeskrivning)) {
+            duplicatesByName.set(row.kontobeskrivning, new Set<string>());
+          }
+
+          duplicatesByName.get(row.kontobeskrivning)!.add(dateKey);
+        }
+
+        const actualDuplicates = sieData.verifikationer
+          .map((v: Verification) => {
+            const name = `Verifikation ${v.serie}:${v.nummer}`;
+            const sieDate = sieDateToISO(v.datum);
+            const existingDates = duplicatesByName.get(name);
+
+            if (existingDates?.has(sieDate)) {
+              return { name, date: sieDate };
+            }
+
+            return null;
+          })
+          .filter(Boolean) as Array<{ name: string; date: string }>;
+
+        if (actualDuplicates.length > 0) {
+          const duplicatesList = actualDuplicates
+            .map(({ name, date }) => `• ${name} (${date})`)
             .join("\n");
 
           // Uppdatera import-logg med duplikat-fel
