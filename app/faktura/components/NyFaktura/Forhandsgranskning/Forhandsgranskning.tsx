@@ -32,11 +32,18 @@ export default function Forhandsgranskning() {
   } = forhandsgranskningCalcs;
 
   return (
-    <>
+    <div className="w-full overflow-auto">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@media print { #print-area { width: 210mm !important; min-height: 297mm !important; } }`,
+        }}
+      />
       <div
         id="print-area"
-        className="relative bg-white text-black w-[210mm] h-[297mm] p-10 text-[11pt] leading-relaxed overflow-hidden flex flex-col"
-        style={{ backgroundColor: "#ffffff", minHeight: "297mm" }}
+        className="relative mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white p-6 text-[11pt] leading-relaxed text-black sm:p-10"
+        style={{
+          backgroundColor: "#ffffff",
+        }}
       >
         <Logotyp
           logo={formData.logo}
@@ -70,6 +77,6 @@ export default function Forhandsgranskning() {
 
         <Fot formData={formData} session={session} />
       </div>
-    </>
+    </div>
   );
 }

@@ -19,8 +19,8 @@ export default function AdminContent({ användarInfo, företagsInfo }: AdminCont
   return (
     <div className="max-w-4xl mx-auto px-6 pt-2">
       {/* Header med logga ut-knapp */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl text-center flex-1">Administration</h1>
+      <div className="mb-8 flex flex-col items-center gap-3">
+        <h1 className="text-3xl text-center">Administration</h1>
         <Knapp
           text="🚪 Logga ut"
           onClick={async () => {

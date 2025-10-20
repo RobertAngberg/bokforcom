@@ -18,10 +18,6 @@ export default function Historik({ initialData }: HistorikProps) {
     validationError,
     loading,
     activeIds,
-    showOnlyUnbalanced,
-    showUnbalancedModal,
-    isCheckingUnbalanced,
-    unbalancedResults,
     deletingIds,
     showDeleteModal,
 
@@ -35,12 +31,10 @@ export default function Historik({ initialData }: HistorikProps) {
     handleMonthChange,
     handleSearchChange,
     handleRowClick,
-    handleUnbalancedCheck,
     handleDelete,
     confirmDelete,
 
     // Setters
-    setShowUnbalancedModal,
     setShowDeleteModal,
   } = useHistorik(initialData);
 
@@ -57,45 +51,43 @@ export default function Historik({ initialData }: HistorikProps) {
     <>
       <div className="text-center mb-8 space-y-4">
         <h1 className="text-3xl">Historik</h1>
-        <div className="flex justify-center gap-4 flex-wrap">
-          <div className="w-24">
-            <Dropdown
-              value={year}
-              onChange={handleYearChange}
-              placeholder="År"
-              options={[
-                { label: "2025", value: "2025" },
-                { label: "2024", value: "2024" },
-                { label: "2023", value: "2023" },
-                { label: "2022", value: "2022" },
-                { label: "2021", value: "2021" },
-                { label: "2020", value: "2020" },
-              ]}
-            />
-          </div>
-          <div className="w-28">
-            <Dropdown
-              value={month}
-              onChange={handleMonthChange}
-              placeholder="Månad"
-              options={[
-                { label: "Alla", value: "" },
-                { label: "Jan", value: "01" },
-                { label: "Feb", value: "02" },
-                { label: "Mar", value: "03" },
-                { label: "Apr", value: "04" },
-                { label: "Maj", value: "05" },
-                { label: "Jun", value: "06" },
-                { label: "Jul", value: "07" },
-                { label: "Aug", value: "08" },
-                { label: "Sep", value: "09" },
-                { label: "Okt", value: "10" },
-                { label: "Nov", value: "11" },
-                { label: "Dec", value: "12" },
-              ]}
-            />
-          </div>
-          <div className="w-40">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+          <Dropdown
+            className="w-full sm:w-24"
+            value={year}
+            onChange={handleYearChange}
+            placeholder="År"
+            options={[
+              { label: "2025", value: "2025" },
+              { label: "2024", value: "2024" },
+              { label: "2023", value: "2023" },
+              { label: "2022", value: "2022" },
+              { label: "2021", value: "2021" },
+              { label: "2020", value: "2020" },
+            ]}
+          />
+          <Dropdown
+            className="w-full sm:w-28"
+            value={month}
+            onChange={handleMonthChange}
+            placeholder="Månad"
+            options={[
+              { label: "Alla", value: "" },
+              { label: "Jan", value: "01" },
+              { label: "Feb", value: "02" },
+              { label: "Mar", value: "03" },
+              { label: "Apr", value: "04" },
+              { label: "Maj", value: "05" },
+              { label: "Jun", value: "06" },
+              { label: "Jul", value: "07" },
+              { label: "Aug", value: "08" },
+              { label: "Sep", value: "09" },
+              { label: "Okt", value: "10" },
+              { label: "Nov", value: "11" },
+              { label: "Dec", value: "12" },
+            ]}
+          />
+          <div className="w-full sm:w-40">
             <TextFalt
               label=""
               name="search"
@@ -104,20 +96,7 @@ export default function Historik({ initialData }: HistorikProps) {
               value={searchTerm}
               onChange={handleSearchChange}
               required={false}
-            />
-          </div>
-          <div className="border border-slate-500 rounded-lg px-3 py-2 bg-gray-800 h-[44px]">
-            <div className="flex items-center text-slate-400 text-sm gap-2 h-full">
-              <span>📄</span>
-              <span>{filteredData.length} transaktioner</span>
-            </div>
-          </div>
-          <div>
-            <Knapp
-              text={showOnlyUnbalanced ? "🔙 Visa alla" : "⚖️ Kolla obalanserade"}
-              onClick={handleUnbalancedCheck}
-              loading={isCheckingUnbalanced}
-              loadingText="🔄 Kollar verifikationer..."
+              className="!mb-0 sm:!mb-0"
             />
           </div>
         </div>
@@ -125,8 +104,6 @@ export default function Historik({ initialData }: HistorikProps) {
         {validationError && (
           <div className="text-red-500 text-sm text-center mb-4">{validationError}</div>
         )}
-
-        <div className="pt-2"></div>
       </div>
 
       <Tabell
@@ -211,87 +188,6 @@ export default function Historik({ initialData }: HistorikProps) {
           );
         }}
       />
-
-      {/* Modal för obalanserade verifikationer */}
-      <Modal
-        isOpen={showUnbalancedModal}
-        onClose={() => setShowUnbalancedModal(false)}
-        title="⚖️ Obalanserade Verifikationer"
-        maxWidth="4xl"
-      >
-        <div className="space-y-4">
-          <div className="text-center text-lg font-semibold text-red-400 mb-6">
-            🚨 Hittade {unbalancedResults.length} obalanserade verifikationer
-          </div>
-
-          <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-4">
-            <div className="text-yellow-200 text-sm">
-              <span className="font-semibold">💡 Tips:</span> Obalanserade verifikationer beror ofta
-              på SIE-import med dimensioner. Kontrollera ursprungsfilen eller justera manuellt.
-            </div>
-          </div>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {unbalancedResults.map(({ item, totalDebet, totalKredit, skillnad }) => (
-              <div
-                key={item.transaktions_id}
-                className="bg-gray-800/50 p-5 rounded-lg border border-gray-600/50 hover:border-gray-500/70 transition-all"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-lg font-semibold text-white mb-1">
-                      #{item.transaktions_id} - {item.kontobeskrivning.replace("Verifikation ", "")}
-                    </div>
-                    <div className="text-sm text-gray-400 mb-1">
-                      {new Date(item.transaktionsdatum).toLocaleDateString("sv-SE")}
-                    </div>
-                    {item.kommentar && (
-                      <div className="text-sm text-gray-300">{item.kommentar}</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-3 bg-gray-700/30 rounded border border-gray-600/40">
-                    <div className="text-gray-300 font-medium mb-1 text-sm">Debet</div>
-                    <div className="text-base font-semibold text-white">
-                      {totalDebet.toLocaleString("sv-SE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      kr
-                    </div>
-                  </div>
-                  <div className="text-center p-3 bg-gray-700/30 rounded border border-gray-600/40">
-                    <div className="text-gray-300 font-medium mb-1 text-sm">Kredit</div>
-                    <div className="text-base font-semibold text-white">
-                      {totalKredit.toLocaleString("sv-SE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      kr
-                    </div>
-                  </div>
-                  <div className="text-center p-3 bg-gray-700/40 rounded border border-gray-500/50">
-                    <div className="text-gray-300 font-medium mb-1 text-sm">Skillnad</div>
-                    <div className="text-base font-bold text-red-300">
-                      {skillnad.toLocaleString("sv-SE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      kr
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center mt-6">
-            <Knapp text="Stäng" onClick={() => setShowUnbalancedModal(false)} />
-          </div>
-        </div>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

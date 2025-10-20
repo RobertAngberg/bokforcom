@@ -64,7 +64,7 @@ export default function Modal({
     xl: "max-w-xl",
     "2xl": "max-w-2xl",
     "4xl": "max-w-4xl",
-    "6xl": "w-[90vw]", // FAST bredd istället för max-width
+    "6xl": "max-w-6xl", // flexibel men begränsad standard
     full: "max-w-full",
   }[maxWidth];
 
@@ -74,18 +74,10 @@ export default function Modal({
       onClick={handleBackdropClick}
     >
       <div
-        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg ${maxWidthClass} shadow-2xl flex flex-col ${
+        className={`bg-slate-800 border border-slate-600 p-6 rounded-lg w-full ${maxWidthClass} shadow-2xl flex flex-col ${
           containerClassName || ""
         }`}
-        style={
-          maxWidth === "6xl"
-            ? {
-                width: "95vw",
-                minWidth: "95vw",
-                maxHeight: "80vh",
-              }
-            : { maxHeight: "80vh" }
-        }
+        style={{ maxHeight: "80vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - visa bara om det finns titel eller om close-knappen ska visas */}

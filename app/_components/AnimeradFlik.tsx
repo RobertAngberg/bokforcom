@@ -53,9 +53,10 @@ export default function AnimeradFlik({
         className="w-full px-4 py-3 text-lg font-semibold flex justify-between transition bg-slate-900 hover:bg-slate-800 cursor-pointer"
         type="button"
       >
-        <span>
-          {icon} {title}
-        </span>
+        <div className="flex items-center gap-2 text-left">
+          <span aria-hidden="true">{icon}</span>
+          <span className="text-left leading-tight">{title}</span>
+        </div>
         <div className="flex items-center gap-3">
           {visaSummaDirekt && (
             <span className="text-sm font-bold text-white">{visaSummaDirekt}</span>

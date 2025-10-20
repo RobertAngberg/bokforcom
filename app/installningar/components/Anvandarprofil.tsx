@@ -10,7 +10,7 @@ export default function Anvandarprofil({ user }: AnvandarprofilProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl text-white flex items-center gap-2">👤 Användarinformation</h2>
+        <h2 className="text-xl text-white flex items-center gap-2">👤 Användare</h2>
         {!state.isEditing && (
           <Knapp
             text="✏️ Redigera"

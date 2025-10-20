@@ -133,38 +133,43 @@ export default function Momsrapport() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 text-white">
+    <div className="mx-auto max-w-7xl text-white mt-4">
       {/* Header Section */}
       <div className="mb-6">
-        <h1 className="text-3xl text-center mb-4">Momsrapport</h1>
+        <h1 className="text-3xl text-center mb-8">Momsrapport</h1>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Dropdown
-              value={år}
-              onChange={(value) => setÅr(value)}
-              options={årLista.map((year) => ({ value: year, label: year }))}
-              className="w-24"
-            />
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
+            <div className="w-full md:w-24">
+              <Dropdown
+                value={år}
+                onChange={(value) => setÅr(value)}
+                options={årLista.map((year) => ({ value: year, label: year }))}
+                className="w-full md:w-24"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <Knapp
               text={isExportingXML ? "Exporterar..." : "Exportera XML"}
               onClick={exportXML}
               disabled={isExportingXML}
+              className={`w-full md:w-auto ${isExportingXML ? "opacity-50" : ""}`}
             />
 
             <Knapp
               text={isExportingPDF ? "Exporterar..." : "Exportera PDF"}
               onClick={exportPDF}
               disabled={isExportingPDF}
+              className={`w-full md:w-auto ${isExportingPDF ? "opacity-50" : ""}`}
             />
 
             <Knapp
               text={isExportingCSV ? "Exporterar..." : "Exportera CSV"}
               onClick={exportCSV}
               disabled={isExportingCSV}
+              className={`w-full md:w-auto ${isExportingCSV ? "opacity-50" : ""}`}
             />
           </div>
         </div>

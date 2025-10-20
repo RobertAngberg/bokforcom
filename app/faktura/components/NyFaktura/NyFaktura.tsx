@@ -55,13 +55,13 @@ export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
       </div>
 
       {showPreview && !isLoadingFaktura && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative bg-white max-w-[95vw] max-h-[95vh] overflow-auto shadow-2xl border border-gray-300 rounded-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-3">
+          <div className="relative max-h-[95vh] w-full max-w-5xl overflow-auto rounded-none border border-gray-300 bg-white shadow-2xl">
             <div className="absolute top-4 right-4 z-50">
               <Knapp onClick={closePreview} text="❌ Stäng" />
             </div>
-            <div className="p-6 flex justify-center">
-              <div className="w-[210mm] h-[297mm] bg-white shadow border rounded">
+            <div className="flex justify-center p-6">
+              <div className="w-full max-w-[210mm] bg-white">
                 <Forhandsgranskning />
               </div>
             </div>

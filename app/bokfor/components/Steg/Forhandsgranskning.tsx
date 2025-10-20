@@ -15,6 +15,12 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
   const [showModal, setShowModal] = useState(false);
   const hasFile = !!(fil || pdfUrl);
   const blobUrl = fil ? URL.createObjectURL(fil) : pdfUrl;
+  const fileType = fil?.type ?? "";
+  const isImageFile = fileType.startsWith("image/");
+  const isPdfFile = fileType === "application/pdf";
+  const isPdfFromUrl = !fil && (pdfUrl?.toLowerCase().endsWith(".pdf") ?? false);
+  const showPdfPreview = !!blobUrl && (isPdfFile || isPdfFromUrl);
+  const showGenericFile = !!pdfUrl && !isImageFile && !showPdfPreview;
 
   const handlePdfOpenClick = () => {
     if (blobUrl) {
@@ -44,10 +50,10 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
         )}
 
         {/* Visa bilder med Image komponenten */}
-        {fil?.type.startsWith("image/") && (
+        {isImageFile && blobUrl && (
           <div className="w-full overflow-auto rounded max-h-[600px]">
             <Image
-              src={pdfUrl || blobUrl!}
+              src={blobUrl}
               alt="Forhandsgranskning"
               width={800}
               height={600}
@@ -57,10 +63,10 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
         )}
 
         {/* Visa PDFs direkt inline */}
-        {fil?.type === "application/pdf" && (
+        {showPdfPreview && (
           <div className="w-full">
             <object
-              data={blobUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
+              data={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
               type="application/pdf"
               width="100%"
               height="600px"
@@ -80,7 +86,7 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
         )}
 
         {/* Visa länk för andra filtyper */}
-        {pdfUrl && !fil?.type.startsWith("image/") && fil?.type !== "application/pdf" && (
+        {showGenericFile && (
           <div className="p-4 border border-gray-300 rounded bg-gray-50">
             <p className="mb-2">Fil uppladdad!</p>
             <a href={pdfUrl} target="_blank" className="text-blue-600 underline">
@@ -110,9 +116,9 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
             </button>
 
             <div className="flex justify-center items-center">
-              {fil?.type.startsWith("image/") && (
+              {isImageFile && blobUrl && (
                 <Image
-                  src={pdfUrl || blobUrl!}
+                  src={blobUrl}
                   alt="Stor förhandsgranskning"
                   width={1200}
                   height={1000}
@@ -120,15 +126,15 @@ function Forhandsgranskning({ fil, pdfUrl }: ForhandsgranskningProps) {
                 />
               )}
 
-              {((pdfUrl && !fil?.type.startsWith("image/")) || fil?.type === "application/pdf") && (
+              {showPdfPreview && blobUrl && (
                 <iframe
-                  src={`${pdfUrl || blobUrl!}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                   className="w-full h-[80vh] rounded"
                   title="PDF förhandsgranskning stor"
                 />
               )}
 
-              {pdfUrl && !fil?.type.startsWith("image/") && (
+              {showGenericFile && pdfUrl && (
                 <iframe
                   src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                   className="w-full h-[80vh] border-none rounded"

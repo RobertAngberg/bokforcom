@@ -66,6 +66,7 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
       onClose={onClose}
       title={`📊 Bokför faktura ${formData.fakturanummer}`}
       maxWidth="4xl"
+      containerClassName="w-full"
     >
       <p className="mt-2 text-sm text-slate-300 text-center">{helperText}</p>
       <div className="mt-6 space-y-6">
@@ -95,11 +96,13 @@ export default function BokforFakturaModal({ isOpen, onClose }: BokforFakturaMod
         {/* Bokföringsposter */}
         {poster.length > 0 && (
           <div className="pb-0">
-            <Tabell
-              data={poster}
-              columns={columns}
-              getRowId={(item) => `${item.konto}-${item.beskrivning}`}
-            />
+            <div className="overflow-x-auto">
+              <Tabell
+                data={poster}
+                columns={columns}
+                getRowId={(item) => `${item.konto}-${item.beskrivning}`}
+              />
+            </div>
           </div>
         )}
 

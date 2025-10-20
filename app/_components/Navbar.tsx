@@ -38,6 +38,12 @@ export default function Navbar() {
     router
   );
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   // Dölj navbar på login-sidan (efter alla hooks)
   if (pathname === "/login") {
     return null;
@@ -55,33 +61,95 @@ export default function Navbar() {
   }
 
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-center w-full h-20 px-4 bg-cyan-950">
-      <nav className="relative flex gap-3">
-        <div
-          className="absolute h-10 bg-cyan-800/60 rounded-full transition-all duration-300 ease-out"
-          style={{
-            left: markerStyle.left,
-            width: markerStyle.width,
-            top: "50%",
-            transform: "translateY(-50%)",
-          }}
-        />
-
-        {currentLinks.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            ref={(el) => {
-              linksRef.current[href] = el;
-            }}
-            onClick={() => handleClick(href)}
-            className="relative z-10 px-4 py-2 text-white font-semibold md:text-lg transition-colors duration-150 hover:text-cyan-300"
-          >
-            {label}
+    <>
+      <header className="sticky top-0 z-50 w-full bg-cyan-950">
+        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 md:justify-center">
+          <Link href="/" className="text-lg font-semibold text-white md:hidden">
+            BokförCom
           </Link>
-        ))}
-      </nav>
-    </div>
+
+          <nav className="relative hidden gap-3 md:flex">
+            <div
+              className="absolute h-10 rounded-full bg-cyan-800/60 transition-all duration-300 ease-out"
+              style={{
+                left: markerStyle.left,
+                width: markerStyle.width,
+                top: "50%",
+                transform: "translateY(-50%)",
+              }}
+            />
+
+            {currentLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                ref={(el) => {
+                  linksRef.current[href] = el;
+                }}
+                onClick={() => handleClick(href)}
+                className="relative z-10 px-4 py-2 text-white font-semibold md:text-lg transition-colors duration-150 hover:text-cyan-300"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <button
+            type="button"
+            aria-label={isMobileMenuOpen ? "Stäng meny" : "Öppna meny"}
+            aria-expanded={isMobileMenuOpen}
+            className="inline-flex h-12 w-12 flex-col items-center justify-center gap-1.5 rounded-lg border border-cyan-700 text-white transition-colors hover:border-cyan-500 hover:bg-cyan-800 md:hidden"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          >
+            <span className="sr-only">Navigationsmeny</span>
+            <span
+              className={`block h-0.5 w-6 bg-current transition-transform ${
+                isMobileMenuOpen ? "translate-y-[7px] rotate-45" : ""
+              }`}
+            />
+            <span
+              className={`block h-0.5 w-6 bg-current transition-opacity ${
+                isMobileMenuOpen ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            <span
+              className={`block h-0.5 w-6 bg-current transition-transform ${
+                isMobileMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
+              }`}
+            />
+          </button>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-cyan-800/60 bg-slate-950/95 backdrop-blur-sm">
+            <nav className="flex flex-col gap-2 px-4 py-4">
+              {currentLinks.map(({ href, label }) => (
+                <Link
+                  key={`${href}-mobile`}
+                  href={href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`rounded-lg px-3 py-2 text-base font-semibold text-slate-100 transition-colors hover:bg-cyan-800/60 hover:text-white ${
+                    pathname === href ? "bg-cyan-800/80 text-white" : ""
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+      </header>
+
+      {isMobileMenuOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <span className="sr-only">Stäng meny</span>
+        </button>
+      )}
+    </>
   );
 }
 

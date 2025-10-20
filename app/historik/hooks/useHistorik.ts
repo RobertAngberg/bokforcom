@@ -2,10 +2,9 @@ import { useState } from "react";
 import {
   fetchTransactionDetails,
   exporteraTransaktionerMedPoster,
-  findUnbalancedVerifications,
   deleteTransaction,
 } from "../actions/actions";
-import { HistoryItem, TransactionDetail, UnbalancedResult } from "../types/types";
+import { HistoryItem, TransactionDetail } from "../types/types";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import { showToast } from "../../_components/Toast";
 import { validateYear } from "../../_utils/validationUtils";
@@ -65,10 +64,6 @@ export function useHistorik(initialData: HistoryItem[] = []) {
   const [loading] = useState(false);
   const [detailsMap, setDetailsMap] = useState<Record<number, TransactionDetail[]>>({});
   const [activeIds, setActiveIds] = useState<number[]>([]);
-  const [showOnlyUnbalanced, setShowOnlyUnbalanced] = useState(false);
-  const [showUnbalancedModal, setShowUnbalancedModal] = useState(false);
-  const [isCheckingUnbalanced, setIsCheckingUnbalanced] = useState(false);
-  const [unbalancedResults, setUnbalancedResults] = useState<UnbalancedResult[]>([]);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<number | null>(null);
@@ -102,23 +97,7 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     });
 
     // Sedan filtrera på sökning (input saneras centralt i TextFalt)
-    let searchFiltered = filterTransactionsBySearch(dateFiltered, searchTerm);
-
-    // Om vi bara ska visa obalanserade, filtrera på det
-    if (showOnlyUnbalanced) {
-      searchFiltered = searchFiltered.filter((item) => {
-        const details = detailsMap[item.transaktions_id];
-        if (!details) return false;
-
-        const totalDebet = details.reduce((sum, d) => sum + (d.debet || 0), 0);
-        const totalKredit = details.reduce((sum, d) => sum + (d.kredit || 0), 0);
-        const skillnad = Math.abs(totalDebet - totalKredit);
-
-        return skillnad > 0.01;
-      });
-    }
-
-    return searchFiltered;
+    return filterTransactionsBySearch(dateFiltered, searchTerm);
   };
 
   const filteredData = getFilteredData();
@@ -126,9 +105,9 @@ export function useHistorik(initialData: HistoryItem[] = []) {
 
   // Column definitions with business logic
   const columns: ColumnDefinition<HistoryItem>[] = [
-    { key: "transaktions_id", label: "ID" },
-    { key: "transaktionsdatum", label: "Datum" },
-    { key: "kontobeskrivning", label: "Verifikat" },
+    { key: "transaktions_id", label: "ID", paddingClass: "pl-4 pr-3 py-3 md:pl-5 md:pr-4" },
+    { key: "transaktionsdatum", label: "Datum", paddingClass: "px-4 py-3" },
+    { key: "kontobeskrivning", label: "Verifikat", paddingClass: "px-4 py-3" },
     {
       key: "belopp",
       label: "Belopp",
@@ -144,8 +123,14 @@ export function useHistorik(initialData: HistoryItem[] = []) {
           currency: "SEK",
         });
       },
+      paddingClass: "px-4 py-3",
     },
-    { key: "kommentar", label: "Kommentar", hiddenOnMobile: true },
+    {
+      key: "kommentar",
+      label: "Kommentar",
+      hiddenOnMobile: true,
+      paddingClass: "px-4 py-3",
+    },
   ];
 
   // Event handlers med validering
@@ -185,51 +170,6 @@ export function useHistorik(initialData: HistoryItem[] = []) {
         }
       }
     })();
-  };
-
-  const handleUnbalancedCheck = async () => {
-    if (showOnlyUnbalanced) {
-      setShowOnlyUnbalanced(false);
-      return;
-    }
-
-    setIsCheckingUnbalanced(true);
-
-    try {
-      // 🚀 EN ENDA DATABASFÖRFRÅGAN istället för hundratals!
-      const result = await findUnbalancedVerifications();
-
-      if (!result.success) {
-        showToast("Fel vid kontroll: " + result.error, "error");
-        return;
-      }
-
-      if (!result.unbalanced || result.unbalanced.length === 0) {
-        showToast("Alla verifikationer är balanserade! ✅", "success");
-        return;
-      }
-
-      // Konvertera till vårt format
-      const unbalancedItems = result.unbalanced.map((item) => ({
-        item: {
-          transaktions_id: item.transaktions_id,
-          transaktionsdatum: item.transaktionsdatum,
-          kontobeskrivning: item.kontobeskrivning,
-          kommentar: item.kommentar,
-          belopp: item.totalDebet, // Placeholder
-        } as HistoryItem,
-        totalDebet: item.totalDebet,
-        totalKredit: item.totalKredit,
-        skillnad: item.skillnad,
-      }));
-
-      setUnbalancedResults(unbalancedItems);
-      setShowUnbalancedModal(true);
-    } catch {
-      showToast("Ett fel uppstod vid kontrollen", "error");
-    } finally {
-      setIsCheckingUnbalanced(false);
-    }
   };
 
   const handleExport = async () => {
@@ -295,10 +235,6 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     validationError,
     loading,
     activeIds,
-    showOnlyUnbalanced,
-    showUnbalancedModal,
-    isCheckingUnbalanced,
-    unbalancedResults,
     deletingIds,
     showDeleteModal,
     deleteTransactionId,
@@ -314,13 +250,11 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     handleMonthChange,
     handleSearchChange,
     handleRowClick,
-    handleUnbalancedCheck,
     handleExport,
     handleDelete,
     confirmDelete,
 
     // Setters for UI state
-    setShowUnbalancedModal,
     setShowDeleteModal,
   };
 }

@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import Totalrad from "../../../_components/Totalrad";
 import Knapp from "../../../_components/Knapp";
@@ -36,6 +34,15 @@ interface VerifikatRad {
   debet: number;
   kredit: number;
   saldo: number;
+}
+
+interface KontoTransRad {
+  id: string;
+  datum: string;
+  beskrivning: string;
+  belopp: number;
+  verifikatNummer?: string;
+  transaktion_id?: number;
 }
 
 export default function Balansrapport() {
@@ -259,120 +266,183 @@ export default function Balansrapport() {
     );
   };
 
-  // Speciell funktion för Beräknat resultat - precis som Bokio!
-  const renderaBeraknatResultat = (beraknatResultatData: {
-    ingaende: number;
-    arets: number;
-    utgaende: number;
-  }) => {
-    const kolumner: ColumnDefinition<TabellRad>[] = [
-      {
-        key: "beskrivning",
-        label: "Konto",
-        render: (_, row) => <div className="font-medium">– {row.beskrivning}</div>,
-      },
-      {
-        key: "ingaendeSaldo",
-        label: "Ing. balans",
-        render: (_, row) => formatSEK(row.ingaendeSaldo || 0),
-      },
-      {
-        key: "aretsResultat",
-        label: "Resultat",
-        render: (_, row) => formatSEK(row.aretsResultat || 0),
-      },
-      {
-        key: "utgaendeSaldo",
-        label: "Utg. balans",
-        render: (_, row) => formatSEK(row.utgaendeSaldo || 0),
-      },
-    ];
-
-    // Skapa tabelldata för beräknat resultat
-    const tabellData = [
-      {
-        id: "beraknat-resultat",
-        beskrivning: "Beräknat resultat",
-        ingaendeSaldo: beraknatResultatData.ingaende,
-        aretsResultat: beraknatResultatData.arets,
-        utgaendeSaldo: beraknatResultatData.utgaende,
-      },
-    ];
+  const renderaKontonSomFlikar = (konton: Konto[], kontoIcon: string) => {
+    if (!konton.length) {
+      return null;
+    }
 
     return (
-      <AnimeradFlik
-        title="Beräknat resultat"
-        icon="📊"
-        visaSummaDirekt={formatSEK(beraknatResultatData.utgaende)}
-      >
-        <Tabell data={tabellData} columns={kolumner} getRowId={(row) => row.id} />
-      </AnimeradFlik>
+      <div className="space-y-4">
+        {konton.map((konto) => {
+          const kolumner: ColumnDefinition<KontoTransRad>[] = [
+            {
+              key: "datum",
+              label: "Datum",
+              render: (value) => {
+                if (!value) return "–";
+                const datum = new Date(String(value));
+                if (Number.isNaN(datum.getTime())) {
+                  return value as string;
+                }
+                return datum.toLocaleDateString("sv-SE");
+              },
+            },
+            {
+              key: "verifikatNummer",
+              label: "Verifikat",
+              render: (value, row) => {
+                if (!value) return "–";
+                if (!row.transaktion_id) return value as string;
+                return (
+                  <button
+                    type="button"
+                    className="text-cyan-400 hover:text-cyan-300 underline"
+                    onClick={() => setVerifikatId(row.transaktion_id as number)}
+                  >
+                    {value as string}
+                  </button>
+                );
+              },
+            },
+            {
+              key: "beskrivning",
+              label: "Beskrivning",
+              render: (value) => (value ? (value as string) : "–"),
+            },
+            {
+              key: "belopp",
+              label: "Belopp",
+              className: "text-right",
+              render: (value) => {
+                let belopp = typeof value === "number" ? value : 0;
+                if (konto.kontonummer.startsWith("26") || konto.kontonummer.startsWith("264")) {
+                  belopp = -Math.abs(belopp);
+                }
+                return <span>{formatSEK(belopp)}</span>;
+              },
+            },
+          ];
+
+          const tabellData: KontoTransRad[] = (konto.transaktioner || []).map((trans, index) => ({
+            id: trans.id || `${konto.kontonummer}-trans-${index}`,
+            datum:
+              typeof trans.datum === "string" ? trans.datum : (trans.datum?.toISOString() ?? ""),
+            beskrivning: trans.beskrivning || "",
+            belopp: trans.belopp,
+            verifikatNummer: trans.verifikatNummer,
+            transaktion_id: trans.transaktion_id,
+          }));
+
+          return (
+            <AnimeradFlik
+              key={konto.kontonummer}
+              title={`${konto.kontonummer} ${konto.beskrivning}`}
+              icon={kontoIcon}
+              visaSummaDirekt={formatSEK(konto.utgaendeSaldo)}
+            >
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg bg-slate-800/60 p-4">
+                    <p className="text-xs text-gray-300 uppercase tracking-wide">Ing. balans</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatSEK(konto.ingaendeSaldo)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/60 p-4">
+                    <p className="text-xs text-gray-300 uppercase tracking-wide">Årets resultat</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatSEK(konto.aretsResultat)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/60 p-4">
+                    <p className="text-xs text-gray-300 uppercase tracking-wide">Utg. balans</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatSEK(konto.utgaendeSaldo)}
+                    </p>
+                  </div>
+                </div>
+
+                {tabellData.length > 0 ? (
+                  <Tabell data={tabellData} columns={kolumner} getRowId={(row) => row.id} />
+                ) : (
+                  <p className="text-sm text-gray-300">Inga transaktioner för detta konto.</p>
+                )}
+              </div>
+            </AnimeradFlik>
+          );
+        })}
+      </div>
     );
   };
   //#endregion
 
   return (
-    <div className="mx-auto px-4 text-white">
+    <div className="mx-auto text-white mt-4">
       <h1 className="text-3xl text-center mb-8">Balansrapport</h1>
 
       {/* Filter- och knappsektion överst */}
       <div className="mb-8 space-y-4">
         {/* Filter och knappar - dropdowns till vänster, export-knappar till höger */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* Vänster sida - År och månad dropdowns */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
             {/* År dropdown utan label */}
-            <Dropdown
-              value={selectedYear}
-              onChange={setSelectedYear}
-              options={Array.from({ length: 10 }, (_, i) => {
-                const year = new Date().getFullYear() - i;
-                return {
-                  label: year.toString(),
-                  value: year.toString(),
-                };
-              })}
-            />
+            <div className="w-full md:w-32">
+              <Dropdown
+                value={selectedYear}
+                onChange={setSelectedYear}
+                options={Array.from({ length: 10 }, (_, i) => {
+                  const year = new Date().getFullYear() - i;
+                  return {
+                    label: year.toString(),
+                    value: year.toString(),
+                  };
+                })}
+                className="w-full md:w-32"
+              />
+            </div>
 
             {/* Månad dropdown utan label med "Alla månader" som default */}
-            <Dropdown
-              value={selectedMonth}
-              onChange={setSelectedMonth}
-              className="min-w-[160px] max-w-[400px] w-auto"
-              options={[
-                { label: "Alla månader", value: "all" },
-                { label: "Januari", value: "01" },
-                { label: "Februari", value: "02" },
-                { label: "Mars", value: "03" },
-                { label: "April", value: "04" },
-                { label: "Maj", value: "05" },
-                { label: "Juni", value: "06" },
-                { label: "Juli", value: "07" },
-                { label: "Augusti", value: "08" },
-                { label: "September", value: "09" },
-                { label: "Oktober", value: "10" },
-                { label: "November", value: "11" },
-                { label: "December", value: "12" },
-              ]}
-            />
+            <div className="w-full md:w-auto">
+              <Dropdown
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                className="w-full md:w-auto md:min-w-[160px] md:max-w-[400px]"
+                options={[
+                  { label: "Alla månader", value: "all" },
+                  { label: "Januari", value: "01" },
+                  { label: "Februari", value: "02" },
+                  { label: "Mars", value: "03" },
+                  { label: "April", value: "04" },
+                  { label: "Maj", value: "05" },
+                  { label: "Juni", value: "06" },
+                  { label: "Juli", value: "07" },
+                  { label: "Augusti", value: "08" },
+                  { label: "September", value: "09" },
+                  { label: "Oktober", value: "10" },
+                  { label: "November", value: "11" },
+                  { label: "December", value: "12" },
+                ]}
+              />
+            </div>
           </div>
 
           {/* Höger sida - Export-knappar med emojis */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <Knapp
               text="📄 Exportera PDF"
               onClick={handleExportPDF}
               disabled={isExportingPDF}
-              className={isExportingPDF ? "opacity-50" : ""}
+              className={`w-full md:w-auto ${isExportingPDF ? "opacity-50" : ""}`}
             />
             <Knapp
               text="📊 Exportera CSV"
               onClick={handleExportCSV}
               disabled={isExportingCSV}
-              className={isExportingCSV ? "opacity-50" : ""}
+              className={`w-full md:w-auto ${isExportingCSV ? "opacity-50" : ""}`}
             />
           </div>
-        </div>{" "}
+        </div>
         {/* HR under knapparna */}
         <hr className="border-gray-600 my-6" />
         {/* Export-status meddelanden */}
@@ -408,7 +478,7 @@ export default function Balansrapport() {
       {/* Omsättningstillgångar */}
       {omsättningstillgångar.length > 0 && (
         <>
-          {renderaKategoriMedKolumner("Omsättningstillgångar", "💰", omsättningstillgångar)}
+          {renderaKontonSomFlikar(omsättningstillgångar, "💰")}
           <Totalrad
             label="Omsättningstillgångar"
             values={{
@@ -436,13 +506,7 @@ export default function Balansrapport() {
       {/* Eget kapital */}
       {egetKapital.length > 0 && (
         <>
-          {renderaKategoriMedKolumner(
-            "Eget kapital",
-            "🏛️",
-            egetKapital,
-            // BOKIO KORREKT: Eget kapital inkluderar beräknat resultat i sammanfattningen
-            egetKapitalSum.utgaende + beraknatResultatData.utgaende
-          )}
+          {renderaKontonSomFlikar(egetKapital, "🏛️")}
           <div className="mb-10">
             <Totalrad
               label="Eget kapital"
@@ -456,13 +520,10 @@ export default function Balansrapport() {
         </>
       )}
 
-      {/* Beräknat resultat */}
-      {beraknatResultatData.utgaende !== 0 && renderaBeraknatResultat(beraknatResultatData)}
-
       {/* Avsättningar */}
       {avsättningar.length > 0 && (
         <>
-          {renderaKategoriMedKolumner("Avsättningar", "📊", avsättningar)}
+          {renderaKontonSomFlikar(avsättningar, "📊")}
           <Totalrad
             label="Avsättningar"
             values={{
@@ -477,7 +538,7 @@ export default function Balansrapport() {
       {/* Långfristiga skulder */}
       {långfristigaSkulder.length > 0 && (
         <>
-          {renderaKategoriMedKolumner("Långfristiga skulder", "🏦", långfristigaSkulder)}
+          {renderaKontonSomFlikar(långfristigaSkulder, "🏦")}
           <Totalrad
             label="Långfristiga skulder"
             values={{
@@ -492,7 +553,7 @@ export default function Balansrapport() {
       {/* Kortfristiga skulder */}
       {kortfristigaSkulder.length > 0 && (
         <>
-          {renderaKategoriMedKolumner("Kortfristiga skulder", "💳", kortfristigaSkulder)}
+          {renderaKontonSomFlikar(kortfristigaSkulder, "💳")}
           <Totalrad
             label="Kortfristiga skulder"
             values={{

@@ -14,13 +14,13 @@ export default function Start() {
     <MainLayout>
       {showWelcome && <ValkomstMedd onClose={handleWelcomeClose} />}
 
-      <div className="flex flex-wrap justify-center gap-4 mb-8 text-center">
+      <div className="mb-8 flex flex-col items-stretch gap-4 text-center sm:flex-row sm:flex-wrap sm:justify-center">
         <Kort title="Intäkter" data={data?.totalInkomst || 0} />
         <Kort title="Kostnader" data={data?.totalUtgift || 0} />
         <Kort title="Resultat" data={data?.totalResultat || 0} />
       </div>
 
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-2 md:mb-4">
         <Dropdown
           value={year}
           onChange={setYear}

@@ -7,6 +7,7 @@ export interface ColumnDefinition<T> {
   render?: (value: unknown, row: T) => React.ReactNode;
   hiddenOnMobile?: boolean;
   className?: string;
+  paddingClass?: string;
 }
 
 interface TableRowProps<T> {
@@ -40,7 +41,11 @@ export default function TabellRad<T>({
           ? col.render(rawValue, item)
           : (rawValue as React.ReactNode);
 
-        const paddingClass = colIndex === 0 ? "pl-6 pr-6 py-3" : "px-6 py-3";
+        const paddingClass = col.paddingClass
+          ? col.paddingClass
+          : colIndex === 0
+            ? "pl-6 pr-6 py-3"
+            : "px-6 py-3";
 
         return (
           <td

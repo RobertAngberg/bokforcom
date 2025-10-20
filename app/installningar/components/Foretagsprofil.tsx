@@ -240,7 +240,7 @@ export default function Foretagsprofil({ company }: ForetagsprofilProps) {
 
       <div className="bg-gray-800 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg text-white flex items-center gap-2">🎨 Företagslogga</h3>
+          <h3 className="text-lg text-white flex items-center gap-2">🎨 Logo</h3>
           <div className="flex gap-3">
             <input
               ref={fileInputRef}

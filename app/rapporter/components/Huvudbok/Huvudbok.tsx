@@ -48,29 +48,36 @@ export default function Huvudbok() {
   }
 
   return (
-    <div className="mx-auto px-4 text-white">
+    <div className="mx-auto px-0 text-white mt-4">
       <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
-
       {/* Årval och månadsval dropdown + Export-knappar */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex gap-4">
-          <div className="w-32">
-            <Dropdown value={selectedYear} onChange={setSelectedYear} options={yearOptions} />
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
+          <div className="w-full md:w-32">
+            <Dropdown
+              value={selectedYear}
+              onChange={setSelectedYear}
+              options={yearOptions}
+              className="w-full md:w-32"
+            />
           </div>
-          <div className="w-40">
-            <Dropdown value={selectedMonth} onChange={setSelectedMonth} options={monthOptions} />
+          <div className="w-full md:w-40">
+            <Dropdown
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              options={monthOptions}
+              className="w-full md:w-40"
+            />
           </div>
         </div>
 
-        <div className="flex gap-4">
-          <Knapp text="📊 Exportera CSV" onClick={handleExportCSV} />
-          <Knapp text="📄 Exportera PDF" onClick={handleExportPDF} />
+        <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+          <Knapp text="📊 Exportera CSV" onClick={handleExportCSV} className="w-full md:w-auto" />
+          <Knapp text="📄 Exportera PDF" onClick={handleExportPDF} className="w-full md:w-auto" />
         </div>
       </div>
-
       {/* Avskiljande linje */}
       <hr className="border-gray-600 mb-8" />
-
       <div className="space-y-6">
         {kategoriseradeKonton.map((kategori) => {
           // Beräkna totalsumma för kategorin
@@ -202,7 +209,6 @@ export default function Huvudbok() {
           );
         })}
       </div>
-
       {/* VerifikatModal för enskilda verifikat */}
       {showVerifikatModal && selectedTransaktionsId && (
         <VerifikatModal

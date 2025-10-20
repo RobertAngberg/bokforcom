@@ -3,7 +3,7 @@
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 
 import Totalrad from "../../../_components/Totalrad";
-import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
+import Tabell from "../../../_components/Tabell";
 import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import VerifikatModal from "../../../_components/VerifikatModal";
@@ -12,21 +12,6 @@ import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
 import { KontoRad } from "../../types/types";
 import { useSession } from "../../../_lib/auth-client";
-
-type ResultatRad = {
-  id: string | number;
-  kontonummer: string;
-  beskrivning: string;
-  transaktion_id: number | null;
-  verifikatNummer?: string | null;
-  isKonto?: boolean;
-  isTransaction?: boolean;
-  isTotal?: boolean;
-  isSumma?: boolean;
-  forandring?: number;
-  totalBelopp?: number;
-  [key: string]: string | number | boolean | null | undefined;
-};
 
 export default function Resultatrapport() {
   const { data: sessionData, isPending } = useSession();
@@ -50,7 +35,6 @@ export default function Resultatrapport() {
     data,
     years,
     currentYear,
-    previousYear,
     intaktsSum,
     rorelsensSum,
     finansiellaIntakterSum,
@@ -126,234 +110,170 @@ export default function Resultatrapport() {
     aretsSummare[year] = resultatEfterFinansiella[year] ?? 0;
   });
 
+  const resolvedPrimaryYear = selectedYear?.trim() ? selectedYear : currentYear;
+  const parsedPrimaryYear = Number.parseInt(resolvedPrimaryYear, 10);
+  const numericPrimaryYear = Number.isNaN(parsedPrimaryYear)
+    ? Number.parseInt(currentYear, 10)
+    : parsedPrimaryYear;
+
+  const yearsToDisplay = [
+    resolvedPrimaryYear,
+    (numericPrimaryYear - 1).toString(),
+    (numericPrimaryYear - 2).toString(),
+  ].filter((year, index, arr) => Boolean(year) && arr.indexOf(year) === index);
+
+  const ensureValuesForYears = (values: Record<string, number | undefined>) =>
+    yearsToDisplay.reduce<Record<string, number>>((acc, year) => {
+      const numeric = typeof values[year] === "number" ? (values[year] as number) : 0;
+      acc[year] = numeric;
+      return acc;
+    }, {});
+
   // Helper function for rendering tables
   const renderTabell = (grupperingar: KontoRad[], isIntakt: boolean = false) => {
     // Safety check - return empty array if no data or invalid years
-    if (
-      !grupperingar ||
-      !Array.isArray(grupperingar) ||
-      !years ||
-      years.length === 0 ||
-      !currentYear ||
-      !previousYear
-    ) {
+    if (!grupperingar || !Array.isArray(grupperingar) || yearsToDisplay.length === 0) {
       return [];
     }
 
+    const availableYears = yearsToDisplay;
+
+    const adjustValue = (value: number) => (isIntakt ? -value : value);
+
+    const formatValue = (value: number) => formatSEK(adjustValue(value));
+
+    const formatTransaktionsDatum = (datum: string) => {
+      if (!datum) return "–";
+      const parsed = new Date(datum);
+      return Number.isNaN(parsed.getTime()) ? datum : parsed.toLocaleDateString("sv-SE");
+    };
+
     return grupperingar
       .map((grupp) => {
-        // Safety check for individual group
-        if (!grupp || !grupp.konton || !Array.isArray(grupp.konton)) {
+        if (!grupp || !Array.isArray(grupp.konton)) {
           return null;
         }
 
-        // Dynamiska kolumner baserat på tillgängliga år
-        const availableYears = years.filter((year) => year); // Filtrera bort undefined/null
+        const kontoFlikar = grupp.konton.map((konto) => {
+          const yearRow = (
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 text-sm text-slate-200 sm:text-base">
+              {availableYears.map((year) => {
+                const rawValue = (konto as Record<string, unknown>)[year];
+                const numericValue = typeof rawValue === "number" ? rawValue : 0;
 
-        const kolumner: ColumnDefinition<ResultatRad>[] = [
-          {
-            label: "Konto",
-            key: "kontonummer",
-            render: (value: unknown, row: ResultatRad) => {
-              if (row.isTotal) {
                 return (
-                  <span className="cursor-pointer text-blue-400 hover:text-blue-300 hover:underline">
-                    {typeof value === "string" ? value : ""}
-                  </span>
+                  <div key={`${konto.kontonummer}-${year}`} className="flex items-baseline gap-2">
+                    <span className="text-slate-400">{year}</span>
+                    <span className="font-semibold text-white">{formatValue(numericValue)}</span>
+                  </div>
                 );
-              }
-              if (row.isTransaction) {
-                return (
-                  <button
-                    onClick={() => setVerifikatId(row.transaktion_id as number)}
-                    className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {typeof row.verifikatNummer === "string" ? row.verifikatNummer : ""}
-                  </button>
-                );
-              }
-              // För vanliga kontorader, visa kontonumret
-              return typeof value === "string" ? value : "";
-            },
-          },
-          {
-            label: "Benämning",
-            key: "beskrivning",
-            render: (value: unknown, row: ResultatRad) => {
-              const textValue = typeof value === "string" ? value : "";
-              if (row.isTotal) {
-                return (
-                  <button
-                    onClick={() =>
-                      row.transaktion_id && setVerifikatId(row.transaktion_id as number)
-                    }
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {textValue}
-                  </button>
-                );
-              }
-              if (row.isTransaction) {
-                return (
-                  <button
-                    onClick={() =>
-                      row.transaktion_id && setVerifikatId(row.transaktion_id as number)
-                    }
-                    className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {textValue}
-                  </button>
-                );
-              }
-              // För vanliga kontorader, visa beskrivningen
-              return textValue;
-            },
-          },
-          // Dynamiska årkolumner baserat på tillgänglig data
-          ...availableYears.map((year) => ({
-            label: year,
-            key: year,
-            render: (value: unknown) => {
-              const numValue = typeof value === "number" ? value : 0;
-              return formatSEK(isIntakt ? -numValue : numValue);
-            },
-          })),
-          // Visa endast förändring om vi har minst 2 år
-          ...(availableYears.length >= 2
-            ? [
-                {
-                  label: "Förändring",
-                  key: "forandring",
-                  render: (_value: unknown, row: ResultatRad) => {
-                    if (!row || availableYears.length < 2) {
-                      return formatSEK(0);
-                    }
-                    const currentValue = (row[availableYears[0]] as number) || 0;
-                    const previousValue = (row[availableYears[1]] as number) || 0;
-                    const change = currentValue - previousValue;
-                    return formatSEK(isIntakt ? -change : change);
-                  },
-                },
-              ]
-            : []),
-        ];
+              })}
+            </div>
+          );
 
-        const tabellData: ResultatRad[] = [
-          ...grupp.konton.reduce<ResultatRad[]>((acc, konto) => {
-            // Skapa yearData
-            const yearData = availableYears.reduce(
-              (acc, year) => {
-                const kontoValue = (konto as Record<string, unknown>)[year];
-                acc[year] = typeof kontoValue === "number" ? kontoValue : 0;
-                return acc;
-              },
-              {} as Record<string, number>
-            );
+          const transaktioner = konto.transaktioner ?? [];
 
-            // Beräkna förändring om vi har minst 2 år
-            const forandring =
-              availableYears.length >= 2
-                ? (yearData[availableYears[0]] || 0) - (yearData[availableYears[1]] || 0)
-                : 0;
+          return (
+            <AnimeradFlik
+              key={konto.kontonummer}
+              title={`${konto.kontonummer} ${konto.beskrivning}`}
+              icon="📄"
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">{yearRow}</div>
 
-            const kontorRad: ResultatRad = {
-              id: konto.kontonummer,
-              kontonummer: String(konto.kontonummer ?? ""),
-              beskrivning: konto.beskrivning,
-              isKonto: true,
-              transaktion_id: null,
-              forandring,
-              ...yearData,
-            };
-
-            // Lägg till kontoraden
-            acc.push(kontorRad);
-
-            // Lägg till transaktioner för detta konto (om de finns)
-            if (konto.transaktioner && konto.transaktioner.length > 0) {
-              konto.transaktioner.forEach((transaktion) => {
-                const transaktionsRad: ResultatRad = {
-                  id: `${konto.kontonummer}-trans-${transaktion.id}`,
-                  kontonummer: "",
-                  beskrivning: transaktion.beskrivning,
-                  isTransaction: true,
-                  transaktion_id: transaktion.transaktion_id,
-                  verifikatNummer: transaktion.verifikatNummer,
-                  [availableYears[0] || currentYear]: transaktion.belopp,
-                  ...(availableYears[1] ? { [availableYears[1]]: 0 } : {}),
-                };
-                acc.push(transaktionsRad);
-              });
-            }
-
-            return acc;
-          }, [] as ResultatRad[]),
-          // Lägg till summeringsrad
-          {
-            id: `${grupp.namn}-summa`,
-            kontonummer: "",
-            beskrivning: `Summa ${grupp.namn.toLowerCase()}`,
-            isSumma: true,
-            transaktion_id: null,
-            forandring:
-              availableYears.length >= 2
-                ? (grupp.summering?.[availableYears[0]] || 0) -
-                  (grupp.summering?.[availableYears[1]] || 0)
-                : 0,
-            ...availableYears.reduce(
-              (acc, year) => {
-                acc[year] = grupp.summering?.[year] || 0;
-                return acc;
-              },
-              {} as Record<string, number>
-            ),
-            totalBelopp: isIntakt
-              ? -(grupp.summering?.[availableYears[0]] || 0)
-              : grupp.summering?.[availableYears[0]] || 0,
-          },
-        ];
+                {transaktioner.length > 0 ? (
+                  <div className="overflow-x-auto rounded-lg border border-slate-700 bg-slate-900/60">
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-slate-800 text-left text-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Datum</th>
+                          <th className="px-4 py-3 font-semibold">Verifikat</th>
+                          <th className="px-4 py-3 font-semibold">Beskrivning</th>
+                          <th className="px-4 py-3 text-right font-semibold">Belopp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transaktioner.map((trans) => (
+                          <tr key={trans.id} className="border-t border-slate-800 text-slate-200">
+                            <td className="px-4 py-2">{formatTransaktionsDatum(trans.datum)}</td>
+                            <td className="px-4 py-2">
+                              {trans.verifikatNummer ? (
+                                <button
+                                  type="button"
+                                  className="text-cyan-400 hover:text-cyan-300 underline"
+                                  onClick={() =>
+                                    trans.transaktion_id && setVerifikatId(trans.transaktion_id)
+                                  }
+                                >
+                                  {trans.verifikatNummer}
+                                </button>
+                              ) : (
+                                "–"
+                              )}
+                            </td>
+                            <td className="px-4 py-2">{trans.beskrivning || "–"}</td>
+                            <td className="px-4 py-2 text-right font-semibold text-white">
+                              {formatValue(trans.belopp)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-300">Inga transaktioner registrerade.</p>
+                )}
+              </div>
+            </AnimeradFlik>
+          );
+        });
 
         return (
           <AnimeradFlik key={grupp.namn} title={grupp.namn} icon="📊">
-            <Tabell
-              data={tabellData}
-              columns={kolumner}
-              getRowId={(row) =>
-                row.isTransaction ? `${row.kontonummer}-trans-${String(row.id)}` : String(row.id)
-              }
-            />
+            <div className="space-y-5">
+              {kontoFlikar.length > 0 ? (
+                <div className="space-y-3">{kontoFlikar}</div>
+              ) : (
+                <p className="text-sm text-slate-300">Inga konton i den här kategorin.</p>
+              )}
+            </div>
           </AnimeradFlik>
         );
       })
-      .filter(Boolean); // Filter out null values
+      .filter(Boolean);
   };
 
   return (
-    <div className="mx-auto px-4 text-white">
+    <div className="mx-auto text-white mt-4">
       <div className="mb-6">
-        <h1 className="text-3xl text-center mb-4">Resultatrapport</h1>
+        <h1 className="text-3xl text-center mb-8">Resultatrapport</h1>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Dropdown
-              value={selectedYear}
-              onChange={(value) => setSelectedYear(value)}
-              options={years.map((year) => ({ value: year, label: year }))}
-              className="w-24"
-            />
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
+            <div className="w-full md:w-24">
+              <Dropdown
+                value={selectedYear}
+                onChange={(value) => setSelectedYear(value)}
+                options={years.map((year) => ({ value: year, label: year }))}
+                className="w-full md:w-24"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <Knapp
               text={isExportingPDF ? "Exporterar..." : "Exportera PDF"}
               onClick={handleExportPDF}
               disabled={isExportingPDF}
+              className={`w-full md:w-auto ${isExportingPDF ? "opacity-50" : ""}`}
             />
 
             <Knapp
               text={isExportingCSV ? "Exporterar..." : "Exportera CSV"}
               onClick={handleExportCSV}
               disabled={isExportingCSV}
+              className={`w-full md:w-auto ${isExportingCSV ? "opacity-50" : ""}`}
             />
           </div>
         </div>
@@ -369,10 +289,7 @@ export default function Resultatrapport() {
           <div>
             <h2 className="mb-4 text-xl font-semibold">Rörelsens intäkter</h2>
             {renderTabell(data.intakter, true)}
-            <Totalrad
-              label="Summa rörelsens intäkter"
-              values={{ [currentYear]: intaktsSum[currentYear] ?? 0 }}
-            />
+            <Totalrad label="Summa rörelsens intäkter" values={ensureValuesForYears(intaktsSum)} />
           </div>
         )}
 
@@ -383,16 +300,13 @@ export default function Resultatrapport() {
             {renderTabell(data.rorelsensKostnader)}
             <Totalrad
               label="Summa rörelsens kostnader"
-              values={{ [currentYear]: rorelsensSum[currentYear] ?? 0 }}
+              values={ensureValuesForYears(rorelsensSum)}
             />
           </div>
         )}
 
         {/* Rörelseresultat */}
-        <Totalrad
-          label="Rörelseresultat"
-          values={{ [currentYear]: rorelsensResultat[currentYear] ?? 0 }}
-        />
+        <Totalrad label="Rörelseresultat" values={ensureValuesForYears(rorelsensResultat)} />
 
         {/* Finansiella intäkter */}
         {data.finansiellaIntakter && data.finansiellaIntakter.length > 0 && (
@@ -401,7 +315,7 @@ export default function Resultatrapport() {
             {renderTabell(data.finansiellaIntakter)}
             <Totalrad
               label="Summa finansiella intäkter"
-              values={{ [currentYear]: finansiellaIntakterSum[currentYear] ?? 0 }}
+              values={ensureValuesForYears(finansiellaIntakterSum)}
             />
           </div>
         )}
@@ -413,7 +327,7 @@ export default function Resultatrapport() {
             {renderTabell(data.finansiellaKostnader)}
             <Totalrad
               label="Summa finansiella kostnader"
-              values={{ [currentYear]: finansiellaKostnaderSum[currentYear] ?? 0 }}
+              values={ensureValuesForYears(finansiellaKostnaderSum)}
             />
           </div>
         )}
@@ -421,14 +335,11 @@ export default function Resultatrapport() {
         {/* Resultat efter finansiella poster */}
         <Totalrad
           label="Resultat efter finansiella poster"
-          values={{ [currentYear]: resultatEfterFinansiella[currentYear] ?? 0 }}
+          values={ensureValuesForYears(resultatEfterFinansiella)}
         />
 
         {/* Årets resultat */}
-        <Totalrad
-          label="Årets resultat"
-          values={{ [currentYear]: aretsSummare[currentYear] ?? 0 }}
-        />
+        <Totalrad label="Årets resultat" values={ensureValuesForYears(aretsSummare)} />
 
         {/* Modals */}
         {verifikatId && (

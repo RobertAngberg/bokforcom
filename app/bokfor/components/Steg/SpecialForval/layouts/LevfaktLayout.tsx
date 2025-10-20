@@ -64,7 +64,7 @@ export default function LevfaktLayout({ title, onSubmit, isValid, children }: Le
 
   return (
     <>
-      <div className="max-w-5xl mx-auto px-4 relative">
+      <div className="max-w-5xl mx-auto relative">
         <TillbakaPil onClick={() => setCurrentStep(1)} />
 
         <h1 className="mb-6 text-3xl text-center text-white">{layoutTitle}</h1>
