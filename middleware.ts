@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const publicRoutes = [
   "/", // Startsidan (Startsidan.tsx)
   "/login", // Login sida
-  "/api/auth", // NextAuth endpoints
+  "/api/auth", // better-auth endpoints
   "/api/feedback", // Feedback API (om det ska vara publikt)
 ];
 
