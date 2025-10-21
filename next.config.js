@@ -18,7 +18,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'https://www.xn--bokfr-mua.com, https://xn--bokfr-mua.com',
+            value: 'https://xn--bokfr-mua.com',
           },
           {
             key: 'Access-Control-Allow-Methods',
