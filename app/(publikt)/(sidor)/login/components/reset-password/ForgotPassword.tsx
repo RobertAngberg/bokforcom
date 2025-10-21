@@ -1,6 +1,6 @@
 "use client";
 
-import TextFalt from "../../../_components/TextFalt";
+import TextFalt from "../../../../../_components/TextFalt";
 import { useForgotPassword } from "../../hooks/useForgotPassword";
 import { ForgotPasswordProps } from "../../types/types";
 

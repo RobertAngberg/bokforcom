@@ -7,7 +7,7 @@ import SieExportKnapp from "./SieExportKnapp";
 import Knapp from "../../_components/Knapp";
 import { useAdmin } from "../hooks/useAdmin";
 import { signOut } from "../../_lib/auth-client";
-import { clearRememberMePreference } from "../../login/utils/rememberMe";
+import { clearRememberMePreference } from "../../(publikt)/(sidor)/login/utils/rememberMe";
 import type { AdminContentProps } from "../types/types";
 
 export default function AdminContent({ användarInfo, företagsInfo }: AdminContentProps) {

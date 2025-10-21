@@ -5,7 +5,7 @@ import ForgotPassword from "./components/reset-password/ForgotPassword";
 import { useRememberMe } from "./utils/rememberMe";
 import { useLogin } from "./hooks/useLogin";
 import { useLoginPage } from "./hooks/useLoginPage";
-import TextFalt from "../_components/TextFalt";
+import TextFalt from "../../../_components/TextFalt";
 
 function EmailLoginForm({ onShowForgotPassword }: { onShowForgotPassword: () => void }) {
   const { rememberMe, setRememberMe } = useRememberMe();
@@ -121,7 +121,8 @@ export default function LoginPage() {
     >
       <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl drop-shadow-2xl backdrop-blur-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-white">Välkommen!</h1>
+          <img src="/Logo.png" alt="Bokför.com" className="h-24 w-auto mx-auto mb-2" />
+          <h1 className="text-3xl font-bold text-white -mt-2">Välkommen!</h1>
         </div>
 
         {verificationMessage && (

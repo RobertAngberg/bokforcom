@@ -1,6 +1,6 @@
 "use client";
 
-import TextFalt from "../../../_components/TextFalt";
+import TextFalt from "../../../../../_components/TextFalt";
 import { useResetPassword } from "../../hooks/useResetPassword";
 import { ResetPasswordProps } from "../../types/types";
 

@@ -114,10 +114,8 @@ export default function Header() {
               href="/"
               className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">B</span>
-              </div>
-              <span className="text-2xl font-bold text-white">Bokföringsapp</span>
+              <img src="/Logo.png" alt="Bokför.com" className="h-16 w-auto" />
+              <span className="text-2xl font-bold text-white">Bokför.com</span>
             </a>
 
             {/* Menylänkar */}

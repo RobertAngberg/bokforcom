@@ -1,7 +1,7 @@
 "use server";
 
-import { pool } from "../../_lib/db";
-import { ensureSession } from "../../_utils/session";
+import { pool } from "../../../../_lib/db";
+import { ensureSession } from "../../../../_utils/session";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { validateEmail, validatePassword } from "../utils/loginValidation";

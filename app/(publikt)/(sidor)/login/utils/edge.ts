@@ -1,6 +1,6 @@
 // app/login/sakerhet/edge.ts
 import type { NextRequest } from "next/server";
-import { auth } from "../../_lib/better-auth";
+import { auth } from "../../../../_lib/better-auth";
 import { headers } from "next/headers";
 
 // SÄKERHETSVALIDERING: Better Auth session handling

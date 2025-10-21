@@ -26,7 +26,7 @@ export default function BenefitsSection() {
     <section className="py-20">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 className="text-4xl font-bold text-white mb-6">Varför välja Bokföringsapp?</h2>
+          <h2 className="text-4xl font-bold text-white mb-6">Varför välja Bokför.com?</h2>
           <div className="space-y-6">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-start space-x-4">

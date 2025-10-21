@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { signUp } from "../../_lib/auth-client";
+import { signUp } from "../../../../_lib/auth-client";
 
 /**
  * Hook för signup/registrering business logic

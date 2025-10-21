@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "../../_lib/auth-client";
+import { useSession } from "../../../../_lib/auth-client";
 
 type TabType = "login" | "signup" | "forgot-password";
 

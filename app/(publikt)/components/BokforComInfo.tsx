@@ -1,3 +1,5 @@
+import ProtectedEmail from "./ProtectedEmail";
+
 export default function BokforComInfo() {
   return (
     <div className="mt-12 bg-slate-800/50 p-6 rounded-xl border border-slate-700">
@@ -13,7 +15,8 @@ export default function BokforComInfo() {
         </div>
         <div>
           <p>
-            <strong className="text-white">Kontakt:</strong> info@bokför.com
+            <strong className="text-white">Kontakt:</strong>{" "}
+            <ProtectedEmail encoded="aW5mb0Bib2tmw7ZyLmNvbQ==" className="text-slate-300" />
           </p>
           <p>
             <strong className="text-white">Telefon:</strong> 021-41 11 10

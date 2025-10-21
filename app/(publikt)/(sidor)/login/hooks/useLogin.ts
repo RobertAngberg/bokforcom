@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { signIn, sendVerificationEmail } from "../../_lib/auth-client";
+import { signIn, sendVerificationEmail } from "../../../../_lib/auth-client";
 
 /**
  * Hook för login business logic

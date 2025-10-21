@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { requestPasswordReset } from "../../_lib/auth-client";
+import { requestPasswordReset } from "../../../../_lib/auth-client";
 
 /**
  * Hook för forgot password business logic

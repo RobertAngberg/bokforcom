@@ -87,7 +87,7 @@ export async function logoutAndClearRememberMe() {
   clearRememberMePreference();
 
   // Logga ut med Better Auth
-  const { signOut } = await import("../../_lib/auth-client");
+  const { signOut } = await import("../../../../_lib/auth-client");
   await signOut({
     fetchOptions: {
       onSuccess: () => {

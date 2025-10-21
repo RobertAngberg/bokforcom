@@ -5,7 +5,7 @@
  */
 
 import { ValidationResult, AuthSecurityConfig } from "../types/types";
-import { validateEmail as validateEmailUtil } from "../../_utils/validationUtils";
+import { validateEmail as validateEmailUtil } from "../../../../_utils/validationUtils";
 
 /**
  * Validerar svenskt organisationsnummer

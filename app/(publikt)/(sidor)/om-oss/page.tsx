@@ -107,7 +107,7 @@ export default function OmOssPage() {
                 Redo att förenkla din bokföring?
               </h2>
               <p className="text-slate-300 mb-6 text-lg">
-                Gå med i tusentals företagare som redan sparat tid och pengar med Bokföringsapp.
+                Gå med i tusentals företagare som redan sparat tid och pengar med Bokför.com.
               </p>
               <a
                 href="/"

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "../../_components/Modal";
-import TextFalt from "../../_components/TextFalt";
-import Knapp from "../../_components/Knapp";
+import Modal from "../../../../_components/Modal";
+import TextFalt from "../../../../_components/TextFalt";
+import Knapp from "../../../../_components/Knapp";
 import { useSignUp } from "../hooks/useSignUp";
 
 export default function SignUp() {

@@ -18,7 +18,7 @@ export default function PricingSection() {
     },
     {
       title: "Standard",
-      price: 199,
+      price: 249,
       description: "För växande företag",
       features: [
         "100 kvittoscanningar/månad",
@@ -32,7 +32,7 @@ export default function PricingSection() {
     },
     {
       title: "Premium",
-      price: 299,
+      price: 399,
       description: "För professionella organisationer",
       features: [
         "500 kvittoscanningar/månad",
