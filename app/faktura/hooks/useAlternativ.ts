@@ -185,14 +185,6 @@ export function useAlternativ() {
   }, [formData.id]);
 
   const hanteraSpara = async () => {
-    console.log("🔍 hanteraSpara kallad!", {
-      harKund,
-      harArtiklar,
-      kundId: formData.kundId,
-      artiklar: formData.artiklar,
-      sparaLoading,
-    });
-
     if (sparaLoading) return; // Förhindra dubbla sparningar
 
     setSparaLoading(true);
@@ -203,22 +195,9 @@ export function useAlternativ() {
         if (k !== "artiklar" && v != null) fd.append(k, String(v));
       });
 
-      console.log("🔍 Skickar saveInvoice request...", {
-        formDataEntries: Object.fromEntries(fd.entries()),
-        rawFormData: {
-          fakturanummer: formData.fakturanummer,
-          kundId: formData.kundId,
-          kundnamn: formData.kundnamn,
-          artiklar: formData.artiklar,
-        },
-      });
-
       const res = await saveInvoice(fd);
 
-      console.log("🔍 saveInvoice response:", res);
-
       if (res.success) {
-        console.log("✅ Faktura sparad framgångsrikt!");
         showToast("Faktura sparad!", "success");
 
         if ("id" in res && res.id) {
@@ -233,15 +212,12 @@ export function useAlternativ() {
         // Trigga reload event så Fakturor.tsx uppdaterar sin lista
         window.dispatchEvent(new Event("reloadFakturor"));
       } else {
-        console.log("❌ saveInvoice misslyckades:", res);
         const errorMessage = (res as { error?: string }).error;
         showToast(errorMessage || "Kunde inte spara fakturan.", "error");
       }
-    } catch (error) {
-      console.log("❌ Fel i hanteraSpara:", error);
+    } catch {
       showToast("Kunde inte konvertera artiklar", "error");
     } finally {
-      console.log("🔍 hanteraSpara avslutar, sätter sparaLoading till false");
       setSparaLoading(false);
     }
   };
@@ -287,9 +263,6 @@ export function useAlternativ() {
   };
 
   // Beräknade värden
-  const harKund = toTrimmedString(formData.kundId) !== "";
-  const artiklarLength = formData.artiklar?.length ?? 0;
-  const harArtiklar = artiklarLength > 0;
   const ärFakturanSkickad = isStatusSkickad(fakturaStatus.status);
   const ärFakturanFärdig = isStatusFardig(fakturaStatus.status);
   const ärFakturanBetald = ärFakturanFärdig;
@@ -374,14 +347,11 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
       // Hämta fakturaSTATUS om ID finns
       if (formData.id) {
-        console.log("🔍 Hämtar status för faktura ID:", formData.id);
         hamtaFakturaStatus(parseInt(formData.id)).then((status) => {
-          console.log("📊 Fakturasstatus:", status);
           setFakturaStatus({ status: status.status, betaldatum: status.betaldatum });
           setStatusLoaded(true);
         });
       } else {
-        console.log("❌ Inget faktura ID hittades");
         setStatusLoaded(true);
       }
     } else if (isOpen && formData.id === lastLoadedId) {
@@ -463,7 +433,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
     }
 
     // KONTROLLERA OM FAKTURAN HAR NÅTT SENARE STATUSSTEG
-    console.log("🔍 Kollar fakturaStatus:", fakturaStatus);
     if (ärFakturanRedanBokförd) {
       const harRotRutArtiklar = formData.artiklar?.some((artikel) => artikel.rotRutTyp) || false;
 
@@ -583,7 +552,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
   const hanteraHUSFil = () => {
     if (!visaHusFilKnapp || !rotRutTyp) {
-      console.log("🔍 Ingen ROT/RUT-data hittades för ROT/RUT-fil");
       return;
     }
 
@@ -605,13 +573,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       "Städa";
 
     if (!formData.fakturanummer || !personnummer) {
-      console.log("🔍 ROT/RUT-fil validering misslyckades:", {
-        fakturanummer: formData.fakturanummer,
-        personnummer: personnummer,
-        rotRutAktiverat: formData.rotRutAktiverat,
-        rotRutTyp: rotRutTyp,
-        harROTRUTArtiklar,
-      });
       showToast("Fakturanummer och personnummer krävs för ROT/RUT-fil", "error");
       return;
     }
@@ -730,12 +691,6 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
       }
 
       const result = await bokforFaktura(bokföringsData);
-
-      console.log("🔥 BOKFÖR DATA:", {
-        fakturaId: formData.id ? parseInt(formData.id) : undefined,
-        formDataId: formData.id,
-        fakturanummer: formData.fakturanummer,
-      });
 
       if (result.success) {
         const message: string =
