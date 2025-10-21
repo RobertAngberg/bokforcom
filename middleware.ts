@@ -53,14 +53,24 @@ export function middleware(request: NextRequest) {
     // CSRF skydd via Origin/Referer validering
     if (origin) {
       const originUrl = new URL(origin);
-      if (originUrl.host !== host) {
-        console.warn("🚨 CSRF ATTACK DETECTED: Origin mismatch", { origin, host });
+      const allowedHosts = [host, "bokför.com", "xn--bokfr-mua.com", "www.xn--bokfr-mua.com"];
+      if (!allowedHosts.includes(originUrl.host)) {
+        console.warn("🚨 CSRF ATTACK DETECTED: Origin mismatch", {
+          origin,
+          host,
+          originHost: originUrl.host,
+        });
         return NextResponse.json({ error: "CSRF: Origin mismatch detected" }, { status: 403 });
       }
     } else if (referer) {
       const refererUrl = new URL(referer);
-      if (refererUrl.host !== host) {
-        console.warn("🚨 CSRF ATTACK DETECTED: Referer mismatch", { referer, host });
+      const allowedHosts = [host, "bokför.com", "xn--bokfr-mua.com", "www.xn--bokfr-mua.com"];
+      if (!allowedHosts.includes(refererUrl.host)) {
+        console.warn("🚨 CSRF ATTACK DETECTED: Referer mismatch", {
+          referer,
+          host,
+          refererHost: refererUrl.host,
+        });
         return NextResponse.json({ error: "CSRF: Referer mismatch detected" }, { status: 403 });
       }
     } else {

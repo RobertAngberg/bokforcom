@@ -12,7 +12,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Tillfälligt avstängt för testing
+    requireEmailVerification: true, // asdf
     sendResetPassword: async ({ user, url }) => {
       console.log("🔑 Password reset for:", user.email);
       console.log("🔗 Reset URL:", url);
