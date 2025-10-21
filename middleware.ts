@@ -31,6 +31,11 @@ function hasValidSession(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
+  
+  // Debug logging för auth-problem
+  if (pathname.startsWith("/api/auth")) {
+    console.log("🔍 AUTH REQUEST:", { method, pathname, origin: request.headers.get("origin"), host: request.headers.get("host") });
+  }
 
   // 🔒 AUTH SKYDD: Kräv inloggning för alla routes utom publika
   if (!isPublicRoute(pathname)) {
