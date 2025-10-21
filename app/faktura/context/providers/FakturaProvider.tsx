@@ -3,7 +3,7 @@
 import { useMemo, useReducer, type ReactNode } from "react";
 import { FakturaContext, FakturaInitialDataContext } from "../defaults/FakturaDefaults";
 import { fakturaReducer, initialFakturaState } from "../state/fakturaReducer";
-import { useFakturaActions } from "../state/useFakturaActions";
+import { useFakturaReducerActions } from "../state/useFakturaReducerActions";
 import { FakturaFormProvider } from "./FakturaFormProvider";
 import { FakturaArtikelProvider } from "./FakturaArtikelProvider";
 import type { FakturaProviderProps, FakturaContextType, ServerData } from "../../types/types";
@@ -31,7 +31,7 @@ function FakturaContextShell({ children, initialData }: FakturaContextShellProps
     initializeState(data)
   );
 
-  const actions = useFakturaActions(dispatch);
+  const actions = useFakturaReducerActions(dispatch);
 
   const contextValue = useMemo<FakturaContextType>(
     () => ({

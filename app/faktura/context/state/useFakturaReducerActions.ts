@@ -11,7 +11,7 @@ import type {
 import { useFakturaFormActions } from "../hooks/FakturaFormContext";
 
 // Huvudhooken kopplar dispatch till färdiga actions så resten av appen kan ropa på dem enkelt.
-export function useFakturaActions(dispatch: FakturaDispatch) {
+export function useFakturaReducerActions(dispatch: FakturaDispatch) {
   const { setFormData } = useFakturaFormActions();
 
   // Uppdaterar kundstatus utan att röra något annat i state.
