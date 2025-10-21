@@ -13,6 +13,24 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // API routes - lägg till CORS headers
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://www.xn--bokfr-mua.com, https://xn--bokfr-mua.com',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
+      {
         // Gäller alla sidor
         source: '/(.*)',
         headers: [
