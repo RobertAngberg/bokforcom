@@ -621,6 +621,17 @@ export interface UseBetalningsbekraftelseModalProps {
   belopp: number;
 }
 
+export interface RotRutBetalningModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  fakturaId: number;
+  fakturanummer: string;
+  kundnamn: string;
+  totalBelopp: number;
+  bokföringsmetod: "kontantmetoden" | "fakturametoden";
+  onSuccess?: (payload: RotRutStatusPayload) => void | Promise<void>;
+}
+
 // BokfordaFakturor component types
 export type BokfordFaktura = {
   id: number; // leverantörsfaktura.id

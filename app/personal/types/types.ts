@@ -1093,6 +1093,20 @@ export interface FormField {
   min?: string;
 }
 
+// ExtraraderField - används för dynamiska formulärfält i extraraderUtils.ts
+export interface ExtraraderField {
+  label: string;
+  name: string;
+  type: "text" | "number" | "select";
+  value: string | null | undefined;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  required?: boolean;
+  placeholder?: string;
+  step?: string;
+  min?: string;
+  options?: string[];
+}
+
 // Wizard.tsx
 export interface WizardProps {
   steps: WizardStep[];

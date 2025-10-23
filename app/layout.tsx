@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import Navbar from "./_components/Navbar";
+import ImpersonationWrapper from "./_components/ImpersonationWrapper";
 import { ClientProviders } from "./_lib/providers";
 import "./globals.css";
 import "react-datepicker/dist/react-datepicker.css";
@@ -17,7 +19,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="sv">
       <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-1046599495"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-1046599495');
+          `}
+        </Script>
+
         <ClientProviders>
+          <ImpersonationWrapper />
           <Navbar />
           {children}
         </ClientProviders>

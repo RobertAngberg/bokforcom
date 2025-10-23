@@ -6,6 +6,7 @@ import { dateToYyyyMmDd, datumTillPostgreSQL } from "../../_utils/datum";
 import { sanitizeInput } from "../../_utils/validationUtils";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
+import { trackEvent } from "../../analytics/actions";
 
 export async function invalidateBokforCache() {
   revalidatePath("/historik");
@@ -177,6 +178,15 @@ export async function saveTransaction(formData: FormData) {
     }
 
     await invalidateBokforCache();
+
+    // Track transaction creation
+    await trackEvent("transaction_saved", {
+      hasAttachment: !!blobUrl,
+      amount: belopp,
+      isExpense: utlaggMode,
+      isInvoice: !!leverantorId,
+    });
+
     return { success: true, id: transaktionsId, blobUrl };
   } catch (err) {
     console.error("❌ saveTransaction error:", err);

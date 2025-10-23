@@ -3,6 +3,7 @@
 import OpenAI from "openai";
 import { ensureSession } from "../../_utils/session";
 import { sanitizeInput } from "../../_utils/validationUtils";
+import { trackEvent } from "../../analytics/actions";
 
 function sanitizeOCRText(text: string): string {
   if (!text || typeof text !== "string") return "";
@@ -44,12 +45,30 @@ export async function extractDataFromOCR(text: string) {
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
+
+      // Track OCR usage
+      await trackEvent("ocr_used", {
+        type: "basic",
+        success: true,
+      });
+
       return parsed;
     }
+
+    await trackEvent("ocr_used", {
+      type: "basic",
+      success: false,
+    });
 
     return { datum: "", belopp: 0 };
   } catch {
     console.error("extractDataFromOCR error"); // Mindre detaljerade loggar
+
+    await trackEvent("ocr_used", {
+      type: "basic",
+      success: false,
+    });
+
     return { datum: "", belopp: 0 };
   }
 }
@@ -110,10 +129,23 @@ export async function extractDataFromOCRLevFakt(text: string) {
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
+
+      // Track OCR usage
+      await trackEvent("ocr_used", {
+        type: "supplier_invoice",
+        success: true,
+      });
+
       return parsed;
     }
 
     console.warn("⚠️ GPT unstructured content:", content);
+
+    await trackEvent("ocr_used", {
+      type: "supplier_invoice",
+      success: false,
+    });
+
     return {
       leverantör: "",
       fakturadatum: null,
@@ -124,6 +156,12 @@ export async function extractDataFromOCRLevFakt(text: string) {
     };
   } catch (error) {
     console.error("❌ extractDataFromOCRLevFakt error:", error);
+
+    await trackEvent("ocr_used", {
+      type: "supplier_invoice",
+      success: false,
+    });
+
     return {
       leverantör: "",
       fakturadatum: null,
@@ -175,10 +213,23 @@ export async function extractDataFromOCRKundfaktura(text: string) {
 
     if (content && content.startsWith("{")) {
       const parsed = JSON.parse(content);
+
+      // Track OCR usage
+      await trackEvent("ocr_used", {
+        type: "customer_invoice",
+        success: true,
+      });
+
       return parsed;
     }
 
     console.warn("⚠️ GPT unstructured content:", content);
+
+    await trackEvent("ocr_used", {
+      type: "customer_invoice",
+      success: false,
+    });
+
     return {
       fakturadatum: null,
       förfallodatum: null,
@@ -186,6 +237,12 @@ export async function extractDataFromOCRKundfaktura(text: string) {
     };
   } catch (error) {
     console.error("❌ extractDataFromOCRKundfaktura error:", error);
+
+    await trackEvent("ocr_used", {
+      type: "customer_invoice",
+      success: false,
+    });
+
     return {
       fakturadatum: null,
       förfallodatum: null,

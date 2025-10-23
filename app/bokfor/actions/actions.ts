@@ -2,6 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { trackEvent } from "../../analytics/actions";
 
 export async function loggaFavoritforval(forvalId: number) {
   const { userId } = await ensureSession();
@@ -16,6 +17,11 @@ export async function loggaFavoritforval(forvalId: number) {
       `,
       [userId, forvalId]
     );
+
+    // Track favorite usage
+    await trackEvent("favorite_used", {
+      forvalId,
+    });
   } catch (error) {
     console.error("❌ loggaFavoritförval error:", error);
   }

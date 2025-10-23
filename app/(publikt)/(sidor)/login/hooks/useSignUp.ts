@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
 import { signUp } from "../../../../_lib/auth-client";
+import { trackRegistrationConversion } from "../../../../_utils/googleAds";
 
 /**
  * Hook för signup/registrering business logic
@@ -33,6 +34,9 @@ export function useSignUp() {
 
       if (error) {
         setError(error.message || "Registrering misslyckades");
+      } else {
+        // Track successful registration in Google Ads
+        trackRegistrationConversion();
       }
     } catch {
       setError("Något gick fel. Försök igen.");

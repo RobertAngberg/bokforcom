@@ -20,6 +20,7 @@ export function useMailaLonespec({
   företagsprofil,
   extrarader = [],
   beräknadeVärden = {},
+  open = false,
   onMailComplete,
   onClose,
   ForhandsgranskningComponent,
@@ -27,6 +28,12 @@ export function useMailaLonespec({
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(open);
+
+  // Update modal state when open prop changes
+  useState(() => {
+    setShowModal(open);
+  });
 
   // PDF generation logic - moved to external function to avoid JSX in .ts file
   const generatePDF = async (
@@ -188,14 +195,23 @@ export function useMailaLonespec({
     ? () => handleMaila(ForhandsgranskningComponent)
     : () => {};
 
+  const openModal = () => setShowModal(true);
+  const closeModal = () => {
+    setShowModal(false);
+    onClose?.();
+  };
+
   return {
     // State
     loading,
     sent,
     error,
+    showModal,
 
     // Actions
     handleMaila: handleMailaWithComponent,
+    openModal,
+    closeModal,
 
     // Utilities
     generatePDF,

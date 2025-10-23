@@ -1,21 +1,25 @@
-import { auth } from "../../_lib/better-auth";
-import { headers } from "next/headers";
 import { pool } from "../../_lib/db";
 import type { AnvandarInfo, ForetagsProfil } from "../types/types";
+import { ensureSession } from "../../_utils/session";
 
 export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user?.id) return null;
+    const { userId } = await ensureSession();
 
-    // Använd Better Auth user data direkt
+    // Hämta användarinfo från databasen baserat på effective userId (kan vara impersonated)
+    const result = await pool.query(
+      'SELECT id, email, name, "createdAt" FROM "user" WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const user = result.rows[0];
     return {
-      id: session.user.id,
-      email: session.user.email || "",
-      name: session.user.name || "",
-      skapad: session.user.createdAt?.toISOString() || new Date().toISOString(),
+      id: user.id,
+      email: user.email || "",
+      name: user.name || "",
+      skapad: user.createdAt?.toISOString() || new Date().toISOString(),
     } as AnvandarInfo;
   } catch (error) {
     console.error("Failed to fetch user info:", error);
@@ -25,11 +29,7 @@ export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
 
 export async function hamtaForetagsprofil(): Promise<ForetagsProfil | null> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    const userId = session?.user?.id;
-    if (!userId) return null;
+    const { userId } = await ensureSession();
 
     const client = await pool.connect();
     let res;
