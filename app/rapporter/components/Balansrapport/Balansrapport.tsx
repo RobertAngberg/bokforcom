@@ -102,7 +102,7 @@ export default function Balansrapport() {
     avsättningar,
     långfristigaSkulder,
     kortfristigaSkulder,
-    anläggningsSum,
+    // anläggningsSum, // Not used - sum shown inside table
     omsättningsSum,
     egetKapitalSum,
     avsättningarSum,
@@ -378,8 +378,6 @@ export default function Balansrapport() {
 
   return (
     <div className="mx-auto text-white mt-4">
-      <h1 className="text-3xl text-center mb-8">Balansrapport</h1>
-
       {/* Filter- och knappsektion överst */}
       <div className="mb-8 space-y-4">
         {/* Filter och knappar - dropdowns till vänster, export-knappar till höger */}
@@ -443,8 +441,7 @@ export default function Balansrapport() {
             />
           </div>
         </div>
-        {/* HR under knapparna */}
-        <hr className="border-gray-600 my-6" />
+
         {/* Export-status meddelanden */}
         {isExportingPDF && <div className="text-center text-blue-400">Genererar PDF...</div>}
         {isExportingCSV && <div className="text-center text-blue-400">Genererar CSV...</div>}
@@ -461,19 +458,8 @@ export default function Balansrapport() {
       <h2 className="text-xl font-semibold mt-16 mb-4 text-center">Tillgångar</h2>
 
       {/* Anläggningstillgångar */}
-      {anläggningstillgångar.length > 0 && (
-        <>
-          {renderaKategoriMedKolumner("Anläggningstillgångar", "🏢", anläggningstillgångar)}
-          <Totalrad
-            label="Anläggningstillgångar"
-            values={{
-              "Ing. balans": anläggningsSum.ingaende,
-              Resultat: anläggningsSum.arets,
-              "Utg. balans": anläggningsSum.utgaende,
-            }}
-          />
-        </>
-      )}
+      {anläggningstillgångar.length > 0 &&
+        renderaKategoriMedKolumner("Anläggningstillgångar", "🏢", anläggningstillgångar)}
 
       {/* Omsättningstillgångar */}
       {omsättningstillgångar.length > 0 && (

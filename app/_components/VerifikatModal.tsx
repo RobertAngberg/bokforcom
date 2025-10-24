@@ -40,7 +40,7 @@ export default function VerifikatModal({
   });
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="4xl" isLoading={loading}>
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="2xl" isLoading={loading}>
       {/* Egen titel-header */}
       <div className="text-center mb-4">
         <h2 className="text-white text-2xl">{headerTitle}</h2>

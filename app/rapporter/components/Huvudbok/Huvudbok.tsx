@@ -49,7 +49,6 @@ export default function Huvudbok() {
 
   return (
     <div className="mx-auto px-0 text-white mt-4">
-      <h1 className="text-3xl text-center mb-8">Huvudbok</h1>
       {/* Årval och månadsval dropdown + Export-knappar */}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
@@ -76,8 +75,7 @@ export default function Huvudbok() {
           <Knapp text="📄 Exportera PDF" onClick={handleExportPDF} className="w-full md:w-auto" />
         </div>
       </div>
-      {/* Avskiljande linje */}
-      <hr className="border-gray-600 mb-8" />
+
       <div className="space-y-6">
         {kategoriseradeKonton.map((kategori) => {
           // Beräkna totalsumma för kategorin
@@ -187,7 +185,7 @@ export default function Huvudbok() {
                             </tr>
                           ))}
                           {/* Utgående balans rad */}
-                          <tr className="bg-slate-600 border-t-2 border-slate-500">
+                          <tr className="bg-slate-600">
                             <td className="p-3 text-sm text-gray-300"></td>
                             <td className="p-3 text-sm font-semibold text-blue-400">
                               Utgående balans

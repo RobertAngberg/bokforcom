@@ -1091,9 +1091,10 @@ export function useVerifikatModal({
 
   // Modal title logic
   const modalTitle = ""; // Tom titel så Modal.tsx inte visar den
-  const headerTitle = `Verifikat - ${leverantör || "Okänd leverantör"}${
-    fakturanummer ? ` (${fakturanummer})` : ""
-  }`;
+  const verifikatNr = transaktionId ? `V${transaktionId}` : "";
+  const headerTitle = leverantör
+    ? `${verifikatNr} - ${leverantör}${fakturanummer ? ` (${fakturanummer})` : ""}`
+    : `${verifikatNr}${fakturanummer ? ` (${fakturanummer})` : ""}`;
 
   return {
     // State

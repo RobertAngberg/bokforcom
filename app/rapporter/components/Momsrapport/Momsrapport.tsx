@@ -32,7 +32,6 @@ export default function Momsrapport() {
   if (isPending) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Momsrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Verifierar session...</p>
         </div>
@@ -44,7 +43,6 @@ export default function Momsrapport() {
   if (!sessionData?.user) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Momsrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Du måste vara inloggad för att se denna sida</p>
         </div>
@@ -56,7 +54,6 @@ export default function Momsrapport() {
   if (error) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Momsrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <div className="text-center">
             <p className="text-red-400 mb-2">Fel vid laddning av data</p>
@@ -71,7 +68,6 @@ export default function Momsrapport() {
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Momsrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Laddar momsrapport...</p>
         </div>
@@ -136,8 +132,6 @@ export default function Momsrapport() {
     <div className="mx-auto max-w-7xl text-white mt-4">
       {/* Header Section */}
       <div className="mb-6">
-        <h1 className="text-3xl text-center mb-8">Momsrapport</h1>
-
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
             <div className="w-full md:w-24">

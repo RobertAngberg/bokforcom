@@ -49,7 +49,6 @@ export default function Resultatrapport() {
   if (isPending) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Verifierar session...</p>
         </div>
@@ -61,7 +60,6 @@ export default function Resultatrapport() {
   if (!sessionData?.user) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Du behöver vara inloggad för att se denna sida.</p>
         </div>
@@ -73,7 +71,6 @@ export default function Resultatrapport() {
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Laddar data...</p>
         </div>
@@ -85,7 +82,6 @@ export default function Resultatrapport() {
   if (!initialData || !data || data.ar.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 text-white">
-        <h1 className="mb-6 text-3xl text-center">Resultatrapport</h1>
         <div className="flex h-40 items-center justify-center">
           <p>Ingen data tillgänglig</p>
         </div>
@@ -210,7 +206,7 @@ export default function Resultatrapport() {
                       </thead>
                       <tbody>
                         {transaktioner.map((trans) => (
-                          <tr key={trans.id} className="border-t border-slate-800 text-slate-200">
+                          <tr key={trans.id} className="text-slate-200">
                             <td className="px-4 py-2">{formatTransaktionsDatum(trans.datum)}</td>
                             <td className="px-4 py-2">
                               {trans.verifikatNummer ? (
@@ -265,8 +261,6 @@ export default function Resultatrapport() {
   return (
     <div className="mx-auto text-white mt-4">
       <div className="mb-6">
-        <h1 className="text-3xl text-center mb-8">Resultatrapport</h1>
-
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
             <div className="w-full md:w-24">
@@ -304,16 +298,18 @@ export default function Resultatrapport() {
       <div id="resultatrapport-print-area" className="space-y-6">
         {/* Intäkter */}
         {data.intakter && data.intakter.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold">Rörelsens intäkter</h2>
             {renderTabell(data.intakter, true)}
             <Totalrad label="Summa rörelsens intäkter" values={ensureValuesForYears(intaktsSum)} />
           </div>
         )}
 
+        <hr />
+
         {/* Kostnader */}
         {data.rorelsensKostnader && data.rorelsensKostnader.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold">Rörelsens kostnader</h2>
             {renderTabell(data.rorelsensKostnader)}
             <Totalrad
@@ -323,12 +319,16 @@ export default function Resultatrapport() {
           </div>
         )}
 
+        <hr />
+
         {/* Rörelseresultat */}
-        <Totalrad label="Rörelseresultat" values={ensureValuesForYears(rorelsensResultat)} />
+        <div className="mb-8">
+          <Totalrad label="Rörelseresultat" values={ensureValuesForYears(rorelsensResultat)} />
+        </div>
 
         {/* Finansiella intäkter */}
         {data.finansiellaIntakter && data.finansiellaIntakter.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold">Finansiella intäkter</h2>
             {renderTabell(data.finansiellaIntakter)}
             <Totalrad
