@@ -38,7 +38,11 @@ export default function Personal({ initialAnställda }: PersonalContentProps) {
       {/* Anställda sektion */}
       <div className="mb-8">
         <div className="flex justify-end items-center mb-6">
-          <Knapp text="+ Lägg till anställd" onClick={handlers.visaNyAnställd} />
+          <Knapp
+            text="+ Lägg till anställd"
+            onClick={handlers.visaNyAnställd}
+            className="w-full md:w-auto"
+          />
         </div>
 
         {state.anställdaError && (

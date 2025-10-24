@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "../_lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -63,7 +64,17 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-cyan-950">
-        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-end px-4 md:justify-center">
+        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 md:justify-center">
+          <Link href="/" className="md:hidden">
+            <Image
+              src="/Logo.png"
+              alt="Bokför.com"
+              width={64}
+              height={64}
+              className="h-16 w-auto"
+            />
+          </Link>
+
           <nav className="relative hidden gap-3 md:flex">
             <div
               className="absolute h-10 rounded-full bg-cyan-800/60 transition-all duration-300 ease-out"
