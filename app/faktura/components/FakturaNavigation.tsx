@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
+import AnimeradFlik from "../../_components/AnimeradFlik";
 import { useFakturaClient } from "../context/hooks/FakturaContext";
-import { invalidateLeverantorsfakturaCaches } from "../hooks/useLeverantorer";
 
 // Ladda de tyngre vyerna vid behov så vi slipper skeppa all fakturalogik direkt på första rendern.
 // Med ssr: false hålls vyerna helt klientrenderade och klipps bort från initiala serverresponsen.
@@ -26,7 +26,6 @@ const Leverantorsfakturor = dynamic(() => import("./Leverantorsfakturor/Leverant
 export default function FakturaNavigation() {
   const {
     formData,
-    navigateToView,
     navigateToEdit,
     navigateBack,
     resetFormData,
@@ -86,15 +85,6 @@ export default function FakturaNavigation() {
     navigateToEdit("ny");
   };
 
-  const handleShowSparade = () => {
-    navigateToView("sparade");
-  };
-
-  const handleShowLeverantorsfakturor = () => {
-    invalidateLeverantorsfakturaCaches();
-    navigateToView("leverantorsfakturor");
-  };
-
   const handleEditFaktura = (fakturaId: number) => {
     navigateToEdit("ny", fakturaId);
   };
@@ -106,33 +96,23 @@ export default function FakturaNavigation() {
   if (activeView === "menu") {
     return (
       <>
-        <h1 className="text-3xl text-center text-slate-100 mb-8">Faktura</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-slate-800 rounded-lg shadow p-6 border border-slate-600">
-            <h2 className="text-xl font-semibold mb-4 text-white flex items-center justify-center gap-3">
-              📄 Ny Faktura
-            </h2>
-            <Knapp text="Skapa Faktura" onClick={handleCreateNew} className="w-full" />
+        <div className="flex items-center justify-center mb-8 relative">
+          <h1 className="text-3xl text-slate-100">Faktura</h1>
+          <div className="absolute right-0">
+            <Knapp text="+ Ny Faktura" onClick={handleCreateNew} />
           </div>
+        </div>
 
-          <div className="bg-slate-800 rounded-lg shadow p-6 border border-slate-600">
-            <h2 className="text-xl font-semibold mb-4 text-white flex items-center justify-center gap-3">
-              📂 Sparade Fakturor
-            </h2>
-            <Knapp text="Visa Sparade" onClick={handleShowSparade} className="w-full" />
-          </div>
+        {/* Visa sparade fakturor direkt på sidan */}
+        <AnimeradFlik title="Sparade Fakturor" icon="📂" forcedOpen={false}>
+          <Sparade onBackToMenu={undefined} onEditFaktura={handleEditFaktura} />
+        </AnimeradFlik>
 
-          <div className="bg-slate-800 rounded-lg shadow p-6 border border-slate-600">
-            <h2 className="text-xl font-semibold mb-4 text-white flex items-center justify-center gap-3">
-              📋 Leverantörsfakturor
-            </h2>
-            <Knapp
-              text="Visa Leverantörsfakturor"
-              onClick={handleShowLeverantorsfakturor}
-              className="w-full"
-            />
-          </div>
+        {/* Visa leverantörsfakturor direkt på sidan */}
+        <div className="mt-6">
+          <AnimeradFlik title="Leverantörsfakturor" icon="📋" forcedOpen={false}>
+            <Leverantorsfakturor onBackToMenu={undefined} />
+          </AnimeradFlik>
         </div>
       </>
     );

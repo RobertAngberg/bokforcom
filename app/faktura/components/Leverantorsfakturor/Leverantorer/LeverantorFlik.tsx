@@ -1,6 +1,5 @@
 "use client";
 
-import AnimeradFlik from "../../../../_components/AnimeradFlik";
 import Knapp from "../../../../_components/Knapp";
 import NyLeverantorModal from "./NyLeverantorModal";
 import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
@@ -27,12 +26,12 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
 
   return (
     <>
-      <AnimeradFlik
-        title="Leverantörer"
-        icon="🏢"
-        visaSummaDirekt={`${leverantörer.length} st`}
-        forcedOpen={true}
-      >
+      <div className="bg-slate-800 rounded-lg p-6 border border-slate-700 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-3">
+          🏢 Leverantörer{" "}
+          <span className="text-sm font-normal text-gray-400">({leverantörer.length} st)</span>
+        </h2>
+
         <div className="space-y-6">
           <div className="flex justify-end mb-4">
             <Knapp text="+ Lägg till leverantör" onClick={() => setShowModal(true)} />
@@ -55,11 +54,11 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
               {leverantörer.map((leverantör) => (
                 <div
                   key={leverantör.id}
-                  className="bg-slate-800 rounded-lg p-5 border border-slate-700 hover:border-slate-600 transition-colors"
+                  className="bg-slate-800 rounded-lg p-5 border-2 border-slate-600 hover:border-slate-500 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="text-white font-medium text-lg">{leverantör.namn}</h4>
+                      <h4 className="text-white font-bold text-lg">{leverantör.namn}</h4>
 
                       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                         {leverantör.organisationsnummer && (
@@ -120,7 +119,7 @@ export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlik
             </div>
           )}
         </div>
-      </AnimeradFlik>
+      </div>
 
       <NyLeverantorModal
         isOpen={showModal}

@@ -109,8 +109,16 @@ export default function ProdukterTjanster() {
             disabled={favoritArtikelVald}
           />
 
-          {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
-          <div className="mb-4 mt-4">
+          {/* ROT/RUT formulär */}
+          {visaRotRutForm && (
+            <div className="mt-4">
+              <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
+            </div>
+          )}
+
+          {/* Knappar på samma rad på desktop, staplade på mobil */}
+          <div className="flex flex-col md:flex-row gap-3 mt-4">
+            {/* ROT/RUT-knapp */}
             <Knapp
               onClick={() => {
                 if (typ === "vara") {
@@ -124,10 +132,8 @@ export default function ProdukterTjanster() {
                   setTyp("tjänst");
                   setRotRutArbete(true);
                   setRotRutMaterial(false);
-                  // Aktivera ROT/RUT i formData så att formuläret visas
                   updateFormField("rotRutAktiverat", true);
                 } else {
-                  // Avaktivera ROT/RUT när formuläret stängs
                   updateFormField("rotRutAktiverat", false);
                 }
               }}
@@ -135,17 +141,8 @@ export default function ProdukterTjanster() {
               disabled={typ === "vara"}
               className={`w-full ${typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}`}
             />
-          </div>
 
-          {/* ROT/RUT formulär */}
-          {visaRotRutForm && (
-            <div className="mt-4">
-              <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
-            </div>
-          )}
-
-          {/* Spara som favorit knapp */}
-          <div className="mb-4">
+            {/* Spara som favorit knapp */}
             <Knapp
               onClick={handleSaveAsFavorite}
               text="📌 Lägg till som favoritartikel"
@@ -159,10 +156,8 @@ export default function ProdukterTjanster() {
               }
               className="w-full"
             />
-          </div>
 
-          {/* Lägg till artikel knapp */}
-          <div className="mt-3 flex justify-end">
+            {/* Lägg till artikel knapp */}
             <Knapp
               onClick={handleAdd}
               text="✚ Lägg till artikel"

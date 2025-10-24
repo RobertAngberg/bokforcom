@@ -61,10 +61,11 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
 
   return (
     <>
-      <div className="relative mb-8 flex items-center justify-center">
-        {onBackToMenu && <TillbakaPil onClick={onBackToMenu} />}
-        <h1 className="text-3xl text-center w-full">Sparade Fakturor</h1>
-      </div>
+      {onBackToMenu && (
+        <div className="relative mb-8">
+          <TillbakaPil onClick={onBackToMenu} />
+        </div>
+      )}
 
       <div className="text-white">
         {loading ? (

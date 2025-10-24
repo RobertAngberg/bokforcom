@@ -1,19 +1,16 @@
 "use client";
 
-import TillbakaPil from "../../../_components/TillbakaPil";
 import LeverantorFlik from "./Leverantorer/LeverantorFlik";
 import BokfordaFakturorFlik from "./BokfordaFakturorFlik";
 import { useLeverantörer } from "../../hooks/useLeverantorer";
-import { useLeverantorNavigation } from "../../hooks/useLeverantorer";
 import { FakturaProvider } from "../../context/providers/FakturaProvider";
 
 interface LeverantorsfakturorPageProps {
   onBackToMenu?: () => void;
 }
 
-export default function LeverantorsfakturorPage({ onBackToMenu }: LeverantorsfakturorPageProps) {
+export default function LeverantorsfakturorPage({}: LeverantorsfakturorPageProps) {
   const { refresh } = useLeverantörer();
-  const { navigateToFaktura } = useLeverantorNavigation();
 
   const handleLeverantörUpdated = () => {
     refresh();
@@ -22,17 +19,14 @@ export default function LeverantorsfakturorPage({ onBackToMenu }: Leverantorsfak
   return (
     <FakturaProvider>
       <>
-        <div className="relative mb-6">
-          <TillbakaPil onClick={onBackToMenu || navigateToFaktura} />
-          <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
-        </div>
+        <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
 
         <div className="mb-6">
-          <LeverantorFlik onLeverantörUpdated={handleLeverantörUpdated} />
+          <BokfordaFakturorFlik />
         </div>
 
         <div className="mb-8">
-          <BokfordaFakturorFlik />
+          <LeverantorFlik onLeverantörUpdated={handleLeverantörUpdated} />
         </div>
       </>
     </FakturaProvider>
