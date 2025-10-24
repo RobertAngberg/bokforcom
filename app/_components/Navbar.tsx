@@ -64,8 +64,8 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-cyan-950">
-        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 md:justify-center">
-          <Link href="/" className="md:hidden">
+        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 lg:justify-center">
+          <Link href="/" className="lg:hidden">
             <Image
               src="/Logo.png"
               alt="Bokför.com"
@@ -75,7 +75,7 @@ export default function Navbar() {
             />
           </Link>
 
-          <nav className="relative hidden gap-3 md:flex">
+          <nav className="relative hidden gap-3 lg:flex">
             <div
               className="absolute h-10 rounded-full bg-cyan-800/60 transition-all duration-300 ease-out"
               style={{
@@ -105,7 +105,7 @@ export default function Navbar() {
             type="button"
             aria-label={isMobileMenuOpen ? "Stäng meny" : "Öppna meny"}
             aria-expanded={isMobileMenuOpen}
-            className="inline-flex h-12 w-12 flex-col items-center justify-center gap-1.5 rounded-lg border border-cyan-700 text-white transition-colors hover:border-cyan-500 hover:bg-cyan-800 md:hidden"
+            className="inline-flex h-12 w-12 flex-col items-center justify-center gap-1.5 rounded-lg border border-cyan-700 text-white transition-colors hover:border-cyan-500 hover:bg-cyan-800 lg:hidden"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
           >
             <span className="sr-only">Navigationsmeny</span>
@@ -128,7 +128,7 @@ export default function Navbar() {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-cyan-800/60 bg-slate-950/95 backdrop-blur-sm">
+          <div className="lg:hidden border-t border-cyan-800/60 bg-slate-950/95 backdrop-blur-sm">
             <nav className="flex flex-col gap-2 px-4 py-4">
               {currentLinks.map(({ href, label }) => (
                 <Link
@@ -150,7 +150,7 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <span className="sr-only">Stäng meny</span>
