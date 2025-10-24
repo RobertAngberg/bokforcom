@@ -21,12 +21,13 @@ export function useSkickaEpost() {
   const [mottagareEmail, setMottagareEmail] = useState("");
   const [egetMeddelande, setEgetMeddelande] = useState("");
 
-  // Förifyll med kundens e-post när formData ändras
+  // Förifyll med kundens e-post när formData ändras (endast första gången)
   useEffect(() => {
-    if (formData.kundemail && formData.kundemail !== mottagareEmail) {
+    if (formData.kundemail && !mottagareEmail) {
       setMottagareEmail(formData.kundemail);
     }
-  }, [formData.kundemail, mottagareEmail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.kundemail]);
 
   // =============================================================================
   // EMAIL FUNCTIONS

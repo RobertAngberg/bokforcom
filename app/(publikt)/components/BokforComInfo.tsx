@@ -19,7 +19,7 @@ export default function BokforComInfo() {
             <ProtectedEmail encoded="aW5mb0Bib2tmw7ZyLmNvbQ==" className="text-slate-300" />
           </p>
           <p>
-            <strong className="text-white">Telefon:</strong> 021-41 11 10
+            <strong className="text-white">Telefon:</strong> Tillgängligt för premiumkunder
           </p>
         </div>
       </div>

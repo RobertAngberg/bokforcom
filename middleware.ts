@@ -6,6 +6,7 @@ const publicRoutes = [
   "/login", // Login sida
   "/api/auth", // better-auth endpoints
   "/api/feedback", // Feedback API (om det ska vara publikt)
+  "/api/kontakt", // Kontaktformulär
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -52,7 +53,10 @@ export function middleware(request: NextRequest) {
 
   // 🛡️ CSRF SKYDD: För state-changing requests (men inte för auth)
   const isAuthRoute =
-    pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/start";
+    pathname.startsWith("/api/auth") ||
+    pathname === "/login" ||
+    pathname === "/start" ||
+    pathname === "/api/kontakt";
 
   if (["POST", "PUT", "DELETE", "PATCH"].includes(method) && !isAuthRoute) {
     // Kontrollera Origin header

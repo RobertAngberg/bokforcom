@@ -95,15 +95,6 @@ export default function FunktionerPage() {
               </div>
             </div>
 
-            <div className="mt-12 p-8 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl border border-blue-500/30">
-              <h3 className="text-2xl font-bold text-white mb-4">🇸🇪 Byggd för svenska företag</h3>
-              <p className="text-slate-300 leading-relaxed">
-                Vår app följer svenska bokföringsregler, använder BAS-kontoplanen och stödjer K2
-                samt K3-regelverken. Vi hanterar moms, ROT/RUT-avdrag, AGI-rapporter och allt annat
-                som svenska företag behöver.
-              </p>
-            </div>
-
             <div className="mt-12 text-center">
               <p className="text-2xl font-semibold text-white mb-6">
                 Redo att förenkla din bokföring?

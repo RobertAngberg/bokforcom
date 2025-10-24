@@ -46,9 +46,8 @@ export default function OmOssPage() {
                 <div className="text-3xl mb-3">🇸🇪</div>
                 <h3 className="text-xl font-bold text-white mb-2">100% Svenskt</h3>
                 <p className="text-slate-300">
-                  Byggd från grunden för svenska regler och företag. BAS-kontoplanen,
-                  K2/K3-regelverk, moms, ROT/RUT och AGI-rapporter - allt är anpassat för den
-                  svenska marknaden.
+                  Byggd från grunden för svenska regler och företag. BAS-kontoplanen, K2-regelverk,
+                  moms, ROT/RUT och AGI-rapporter - allt är anpassat för den svenska marknaden.
                 </p>
               </div>
 
@@ -77,25 +76,6 @@ export default function OmOssPage() {
                 <p className="text-slate-300">
                   Din data är krypterad och säkrad enligt branschstandard. Vi tar säkerhet på
                   största allvar och följer GDPR. Dina siffror är bara dina.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 p-8 rounded-xl border border-blue-500/30">
-              <h2 className="text-2xl font-bold text-white mb-4">💡 Vår filosofi</h2>
-              <div className="space-y-4 text-slate-300">
-                <p>
-                  <strong className="text-white">Enkelhet:</strong> Bokföring ska inte kräva en
-                  ekonomiexamen. Vi gör det komplicerade enkelt med förval, automatik och
-                  vägledning.
-                </p>
-                <p>
-                  <strong className="text-white">Transparens:</strong> Inga konstiga avgifter eller
-                  villkor med stövel. Du vet alltid vad du får och vad det kostar (ofta: ingenting).
-                </p>
-                <p>
-                  <strong className="text-white">Innovation:</strong> Vi utvecklar ständigt nya
-                  funktioner baserat på feedback från våra användare. Din röst räknas.
                 </p>
               </div>
             </div>

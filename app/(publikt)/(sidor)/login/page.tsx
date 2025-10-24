@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import SignUp from "./components/SignUp";
 import ForgotPassword from "./components/reset-password/ForgotPassword";
 import { useRememberMe } from "./utils/rememberMe";
@@ -121,7 +122,9 @@ export default function LoginPage() {
     >
       <div className="w-full max-w-md p-8 bg-slate-900/95 rounded-2xl shadow-2xl drop-shadow-2xl backdrop-blur-sm">
         <div className="mb-6 text-center">
-          <img src="/Logo.png" alt="Bokför.com" className="h-24 w-auto mx-auto mb-2" />
+          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+            <img src="/Logo.png" alt="Bokför.com" className="h-24 w-auto mx-auto mb-2" />
+          </Link>
           <h1 className="text-3xl font-bold text-white -mt-2">Välkommen!</h1>
         </div>
 

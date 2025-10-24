@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
 
     // HONEYPOT CHECK - om "website" är ifyllt är det en bot
     if (website) {
-      console.log("🚫 Spam detected via honeypot");
       return NextResponse.json({ error: "Spam detected" }, { status: 400 });
     }
 
