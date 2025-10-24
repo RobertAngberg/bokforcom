@@ -38,6 +38,7 @@ export default function KundUppgifter() {
             label: kund.kundnamn,
             value: kund.id.toString(),
           }))}
+          className="w-full md:max-w-[220px]"
         />
 
         {kundStatus === "loaded" && (
@@ -83,6 +84,45 @@ export default function KundUppgifter() {
 
       {kundStatus === "editing" && (
         <>
+          {/* Kundtyp radio buttons */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-slate-300 mb-3">Kundtyp</label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="kundtyp"
+                  value="företag"
+                  checked={!formData.personnummer || formData.personnummer === ""}
+                  onChange={() =>
+                    handleKundChange({
+                      target: { name: "personnummer", value: "" },
+                    } as React.ChangeEvent<HTMLInputElement>)
+                  }
+                  className="w-4 h-4 text-cyan-600 bg-slate-700 border-slate-500 focus:ring-cyan-500"
+                />
+                <span className="text-slate-200">Företag</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="kundtyp"
+                  value="privat"
+                  checked={formData.personnummer !== "" && formData.personnummer !== undefined}
+                  onChange={() => {
+                    if (!formData.personnummer) {
+                      handleKundChange({
+                        target: { name: "personnummer", value: " " },
+                      } as React.ChangeEvent<HTMLInputElement>);
+                    }
+                  }}
+                  className="w-4 h-4 text-cyan-600 bg-slate-700 border-slate-500 focus:ring-cyan-500"
+                />
+                <span className="text-slate-200">Privatkund</span>
+              </label>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextFalt
               label="Kundnamn"
@@ -90,31 +130,33 @@ export default function KundUppgifter() {
               value={formData.kundnamn}
               onChange={handleKundChange}
             />
-            <TextFalt
-              label="Organisationsnummer"
-              name="kundorganisationsnummer"
-              value={formData.kundorganisationsnummer}
-              onChange={handleKundChange}
-            />
-            <TextFalt
-              label="Personnummer"
-              name="personnummer"
-              value={formData.personnummer || ""}
-              onChange={handleKundChange}
-              placeholder="YYYYMMDD-XXXX (för ROT/RUT)"
-            />
-            <TextFalt
-              label="Kundnummer"
-              name="kundnummer"
-              value={formData.kundnummer}
-              onChange={handleKundChange}
-            />
-            <TextFalt
-              label="Momsnummer"
-              name="kundmomsnummer"
-              value={formData.kundmomsnummer}
-              onChange={handleKundChange}
-            />
+            {/* Visa bara för Företag */}
+            {(!formData.personnummer || formData.personnummer === "") && (
+              <>
+                <TextFalt
+                  label="Organisationsnummer"
+                  name="kundorganisationsnummer"
+                  value={formData.kundorganisationsnummer}
+                  onChange={handleKundChange}
+                />
+                <TextFalt
+                  label="Momsnummer"
+                  name="kundmomsnummer"
+                  value={formData.kundmomsnummer}
+                  onChange={handleKundChange}
+                />
+              </>
+            )}
+            {/* Visa bara för Privatkund */}
+            {formData.personnummer !== "" && formData.personnummer !== undefined && (
+              <TextFalt
+                label="Personnummer"
+                name="personnummer"
+                value={formData.personnummer || ""}
+                onChange={handleKundChange}
+                placeholder="YYYYMMDD-XXXX (för ROT/RUT)"
+              />
+            )}
             <TextFalt
               label="E‑post"
               name="kundemail"

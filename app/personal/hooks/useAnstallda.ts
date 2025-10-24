@@ -224,11 +224,14 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
         setPersonalHasChanges(false);
         setPersonalIsEditing(false);
         setPersonalErrorMessage(null);
+        showToast("Uppgifter uppdaterade!", "success");
       } else {
         setPersonalErrorMessage(result?.error || "Kunde inte spara");
+        showToast(result?.error || "Kunde inte spara", "error");
       }
     } catch {
       setPersonalErrorMessage("Ett fel uppstod vid sparande");
+      showToast("Ett fel uppstod vid sparande", "error");
     }
   };
 

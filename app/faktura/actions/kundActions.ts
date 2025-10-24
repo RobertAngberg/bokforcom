@@ -4,6 +4,41 @@ import { ensureSession } from "../../_utils/session";
 import { validateEmail } from "../../_utils/validationUtils";
 import type { KundListItem } from "../types/types";
 
+export async function genereraNastaKundnummer(): Promise<string> {
+  const { userId } = await ensureSession();
+
+  try {
+    const client = await pool.connect();
+    try {
+      // Hämta högsta kundnummer för denna användare
+      const res = await client.query(
+        `SELECT kundnummer FROM kunder 
+         WHERE "user_id" = $1 
+         AND kundnummer IS NOT NULL 
+         AND kundnummer != ''
+         ORDER BY CAST(kundnummer AS INTEGER) DESC 
+         LIMIT 1`,
+        [userId]
+      );
+
+      if (res.rows.length === 0) {
+        // Ingen kund finns, börja på 1
+        return "1";
+      }
+
+      // Öka högsta nummer med 1
+      const högstaNummer = parseInt(res.rows[0].kundnummer, 10);
+      return (högstaNummer + 1).toString();
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("❌ genereraNastaKundnummer error:", err);
+    // Om något går fel, returnera "1" som fallback
+    return "1";
+  }
+}
+
 export async function sparaNyKund(formData: FormData) {
   const { userId } = await ensureSession();
 
@@ -12,11 +47,13 @@ export async function sparaNyKund(formData: FormData) {
   const kundEmail = formData.get("kundemail")?.toString() || "";
   const orgNummer = formData.get("kundorgnummer")?.toString() || "";
   const personnummer = formData.get("personnummer")?.toString() || "";
-  const kundnummer = formData.get("kundnummer")?.toString() || "";
   const kundmomsnummer = formData.get("kundmomsnummer")?.toString() || "";
   const kundadress1 = formData.get("kundadress1")?.toString() || "";
   const kundpostnummer = formData.get("kundpostnummer")?.toString() || "";
   const kundstad = formData.get("kundstad")?.toString() || "";
+
+  // Generera nästa kundnummer automatiskt
+  const kundnummer = await genereraNastaKundnummer();
 
   // Validera obligatoriska fält
   if (!kundnamn || kundnamn.length < 2) {
@@ -80,12 +117,11 @@ export async function uppdateraKund(id: number, formData: FormData) {
       return { success: false, error: "Ogiltigt kund-ID" };
     }
 
-    // SÄKERHETSVALIDERING: Sanitera alla input-värden
+    // SÄKERHETSVALIDERING: Sanitera alla input-värden (ta bort kundnummer från formData)
     const kundnamn = formData.get("kundnamn")?.toString() || "";
     const kundEmail = formData.get("kundemail")?.toString() || "";
     const orgNummer = formData.get("kundorgnummer")?.toString() || "";
     const personnummer = formData.get("personnummer")?.toString() || "";
-    const kundnummer = formData.get("kundnummer")?.toString() || "";
     const kundmomsnummer = formData.get("kundmomsnummer")?.toString() || "";
     const kundadress1 = formData.get("kundadress1")?.toString() || "";
     const kundpostnummer = formData.get("kundpostnummer")?.toString() || "";
@@ -118,22 +154,21 @@ export async function uppdateraKund(id: number, formData: FormData) {
         return { success: false, error: "Kunden finns inte eller tillhör inte dig" };
       }
 
+      // Uppdatera kund (kundnummer ändras INTE)
       await client.query(
         `
         UPDATE kunder SET
           kundnamn = $1,
-          kundnummer = $2,
-          kundorgnummer = $3,
-          kundmomsnummer = $4,
-          kundadress1 = $5,
-          kundpostnummer = $6,
-          kundstad = $7,
-          kundemail = $8
-        WHERE id = $9 AND "user_id" = $10
+          kundorgnummer = $2,
+          kundmomsnummer = $3,
+          kundadress1 = $4,
+          kundpostnummer = $5,
+          kundstad = $6,
+          kundemail = $7
+        WHERE id = $8 AND "user_id" = $9
         `,
         [
           kundnamn,
-          kundnummer,
           orgNummer,
           kundmomsnummer,
           kundadress1,

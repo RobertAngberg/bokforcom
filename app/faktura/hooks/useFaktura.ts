@@ -926,7 +926,6 @@ export function useFaktura() {
       const fd = new FormData();
       fd.append("kundnamn", sanitizedData.kundnamn);
       fd.append("kundorgnummer", sanitizedData.kundorganisationsnummer);
-      fd.append("kundnummer", sanitizedData.kundnummer);
       fd.append("kundmomsnummer", sanitizedData.kundmomsnummer);
       fd.append("kundadress1", sanitizedData.kundadress);
       fd.append("kundpostnummer", sanitizedData.kundpostnummer);

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { dateToYyyyMmDd } from "../../_utils/datum";
 import type { EditData, AnställdData, AnställdListItem } from "../types/types";
 import { sparaAnstalld } from "../actions/anstalldaActions";
+import { showToast } from "../../_components/Toast";
 
 const initialEditData: EditData = {
   anställningstyp: "",
@@ -227,11 +228,14 @@ export function useKontrakt(initial?: AnställdListItem) {
         setKontraktHasChanges(false);
         setKontraktIsEditing(false);
         setKontraktError(null);
+        showToast("Uppgifter uppdaterade!", "success");
       } else {
         setKontraktError(result?.error || "Kunde inte spara");
+        showToast(result?.error || "Kunde inte spara", "error");
       }
     } catch {
       setKontraktError("Ett fel uppstod vid sparande");
+      showToast("Ett fel uppstod vid sparande", "error");
     }
   };
 

@@ -63,11 +63,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-cyan-950">
-        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 md:justify-center">
-          <Link href="/" className="text-lg font-semibold text-white md:hidden">
-            BokförCom
-          </Link>
-
+        <div className="relative mx-auto flex h-20 w-full max-w-6xl items-center justify-end px-4 md:justify-center">
           <nav className="relative hidden gap-3 md:flex">
             <div
               className="absolute h-10 rounded-full bg-cyan-800/60 transition-all duration-300 ease-out"

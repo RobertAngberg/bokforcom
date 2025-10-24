@@ -89,8 +89,8 @@ export default function FunktionerPage() {
                 <div className="text-3xl mb-3">📅</div>
                 <h3 className="text-xl font-bold text-white mb-2">Automatiskt bokslut</h3>
                 <p className="text-slate-300">
-                  Guided bokslutswizard som hjälper dig stänga räkenskapsåret enligt K2-reglerna.
-                  Genererar automatiskt alla nödvändiga verifikationer.
+                  Systemet hjälper dig stänga räkenskapsåret enligt reglerna. Genererar automatiskt
+                  alla nödvändiga verifikationer.
                 </p>
               </div>
             </div>

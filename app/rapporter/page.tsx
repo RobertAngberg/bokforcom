@@ -74,7 +74,7 @@ export default function Page() {
         </>
       ) : (
         <>
-          <TillbakaPil onClick={() => setActiveRapport("overview")}>Tillbaka</TillbakaPil>
+          <TillbakaPil onClick={() => setActiveRapport("overview")} />
           {renderRapport()}
         </>
       )}

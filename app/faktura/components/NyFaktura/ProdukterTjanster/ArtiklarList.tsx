@@ -48,44 +48,31 @@ export default function ArtiklarList() {
   if (artiklar.length === 0) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+    <div className="mt-6">
       {/* Header för tillagda artiklar */}
-      <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
-        <h3 className="text-white font-medium">Tillagda artiklar ({artiklar.length})</h3>
+      <div className="mb-4">
+        <h3 className="text-white font-bold text-center text-lg">
+          Tillagda artiklar ({artiklar.length})
+        </h3>
       </div>
 
-      {/* Artikellista */}
-      <div className="divide-y divide-slate-600">
+      {/* Artikellista - Grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {artiklar.map((a, idx) => {
           const isRotRutMaterial = typeof a.rotRutMaterial === "boolean" ? a.rotRutMaterial : false;
 
           return (
             <div
               key={idx}
-              className={`flex justify-between items-center p-4 hover:bg-slate-700 transition-colors ${
+              className={`relative bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg p-3 hover:bg-slate-700 hover:border-slate-500 transition-all ${
                 blinkIndex === idx ? "background-pulse" : ""
               }`}
             >
-              <div
-                className="flex-1 cursor-pointer"
-                onClick={() => {
-                  handleShowArtikelDetaljer(a);
-                }}
-                title="Klicka för att visa detaljer"
-              >
-                <div className="text-white font-semibold flex items-center">
-                  <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
-                  {a.beskrivning}
-                </div>
-                <div className="text-gray-400 text-sm">
-                  {a.antal} × {a.prisPerEnhet} {a.valuta} ({a.moms}% moms)
-                  {isRotRutMaterial ? " — ROT/RUT-material" : ""}
-                </div>
-              </div>
-              <div className="flex gap-2">
+              {/* Checkmark badge */}
+              <div className="absolute top-2 right-2 flex gap-1">
                 <button
                   onClick={() => handleEdit(a, idx)}
-                  className="text-blue-400 hover:text-blue-600 p-1"
+                  className="text-blue-400 hover:text-blue-300 hover:bg-slate-600 p-1.5 rounded transition-colors"
                   title="Redigera artikel"
                 >
                   ✏️
@@ -94,11 +81,54 @@ export default function ArtiklarList() {
                   onClick={() => {
                     handleRemove(idx, a.beskrivning);
                   }}
-                  className="text-red-400 hover:text-red-600 p-1"
+                  className="text-red-400 hover:text-red-300 hover:bg-slate-600 p-1.5 rounded transition-colors"
                   title="Ta bort artikel"
                 >
                   🗑️
                 </button>
+              </div>
+
+              <div
+                className="cursor-pointer pr-16"
+                onClick={() => {
+                  handleShowArtikelDetaljer(a);
+                }}
+                title="Klicka för att visa detaljer"
+              >
+                {/* Beskrivning */}
+                <div className="text-white font-semibold mb-2 flex items-start">
+                  <span className="text-green-400 mr-2 flex-shrink-0 mt-0.5">✓</span>
+                  <span className="line-clamp-2">{a.beskrivning}</span>
+                </div>
+
+                {/* Info */}
+                <div className="text-sm space-y-1">
+                  <div className="text-slate-300">
+                    <span className="text-slate-400">Antal:</span> {a.antal} •{" "}
+                    <span className="text-slate-400">Pris:</span> {a.prisPerEnhet} {a.valuta}
+                  </div>
+                  <div className="text-slate-300">
+                    <span className="text-slate-400">Exkl. moms:</span>{" "}
+                    {(a.antal * a.prisPerEnhet).toFixed(2)} {a.valuta}
+                  </div>
+                  <div className="text-slate-300">
+                    <span className="text-slate-400">Inkl. moms ({a.moms}%):</span>{" "}
+                    {(a.antal * a.prisPerEnhet * (1 + a.moms / 100)).toFixed(2)} {a.valuta}
+                  </div>
+                  {isRotRutMaterial && (
+                    <div className="text-purple-400 text-xs font-semibold mt-1">
+                      🏠 ROT/RUT-material
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="mt-2 pt-2 border-t border-slate-600">
+                  <div className="text-white font-bold">
+                    {(a.antal * a.prisPerEnhet * (1 + a.moms / 100)).toFixed(2)} {a.valuta}
+                  </div>
+                  <div className="text-slate-400 text-xs">inkl. moms</div>
+                </div>
               </div>
             </div>
           );

@@ -986,6 +986,11 @@ export interface LönespecData {
   agi_genererad?: boolean;
   utbetalningsdatum?: string | Date | null;
   extrarader?: ExtraradData[]; // ✅ Extrarader laddas från databasen
+  // JOINade fält från anställda-tabellen (från hamtaLonespecifikationerForLonekorning)
+  förnamn?: string;
+  efternamn?: string;
+  mail?: string;
+  epost?: string;
 }
 
 export interface BeräknadeVärden {

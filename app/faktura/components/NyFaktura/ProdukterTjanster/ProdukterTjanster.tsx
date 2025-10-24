@@ -7,6 +7,7 @@ import FavoritArtiklarList from "./FavoritArtiklarList";
 import RotRutForm from "./RotRutForm";
 import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
+import AnimeradFlik from "../../../../_components/AnimeradFlik";
 import { showToast } from "../../../../_components/Toast";
 import { dateToYyyyMmDd } from "../../../../_utils/datum";
 
@@ -70,14 +71,6 @@ export default function ProdukterTjanster() {
     läggTillArtikel();
   };
 
-  const handleToggleArtikelForm = () => {
-    if (!visaArtikelForm) {
-      avbrytRedigering();
-      setVisaRotRutForm(false);
-    }
-    setVisaArtikelForm(!visaArtikelForm);
-  };
-
   const handleSaveAsFavorite = () => {
     sparaArtikelSomFavorit();
   };
@@ -101,108 +94,83 @@ export default function ProdukterTjanster() {
 
       {/* Knapp för att visa/dölja artikelformuläret */}
       {redigerarIndex === null && (
-        <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-          {/* Knapp som header */}
-          <div className="border-b border-slate-600">
-            {visaArtikelForm ? (
-              <Knapp
-                onClick={handleToggleArtikelForm}
-                text="❌ Avsluta lägg till ny artikel"
-                className="w-full rounded-none border-none"
-              />
-            ) : (
-              <Knapp
-                onClick={handleToggleArtikelForm}
-                text="✚ Lägg till ny artikel"
-                className="w-full rounded-none border-none"
-              />
-            )}
+        <AnimeradFlik title="Lägg till ny artikel" icon="✚">
+          <ArtikelForm
+            beskrivning={beskrivning}
+            antal={parseFloat(antal) || 0}
+            prisPerEnhet={parseFloat(prisPerEnhet) || 0}
+            moms={parseFloat(moms) || 0}
+            typ={typ}
+            onChangeBeskrivning={setBeskrivning}
+            onChangeAntal={setAntal}
+            onChangePrisPerEnhet={setPrisPerEnhet}
+            onChangeMoms={setMoms}
+            onChangeTyp={setTyp}
+            disabled={favoritArtikelVald}
+          />
+
+          {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
+          <div className="mb-4 mt-4">
+            <Knapp
+              onClick={() => {
+                if (typ === "vara") {
+                  showToast("ROT/RUT-avdrag är endast tillåtet för tjänster, inte varor", "error");
+                  return;
+                }
+
+                const newValue = !visaRotRutForm;
+                setVisaRotRutForm(newValue);
+                if (newValue) {
+                  setTyp("tjänst");
+                  setRotRutArbete(true);
+                  setRotRutMaterial(false);
+                  // Aktivera ROT/RUT i formData så att formuläret visas
+                  updateFormField("rotRutAktiverat", true);
+                } else {
+                  // Avaktivera ROT/RUT när formuläret stängs
+                  updateFormField("rotRutAktiverat", false);
+                }
+              }}
+              text={visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Lägg till ROT/RUT-avdrag"}
+              disabled={typ === "vara"}
+              className={`w-full ${typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}`}
+            />
           </div>
 
-          {/* Formulär som expanderar nedåt */}
-          {visaArtikelForm && (
-            <div className="p-4 space-y-4">
-              <ArtikelForm
-                beskrivning={beskrivning}
-                antal={parseFloat(antal) || 0}
-                prisPerEnhet={parseFloat(prisPerEnhet) || 0}
-                moms={parseFloat(moms) || 0}
-                typ={typ}
-                onChangeBeskrivning={setBeskrivning}
-                onChangeAntal={setAntal}
-                onChangePrisPerEnhet={setPrisPerEnhet}
-                onChangeMoms={setMoms}
-                onChangeTyp={setTyp}
-                disabled={favoritArtikelVald}
-              />
-
-              {/* ROT/RUT-knapp - alltid synlig men disabled för varor */}
-              <div className="mb-4">
-                <Knapp
-                  onClick={() => {
-                    if (typ === "vara") {
-                      showToast(
-                        "ROT/RUT-avdrag är endast tillåtet för tjänster, inte varor",
-                        "error"
-                      );
-                      return;
-                    }
-
-                    const newValue = !visaRotRutForm;
-                    setVisaRotRutForm(newValue);
-                    if (newValue) {
-                      setTyp("tjänst");
-                      setRotRutArbete(true);
-                      setRotRutMaterial(false);
-                      // Aktivera ROT/RUT i formData så att formuläret visas
-                      updateFormField("rotRutAktiverat", true);
-                    } else {
-                      // Avaktivera ROT/RUT när formuläret stängs
-                      updateFormField("rotRutAktiverat", false);
-                    }
-                  }}
-                  text={
-                    visaRotRutForm ? "❌ Avaktivera ROT/RUT-avdrag" : "🏠 Lägg till ROT/RUT-avdrag"
-                  }
-                  disabled={typ === "vara"}
-                  className={typ === "vara" ? "opacity-50 cursor-not-allowed" : ""}
-                />
-              </div>
-
-              {/* ROT/RUT formulär */}
-              {visaRotRutForm && (
-                <div className="mt-4">
-                  <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
-                </div>
-              )}
-
-              {/* Spara som favorit knapp */}
-              <div className="mb-4">
-                <Knapp
-                  onClick={handleSaveAsFavorite}
-                  text="📌 Lägg till som favoritartikel"
-                  disabled={
-                    !beskrivning.trim() ||
-                    !antal ||
-                    !prisPerEnhet ||
-                    Number(prisPerEnhet) <= 0 ||
-                    favoritArtikelVald ||
-                    artikelSparadSomFavorit
-                  }
-                />
-              </div>
-
-              {/* Lägg till artikel knapp */}
-              <div className="mt-3 flex justify-end">
-                <Knapp
-                  onClick={handleAdd}
-                  text="✚ Lägg till artikel"
-                  disabled={addButtonDisabled}
-                />
-              </div>
+          {/* ROT/RUT formulär */}
+          {visaRotRutForm && (
+            <div className="mt-4">
+              <RotRutForm showCheckbox={false} disabled={favoritArtikelVald} />
             </div>
           )}
-        </div>
+
+          {/* Spara som favorit knapp */}
+          <div className="mb-4">
+            <Knapp
+              onClick={handleSaveAsFavorite}
+              text="📌 Lägg till som favoritartikel"
+              disabled={
+                !beskrivning.trim() ||
+                !antal ||
+                !prisPerEnhet ||
+                Number(prisPerEnhet) <= 0 ||
+                favoritArtikelVald ||
+                artikelSparadSomFavorit
+              }
+              className="w-full"
+            />
+          </div>
+
+          {/* Lägg till artikel knapp */}
+          <div className="mt-3 flex justify-end">
+            <Knapp
+              onClick={handleAdd}
+              text="✚ Lägg till artikel"
+              disabled={addButtonDisabled}
+              className="w-full"
+            />
+          </div>
+        </AnimeradFlik>
       )}
 
       {/* Artikellista - döljs under redigering */}
@@ -269,9 +237,6 @@ export default function ProdukterTjanster() {
       >
         {valtArtikel && (
           <div className="space-y-4">
-            <div className="text-sm text-gray-400 mb-4 text-center">
-              Detta är bara en översikt. Om du vill ändra något måste du skapa en ny artikel.
-            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Beskrivning</label>

@@ -44,27 +44,27 @@ export default function NyLonekorningModal({
         {steg === "datum" && (
           <>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2 text-center">
                 Utbetalningsdatum
               </label>
               <DatePicker
                 selected={utbetalningsdatum}
                 onChange={(date) => setUtbetalningsdatum(date)}
                 dateFormat="yyyy-MM-dd"
-                className="bg-slate-800 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700"
+                className="bg-slate-800 text-white px-4 py-3 rounded-lg w-full border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 text-center"
+                wrapperClassName="w-full block"
                 disabled={loading}
                 placeholderText="Välj utbetalningsdatum"
               />
             </div>
 
             <div className="flex gap-3 pt-4">
-              <button
+              <Knapp
+                text="Avbryt"
                 onClick={handleClose}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 disabled:opacity-50"
-              >
-                Avbryt
-              </button>
+                className="flex-1 bg-slate-600 hover:bg-slate-500"
+              />
               <Knapp
                 text="Nästa"
                 onClick={handleCreate}
@@ -78,8 +78,8 @@ export default function NyLonekorningModal({
         {steg === "anställda" && (
           <>
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Välj anställda</h3>
-              <p className="text-slate-300 text-sm mb-4">
+              <h3 className="text-lg font-semibold text-white mb-4 text-center">Välj anställda</h3>
+              <p className="text-slate-300 text-sm mb-4 text-center">
                 Välj vilka anställda som ska få lönespecifikationer för denna lönekörning.
               </p>
 

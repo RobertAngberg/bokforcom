@@ -66,7 +66,21 @@ export default function LonespecLista({
         {valdaSpecar.map((spec) => {
           // Konvertera alltid till nummer för säker jämförelse
           const anställdId = Number(spec.anställd_id);
-          const anstalld = anstallda.find((a) => a.id === anställdId);
+
+          // Försök hitta i anstallda-listan först
+          let anstalld = anstallda.find((a) => a.id === anställdId);
+
+          // Om inte hittad, skapa från lönespec-data (JOINad från databasen)
+          if (!anstalld && spec.förnamn && spec.efternamn) {
+            anstalld = {
+              id: anställdId,
+              namn: `${spec.förnamn} ${spec.efternamn}`.trim(),
+              förnamn: spec.förnamn,
+              efternamn: spec.efternamn,
+              mail: spec.mail || spec.epost || "",
+              epost: spec.mail || spec.epost || "",
+            };
+          }
 
           const utlagg = anstalld ? utlaggMap[anstalld.id] || [] : [];
 

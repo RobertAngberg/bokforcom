@@ -104,6 +104,7 @@ export async function sparaNyAnstalldFormAction(
     const result = await sparaAnstalld(data);
 
     if (result.success) {
+      revalidatePath("/personal");
       return { success: true, message: "Ny anställd sparad!" };
     } else {
       return { success: false, message: result.message || "Fel vid sparande" };

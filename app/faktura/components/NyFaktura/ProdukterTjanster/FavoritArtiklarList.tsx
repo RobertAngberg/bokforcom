@@ -1,14 +1,12 @@
-import Knapp from "../../../../_components/Knapp";
 import Modal from "../../../../_components/Modal";
+import AnimeradFlik from "../../../../_components/AnimeradFlik";
 import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
 import { Artikel } from "../../../types/types";
 
 export default function FavoritArtiklarList() {
   const {
     favoritArtiklar,
-    showFavoritArtiklar,
     ursprungligFavoritId,
-    setShowFavoritArtiklar,
     taBortFavoritArtikel,
     laddaFavoritArtikel,
     showDeleteFavoritModal,
@@ -36,51 +34,39 @@ export default function FavoritArtiklarList() {
 
   if (!favoritArtiklar || favoritArtiklar.length === 0) return null;
   return (
-    <div className="bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-      {/* Knapp som header */}
-      <div className="border-b border-slate-600">
-        <Knapp
-          onClick={() => setShowFavoritArtiklar(!showFavoritArtiklar)}
-          text={showFavoritArtiklar ? "🔼 Dölj sparade artiklar" : "📂 Ladda in sparade artiklar"}
-          className="w-full rounded-none border-none"
-        />
-      </div>
-
-      {/* Artiklar som expanderar nedåt */}
-      {showFavoritArtiklar && (
-        <div className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoritArtiklar.map((a) => (
-              <div
-                key={a.id}
-                className="bg-slate-700 p-3 rounded border border-slate-500 flex flex-col justify-between relative transition-colors hover:bg-slate-600 cursor-pointer"
+    <>
+      <AnimeradFlik title="Ladda in sparade artiklar" icon="📂">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {favoritArtiklar.map((a) => (
+            <div
+              key={a.id}
+              className="bg-slate-700/50 p-3 rounded-lg border-2 border-dashed border-slate-600 flex flex-col justify-between relative transition-colors hover:bg-slate-700 hover:border-slate-500 cursor-pointer"
+            >
+              <button
+                onClick={() => a.id && handleDeleteFavorit(a.id)}
+                className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                title="Ta bort favoritartikel"
+                disabled={!a.id}
               >
-                <button
-                  onClick={() => a.id && handleDeleteFavorit(a.id)}
-                  className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-                  title="Ta bort favoritartikel"
-                  disabled={!a.id}
-                >
-                  🗑️
-                </button>
-                <div onClick={() => handleSelectFavorit(a as Artikel)} className="flex-1">
-                  <div className="text-white font-semibold">
-                    📌 {a.beskrivning}
-                    {ursprungligFavoritId === a.id && (
-                      <span className="text-green-400 ml-2">— Inladdad</span>
-                    )}
-                  </div>
-                  <div className="text-gray-400 text-sm mt-1">
-                    {a.antal} × {a.prisPerEnhet} {a.valuta} ={" "}
-                    {(a.antal * a.prisPerEnhet).toLocaleString("sv-SE")} {a.valuta}
-                  </div>
-                  <div className="text-gray-400 text-sm">({a.moms}% moms)</div>
+                🗑️
+              </button>
+              <div onClick={() => handleSelectFavorit(a as Artikel)} className="flex-1">
+                <div className="text-white font-semibold">
+                  📌 {a.beskrivning}
+                  {ursprungligFavoritId === a.id && (
+                    <span className="text-green-400 ml-2">— Inladdad</span>
+                  )}
                 </div>
+                <div className="text-gray-400 text-sm mt-1">
+                  {a.antal} × {a.prisPerEnhet} {a.valuta} ={" "}
+                  {(a.antal * a.prisPerEnhet).toLocaleString("sv-SE")} {a.valuta}
+                </div>
+                <div className="text-gray-400 text-sm">({a.moms}% moms)</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      )}
+      </AnimeradFlik>
 
       <Modal
         isOpen={showDeleteFavoritModal}
@@ -113,6 +99,6 @@ export default function FavoritArtiklarList() {
           </div>
         </div>
       </Modal>
-    </div>
+    </>
   );
 }

@@ -13,7 +13,7 @@ export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: Wiz
           return (
             <div
               key={step.id}
-              className={`flex items-center justify-between rounded-lg p-4 transition-all duration-200 ${
+              className={`flex flex-col md:flex-row md:items-center md:justify-between rounded-lg p-4 transition-all duration-200 gap-3 ${
                 isCompleted
                   ? "bg-slate-800 border border-green-600/30"
                   : isDisabled
@@ -45,18 +45,7 @@ export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: Wiz
                       {step.title}
                     </div>
 
-                    {/* Markera färdig-knapp */}
-                    {!isCompleted && !isDisabled && (
-                      <button
-                        onClick={() => lönekörningId && onMarkeraFärdig?.(lönekörningId)}
-                        disabled={!lönekörningId || !onMarkeraFärdig}
-                        className="text-xs bg-cyan-700 text-white px-2 py-1 rounded hover:bg-cyan-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Markera färdig
-                      </button>
-                    )}
-
-                    {/* Status badges - bara för completed */}
+                    {/* Status badge - bara för completed */}
                     {isCompleted && (
                       <span className="text-xs bg-slate-700 text-green-400 px-2 py-1 rounded">
                         ✅ Klar
@@ -80,8 +69,8 @@ export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: Wiz
                 </div>
               </div>
 
-              {/* Höger sida: Knapp */}
-              <div>
+              {/* Höger sida: Knappar */}
+              <div className="flex gap-2 flex-wrap md:flex-nowrap">
                 <Knapp
                   text={step.buttonText}
                   onClick={isDisabled ? undefined : step.onClick}
@@ -94,6 +83,17 @@ export default function Wizard({ steps, lönekörningId, onMarkeraFärdig }: Wiz
                         : "bg-blue-600 hover:bg-blue-700"
                   }
                 />
+
+                {/* Markera färdig-knapp */}
+                {!isCompleted && !isDisabled && (
+                  <button
+                    onClick={() => lönekörningId && onMarkeraFärdig?.(lönekörningId)}
+                    disabled={!lönekörningId || !onMarkeraFärdig}
+                    className="font-medium bg-cyan-700 text-white px-4 py-2 rounded hover:bg-cyan-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    ✅ Markera färdig
+                  </button>
+                )}
               </div>
             </div>
           );
