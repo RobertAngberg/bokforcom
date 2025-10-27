@@ -11,6 +11,7 @@ export const useMomsrapport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [år, setÅr] = useState("2025");
+  const [månad, setMånad] = useState("all");
   const [activeId, setActiveId] = useState<string | number | null>(null);
 
   // Export state
@@ -20,7 +21,7 @@ export const useMomsrapport = () => {
   const [exportMessage, setExportMessage] = useState<string>("");
 
   // Constants
-  const årLista = ["2023", "2024", "2025"];
+  const årLista = ["2025"];
 
   // Data fetching effect
   useEffect(() => {
@@ -30,7 +31,7 @@ export const useMomsrapport = () => {
         setError(""); // Rensa tidigare fel
 
         const [momsData, profilData] = await Promise.all([
-          getMomsrapport(år),
+          getMomsrapport(år, månad),
           fetchForetagsprofil(),
         ]);
 
@@ -61,7 +62,7 @@ export const useMomsrapport = () => {
     };
 
     loadData();
-  }, [år]); // Re-load when year changes
+  }, [år, månad]); // Re-load when year or month changes
 
   // Helper functions
   const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
@@ -285,6 +286,9 @@ export const useMomsrapport = () => {
     setExportMessage,
     // Constants
     årLista,
+    // Filter state
+    månad,
+    setMånad,
     // Helper functions
     get,
     sum,

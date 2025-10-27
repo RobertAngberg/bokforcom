@@ -2,27 +2,13 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { getPeriodDateRange } from "../utils/periodOptions";
 
-export async function getMomsrapport(year: string, kvartal?: string) {
+export async function getMomsrapport(year: string, period?: string) {
   const { userId } = await ensureSession();
 
   /* ---- datumintervall ---- */
-  let from = `${year}-01-01`;
-  let to = `${year}-12-31`;
-
-  if (kvartal === "Q1") {
-    from = `${year}-01-01`;
-    to = `${year}-03-31`;
-  } else if (kvartal === "Q2") {
-    from = `${year}-04-01`;
-    to = `${year}-06-30`;
-  } else if (kvartal === "Q3") {
-    from = `${year}-07-01`;
-    to = `${year}-09-30`;
-  } else if (kvartal === "Q4") {
-    from = `${year}-10-01`;
-    to = `${year}-12-31`;
-  }
+  const { from, to } = getPeriodDateRange(year, period || "all");
 
   /* ---- hämta transaktioner ---- */
   const { rows } = await pool.query(

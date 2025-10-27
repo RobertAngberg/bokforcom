@@ -9,6 +9,7 @@ import Modal from "../../../_components/Modal";
 import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
 import { useBalansrapport } from "../../hooks/useBalansrapport";
 import { Konto } from "../../types/types";
+import { PERIOD_OPTIONS } from "../../utils/periodOptions";
 
 // Typ för tabellrader
 interface TabellRad {
@@ -389,13 +390,7 @@ export default function Balansrapport() {
               <Dropdown
                 value={selectedYear}
                 onChange={setSelectedYear}
-                options={Array.from({ length: 10 }, (_, i) => {
-                  const year = new Date().getFullYear() - i;
-                  return {
-                    label: year.toString(),
-                    value: year.toString(),
-                  };
-                })}
+                options={[{ label: "2025", value: "2025" }]}
                 className="w-full md:w-32"
               />
             </div>
@@ -406,21 +401,7 @@ export default function Balansrapport() {
                 value={selectedMonth}
                 onChange={setSelectedMonth}
                 className="w-full md:w-auto md:min-w-[160px] md:max-w-[400px]"
-                options={[
-                  { label: "Alla månader", value: "all" },
-                  { label: "Januari", value: "01" },
-                  { label: "Februari", value: "02" },
-                  { label: "Mars", value: "03" },
-                  { label: "April", value: "04" },
-                  { label: "Maj", value: "05" },
-                  { label: "Juni", value: "06" },
-                  { label: "Juli", value: "07" },
-                  { label: "Augusti", value: "08" },
-                  { label: "September", value: "09" },
-                  { label: "Oktober", value: "10" },
-                  { label: "November", value: "11" },
-                  { label: "December", value: "12" },
-                ]}
+                options={PERIOD_OPTIONS}
               />
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
+import { getPeriodDateRange } from "../utils/periodOptions";
 import type { TransaktionData } from "../types/types";
 
 export async function fetchHuvudbok() {
@@ -201,15 +202,28 @@ export async function fetchKontoTransaktioner(kontonummer: string) {
   }
 }
 
-export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
+export async function fetchHuvudbokMedAllaTransaktioner(year?: string, period?: string) {
   const { userId } = await ensureSession();
 
   try {
     const client = await pool.connect();
 
-    // Lägg till WHERE-klausul för år om det är specificerat
-    const yearFilter = year ? `AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2` : "";
-    const queryParams = year ? [userId, parseInt(year)] : [userId];
+    // Bygg WHERE-klausul för datumfiltrering
+    let dateFilter = "";
+    const queryParams: (string | number)[] = [userId];
+
+    if (year) {
+      if (period && period !== "alla" && period !== "all") {
+        // Specifik period (månad eller kvartal)
+        const { from, to } = getPeriodDateRange(year, period);
+        dateFilter = `AND t.transaktionsdatum BETWEEN $2 AND $3`;
+        queryParams.push(from, to);
+      } else {
+        // Helt år
+        dateFilter = `AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2`;
+        queryParams.push(parseInt(year));
+      }
+    }
 
     // Hämta alla transaktioner grupperade per konto, inklusive ingående balans
     const fullQuery = `
@@ -236,7 +250,7 @@ export async function fetchHuvudbokMedAllaTransaktioner(year?: string) {
         FROM transaktioner t
         JOIN transaktionsposter tp ON tp.transaktions_id = t.id
         JOIN konton k ON k.id = tp.konto_id
-        WHERE t."user_id" = $1 ${yearFilter}
+        WHERE t."user_id" = $1 ${dateFilter}
         ORDER BY k.kontonummer::int, sort_priority, t.transaktionsdatum, t.id
       ),
       konto_summary AS (

@@ -2,12 +2,34 @@
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
 import { fetchTransactionWithEntries } from "../../_utils/transactions";
+import { getPeriodDateRange } from "../utils/periodOptions";
 import type { ResultatKonto, ResultatTransaktion } from "../types/types";
 
-export async function hamtaResultatrapport() {
+export async function hamtaResultatrapport(year?: string, period?: string) {
   const { userId } = await ensureSession();
 
   try {
+    // Bygg WHERE-klausul för datumfiltrering
+    let dateFilter = "";
+    const params: (string | number)[] = [userId];
+
+    if (year) {
+      if (period && period !== "all") {
+        // Specifik period (månad eller kvartal)
+        const { from, to } = getPeriodDateRange(year, period);
+        dateFilter = `AND t.transaktionsdatum BETWEEN $2 AND $3`;
+        params.push(from, to);
+      } else {
+        // Helt år
+        dateFilter = `AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2`;
+        params.push(parseInt(year));
+      }
+    } else {
+      // Ingen filtrering - använd nuvarande och föregående år (legacy)
+      dateFilter = `AND EXTRACT(YEAR FROM t.transaktionsdatum) IN ($2, $3)`;
+      params.push(new Date().getFullYear(), new Date().getFullYear() - 1);
+    }
+
     const result = await pool.query(
       `
     SELECT
@@ -31,11 +53,11 @@ export async function hamtaResultatrapport() {
     JOIN transaktionsposter tp ON tp.transaktions_id = t.id
     JOIN konton k ON k.id = tp.konto_id
     WHERE t."user_id" = $1 
-      AND EXTRACT(YEAR FROM t.transaktionsdatum) IN ($2, $3)
+      ${dateFilter}
     GROUP BY k.kontonummer, k.beskrivning, k.kontoklass, k.kategori, år
     ORDER BY år DESC, k.kontonummer::int
     `,
-      [userId, new Date().getFullYear(), new Date().getFullYear() - 1]
+      params
     );
 
     const rows = result.rows;

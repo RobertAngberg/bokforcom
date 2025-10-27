@@ -17,7 +17,7 @@ export function useBalansrapport() {
   const [loading, setLoading] = useState(true);
 
   // Step 2 & 3: Filter state
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   // Step 4: Export state

@@ -4,8 +4,9 @@ import { hamtaResultatrapport, fetchForetagsprofil } from "../actions/resultatra
 import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/types";
 
 export const useResultatrapport = () => {
-  // Filter state
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  // Filter state - default till 2025
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   // Grundläggande state
   const [initialData, setInitialData] = useState<ResultatData | null>(null);
@@ -35,7 +36,7 @@ export const useResultatrapport = () => {
       try {
         setLoading(true);
         const [resultData, profilData] = await Promise.all([
-          hamtaResultatrapport(), // TODO: Uppdatera för att ta selectedYear som parameter
+          hamtaResultatrapport(selectedYear, selectedMonth),
           fetchForetagsprofil(),
         ]);
 
@@ -75,7 +76,7 @@ export const useResultatrapport = () => {
     };
 
     loadData();
-  }, [selectedYear]); // Lägg till selectedYear som dependency
+  }, [selectedYear, selectedMonth]); // Re-load when year or month changes
 
   // Modal functions
   const handleShowVerifikationer = async (kontonummer: string) => {
@@ -125,9 +126,10 @@ export const useResultatrapport = () => {
     finansiellaKostnader: [],
   };
 
-  const years = [...data.ar].sort((a, b) => parseInt(b) - parseInt(a));
-  const currentYear = years[0] || new Date().getFullYear().toString();
-  const previousYear = years[1] || (parseInt(currentYear) - 1).toString();
+  // Filtrera år till endast 2025
+  const years = ["2025"];
+  const currentYear = "2025";
+  const previousYear = "2024";
 
   const intaktsSumRaw = summering(data.intakter);
   const intaktsSum = Object.keys(intaktsSumRaw).reduce(
@@ -258,6 +260,8 @@ export const useResultatrapport = () => {
     // Filter state
     selectedYear,
     setSelectedYear,
+    selectedMonth,
+    setSelectedMonth,
     // Data state
     initialData,
     setInitialData,

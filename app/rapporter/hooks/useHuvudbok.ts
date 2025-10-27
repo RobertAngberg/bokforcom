@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchHuvudbokMedAllaTransaktioner, fetchForetagsprofil } from "../actions/huvudbokActions";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
 import { HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
+import { PERIOD_OPTIONS } from "../utils/periodOptions";
 
 export function useHuvudbok() {
   // State
@@ -10,10 +11,9 @@ export function useHuvudbok() {
   const [organisationsnummer, setOrganisationsnummer] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Filter state
-  const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
-  const [selectedMonth, setSelectedMonth] = useState("alla");
+  // Filter state - endast 2025
+  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedMonth, setSelectedMonth] = useState("all");
 
   // Modal state
   const [showVerifikatModal, setShowVerifikatModal] = useState(false);
@@ -27,7 +27,7 @@ export function useHuvudbok() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner(selectedYear);
+        const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner(selectedYear, selectedMonth);
         setHuvudboksdata(huvudbokResult);
 
         // Försök ladda företagsprofil
@@ -53,34 +53,17 @@ export function useHuvudbok() {
     };
 
     loadData();
-  }, [selectedYear]); // Lägg till selectedYear som dependency
+  }, [selectedYear, selectedMonth]); // Re-load when year or month changes
 
-  // Year options från nu till 2020 (högst till lägst)
-  const yearOptions = Array.from({ length: currentYear - 2019 }, (_, i) => {
-    const year = currentYear - i;
-    return { value: year.toString(), label: year.toString() };
-  });
+  // Year options - endast 2025
+  const yearOptions = [{ value: "2025", label: "2025" }];
 
-  // Month options
-  const monthOptions = [
-    { value: "alla", label: "Alla månader" },
-    { value: "01", label: "Januari" },
-    { value: "02", label: "Februari" },
-    { value: "03", label: "Mars" },
-    { value: "04", label: "April" },
-    { value: "05", label: "Maj" },
-    { value: "06", label: "Juni" },
-    { value: "07", label: "Juli" },
-    { value: "08", label: "Augusti" },
-    { value: "09", label: "September" },
-    { value: "10", label: "Oktober" },
-    { value: "11", label: "November" },
-    { value: "12", label: "December" },
-  ];
+  // Month options - using shared PERIOD_OPTIONS
+  const monthOptions = PERIOD_OPTIONS;
 
   // Filtrera konton efter månad
   const filtreraKontonEfterMånad = (konton: HuvudboksKontoMedTransaktioner[]) => {
-    if (selectedMonth === "alla") {
+    if (selectedMonth === "all") {
       return konton;
     }
 

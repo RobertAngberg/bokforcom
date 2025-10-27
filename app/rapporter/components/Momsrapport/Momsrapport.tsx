@@ -4,6 +4,7 @@ import Dropdown from "../../../_components/Dropdown";
 import Knapp from "../../../_components/Knapp";
 import { useMomsrapport } from "../../hooks/useMomsrapport";
 import { useSession } from "../../../_lib/auth-client";
+import { PERIOD_OPTIONS } from "../../utils/periodOptions";
 
 export default function Momsrapport() {
   const { data: sessionData, isPending } = useSession();
@@ -15,6 +16,8 @@ export default function Momsrapport() {
     år,
     setÅr,
     årLista,
+    månad,
+    setMånad,
     exportMessage,
     isExportingPDF,
     isExportingCSV,
@@ -134,12 +137,21 @@ export default function Momsrapport() {
       <div className="mb-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
-            <div className="w-full md:w-24">
+            <div className="w-full md:w-32">
               <Dropdown
                 value={år}
                 onChange={(value) => setÅr(value)}
                 options={årLista.map((year) => ({ value: year, label: year }))}
-                className="w-full md:w-24"
+                className="w-full md:w-32"
+              />
+            </div>
+
+            <div className="w-full md:w-auto">
+              <Dropdown
+                value={månad}
+                onChange={setMånad}
+                className="w-full md:w-auto md:min-w-[160px]"
+                options={PERIOD_OPTIONS}
               />
             </div>
           </div>

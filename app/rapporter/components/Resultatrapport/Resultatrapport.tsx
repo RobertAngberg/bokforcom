@@ -12,6 +12,7 @@ import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
 import { KontoRad, ResultatTransaktion } from "../../types/types";
 import { useSession } from "../../../_lib/auth-client";
+import { PERIOD_OPTIONS } from "../../utils/periodOptions";
 
 export default function Resultatrapport() {
   const { data: sessionData, isPending } = useSession();
@@ -20,6 +21,8 @@ export default function Resultatrapport() {
   const {
     selectedYear,
     setSelectedYear,
+    selectedMonth,
+    setSelectedMonth,
     initialData,
     loading,
     verifikatId,
@@ -263,12 +266,21 @@ export default function Resultatrapport() {
       <div className="mb-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:w-auto">
-            <div className="w-full md:w-24">
+            <div className="w-full md:w-32">
               <Dropdown
                 value={selectedYear}
                 onChange={(value) => setSelectedYear(value)}
                 options={years.map((year) => ({ value: year, label: year }))}
-                className="w-full md:w-24"
+                className="w-full md:w-32"
+              />
+            </div>
+
+            <div className="w-full md:w-auto">
+              <Dropdown
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                className="w-full md:w-auto md:min-w-[160px]"
+                options={PERIOD_OPTIONS}
               />
             </div>
           </div>
