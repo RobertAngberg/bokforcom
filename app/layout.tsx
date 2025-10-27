@@ -4,6 +4,7 @@ import Script from "next/script";
 import Navbar from "./_components/Navbar";
 import ImpersonationWrapper from "./_components/ImpersonationWrapper";
 import { ClientProviders } from "./_lib/providers";
+import { RequireOnboarding } from "./onboarding/components/RequireOnboarding";
 import "./globals.css";
 import "react-datepicker/dist/react-datepicker.css";
 import React from "react";
@@ -36,7 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientProviders>
           <ImpersonationWrapper />
           <Navbar />
-          {children}
+          <RequireOnboarding>{children}</RequireOnboarding>
         </ClientProviders>
       </body>
     </html>
