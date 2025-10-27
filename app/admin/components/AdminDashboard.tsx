@@ -1,4 +1,4 @@
-import { getAnalyticsData } from "../../analytics/actions";
+import { getAnalyticsData } from "../actions/analyticsActions";
 import { getAllUsers } from "../actions/userActions";
 import MainLayout from "../../_components/MainLayout";
 import ImpersonateButton from "./ImpersonateButton";

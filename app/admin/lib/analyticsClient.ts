@@ -1,6 +1,6 @@
 "use client";
 
-import { trackEvent } from "./actions";
+import { trackEvent } from "../actions/analyticsActions";
 
 /**
  * Client-side analytics helpers

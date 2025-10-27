@@ -1,4 +1,4 @@
-import { getAnalyticsData } from "../../analytics/actions";
+import { getAnalyticsData } from "../actions/analyticsActions";
 import AdminLayout from "./AdminLayout";
 import TestTrackingButton from "./TestTrackingButton";
 

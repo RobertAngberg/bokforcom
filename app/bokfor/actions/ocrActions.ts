@@ -3,7 +3,7 @@
 import OpenAI from "openai";
 import { ensureSession } from "../../_utils/session";
 import { sanitizeInput } from "../../_utils/validationUtils";
-import { trackEvent } from "../../analytics/actions";
+import { trackEvent } from "../../admin/actions/analyticsActions";
 
 function sanitizeOCRText(text: string): string {
   if (!text || typeof text !== "string") return "";

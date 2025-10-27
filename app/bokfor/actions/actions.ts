@@ -2,7 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-import { trackEvent } from "../../analytics/actions";
+import { trackEvent } from "../../admin/actions/analyticsActions";
 
 export async function loggaFavoritforval(forvalId: number) {
   const { userId } = await ensureSession();

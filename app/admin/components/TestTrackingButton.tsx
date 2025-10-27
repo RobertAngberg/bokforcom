@@ -1,6 +1,6 @@
 "use client";
 
-import { Analytics } from "../../analytics/client";
+import { Analytics } from "../lib/analyticsClient";
 import { useState } from "react";
 
 export default function TestTrackingButton() {

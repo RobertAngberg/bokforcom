@@ -6,7 +6,7 @@ import { dateToYyyyMmDd, datumTillPostgreSQL } from "../../_utils/datum";
 import { sanitizeInput } from "../../_utils/validationUtils";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
-import { trackEvent } from "../../analytics/actions";
+import { trackEvent } from "../../admin/actions/analyticsActions";
 
 export async function invalidateBokforCache() {
   revalidatePath("/historik");
