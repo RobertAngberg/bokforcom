@@ -14,7 +14,6 @@ export default function Alternativ({ onPreview }: AlternativProps) {
     bokförModalOpen,
     sparaLoading,
     bokförLoading,
-    ärFakturanBokfördOchBetald,
     doljBokförKnapp,
     sparaKnappText,
     bokförKnappText,
@@ -51,7 +50,7 @@ export default function Alternativ({ onPreview }: AlternativProps) {
             <Knapp
               onClick={hanteraBokför}
               text={bokförKnappText}
-              disabled={ärFakturanBokfördOchBetald || bokförLoading || statusLoading}
+              disabled={bokförLoading || statusLoading}
               loading={statusLoading}
               loadingText="Hämtar status..."
               className="w-full"

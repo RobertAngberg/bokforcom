@@ -66,6 +66,10 @@ export function genereraHUSFil(data: HUSFilData): string {
   const antalTimmar = data.antalTimmar || Math.max(1, Math.round(data.prisForArbete / 500));
   const materialKostnad = data.materialKostnad || 0;
 
+  // Beräkna övrig kostnad (skillnad mellan betalt belopp och arbetskostnad + material)
+  const ovrigKostnad = data.betaltBelopp - data.prisForArbete - materialKostnad;
+  const ovrigKostnadPositiv = Math.max(0, Math.round(ovrigKostnad));
+
   if (data.rotRutTyp === "ROT") {
     const valdRotArbetstyp =
       rotArbetstyper[data.rotRutKategori as keyof typeof rotArbetstyper] || "MalningTapetsering";
@@ -92,7 +96,7 @@ export function genereraHUSFil(data: HUSFilData): string {
       <ns2:BetaltBelopp>${data.betaltBelopp}</ns2:BetaltBelopp>
       <ns2:BegartBelopp>${data.begartBelopp}</ns2:BegartBelopp>
       <ns2:FakturaNr>${data.fakturanummer}</ns2:FakturaNr>
-      <ns2:Ovrigkostnad>0</ns2:Ovrigkostnad>
+      <ns2:Ovrigkostnad>${ovrigKostnadPositiv}</ns2:Ovrigkostnad>
       ${data.fastighetsbeteckning ? `<ns2:Fastighetsbeteckning>${data.fastighetsbeteckning}</ns2:Fastighetsbeteckning>` : ""}
       ${data.lägenhetsNummer ? `<ns2:LagenhetsNr>${data.lägenhetsNummer}</ns2:LagenhetsNr>` : '<ns2:LagenhetsNr xsi:nil="true" />'}
       ${data.brfOrgNummer ? `<ns2:BrfOrgNr>${data.brfOrgNummer}</ns2:BrfOrgNr>` : '<ns2:BrfOrgNr xsi:nil="true" />'}
@@ -100,10 +104,20 @@ export function genereraHUSFil(data: HUSFilData): string {
         ${rotXMLElementOrder
           .map((xmlTag) => {
             const ärVald = xmlTag === valdRotArbetstyp;
-            return `<ns2:${xmlTag}>
-          <ns2:AntalTimmar>${ärVald ? antalTimmar : 0}</ns2:AntalTimmar>
-          <ns2:Materialkostnad>${ärVald ? materialKostnad : 0}</ns2:Materialkostnad>
+            const timmar = ärVald ? antalTimmar : 0;
+            const material = ärVald ? materialKostnad : 0;
+
+            // Generera XML - skippa AntalTimmar om 0 (optional enligt schema)
+            if (timmar > 0) {
+              return `<ns2:${xmlTag}>
+          <ns2:AntalTimmar>${timmar}</ns2:AntalTimmar>
+          <ns2:Materialkostnad>${material}</ns2:Materialkostnad>
         </ns2:${xmlTag}>`;
+            } else {
+              return `<ns2:${xmlTag}>
+          <ns2:Materialkostnad>${material}</ns2:Materialkostnad>
+        </ns2:${xmlTag}>`;
+            }
           })
           .join("\n        ")}
       </ns2:UtfortArbete>
@@ -145,7 +159,7 @@ export function genereraHUSFil(data: HUSFilData): string {
       <ns2:BetaltBelopp>${data.betaltBelopp}</ns2:BetaltBelopp>
       <ns2:BegartBelopp>${data.begartBelopp}</ns2:BegartBelopp>
       <ns2:FakturaNr>${data.fakturanummer}</ns2:FakturaNr>
-      <ns2:Ovrigkostnad>0</ns2:Ovrigkostnad>
+      <ns2:Ovrigkostnad>${ovrigKostnadPositiv}</ns2:Ovrigkostnad>
       <ns2:UtfortArbete>
         ${rutXMLElementOrder
           .map((xmlTag) => {
@@ -157,10 +171,20 @@ export function genereraHUSFil(data: HUSFilData): string {
           <ns2:Utfort>${ärVald}</ns2:Utfort>
         </ns2:${xmlTag}>`;
             } else {
-              return `<ns2:${xmlTag}>
-          <ns2:AntalTimmar>${ärVald ? antalTimmar : 0}</ns2:AntalTimmar>
-          <ns2:Materialkostnad>${ärVald ? materialKostnad : 0}</ns2:Materialkostnad>
+              const timmar = ärVald ? antalTimmar : 0;
+              const material = ärVald ? materialKostnad : 0;
+
+              // Skippa AntalTimmar om 0 (optional enligt schema)
+              if (timmar > 0) {
+                return `<ns2:${xmlTag}>
+          <ns2:AntalTimmar>${timmar}</ns2:AntalTimmar>
+          <ns2:Materialkostnad>${material}</ns2:Materialkostnad>
         </ns2:${xmlTag}>`;
+              } else {
+                return `<ns2:${xmlTag}>
+          <ns2:Materialkostnad>${material}</ns2:Materialkostnad>
+        </ns2:${xmlTag}>`;
+              }
             }
           })
           .join("\n        ")}

@@ -514,18 +514,52 @@ export function useBokforFakturaModal(isOpen: boolean, onClose: () => void) {
 
     const kundBelopp = totalInkMoms;
 
+    // Kontrollera om fakturan har ROT/RUT-artiklar
+    const harROTRUT = formData.artiklar?.some((artikel) => artikel.rotRutTyp) ?? false;
+
     // Skapa bokföringsposter
     // 1. Kundfordran eller Bank/Kassa beroende på metod
-    const skuld_tillgångskonto = ärKontantmetod ? "1930" : "1510";
-    const skuld_tillgångsnamn = ärKontantmetod ? "Bank/Kassa" : "Kundfordringar";
+    if (ärKontantmetod) {
+      // Kontantmetoden: ingen delning vid bokföring
+      poster.push({
+        konto: "1930",
+        kontoNamn: "Bank/Kassa",
+        debet: kundBelopp,
+        kredit: 0,
+        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
+      });
+    } else if (harROTRUT) {
+      // Fakturametoden med ROT/RUT: dela kundfordringen 50/50
+      const kundensAndel = Math.round(kundBelopp * 0.5 * 100) / 100; // Kundens 50%
+      const skatteverketAndel = Math.round(kundBelopp * 0.5 * 100) / 100; // Skatteverkets 50%
 
-    poster.push({
-      konto: skuld_tillgångskonto,
-      kontoNamn: skuld_tillgångsnamn,
-      debet: kundBelopp,
-      kredit: 0,
-      beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
-    });
+      // Konto 1510: Kundens andel (50%)
+      poster.push({
+        konto: "1510",
+        kontoNamn: "Kundfordringar",
+        debet: kundensAndel,
+        kredit: 0,
+        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
+      });
+
+      // Konto 1513: Skatteverkets andel (50%)
+      poster.push({
+        konto: "1513",
+        kontoNamn: "Kundfordringar – delad faktura",
+        debet: skatteverketAndel,
+        kredit: 0,
+        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
+      });
+    } else {
+      // Fakturametoden utan ROT/RUT: vanlig kundfordran
+      poster.push({
+        konto: "1510",
+        kontoNamn: "Kundfordringar",
+        debet: kundBelopp,
+        kredit: 0,
+        beskrivning: `Faktura ${formData.fakturanummer} ${formData.kundnamn}`,
+      });
+    }
 
     // 2. Intäkt (kredit)
     poster.push({
