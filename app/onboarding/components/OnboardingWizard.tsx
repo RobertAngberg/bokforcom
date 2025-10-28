@@ -149,25 +149,8 @@ export default function OnboardingWizard() {
             <label className="block text-sm font-medium text-slate-200 mb-2">
               Bokföringsmetod <span className="text-red-400">*</span>
             </label>
-            <div className="space-y-3">
-              <label className="flex items-start p-4 border-2 border-cyan-800 rounded-lg cursor-pointer hover:bg-cyan-950 transition-colors">
-                <input
-                  type="radio"
-                  name="bokföringsmetod"
-                  value="Kontantmetoden"
-                  checked={bokföringsmetod === "Kontantmetoden"}
-                  onChange={(e) => setBokföringsmetod(e.target.value as BokföringsmetodType)}
-                  className="mt-1 mr-3"
-                />
-                <div>
-                  <div className="font-medium text-slate-100">Kontantmetoden</div>
-                  <div className="text-sm text-slate-300">
-                    Bokför när pengarna faktiskt betalas in eller ut. Enklare för mindre företag.
-                  </div>
-                </div>
-              </label>
-
-              <label className="flex items-start p-4 border-2 border-cyan-800 rounded-lg cursor-pointer hover:bg-cyan-950 transition-colors">
+            <div className="flex gap-3">
+              <label className="flex-1 flex items-start p-4 border-2 border-cyan-800 rounded-lg cursor-pointer hover:bg-cyan-950 transition-colors">
                 <input
                   type="radio"
                   name="bokföringsmetod"
@@ -178,9 +161,20 @@ export default function OnboardingWizard() {
                 />
                 <div>
                   <div className="font-medium text-slate-100">Fakturametoden</div>
-                  <div className="text-sm text-slate-300">
-                    Bokför när fakturor skickas/tas emot. Obligatorisk för vissa företag.
-                  </div>
+                </div>
+              </label>
+
+              <label className="flex-1 flex items-start p-4 border-2 border-cyan-800 rounded-lg cursor-pointer hover:bg-cyan-950 transition-colors">
+                <input
+                  type="radio"
+                  name="bokföringsmetod"
+                  value="Kontantmetoden"
+                  checked={bokföringsmetod === "Kontantmetoden"}
+                  onChange={(e) => setBokföringsmetod(e.target.value as BokföringsmetodType)}
+                  className="mt-1 mr-3"
+                />
+                <div>
+                  <div className="font-medium text-slate-100">Kontantmetoden</div>
                 </div>
               </label>
             </div>
@@ -200,9 +194,6 @@ export default function OnboardingWizard() {
               ]}
               className="w-full"
             />
-            <p className="text-xs text-slate-400 mt-1">
-              Hur ofta du ska redovisa moms till Skatteverket
-            </p>
           </div>
         </div>
       )}

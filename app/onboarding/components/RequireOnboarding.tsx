@@ -16,17 +16,42 @@ export function useRequireOnboarding() {
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    // Tillåt vissa paths utan onboarding-check
-    const allowedPaths = ["/onboarding", "/login", "/api"];
-    if (allowedPaths.some((path) => pathname.startsWith(path))) {
+    // Publika routes som inte kräver inloggning eller onboarding
+    const publicPaths = ["/", "/login", "/funktioner", "/kontakt", "/om-oss", "/priser", "/api"];
+
+    // Om användaren är på en publik sida, tillåt direkt
+    if (publicPaths.some((path) => pathname === path || pathname.startsWith(path + "/"))) {
       setIsChecking(false);
       setIsComplete(true);
       return;
     }
 
+    // Om användaren är på onboarding-sidan, kolla att de är inloggade
+    if (pathname.startsWith("/onboarding")) {
+      async function checkLogin() {
+        const result = await checkOnboardingStatus();
+        if (result.notLoggedIn) {
+          router.push("/login");
+        } else {
+          setIsComplete(true);
+        }
+        setIsChecking(false);
+      }
+      checkLogin();
+      return;
+    }
+
+    // För alla andra sidor (skyddade), kolla både inloggning och onboarding
     async function checkStatus() {
       const result = await checkOnboardingStatus();
 
+      // Om inte inloggad, redirecta till login
+      if (result.notLoggedIn) {
+        router.push("/login");
+        return;
+      }
+
+      // Om inloggad men inte slutfört onboarding, redirecta till onboarding
       if (result.needsOnboarding) {
         router.push("/onboarding");
       } else {

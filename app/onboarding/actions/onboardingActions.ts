@@ -61,7 +61,7 @@ export async function checkOnboardingStatus() {
     });
 
     if (!session?.user?.id) {
-      return { completed: false, needsOnboarding: true };
+      return { completed: false, needsOnboarding: false, notLoggedIn: true };
     }
 
     const result = await pool.query(
