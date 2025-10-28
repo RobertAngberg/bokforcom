@@ -33,21 +33,11 @@ export async function getMomsrapport(year: string, period?: string) {
   const add = (fält: string, beskrivning: string, belopp: number) => {
     if (!fältMap[fält]) fältMap[fält] = { fält, beskrivning, belopp: 0 };
     fältMap[fält].belopp += belopp;
-    console.log(`✅  +${belopp} kr till fält ${fält} (${beskrivning})`);
   };
 
   /* ---- loopa rader ---- */
   for (const r of rows) {
     const { kontonummer, debet, kredit } = r;
-
-    // Debugga alla möjliga ingående moms-konton
-    if (
-      ["2640", "2641", "2645", "2647", "2648", "2650", "210", "248", "250", "251"].includes(
-        kontonummer
-      )
-    ) {
-      console.log(`MOMSDEBUG: ${kontonummer} debet=${debet} kredit=${kredit}`);
-    }
 
     const netto = kredit - debet;
 
@@ -107,10 +97,6 @@ export async function getMomsrapport(year: string, period?: string) {
   const ingående = fältMap["48"]?.belopp ?? 0;
 
   const moms49 = utgående - ingående;
-
-  console.log(`📊 Utgående moms: ${utgående}`);
-  console.log(`📊 Ingående moms: ${ingående}`);
-  console.log(`📦 Ruta 49: ${moms49}`);
 
   fältMap["49"] = {
     fält: "49",

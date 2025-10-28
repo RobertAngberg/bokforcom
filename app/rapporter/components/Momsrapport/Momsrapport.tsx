@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Dropdown from "../../../_components/Dropdown";
 import Knapp from "../../../_components/Knapp";
 import { useMomsrapport } from "../../hooks/useMomsrapport";
+import { useMomsrapportStatus } from "../../hooks/useMomsrapportStatus";
 import { useSession } from "../../../_lib/auth-client";
 import { PERIOD_OPTIONS } from "../../utils/periodOptions";
+import MomsWizard from "./MomsWizard";
 
 export default function Momsrapport() {
   const { data: sessionData, isPending } = useSession();
+  const [showWizard, setShowWizard] = useState(false);
 
   // Använd hook för all state management
   const {
@@ -21,7 +25,6 @@ export default function Momsrapport() {
     exportMessage,
     isExportingPDF,
     isExportingCSV,
-    isExportingXML,
     exportXML,
     exportPDF,
     exportCSV,
@@ -29,7 +32,11 @@ export default function Momsrapport() {
     ärKorrekt,
     momsAttBetalaEllerFaTillbaka,
     ruta49,
+    organisationsnummer,
   } = useMomsrapport();
+
+  // Hämta period-status
+  const { status: periodStatus } = useMomsrapportStatus(parseInt(år), månad);
 
   // Session loading
   if (isPending) {
@@ -158,10 +165,10 @@ export default function Momsrapport() {
 
           <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <Knapp
-              text={isExportingXML ? "Exporterar..." : "Exportera XML"}
-              onClick={exportXML}
-              disabled={isExportingXML}
-              className={`w-full md:w-auto ${isExportingXML ? "opacity-50" : ""}`}
+              text="Momsdeklaration"
+              onClick={() => setShowWizard(true)}
+              className="w-full md:w-auto"
+              disabled={periodStatus?.status === "stängd"}
             />
 
             <Knapp
@@ -320,6 +327,17 @@ export default function Momsrapport() {
           </div>
         </div>
       </div>
+
+      {/* Momsdeklaration Wizard */}
+      <MomsWizard
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        year={år}
+        period={månad}
+        momsData={fullData}
+        organisationsnummer={organisationsnummer}
+        onExportXML={exportXML}
+      />
     </div>
   );
 }

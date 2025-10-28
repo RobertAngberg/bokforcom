@@ -1,6 +1,7 @@
 import { pool } from "../_lib/db";
 import { ensureSession } from "./session";
 import { dateToYyyyMmDd } from "./datum";
+import { isPeriodClosed } from "../rapporter/actions/momsrapportStatusActions";
 
 export interface TransaktionsPostInput {
   kontonummer: string;
@@ -68,6 +69,26 @@ export async function createTransaktion(data: SkapaTransaktionInput) {
       data.datum instanceof Date
         ? dateToYyyyMmDd(data.datum)
         : data.datum || dateToYyyyMmDd(new Date());
+
+    // Kontrollera om momsperioden är stängd
+    const transDate = new Date(datumISO);
+    const year = transDate.getFullYear();
+    const month = String(transDate.getMonth() + 1).padStart(2, "0");
+
+    const periodCheck = await isPeriodClosed(year, month);
+    if (periodCheck.closed) {
+      throw new Error(
+        `Momsperioden ${month}/${year} är stängd. Inga transaktioner kan bokföras för denna period.`
+      );
+    }
+
+    // Kolla även helårsperiod
+    const yearPeriodCheck = await isPeriodClosed(year, "all");
+    if (yearPeriodCheck.closed) {
+      throw new Error(
+        `Momsperioden för hela ${year} är stängd. Inga transaktioner kan bokföras för detta år.`
+      );
+    }
 
     const belopp =
       data.autoBelopp === false ? null : data.poster.reduce((s, p) => s + (p.debet || 0), 0);

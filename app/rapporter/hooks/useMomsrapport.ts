@@ -103,35 +103,99 @@ export const useMomsrapport = () => {
       "62": "MomsImportUtgLag", // Utgående moms 6% import
     };
 
-    // Formatera period: År + 12 för helårsrapport
-    const period = `${år}12`;
+    // Formatera period baserat på månad/kvartal
+    let period = "";
+    if (månad === "all") {
+      // Helårsrapport: År + 12 (sista månaden)
+      period = `${år}12`;
+    } else if (månad.startsWith("Q")) {
+      // Kvartalsrapport: År + sista månaden i kvartalet
+      const kvartalMap: { [key: string]: string } = {
+        Q1: "03",
+        Q2: "06",
+        Q3: "09",
+        Q4: "12",
+      };
+      period = `${år}${kvartalMap[månad]}`;
+    } else {
+      // Månadsrapport: År + månad
+      period = `${år}${månad}`;
+    }
+
+    // Formatera organisationsnummer med bindestreck (XXXXXX-XXXX)
+    const formattedOrgNr = organisationsnummer.replace(/[^0-9]/g, ""); // Ta bort alla icke-siffror
+    const orgNrWithHyphen =
+      formattedOrgNr.length === 10
+        ? `${formattedOrgNr.slice(0, 6)}-${formattedOrgNr.slice(6)}`
+        : organisationsnummer; // Fallback om fel format
 
     // Bygg XML enligt Skatteverkets eSKDUpload DTD Version 6.0
-    let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-    xml +=
-      '<!DOCTYPE eSKDUpload PUBLIC "-//Skatteverket, Sweden//DTD Skatteverket eSKDUpload-DTD Version 6.0//SV" "https://www.skatteverket.se/download/18.3f4496fd14864cc5ac99cb1/1415022101213/eSKDUpload_6p0.dtd">\n';
+    let xml = '<?xml version="1.0" encoding="ISO-8859-1"?>\n'; // ISO-8859-1 som Skatteverket kräver
     xml += '<eSKDUpload Version="6.0">\n';
-    xml += `  <OrgNr>${organisationsnummer}</OrgNr>\n`;
-    xml += "  <Moms>\n";
-    xml += `    <Period>${period}</Period>\n`;
+    xml += `<OrgNr>${orgNrWithHyphen}</OrgNr>\n`;
+    xml += "<Moms>\n";
+    xml += `<Period>${period}</Period>\n`;
 
-    // Lägg till fält som har värden
+    // Lägg till fält som har värden (i korrekt ordning enligt Skatteverkets specifikation)
     let fieldsAdded = 0;
-    Object.entries(fieldMapping).forEach(([fältNr, xmlTag]) => {
+    const orderedFields = [
+      "05",
+      "06",
+      "07",
+      "08",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "50",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "10",
+      "11",
+      "12",
+      "30",
+      "31",
+      "32",
+      "60",
+      "61",
+      "62",
+      "48",
+      "49",
+    ];
+
+    orderedFields.forEach((fältNr) => {
+      const xmlTag = fieldMapping[fältNr];
+      if (!xmlTag) return;
+
       const värde = get(fältNr);
       if (värde !== 0) {
         // Skatteverket kräver heltal (inga decimaler)
         const belopp = Math.round(värde);
-        xml += `    <${xmlTag}>${belopp}</${xmlTag}>\n`;
+        // För negativa belopp (återbetalning): minustecken direkt före belopp, INGET mellanrum
+        xml += `<${xmlTag}>${belopp}</${xmlTag}>\n`;
         fieldsAdded++;
       }
     });
 
-    xml += "  </Moms>\n";
+    // Om inga fält har värden, sätt MomsBetala till 0
+    if (fieldsAdded === 0) {
+      xml += "<MomsBetala>0</MomsBetala>\n";
+    }
+
+    xml += "</Moms>\n";
     xml += "</eSKDUpload>";
 
     // Log för debugging
-    console.log(`XML genererad: ${fieldsAdded} fält inkluderade för period ${period}`);
+    console.log(
+      `XML genererad: ${fieldsAdded} fält inkluderade för period ${period}, org.nr: ${orgNrWithHyphen}`
+    );
 
     return xml;
   };

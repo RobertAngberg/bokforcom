@@ -1,10 +1,16 @@
 // formaterar ett tal till svenskt format utan decimaler, t.ex. "1 234"
-export function formatSEK(v: number): string {
+export function formatSEK(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) {
+    return "0";
+  }
   return v.toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 // formaterar ett tal som valuta med decimaler och kr, t.ex. "1 234,56 kr"
-export function formatCurrency(v: number): string {
+export function formatCurrency(v: number | null | undefined): string {
+  if (v == null || isNaN(v)) {
+    return "0,00 kr";
+  }
   return (
     v.toLocaleString("sv-SE", {
       minimumFractionDigits: 2,
