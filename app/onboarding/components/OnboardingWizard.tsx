@@ -15,6 +15,7 @@ export default function OnboardingWizard() {
   const [error, setError] = useState<string | null>(null);
 
   // Form data
+  const [bolagsform, setBolagsform] = useState("Enskild firma");
   const [organisationsnummer, setOrganisationsnummer] = useState("");
   const [företagsnamn, setFöretagsnamn] = useState("");
   const [bokföringsmetod, setBokföringsmetod] = useState<BokföringsmetodType>("Kontantmetoden");
@@ -27,6 +28,10 @@ export default function OnboardingWizard() {
 
     // Validera steg 1
     if (step === 1) {
+      if (bolagsform !== "Enskild firma") {
+        setError("Endast Enskild firma stödjs för tillfället. Fler bolagsformer kommer snart.");
+        return;
+      }
       const orgNrCleaned = organisationsnummer.replace(/\D/g, "");
       if (orgNrCleaned.length !== 10) {
         setError("Organisationsnummer måste vara 10 siffror");
@@ -101,43 +106,70 @@ export default function OnboardingWizard() {
 
       {/* Error message */}
       {error && (
-        <div className="p-4 bg-red-950 border border-red-800 rounded-lg">
-          <p className="text-red-200 text-sm">❌ {error}</p>
+        <div className="p-4 bg-red-900/30 border border-red-700/50 rounded-lg">
+          <p className="text-white text-sm">ℹ️ {error}</p>
         </div>
       )}
 
       {/* Step 1: Företagsinformation */}
       {step === 1 && (
         <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
-              Organisationsnummer <span className="text-red-400">*</span>
-            </label>
-            <TextFalt
-              label=""
-              name="organisationsnummer"
-              value={organisationsnummer}
-              onChange={(e) => setOrganisationsnummer(e.target.value)}
-              placeholder="XXXXXX-XXXX"
-              maxLength={11}
-              className="w-full"
-            />
-            <p className="text-xs text-slate-400 mt-1">Format: 10 siffror (t.ex. 5566778899)</p>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                Bolagsform <span className="text-red-400">*</span>
+              </label>
+              <Dropdown
+                value={bolagsform}
+                onChange={(value) => {
+                  setBolagsform(value);
+                  if (value !== "Enskild firma") {
+                    setError(
+                      "Endast Enskild firma stödjs för tillfället. Fler bolagsformer kommer snart."
+                    );
+                  } else {
+                    setError(null);
+                  }
+                }}
+                options={[
+                  { label: "Enskild firma", value: "Enskild firma" },
+                  { label: "Aktiebolag", value: "Aktiebolag" },
+                  { label: "Handelsbolag", value: "Handelsbolag" },
+                  { label: "Kommanditbolag", value: "Kommanditbolag" },
+                ]}
+                className="w-full"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
-              Företagsnamn <span className="text-red-400">*</span>
-            </label>
-            <TextFalt
-              label=""
-              name="företagsnamn"
-              value={företagsnamn}
-              onChange={(e) => setFöretagsnamn(e.target.value)}
-              placeholder="Ditt Företag AB"
-              maxLength={255}
-              className="w-full"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                Organisationsnummer <span className="text-red-400">*</span>
+              </label>
+              <TextFalt
+                label=""
+                name="organisationsnummer"
+                value={organisationsnummer}
+                onChange={(e) => setOrganisationsnummer(e.target.value)}
+                placeholder="XXXXXX-XXXX"
+                maxLength={11}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                Företagsnamn <span className="text-red-400">*</span>
+              </label>
+              <TextFalt
+                label=""
+                name="företagsnamn"
+                value={företagsnamn}
+                onChange={(e) => setFöretagsnamn(e.target.value)}
+                placeholder="Ditt Företag AB"
+                maxLength={255}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       )}
