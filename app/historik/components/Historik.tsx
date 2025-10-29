@@ -8,6 +8,10 @@ import Dropdown from "../../_components/Dropdown";
 import Knapp from "../../_components/Knapp";
 import Modal from "../../_components/Modal";
 import TextFalt from "../../_components/TextFalt";
+import DatePicker from "react-datepicker";
+import { registerLocale } from "react-datepicker";
+import { sv } from "date-fns/locale/sv";
+registerLocale("sv", sv);
 
 export default function Historik({ initialData }: HistorikProps) {
   const {
@@ -20,6 +24,10 @@ export default function Historik({ initialData }: HistorikProps) {
     activeIds,
     deletingIds,
     showDeleteModal,
+    fakturaStatusMap,
+    showBetalningModal,
+    betalningDatum,
+    registeringPayment,
 
     // Computed values
     filteredData,
@@ -33,9 +41,13 @@ export default function Historik({ initialData }: HistorikProps) {
     handleRowClick,
     handleDelete,
     confirmDelete,
+    handleRegistreraBetalning,
+    confirmBetalning,
 
     // Setters
     setShowDeleteModal,
+    setShowBetalningModal,
+    setBetalningDatum,
   } = useHistorik(initialData);
 
   if (loading) {
@@ -176,6 +188,13 @@ export default function Historik({ initialData }: HistorikProps) {
                         onClick={() => window.open(item.blob_url, "_blank")}
                       />
                     )}
+                    {fakturaStatusMap[item.transaktions_id]?.ärFaktura &&
+                      !fakturaStatusMap[item.transaktions_id]?.ärBetald && (
+                        <Knapp
+                          text="💳 Registrera betalning"
+                          onClick={() => handleRegistreraBetalning(item.transaktions_id)}
+                        />
+                      )}
                     <Knapp
                       text={
                         deletingIds.includes(item.transaktions_id) ? "Tar bort..." : "🗑️ Ta bort"
@@ -213,6 +232,49 @@ export default function Historik({ initialData }: HistorikProps) {
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
             >
               🗑️ Ta bort
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Betalning Modal */}
+      <Modal
+        isOpen={showBetalningModal}
+        onClose={() => setShowBetalningModal(false)}
+        title="💳 Registrera betalning"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-300">
+            Välj datum när betalningen kom in. Ett nytt verifikat kommer att skapas som bokför
+            betalningen från kund.
+          </p>
+
+          <div>
+            <label className="block mb-2 text-white">Betaldatum:</label>
+            <DatePicker
+              className="w-full p-2 rounded text-white bg-slate-900 border border-gray-700"
+              selected={betalningDatum}
+              onChange={(date) => setBetalningDatum(date || new Date())}
+              dateFormat="yyyy-MM-dd"
+              locale="sv"
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end mt-6">
+            <button
+              onClick={() => setShowBetalningModal(false)}
+              className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
+              disabled={registeringPayment}
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={confirmBetalning}
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md transition-colors disabled:opacity-50"
+              disabled={registeringPayment}
+            >
+              {registeringPayment ? "Registrerar..." : "💳 Registrera betalning"}
             </button>
           </div>
         </div>

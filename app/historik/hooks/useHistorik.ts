@@ -4,6 +4,7 @@ import {
   exporteraTransaktionerMedPoster,
   deleteTransaction,
 } from "../actions/actions";
+import { getFakturaStatus, registreraBetalning } from "../actions/fakturaActions";
 import { HistoryItem, TransactionDetail } from "../types/types";
 import { ColumnDefinition } from "../../_components/TabellRad";
 import { showToast } from "../../_components/Toast";
@@ -67,6 +68,15 @@ export function useHistorik(initialData: HistoryItem[] = []) {
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<number | null>(null);
+
+  // Faktura-relaterad state
+  const [fakturaStatusMap, setFakturaStatusMap] = useState<
+    Record<number, { ärFaktura: boolean; ärBetald: boolean }>
+  >({});
+  const [showBetalningModal, setShowBetalningModal] = useState(false);
+  const [betalningTransactionId, setBetalningTransactionId] = useState<number | null>(null);
+  const [betalningDatum, setBetalningDatum] = useState<Date>(new Date());
+  const [registeringPayment, setRegisteringPayment] = useState(false);
 
   // Validera inputs och visa fel i realtid
   const validateInputs = (yearValue: string, monthValue: string): string | null => {
@@ -167,9 +177,61 @@ export function useHistorik(initialData: HistoryItem[] = []) {
         if (!detailsMap[numericId]) {
           const detailResult = await fetchTransactionDetails(numericId);
           setDetailsMap((prev) => ({ ...prev, [numericId]: detailResult }));
+
+          // Kolla fakturastatus när vi expanderar
+          const fakturaStatus = await getFakturaStatus(numericId);
+          setFakturaStatusMap((prev) => ({
+            ...prev,
+            [numericId]: {
+              ärFaktura: fakturaStatus.ärFaktura,
+              ärBetald: fakturaStatus.ärBetald,
+            },
+          }));
         }
       }
     })();
+  };
+
+  const handleRegistreraBetalning = (transactionId: number) => {
+    setBetalningTransactionId(transactionId);
+    setBetalningDatum(new Date());
+    setShowBetalningModal(true);
+  };
+
+  const confirmBetalning = async () => {
+    if (!betalningTransactionId) return;
+
+    setRegisteringPayment(true);
+
+    try {
+      const betaldatumStr = betalningDatum.toISOString().split("T")[0];
+      const result = await registreraBetalning(betalningTransactionId, betaldatumStr);
+
+      if (result.success) {
+        // Uppdatera fakturastatus
+        setFakturaStatusMap((prev) => ({
+          ...prev,
+          [betalningTransactionId]: { ärFaktura: true, ärBetald: true },
+        }));
+
+        // Stäng modal
+        setShowBetalningModal(false);
+        setBetalningTransactionId(null);
+
+        showToast(result.message || "Betalning registrerad!", "success");
+
+        // Refresh page efter kort delay för att visa det nya verifikatet
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        showToast(result.error || "Kunde inte registrera betalning", "error");
+      }
+    } catch {
+      showToast("Ett fel uppstod", "error");
+    } finally {
+      setRegisteringPayment(false);
+    }
   };
 
   const handleExport = async () => {
@@ -238,6 +300,11 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     deletingIds,
     showDeleteModal,
     deleteTransactionId,
+    fakturaStatusMap,
+    showBetalningModal,
+    betalningTransactionId,
+    betalningDatum,
+    registeringPayment,
 
     // Computed values
     filteredData,
@@ -253,8 +320,12 @@ export function useHistorik(initialData: HistoryItem[] = []) {
     handleExport,
     handleDelete,
     confirmDelete,
+    handleRegistreraBetalning,
+    confirmBetalning,
 
     // Setters for UI state
     setShowDeleteModal,
+    setShowBetalningModal,
+    setBetalningDatum,
   };
 }

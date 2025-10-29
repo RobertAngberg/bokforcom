@@ -55,7 +55,7 @@ export default function Information({
       )}
 
       <label htmlFor="datum" className="block mb-2 text-white">
-        Betaldatum (ÅÅÅÅ-MM-DD):
+        {visaFakturadatum ? "Förfallodatum (ÅÅÅÅ-MM-DD):" : "Betaldatum (ÅÅÅÅ-MM-DD):"}
       </label>
       <DatePicker
         className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
