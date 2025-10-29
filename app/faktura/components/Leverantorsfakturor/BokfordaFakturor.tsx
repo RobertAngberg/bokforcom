@@ -49,7 +49,6 @@ export default function BokfordaFakturor() {
   if (fakturor.length === 0) {
     return (
       <div className="bg-gray-900 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Leverantörsfakturor</h2>
         <p className="text-gray-400">Inga leverantörsfakturor hittades.</p>
       </div>
     );

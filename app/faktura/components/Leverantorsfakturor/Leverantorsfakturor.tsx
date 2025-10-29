@@ -19,8 +19,6 @@ export default function LeverantorsfakturorPage({}: LeverantorsfakturorPageProps
   return (
     <FakturaProvider>
       <>
-        <h1 className="text-3xl mb-6 text-center text-white">Leverantörsfakturor</h1>
-
         <div className="mb-6">
           <BokfordaFakturorFlik />
         </div>
