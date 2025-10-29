@@ -942,7 +942,7 @@ export function useFaktura() {
           updateFormField("kundId", res.id.toString());
         }
         setKundStatus("loaded");
-        showToast("Kund sparad! ✅", "success");
+        showToast("Kund sparad!", "success");
 
         // Ladda om kunder
         const sparade = await hamtaSparadeKunder();

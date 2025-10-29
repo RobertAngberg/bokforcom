@@ -56,7 +56,7 @@ export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
 
       {showPreview && !isLoadingFaktura && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-3">
-          <div className="relative max-h-[95vh] w-full max-w-5xl overflow-auto rounded-none border border-gray-300 bg-white shadow-2xl">
+          <div className="relative max-h-[95vh] w-full max-w-3xl overflow-auto rounded-none border border-gray-300 bg-white shadow-2xl">
             <div className="absolute top-4 right-4 z-50">
               <Knapp onClick={closePreview} text="❌ Stäng" />
             </div>

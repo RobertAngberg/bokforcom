@@ -384,9 +384,18 @@ export function useBokfor() {
                 namn = `1510 Kundfordringar`;
                 beloppAttVisa = safeBelopp;
               } else if (levfaktMode && !ärFörsäljning && kontoNr === "1930") {
-                kontoNr = "2440";
-                namn = `2440 Leverantörsskulder`;
-                beloppAttVisa = safeBelopp;
+                // För leverantörsfaktura: använd 1930 (kontantmetoden) eller 2440 (fakturametoden)
+                if (bokföringsmetod === "Kontantmetoden") {
+                  // Behåll 1930 Företagskonto för kontantmetoden
+                  kontoNr = "1930";
+                  namn = `1930 Företagskonto (bank)`;
+                  beloppAttVisa = safeBelopp;
+                } else {
+                  // Fakturametoden: använd 2440 Leverantörsskulder
+                  kontoNr = "2440";
+                  namn = `2440 Leverantörsskulder`;
+                  beloppAttVisa = safeBelopp;
+                }
               } else if (levfaktMode && ärFörsäljning && kontoNr === "1930") {
                 kontoNr = "1510";
                 namn = `1510 Kundfordringar`;
