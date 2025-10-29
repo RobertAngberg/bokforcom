@@ -47,11 +47,7 @@ export default function BokfordaFakturor() {
   }
 
   if (fakturor.length === 0) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-6">
-        <p className="text-gray-400">Inga leverantörsfakturor hittades.</p>
-      </div>
-    );
+    return <p className="text-gray-400">Inga leverantörsfakturor hittades.</p>;
   }
 
   return (

@@ -129,52 +129,66 @@ export async function saveTransaction(formData: FormData) {
 
     // Skapa leverantörsfaktura-rad om levfakt-mode
     if (leverantorId) {
-      // Hämta leverantörsnamn från databasen
-      const leverantörResult = await client.query(
-        `SELECT "namn" FROM "leverantörer" WHERE "id" = $1 AND "user_id" = $2`,
-        [parseInt(leverantorId), userId]
-      );
+      // Hämta användarens bokföringsmetod
+      const userResult = await client.query(`SELECT bokföringsmetod FROM "user" WHERE id = $1`, [
+        userId,
+      ]);
 
-      const leverantörNamn =
-        leverantörResult.rows.length > 0
-          ? leverantörResult.rows[0].namn
-          : (() => {
-              throw new Error(`Leverantör med ID ${leverantorId} hittades inte`);
-            })();
+      const bokföringsmetod = userResult.rows[0]?.bokföringsmetod;
 
-      const fakturanummer = formData.get("fakturanummer")?.toString() || null;
-      const fakturadatum = formData.get("fakturadatum")?.toString() || null;
-      const förfallodatum = formData.get("förfallodatum")?.toString() || null;
+      // Med kontantmetoden bokförs betalningen direkt, så vi skapar inte en "ej bokförd" leverantörsfaktura
+      if (bokföringsmetod === "Kontantmetoden") {
+        // Skapa ingen leverantörsfaktura-post eftersom betalningen redan är bokförd
+        // Användaren bokförde ju betalningen direkt via bokför-flödet
+      } else {
+        // Fakturametoden: Skapa leverantörsfaktura som "Ej bokförd"
+        // Hämta leverantörsnamn från databasen
+        const leverantörResult = await client.query(
+          `SELECT "namn" FROM "leverantörer" WHERE "id" = $1 AND "user_id" = $2`,
+          [parseInt(leverantorId), userId]
+        );
 
-      // Formatera datum korrekt för PostgreSQL
-      const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return null;
-        // Returnera direkt som string i YYYY-MM-DD format - ingen konvertering via Date-objekt
-        return dateStr;
-      };
+        const leverantörNamn =
+          leverantörResult.rows.length > 0
+            ? leverantörResult.rows[0].namn
+            : (() => {
+                throw new Error(`Leverantör med ID ${leverantorId} hittades inte`);
+              })();
 
-      const formattedFakturadatum = formatDate(fakturadatum);
-      const formattedFörfallodatum = formatDate(förfallodatum);
+        const fakturanummer = formData.get("fakturanummer")?.toString() || null;
+        const fakturadatum = formData.get("fakturadatum")?.toString() || null;
+        const förfallodatum = formData.get("förfallodatum")?.toString() || null;
 
-      await client.query(
-        `INSERT INTO leverantörsfakturor (
-          "user_id", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
-          fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-        [
-          userId,
-          transaktionsId,
-          leverantörNamn,
-          parseInt(leverantorId),
-          fakturanummer,
-          formattedFakturadatum,
-          formattedFörfallodatum,
-          null, // betaldatum ska alltid vara null vid registrering
-          belopp,
-          "Obetald", // status_betalning ska alltid vara "Obetald" vid registrering
-          "Ej bokförd", // status_bokförd ska vara "Ej bokförd" (inte "Registrerad")
-        ]
-      );
+        // Formatera datum korrekt för PostgreSQL
+        const formatDate = (dateStr: string | null) => {
+          if (!dateStr) return null;
+          // Returnera direkt som string i YYYY-MM-DD format - ingen konvertering via Date-objekt
+          return dateStr;
+        };
+
+        const formattedFakturadatum = formatDate(fakturadatum);
+        const formattedFörfallodatum = formatDate(förfallodatum);
+
+        await client.query(
+          `INSERT INTO leverantörsfakturor (
+            "user_id", transaktions_id, leverantör_namn, leverantor_id, fakturanummer, 
+            fakturadatum, förfallodatum, betaldatum, belopp, status_betalning, status_bokförd
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+          [
+            userId,
+            transaktionsId,
+            leverantörNamn,
+            parseInt(leverantorId),
+            fakturanummer,
+            formattedFakturadatum,
+            formattedFörfallodatum,
+            null, // betaldatum ska alltid vara null vid registrering
+            belopp,
+            "Obetald", // status_betalning ska alltid vara "Obetald" vid registrering
+            "Ej bokförd", // status_bokförd ska vara "Ej bokförd" (inte "Registrerad")
+          ]
+        );
+      }
     }
 
     await invalidateBokforCache();

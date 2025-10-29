@@ -141,6 +141,17 @@ export default function Steg2Levfakt() {
       aborted = true;
     };
   }, [actions, state.leverantör]);
+
+  // Synka fakturadatum till transaktionsdatum för leverantörsfakturor
+  useEffect(() => {
+    if (
+      levfaktHelper.state.fakturadatum &&
+      levfaktHelper.state.fakturadatum !== state.transaktionsdatum
+    ) {
+      actions.setTransaktionsdatum(levfaktHelper.state.fakturadatum);
+    }
+  }, [levfaktHelper.state.fakturadatum, state.transaktionsdatum, actions]);
+
   // Visa bara på steg 2 och i levfakt mode
   if (state.currentStep !== 2 || !state.levfaktMode) return null;
 
@@ -221,9 +232,10 @@ export default function Steg2Levfakt() {
               <label className="block mb-2 text-white">Fakturadatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(state.fakturadatum) || new Date()}
+                selected={datePickerValue(levfaktHelper.state.fakturadatum) ?? new Date()}
                 onChange={(date) => {
-                  actions.setFakturadatum(datePickerOnChange(date));
+                  const newValue = datePickerOnChange(date);
+                  levfaktHelper.actions.setFakturadatum(newValue);
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"
@@ -236,9 +248,10 @@ export default function Steg2Levfakt() {
               <label className="block mb-2 text-white">Förfallodatum:</label>
               <DatePicker
                 className="w-full p-2 mb-4 rounded text-white bg-slate-900 border border-gray-700"
-                selected={datePickerValue(state.förfallodatum) || new Date()}
+                selected={datePickerValue(levfaktHelper.state.förfallodatum) ?? new Date()}
                 onChange={(date) => {
-                  levfaktHelper.actions.setFörfallodatum(datePickerOnChange(date));
+                  const newValue = datePickerOnChange(date);
+                  levfaktHelper.actions.setFörfallodatum(newValue);
                 }}
                 dateFormat="yyyy-MM-dd"
                 locale="sv"

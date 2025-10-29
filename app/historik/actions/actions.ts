@@ -40,7 +40,7 @@ export async function findUnbalancedVerifications(): Promise<{
         ABS(total_debet - total_kredit) as skillnad
       FROM verification_totals
       WHERE ABS(total_debet - total_kredit) > 0.01
-      ORDER BY transaktionsdatum DESC, transaktions_id DESC
+      ORDER BY transaktions_id DESC
     `,
       [userId]
     );
@@ -91,7 +91,7 @@ async function fetchTransaktionerInternal(fromYear?: string) {
       WHERE t."user_id" = $1
       ${fromYear ? "AND EXTRACT(YEAR FROM t.transaktionsdatum) = $2" : ""}
       GROUP BY t.id, t.transaktionsdatum, t.kontobeskrivning, t.kommentar, t.fil, t.blob_url
-      ORDER BY t.transaktionsdatum DESC, t.id DESC
+      ORDER BY t.id DESC
       `,
       fromYear ? [userId, parseInt(fromYear)] : [userId]
     );
@@ -182,7 +182,7 @@ async function exporteraTransaktionerMedPosterInternal(year: string) {
       LEFT JOIN konton k ON tp.konto_id = k.id
       WHERE t."user_id" = $1 
         AND t.transaktionsdatum BETWEEN $2 AND $3
-      ORDER BY t.transaktionsdatum DESC, t.id DESC, tp.id ASC
+      ORDER BY t.id DESC, tp.id ASC
     `,
       [userId, start, end]
     );
