@@ -310,11 +310,13 @@ export interface SparadFaktura {
   totalBelopp: number;
   antalArtiklar: number;
   rotRutTyp: "ROT" | "RUT" | "ROT+RUT" | null;
+  isOffert?: boolean;
 }
 
 export interface SparadeProps {
   onBackToMenu?: () => void;
-  onEditFaktura?: (fakturaId: number) => void;
+  onEditFaktura?: (fakturaId: number, isOffert?: boolean) => void;
+  isOffertView?: boolean;
 }
 
 export interface SparadeFakturorProps {

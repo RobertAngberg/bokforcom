@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { dateToYyyyMmDd } from "../../_utils/datum";
 import { useFaktura } from "./useFaktura";
 import { useFakturaInitialData } from "../context/hooks/FakturaContext";
@@ -108,6 +111,9 @@ const normalizeBokforingsmetod = (metod?: string | null) => {
 };
 
 export function useAlternativ() {
+  const searchParams = useSearchParams();
+  const isOffert = searchParams.get("type") === "offert";
+
   const { formData, updateFormField } = useFaktura();
   const initialData = useFakturaInitialData();
   // Servern kan skicka med bokföringsmetoden; i så fall hoppar vi över första fetch och använder värdet direkt.
@@ -191,6 +197,7 @@ export function useAlternativ() {
     const fd = new FormData();
     try {
       fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
+      fd.append("isOffert", isOffert ? "true" : "false");
       Object.entries(formData).forEach(([k, v]) => {
         if (k !== "artiklar" && v != null) fd.append(k, String(v));
       });
@@ -231,6 +238,7 @@ export function useAlternativ() {
         const fd = new FormData();
         try {
           fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
+          fd.append("isOffert", isOffert ? "true" : "false");
           Object.entries(formData).forEach(([k, v]) => {
             if (k !== "artiklar" && v != null) fd.append(k, String(v));
           });

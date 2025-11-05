@@ -45,7 +45,11 @@ const resolveStatus = (
   return "Oskickad";
 };
 
-export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
+export default function Sparade({
+  onBackToMenu,
+  onEditFaktura,
+  isOffertView = false,
+}: SparadeProps) {
   const { data, loading } = useSparadeFakturorPage();
   const {
     loadingInvoiceId,
@@ -57,7 +61,12 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
     deleteFakturaId,
   } = useSparade();
 
-  const fakturor: SparadFaktura[] = data?.fakturor ?? [];
+  const allFakturor: SparadFaktura[] = data?.fakturor ?? [];
+
+  // Filtrera baserat på om vi visar offerter eller fakturor
+  const fakturor = allFakturor.filter((f) => (isOffertView ? f.isOffert : !f.isOffert));
+
+  const docType = isOffertView ? "offerter" : "fakturor";
 
   return (
     <>
@@ -71,7 +80,7 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
         {loading ? (
           <LoadingSpinner />
         ) : fakturor.length === 0 ? (
-          <p className="text-gray-400 italic text-center">Inga fakturor hittades.</p>
+          <p className="text-gray-400 italic text-center">Inga {docType} hittades.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {fakturor.map((faktura) => {
@@ -130,7 +139,9 @@ export default function Sparade({ onBackToMenu, onEditFaktura }: SparadeProps) {
                       ${isLoading ? "opacity-50" : ""}
                     `}
                     onClick={() =>
-                      onEditFaktura ? onEditFaktura(faktura.id) : handleSelectInvoice(faktura.id)
+                      onEditFaktura
+                        ? onEditFaktura(faktura.id, faktura.isOffert)
+                        : handleSelectInvoice(faktura.id)
                     }
                   >
                     <div className="font-semibold text-base mb-3">

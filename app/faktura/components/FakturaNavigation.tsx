@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams, useRouter } from "next/navigation";
 import Knapp from "../../_components/Knapp";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import AnimeradFlik from "../../_components/AnimeradFlik";
@@ -24,6 +25,10 @@ const Leverantorsfakturor = dynamic(() => import("./Leverantorsfakturor/Leverant
 });
 
 export default function FakturaNavigation() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isOffert = searchParams.get("type") === "offert";
+
   const {
     formData,
     navigateToEdit,
@@ -85,7 +90,15 @@ export default function FakturaNavigation() {
     navigateToEdit("ny");
   };
 
-  const handleEditFaktura = (fakturaId: number) => {
+  const handleCreateNewOffert = () => {
+    router.push("/faktura?type=offert");
+    handleCreateNew();
+  };
+
+  const handleEditFaktura = (fakturaId: number, isOffert?: boolean) => {
+    if (isOffert) {
+      router.push("/faktura?type=offert");
+    }
     navigateToEdit("ny", fakturaId);
   };
 
@@ -98,15 +111,31 @@ export default function FakturaNavigation() {
       <>
         <div className="flex items-center justify-center mb-8 relative">
           <h1 className="text-3xl text-slate-100">Faktura</h1>
-          <div className="absolute right-0">
+          <div className="absolute right-0 flex gap-2">
             <Knapp text="+ Ny Faktura" onClick={handleCreateNew} />
+            <Knapp text="+ Ny Offert" onClick={handleCreateNewOffert} />
           </div>
         </div>
 
         {/* Visa sparade fakturor direkt på sidan */}
         <AnimeradFlik title="Sparade Fakturor" icon="📂" forcedOpen={false}>
-          <Sparade onBackToMenu={undefined} onEditFaktura={handleEditFaktura} />
+          <Sparade
+            onBackToMenu={undefined}
+            onEditFaktura={handleEditFaktura}
+            isOffertView={false}
+          />
         </AnimeradFlik>
+
+        {/* Visa sparade offerter direkt på sidan */}
+        <div className="mt-6">
+          <AnimeradFlik title="Sparade Offerter" icon="📄" forcedOpen={false}>
+            <Sparade
+              onBackToMenu={undefined}
+              onEditFaktura={handleEditFaktura}
+              isOffertView={true}
+            />
+          </AnimeradFlik>
+        </div>
 
         {/* Visa leverantörsfakturor direkt på sidan */}
         <div className="mt-6">
@@ -121,7 +150,7 @@ export default function FakturaNavigation() {
   // Renderera specifika vyer
   return (
     <>
-      {activeView === "ny" && <NyFaktura onBackToMenu={handleBackToOverview} />}
+      {activeView === "ny" && <NyFaktura onBackToMenu={handleBackToOverview} isOffert={isOffert} />}
       {activeView === "sparade" && (
         <Sparade onBackToMenu={handleBackToOverview} onEditFaktura={handleEditFaktura} />
       )}

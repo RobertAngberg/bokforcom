@@ -5,6 +5,7 @@ import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/valid
 import { ensureSession } from "../../_utils/session";
 import { dateToYyyyMmDd, stringTillDate } from "../../_utils/datum";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
+import { revalidatePath } from "next/cache";
 
 const normalizeStatus = (status: string | null | undefined) => {
   const normalized = (status || "").trim().toLowerCase();
@@ -172,6 +173,9 @@ export async function saveInvoiceInternal(formData: FormData) {
 
   const sanitizedArtiklar = artiklar.map(sanitizeArtikelInput);
 
+  // Kolla om det är en offert eller faktura
+  const isOffert = formData.get("isOffert") === "true";
+
   // Kolla om det är en uppdatering eller ny faktura
   const fakturaIdRaw = formData.get("id");
   const isUpdate = !!fakturaIdRaw;
@@ -290,8 +294,83 @@ export async function saveInvoiceInternal(formData: FormData) {
         );
       }
 
+      revalidatePath("/faktura");
       return { success: true, id: fakturaId };
     } else {
+      // Skapa ny faktura/offert
+      if (isOffert) {
+        // Spara som offert
+        let offertnummer = formData.get("fakturanummer")?.toString();
+        if (!offertnummer) {
+          const latest = await client.query(
+            `SELECT MAX(CAST(offertnummer AS INTEGER)) AS max FROM offerter WHERE user_id = $1`,
+            [userId]
+          );
+          offertnummer = ((latest.rows[0].max || 0) + 1).toString();
+        }
+
+        const insertOffert = await client.query(
+          `INSERT INTO offerter (
+            user_id, offertnummer, offertdatum, giltighetsdatum,
+            kundid, nummer, logo_width, status
+          ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8)
+          RETURNING id`,
+          [
+            userId,
+            offertnummer,
+            fakturaDateString,
+            forfalloDatumsString,
+            formData.get("kundId") ? parseInt(formData.get("kundId")!.toString()) : null,
+            formData.get("nummer"),
+            formData.get("logoWidth") ? parseInt(formData.get("logoWidth")!.toString()) : 200,
+            "Utkast",
+          ]
+        );
+
+        const newId = insertOffert.rows[0].id;
+
+        for (const rad of sanitizedArtiklar) {
+          await client.query(
+            `INSERT INTO offert_artiklar (
+              offert_id, beskrivning, antal, pris_per_enhet, moms, valuta, typ,
+              rot_rut_typ, rot_rut_kategori, avdrag_procent, arbetskostnad_ex_moms,
+              rot_rut_antal_timmar, rot_rut_pris_per_timme,
+              rot_rut_beskrivning, rot_rut_startdatum, rot_rut_slutdatum,
+              rot_rut_personnummer, rot_rut_fastighetsbeteckning, rot_rut_boende_typ,
+              rot_rut_brf_org, rot_rut_brf_lagenhet
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+            [
+              newId,
+              rad.beskrivning,
+              rad.antal,
+              rad.prisPerEnhet,
+              rad.moms,
+              rad.valuta,
+              rad.typ,
+              rad.rotRutTyp ?? null,
+              rad.rotRutKategori ?? null,
+              rad.avdragProcent ?? null,
+              rad.arbetskostnadExMoms ?? null,
+              rad.rotRutAntalTimmar ?? null,
+              rad.rotRutPrisPerTimme ?? null,
+              rad.rotRutBeskrivning ?? null,
+              rad.rotRutStartdatum ? dateToYyyyMmDd(new Date(rad.rotRutStartdatum)) : null,
+              rad.rotRutSlutdatum ? dateToYyyyMmDd(new Date(rad.rotRutSlutdatum)) : null,
+              rad.rotRutPersonnummer ?? null,
+              rad.rotRutFastighetsbeteckning ?? null,
+              rad.rotRutBoendeTyp ?? null,
+              rad.rotRutBrfOrg ?? null,
+              rad.rotRutBrfLagenhet ?? null,
+            ]
+          );
+        }
+
+        revalidatePath("/faktura");
+        return { success: true, id: newId };
+      }
+
+      // Spara som faktura (befintlig kod)
       let fakturanummer = formData.get("fakturanummer")?.toString();
       if (!fakturanummer) {
         const latest = await client.query(
@@ -362,6 +441,7 @@ export async function saveInvoiceInternal(formData: FormData) {
         );
       }
 
+      revalidatePath("/faktura");
       return { success: true, id: newId };
     }
   } finally {
@@ -384,14 +464,32 @@ export async function hamtaNastaFakturanummer() {
   }
 }
 
-export async function hamtaFakturaMedRader(id: number) {
+export async function hamtaFakturaMedRader(id: number, isOffert?: boolean) {
   const client = await pool.connect();
   try {
-    // Hämta faktura + kunduppgifter
+    // Om isOffert inte är specificerat, försök detektera automatiskt
+    let dokumentTyp = isOffert;
+    if (dokumentTyp === undefined) {
+      const checkRes = await client.query(`SELECT 1 FROM offerter WHERE id = $1 LIMIT 1`, [id]);
+      dokumentTyp = checkRes.rows.length > 0;
+    }
+
+    // Välj rätt tabeller baserat på dokumenttyp
+    const dokumentTabell = dokumentTyp ? "offerter" : "fakturor";
+    const artikelTabell = dokumentTyp ? "offert_artiklar" : "faktura_artiklar";
+    const idKolumn = dokumentTyp ? "offert_id" : "faktura_id";
+    const nummerKolumn = dokumentTyp ? "offertnummer" : "fakturanummer";
+    const datumKolumn = dokumentTyp ? "offertdatum" : "fakturadatum";
+    const kundIdKolumn = dokumentTyp ? "kundid" : '"kundId"';
+
+    // Hämta dokument + kunduppgifter
     const fakturaRes = await client.query(
       `
       SELECT 
         f.*, 
+        f.${nummerKolumn} as fakturanummer,
+        f.${datumKolumn} as fakturadatum,
+        f.${kundIdKolumn} as "kundId",
         k.kundnamn, 
         k.kundnummer, 
         k.kundorgnummer as kundorganisationsnummer, 
@@ -400,8 +498,8 @@ export async function hamtaFakturaMedRader(id: number) {
         k.kundpostnummer, 
         k.kundstad, 
         k.kundemail
-      FROM fakturor f
-      LEFT JOIN kunder k ON f."kundId" = k.id
+      FROM ${dokumentTabell} f
+      LEFT JOIN kunder k ON f.${kundIdKolumn} = k.id
       WHERE f.id = $1
       LIMIT 1
       `,
@@ -411,7 +509,7 @@ export async function hamtaFakturaMedRader(id: number) {
 
     // Hämta artiklar (inklusive ROT/RUT data som nu finns i samma tabell)
     const artiklarRes = await client.query(
-      `SELECT * FROM faktura_artiklar WHERE faktura_id = $1 ORDER BY id ASC`,
+      `SELECT * FROM ${artikelTabell} WHERE ${idKolumn} = $1 ORDER BY id ASC`,
       [id]
     );
 
@@ -480,20 +578,36 @@ export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
         f.id, f.fakturanummer, f.fakturadatum, f."kundId",
         f.status, f.betaldatum,
         f.transaktions_id, f.rot_rut_status, 'kund' as typ,
-        k.kundnamn
+        k.kundnamn, false as is_offert
       FROM fakturor f
       LEFT JOIN kunder k ON f."kundId" = k.id
       WHERE f."user_id" = $1
-      ORDER BY f.id DESC
+      
+      UNION ALL
+      
+      SELECT
+        o.id, o.offertnummer as fakturanummer, o.offertdatum as fakturadatum, o.kundid as "kundId",
+        o.status, NULL as betaldatum,
+        NULL as transaktions_id, NULL as rot_rut_status, 'kund' as typ,
+        k.kundnamn, true as is_offert
+      FROM offerter o
+      LEFT JOIN kunder k ON o.kundid = k.id
+      WHERE o.user_id = $1
+      
+      ORDER BY id DESC
       `,
       [userId]
     );
 
-    // Hämta artiklar och beräkna totalt belopp för varje faktura
+    // Hämta artiklar och beräkna totalt belopp för varje faktura/offert
     const fakturorMedTotaler = await Promise.all(
       res.rows.map(async (faktura) => {
+        const isOffert = faktura.is_offert;
+        const artikelTable = isOffert ? "offert_artiklar" : "faktura_artiklar";
+        const idColumn = isOffert ? "offert_id" : "faktura_id";
+
         const artiklarRes = await client.query(
-          `SELECT antal, pris_per_enhet, moms, rot_rut_typ FROM faktura_artiklar WHERE faktura_id = $1`,
+          `SELECT antal, pris_per_enhet, moms, rot_rut_typ FROM ${artikelTable} WHERE ${idColumn} = $1`,
           [faktura.id]
         );
 
@@ -534,6 +648,7 @@ export async function hamtaSparadeFakturor(): Promise<SparadFaktura[]> {
           totalBelopp: Math.round(totalBelopp * 100) / 100,
           antalArtiklar: artiklarRes.rows.length,
           rotRutTyp,
+          isOffert: isOffert,
         } as SparadFaktura;
       })
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
 import { useSession } from "../../_lib/auth-client";
@@ -111,6 +112,12 @@ export function useFaktura() {
   // Företagsprofilen kan också hydreras direkt från initialdata (om den finns) och då behöver vi inte hämta den igen klient-side.
   const initialForetagsprofil = initialData?.foretagsprofil;
 
+  // Läs om det är offert från URL
+  const searchParams = useSearchParams();
+  const isOffert = searchParams.get("type") === "offert";
+  const docType = isOffert ? "Offert" : "Faktura";
+  const docIcon = isOffert ? "📄" : "🧾";
+
   // Avgör om vi redigerar en sparad faktura och tar fram titel/fakturanummer för vyn.
   const editFakturaId = navigationState.editFakturaId;
   const isEditingView = navigationState.currentView === "ny" && Boolean(editFakturaId);
@@ -121,22 +128,22 @@ export function useFaktura() {
   const fakturaTitle = useMemo(() => {
     if (isEditingView) {
       if (displayFakturanummer && displayKundnamn) {
-        return `✏️ Redigerar Faktura #${displayFakturanummer} - ${displayKundnamn}`;
+        return `✏️ Redigerar ${docType} #${displayFakturanummer} - ${displayKundnamn}`;
       }
       if (displayFakturanummer) {
-        return `✏️ Redigerar Faktura #${displayFakturanummer}`;
+        return `✏️ Redigerar ${docType} #${displayFakturanummer}`;
       }
-      return "✏️ Redigerar Faktura";
+      return `✏️ Redigerar ${docType}`;
     }
 
     if (displayFakturanummer && displayKundnamn) {
-      return `🧾 Faktura #${displayFakturanummer} - ${displayKundnamn}`;
+      return `${docIcon} ${docType} #${displayFakturanummer} - ${displayKundnamn}`;
     }
     if (displayFakturanummer) {
-      return `🧾 Faktura #${displayFakturanummer}`;
+      return `${docIcon} ${docType} #${displayFakturanummer}`;
     }
-    return "Ny Faktura";
-  }, [isEditingView, displayFakturanummer, displayKundnamn]);
+    return `${docIcon} Ny ${docType}`;
+  }, [isEditingView, displayFakturanummer, displayKundnamn, docType, docIcon]);
 
   // External hooks
   const { data: session } = useSession();

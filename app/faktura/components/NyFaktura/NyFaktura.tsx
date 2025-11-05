@@ -12,11 +12,16 @@ import { useFaktura } from "../../hooks/useFaktura";
 import { NyFakturaProps } from "../../types/types";
 import TillbakaPil from "../../../_components/TillbakaPil";
 
-export default function NyFaktura({ onBackToMenu }: NyFakturaProps) {
+export default function NyFaktura({
+  onBackToMenu,
+  isOffert = false,
+}: NyFakturaProps & { isOffert?: boolean }) {
   const { showPreview, openPreview, closePreview, isLoadingFaktura, fakturaTitle } = useFaktura();
 
+  const docType = isOffert ? "offert" : "faktura";
+
   const titleContent = isLoadingFaktura ? (
-    <span className="text-blue-400">🔄 Laddar faktura...</span>
+    <span className="text-blue-400">🔄 Laddar {docType}...</span>
   ) : (
     fakturaTitle
   );
