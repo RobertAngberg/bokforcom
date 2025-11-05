@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { dateToYyyyMmDd } from "../../_utils/datum";
 import { useFaktura } from "./useFaktura";
 import { useFakturaInitialData } from "../context/hooks/FakturaContext";
-import { saveInvoice } from "../actions/fakturaActions";
+import { saveInvoice, konverteraOffertTillFaktura } from "../actions/fakturaActions";
 import { showToast } from "../../_components/Toast";
 import {
   hamtaFakturaStatus,
@@ -190,6 +190,32 @@ export function useAlternativ() {
     };
   }, [formData.id]);
 
+  const hanteraKonverteraTillFaktura = async () => {
+    if (!formData.id) {
+      showToast("Spara offerten först innan konvertering", "error");
+      return;
+    }
+
+    try {
+      setSparaLoading(true);
+      const result = await konverteraOffertTillFaktura(Number(formData.id));
+
+      if (result.success && result.fakturaId) {
+        showToast(`Offert konverterad till Faktura #${result.fakturanummer}!`, "success");
+
+        // Navigera till den nya fakturan
+        // Använd window.location för att säkerställa fullständig reload
+        window.location.href = `/faktura?edit=${result.fakturaId}`;
+      } else {
+        showToast(result.error || "Kunde inte konvertera offert", "error");
+      }
+    } catch {
+      showToast("Kunde inte konvertera offert till faktura", "error");
+    } finally {
+      setSparaLoading(false);
+    }
+  };
+
   const hanteraSpara = async () => {
     if (sparaLoading) return; // Förhindra dubbla sparningar
 
@@ -209,9 +235,12 @@ export function useAlternativ() {
 
         if ("id" in res && res.id) {
           updateFormField("id", res.id.toString());
+          if ("fakturanummer" in res && res.fakturanummer) {
+            updateFormField("fakturanummer", res.fakturanummer);
+          }
           window.dispatchEvent(
             new CustomEvent("fakturaSaved", {
-              detail: { id: res.id, fakturanummer: formData.fakturanummer },
+              detail: { id: res.id, fakturanummer: res.fakturanummer || formData.fakturanummer },
             })
           );
         }
@@ -246,9 +275,12 @@ export function useAlternativ() {
 
           if (res.success && "id" in res && res.id) {
             updateFormField("id", res.id.toString());
+            if ("fakturanummer" in res && res.fakturanummer) {
+              updateFormField("fakturanummer", res.fakturanummer);
+            }
             window.dispatchEvent(
               new CustomEvent("fakturaSaved", {
-                detail: { id: res.id, fakturanummer: formData.fakturanummer },
+                detail: { id: res.id, fakturanummer: res.fakturanummer || formData.fakturanummer },
               })
             );
             window.dispatchEvent(new Event("reloadFakturor"));
@@ -277,13 +309,16 @@ export function useAlternativ() {
   const ärFakturanBokfördOchBetald = ärFakturanFärdig;
   const ärKontantmetod = bokföringsmetod === "kontantmetoden";
   const ärNyFaktura = !formData.id;
-  const doljBokförKnapp = false;
+
+  // För offerter, dölj bokför-knappen
+  const doljBokförKnapp = isOffert;
+  const visaKonverteraKnapp = isOffert && formData.id; // Visa bara om offerten är sparad
 
   // Knapptexter
   const sparaKnappText = sparaLoading ? "💾 Sparar..." : "💾 Spara";
   const fakturaIdStr = toTrimmedString(formData.id);
   const harFakturaId = fakturaIdStr !== "";
-  const statusLoading = harFakturaId && fakturaStatus.status == null;
+  const statusLoading = harFakturaId && fakturaStatus.status == null && !isOffert; // Ingen status-check för offerter
   const registerButtonLabel = (() => {
     const normalized = (bokföringsmetod || "").toLowerCase();
     if (ärFakturanSkickad && !ärFakturanBokfördOchBetald) {
@@ -319,6 +354,7 @@ export function useAlternativ() {
     ärFakturanBokfördOchBetald,
     statusLoading,
     doljBokförKnapp,
+    visaKonverteraKnapp,
     sparaKnappText,
     bokförKnappText,
     återställKnappText,
@@ -329,6 +365,7 @@ export function useAlternativ() {
     setBokförModalOpen,
     hanteraSpara,
     hanteraBokför,
+    hanteraKonverteraTillFaktura,
   };
 }
 

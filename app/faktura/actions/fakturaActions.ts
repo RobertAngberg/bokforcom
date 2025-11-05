@@ -5,7 +5,6 @@ import { validateAmount, sanitizeInput, validateEmail } from "../../_utils/valid
 import { ensureSession } from "../../_utils/session";
 import { dateToYyyyMmDd, stringTillDate } from "../../_utils/datum";
 import type { ArtikelInput, SparadFaktura } from "../types/types";
-import { revalidatePath } from "next/cache";
 
 const normalizeStatus = (status: string | null | undefined) => {
   const normalized = (status || "").trim().toLowerCase();
@@ -294,8 +293,11 @@ export async function saveInvoiceInternal(formData: FormData) {
         );
       }
 
-      revalidatePath("/faktura");
-      return { success: true, id: fakturaId };
+      return {
+        success: true,
+        id: fakturaId,
+        fakturanummer: formData.get("fakturanummer")?.toString() || "",
+      };
     } else {
       // Skapa ny faktura/offert
       if (isOffert) {
@@ -366,8 +368,7 @@ export async function saveInvoiceInternal(formData: FormData) {
           );
         }
 
-        revalidatePath("/faktura");
-        return { success: true, id: newId };
+        return { success: true, id: newId, fakturanummer: offertnummer };
       }
 
       // Spara som faktura (befintlig kod)
@@ -441,8 +442,7 @@ export async function saveInvoiceInternal(formData: FormData) {
         );
       }
 
-      revalidatePath("/faktura");
-      return { success: true, id: newId };
+      return { success: true, id: newId, fakturanummer };
     }
   } finally {
     client.release();
@@ -464,6 +464,132 @@ export async function hamtaNastaFakturanummer() {
   }
 }
 
+export async function konverteraOffertTillFaktura(offertId: number) {
+  const { userId } = await ensureSession();
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Hämta offerten med alla detaljer
+    const offertRes = await client.query(`SELECT * FROM offerter WHERE id = $1 AND user_id = $2`, [
+      offertId,
+      userId,
+    ]);
+
+    if (offertRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return { success: false, error: "Offert hittades inte" };
+    }
+
+    const offert = offertRes.rows[0];
+
+    // Kolla om offerten redan konverterats
+    if (offert.konverterad_till_faktura_id) {
+      await client.query("ROLLBACK");
+      return { success: false, error: "Offerten är redan konverterad till faktura" };
+    }
+
+    // Hämta nästa fakturanummer
+    const latest = await client.query(
+      `SELECT MAX(CAST(fakturanummer AS INTEGER)) AS max FROM fakturor WHERE "user_id" = $1`,
+      [userId]
+    );
+    const fakturanummer = ((latest.rows[0].max || 0) + 1).toString();
+
+    // Skapa ny faktura från offertdata
+    const fakturaRes = await client.query(
+      `INSERT INTO fakturor (
+        "user_id",
+        fakturanummer,
+        fakturadatum,
+        forfallodatum,
+        "kundId",
+        nummer,
+        logo_width,
+        status
+      ) VALUES ($1, $2, NOW(), NOW() + INTERVAL '30 days', $3, $4, $5, 'Oskickad')
+      RETURNING id`,
+      [userId, fakturanummer, offert.kundid, offert.nummer, offert.logo_width || 200]
+    );
+
+    const fakturaId = fakturaRes.rows[0].id;
+
+    // Kopiera artiklar från offert till faktura
+    const artiklarRes = await client.query(
+      `SELECT * FROM offert_artiklar WHERE offert_id = $1 ORDER BY id ASC`,
+      [offertId]
+    );
+
+    for (const artikel of artiklarRes.rows) {
+      await client.query(
+        `INSERT INTO faktura_artiklar (
+          faktura_id,
+          beskrivning,
+          antal,
+          pris_per_enhet,
+          moms,
+          valuta,
+          typ,
+          rot_rut_typ,
+          rot_rut_kategori,
+          avdrag_procent,
+          arbetskostnad_ex_moms,
+          rot_rut_antal_timmar,
+          rot_rut_pris_per_timme,
+          rot_rut_beskrivning,
+          rot_rut_startdatum,
+          rot_rut_slutdatum,
+          rot_rut_personnummer,
+          rot_rut_fastighetsbeteckning,
+          rot_rut_boende_typ,
+          rot_rut_brf_org,
+          rot_rut_brf_lagenhet
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+        [
+          fakturaId,
+          artikel.beskrivning,
+          artikel.antal,
+          artikel.pris_per_enhet,
+          artikel.moms,
+          artikel.valuta,
+          artikel.typ,
+          artikel.rot_rut_typ,
+          artikel.rot_rut_kategori,
+          artikel.avdrag_procent,
+          artikel.arbetskostnad_ex_moms,
+          artikel.rot_rut_antal_timmar,
+          artikel.rot_rut_pris_per_timme,
+          artikel.rot_rut_beskrivning,
+          artikel.rot_rut_startdatum,
+          artikel.rot_rut_slutdatum,
+          artikel.rot_rut_personnummer,
+          artikel.rot_rut_fastighetsbeteckning,
+          artikel.rot_rut_boende_typ,
+          artikel.rot_rut_brf_org,
+          artikel.rot_rut_brf_lagenhet,
+        ]
+      );
+    }
+
+    // Uppdatera offerten med referens till fakturan
+    await client.query(
+      `UPDATE offerter SET konverterad_till_faktura_id = $1, uppdaterad = NOW() WHERE id = $2`,
+      [fakturaId, offertId]
+    );
+
+    await client.query("COMMIT");
+
+    return { success: true, fakturaId, fakturanummer };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Fel vid konvertering av offert:", error);
+    return { success: false, error: "Kunde inte konvertera offert till faktura" };
+  } finally {
+    client.release();
+  }
+}
+
 export async function hamtaFakturaMedRader(id: number, isOffert?: boolean) {
   const client = await pool.connect();
   try {
@@ -475,36 +601,62 @@ export async function hamtaFakturaMedRader(id: number, isOffert?: boolean) {
     }
 
     // Välj rätt tabeller baserat på dokumenttyp
-    const dokumentTabell = dokumentTyp ? "offerter" : "fakturor";
     const artikelTabell = dokumentTyp ? "offert_artiklar" : "faktura_artiklar";
     const idKolumn = dokumentTyp ? "offert_id" : "faktura_id";
-    const nummerKolumn = dokumentTyp ? "offertnummer" : "fakturanummer";
-    const datumKolumn = dokumentTyp ? "offertdatum" : "fakturadatum";
-    const kundIdKolumn = dokumentTyp ? "kundid" : '"kundId"';
 
     // Hämta dokument + kunduppgifter
-    const fakturaRes = await client.query(
-      `
-      SELECT 
-        f.*, 
-        f.${nummerKolumn} as fakturanummer,
-        f.${datumKolumn} as fakturadatum,
-        f.${kundIdKolumn} as "kundId",
-        k.kundnamn, 
-        k.kundnummer, 
-        k.kundorgnummer as kundorganisationsnummer, 
-        k.kundmomsnummer, 
-        k.kundadress1 as kundadress, 
-        k.kundpostnummer, 
-        k.kundstad, 
-        k.kundemail
-      FROM ${dokumentTabell} f
-      LEFT JOIN kunder k ON f.${kundIdKolumn} = k.id
-      WHERE f.id = $1
-      LIMIT 1
-      `,
-      [id]
-    );
+    // Bygg SELECT med rätt kolumnmappning för offerter vs fakturor
+    let selectQuery;
+    if (dokumentTyp) {
+      // Offert - mappa offerter-kolumner till faktura-format
+      selectQuery = `
+        SELECT 
+          f.id,
+          f.user_id,
+          f.offertnummer as fakturanummer,
+          f.offertdatum as fakturadatum,
+          f.giltighetsdatum as forfallodatum,
+          NULL as betalningsmetod,
+          NULL as betalningsvillkor,
+          NULL as drojsmalsranta,
+          f.kundid as "kundId",
+          f.nummer,
+          f.logo_width,
+          f.status,
+          k.kundnamn, 
+          k.kundnummer, 
+          k.kundorgnummer as kundorganisationsnummer, 
+          k.kundmomsnummer, 
+          k.kundadress1 as kundadress, 
+          k.kundpostnummer, 
+          k.kundstad, 
+          k.kundemail
+        FROM offerter f
+        LEFT JOIN kunder k ON f.kundid = k.id
+        WHERE f.id = $1
+        LIMIT 1
+      `;
+    } else {
+      // Faktura - använd direkt
+      selectQuery = `
+        SELECT 
+          f.*, 
+          k.kundnamn, 
+          k.kundnummer, 
+          k.kundorgnummer as kundorganisationsnummer, 
+          k.kundmomsnummer, 
+          k.kundadress1 as kundadress, 
+          k.kundpostnummer, 
+          k.kundstad, 
+          k.kundemail
+        FROM fakturor f
+        LEFT JOIN kunder k ON f."kundId" = k.id
+        WHERE f.id = $1
+        LIMIT 1
+      `;
+    }
+
+    const fakturaRes = await client.query(selectQuery, [id]);
     const faktura = fakturaRes.rows[0];
 
     // Hämta artiklar (inklusive ROT/RUT data som nu finns i samma tabell)
@@ -678,24 +830,42 @@ export async function deleteFaktura(id: number) {
   try {
     await client.query("BEGIN");
 
-    // SÄKERHETSVALIDERING: Verifiera att fakturan tillhör denna användare
+    // Kolla först om det är en offert eller faktura
+    const checkOffertRes = await client.query(
+      `SELECT id FROM offerter WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+    const isOffert = checkOffertRes.rows.length > 0;
+
+    // Välj rätt tabeller
+    const dokumentTabell = isOffert ? "offerter" : "fakturor";
+    const artikelTabell = isOffert ? "offert_artiklar" : "faktura_artiklar";
+    const idKolumn = isOffert ? "offert_id" : "faktura_id";
+    const userIdKolumn = isOffert ? "user_id" : '"user_id"';
+
+    // SÄKERHETSVALIDERING: Verifiera att dokumentet tillhör denna användare
+    // Offerter har inte transaktions_id kolumn
+    const selectColumns = isOffert ? `id, status` : `id, transaktions_id, status`;
+
     const verifyRes = await client.query(
-      `SELECT id, transaktions_id, status FROM fakturor WHERE id = $1 AND "user_id" = $2`,
+      `SELECT ${selectColumns} FROM ${dokumentTabell} WHERE id = $1 AND ${userIdKolumn} = $2`,
       [id, userId]
     );
 
     if (verifyRes.rows.length === 0) {
       await client.query("ROLLBACK");
-      console.error("[deleteFaktura] Försök att radera faktura som inte ägs", {
+      console.error("[deleteFaktura] Försök att radera dokument som inte ägs", {
         userId,
-        fakturaId: id,
+        dokumentId: id,
+        isOffert,
       });
-      return { success: false, error: "Fakturan finns inte eller tillhör inte dig" };
+      return { success: false, error: "Dokumentet finns inte eller tillhör inte dig" };
     }
 
     const status = verifyRes.rows[0]?.status as string | null;
 
-    if (status && isStatusAtLeastSkickad(status)) {
+    // Offerter kan alltid raderas, fakturor har restriktioner
+    if (!isOffert && status && isStatusAtLeastSkickad(status)) {
       await client.query("ROLLBACK");
       const normalized = status.trim();
       const errorMessage =
@@ -705,7 +875,7 @@ export async function deleteFaktura(id: number) {
       return { success: false, error: errorMessage };
     }
 
-    const transaktionsId = verifyRes.rows[0]?.transaktions_id;
+    const transaktionsId = isOffert ? null : verifyRes.rows[0]?.transaktions_id;
 
     // Radera i rätt ordning (child tables först)
     // 1. Radera transaktionsposter (om det finns en transaktion)
@@ -718,23 +888,23 @@ export async function deleteFaktura(id: number) {
       await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
     }
 
-    // 3. Radera faktura_artiklar (inklusive ROT/RUT data)
-    await client.query(`DELETE FROM faktura_artiklar WHERE faktura_id = $1`, [id]);
+    // 3. Radera artiklar
+    await client.query(`DELETE FROM ${artikelTabell} WHERE ${idKolumn} = $1`, [id]);
 
-    // 4. Radera fakturan själv (med dubbel validering av ägarskap)
-    const deleteRes = await client.query(`DELETE FROM fakturor WHERE id = $1 AND "user_id" = $2`, [
-      id,
-      userId,
-    ]);
+    // 4. Radera dokumentet själv (med dubbel validering av ägarskap)
+    const deleteRes = await client.query(
+      `DELETE FROM ${dokumentTabell} WHERE id = $1 AND ${userIdKolumn} = $2`,
+      [id, userId]
+    );
 
     if (deleteRes.rowCount === 0) {
       await client.query("ROLLBACK");
-      throw new Error("Fakturan kunde inte raderas - ägarskapsvalidering misslyckades");
+      throw new Error("Dokumentet kunde inte raderas - ägarskapsvalidering misslyckades");
     }
 
     await client.query("COMMIT");
 
-    console.log(`✅ Säkert raderade faktura ${id} för user ${userId}`);
+    console.log(`✅ Säkert raderade ${isOffert ? "offert" : "faktura"} ${id} för user ${userId}`);
     if (transaktionsId) {
       console.log(`✅ Raderade transaktion ${transaktionsId} och dess poster`);
     }

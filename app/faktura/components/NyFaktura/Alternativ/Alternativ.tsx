@@ -15,6 +15,7 @@ export default function Alternativ({ onPreview }: AlternativProps) {
     sparaLoading,
     bokförLoading,
     doljBokförKnapp,
+    visaKonverteraKnapp,
     sparaKnappText,
     bokförKnappText,
     statusLoading,
@@ -25,6 +26,7 @@ export default function Alternativ({ onPreview }: AlternativProps) {
     setBokförModalOpen,
     hanteraSpara,
     hanteraBokför,
+    hanteraKonverteraTillFaktura,
   } = useAlternativ();
 
   return (
@@ -45,6 +47,15 @@ export default function Alternativ({ onPreview }: AlternativProps) {
         <div className="flex-1 min-w-40">
           <ExporteraPDFKnapp text={pdfKnappText} className="w-full" />
         </div>
+        {visaKonverteraKnapp && (
+          <div className="flex-1 min-w-40">
+            <Knapp
+              onClick={hanteraKonverteraTillFaktura}
+              text="🔄 Konvertera till faktura"
+              className="w-full"
+            />
+          </div>
+        )}
         {!doljBokförKnapp && (
           <div className="flex-1 min-w-40">
             <Knapp

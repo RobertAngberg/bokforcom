@@ -102,8 +102,11 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send(emailOptions);
 
     if (error) {
-      console.error("Email sending failed:", error.message); // Logga bara felmeddelande
-      return NextResponse.json({ error: "Kunde inte skicka e-post" }, { status: 400 });
+      console.error("Email sending failed:", error); // Logga hela error-objektet
+      return NextResponse.json(
+        { error: error.message || "Kunde inte skicka e-post" },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({

@@ -743,6 +743,18 @@ export function useSparadeFakturorPage(): UseSparadeFakturorPageReturn {
     };
   }, [initialKunder, initialArtiklar]);
 
+  // Lyssna på reload-event från radering/sparning
+  useEffect(() => {
+    const handleReload = () => {
+      loadData();
+    };
+
+    window.addEventListener("reloadFakturor", handleReload);
+    return () => {
+      window.removeEventListener("reloadFakturor", handleReload);
+    };
+  }, [loadData]);
+
   return {
     data,
     loading,

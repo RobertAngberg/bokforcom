@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useFaktura } from "./useFaktura";
 import { generatePDFAsBase64 } from "../utils/pdfGenerator";
 import { showToast } from "../../_components/Toast";
@@ -15,6 +16,10 @@ import type { SkickaEpostProps } from "../types/types";
 export function useSkickaEpost() {
   // Get form data from main faktura hook
   const { formData } = useFaktura();
+
+  // Kolla om det är en offert
+  const searchParams = useSearchParams();
+  const isOffert = searchParams.get("type") === "offert";
 
   // Local state för e-post
   const [isSending, setIsSending] = useState(false);
@@ -68,9 +73,10 @@ export function useSkickaEpost() {
         // Generera PDF som base64
         const pdfBase64 = await generatePDFAsBase64();
 
+        const docType = isOffert ? "offert" : "faktura";
         const safeFilename = formData.fakturanummer?.trim()
-          ? `faktura-${formData.fakturanummer.trim()}.pdf`
-          : "faktura.pdf";
+          ? `${docType}-${formData.fakturanummer.trim()}.pdf`
+          : `${docType}.pdf`;
 
         const payload = {
           faktura: {
@@ -107,7 +113,7 @@ export function useSkickaEpost() {
         setIsSending(false);
       }
     },
-    [mottagareEmail, egetMeddelande, formData, validateEmailAddress]
+    [mottagareEmail, egetMeddelande, formData, validateEmailAddress, isOffert]
   );
 
   // =============================================================================

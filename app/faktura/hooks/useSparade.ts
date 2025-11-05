@@ -12,6 +12,7 @@ export function useSparade() {
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteFakturaId, setDeleteFakturaId] = useState<number | null>(null);
+  const [deleteIsOffert, setDeleteIsOffert] = useState(false);
   // Store callbacks for delete operation
   const [deleteCallbacks, setDeleteCallbacks] = useState<{
     onSuccess?: () => void;
@@ -29,18 +30,25 @@ export function useSparade() {
   }, []);
 
   const handleDeleteInvoice = useCallback(
-    async (fakturaId: number, onSuccess?: () => void, onError?: (error: string) => void) => {
+    async (
+      fakturaId: number,
+      isOffert?: boolean,
+      onSuccess?: () => void,
+      onError?: (error: string) => void
+    ) => {
       setDeleteFakturaId(fakturaId);
+      setDeleteIsOffert(isOffert || false);
       setDeleteCallbacks({ onSuccess, onError });
       setShowDeleteModal(true);
     },
-    [setDeleteFakturaId, setDeleteCallbacks, setShowDeleteModal]
+    [setDeleteFakturaId, setDeleteIsOffert, setDeleteCallbacks, setShowDeleteModal]
   );
 
   const confirmDeleteFaktura = useCallback(async () => {
     if (!deleteFakturaId) return;
 
     const { onSuccess, onError } = deleteCallbacks;
+    const docType = deleteIsOffert ? "Offert" : "Faktura";
 
     setShowDeleteModal(false);
 
@@ -51,11 +59,12 @@ export function useSparade() {
         if (onSuccess) {
           onSuccess();
         } else {
-          // Fallback för när ingen callback ges
-          window.location.reload();
+          // Fallback: Trigga reload event istället för full page reload
+          window.dispatchEvent(new Event("reloadFakturor"));
         }
+        showToast(`${docType} raderad`, "success");
       } else {
-        const errorMsg = result.error || "Fel vid borttagning av faktura";
+        const errorMsg = result.error || `Fel vid borttagning av ${docType.toLowerCase()}`;
         if (onError) {
           onError(errorMsg);
         } else {
@@ -63,7 +72,7 @@ export function useSparade() {
         }
       }
     } catch {
-      const errorMsg = "Fel vid borttagning av faktura";
+      const errorMsg = `Fel vid borttagning av ${docType.toLowerCase()}`;
       if (onError) {
         onError(errorMsg);
       } else {
@@ -72,7 +81,7 @@ export function useSparade() {
     } finally {
       setLoadingInvoiceId(null);
     }
-  }, [deleteFakturaId, deleteCallbacks, setShowDeleteModal, setLoadingInvoiceId]);
+  }, [deleteFakturaId, deleteIsOffert, deleteCallbacks, setShowDeleteModal, setLoadingInvoiceId]);
 
   // =============================================================================
   // RETURN OBJECT

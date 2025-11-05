@@ -125,9 +125,9 @@ export default function Sparade({
                     className="absolute top-2 right-2 z-10 text-gray-400 hover:text-red-400 transition-colors duration-200 text-lg"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteInvoice(faktura.id);
+                      handleDeleteInvoice(faktura.id, faktura.isOffert);
                     }}
-                    title="Ta bort faktura"
+                    title={`Ta bort ${isOffertView ? "offert" : "faktura"}`}
                   >
                     🗑️
                   </button>
@@ -193,12 +193,12 @@ export default function Sparade({
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="🗑️ Ta bort faktura"
+        title={`🗑️ Ta bort ${docType.slice(0, -2)}`}
         maxWidth="md"
       >
         <div className="space-y-4">
           <p className="text-white">
-            Är du säker på att du vill ta bort faktura #{" "}
+            Är du säker på att du vill ta bort {docType.slice(0, -2)} #{" "}
             <span className="font-semibold">
               {fakturor.find((f) => f.id === deleteFakturaId)?.fakturanummer || deleteFakturaId}
             </span>
