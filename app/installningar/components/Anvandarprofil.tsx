@@ -78,6 +78,12 @@ export default function Anvandarprofil({ user }: AnvandarprofilProps) {
               <span className="text-gray-400">Email:</span>
               <span className="text-white ml-2">{state.userInfo?.email}</span>
             </div>
+            <div>
+              <span className="text-gray-400">Omsättning innevarande år:</span>
+              <span className="text-white ml-2">
+                {state.userInfo?.omsättning?.toLocaleString("sv-SE")} kr
+              </span>
+            </div>
           </div>
         )}
       </div>

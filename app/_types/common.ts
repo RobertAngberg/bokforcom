@@ -8,6 +8,7 @@ export interface AnvandarInfo {
   skapad?: string;
   uppdaterad?: string;
   provider?: string;
+  omsättning?: number;
 }
 
 export interface AktionsResultat<T = unknown> {

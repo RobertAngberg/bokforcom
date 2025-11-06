@@ -8,7 +8,7 @@ export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
 
     // Hämta användarinfo från databasen baserat på effective userId (kan vara impersonated)
     const result = await pool.query(
-      'SELECT id, email, name, "createdAt" FROM "user" WHERE id = $1',
+      'SELECT id, email, name, "createdAt", omsättning FROM "user" WHERE id = $1',
       [userId]
     );
 
@@ -20,6 +20,7 @@ export async function hamtaAnvandarInfo(): Promise<AnvandarInfo | null> {
       email: user.email || "",
       name: user.name || "",
       skapad: user.createdAt?.toISOString() || new Date().toISOString(),
+      omsättning: parseFloat(user.omsättning || 0),
     } as AnvandarInfo;
   } catch (error) {
     console.error("Failed to fetch user info:", error);

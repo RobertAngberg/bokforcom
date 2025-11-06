@@ -878,20 +878,41 @@ export async function deleteFaktura(id: number) {
     const transaktionsId = isOffert ? null : verifyRes.rows[0]?.transaktions_id;
 
     // Radera i rätt ordning (child tables först)
-    // 1. Radera transaktionsposter (om det finns en transaktion)
+    // 1. Dra av från omsättning om transaktionen har intäktskonto (3XXX)
+    if (transaktionsId) {
+      const intäktResult = await client.query(
+        `SELECT SUM(tp.kredit) as total_intakt
+         FROM transaktionsposter tp
+         JOIN konton k ON tp.konto_id = k.id
+         WHERE tp.transaktions_id = $1 
+         AND k.kontonummer::int >= 3000 
+         AND k.kontonummer::int < 4000`,
+        [transaktionsId]
+      );
+
+      if (intäktResult.rows.length > 0 && intäktResult.rows[0].total_intakt) {
+        const intäktsbelopp = parseFloat(intäktResult.rows[0].total_intakt);
+        await client.query(`UPDATE "user" SET omsättning = omsättning - $1 WHERE id = $2`, [
+          intäktsbelopp,
+          userId,
+        ]);
+      }
+    }
+
+    // 2. Radera transaktionsposter (om det finns en transaktion)
     if (transaktionsId) {
       await client.query(`DELETE FROM transaktionsposter WHERE transaktions_id = $1`, [
         transaktionsId,
       ]);
 
-      // 2. Radera transaktionen
+      // 3. Radera transaktionen
       await client.query(`DELETE FROM transaktioner WHERE id = $1`, [transaktionsId]);
     }
 
-    // 3. Radera artiklar
+    // 4. Radera artiklar
     await client.query(`DELETE FROM ${artikelTabell} WHERE ${idKolumn} = $1`, [id]);
 
-    // 4. Radera dokumentet själv (med dubbel validering av ägarskap)
+    // 5. Radera dokumentet själv (med dubbel validering av ägarskap)
     const deleteRes = await client.query(
       `DELETE FROM ${dokumentTabell} WHERE id = $1 AND ${userIdKolumn} = $2`,
       [id, userId]

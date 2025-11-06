@@ -118,6 +118,15 @@ export async function saveTransaction(formData: FormData) {
       }
 
       await client.query(insertPost, [transaktionsId, kontoRows[0].id, post.debet, post.kredit]);
+
+      // Uppdatera omsättning om det är ett intäktskonto (3XXX)
+      const kontonummerInt = parseInt(post.kontonummer);
+      if (kontonummerInt >= 3000 && kontonummerInt < 4000 && post.kredit > 0) {
+        await client.query(`UPDATE "user" SET omsättning = omsättning + $1 WHERE id = $2`, [
+          post.kredit,
+          userId,
+        ]);
+      }
     }
     // Skapa utlägg-rad om utläggs-mode och anstalldId finns
     if (utlaggMode && anstalldId) {

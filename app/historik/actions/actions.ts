@@ -267,6 +267,25 @@ async function deleteTransactionInternal(transactionId: number): Promise<{
         };
       }
 
+      // Dra av från omsättning om transaktionen har intäktskonto (3XXX)
+      const intäktResult = await client.query(
+        `SELECT SUM(tp.kredit) as total_intakt
+         FROM transaktionsposter tp
+         JOIN konton k ON tp.konto_id = k.id
+         WHERE tp.transaktions_id = $1 
+         AND k.kontonummer::int >= 3000 
+         AND k.kontonummer::int < 4000`,
+        [transactionId]
+      );
+
+      if (intäktResult.rows.length > 0 && intäktResult.rows[0].total_intakt) {
+        const intäktsbelopp = parseFloat(intäktResult.rows[0].total_intakt);
+        await client.query(`UPDATE "user" SET omsättning = omsättning - $1 WHERE id = $2`, [
+          intäktsbelopp,
+          userId,
+        ]);
+      }
+
       // Ta bort transaktionsposter först (på grund av foreign key)
       await client.query("DELETE FROM transaktionsposter WHERE transaktions_id = $1", [
         transactionId,
