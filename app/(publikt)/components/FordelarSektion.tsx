@@ -1,5 +1,3 @@
-"use client";
-
 import StartaKnapp from "./StartaKnapp";
 
 export default function BenefitsSection() {

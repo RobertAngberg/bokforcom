@@ -1,5 +1,4 @@
-"use client";
-
+import Link from "next/link";
 import StartaKnapp from "./StartaKnapp";
 
 export default function HeroSection() {
@@ -13,12 +12,12 @@ export default function HeroSection() {
       </p>
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
         <StartaKnapp className="w-full max-w-[260px] sm:w-auto" />
-        <button
-          onClick={() => (window.location.href = "/login")}
-          className="w-full max-w-[260px] sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
+        <Link
+          href="/login"
+          className="w-full max-w-[260px] sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors inline-block text-center"
         >
           Har redan konto
-        </button>
+        </Link>
       </div>
     </section>
   );

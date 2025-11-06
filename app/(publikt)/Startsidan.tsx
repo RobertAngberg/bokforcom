@@ -1,19 +1,16 @@
-"use client";
-
 import dynamic from "next/dynamic";
 
 import Header from "./components/Header";
 import HuvudSektion from "./components/HuvudSektion";
+import FunktionsKort from "./components/FunktionsKort";
+import PrisSektion from "./components/PrisSektion";
+import FordelarSektion from "./components/FordelarSektion";
+import Footer from "./components/Footer";
 
 const AnimeradeStjarnor = dynamic(() => import("./components/AnimeradeStjarnor"), {
   ssr: false,
   loading: () => null,
 });
-
-const FunktionsKort = dynamic(() => import("./components/FunktionsKort"));
-const PrisSektion = dynamic(() => import("./components/PrisSektion"));
-const FordelarSektion = dynamic(() => import("./components/FordelarSektion"));
-const Footer = dynamic(() => import("./components/Footer"));
 
 export default function Startsidan() {
   return (
