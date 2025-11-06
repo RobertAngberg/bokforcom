@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const menuLinks = [
   { label: "Priser", href: "/priser" },
@@ -114,7 +115,14 @@ export default function Header() {
               href="/"
               className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <img src="/Logo.png" alt="Bokför.com" className="h-16 w-auto" />
+              <Image
+                src="/Logo.png"
+                alt="Bokför.com"
+                width={64}
+                height={64}
+                priority
+                className="h-16 w-auto"
+              />
               <span className="text-2xl font-bold text-white">Bokför.com</span>
             </a>
 
