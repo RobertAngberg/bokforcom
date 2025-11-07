@@ -30,7 +30,7 @@ export default function PricingSection() {
     },
     {
       title: "Premium",
-      price: 199,
+      price: 249,
       description: "För professionella organisationer",
       features: [
         "Över 500 000 kr i omsättning",

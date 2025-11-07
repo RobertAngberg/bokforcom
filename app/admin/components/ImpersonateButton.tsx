@@ -37,9 +37,10 @@ export default function ImpersonateButton({ userId, userName }: ImpersonateButto
     <button
       onClick={handleImpersonate}
       disabled={loading}
-      className="text-white hover:text-slate-300 disabled:opacity-50"
+      className="px-3 py-1.5 text-sm bg-cyan-600 hover:bg-cyan-700 text-white rounded transition-colors font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Impersonera användare"
     >
-      {loading ? "..." : "Impersonate"}
+      {loading ? "..." : "👤 Impersonate"}
     </button>
   );
 }

@@ -1,8 +1,9 @@
 import { getAnalyticsData } from "../actions/analyticsActions";
 import { getAllUsers } from "../actions/userActions";
 import MainLayout from "../../_components/MainLayout";
-import ImpersonateButton from "./ImpersonateButton";
 import AnalyticsClient from "./AnalyticsClient";
+import UserActionsCell from "./UserActionsCell";
+import CustomEmailButton from "./CustomEmailButton";
 
 // Types
 interface User {
@@ -35,8 +36,9 @@ export default async function AdminDashboard() {
   return (
     <MainLayout>
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+        <CustomEmailButton />
       </div>
 
       <div className="space-y-8">
@@ -146,7 +148,11 @@ export default async function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <ImpersonateButton userId={user.id} userName={user.name || user.email} />
+                          <UserActionsCell
+                            userId={user.id}
+                            userName={user.name}
+                            userEmail={user.email}
+                          />
                         </td>
                       </tr>
                     ))}
