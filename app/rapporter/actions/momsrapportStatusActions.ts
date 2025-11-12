@@ -2,27 +2,7 @@
 
 import { pool } from "../../_lib/db";
 import { ensureSession } from "../../_utils/session";
-
-export type MomsrapportStatus = "öppen" | "granskad" | "deklarerad" | "betald" | "stängd";
-
-export interface MomsrapportStatusData {
-  id: number;
-  user_id: string;
-  year: number;
-  period: string;
-  status: MomsrapportStatus;
-  granskad_datum: Date | null;
-  deklarerad_datum: Date | null;
-  betald_datum: Date | null;
-  moms_att_betala: number | null;
-  ocr_nummer: string | null;
-  betalningsreferens: string | null;
-  xml_genererad: boolean;
-  xml_genererad_datum: Date | null;
-  noteringar: string | null;
-  created_at: Date;
-  updated_at: Date;
-}
+import type { MomsrapportStatus, MomsrapportStatusData } from "../types/types";
 
 /**
  * Hämta eller skapa momsrapport-status för en period

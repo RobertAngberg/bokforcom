@@ -4,7 +4,13 @@ import { pool } from "../../_lib/db";
 import { createTransaktion } from "../../_utils/transactions";
 import { ensureSession } from "../../_utils/session";
 import { revalidatePath } from "next/cache";
+import { calculateMomsBokforingPoster, buildDateFilter } from "../utils/momsBokforing";
 
+/**
+ * Bokför momsavstämning för en period
+ * Detta är en TUNN WRAPPER som endast hanterar auth + DB-operations
+ * All beräkningslogik finns i utils/momsBokforing.ts
+ */
 export async function bokforMomsavstamning(year: string, period: string) {
   try {
     const { userId } = await ensureSession();
@@ -28,13 +34,7 @@ export async function bokforMomsavstamning(year: string, period: string) {
       }
 
       // Hämta alla momskonton med deras saldon för perioden
-      let dateFilter = "";
-      if (period === "all") {
-        dateFilter = `EXTRACT(YEAR FROM t.transaktionsdatum) = ${year}`;
-      } else {
-        const monthNum = period.padStart(2, "0");
-        dateFilter = `TO_CHAR(t.transaktionsdatum, 'YYYY-MM') = '${year}-${monthNum}'`;
-      }
+      const dateFilter = buildDateFilter(year, period);
 
       const query = `
         SELECT 
@@ -55,80 +55,14 @@ export async function bokforMomsavstamning(year: string, period: string) {
 
       const result = await client.query(query, [userId]);
 
-      // Debug: Logga alla rader som returneras från databasen
-      console.log("=== MOMSAVSTÄMNING BOKFÖRING ===");
-      console.log("Antal konton från DB:", result.rows.length);
-      result.rows.forEach((row) => {
-        const totalKredit = parseFloat(row.total_kredit);
-        const totalDebet = parseFloat(row.total_debet);
-        const saldo = row.kontonummer.startsWith("264")
-          ? totalDebet - totalKredit
-          : totalKredit - totalDebet;
-        console.log(
-          `📌 ${row.kontonummer} ${row.beskrivning}: K=${totalKredit} D=${totalDebet} → Saldo=${saldo.toFixed(2)}`
-        );
-      });
-
-      // Beräkna bokföringsposter baserat på faktiska saldon
-      const poster: { kontonummer: string; debet: number; kredit: number }[] = [];
-
-      for (const row of result.rows) {
-        const totalKredit = parseFloat(row.total_kredit);
-        const totalDebet = parseFloat(row.total_debet);
-        const kontonummer = row.kontonummer;
-
-        // Utgående moms (2610-2635) har normalt KREDIT-saldo, vi debiterar för att nollställa
-        if (
-          kontonummer.startsWith("261") ||
-          kontonummer.startsWith("262") ||
-          kontonummer.startsWith("263")
-        ) {
-          const saldo = totalKredit - totalDebet;
-          if (Math.abs(saldo) < 0.01) continue;
-
-          if (saldo > 0) {
-            // Kredit-saldo, debitera för att nollställa
-            poster.push({ kontonummer, debet: saldo, kredit: 0 });
-          } else {
-            // Debet-saldo (ovanligt), kreditera för att nollställa
-            poster.push({ kontonummer, debet: 0, kredit: Math.abs(saldo) });
-          }
-        }
-        // Ingående moms (2640, 2645 etc) har normalt DEBET-saldo, vi krediterar för att nollställa
-        else if (kontonummer.startsWith("264")) {
-          const saldo = totalDebet - totalKredit;
-          if (Math.abs(saldo) < 0.01) continue;
-
-          if (saldo > 0) {
-            // Debet-saldo, kreditera för att nollställa
-            poster.push({ kontonummer, debet: 0, kredit: saldo });
-          } else {
-            // Kredit-saldo (ovanligt), debitera för att nollställa
-            poster.push({ kontonummer, debet: Math.abs(saldo), kredit: 0 });
-          }
-        }
-      }
+      // Använd utility-funktion för att beräkna poster
+      const poster = calculateMomsBokforingPoster(result.rows);
 
       if (poster.length === 0) {
         return { success: false, error: "Inga momsposter att bokföra för perioden" };
       }
 
-      // Balansera mot 2650 Redovisningskonto för moms
-      const totalDebet = poster.reduce((sum, p) => sum + p.debet, 0);
-      const totalKredit = poster.reduce((sum, p) => sum + p.kredit, 0);
-      const netto = totalDebet - totalKredit;
-
-      if (Math.abs(netto) > 0.01) {
-        if (netto > 0) {
-          // Vi har mer utgående än ingående = skuld, kredit 2650
-          poster.push({ kontonummer: "2650", debet: 0, kredit: netto });
-        } else {
-          // Vi har mer ingående än utgående = fordran, debet 2650
-          poster.push({ kontonummer: "2650", debet: Math.abs(netto), kredit: 0 });
-        }
-      }
-
-      // Skapa transaktion
+      // Skapa transaktion (detta är en mutation - OK att göra i Server Action)
       const { transaktionsId } = await createTransaktion({
         datum: new Date(),
         beskrivning: `Momsavstämning ${year} ${period === "all" ? "" : period}`,

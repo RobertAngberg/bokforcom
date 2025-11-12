@@ -1,15 +1,15 @@
 "use client";
 
-import React from "react";
-
 import AnimeradFlik from "../../../_components/AnimeradFlik";
 import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import VerifikatModal from "../../../_components/VerifikatModal";
 import Toast from "../../../_components/Toast";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 import { useHuvudbok } from "../../hooks/useHuvudbok";
+import type { HuvudbokProps } from "../../types/types";
 
-export default function Huvudbok() {
+export default function Huvudbok({ data, foretagsprofil }: HuvudbokProps) {
   const {
     // State
     loading,
@@ -27,7 +27,6 @@ export default function Huvudbok() {
     kategoriseradeKonton,
 
     // Actions
-    setSelectedYear,
     setSelectedMonth,
     setToast,
     handleShowVerifikat,
@@ -37,14 +36,10 @@ export default function Huvudbok() {
 
     // Utils
     formatSEKLocal,
-  } = useHuvudbok();
+  } = useHuvudbok({ data, foretagsprofil });
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-64">
-        <div className="text-white">Laddar huvudbok...</div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -55,7 +50,7 @@ export default function Huvudbok() {
           <div className="w-full md:w-32">
             <Dropdown
               value={selectedYear}
-              onChange={setSelectedYear}
+              onChange={() => {}}
               options={yearOptions}
               className="w-full md:w-32"
             />

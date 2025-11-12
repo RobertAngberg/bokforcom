@@ -1,115 +1,297 @@
-import { useState, useEffect } from "react";
-import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
-import { getMomsrapport, fetchForetagsprofil } from "../actions/momsrapportActions";
-import { MomsRad } from "../types/types";
+"use client";
 
-export const useMomsrapport = () => {
-  // State management
-  const [initialData, setInitialData] = useState<MomsRad[]>([]);
-  const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
-  const [företagsnamn, setFöretagsnamn] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+import { useState, useEffect, useMemo } from "react";
+import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
+import type {
+  MomsRad,
+  ToastState,
+  UseMomsrapportProps,
+  MomsrapportStatusData,
+  MomsrapportStatus,
+  ValidationResult,
+  BokforingsPostWizard,
+} from "../types/types";
+import { processMomsData } from "../utils/momsProcessing";
+import {
+  getMomsrapportStatus,
+  updateMomsrapportStatus,
+  saveNoteringar,
+} from "../actions/momsrapportStatusActions";
+import { validateMomsVerifikat } from "../actions/momsValidationActions";
+import { bokforMomsavstamning } from "../actions/momsBokforingActions";
+
+/**
+ * Centraliserad hook för all momshantering
+ * Hanterar: data, export, status, wizard, validering, bokföring
+ */
+export const useMomsrapport = ({ transaktionsdata, foretagsprofil }: UseMomsrapportProps) => {
+  // ============================================================================
+  // SECTION 1: GRUNDLÄGGANDE STATE & DATA
+  // ============================================================================
+
+  // Företagsinformation
+  const organisationsnummer = foretagsprofil.organisationsnummer;
+  const företagsnamn = foretagsprofil.företagsnamn;
+  const loading = false;
+
+  // Filter state
   const [år, setÅr] = useState("2025");
   const [månad, setMånad] = useState("all");
-  const [activeId, setActiveId] = useState<string | number | null>(null);
-
-  // Export state
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const [isExportingCSV, setIsExportingCSV] = useState(false);
-  const [isExportingXML, setIsExportingXML] = useState(false);
-  const [exportMessage, setExportMessage] = useState<string>("");
 
   // Constants
   const årLista = ["2025"];
 
-  // Data fetching effect
+  // Process momsdata - använd useMemo för rent derived state
+  const initialData = useMemo(() => {
+    try {
+      const momsData = processMomsData(transaktionsdata, år, månad);
+      console.log(`Momsdata processad för ${år} (${månad}): ${momsData.length} rader`);
+      return momsData;
+    } catch (error) {
+      console.error("Fel vid processning av momsdata:", error);
+      return [];
+    }
+  }, [transaktionsdata, år, månad]);
+
+  // ============================================================================
+  // SECTION 2: STATUS & PROGRESS TRACKING
+  // ============================================================================
+
+  const [status, setStatus] = useState<MomsrapportStatusData | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+
+  // Hämta status BARA när den behövs (när wizard öppnas)
+  const loadStatus = async () => {
+    if (status) return; // Redan laddad
+
+    setLoadingStatus(true);
+    const result = await getMomsrapportStatus(parseInt(år), månad);
+
+    if (result.success && result.data) {
+      setStatus(result.data);
+    } else {
+      setStatusError(result.error || "Kunde inte ladda status");
+    }
+    setLoadingStatus(false);
+  };
+
+  // Uppdatera status
+  const updateStatus = async (newStatus: MomsrapportStatus) => {
+    const result = await updateMomsrapportStatus(parseInt(år), månad, newStatus);
+
+    if (result.success && result.data) {
+      setStatus(result.data);
+      return { success: true };
+    }
+
+    return { success: false, error: result.error };
+  };
+
+  // Spara noteringar
+  const saveNotes = async (noteringar: string) => {
+    const result = await saveNoteringar(parseInt(år), månad, noteringar);
+
+    if (result.success && result.data) {
+      setStatus(result.data);
+      return { success: true };
+    }
+
+    return { success: false, error: result.error };
+  };
+
+  // Status helper functions
+  const canProceedToGranska = () => status?.status === "öppen";
+  const canProceedToDeklarera = () => status?.status === "granskad";
+  const canProceedToBetala = () => status?.status === "deklarerad";
+  const isCompleted = () => status?.status === "betald" || status?.status === "stängd";
+
+  // ============================================================================
+  // SECTION 3: WIZARD STATE & LOGIC
+  // ============================================================================
+
+  const [showWizard, setShowWizard] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [hideOkVerifikat, setHideOkVerifikat] = useState(true);
+  const [isBokforing, setIsBokforing] = useState(false);
+  const [bokforingSuccess, setBokforingSuccess] = useState(false);
+
+  // Öppna wizard och hämta status (BARA första gången)
+  const handleOpenWizard = async () => {
+    setShowWizard(true);
+    await loadStatus(); // Hämta status när wizard öppnas
+  };
+
+  // Om år/månad ändras när wizard är öppen, rensa status så den laddas om vid behov
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(""); // Rensa tidigare fel
+    if (showWizard) {
+      setStatus(null); // Rensa status när filter ändras
+    }
+  }, [år, månad, showWizard]);
 
-        const [momsData, profilData] = await Promise.all([
-          getMomsrapport(år, månad),
-          fetchForetagsprofil(),
-        ]);
+  // Beräkna moms att betala
+  const momsAttBetala = useMemo(
+    () => initialData.find((r) => r.fält === "49")?.belopp ?? 0,
+    [initialData]
+  );
 
-        // Validera data
-        if (!momsData) {
-          throw new Error(`Kunde inte ladda momsdata för år ${år}`);
-        }
+  // Generera bokföringsposter baserat på momsdata (för förhandsvisning)
+  const bokforingsposter = useMemo((): BokforingsPostWizard[] => {
+    const poster: BokforingsPostWizard[] = [];
 
-        if (!profilData) {
-          console.warn("Kunde inte ladda företagsprofil - fortsätter utan");
-        }
+    const utgaendeMoms25 = Math.abs(initialData.find((r) => r.fält === "10")?.belopp ?? 0);
+    const utgaendeOmvand25 = Math.abs(initialData.find((r) => r.fält === "30")?.belopp ?? 0);
+    const ingaendeMoms = Math.abs(initialData.find((r) => r.fält === "48")?.belopp ?? 0);
+    const momsAttBetalaLocal = initialData.find((r) => r.fält === "49")?.belopp ?? 0;
 
-        setInitialData(momsData);
-        setOrganisationsnummer(profilData?.organisationsnummer ?? "");
-        setFöretagsnamn(profilData?.företagsnamn ?? "Okänt företag");
+    if (utgaendeMoms25 > 0) {
+      poster.push({
+        konto: "2610",
+        kontonamn: "Utgående moms, 25 %",
+        debet: utgaendeMoms25,
+        kredit: 0,
+      });
+    }
 
-        console.log(`Momsdata laddad för ${år}: ${momsData.length} rader`);
-      } catch (error) {
-        console.error("Fel vid laddning av momsdata:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : `Kunde inte ladda momsdata för år ${år}`;
-        setError(errorMessage);
-        setExportMessage(errorMessage);
-        setTimeout(() => setExportMessage(""), 5000);
-      } finally {
-        setLoading(false);
+    if (utgaendeOmvand25 > 0) {
+      poster.push({
+        konto: "2614",
+        kontonamn: "Utgående moms omvänd skattskyldighet, 25 %",
+        debet: utgaendeOmvand25,
+        kredit: 0,
+      });
+      poster.push({
+        konto: "2645",
+        kontonamn: "Beräknad ingående moms på förvärv från utlandet",
+        debet: 0,
+        kredit: utgaendeOmvand25,
+      });
+    }
+
+    const ovrigIngaende = ingaendeMoms - utgaendeOmvand25;
+    if (ovrigIngaende > 0) {
+      poster.push({
+        konto: "2640",
+        kontonamn: "Ingående moms",
+        debet: 0,
+        kredit: ovrigIngaende,
+      });
+    }
+
+    if (Math.abs(momsAttBetalaLocal) > 0.01) {
+      poster.push({
+        konto: "2650",
+        kontonamn: "Redovisningskonto för moms",
+        debet: momsAttBetalaLocal < 0 ? Math.abs(momsAttBetalaLocal) : 0,
+        kredit: momsAttBetalaLocal > 0 ? momsAttBetalaLocal : 0,
+      });
+    }
+
+    return poster;
+  }, [initialData]);
+
+  // Kör validering när steg 2 visas
+  useEffect(() => {
+    if (currentStep === 2 && !validationResult) {
+      runValidation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
+
+  const runValidation = async () => {
+    setIsValidating(true);
+    const result = await validateMomsVerifikat(parseInt(år), månad);
+    setValidationResult(result);
+    setIsValidating(false);
+  };
+
+  const handleBokfor = async () => {
+    setIsBokforing(true);
+    setBokforingSuccess(false);
+
+    try {
+      const result = await bokforMomsavstamning(år, månad);
+
+      if (result.success) {
+        setBokforingSuccess(true);
+      } else {
+        alert(`Fel vid bokföring: ${result.error}`);
       }
-    };
+    } catch (error) {
+      alert(`Fel vid bokföring: ${error instanceof Error ? error.message : "Okänt fel"}`);
+    } finally {
+      setIsBokforing(false);
+    }
+  };
 
-    loadData();
-  }, [år, månad]); // Re-load when year or month changes
+  const handleStepComplete = async () => {
+    if (currentStep === 1) {
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      await updateStatus("granskad");
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
+      await updateStatus("deklarerad");
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
+      await updateStatus("betald");
+      setCurrentStep(5);
+    } else if (currentStep === 5) {
+      await updateStatus("stängd");
+      setShowWizard(false);
+      setCurrentStep(1);
+    }
+  };
 
-  // Helper functions
-  const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
-  const sum = (...fält: string[]) => fält.reduce((acc, f) => acc + get(f), 0);
+  // ============================================================================
+  // SECTION 4: EXPORT FUNCTIONALITY
+  // ============================================================================
 
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
+  const [isExportingXML, setIsExportingXML] = useState(false);
+  const [toast, setToast] = useState<ToastState>(null);
+
+  // XML generation
   const generateXML = () => {
-    // Mapping från fält till XML-taggar enligt Skatteverkets specifikation
-    // Baserat på eSKDUpload DTD Version 6.0
     const fieldMapping: { [key: string]: string } = {
-      "05": "ForsMomsEjAnnan", // Momspliktig försäljning exkl. andra fält
-      "06": "UttagMoms", // Momspliktiga uttag
-      "07": "UlagMargbesk", // Försäljning med vinstmarginalmetoden
-      "08": "HyrinkomstFriv", // Hyresinkomster med frivillig moms
-      "10": "MomsUtgHog", // Utgående moms 25%
-      "11": "MomsUtgMedel", // Utgående moms 12%
-      "12": "MomsUtgLag", // Utgående moms 6%
-      "20": "InkopVaruAnnatEg", // Inköp varor från annat EU-land
-      "21": "InkopTjanstAnnatEg", // Inköp tjänster från annat EU-land
-      "22": "InkopTjanstUtomEg", // Inköp tjänster från utanför EU
-      "23": "InkopVaruSverige", // Inköp varor i Sverige med omvänd moms
-      "24": "InkopTjanstSverige", // Inköp tjänster i Sverige med omvänd moms
-      "30": "MomsInkopUtgHog", // Utgående moms 25% på inköp (omvänd)
-      "31": "MomsInkopUtgMedel", // Utgående moms 12% på inköp (omvänd)
-      "32": "MomsInkopUtgLag", // Utgående moms 6% på inköp (omvänd)
-      "35": "ForsVaruAnnatEg", // Försäljning varor till annat EU-land
-      "36": "ForsVaruUtomEg", // Export varor utanför EU
-      "37": "InkopVaruMellan3p", // 3-partshandel inköp
-      "38": "ForsVaruMellan3p", // 3-partshandel försäljning
-      "39": "ForsTjSkskAnnatEg", // Försäljning tjänster skatteskyldighet EU
-      "40": "ForsTjOvrUtomEg", // Försäljning tjänster utanför EU
-      "41": "ForsKopareSkskSverige", // Försäljning köpare skattskyldighet Sverige
-      "42": "ForsOvrigt", // Övrigt momsundantaget
-      "48": "MomsIngAvdr", // Ingående moms att dra av
-      "49": "MomsBetala", // Moms att betala/få tillbaka
-      "50": "MomsUlagImport", // Beskattningsunderlag import
-      "60": "MomsImportUtgHog", // Utgående moms 25% import
-      "61": "MomsImportUtgMedel", // Utgående moms 12% import
-      "62": "MomsImportUtgLag", // Utgående moms 6% import
+      "05": "ForsMomsEjAnnan",
+      "06": "UttagMoms",
+      "07": "UlagMargbesk",
+      "08": "HyrinkomstFriv",
+      "10": "MomsUtgHog",
+      "11": "MomsUtgMedel",
+      "12": "MomsUtgLag",
+      "20": "InkopVaruAnnatEg",
+      "21": "InkopTjanstAnnatEg",
+      "22": "InkopTjanstUtomEg",
+      "23": "InkopVaruSverige",
+      "24": "InkopTjanstSverige",
+      "30": "MomsInkopUtgHog",
+      "31": "MomsInkopUtgMedel",
+      "32": "MomsInkopUtgLag",
+      "35": "ForsVaruAnnatEg",
+      "36": "ForsVaruUtomEg",
+      "37": "InkopVaruMellan3p",
+      "38": "ForsVaruMellan3p",
+      "39": "ForsTjSkskAnnatEg",
+      "40": "ForsTjOvrUtomEg",
+      "41": "ForsKopareSkskSverige",
+      "42": "ForsOvrigt",
+      "48": "MomsIngAvdr",
+      "49": "MomsBetala",
+      "50": "MomsUlagImport",
+      "60": "MomsImportUtgHog",
+      "61": "MomsImportUtgMedel",
+      "62": "MomsImportUtgLag",
     };
 
-    // Formatera period baserat på månad/kvartal
     let period = "";
     if (månad === "all") {
-      // Helårsrapport: År + 12 (sista månaden)
       period = `${år}12`;
     } else if (månad.startsWith("Q")) {
-      // Kvartalsrapport: År + sista månaden i kvartalet
       const kvartalMap: { [key: string]: string } = {
         Q1: "03",
         Q2: "06",
@@ -118,25 +300,21 @@ export const useMomsrapport = () => {
       };
       period = `${år}${kvartalMap[månad]}`;
     } else {
-      // Månadsrapport: År + månad
       period = `${år}${månad}`;
     }
 
-    // Formatera organisationsnummer med bindestreck (XXXXXX-XXXX)
-    const formattedOrgNr = organisationsnummer.replace(/[^0-9]/g, ""); // Ta bort alla icke-siffror
+    const formattedOrgNr = organisationsnummer.replace(/[^0-9]/g, "");
     const orgNrWithHyphen =
       formattedOrgNr.length === 10
         ? `${formattedOrgNr.slice(0, 6)}-${formattedOrgNr.slice(6)}`
-        : organisationsnummer; // Fallback om fel format
+        : organisationsnummer;
 
-    // Bygg XML enligt Skatteverkets eSKDUpload DTD Version 6.0
-    let xml = '<?xml version="1.0" encoding="ISO-8859-1"?>\n'; // ISO-8859-1 som Skatteverket kräver
+    let xml = '<?xml version="1.0" encoding="ISO-8859-1"?>\n';
     xml += '<eSKDUpload Version="6.0">\n';
     xml += `<OrgNr>${orgNrWithHyphen}</OrgNr>\n`;
     xml += "<Moms>\n";
     xml += `<Period>${period}</Period>\n`;
 
-    // Lägg till fält som har värden (i korrekt ordning enligt Skatteverkets specifikation)
     let fieldsAdded = 0;
     const orderedFields = [
       "05",
@@ -176,15 +354,12 @@ export const useMomsrapport = () => {
 
       const värde = get(fältNr);
       if (värde !== 0) {
-        // Skatteverket kräver heltal (inga decimaler)
         const belopp = Math.round(värde);
-        // För negativa belopp (återbetalning): minustecken direkt före belopp, INGET mellanrum
         xml += `<${xmlTag}>${belopp}</${xmlTag}>\n`;
         fieldsAdded++;
       }
     });
 
-    // Om inga fält har värden, sätt MomsBetala till 0
     if (fieldsAdded === 0) {
       xml += "<MomsBetala>0</MomsBetala>\n";
     }
@@ -192,7 +367,6 @@ export const useMomsrapport = () => {
     xml += "</Moms>\n";
     xml += "</eSKDUpload>";
 
-    // Log för debugging
     console.log(
       `XML genererad: ${fieldsAdded} fält inkluderade för period ${period}, org.nr: ${orgNrWithHyphen}`
     );
@@ -200,18 +374,15 @@ export const useMomsrapport = () => {
     return xml;
   };
 
-  // Export functions
   const exportXML = () => {
     setIsExportingXML(true);
-    setExportMessage("");
+    setToast(null);
 
     try {
-      // Validera att vi har organisationsnummer
       if (!organisationsnummer || organisationsnummer === "XXXXXX-XXXX") {
         throw new Error("Organisationsnummer saknas - kan inte skapa XML för Skatteverket");
       }
 
-      // Validera att vi har någon momsdata
       const harData = fullData.some((rad) => rad.belopp !== 0);
       if (!harData) {
         throw new Error("Ingen momsdata att exportera");
@@ -219,7 +390,6 @@ export const useMomsrapport = () => {
 
       const xmlContent = generateXML();
 
-      // Validera att XML:en genererades korrekt
       if (!xmlContent.includes("<Moms>")) {
         throw new Error("XML-generering misslyckades");
       }
@@ -234,13 +404,13 @@ export const useMomsrapport = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setExportMessage(`XML-fil för Skatteverket har laddats ner (${år})`);
-      setTimeout(() => setExportMessage(""), 3000);
+      setToast({ type: "success", message: `XML-fil för Skatteverket har laddats ner (${år})` });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("XML export error:", error);
       const errorMessage = error instanceof Error ? error.message : "Fel vid XML export";
-      setExportMessage(errorMessage);
-      setTimeout(() => setExportMessage(""), 5000);
+      setToast({ type: "error", message: errorMessage });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setIsExportingXML(false);
     }
@@ -248,17 +418,17 @@ export const useMomsrapport = () => {
 
   const exportPDF = async () => {
     setIsExportingPDF(true);
-    setExportMessage("");
+    setToast(null);
 
     try {
       await exportMomsrapportPDF(initialData, företagsnamn, organisationsnummer, år);
 
-      setExportMessage("PDF-rapporten har laddats ner");
-      setTimeout(() => setExportMessage(""), 3000);
+      setToast({ type: "success", message: "PDF-rapporten har laddats ner" });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("PDF export error:", error);
-      setExportMessage("Fel vid PDF export");
-      setTimeout(() => setExportMessage(""), 5000);
+      setToast({ type: "error", message: "Fel vid PDF export" });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setIsExportingPDF(false);
     }
@@ -266,23 +436,29 @@ export const useMomsrapport = () => {
 
   const exportCSV = async () => {
     setIsExportingCSV(true);
-    setExportMessage("");
+    setToast(null);
 
     try {
       await exportMomsrapportCSV(initialData, företagsnamn, organisationsnummer, år);
 
-      setExportMessage("CSV-filen har laddats ner");
-      setTimeout(() => setExportMessage(""), 3000);
+      setToast({ type: "success", message: "CSV-filen har laddats ner" });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("CSV export error:", error);
-      setExportMessage("Fel vid CSV export");
-      setTimeout(() => setExportMessage(""), 5000);
+      setToast({ type: "error", message: "Fel vid CSV export" });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setIsExportingCSV(false);
     }
   };
 
-  // Calculated values
+  // ============================================================================
+  // SECTION 5: BERÄKNINGAR & HELPER FUNCTIONS
+  // ============================================================================
+
+  const get = (fält: string) => initialData.find((r) => r.fält === fält)?.belopp ?? 0;
+  const sum = (...fält: string[]) => fält.reduce((acc, f) => acc + get(f), 0);
+
   const ruta49 = get("49");
   const utgåendeMoms = sum("10", "11", "12", "30", "31", "32", "60", "61", "62");
   const ingåendeMoms = get("48");
@@ -290,7 +466,6 @@ export const useMomsrapport = () => {
   const diff = Math.abs(momsAttBetalaEllerFaTillbaka - ruta49);
   const ärKorrekt = diff < 1;
 
-  // Full data for table
   const fullData: MomsRad[] = [
     { fält: "05", beskrivning: "Momspliktig försäljning", belopp: get("05") },
     { fält: "06", beskrivning: "Momspliktiga uttag", belopp: get("06") },
@@ -323,52 +498,71 @@ export const useMomsrapport = () => {
     { fält: "49", beskrivning: "Moms att betala eller få tillbaka", belopp: ruta49 },
   ];
 
+  // ============================================================================
+  // RETURN: ALL FUNKTIONALITET
+  // ============================================================================
+
   return {
-    // State
+    // SECTION 1: Grundläggande data
     initialData,
-    setInitialData,
     organisationsnummer,
-    setOrganisationsnummer,
     företagsnamn,
-    setFöretagsnamn,
     loading,
-    setLoading,
-    error,
-    setError,
     år,
     setÅr,
-    activeId,
-    setActiveId,
-    // Export state
-    isExportingPDF,
-    setIsExportingPDF,
-    isExportingCSV,
-    setIsExportingCSV,
-    isExportingXML,
-    setIsExportingXML,
-    exportMessage,
-    setExportMessage,
-    // Constants
     årLista,
-    // Filter state
     månad,
     setMånad,
-    // Helper functions
-    get,
-    sum,
+
+    // SECTION 2: Status & Progress
+    status,
+    loadingStatus,
+    statusError,
+    updateStatus,
+    saveNotes,
+    canProceedToGranska,
+    canProceedToDeklarera,
+    canProceedToBetala,
+    isCompleted,
+
+    // SECTION 3: Wizard
+    showWizard,
+    setShowWizard,
+    handleOpenWizard,
+    currentStep,
+    setCurrentStep,
+    validationResult,
+    isValidating,
+    hideOkVerifikat,
+    setHideOkVerifikat,
+    isBokforing,
+    bokforingSuccess,
+    momsAttBetala,
+    bokforingsposter,
+    runValidation,
+    handleBokfor,
+    handleStepComplete,
+
+    // SECTION 4: Export
+    isExportingPDF,
+    isExportingCSV,
+    isExportingXML,
+    toast,
+    setToast,
     generateXML,
-    // Export functions
     exportXML,
     exportPDF,
     exportCSV,
-    // Calculated values
+
+    // SECTION 5: Beräkningar
+    get,
+    sum,
     ruta49,
     utgåendeMoms,
     ingåendeMoms,
     momsAttBetalaEllerFaTillbaka,
     diff,
     ärKorrekt,
-    // Data
     fullData,
   };
 };

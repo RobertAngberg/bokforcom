@@ -1,18 +1,15 @@
-import { useState, useEffect } from "react";
-import { fetchHuvudbokMedAllaTransaktioner, fetchForetagsprofil } from "../actions/huvudbokActions";
+import { useState, useMemo } from "react";
 import { exportHuvudbokCSV, exportHuvudbokPDF } from "../../_utils/fileUtils";
-import { HuvudboksKontoMedTransaktioner, ToastState } from "../types/types";
+import type { HuvudboksKontoMedTransaktioner, ToastState, UseHuvudbokProps } from "../types/types";
 import { PERIOD_OPTIONS } from "../utils/periodOptions";
+import { formatCurrency } from "../../_utils/format";
 
-export function useHuvudbok() {
+export function useHuvudbok({ data, foretagsprofil }: UseHuvudbokProps) {
   // State
-  const [huvudboksdata, setHuvudboksdata] = useState<HuvudboksKontoMedTransaktioner[]>([]);
-  const [företagsnamn, setFöretagsnamn] = useState("");
-  const [organisationsnummer, setOrganisationsnummer] = useState("");
-  const [loading, setLoading] = useState(true);
+  const loading = false;
 
   // Filter state - endast 2025
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedYear] = useState("2025");
   const [selectedMonth, setSelectedMonth] = useState("all");
 
   // Modal state
@@ -22,38 +19,67 @@ export function useHuvudbok() {
   // Toast state
   const [toast, setToast] = useState<ToastState>(null);
 
-  // Data fetching
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const huvudbokResult = await fetchHuvudbokMedAllaTransaktioner(selectedYear, selectedMonth);
-        setHuvudboksdata(huvudbokResult);
+  // Konvertera TransaktionsPost[] till HuvudboksKontoMedTransaktioner[]
+  const huvudboksdata = useMemo(() => {
+    const kontoMap = new Map<string, HuvudboksKontoMedTransaktioner>();
 
-        // Försök ladda företagsprofil
-        try {
-          const profileResult = await fetchForetagsprofil();
-          if (profileResult) {
-            setFöretagsnamn(profileResult.företagsnamn || "");
-            setOrganisationsnummer(profileResult.organisationsnummer || "");
-          }
-        } catch (profileError) {
-          console.log("Kunde inte ladda företagsprofil:", profileError);
-          // Inte kritiskt fel, fortsätt utan företagsinfo
-        }
-      } catch (error) {
-        console.error("Fel vid laddning av huvudboksdata:", error);
-        setToast({
-          type: "error",
-          message: "Kunde inte ladda huvudboksdata. Försök igen.",
+    data.forEach((post) => {
+      if (!kontoMap.has(post.kontonummer)) {
+        kontoMap.set(post.kontonummer, {
+          kontonummer: post.kontonummer,
+          beskrivning: post.kontobeskrivning,
+          ingaendeBalans: 0,
+          utgaendeBalans: 0,
+          transaktioner: [],
         });
-      } finally {
-        setLoading(false);
       }
-    };
 
-    loadData();
-  }, [selectedYear, selectedMonth]); // Re-load when year or month changes
+      const konto = kontoMap.get(post.kontonummer)!;
+
+      // Lägg till transaktion
+      konto.transaktioner.push({
+        transaktion_id: post.transaktions_id,
+        datum: post.transaktionsdatum,
+        verifikatNummer: post.ar_oppningsbalans ? "Ingående balans" : `V${post.transaktions_id}`,
+        beskrivning: post.kontobeskrivning_transaktion,
+        debet: post.debet,
+        kredit: post.kredit,
+        belopp: post.debet - post.kredit,
+        lopande_saldo: 0, // Beräknas nedan
+        sort_priority: post.ar_oppningsbalans ? 1 : 2,
+      });
+    });
+
+    // Beräkna ingående/utgående balans och löpande saldo för varje konto
+    kontoMap.forEach((konto) => {
+      // Sortera transaktioner: ingående balans först, sedan efter datum
+      konto.transaktioner.sort((a, b) => {
+        if (a.sort_priority !== b.sort_priority) return a.sort_priority - b.sort_priority;
+        return new Date(a.datum).getTime() - new Date(b.datum).getTime();
+      });
+
+      let lopandeSaldo = 0;
+      konto.transaktioner.forEach((trans) => {
+        const debet = trans.debet ?? 0;
+        const kredit = trans.kredit ?? 0;
+
+        // RAW bokföringssaldo: alltid debet - kredit
+        // Detta ger negativt för skulder/intäkter (där kredit > debet)
+        // och positivt för tillgångar/kostnader (där debet > kredit)
+        lopandeSaldo += debet - kredit;
+        trans.lopande_saldo = lopandeSaldo;
+
+        // Ingående balans = första transaktionens saldo (om det är en öppningsbalans)
+        if (trans.sort_priority === 1) {
+          konto.ingaendeBalans = lopandeSaldo;
+        }
+      });
+
+      konto.utgaendeBalans = lopandeSaldo;
+    });
+
+    return Array.from(kontoMap.values());
+  }, [data]);
 
   // Year options - endast 2025
   const yearOptions = [{ value: "2025", label: "2025" }];
@@ -61,13 +87,13 @@ export function useHuvudbok() {
   // Month options - using shared PERIOD_OPTIONS
   const monthOptions = PERIOD_OPTIONS;
 
-  // Filtrera konton efter månad
-  const filtreraKontonEfterMånad = (konton: HuvudboksKontoMedTransaktioner[]) => {
+  // Filtrera konton efter månad - useMemo för att re-beräkna när selectedMonth ändras
+  const filtradeKonton = useMemo(() => {
     if (selectedMonth === "all") {
-      return konton;
+      return huvudboksdata;
     }
 
-    return konton
+    return huvudboksdata
       .map((konto) => ({
         ...konto,
         transaktioner: konto.transaktioner.filter((transaktion) => {
@@ -77,10 +103,10 @@ export function useHuvudbok() {
         }),
       }))
       .filter((konto) => konto.transaktioner.length > 0);
-  };
+  }, [huvudboksdata, selectedMonth]);
 
-  // Kategorisera konton enligt BAS-kontoplan
-  const kategoriseraKonton = (konton: HuvudboksKontoMedTransaktioner[]) => {
+  // Kategorisera konton enligt BAS-kontoplan - useMemo för att re-beräkna när filtradeKonton ändras
+  const kategoriseradeKonton = useMemo(() => {
     const kategorier = [
       { namn: "Tillgångar", pattern: /^1/, konton: [] as HuvudboksKontoMedTransaktioner[] },
       {
@@ -92,7 +118,7 @@ export function useHuvudbok() {
       { namn: "Kostnader", pattern: /^[4-8]/, konton: [] as HuvudboksKontoMedTransaktioner[] },
     ];
 
-    konton.forEach((konto) => {
+    filtradeKonton.forEach((konto) => {
       const kategori = kategorier.find((k) => k.pattern.test(konto.kontonummer));
       if (kategori) {
         kategori.konton.push(konto);
@@ -100,17 +126,7 @@ export function useHuvudbok() {
     });
 
     return kategorier.filter((k) => k.konton.length > 0);
-  };
-
-  // Formatering för SEK med behållet minustecken
-  const formatSEKLocal = (val: number): string => {
-    if (val === 0) return "0kr";
-
-    const isNegative = val < 0;
-    const absVal = Math.abs(val);
-    const formatted = absVal.toLocaleString("sv-SE") + "kr";
-    return isNegative ? `−${formatted}` : formatted;
-  };
+  }, [filtradeKonton]);
 
   // Modal handlers
   const handleShowVerifikat = async (transaktionsId: number) => {
@@ -127,7 +143,7 @@ export function useHuvudbok() {
   // Export handlers
   const handleExportCSV = () => {
     try {
-      exportHuvudbokCSV(filtradeKonton, företagsnamn, selectedMonth, selectedYear);
+      exportHuvudbokCSV(filtradeKonton, foretagsprofil.företagsnamn, selectedMonth, selectedYear);
       setToast({
         type: "success",
         message: "CSV-fil exporterad framgångsrikt!",
@@ -145,8 +161,8 @@ export function useHuvudbok() {
     try {
       await exportHuvudbokPDF(
         filtradeKonton,
-        företagsnamn,
-        organisationsnummer,
+        foretagsprofil.företagsnamn,
+        foretagsprofil.organisationsnummer,
         selectedMonth,
         selectedYear
       );
@@ -163,15 +179,8 @@ export function useHuvudbok() {
     }
   };
 
-  // Computed values
-  const filtradeKonton = filtreraKontonEfterMånad(huvudboksdata);
-  const kategoriseradeKonton = kategoriseraKonton(filtradeKonton);
-
   return {
     // State
-    huvudboksdata,
-    företagsnamn,
-    organisationsnummer,
     loading,
     selectedYear,
     selectedMonth,
@@ -188,7 +197,6 @@ export function useHuvudbok() {
     kategoriseradeKonton,
 
     // Actions
-    setSelectedYear,
     setSelectedMonth,
     setToast,
     handleShowVerifikat,
@@ -197,6 +205,6 @@ export function useHuvudbok() {
     handleExportPDF,
 
     // Utils
-    formatSEKLocal,
+    formatSEKLocal: formatCurrency,
   };
 }

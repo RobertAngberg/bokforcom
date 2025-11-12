@@ -1,29 +1,27 @@
-import { useState, useEffect, useMemo } from "react";
-import { fetchBalansData, fetchForetagsprofil } from "../actions/balansrapportActions";
-import {
-  BalansData,
+import { useState, useMemo } from "react";
+import type {
   Konto,
-  ExportMessage,
+  ToastState,
   Verifikation,
   BasicBalanceAccount,
+  UseBalansrapportProps,
+  TransaktionsPost,
 } from "../types/types";
 import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
+import { formatSEK } from "../../_utils/format";
 
-export function useBalansrapport() {
+export function useBalansrapport({ data, foretagsprofil }: UseBalansrapportProps) {
   // Step 1: Basic data state
-  const [initialData, setInitialData] = useState<BalansData | null>(null);
-  const [företagsnamn, setFöretagsnamn] = useState<string>("");
-  const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const loading = false;
 
   // Step 2 & 3: Filter state
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedYear] = useState<string>("2025");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   // Step 4: Export state
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
-  const [exportMessage, setExportMessage] = useState<ExportMessage>(null);
+  const [toast, setToast] = useState<ToastState>(null);
 
   // Step 5: Modal state
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
@@ -33,33 +31,86 @@ export function useBalansrapport() {
   const [verifikationer, setVerifikationer] = useState<Verifikation[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
 
-  // Step 2: Data fetching
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setExportMessage(null); // Clear export messages on new load
-        const [balansData, profilData] = await Promise.all([
-          fetchBalansData(selectedYear, selectedMonth),
-          fetchForetagsprofil(),
-        ]);
+  // Konvertera TransaktionsPost[] till BalansData
+  const initialData = useMemo(() => {
+    // Filtrera efter månad om vald
+    const filteredData =
+      selectedMonth === "all"
+        ? data
+        : data.filter((post) => {
+            const datum = new Date(post.transaktionsdatum);
+            const månad = (datum.getMonth() + 1).toString().padStart(2, "0");
+            return månad === selectedMonth;
+          });
 
-        setInitialData(balansData);
-        setFöretagsnamn(profilData?.företagsnamn ?? "");
-        setOrganisationsnummer(profilData?.organisationsnummer ?? "");
-      } catch (error) {
-        console.error("Fel vid laddning av balansdata:", error);
-        setExportMessage({
-          type: "error",
-          text: "Kunde inte ladda balansdata. Försök igen.",
-        });
-      } finally {
-        setLoading(false);
-      }
+    // Dela upp i kategorier baserat på kontonummer
+    const tillgångar = filteredData.filter((p) => p.kontonummer.startsWith("1"));
+    const skulder = filteredData.filter((p) => p.kontonummer.startsWith("2"));
+    const resultat = filteredData.filter(
+      (p) =>
+        p.kontonummer.startsWith("3") ||
+        p.kontonummer.startsWith("4") ||
+        p.kontonummer.startsWith("5") ||
+        p.kontonummer.startsWith("6") ||
+        p.kontonummer.startsWith("7") ||
+        p.kontonummer.startsWith("8")
+    );
+
+    // Konvertera till BasicBalanceAccount format
+    const convertToAccounts = (posts: TransaktionsPost[]): BasicBalanceAccount[] => {
+      const kontoMap = new Map<string, BasicBalanceAccount>();
+
+      posts.forEach((post) => {
+        if (!kontoMap.has(post.kontonummer)) {
+          kontoMap.set(post.kontonummer, {
+            kontonummer: post.kontonummer,
+            beskrivning: post.kontobeskrivning,
+            saldo: 0,
+            transaktioner: [],
+          });
+        }
+
+        const konto = kontoMap.get(post.kontonummer)!;
+        konto.saldo += post.debet - post.kredit;
+        if (konto.transaktioner) {
+          konto.transaktioner.push({
+            id: `${post.transaktions_id}`,
+            transaktion_id: post.transaktions_id,
+            datum: post.transaktionsdatum,
+            belopp: post.debet - post.kredit,
+            beskrivning: post.kontobeskrivning_transaktion,
+          });
+        }
+      });
+
+      return Array.from(kontoMap.values());
     };
 
-    loadData();
-  }, [selectedYear, selectedMonth]);
+    // Separera ingående, årets och utgående
+    const ingaendeTillgangar = convertToAccounts(tillgångar.filter((p) => p.ar_oppningsbalans));
+    const aretsTillgangar = convertToAccounts(tillgångar.filter((p) => !p.ar_oppningsbalans));
+    const utgaendeTillgangar = convertToAccounts(tillgångar); // Alla för utgående
+
+    const ingaendeSkulder = convertToAccounts(skulder.filter((p) => p.ar_oppningsbalans));
+    const aretsSkulder = convertToAccounts(skulder.filter((p) => !p.ar_oppningsbalans));
+    const utgaendeSkulder = convertToAccounts(skulder);
+
+    const ingaendeResultat = convertToAccounts(resultat.filter((p) => p.ar_oppningsbalans));
+    const aretsResultat = convertToAccounts(resultat.filter((p) => !p.ar_oppningsbalans));
+    const utgaendeResultat = convertToAccounts(resultat);
+
+    return {
+      ingaendeTillgangar,
+      aretsTillgangar,
+      utgaendeTillgangar,
+      ingaendeSkulder,
+      aretsSkulder,
+      utgaendeSkulder,
+      ingaendeResultat,
+      aretsResultat,
+      utgaendeResultat,
+    };
+  }, [data, selectedMonth]);
 
   // Step 6: Data processing utilities
   const createKontoMap = (rows: BasicBalanceAccount[]) => {
@@ -73,34 +124,6 @@ export function useBalansrapport() {
       });
     });
     return map;
-  };
-
-  const formatSEK = (val: number) => {
-    // Avrunda till heltal först för att ta bort decimaler
-    const rundatVarde = Math.round(val);
-
-    const formatted = rundatVarde
-      .toLocaleString("sv-SE", {
-        style: "currency",
-        currency: "SEK",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })
-      .replace(/[^0-9a-zA-Z,.\-\s]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // Behåll minustecknet för negativa värden
-    return rundatVarde < 0 && !formatted.startsWith("-") ? `-${formatted}` : formatted;
-  };
-
-  // Formatera datum för transaktioner
-  const formatDaterat = (datum: string | Date) => {
-    if (typeof datum === "string") {
-      // Ta bort T00:00:00 delen
-      return datum.split("T")[0];
-    }
-    return new Date(datum).toLocaleDateString("sv-SE");
   };
 
   // Step 6: Processed data computation
@@ -148,6 +171,8 @@ export function useBalansrapport() {
       .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
 
     // Skapa skulder och eget kapital array
+    // OBS: Skulder och EK har normalt kredit > debet, vilket ger negativt saldo (debet - kredit)
+    // Vi negerar för att visa dem som positiva tal (som i Bokio)
     const rawSkulderOchEgetKapital = Array.from(allaSkulderKonton)
       .map((kontonummer) => {
         const ing = ingaendeSkulderMap.get(kontonummer);
@@ -157,16 +182,13 @@ export function useBalansrapport() {
         return {
           kontonummer,
           beskrivning: utg?.beskrivning || aret?.beskrivning || ing?.beskrivning || "",
-          ingaendeSaldo: ing?.saldo || 0,
-          aretsResultat: aret?.saldo || 0,
-          utgaendeSaldo: utg?.saldo || 0,
+          ingaendeSaldo: -(ing?.saldo || 0), // Negera för att få positivt tal
+          aretsResultat: -(aret?.saldo || 0), // Negera för att få positivt tal
+          utgaendeSaldo: -(utg?.saldo || 0), // Negera för att få positivt tal
           transaktioner: aret?.transaktioner || [],
         };
       })
       .sort((a, b) => a.kontonummer.localeCompare(b.kontonummer));
-
-    // Beräkna obalans och justeringar (komplexe logik från komponenten)
-    const rawSumSkulderEK = rawSkulderOchEgetKapital.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
 
     // Justera tillgångar med beskrivningar exakt som Bokio
     const adjustedTillgangar = rawTillgangar.map((konto) => ({
@@ -174,11 +196,33 @@ export function useBalansrapport() {
       beskrivning: konto.kontonummer === "1930" ? "Företagskonto / affärskonto" : konto.beskrivning,
     }));
 
-    const adjustedSumTillgangar = adjustedTillgangar.reduce((sum, k) => sum + k.utgaendeSaldo, 0);
-    const adjustedObalans = adjustedSumTillgangar - rawSumSkulderEK;
+    // Beräkna årets resultat korrekt: Intäkter - Kostnader
+    // För intäkter (3xxx): kredit - debet ger negativt i saldo, så vi måste negera
+    // För kostnader (4-8xxx): debet - kredit ger positivt i saldo
+    const intakter = initialData.aretsResultat
+      .filter((k) => k.kontonummer.startsWith("3"))
+      .reduce((sum, k) => sum - k.saldo, 0); // Negera för att få positivt belopp
+    const kostnader = initialData.aretsResultat
+      .filter((k) => !k.kontonummer.startsWith("3"))
+      .reduce((sum, k) => sum + k.saldo, 0);
+    const aretsResultatSum = intakter - kostnader;
 
-    // Beräkna föregående års resultat
-    const föregåendeÅrsBeräknatResultat = adjustedObalans - initialData.aretsResultat;
+    // Beräkna ingående beräknat resultat från balansekvationen:
+    // Tillgångar = Skulder + Eget kapital + Beräknat resultat
+    // => Beräknat resultat = Tillgångar - Skulder
+    //
+    // OBS: rawSkulderOchEgetKapital innehåller BÅDE skulder OCH EK-konton (alla 2xxx)
+    // Vi behöver separera:
+    // - EK-konton: 20xx (2010, 2018, 2099 etc)
+    // - Skuld-konton: 24xx-29xx
+    const ingaendeTillgangarSum = adjustedTillgangar.reduce((sum, k) => sum + k.ingaendeSaldo, 0);
+    const ingaendeSkulderSum = rawSkulderOchEgetKapital
+      .filter((k) => {
+        const num = parseInt(k.kontonummer);
+        return num >= 2400 && num < 3000; // Skulder är 24xx-29xx, inte 20xx-23xx (som är EK)
+      })
+      .reduce((sum, k) => sum + k.ingaendeSaldo, 0);
+    const föregåendeÅrsBeräknatResultat = ingaendeTillgangarSum - ingaendeSkulderSum;
 
     // Rätta eget kapital enligt Bokio-logik
     const rättatEgetKapital = rawSkulderOchEgetKapital.map((konto) => {
@@ -199,7 +243,7 @@ export function useBalansrapport() {
 
     // Beräknat resultat beräkningar
     const ingaendeBeraknatResultat = föregåendeÅrsBeräknatResultat;
-    const aretsBeraknatResultat = initialData.aretsResultat;
+    const aretsBeraknatResultat = aretsResultatSum;
 
     // Lägg till beräknat resultat för balansering
     rättatEgetKapital.push({
@@ -227,7 +271,6 @@ export function useBalansrapport() {
     );
 
     return {
-      year: initialData.year,
       tillgangar: adjustedTillgangar,
       skulderOchEgetKapital: skulderOchEgetKapitalUtanBeraknat,
       beraknatResultatData,
@@ -246,7 +289,6 @@ export function useBalansrapport() {
     const sumSkulderEK = sumSkulderEKUtan + processedData.beraknatResultatData.utgaende;
 
     return {
-      year: processedData.year,
       tillgangar: processedData.tillgangar,
       skulderOchEgetKapital: processedData.skulderOchEgetKapital,
       sumTillgangar,
@@ -303,21 +345,20 @@ export function useBalansrapport() {
       utgaende: anläggningsSum.utgaende + omsättningsSum.utgaende,
     };
 
+    // Summa EK och skulder = Beräknat resultat + Skulder (EXkluderar individuella EK-konton)
+    // Beräknat resultat representerar redan HELA eget kapital
     const totalEgetKapitalOchSkulder = {
       ingaende:
-        egetKapitalSum.ingaende +
         processedData.beraknatResultatData.ingaende +
         avsättningarSum.ingaende +
         långfristigaSum.ingaende +
         kortfristigaSum.ingaende,
       arets:
-        egetKapitalSum.arets +
         processedData.beraknatResultatData.arets +
         avsättningarSum.arets +
         långfristigaSum.arets +
         kortfristigaSum.arets,
       utgaende:
-        egetKapitalSum.utgaende +
         processedData.beraknatResultatData.utgaende +
         avsättningarSum.utgaende +
         långfristigaSum.utgaende +
@@ -352,7 +393,7 @@ export function useBalansrapport() {
   const handleExportPDF = async () => {
     if (isExportingPDF || !summaryData || !processedData) return;
     setIsExportingPDF(true);
-    setExportMessage(null);
+    setToast(null);
 
     try {
       await exportBalansrapportPDF(
@@ -361,16 +402,16 @@ export function useBalansrapport() {
         summaryData.sumTillgangar,
         summaryData.sumSkulderEK,
         summaryData.beraknatResultat,
-        företagsnamn,
-        organisationsnummer,
+        foretagsprofil.företagsnamn,
+        foretagsprofil.organisationsnummer,
         selectedMonth,
         selectedYear
       );
-      setExportMessage({ type: "success", text: "PDF-rapporten har laddats ner" });
+      setToast({ type: "success", message: "PDF-rapporten har laddats ner" });
     } catch {
-      setExportMessage({
+      setToast({
         type: "error",
-        text: "Ett fel uppstod vid PDF-export. Försök igen.",
+        message: "Ett fel uppstod vid PDF-export. Försök igen.",
       });
     } finally {
       setIsExportingPDF(false);
@@ -380,7 +421,7 @@ export function useBalansrapport() {
   const handleExportCSV = async () => {
     if (isExportingCSV || !summaryData || !processedData) return;
     setIsExportingCSV(true);
-    setExportMessage(null);
+    setToast(null);
 
     try {
       exportBalansrapportCSV(
@@ -389,16 +430,16 @@ export function useBalansrapport() {
         summaryData.sumTillgangar,
         summaryData.sumSkulderEK,
         summaryData.beraknatResultat,
-        företagsnamn,
-        organisationsnummer,
+        foretagsprofil.företagsnamn,
+        foretagsprofil.organisationsnummer,
         selectedMonth,
         selectedYear
       );
-      setExportMessage({ type: "success", text: "CSV-filen har laddats ner" });
+      setToast({ type: "success", message: "CSV-filen har laddats ner" });
     } catch {
-      setExportMessage({
+      setToast({
         type: "error",
-        text: "Ett fel uppstod vid CSV-export. Försök igen.",
+        message: "Ett fel uppstod vid CSV-export. Försök igen.",
       });
     } finally {
       setIsExportingCSV(false);
@@ -430,15 +471,14 @@ export function useBalansrapport() {
 
   return {
     // State
-    initialData,
-    företagsnamn,
-    organisationsnummer,
+    företagsnamn: foretagsprofil.företagsnamn,
+    organisationsnummer: foretagsprofil.organisationsnummer,
     loading,
     selectedYear,
     selectedMonth,
     isExportingPDF,
     isExportingCSV,
-    exportMessage,
+    toast,
 
     // Modal state
     verifikatId,
@@ -450,17 +490,37 @@ export function useBalansrapport() {
 
     // Step 6: Processed data
     processedData,
-    summaryData,
-    categorizedData,
+
+    // Categorized data (from categorizedData for easier access)
+    anläggningstillgångar: categorizedData?.anläggningstillgångar ?? [],
+    omsättningstillgångar: categorizedData?.omsättningstillgångar ?? [],
+    egetKapital: categorizedData?.egetKapital ?? [],
+    avsättningar: categorizedData?.avsättningar ?? [],
+    långfristigaSkulder: categorizedData?.långfristigaSkulder ?? [],
+    kortfristigaSkulder: categorizedData?.kortfristigaSkulder ?? [],
+    omsättningsSum: categorizedData?.omsättningsSum ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    egetKapitalSum: categorizedData?.egetKapitalSum ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    avsättningarSum: categorizedData?.avsättningarSum ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    långfristigaSum: categorizedData?.långfristigaSum ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    kortfristigaSum: categorizedData?.kortfristigaSum ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    totalTillgangar: categorizedData?.totalTillgangar ?? { ingaende: 0, arets: 0, utgaende: 0 },
+    totalEgetKapitalOchSkulder: categorizedData?.totalEgetKapitalOchSkulder ?? {
+      ingaende: 0,
+      arets: 0,
+      utgaende: 0,
+    },
+    beraknatResultatData: processedData?.beraknatResultatData ?? {
+      ingaende: 0,
+      arets: 0,
+      utgaende: 0,
+    },
 
     // Utility functions
     formatSEK,
-    formatDaterat,
 
     // Actions
-    setSelectedYear,
     setSelectedMonth,
-    setExportMessage,
+    setToast,
     handleExportPDF,
     handleExportCSV,
 
@@ -471,11 +531,5 @@ export function useBalansrapport() {
     setVerifikationer,
     setLoadingModal,
     handleShowVerifikationer,
-
-    // Setters (keeping for now, will remove later)
-    setInitialData,
-    setFöretagsnamn,
-    setOrganisationsnummer,
-    setLoading,
   };
 }

@@ -1,32 +1,21 @@
-"use server";
+import type { MomsRad, TransaktionsPost } from "../types/types";
 
-import { pool } from "../../_lib/db";
-import { ensureSession } from "../../_utils/session";
-import { getPeriodDateRange } from "../utils/periodOptions";
-
-export async function getMomsrapport(year: string, period?: string) {
-  const { userId } = await ensureSession();
-
-  /* ---- datumintervall ---- */
-  const { from, to } = getPeriodDateRange(year, period || "all");
-
-  /* ---- hämta transaktioner ---- */
-  const { rows } = await pool.query(
-    `
-    SELECT  t.id                   AS transaktions_id,
-            t.transaktionsdatum,
-            k.kontonummer,
-            k.beskrivning,
-            tp.debet,
-            tp.kredit
-    FROM    transaktioner      t
-    JOIN    transaktionsposter tp ON tp.transaktions_id = t.id
-    JOIN    konton             k  ON k.id = tp.konto_id
-    WHERE   t.transaktionsdatum BETWEEN $1 AND $2
-      AND   t."user_id" = $3;
-    `,
-    [from, to, userId]
-  );
+/**
+ * Processar momsrapport lokalt från transaktionsdata
+ * INGEN databasfetching - bara beräkningar på befintlig data
+ *
+ * @param transaktioner - All transaktionsdata för året
+ * @param year - Årstal (används för filtrering)
+ * @param period - Period (t.ex. "Q1", "M01" eller "all")
+ * @returns Array av MomsRad objekt
+ */
+export function processMomsData(
+  transaktioner: TransaktionsPost[],
+  year: string,
+  period?: string
+): MomsRad[] {
+  // Filtrera transaktioner baserat på period
+  const filtrerade = filterByPeriod(transaktioner, year, period || "all");
 
   /* ---- hjälpstrukturer ---- */
   const fältMap: Record<string, { fält: string; beskrivning: string; belopp: number }> = {};
@@ -36,7 +25,7 @@ export async function getMomsrapport(year: string, period?: string) {
   };
 
   /* ---- loopa rader ---- */
-  for (const r of rows) {
+  for (const r of filtrerade) {
     const { kontonummer, debet, kredit } = r;
 
     const netto = kredit - debet;
@@ -104,28 +93,47 @@ export async function getMomsrapport(year: string, period?: string) {
     belopp: moms49,
   };
 
-  /* sorterat resultat (valfritt) */
+  /* sorterat resultat */
   return Object.values(fältMap)
     .filter((r) => r.belopp !== 0)
     .sort((a, b) => Number(a.fält) - Number(b.fält));
 }
 
-export async function fetchForetagsprofil() {
-  const { userId } = await ensureSession();
-
-  try {
-    const client = await pool.connect();
-    const query = `
-      SELECT företagsnamn, organisationsnummer
-      FROM företagsprofil
-      WHERE id = $1
-      LIMIT 1
-    `;
-    const res = await client.query(query, [userId]);
-    client.release();
-    return res.rows[0] || null;
-  } catch (error) {
-    console.error("❌ fetchForetagsprofil error:", error);
-    return null;
+/**
+ * Hjälpfunktion för att filtrera transaktioner baserat på period
+ */
+function filterByPeriod(
+  transaktioner: TransaktionsPost[],
+  year: string,
+  period: string
+): TransaktionsPost[] {
+  if (period === "all") {
+    return transaktioner;
   }
+
+  // Hantera kvartal (Q1, Q2, Q3, Q4)
+  if (period.startsWith("Q")) {
+    const quarter = parseInt(period.substring(1));
+    const startMonth = (quarter - 1) * 3 + 1;
+    const endMonth = startMonth + 2;
+
+    return transaktioner.filter((t) => {
+      const datum = new Date(t.transaktionsdatum);
+      const month = datum.getMonth() + 1; // getMonth() är 0-indexerad
+      return month >= startMonth && month <= endMonth;
+    });
+  }
+
+  // Hantera månad (M01, M02, etc.)
+  if (period.startsWith("M")) {
+    const month = parseInt(period.substring(1));
+
+    return transaktioner.filter((t) => {
+      const datum = new Date(t.transaktionsdatum);
+      return datum.getMonth() + 1 === month;
+    });
+  }
+
+  // Fallback: returnera allt
+  return transaktioner;
 }

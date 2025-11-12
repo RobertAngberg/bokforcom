@@ -1,28 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import Dropdown from "../../../_components/Dropdown";
 import Knapp from "../../../_components/Knapp";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
+import Toast from "../../../_components/Toast";
 import { useMomsrapport } from "../../hooks/useMomsrapport";
-import { useMomsrapportStatus } from "../../hooks/useMomsrapportStatus";
-import { useSession } from "../../../_lib/auth-client";
 import { PERIOD_OPTIONS } from "../../utils/periodOptions";
+import { formatSEK } from "../../../_utils/format";
 import MomsWizard from "./MomsWizard";
+import type { MomsrapportProps } from "../../types/types";
 
-export default function Momsrapport() {
-  const { data: sessionData, isPending } = useSession();
-  const [showWizard, setShowWizard] = useState(false);
-
-  // Använd hook för all state management
+export default function Momsrapport({ transaktionsdata, foretagsprofil }: MomsrapportProps) {
   const {
     loading,
-    error,
     år,
     setÅr,
     årLista,
     månad,
     setMånad,
-    exportMessage,
+    toast,
+    setToast,
     isExportingPDF,
     isExportingCSV,
     exportXML,
@@ -33,59 +30,29 @@ export default function Momsrapport() {
     momsAttBetalaEllerFaTillbaka,
     ruta49,
     organisationsnummer,
-  } = useMomsrapport();
+    showWizard,
+    setShowWizard,
+    handleOpenWizard,
+    status: periodStatus,
+    // Wizard state
+    currentStep,
+    validationResult,
+    isValidating,
+    hideOkVerifikat,
+    isBokforing,
+    bokforingSuccess,
+    momsAttBetala,
+    bokforingsposter,
+    setCurrentStep,
+    setHideOkVerifikat,
+    handleBokfor,
+    handleStepComplete,
+  } = useMomsrapport({ transaktionsdata, foretagsprofil });
 
-  // Hämta period-status
-  const { status: periodStatus } = useMomsrapportStatus(parseInt(år), månad);
-
-  // Session loading
-  if (isPending) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Verifierar session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Session check
-  if (!sessionData?.user) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Du måste vara inloggad för att se denna sida</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error handling
-  if (error) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-400 mb-2">Fel vid laddning av data</p>
-            <p className="text-sm text-gray-300">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Data loading
   if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Laddar momsrapport...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Block generator helper function
   const spawnaBlock = (titel: string, fält: string[]) => {
     const data = fullData.filter((rad) => fält.includes(rad.fält));
 
@@ -120,14 +87,7 @@ export default function Momsrapport() {
                   <tr key={rad.fält} className={rowColorClass}>
                     <td className="px-4 py-3 text-center">{rad.fält}</td>
                     <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
-                    <td className={`px-4 py-3 text-right ${klass}`}>
-                      {new Intl.NumberFormat("sv-SE", {
-                        style: "currency",
-                        currency: "SEK",
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }).format(rad.belopp)}
-                    </td>
+                    <td className={`px-4 py-3 text-right ${klass}`}>{formatSEK(rad.belopp)}</td>
                   </tr>
                 );
               })}
@@ -166,7 +126,7 @@ export default function Momsrapport() {
           <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <Knapp
               text="Momsdeklaration"
-              onClick={() => setShowWizard(true)}
+              onClick={handleOpenWizard}
               className="w-full md:w-auto"
               disabled={periodStatus?.status === "stängd"}
             />
@@ -188,10 +148,8 @@ export default function Momsrapport() {
         </div>
       </div>
 
-      {/* Export Message */}
-      {exportMessage && (
-        <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
-      )}
+      {/* Toast */}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Main Content */}
       <div id="momsrapport-print-area" className="space-y-6">
@@ -259,14 +217,7 @@ export default function Momsrapport() {
                           <tr key={rad.fält} className={rowColorClass}>
                             <td className="px-4 py-3 text-center">{rad.fält}</td>
                             <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
-                            <td className="px-4 py-3 text-right">
-                              {new Intl.NumberFormat("sv-SE", {
-                                style: "currency",
-                                currency: "SEK",
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0,
-                              }).format(rad.belopp)}
-                            </td>
+                            <td className="px-4 py-3 text-right">{formatSEK(rad.belopp)}</td>
                           </tr>
                         );
                       })}
@@ -310,12 +261,7 @@ export default function Momsrapport() {
                             <td className="px-4 py-3 text-center">{rad.fält}</td>
                             <td className="px-4 py-3 text-left break-words">{rad.beskrivning}</td>
                             <td className={`px-4 py-3 text-right ${klass}`}>
-                              {new Intl.NumberFormat("sv-SE", {
-                                style: "currency",
-                                currency: "SEK",
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0,
-                              }).format(rad.belopp)}
+                              {formatSEK(rad.belopp)}
                             </td>
                           </tr>
                         );
@@ -337,6 +283,18 @@ export default function Momsrapport() {
         momsData={fullData}
         organisationsnummer={organisationsnummer}
         onExportXML={exportXML}
+        currentStep={currentStep}
+        validationResult={validationResult}
+        isValidating={isValidating}
+        hideOkVerifikat={hideOkVerifikat}
+        isBokforing={isBokforing}
+        bokforingSuccess={bokforingSuccess}
+        momsAttBetala={momsAttBetala}
+        bokforingsposter={bokforingsposter}
+        setCurrentStep={setCurrentStep}
+        setHideOkVerifikat={setHideOkVerifikat}
+        handleBokfor={handleBokfor}
+        handleStepComplete={handleStepComplete}
       />
     </div>
   );

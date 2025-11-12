@@ -1,56 +1,20 @@
-"use client";
-
-import dynamic from "next/dynamic";
 import MainLayout from "../_components/MainLayout";
-import LoadingSpinner from "../_components/LoadingSpinner";
-import AnimeradFlik from "../_components/AnimeradFlik";
+import RapporterClient from "./components/RapporterClient";
+import { getAllTransaktionsdata } from "./data/rapportData";
+import { getForetagsprofil } from "./data/foretagData";
 
-const Huvudbok = dynamic(() => import("./components/Huvudbok/Huvudbok"), {
-  loading: () => <LoadingSpinner />,
-  ssr: false,
-});
+export default async function Page() {
+  const [data, profil] = await Promise.all([getAllTransaktionsdata("2025"), getForetagsprofil()]);
 
-const Balansrapport = dynamic(() => import("./components/Balansrapport/Balansrapport"), {
-  loading: () => <LoadingSpinner />,
-  ssr: false,
-});
-
-const Resultatrapport = dynamic(() => import("./components/Resultatrapport/Resultatrapport"), {
-  loading: () => <LoadingSpinner />,
-  ssr: false,
-});
-
-const Momsrapport = dynamic(() => import("./components/Momsrapport/Momsrapport"), {
-  loading: () => <LoadingSpinner />,
-  ssr: false,
-});
-
-export default function Page() {
   return (
     <MainLayout>
-      <h1 className="text-3xl mb-8 text-center text-white">Rapporter</h1>
-
-      <AnimeradFlik title="Huvudbok" icon="📚" forcedOpen={false}>
-        <Huvudbok />
-      </AnimeradFlik>
-
-      <div className="mt-6">
-        <AnimeradFlik title="Balansrapport" icon="🏦" forcedOpen={false}>
-          <Balansrapport />
-        </AnimeradFlik>
-      </div>
-
-      <div className="mt-6">
-        <AnimeradFlik title="Resultatrapport" icon="📈" forcedOpen={false}>
-          <Resultatrapport />
-        </AnimeradFlik>
-      </div>
-
-      <div className="mt-6">
-        <AnimeradFlik title="Momsrapport" icon="📑" forcedOpen={false}>
-          <Momsrapport />
-        </AnimeradFlik>
-      </div>
+      <RapporterClient
+        initialData={data}
+        foretagsprofil={{
+          företagsnamn: profil?.företagsnamn ?? "",
+          organisationsnummer: profil?.organisationsnummer ?? "",
+        }}
+      />
     </MainLayout>
   );
 }

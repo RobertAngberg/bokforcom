@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { exportResultatrapportPDF, exportResultatrapportCSV } from "../../_utils/fileUtils";
-import { hamtaResultatrapport, fetchForetagsprofil } from "../actions/resultatrapportActions";
-import { ResultatKonto, KontoRad, ResultatData, Verifikation } from "../types/types";
+import type { KontoRad, Verifikation, ToastState, UseResultatrapportProps } from "../types/types";
+import { formatSEK } from "../../_utils/format";
+import { processResultatData } from "../utils/resultatProcessing";
 
-export const useResultatrapport = () => {
+export const useResultatrapport = ({
+  transaktionsdata,
+  foretagsprofil,
+}: UseResultatrapportProps) => {
   // Filter state - default till 2025
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const selectedYear = "2025";
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
-  // Grundläggande state
-  const [initialData, setInitialData] = useState<ResultatData | null>(null);
-  const [företagsnamn, setFöretagsnamn] = useState<string>("");
-  const [organisationsnummer, setOrganisationsnummer] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  // Företagsinformation
+  const företagsnamn = foretagsprofil.företagsnamn;
+  const organisationsnummer = foretagsprofil.organisationsnummer;
+  const loading = false; // Ingen loading eftersom data redan finns
 
   // Modal state
   const [verifikatId, setVerifikatId] = useState<number | null>(null);
@@ -28,55 +31,19 @@ export const useResultatrapport = () => {
   // Export state
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
-  const [exportMessage, setExportMessage] = useState<string>("");
+  const [toast, setToast] = useState<ToastState>(null);
 
-  // Data fetching effect
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [resultData, profilData] = await Promise.all([
-          hamtaResultatrapport(selectedYear, selectedMonth),
-          fetchForetagsprofil(),
-        ]);
-
-        // Typ-konvertering från actions till ResultatData
-        const convertedData: ResultatData = {
-          ar: resultData.ar,
-          intakter: resultData.intakter.map((grupp) => ({
-            namn: grupp.namn,
-            konton: grupp.konton.map((konto) => konto as ResultatKonto),
-            summering: grupp.summering,
-          })),
-          rorelsensKostnader: resultData.rorelsensKostnader.map((grupp) => ({
-            namn: grupp.namn,
-            konton: grupp.konton.map((konto) => konto as ResultatKonto),
-            summering: grupp.summering,
-          })),
-          finansiellaIntakter: resultData.finansiellaIntakter?.map((grupp) => ({
-            namn: grupp.namn,
-            konton: grupp.konton.map((konto) => konto as ResultatKonto),
-            summering: grupp.summering,
-          })),
-          finansiellaKostnader: resultData.finansiellaKostnader.map((grupp) => ({
-            namn: grupp.namn,
-            konton: grupp.konton.map((konto) => konto as ResultatKonto),
-            summering: grupp.summering,
-          })),
-        };
-
-        setInitialData(convertedData);
-        setFöretagsnamn(profilData?.företagsnamn ?? "");
-        setOrganisationsnummer(profilData?.organisationsnummer ?? "");
-      } catch (error) {
-        console.error("Fel vid laddning av resultatdata:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [selectedYear, selectedMonth]); // Re-load when year or month changes
+  // Process resultatdata med useMemo - rent derived state
+  const initialData = useMemo(() => {
+    try {
+      const resultData = processResultatData(transaktionsdata, selectedYear, selectedMonth);
+      console.log(`Resultatdata processad för ${selectedYear} (${selectedMonth})`);
+      return resultData;
+    } catch (error) {
+      console.error("Fel vid processning av resultatdata:", error);
+      return null;
+    }
+  }, [transaktionsdata, selectedYear, selectedMonth]);
 
   // Modal functions
   const handleShowVerifikationer = async (kontonummer: string) => {
@@ -126,10 +93,9 @@ export const useResultatrapport = () => {
     finansiellaKostnader: [],
   };
 
-  // Filtrera år till endast 2025
+  // Endast 2025
   const years = ["2025"];
   const currentYear = "2025";
-  const previousYear = "2024";
 
   const intaktsSumRaw = summering(data.intakter);
   const intaktsSum = Object.keys(intaktsSumRaw).reduce(
@@ -144,19 +110,10 @@ export const useResultatrapport = () => {
   const finansiellaIntakterSum = summering(data.finansiellaIntakter);
   const finansiellaKostnaderSum = summering(data.finansiellaKostnader);
 
-  // Helper functions
-  const formatSEKforPDF = (val: number) => {
-    if (val === 0) return "0";
-    const isNegative = val < 0;
-    const absVal = Math.abs(val);
-    const formatted = Math.round(absVal).toLocaleString("sv-SE");
-    return isNegative ? `-${formatted}` : formatted;
-  };
-
   // Export functions
   const handleExportPDF = async () => {
     setIsExportingPDF(true);
-    setExportMessage("");
+    setToast(null);
 
     try {
       // Transform data to format expected by fileUtils
@@ -194,12 +151,12 @@ export const useResultatrapport = () => {
         currentYear
       );
 
-      setExportMessage("PDF-rapporten har laddats ner");
-      setTimeout(() => setExportMessage(""), 3000);
+      setToast({ type: "success", message: "PDF-rapporten har laddats ner" });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("PDF export error:", error);
-      setExportMessage("Fel vid PDF export");
-      setTimeout(() => setExportMessage(""), 5000);
+      setToast({ type: "error", message: "Fel vid PDF export" });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setIsExportingPDF(false);
     }
@@ -207,7 +164,7 @@ export const useResultatrapport = () => {
 
   const handleExportCSV = async () => {
     setIsExportingCSV(true);
-    setExportMessage("");
+    setToast(null);
 
     try {
       // Transform data to format expected by fileUtils
@@ -245,12 +202,12 @@ export const useResultatrapport = () => {
         currentYear
       );
 
-      setExportMessage("CSV-filen har laddats ner");
-      setTimeout(() => setExportMessage(""), 3000);
+      setToast({ type: "success", message: "CSV-filen har laddats ner" });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("CSV export error:", error);
-      setExportMessage("Fel vid CSV export");
-      setTimeout(() => setExportMessage(""), 5000);
+      setToast({ type: "error", message: "Fel vid CSV export" });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setIsExportingCSV(false);
     }
@@ -259,18 +216,13 @@ export const useResultatrapport = () => {
   return {
     // Filter state
     selectedYear,
-    setSelectedYear,
     selectedMonth,
     setSelectedMonth,
     // Data state
     initialData,
-    setInitialData,
     företagsnamn,
-    setFöretagsnamn,
     organisationsnummer,
-    setOrganisationsnummer,
     loading,
-    setLoading,
     // Modal state
     verifikatId,
     setVerifikatId,
@@ -286,29 +238,24 @@ export const useResultatrapport = () => {
     setVerifikatMeta,
     // Export state
     isExportingPDF,
-    setIsExportingPDF,
     isExportingCSV,
-    setIsExportingCSV,
-    exportMessage,
-    setExportMessage,
+    toast,
+    setToast,
     // Modal functions
     handleShowVerifikationer,
     // Data processing
     data,
     years,
     currentYear,
-    previousYear,
     summering,
     intaktsSum,
     rorelsensSum,
     finansiellaIntakterSum,
     finansiellaKostnaderSum,
     // Helper functions
-    formatSEKforPDF,
+    formatSEK,
     // Export functions
     handleExportPDF,
     handleExportCSV,
   };
 };
-
-export type { ResultatData, KontoRad, ResultatKonto };

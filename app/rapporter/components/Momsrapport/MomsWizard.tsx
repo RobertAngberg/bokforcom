@@ -1,106 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
-import { useMomsrapportStatus } from "../../hooks/useMomsrapportStatus";
-import { MomsRad } from "../../types/types";
+import { MomsWizardProps, BokforingsPostWizard } from "../../types/types";
 import { formatSEK } from "../../../_utils/format";
-import { validateMomsVerifikat, type ValidationResult } from "../../actions/momsValidationActions";
-import { bokforMomsavstamning } from "../../actions/momsBokforingActions";
-
-interface MomsWizardProps {
-  isOpen: boolean;
-  onClose: () => void;
-  year: string;
-  period: string;
-  momsData: MomsRad[];
-  organisationsnummer: string;
-  onExportXML: () => void;
-}
 
 export default function MomsWizard({
   isOpen,
   onClose,
   year,
   period,
-  momsData,
   organisationsnummer,
   onExportXML,
+  currentStep,
+  validationResult,
+  isValidating,
+  hideOkVerifikat,
+  isBokforing,
+  bokforingSuccess,
+  momsAttBetala,
+  bokforingsposter,
+  setCurrentStep,
+  setHideOkVerifikat,
+  handleBokfor,
+  handleStepComplete,
 }: MomsWizardProps) {
-  const { updateStatus } = useMomsrapportStatus(parseInt(year), period);
-
-  const [currentStep, setCurrentStep] = useState(1);
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [hideOkVerifikat, setHideOkVerifikat] = useState(true);
-  const [isBokforing, setIsBokforing] = useState(false);
-  const [bokforingSuccess, setBokforingSuccess] = useState(false);
-
-  // Beräkna moms att betala
-  const momsAttBetala = momsData.find((r) => r.fält === "49")?.belopp ?? 0;
-
-  // Beräkna bokföringsposter baserat på momsdata (för förhandsvisning)
-  const genereraBokforingsposter = () => {
-    const poster: { konto: string; kontonamn: string; debet: number; kredit: number }[] = [];
-
-    // OBS: Detta är bara en förhandsvisning. Den faktiska bokföringen hämtar saldon från databasen.
-    // För att visa användaren ungefär vad som kommer att bokföras
-
-    const utgaendeMoms25 = Math.abs(momsData.find((r) => r.fält === "10")?.belopp ?? 0);
-    const utgaendeOmvand25 = Math.abs(momsData.find((r) => r.fält === "30")?.belopp ?? 0);
-    const ingaendeMoms = Math.abs(momsData.find((r) => r.fält === "48")?.belopp ?? 0);
-    const momsAttBetala = momsData.find((r) => r.fält === "49")?.belopp ?? 0;
-
-    if (utgaendeMoms25 > 0) {
-      poster.push({
-        konto: "2610",
-        kontonamn: "Utgående moms, 25 %",
-        debet: utgaendeMoms25,
-        kredit: 0,
-      });
-    }
-    if (utgaendeOmvand25 > 0) {
-      poster.push({
-        konto: "2614",
-        kontonamn: "Utgående moms omvänd skattskyldighet, 25 %",
-        debet: utgaendeOmvand25,
-        kredit: 0,
-      });
-      // När det finns omvänd moms så finns ofta också 2645
-      poster.push({
-        konto: "2645",
-        kontonamn: "Beräknad ingående moms på förvärv från utlandet",
-        debet: 0,
-        kredit: utgaendeOmvand25,
-      });
-    }
-
-    // Övrig ingående moms (2640)
-    const ovrigIngaende = ingaendeMoms - utgaendeOmvand25;
-    if (ovrigIngaende > 0) {
-      poster.push({ konto: "2640", kontonamn: "Ingående moms", debet: 0, kredit: ovrigIngaende });
-    }
-
-    if (Math.abs(momsAttBetala) > 0.01) {
-      poster.push({
-        konto: "2650",
-        kontonamn: "Redovisningskonto för moms",
-        debet: momsAttBetala < 0 ? Math.abs(momsAttBetala) : 0,
-        kredit: momsAttBetala > 0 ? momsAttBetala : 0,
-      });
-    }
-
-    return poster;
-  };
-
-  const bokforingsposter = genereraBokforingsposter();
-
   // Definiera kolumner för Tabell-komponenten
-  type BokforingsPost = { konto: string; kontonamn: string; debet: number; kredit: number };
-
-  const bokforingsKolumner: ColumnDefinition<BokforingsPost>[] = [
+  const bokforingsKolumner: ColumnDefinition<BokforingsPostWizard>[] = [
     { key: "konto", label: "Konto", className: "font-mono" },
     { key: "kontonamn", label: "Kontonamn" },
     {
@@ -116,63 +45,6 @@ export default function MomsWizard({
       render: (_, row) => (row.kredit > 0 ? formatSEK(row.kredit) : "—"),
     },
   ];
-
-  const handleBokfor = async () => {
-    setIsBokforing(true);
-    setBokforingSuccess(false);
-
-    try {
-      const result = await bokforMomsavstamning(year, period);
-
-      if (result.success) {
-        setBokforingSuccess(true);
-      } else {
-        alert(`Fel vid bokföring: ${result.error}`);
-      }
-    } catch (error) {
-      alert(`Fel vid bokföring: ${error instanceof Error ? error.message : "Okänt fel"}`);
-    } finally {
-      setIsBokforing(false);
-    }
-  };
-
-  // Kör validering när steg 2 visas
-  useEffect(() => {
-    if (currentStep === 2 && !validationResult) {
-      runValidation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep]);
-
-  const runValidation = async () => {
-    setIsValidating(true);
-    const result = await validateMomsVerifikat(parseInt(year), period);
-    setValidationResult(result);
-    setIsValidating(false);
-  };
-
-  const handleStepComplete = async () => {
-    if (currentStep === 1) {
-      // Steg 1: Gå till validering
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      // Steg 2: Markera som granskad och gå till export
-      await updateStatus("granskad");
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      // Steg 3: Markera som deklarerad
-      await updateStatus("deklarerad");
-      setCurrentStep(4);
-    } else if (currentStep === 4) {
-      // Steg 4: Gå till stäng period
-      await updateStatus("betald");
-      setCurrentStep(5);
-    } else if (currentStep === 5) {
-      // Steg 5: Stäng period och avsluta
-      await updateStatus("stängd");
-      onClose();
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -243,9 +115,7 @@ export default function MomsWizard({
             </p>
 
             {isValidating ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
-              </div>
+              <LoadingSpinner />
             ) : validationResult ? (
               <div className="space-y-4">
                 {/* Sammanfattning */}

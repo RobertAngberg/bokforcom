@@ -6,114 +6,62 @@ import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import VerifikatModal from "../../../_components/VerifikatModal";
 import Modal from "../../../_components/Modal";
+import Toast from "../../../_components/Toast";
 import Tabell, { ColumnDefinition } from "../../../_components/Tabell";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
 import { useBalansrapport } from "../../hooks/useBalansrapport";
-import { Konto } from "../../types/types";
+import {
+  Konto,
+  TabellRad,
+  VerifikatRad,
+  KontoTransRad,
+  BalansrapportProps,
+} from "../../types/types";
 import { PERIOD_OPTIONS } from "../../utils/periodOptions";
 
-// Typ för tabellrader
-interface TabellRad {
-  id: string;
-  kontonummer?: string;
-  beskrivning: string;
-  ingaendeSaldo?: number;
-  aretsResultat?: number;
-  utgaendeSaldo?: number;
-  datum?: string;
-  belopp?: number;
-  verifikatNummer?: string;
-  transaktion_id?: number;
-  isTransaction?: boolean;
-  isSummary?: boolean;
-}
-
-// Typ för verifikationsdata
-interface VerifikatRad {
-  id: string;
-  datum: string;
-  beskrivning: string;
-  debet: number;
-  kredit: number;
-  saldo: number;
-}
-
-interface KontoTransRad {
-  id: string;
-  datum: string;
-  beskrivning: string;
-  belopp: number;
-  verifikatNummer?: string;
-  transaktion_id?: number;
-}
-
-export default function Balansrapport() {
-  // Hook for all data and state management
+export default function Balansrapport({ data, foretagsprofil }: BalansrapportProps) {
   const {
     loading,
     selectedYear,
     selectedMonth,
     isExportingPDF,
     isExportingCSV,
-    exportMessage,
+    toast,
     // Modal state
     verifikatId,
     showModal,
     selectedKonto,
     verifikationer,
     loadingModal,
-    // Processed data
-    processedData,
-    summaryData,
-    categorizedData,
-    formatSEK,
-    // Actions
-    setSelectedYear,
-    setSelectedMonth,
-    handleExportPDF,
-    handleExportCSV,
-    // Modal actions
-    setVerifikatId,
-    setShowModal,
-  } = useBalansrapport();
-
-  // Loading check
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-white">Laddar balansrapport...</div>
-      </div>
-    );
-  }
-
-  // Early return if data not ready
-  if (!processedData || !summaryData || !categorizedData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-white">Bearbetar balansdata...</div>
-      </div>
-    );
-  }
-
-  // Extract only used data from hook
-  const { beraknatResultatData } = processedData;
-  const {
+    // Categorized data
     anläggningstillgångar,
     omsättningstillgångar,
     egetKapital,
     avsättningar,
     långfristigaSkulder,
     kortfristigaSkulder,
-    // anläggningsSum, // Not used - sum shown inside table
     omsättningsSum,
-    egetKapitalSum,
     avsättningarSum,
     långfristigaSum,
     kortfristigaSum,
     totalTillgangar,
     totalEgetKapitalOchSkulder,
-  } = categorizedData;
+    beraknatResultatData,
+    formatSEK,
+    // Actions
+    setSelectedMonth,
+    setToast,
+    handleExportPDF,
+    handleExportCSV,
+    // Modal actions
+    setVerifikatId,
+    setShowModal,
+  } = useBalansrapport({ data, foretagsprofil });
 
-  //#region Render Functions
+  // Loading check
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   // Render function for categories with expandable accounts and transactions
   const renderaKategoriMedKolumner = (
@@ -375,7 +323,6 @@ export default function Balansrapport() {
       </div>
     );
   };
-  //#endregion
 
   return (
     <div className="mx-auto text-white mt-4">
@@ -389,12 +336,11 @@ export default function Balansrapport() {
             <div className="w-full md:w-32">
               <Dropdown
                 value={selectedYear}
-                onChange={setSelectedYear}
-                options={[{ label: "2025", value: "2025" }]}
+                onChange={() => {}}
+                options={[{ value: "2025", label: "2025" }]}
                 className="w-full md:w-32"
               />
-            </div>
-
+            </div>{" "}
             {/* Månad dropdown utan label med "Alla månader" som default */}
             <div className="w-full md:w-auto">
               <Dropdown
@@ -426,12 +372,8 @@ export default function Balansrapport() {
         {/* Export-status meddelanden */}
         {isExportingPDF && <div className="text-center text-blue-400">Genererar PDF...</div>}
         {isExportingCSV && <div className="text-center text-blue-400">Genererar CSV...</div>}
-        {exportMessage && (
-          <div
-            className={`text-center ${exportMessage.type === "success" ? "text-green-400" : "text-red-400"}`}
-          >
-            {exportMessage.text}
-          </div>
+        {toast && (
+          <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
         )}
       </div>
 
@@ -473,14 +415,24 @@ export default function Balansrapport() {
       {/* Eget kapital */}
       {egetKapital.length > 0 && (
         <>
+          <div className="mb-4">
+            <Totalrad
+              label="Beräknat resultat"
+              values={{
+                "Ing. balans": beraknatResultatData.ingaende,
+                Resultat: beraknatResultatData.arets,
+                "Utg. balans": beraknatResultatData.utgaende,
+              }}
+            />
+          </div>
           {renderaKontonSomFlikar(egetKapital, "🏛️")}
           <div className="mb-10">
             <Totalrad
               label="Eget kapital"
               values={{
-                "Ing. balans": egetKapitalSum.ingaende + beraknatResultatData.ingaende,
-                Resultat: egetKapitalSum.arets + beraknatResultatData.arets,
-                "Utg. balans": egetKapitalSum.utgaende + beraknatResultatData.utgaende,
+                "Ing. balans": beraknatResultatData.ingaende,
+                Resultat: beraknatResultatData.arets,
+                "Utg. balans": beraknatResultatData.utgaende,
               }}
             />
           </div>
@@ -558,7 +510,7 @@ export default function Balansrapport() {
         title={`Verifikationer för konto ${selectedKonto}`}
       >
         {loadingModal ? (
-          <div className="text-center p-4">Laddar verifikationer...</div>
+          <LoadingSpinner />
         ) : (
           <Tabell
             data={verifikationer}

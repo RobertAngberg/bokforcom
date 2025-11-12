@@ -1,26 +1,25 @@
 "use client";
 
 import AnimeradFlik from "../../../_components/AnimeradFlik";
-
 import Totalrad from "../../../_components/Totalrad";
 import Tabell from "../../../_components/Tabell";
 import Knapp from "../../../_components/Knapp";
 import Dropdown from "../../../_components/Dropdown";
 import VerifikatModal from "../../../_components/VerifikatModal";
 import Modal from "../../../_components/Modal";
+import LoadingSpinner from "../../../_components/LoadingSpinner";
+import Toast from "../../../_components/Toast";
 import { formatSEK } from "../../../_utils/format";
 import { useResultatrapport } from "../../hooks/useResultatrapport";
-import { KontoRad, ResultatTransaktion } from "../../types/types";
-import { useSession } from "../../../_lib/auth-client";
+import { KontoRad, ResultatTransaktion, ResultatrapportProps } from "../../types/types";
 import { PERIOD_OPTIONS } from "../../utils/periodOptions";
 
-export default function Resultatrapport() {
-  const { data: sessionData, isPending } = useSession();
-
-  // Använd hook för all state management
+export default function Resultatrapport({
+  transaktionsdata,
+  foretagsprofil,
+}: ResultatrapportProps) {
   const {
     selectedYear,
-    setSelectedYear,
     selectedMonth,
     setSelectedMonth,
     initialData,
@@ -36,7 +35,8 @@ export default function Resultatrapport() {
     setVerifikatMeta,
     isExportingPDF,
     isExportingCSV,
-    exportMessage,
+    toast,
+    setToast,
     data,
     years,
     currentYear,
@@ -46,39 +46,11 @@ export default function Resultatrapport() {
     finansiellaKostnaderSum,
     handleExportPDF,
     handleExportCSV,
-  } = useResultatrapport();
-
-  // Session loading
-  if (isPending) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Verifierar session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Session check
-  if (!sessionData?.user) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Du behöver vara inloggad för att se denna sida.</p>
-        </div>
-      </div>
-    );
-  }
+  } = useResultatrapport({ transaktionsdata, foretagsprofil });
 
   // Data loading
   if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 text-white">
-        <div className="flex h-40 items-center justify-center">
-          <p>Laddar data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   // No data check
@@ -269,7 +241,7 @@ export default function Resultatrapport() {
             <div className="w-full md:w-32">
               <Dropdown
                 value={selectedYear}
-                onChange={(value) => setSelectedYear(value)}
+                onChange={() => {}} // År är hårdkodat till 2025
                 options={years.map((year) => ({ value: year, label: year }))}
                 className="w-full md:w-32"
               />
@@ -303,9 +275,7 @@ export default function Resultatrapport() {
         </div>
       </div>
 
-      {exportMessage && (
-        <div className="mb-4 rounded bg-blue-600 p-3 text-white">{exportMessage}</div>
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       <div id="resultatrapport-print-area" className="space-y-6">
         {/* Intäkter */}
@@ -391,7 +361,7 @@ export default function Resultatrapport() {
           title={`Verifikationer för konto ${selectedKonto}`}
         >
           {loadingModal ? (
-            <p>Laddar verifikationer...</p>
+            <LoadingSpinner />
           ) : (
             <Tabell
               data={verifikationer}
