@@ -17,7 +17,16 @@ export function useRequireOnboarding() {
 
   useEffect(() => {
     // Publika routes som inte kräver inloggning eller onboarding
-    const publicPaths = ["/", "/login", "/funktioner", "/kontakt", "/om-oss", "/priser", "/api"];
+    const publicPaths = [
+      "/",
+      "/login",
+      "/funktioner",
+      "/kontakt",
+      "/om-oss",
+      "/priser",
+      "/anvandarvillkor",
+      "/api",
+    ];
 
     // Om användaren är på en publik sida, tillåt direkt
     if (publicPaths.some((path) => pathname === path || pathname.startsWith(path + "/"))) {
