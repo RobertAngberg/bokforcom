@@ -5,9 +5,8 @@ import {
   getMomsrapportStatus,
   updateMomsrapportStatus,
   saveNoteringar,
-  MomsrapportStatusData,
-  MomsrapportStatus,
 } from "../actions/momsrapportStatusActions";
+import type { MomsrapportStatusData, MomsrapportStatus } from "../types/types";
 
 export function useMomsrapportStatus(year: number, period: string) {
   const [status, setStatus] = useState<MomsrapportStatusData | null>(null);
