@@ -10,7 +10,7 @@ import { signOut } from "../../_lib/auth-client";
 import { clearRememberMePreference } from "../../(publikt)/(sidor)/login/utils/rememberMe";
 import type { AdminContentProps } from "../types/types";
 
-export default function AdminContent({ användarInfo, företagsInfo }: AdminContentProps) {
+export default function InstallningarClient({ användarInfo, företagsInfo }: AdminContentProps) {
   const admin = useAdmin({
     initialUser: användarInfo,
     initialForetagsInfo: företagsInfo,

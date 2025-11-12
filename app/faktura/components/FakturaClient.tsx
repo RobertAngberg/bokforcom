@@ -24,7 +24,7 @@ const Leverantorsfakturor = dynamic(() => import("./Leverantorsfakturor/Leverant
   ssr: false,
 });
 
-export default function FakturaNavigation() {
+export default function FakturaClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isOffert = searchParams.get("type") === "offert";

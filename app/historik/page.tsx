@@ -1,5 +1,5 @@
 import MainLayout from "../_components/MainLayout";
-import Historik from "./components/Historik";
+import HistorikClient from "./components/HistorikClient";
 import { hamtaHistorikData } from "./actions/data";
 
 export default async function HistorikPage() {
@@ -7,7 +7,7 @@ export default async function HistorikPage() {
 
   return (
     <MainLayout>
-      <Historik initialData={historikData} />
+      <HistorikClient initialData={historikData} />
     </MainLayout>
   );
 }

@@ -1,5 +1,5 @@
 import { FakturaProvider } from "./context/providers/FakturaProvider";
-import FakturaNavigation from "./components/FakturaNavigation";
+import FakturaClient from "./components/FakturaClient";
 import MainLayout from "../_components/MainLayout";
 import { hamtaFakturaInitialData } from "./actions/initialDataActions";
 
@@ -9,7 +9,7 @@ export default async function FakturaPage() {
   return (
     <MainLayout>
       <FakturaProvider initialData={initialData}>
-        <FakturaNavigation />
+        <FakturaClient />
       </FakturaProvider>
     </MainLayout>
   );

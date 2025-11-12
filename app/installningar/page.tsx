@@ -1,8 +1,8 @@
 import MainLayout from "../_components/MainLayout";
-import Admin from "./components/Admin";
+import InstallningarClient from "./components/InstallningarClient";
 import { hamtaAnvandarInfo, hamtaForetagsprofil } from "./actions/data";
 
-export default async function AdminPage() {
+export default async function InstallningarPage() {
   const [användarInfo, företagsInfo] = await Promise.all([
     hamtaAnvandarInfo(),
     hamtaForetagsprofil(),
@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
   return (
     <MainLayout>
-      <Admin användarInfo={användarInfo} företagsInfo={företagsInfo} />
+      <InstallningarClient användarInfo={användarInfo} företagsInfo={företagsInfo} />
     </MainLayout>
   );
 }

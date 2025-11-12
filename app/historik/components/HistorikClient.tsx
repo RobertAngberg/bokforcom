@@ -13,7 +13,7 @@ import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale/sv";
 registerLocale("sv", sv);
 
-export default function Historik({ initialData }: HistorikProps) {
+export default function HistorikClient({ initialData }: HistorikProps) {
   const {
     // State
     year,
