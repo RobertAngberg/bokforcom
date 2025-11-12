@@ -20,6 +20,7 @@ export default function UtlaggFlik({ state }: Omit<UtlaggFlikProps, "utlaggFlikD
   } = useUtlagg({
     anställdId: state?.valdAnställd?.id,
     enableFlikMode: true,
+    // Data laddas nu automatiskt när komponenten mountas (tack vare lazy rendering i AnimeradFlik)
   });
 
   // Enhanced columns with all formatting functions

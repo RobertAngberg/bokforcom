@@ -25,6 +25,7 @@ export default function Lonespecar({
     enableComponentMode: true,
     anställdId: anställd?.id,
     specificLönespec,
+    // Data laddas nu automatiskt när komponenten mountas (tack vare lazy rendering i AnimeradFlik)
   });
 
   if (loading) {

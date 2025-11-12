@@ -99,6 +99,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
     enableNyAnstalldMode = false,
     onNyAnstalldSaved,
     onNyAnstalldCancel,
+    skipDataFetch = false, // NY FLAG: hoppa över automatisk data-fetching
   } = props;
 
   const [anställda, setAnställda] = useState<AnställdListItem[]>(() =>
@@ -264,6 +265,11 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
 
   // Hämta alla anställda vid mount
   useEffect(() => {
+    // Om skipDataFetch är true, kör inte data-fetching (används av child-komponenter)
+    if (skipDataFetch) {
+      return;
+    }
+
     if (initialAnstallda && initialAnstallda.length > 0) {
       setAnställda((prev) =>
         prev.length > 0 ? prev : mapAnställdaDataToListItems(initialAnstallda)
@@ -272,7 +278,7 @@ export function useAnstallda(props: UseAnstalldaProps = {}) {
     }
     laddaAnställda();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAnstallda]);
+  }, [initialAnstallda, skipDataFetch]);
 
   // ===========================================
   // ANSTÄLLD DETALJER - För page.tsx (vald anställd)

@@ -26,7 +26,7 @@ const Lonekorning = dynamic<LonekorningProps>(() => import("./Lonekorning/Loneko
 });
 
 export default function Personal({ initialAnställda }: PersonalContentProps) {
-  const { state, actions, handlers } = useAnstallda({ initialAnstallda: initialAnställda });
+  const { state, handlers, actions } = useAnstallda({ initialAnstallda: initialAnställda });
 
   // Vi använder alltid initialAnställda som har full data
   const harAnställda = initialAnställda.length > 0;

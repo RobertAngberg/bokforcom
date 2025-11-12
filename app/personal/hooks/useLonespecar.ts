@@ -30,6 +30,7 @@ export function useLonespec({
   // Component mode props
   enableComponentMode = false,
   specificLönespec,
+  skipDataFetch = false, // NY FLAG: förhindra automatisk data-fetching
 
   // New spec modal props
   enableNewSpecModal = false,
@@ -55,6 +56,7 @@ export function useLonespec({
   // Component mode state (only active when enableComponentMode is true)
   const [utlägg, setUtlägg] = useState<Utlägg[]>([]);
   const [loading, setLoading] = useState(true);
+  const isFetchingRef = useRef(false); // 🆕 Guard mot duplicate fetches
 
   // New spec modal state (only active when enableNewSpecModal is true)
   const [valdAnställd, setValdAnställd] = useState<string>("");
@@ -195,6 +197,12 @@ export function useLonespec({
   useEffect(() => {
     if (!enableComponentMode) return;
 
+    // Om skipDataFetch, sätt loading till false direkt
+    if (skipDataFetch) {
+      setLoading(false);
+      return;
+    }
+
     if (specificLönespec) {
       setLoading(false);
       return;
@@ -203,7 +211,13 @@ export function useLonespec({
     const loadSpecar = async () => {
       if (!anställdId) return;
 
+      // 🆕 Guard: Förhindra duplicate fetches (React StrictMode kör useEffect 2x i dev)
+      if (isFetchingRef.current) {
+        return;
+      }
+
       try {
+        isFetchingRef.current = true;
         setLoading(true);
         const [lönespecarData, utläggData] = await Promise.all([
           hamtaLonespecifikationer(anställdId),
@@ -215,11 +229,12 @@ export function useLonespec({
         console.error("Fel vid laddning av data:", error);
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     loadSpecar();
-  }, [enableComponentMode, specificLönespec, anställdId]);
+  }, [enableComponentMode, specificLönespec, anställdId, skipDataFetch]);
 
   // Reset selected employee when modal opens - moved to direct computation
   // (removed useEffect to avoid prop-change listener anti-pattern)

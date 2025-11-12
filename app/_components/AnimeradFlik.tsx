@@ -16,6 +16,7 @@ export default function AnimeradFlik({
   forcedOpen?: boolean;
 }) {
   const [open, setOpen] = useState(forcedOpen);
+  const [hasBeenOpened, setHasBeenOpened] = useState(forcedOpen); // 🆕 Track if ever opened
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(forcedOpen ? "auto" : "0px");
 
@@ -23,6 +24,7 @@ export default function AnimeradFlik({
     if (!open && contentRef.current) {
       setHeight(contentRef.current.scrollHeight + "px");
       setOpen(true);
+      setHasBeenOpened(true); // 🆕 Mark as opened
     } else if (open && contentRef.current) {
       setHeight(contentRef.current.scrollHeight + "px");
       requestAnimationFrame(() => setHeight("0px"));
@@ -72,7 +74,8 @@ export default function AnimeradFlik({
           overflow: open ? "visible" : "hidden",
         }}
       >
-        <div className="p-4 bg-slate-900">{children}</div>
+        {/* 🆕 Lazy render: Only render children when accordion has been opened at least once */}
+        {hasBeenOpened && <div className="p-4 bg-slate-900">{children}</div>}
       </div>
     </div>
   );

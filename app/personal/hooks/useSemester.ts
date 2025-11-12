@@ -20,6 +20,7 @@ export function useSemester({
   anställdId,
   anställdKompensation,
   userId,
+  skipDataFetch = false,
 }: UseSemesterProps): UseSemesterReturn {
   // State
   const [showBokforKnapp, setShowBokforKnapp] = useState(false);
@@ -62,9 +63,12 @@ export function useSemester({
 
   // Ladda data vid ändring av anställdId
   useEffect(() => {
+    if (skipDataFetch) {
+      return;
+    }
     hamtaData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anställdId]);
+  }, [anställdId, skipDataFetch]);
 
   // Hantera manuell redigering av semesterbox
   const handleEditField = useCallback((fieldName: SemesterBoxField, currentValue: number) => {

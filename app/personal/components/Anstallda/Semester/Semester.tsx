@@ -12,6 +12,7 @@ export default function ModernSemester({ anställd, userId }: ModernSemesterProp
     anställdId: anställd.id,
     anställdKompensation: anställd.kompensation,
     userId,
+    // Data laddas nu automatiskt när komponenten mountas (tack vare lazy rendering i AnimeradFlik)
   });
 
   const {

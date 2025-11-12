@@ -12,7 +12,9 @@ import { useAnstallda } from "../../hooks/useAnstallda";
 import type { AnställdFlikProps } from "../../types/types";
 
 export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProps) {
-  const { state, handlers, actions } = useAnstallda();
+  // skipDataFetch = true eftersom vi INTE vill att varje anställd-komponent
+  // ska försöka hämta data. Data hämtas redan av Personal.tsx!
+  const { state, handlers, actions } = useAnstallda({ skipDataFetch: true });
 
   // Sätt valdAnställd när komponenten mountar
   useEffect(() => {
@@ -28,7 +30,6 @@ export default function AnställdFlik({ anställd, onTaBort }: AnställdFlikProp
     <div className="mb-4">
       <AnimeradFlik title={anställdInfo} icon="👤">
         <div className="space-y-4">
-          {/* Anställd detaljer som nested animerade flikar */}
           <AnimeradFlik title="Personalinformation" icon="📋">
             <Information
               state={{

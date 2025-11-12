@@ -17,6 +17,7 @@ import { showToast } from "../../_components/Toast";
 export function useUtlagg(props?: UseUtlaggProps | number | null) {
   // Backwards compatibility: support both old signature and new object
   const anställdId = typeof props === "object" && props !== null ? props.anställdId : props;
+  const skipDataFetch = typeof props === "object" && props !== null ? props.skipDataFetch : false;
   const [utlägg, setUtlägg] = useState<UtläggQueryResult[]>([]);
   const [utläggLoading, setUtläggLoading] = useState(false);
   const [utläggBokföringModal, setUtläggBokföringModal] = useState<UtläggBokföringModal>({
@@ -132,12 +133,15 @@ export function useUtlagg(props?: UseUtlaggProps | number | null) {
 
   // Ladda utlägg när anställdId ändras
   useEffect(() => {
+    if (skipDataFetch) {
+      return;
+    }
     if (anställdId) {
       laddaUtläggFörAnställd(anställdId);
     } else {
       setUtlägg([]);
     }
-  }, [anställdId, laddaUtläggFörAnställd]);
+  }, [anställdId, laddaUtläggFörAnställd, skipDataFetch]);
 
   // ===========================================
   // UTLÄGG FLIK - För UtlaggFlik.tsx

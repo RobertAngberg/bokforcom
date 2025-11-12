@@ -1168,6 +1168,7 @@ export interface UseWizardProps {
 export interface UseUtlaggProps {
   anställdId?: number | null;
   enableFlikMode?: boolean;
+  skipDataFetch?: boolean; // Hoppa över automatisk data-fetching (för child-komponenter)
 }
 
 export interface UtläggBokföringModal {
@@ -1182,6 +1183,7 @@ export interface UseSemesterProps {
   anställdId: number;
   anställdKompensation: number;
   userId: number;
+  skipDataFetch?: boolean; // Hoppa över automatisk data-fetching (för child-komponenter)
 }
 
 export interface UseSemesterReturn {
@@ -1215,6 +1217,7 @@ export interface UseAnstalldaProps {
   enableNyAnstalldMode?: boolean;
   onNyAnstalldSaved?: () => void;
   onNyAnstalldCancel?: () => void;
+  skipDataFetch?: boolean; // Hoppa över automatisk data-fetching (för child-komponenter)
 }
 
 // useMailaLonespec.ts
@@ -1263,6 +1266,7 @@ export interface UseLonespecProps {
   // Component mode props
   enableComponentMode?: boolean;
   specificLönespec?: Lönespec;
+  skipDataFetch?: boolean; // Förhindra automatisk data-fetching (för komponenter i stängda flikar)
 
   // New spec modal props
   enableNewSpecModal?: boolean;
