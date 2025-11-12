@@ -11,6 +11,13 @@ export type YearDataPoint = {
   utgift: number;
 };
 
+// Props för StartClient component
+export interface StartClientProps {
+  initialData: YearSummary;
+  initialYear: string;
+  showWelcome: boolean;
+}
+
 export interface FrontCardProps {
   title: string;
   data: number;

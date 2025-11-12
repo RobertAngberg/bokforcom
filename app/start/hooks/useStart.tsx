@@ -1,34 +1,33 @@
-import { useEffect, useState, useCallback } from "react";
-import { fetchRawYearData, checkWelcomeStatus, markWelcomeAsShown } from "../actions/actions";
+import { useState, useCallback } from "react";
+import { fetchRawYearData } from "../actions/actions";
 import { processYearData } from "../../_utils/format";
 import type { YearSummary } from "../types/types";
 
-export function useStart() {
-  const [year, setYear] = useState("2025");
-  const [showWelcome, setShowWelcome] = useState(false);
-  const { data, isLoading } = useFetchYearSummary(year);
+interface UseStartProps {
+  initialData: YearSummary;
+  initialYear: string;
+  initialShowWelcome: boolean;
+}
 
-  useEffect(() => {
-    let cancelled = false;
+export function useStart({ initialData, initialYear, initialShowWelcome }: UseStartProps) {
+  const [year, setYear] = useState(initialYear);
+  const [data, setData] = useState<YearSummary>(initialData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(initialShowWelcome);
 
-    async function loadWelcomeState() {
-      try {
-        const shouldShow = await checkWelcomeStatus();
+  const handleYearChange = useCallback(async (newYear: string) => {
+    setYear(newYear);
+    setIsLoading(true);
 
-        if (!cancelled && shouldShow) {
-          setShowWelcome(true);
-          await markWelcomeAsShown();
-        }
-      } catch (error) {
-        console.error("checkWelcomeStatus failed", error);
-      }
+    try {
+      const rawData = await fetchRawYearData(newYear);
+      const processedData = processYearData(rawData);
+      setData(processedData);
+    } catch (error) {
+      console.error("Error fetching year data:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    loadWelcomeState();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const handleWelcomeClose = useCallback(() => {
@@ -37,44 +36,10 @@ export function useStart() {
 
   return {
     year,
-    setYear,
     data,
     isLoading,
     showWelcome,
+    handleYearChange,
     handleWelcomeClose,
   };
-}
-
-function useFetchYearSummary(year: string) {
-  const [data, setData] = useState<YearSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchData() {
-      try {
-        const rawData = await fetchRawYearData(year);
-        if (!cancelled) {
-          const processedData = processYearData(rawData);
-          setData(processedData);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Error fetching year data:", error);
-          setData(null);
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [year]);
-
-  return { data, isLoading };
 }
