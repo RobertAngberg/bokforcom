@@ -1,10 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
 import LoadingSpinner from "../../_components/LoadingSpinner";
 import { useBokforContext } from "../context/BokforContextProvider";
-import { BokforClientProps } from "../types/types";
+import { useBokforInit } from "../hooks/useBokforInit";
+import type { BokforClientProps } from "../types/types";
 
 import SokForval from "./SokForval";
 
@@ -28,22 +28,11 @@ const Steg4 = dynamic(() => import("./Steg/Steg4"), {
   ssr: false,
 });
 
-export default function Bokfor({ initialData }: BokforClientProps) {
-  const { state, actions } = useBokforContext();
-  const {
-    setFavoritFörvalen,
-    setAllaFörval,
-    setBokföringsmetod,
-    setAnställda: setAnstallda,
-  } = actions;
+export default function BokforClient({ initialData }: BokforClientProps) {
+  const { state } = useBokforContext();
 
-  useEffect(() => {
-    // Initialisera med server data
-    setFavoritFörvalen(initialData.favoritFörval);
-    setAllaFörval(initialData.allaFörval);
-    setBokföringsmetod(initialData.bokföringsmetod);
-    setAnstallda(initialData.anställda);
-  }, [initialData, setFavoritFörvalen, setAllaFörval, setBokföringsmetod, setAnstallda]);
+  // Initialisera context med server data
+  useBokforInit(initialData);
 
   // Rendera alla komponenter - de hanterar själva sin visning baserat på currentStep
   return (

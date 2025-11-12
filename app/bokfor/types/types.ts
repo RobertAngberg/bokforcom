@@ -406,13 +406,16 @@ export interface UseLaddaUppFilProps {
 // ========================================
 
 // BokforClient
+// Initial data struktur (från server)
+export interface BokforInitialData {
+  favoritFörval: Förval[];
+  allaFörval: Förval[];
+  bokföringsmetod: string;
+  anställda: UtlaggAnställd[];
+}
+
 export interface BokforClientProps {
-  initialData: {
-    favoritFörval: Förval[];
-    allaFörval: Förval[];
-    bokföringsmetod: string;
-    anställda: UtlaggAnställd[];
-  };
+  initialData: BokforInitialData;
 }
 
 // ========================================
