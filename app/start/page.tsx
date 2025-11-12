@@ -1,4 +1,4 @@
-import StartClient from "./StartClient";
+import StartClient from "./components/StartClient";
 import { fetchRawYearData, checkWelcomeStatus, markWelcomeAsShown } from "./actions/actions";
 import { processYearData } from "../_utils/format";
 
