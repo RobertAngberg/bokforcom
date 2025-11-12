@@ -1,12 +1,12 @@
 "use client";
 
-import Kort from "./components/Kort";
-import Chart from "./components/Chart";
-import MainLayout from "../_components/MainLayout";
-import Dropdown from "../_components/Dropdown";
-import ValkomstMedd from "./components/ValkomstMedd";
-import { useStart } from "./hooks/useStart";
-import type { StartClientProps } from "./types/types";
+import Kort from "./Kort";
+import Chart from "./Chart";
+import MainLayout from "../../_components/MainLayout";
+import Dropdown from "../../_components/Dropdown";
+import ValkomstMedd from "./ValkomstMedd";
+import { useStart } from "../hooks/useStart";
+import type { StartClientProps } from "../types/types";
 
 export default function StartClient({
   initialData,
