@@ -2,7 +2,7 @@
 
 import BokfordaFakturor from "./BokfordaFakturor";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
-import { useBokfordaFakturorFlik } from "../../hooks/useLeverantorer";
+import { useBokfordaFakturorFlik } from "../../hooks/useLeverantorer/useBokfordaFakturor";
 
 export default function BokfordaFakturorFlik() {
   const { loading } = useBokfordaFakturorFlik();

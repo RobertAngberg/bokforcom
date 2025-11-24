@@ -4,7 +4,8 @@ import Knapp from "../../../../_components/Knapp";
 import NyLeverantorModal from "./NyLeverantorModal";
 import BekraftaBorttagnngModal from "./BekraftaBorttagnngModal";
 import { LeverantorFlikProps } from "../../../types/types";
-import { useLeverantorFlik, useLeverantorNavigation } from "../../../hooks/useLeverantorer";
+import { useLeverantorFlik } from "../../../hooks/useLeverantorer/useLeverantorFlik";
+import { useLeverantorNavigation } from "../../../hooks/useLeverantorer/useNavigation";
 
 export default function LeverantörFlik({ onLeverantörUpdated }: LeverantorFlikProps) {
   const {

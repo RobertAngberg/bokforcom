@@ -4,7 +4,7 @@ import Modal from "../../../../_components/Modal";
 import Knapp from "../../../../_components/Knapp";
 import TextFalt from "../../../../_components/TextFalt";
 import { NyLeverantorModalProps } from "../../../types/types";
-import { useNyLeverantorModal } from "../../../hooks/useLeverantorer";
+import { useNyLeverantorModal } from "../../../hooks/useLeverantorer/useLeverantorModals";
 
 export default function NyLeverantorModal({
   isOpen,

@@ -3,8 +3,8 @@
 import Modal from "../../../_components/Modal";
 import Knapp from "../../../_components/Knapp";
 import LoadingSpinner from "../../../_components/LoadingSpinner";
-import { useLeverantörer } from "../../hooks/useLeverantorer";
-import { useValjLeverantorModal } from "../../hooks/useLeverantorer";
+import { useLeverantörer } from "../../hooks/useLeverantorer/useLeverantorer";
+import { useValjLeverantorModal } from "../../hooks/useLeverantorer/useLeverantorModals";
 import { VäljLeverantörModalProps } from "../../types/types";
 
 export default function ValjLeverantorModal({ isOpen, onClose }: VäljLeverantörModalProps) {

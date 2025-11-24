@@ -1,7 +1,7 @@
 "use client";
 
 import { useSparade } from "../../hooks/useSparade";
-import { useSparadeFakturorPage } from "../../hooks/useLeverantorer";
+import { useSparadeFakturorPage } from "../../hooks/useLeverantorer/useSparadeFakturor";
 import TillbakaPil from "../../../_components/TillbakaPil";
 import { formatCurrency } from "../../../_utils/format";
 import type { SparadeProps, SparadFaktura } from "../../types/types";

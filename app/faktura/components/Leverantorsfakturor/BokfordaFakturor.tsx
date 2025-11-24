@@ -6,7 +6,7 @@ import VerifikatModal from "../../../_components/VerifikatModal";
 import Knapp from "../../../_components/Knapp";
 import Modal from "../../../_components/Modal";
 import Tabell from "../../../_components/Tabell";
-import { useBokfordaFakturor } from "../../hooks/useLeverantorer";
+import { useBokfordaFakturor } from "../../hooks/useLeverantorer/useBokfordaFakturor";
 
 export default function BokfordaFakturor() {
   const {

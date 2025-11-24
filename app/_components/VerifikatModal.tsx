@@ -4,7 +4,7 @@ import React from "react";
 import Modal from "./Modal";
 import Tabell from "./Tabell";
 import { formatSEK } from "../_utils/format";
-import { useVerifikatModal } from "../faktura/hooks/useLeverantorer";
+import { useVerifikatModal } from "../faktura/hooks/useLeverantorer/useVerifikat";
 
 interface VerifikatModalProps {
   isOpen: boolean;
