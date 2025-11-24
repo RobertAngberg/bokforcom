@@ -222,7 +222,29 @@ export function useAlternativ() {
     setSparaLoading(true);
     const fd = new FormData();
     try {
-      fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
+      // Validera och rensa artiklar innan serialisering
+      const artiklarToSave = (formData.artiklar ?? []).map((artikel) => ({
+        beskrivning: artikel.beskrivning,
+        antal: artikel.antal,
+        prisPerEnhet: artikel.prisPerEnhet,
+        moms: artikel.moms,
+        valuta: artikel.valuta || "SEK",
+        typ: artikel.typ || "vara",
+        rotRutTyp: artikel.rotRutTyp || null,
+        rotRutKategori: artikel.rotRutKategori || null,
+        avdragProcent: artikel.avdragProcent || null,
+        arbetskostnadExMoms: artikel.arbetskostnadExMoms || null,
+        rotRutBeskrivning: artikel.rotRutBeskrivning || null,
+        rotRutStartdatum: artikel.rotRutStartdatum || null,
+        rotRutSlutdatum: artikel.rotRutSlutdatum || null,
+        rotRutPersonnummer: artikel.rotRutPersonnummer || null,
+        rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning || null,
+        rotRutBoendeTyp: artikel.rotRutBoendeTyp || null,
+        rotRutBrfOrg: artikel.rotRutBrfOrg || null,
+        rotRutBrfLagenhet: artikel.rotRutBrfLagenhet || null,
+      }));
+
+      fd.append("artiklar", JSON.stringify(artiklarToSave));
       fd.append("isOffert", isOffert ? "true" : "false");
       Object.entries(formData).forEach(([k, v]) => {
         if (k !== "artiklar" && v != null) fd.append(k, String(v));
@@ -251,8 +273,12 @@ export function useAlternativ() {
         const errorMessage = (res as { error?: string }).error;
         showToast(errorMessage || "Kunde inte spara fakturan.", "error");
       }
-    } catch {
-      showToast("Kunde inte konvertera artiklar", "error");
+    } catch (error) {
+      console.error("Fel vid sparande av faktura:", error);
+      showToast(
+        "Kunde inte spara fakturan. Kontrollera att alla fält är ifyllda korrekt.",
+        "error"
+      );
     } finally {
       setSparaLoading(false);
     }
@@ -266,7 +292,29 @@ export function useAlternativ() {
       if (!formData.id) {
         const fd = new FormData();
         try {
-          fd.append("artiklar", JSON.stringify(formData.artiklar ?? []));
+          // Validera och rensa artiklar innan serialisering
+          const artiklarToSave = (formData.artiklar ?? []).map((artikel) => ({
+            beskrivning: artikel.beskrivning,
+            antal: artikel.antal,
+            prisPerEnhet: artikel.prisPerEnhet,
+            moms: artikel.moms,
+            valuta: artikel.valuta || "SEK",
+            typ: artikel.typ || "vara",
+            rotRutTyp: artikel.rotRutTyp || null,
+            rotRutKategori: artikel.rotRutKategori || null,
+            avdragProcent: artikel.avdragProcent || null,
+            arbetskostnadExMoms: artikel.arbetskostnadExMoms || null,
+            rotRutBeskrivning: artikel.rotRutBeskrivning || null,
+            rotRutStartdatum: artikel.rotRutStartdatum || null,
+            rotRutSlutdatum: artikel.rotRutSlutdatum || null,
+            rotRutPersonnummer: artikel.rotRutPersonnummer || null,
+            rotRutFastighetsbeteckning: artikel.rotRutFastighetsbeteckning || null,
+            rotRutBoendeTyp: artikel.rotRutBoendeTyp || null,
+            rotRutBrfOrg: artikel.rotRutBrfOrg || null,
+            rotRutBrfLagenhet: artikel.rotRutBrfLagenhet || null,
+          }));
+
+          fd.append("artiklar", JSON.stringify(artiklarToSave));
           fd.append("isOffert", isOffert ? "true" : "false");
           Object.entries(formData).forEach(([k, v]) => {
             if (k !== "artiklar" && v != null) fd.append(k, String(v));
@@ -290,7 +338,8 @@ export function useAlternativ() {
             showToast(errorMessage || "Kunde inte spara fakturan innan bokföring.", "error");
             return;
           }
-        } catch {
+        } catch (error) {
+          console.error("Fel vid sparande innan bokföring:", error);
           showToast("Kunde inte spara fakturan innan bokföring.", "error");
           return;
         }
