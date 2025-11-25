@@ -1,6 +1,6 @@
 import Modal from "../../../../_components/Modal";
 import AnimeradFlik from "../../../../_components/AnimeradFlik";
-import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster/useProdukterTjanster";
 import { Artikel } from "../../../types/types";
 
 export default function FavoritArtiklarList() {

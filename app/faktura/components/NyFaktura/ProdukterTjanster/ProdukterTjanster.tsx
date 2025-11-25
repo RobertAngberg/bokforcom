@@ -1,6 +1,6 @@
 "use client";
 import { useFaktura } from "../../../hooks/useFaktura";
-import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster/useProdukterTjanster";
 import ArtikelForm from "./ArtikelForm";
 import ArtiklarList from "./ArtiklarList";
 import FavoritArtiklarList from "./FavoritArtiklarList";

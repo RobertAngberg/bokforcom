@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useFaktura } from "../../../hooks/useFaktura";
 import Modal from "../../../../_components/Modal";
-import type { Artikel, FavoritArtikel } from "../../../types/types";
+import type { Artikel } from "../../../types/types";
 
 export default function ArtiklarList() {
   const {
@@ -40,7 +40,7 @@ export default function ArtiklarList() {
   };
 
   const handleShowArtikelDetaljer = (artikel: Artikel) => {
-    setValtArtikel(artikel as FavoritArtikel);
+    setValtArtikel(artikel);
     setVisaArtikelModal(true);
   };
 

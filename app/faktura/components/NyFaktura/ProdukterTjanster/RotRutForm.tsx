@@ -1,7 +1,7 @@
 "use client";
 
 import { useFaktura } from "../../../hooks/useFaktura";
-import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster";
+import { useProdukterTjanster } from "../../../hooks/useProdukterTjanster/useProdukterTjanster";
 import TextFalt from "../../../../_components/TextFalt";
 import { datePickerValue } from "../../../../_utils/datum";
 import { formatCurrency } from "../../../../_utils/format";

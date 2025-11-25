@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { registerLocale } from "react-datepicker";
 import { sv } from "date-fns/locale";
 import { useFakturaClient } from "../context/hooks/FakturaContext";
-import { useProdukterTjanster } from "./useProdukterTjanster";
+import { useProdukterTjanster } from "./useProdukterTjanster/useProdukterTjanster";
 import { useBetalning } from "./useBetalning";
 import { useAvsandare } from "./useAvsandare";
 import { useKundUppgifter } from "./useKundUppgifter";
