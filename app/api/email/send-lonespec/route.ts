@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { auth } from "../../../_lib/better-auth";
 import { headers } from "next/headers";
 import { validateEmail } from "../../../_utils/validationUtils";
-import { validateFileSize, MAX_FILE_SIZES } from "../../../_utils/fileUtils";
+import { validateFileSize, MAX_FILE_SIZES } from "../../../_utils/fileValidation";
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
 
