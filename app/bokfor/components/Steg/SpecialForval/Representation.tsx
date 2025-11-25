@@ -11,7 +11,7 @@ import Forhandsgranskning from "../Forhandsgranskning";
 import { datePickerValue, dateToYyyyMmDd } from "../../../../_utils/datum";
 import { useBokforContext } from "../../../context/BokforContextProvider";
 import { RepresentationProps, RepresentationsTypLocal } from "../../../types/types";
-import { calculateRepresentation } from "../../../../_utils/representation";
+import { calculateRepresentation } from "../../../utils/representationCalculations";
 
 export default function Representation({ mode, renderMode = "standard" }: RepresentationProps) {
   const { state, actions } = useBokforContext();

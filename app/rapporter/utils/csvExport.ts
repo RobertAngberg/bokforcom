@@ -1,130 +1,6 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { dateToYyyyMmDd } from "./datum";
-
-/**
- * =================================================================
- * FILVALIDERINGS-FUNKTIONER
- * Centraliserad filvalidering för hela projektet
- * =================================================================
- */
-
-// Tillåtna filtyper för bokföringsbilagor
-export const ALLOWED_FILE_TYPES = {
-  "application/pdf": ".pdf",
-  "image/jpeg": ".jpg",
-  "image/jpg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-} as const;
-
-// Max filstorlek för olika typer
-export const MAX_FILE_SIZES = {
-  image: 10 * 1024 * 1024, // 10MB för bilagor (PDF/bilder)
-  sie: 50 * 1024 * 1024, // 50MB för SIE-filer
-  email: 8 * 1024 * 1024, // 8MB för email-bilagor
-} as const;
-
-/**
- * Validerar filstorlek
- */
-export function validateFileSize(
-  size: number,
-  maxSize: number = MAX_FILE_SIZES.image
-): { valid: boolean; error?: string } {
-  if (size > maxSize) {
-    return {
-      valid: false,
-      error: `Filen är för stor (${Math.round(size / 1024 / 1024)}MB). Max ${Math.round(maxSize / 1024 / 1024)}MB tillåtet.`,
-    };
-  }
-  return { valid: true };
-}
-
-/**
- * Validerar filtyp för bokföringsbilagor (PDF/bilder)
- */
-export function validateFileType(
-  fileType: string,
-  allowedTypes: Record<string, string> = ALLOWED_FILE_TYPES
-): { valid: boolean; error?: string } {
-  if (!allowedTypes[fileType as keyof typeof allowedTypes]) {
-    const extensions = Object.values(allowedTypes).join(", ");
-    return {
-      valid: false,
-      error: `Ogiltig filtyp. Tillåtna format: ${extensions}`,
-    };
-  }
-  return { valid: true };
-}
-
-/**
- * Validerar filnamn för säkra tecken
- */
-export function validateFilename(filename: string): { valid: boolean; error?: string } {
-  const unsafeChars = /[<>:"/\\|?*\x00-\x1f]/;
-  if (unsafeChars.test(filename)) {
-    return {
-      valid: false,
-      error: "Filnamnet innehåller ogiltiga tecken",
-    };
-  }
-  return { valid: true };
-}
-
-/**
- * Saniterar filnamn genom att ersätta osäkra tecken
- */
-export function sanitizeFilename(filename: string, maxLength: number = 100): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, "_") // Ersätt osäkra tecken med underscore
-    .substring(0, maxLength) // Begränsa längd
-    .toLowerCase();
-}
-
-/**
- * npm run devlett filvalidering för bokföringsbilagor
- *
- */
-export function validateFile(
-  file: File,
-  maxSize: number = MAX_FILE_SIZES.image
-): { valid: boolean; error?: string } {
-  // Kontrollera filstorlek
-  const sizeCheck = validateFileSize(file.size, maxSize);
-  if (!sizeCheck.valid) return sizeCheck;
-
-  // Kontrollera filtyp
-  const typeCheck = validateFileType(file.type);
-  if (!typeCheck.valid) return typeCheck;
-
-  // Kontrollera filnamn
-  const nameCheck = validateFilename(file.name);
-  if (!nameCheck.valid) return nameCheck;
-
-  return { valid: true };
-}
-
-/**
- * Validerar SIE-filtyp
- */
-export function validateSieFileType(type: string): { valid: boolean; error?: string } {
-  const validTypes = [
-    "text/plain",
-    "application/octet-stream",
-    "application/x-sie",
-    "", // Tomma typer accepteras också
-  ];
-
-  if (!validTypes.includes(type)) {
-    return {
-      valid: false,
-      error: `Ogiltig filtyp: ${type}. Endast SIE-filer är tillåtna.`,
-    };
-  }
-
-  return { valid: true };
-}
+import { dateToYyyyMmDd } from "../../_utils/datum";
 
 /**
  * =================================================================
@@ -134,7 +10,6 @@ export function validateSieFileType(type: string): { valid: boolean; error?: str
 
 /**
  * Ladda ner fil från innehåll
- * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
  */
 function downloadFile(
   content: string | Blob,
@@ -156,7 +31,6 @@ function downloadFile(
 
 /**
  * Generera filnamn med datum
- * Konsoliderad version från personal/Bokforing/bokforingsUtils.ts
  */
 function generateFilename(prefix: string, date: Date, extension: string): string {
   const dateStr = dateToYyyyMmDd(date);
@@ -173,8 +47,9 @@ const downloadPDF = (blob: Blob, filename: string) =>
   downloadFile(blob, filename, "application/pdf");
 
 /**
- * Huvudbok export-funktioner
- * Modulära funktioner för CSV och PDF export av huvudboksdata
+ * =================================================================
+ * HUVUDBOK EXPORT-FUNKTIONER
+ * =================================================================
  */
 
 // Typdefinitioner för huvudbok
@@ -203,15 +78,13 @@ type HuvudbokKonto = {
  *
  * VIKTIGT: Använder vanligt ASCII minus (-) istället för Unicode minus (−)
  * Anledning: Unicode minus (U+2212) visas som konstiga tecken i PDF:er
- * Exempel av problem: "-3 815,79kr" blev "3 815,79kr" i PDF
- * Lösning: Använd ASCII minus (-) som fungerar korrekt i alla format
  */
 function formatSEKForExport(val: number): string {
   if (val === 0) return "0kr";
   const isNegative = val < 0;
   const absVal = Math.abs(val);
   const formatted = absVal.toLocaleString("sv-SE") + "kr";
-  return isNegative ? `-${formatted}` : formatted; // ASCII minus (-) INTE Unicode minus (−)
+  return isNegative ? `-${formatted}` : formatted;
 }
 
 /**
@@ -290,7 +163,6 @@ export async function exportHuvudbokPDF(
   selectedYear: string
 ): Promise<void> {
   try {
-    // Dynamisk import av jsPDF för att undvika SSR-problem
     const { default: jsPDF } = await import("jspdf");
     const { default: autoTable } = await import("jspdf-autotable");
 
@@ -322,7 +194,6 @@ export async function exportHuvudbokPDF(
 
     let y = 30;
 
-    // Header
     doc.setFontSize(32);
     doc.text("Huvudbok", 105, y, { align: "center" });
     y += 10;
@@ -332,7 +203,6 @@ export async function exportHuvudbokPDF(
     doc.text(period, 105, y, { align: "center" });
     y += 15;
 
-    // Företagsnamn (bold)
     if (företagsnamn) {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -340,7 +210,6 @@ export async function exportHuvudbokPDF(
       y += 7;
     }
 
-    // Organisationsnummer (normal)
     if (organisationsnummer) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
@@ -348,21 +217,17 @@ export async function exportHuvudbokPDF(
       y += 8;
     }
 
-    // Utskriven datum
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
     y += 18;
 
-    // Loopa genom alla konton
     for (const konto of konton) {
-      // Kontrollera om vi behöver ny sida
       if (y > 250) {
         doc.addPage();
         y = 20;
       }
 
-      // Kontohuvud
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text(`Konto ${konto.kontonummer} - ${konto.beskrivning}`, 14, y);
@@ -373,7 +238,6 @@ export async function exportHuvudbokPDF(
       doc.text(`Ingående balans: ${formatSEKForExport(konto.ingaendeBalans)}`, 14, y);
       y += 8;
 
-      // Transaktionstabell
       const tableData = konto.transaktioner.map((trans) => [
         trans.sort_priority === 1 ? "" : new Date(trans.datum).toLocaleDateString("sv-SE"),
         trans.verifikatNummer,
@@ -383,7 +247,6 @@ export async function exportHuvudbokPDF(
         formatSEKForExport(trans.lopande_saldo),
       ]);
 
-      // Lägg till utgående balans rad
       tableData.push([
         "",
         "Utgående balans",
@@ -443,11 +306,11 @@ export async function exportHuvudbokPDF(
 }
 
 /**
- * Balansrapport export-funktioner
- * Modulära funktioner för CSV och PDF export av balansrapportdata
+ * =================================================================
+ * BALANSRAPPORT EXPORT-FUNKTIONER
+ * =================================================================
  */
 
-// Typdefinitioner för balansrapport
 type BalansKonto = {
   kontonummer: string;
   beskrivning: string;
@@ -552,7 +415,6 @@ export async function exportBalansrapportPDF(
   selectedYear: string
 ): Promise<void> {
   try {
-    // Dynamisk import av jsPDF för att undvika SSR-problem
     const { default: jsPDF } = await import("jspdf");
     const { default: autoTable } = await import("jspdf-autotable");
 
@@ -584,7 +446,6 @@ export async function exportBalansrapportPDF(
 
     let y = 30;
 
-    // Header
     doc.setFontSize(32);
     doc.text("Balansrapport", 105, y, { align: "center" });
     y += 10;
@@ -594,7 +455,6 @@ export async function exportBalansrapportPDF(
     doc.text(period, 105, y, { align: "center" });
     y += 15;
 
-    // Företagsnamn (bold)
     if (företagsnamn) {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -602,7 +462,6 @@ export async function exportBalansrapportPDF(
       y += 7;
     }
 
-    // Organisationsnummer (normal)
     if (organisationsnummer) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
@@ -610,13 +469,11 @@ export async function exportBalansrapportPDF(
       y += 8;
     }
 
-    // Utskriven datum
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
     y += 18;
 
-    // Dynamiska grupper
     const grupper = [
       { titel: "Tillgångar", konton: tillgangar, summa: sumTillgangar },
       { titel: "Eget kapital och skulder", konton: skulderOchEgetKapital, summa: sumSkulderEK },
@@ -628,7 +485,6 @@ export async function exportBalansrapportPDF(
       doc.text(titel, 14, y);
       y += 8;
 
-      // Tabellrader med tre kolumner som webbgränssnittet
       const rows: (
         | string
         | number
@@ -641,7 +497,6 @@ export async function exportBalansrapportPDF(
         formatSEKForExport(konto.utgaendeSaldo || 0),
       ]);
 
-      // Summeringsrad med colSpan för första två kolumner
       const ingaendeSum = konton.reduce((sum, k) => sum + (k.ingaendeSaldo || 0), 0);
       const aretsSum = konton.reduce((sum, k) => sum + (k.aretsResultat || 0), 0);
       rows.push([
@@ -681,11 +536,11 @@ export async function exportBalansrapportPDF(
           fillColor: [248, 249, 250],
         },
         columnStyles: {
-          0: { cellWidth: 24 }, // Konto
-          1: { cellWidth: 75 }, // Beskrivning
-          2: { cellWidth: 28, halign: "right" }, // Ing. balans
-          3: { cellWidth: 28, halign: "right" }, // Resultat
-          4: { cellWidth: 28, halign: "right" }, // Utg. balans
+          0: { cellWidth: 24 },
+          1: { cellWidth: 75 },
+          2: { cellWidth: 28, halign: "right" },
+          3: { cellWidth: 28, halign: "right" },
+          4: { cellWidth: 28, halign: "right" },
         },
         margin: { left: 10, right: 10 },
         didDrawPage: (data) => {
@@ -710,7 +565,12 @@ export async function exportBalansrapportPDF(
   }
 }
 
-// Typer för resultatrapport
+/**
+ * =================================================================
+ * RESULTATRAPPORT EXPORT-FUNKTIONER
+ * =================================================================
+ */
+
 type ResultatKonto = {
   kontonummer: string;
   beskrivning: string;
@@ -738,7 +598,6 @@ export async function exportResultatrapportPDF(
   selectedYear: string
 ): Promise<void> {
   try {
-    // Dynamisk import av jsPDF för att undvika SSR-problem
     const { default: jsPDF } = await import("jspdf");
     const { default: autoTable } = await import("jspdf-autotable");
 
@@ -770,7 +629,6 @@ export async function exportResultatrapportPDF(
 
     let y = 30;
 
-    // Header
     doc.setFontSize(32);
     doc.text("Resultatrapport", 105, y, { align: "center" });
     y += 10;
@@ -780,7 +638,6 @@ export async function exportResultatrapportPDF(
     doc.text(period, 105, y, { align: "center" });
     y += 15;
 
-    // Företagsnamn (bold)
     if (företagsnamn) {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -788,7 +645,6 @@ export async function exportResultatrapportPDF(
       y += 7;
     }
 
-    // Organisationsnummer (normal)
     if (organisationsnummer) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
@@ -796,13 +652,11 @@ export async function exportResultatrapportPDF(
       y += 8;
     }
 
-    // Utskriven datum
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
     y += 18;
 
-    // Dynamiska grupper
     const grupper = [
       { titel: "Rörelsens intäkter", data: intakter },
       { titel: "Rörelsens kostnader", data: rorelsensKostnader },
@@ -821,7 +675,6 @@ export async function exportResultatrapportPDF(
       data.forEach((grupp) => {
         if (grupp.konton.length === 0) return;
 
-        // Tabellrader
         const rows: (
           | string
           | number
@@ -832,7 +685,6 @@ export async function exportResultatrapportPDF(
           formatSEKForExport(konto.belopp),
         ]);
 
-        // Summeringsrad
         if (rows.length > 1) {
           rows.push([
             {
@@ -866,9 +718,9 @@ export async function exportResultatrapportPDF(
             fillColor: [248, 249, 250],
           },
           columnStyles: {
-            0: { cellWidth: 25 }, // Konto
-            1: { cellWidth: 110 }, // Beskrivning
-            2: { cellWidth: 30, halign: "right" }, // Belopp
+            0: { cellWidth: 25 },
+            1: { cellWidth: 110 },
+            2: { cellWidth: 30, halign: "right" },
           },
           margin: { left: 10, right: 10 },
           didDrawPage: (data) => {
@@ -880,7 +732,6 @@ export async function exportResultatrapportPDF(
       });
     });
 
-    // Nettoresultat
     doc.setFontSize(15);
     doc.setFont("helvetica", "bold");
     doc.text("Nettoresultat", 14, y);
@@ -1013,7 +864,15 @@ export function exportResultatrapportCSV(
   }
 }
 
-// Momsrapport export functions
+/**
+ * =================================================================
+ * MOMSRAPPORT EXPORT-FUNKTIONER
+ * =================================================================
+ */
+
+/**
+ * Exportera momsrapport till PDF
+ */
 export async function exportMomsrapportPDF(
   data: Array<{ fält: string; beskrivning: string; belopp: number }>,
   företagsnamn: string,
@@ -1021,14 +880,10 @@ export async function exportMomsrapportPDF(
   år: string
 ): Promise<void> {
   try {
-    console.log("🔍 PDF Export - Företagsnamn:", företagsnamn);
-    console.log("🔍 PDF Export - Organisationsnummer:", organisationsnummer);
-
     const doc = new jsPDF();
 
     let y = 30;
 
-    // Header - Rapportnamn centrerat
     doc.setFontSize(32);
     doc.text("Momsrapport", 105, y, { align: "center" });
     y += 10;
@@ -1038,7 +893,6 @@ export async function exportMomsrapportPDF(
     doc.text(`År ${år}`, 105, y, { align: "center" });
     y += 15;
 
-    // Företagsnamn (bold) - samma som andra rapporter
     if (företagsnamn && företagsnamn.trim() !== "") {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -1046,7 +900,6 @@ export async function exportMomsrapportPDF(
       y += 7;
     }
 
-    // Organisationsnummer (normal) - samma som andra rapporter
     if (organisationsnummer && organisationsnummer.trim() !== "") {
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
@@ -1054,13 +907,11 @@ export async function exportMomsrapportPDF(
       y += 8;
     }
 
-    // Utskriven datum - samma som andra rapporter
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Utskriven: ${new Date().toLocaleDateString("sv-SE")}`, 14, y);
     y += 15;
 
-    // Gruppera data per sektion
     const sektioner = [
       {
         titel: "A. Momspliktig försäljning eller uttag exkl. moms",
@@ -1075,13 +926,11 @@ export async function exportMomsrapportPDF(
     ];
 
     sektioner.forEach((sektion) => {
-      // Sektion header
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text(sektion.titel, 14, y);
       y += 8;
 
-      // Sektions data
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
 
@@ -1094,7 +943,7 @@ export async function exportMomsrapportPDF(
         }
       });
 
-      y += 4; // Extra space mellan sektioner
+      y += 4;
     });
 
     const filename = generateFilename(`momsrapport_${år}`, new Date(), "pdf");
@@ -1105,6 +954,9 @@ export async function exportMomsrapportPDF(
   }
 }
 
+/**
+ * Exportera momsrapport till CSV
+ */
 export async function exportMomsrapportCSV(
   data: Array<{ fält: string; beskrivning: string; belopp: number }>,
   företagsnamn: string,

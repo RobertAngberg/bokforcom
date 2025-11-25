@@ -9,7 +9,7 @@ import {
   validateFileSize as validateFileSizeUtil,
   validateSieFileType as validateSieFileTypeUtil,
   MAX_FILE_SIZES,
-} from "../../_utils/fileUtils";
+} from "../../_utils/fileValidation";
 
 /**
  * Validerar filstorlek för SIE-filer

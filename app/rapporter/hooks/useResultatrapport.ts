@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { exportResultatrapportPDF, exportResultatrapportCSV } from "../../_utils/fileUtils";
+import { exportResultatrapportPDF, exportResultatrapportCSV } from "../utils/csvExport";
 import type { KontoRad, Verifikation, ToastState, UseResultatrapportProps } from "../types/types";
 import { formatSEK } from "../../_utils/format";
 import { processResultatData } from "../utils/resultatProcessing";

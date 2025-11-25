@@ -16,7 +16,10 @@ import { decodeSieFile } from "../utils/encoding";
 import { parseSieContent } from "../utils/parser";
 import { analyzeAccounts } from "../utils/validation";
 import { uploadSieFile } from "../actions/actions";
-import { validateFileSize as validateFileSizeUtil, MAX_FILE_SIZES } from "../../_utils/fileUtils";
+import {
+  validateFileSize as validateFileSizeUtil,
+  MAX_FILE_SIZES,
+} from "../../_utils/fileValidation";
 import type { SieData, Analys } from "../types/types";
 
 const isDev = process.env.NODE_ENV !== "production";

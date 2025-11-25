@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { exportMomsrapportPDF, exportMomsrapportCSV } from "../../_utils/fileUtils";
+import { exportMomsrapportPDF, exportMomsrapportCSV } from "../utils/csvExport";
 import type {
   MomsRad,
   ToastState,

@@ -7,7 +7,7 @@ import type {
   UseBalansrapportProps,
   TransaktionsPost,
 } from "../types/types";
-import { exportBalansrapportCSV, exportBalansrapportPDF } from "../../_utils/fileUtils";
+import { exportBalansrapportCSV, exportBalansrapportPDF } from "../utils/csvExport";
 import { formatSEK } from "../../_utils/format";
 
 export function useBalansrapport({ data, foretagsprofil }: UseBalansrapportProps) {

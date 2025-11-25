@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import extractTextFromPDF from "pdf-parser-client-side";
 import { extractDataFromOCR, extractDataFromOCRLevFakt } from "../actions/ocrActions";
 import { compressImageFile } from "../../_utils/blobUpload";
-import { validateFile, sanitizeFilename } from "../../_utils/fileUtils";
+import { validateFile, sanitizeFilename } from "../../_utils/fileValidation";
 import Tesseract from "tesseract.js";
 import { UseLaddaUppFilProps } from "../types/types";
 import { showToast } from "../../_components/Toast";
