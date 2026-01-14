@@ -21,7 +21,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^5.0.2",
-    "next": "^15.3.4",
+    "next": "^15.5.9",
     "openai": "^4.90.0",
     "pdf-parser-client-side": "^1.1.1",
     "pg": "^8.14.1",
