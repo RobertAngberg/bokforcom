@@ -6,13 +6,16 @@ type Props = {
 
 export default function MainLayout({ children }: Props) {
   return (
-    <main className="min-h-screen bg-slate-950 overflow-x-hidden text-slate-100">
-      {/* Mobil: liten padding, Desktop: mer utrymme */}
-      <div className="px-4 py-4 lg:px-8 lg:py-6">
-        <div className="w-full max-w-6xl p-5 md:p-8 bg-cyan-950 border border-cyan-800 rounded-2xl shadow-lg">
-          {children}
-        </div>
+    <main className="min-h-screen bg-cyan-950 overflow-x-hidden text-slate-100">
+      {/* Subtle decorative lines */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-px h-full bg-slate-950/30" />
+        <div className="absolute top-0 left-2/4 w-px h-full bg-slate-950/30" />
+        <div className="absolute top-0 left-3/4 w-px h-full bg-slate-950/30" />
       </div>
+
+      {/* Content */}
+      <div className="relative w-full p-4 md:p-6 lg:p-8">{children}</div>
       <FeedbackWidget />
     </main>
   );
