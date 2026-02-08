@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
-import Navbar from "./_components/Navbar";
+import Sidebar from "./_components/Sidebar";
 import ImpersonationWrapper from "./_components/ImpersonationWrapper";
 import { ClientProviders } from "./_lib/providers";
 import { RequireOnboarding } from "./onboarding/components/RequireOnboarding";
@@ -36,8 +36,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <ClientProviders>
           <ImpersonationWrapper />
-          <Navbar />
-          <RequireOnboarding>{children}</RequireOnboarding>
+          <Sidebar />
+          <div className="lg:ml-56">
+            <RequireOnboarding>{children}</RequireOnboarding>
+          </div>
         </ClientProviders>
       </body>
     </html>
