@@ -196,7 +196,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-cyan-800/60 text-center text-xs text-cyan-400">
+        <div className="p-3 border-t border-cyan-800/60 text-center text-[10px] text-white/70">
           © 2026 Bokför.com
         </div>
       </aside>
