@@ -10,7 +10,7 @@ export default function MainLayout({ children }: Props) {
       <div className="w-full p-3 md:p-5 lg:p-6">
         <div className="bg-cyan-950 p-4 md:p-6 lg:p-8">{children}</div>
       </div>
-      <FeedbackWidget />
+      {/* <FeedbackWidget /> */}
     </main>
   );
 }
