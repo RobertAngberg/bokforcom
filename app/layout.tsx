@@ -37,9 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientProviders>
           <ImpersonationWrapper />
           <Sidebar />
-          <div className="lg:ml-56">
-            <RequireOnboarding>{children}</RequireOnboarding>
-          </div>
+          <RequireOnboarding>{children}</RequireOnboarding>
         </ClientProviders>
       </body>
     </html>
