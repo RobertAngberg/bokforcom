@@ -161,9 +161,9 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-56 flex-col bg-cyan-950 border-r border-cyan-800 z-50">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-56 flex-col bg-cyan-950 border-r border-slate-950/40 z-50">
         {/* Logo */}
-        <div className="flex items-center justify-center h-20 border-b border-cyan-800/60">
+        <div className="flex items-center justify-center h-20 border-b border-slate-950/40">
           <Link href="/">
             <Image
               src="/Logo.png"
@@ -196,13 +196,13 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-cyan-800/60 text-center text-[10px] text-white/70">
+        <div className="p-3 border-t border-slate-950/40 text-center text-[10px] text-white/70">
           © 2026 Bokför.com
         </div>
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 w-full bg-cyan-950 border-b border-cyan-800">
+      <header className="lg:hidden sticky top-0 z-50 w-full bg-cyan-950 border-b border-slate-950/40">
         <div className="flex h-16 items-center justify-between px-4">
           <Link href="/">
             <Image
@@ -242,7 +242,7 @@ export default function Sidebar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <nav className="border-t border-cyan-800/60 bg-slate-950/95 backdrop-blur-sm px-4 py-3">
+          <nav className="border-t border-slate-950/40 bg-slate-950/95 backdrop-blur-sm px-4 py-3">
             <div className="flex flex-col gap-1">
               {currentLinks.map(({ href, label, icon }) => (
                 <Link
